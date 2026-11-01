@@ -40,7 +40,10 @@ Extend what is already here rather than repeating its boilerplate.
   next to the example test, with `NameArbs` for names. Assert what holds for every input — a round trip, the output shape, idempotence,
   case-insensitivity — never a single expected value. A failure prints the input and a seed; pin that input as an example test, then fix the code or
   the property. Compare letter case char by char: `String.lowercase()` turns `İ` into two characters. **Without `runTest`, write `runBlocking<Unit>`**:
-  a test method that returns `checkAll`'s result is not void, and JUnit 5 skips it without a word.
+  a test method that returns `checkAll`'s result is not void, and JUnit 5 skips it without a word. **One green run proves little**: every run draws a
+  new seed, so before a PR that adds a property or changes the code under one, run it ten times
+  (`for i in $(seq 10); do ./gradlew :<module>:test --tests '*<Name>PropertyTest' --rerun -q || break; done`). Otherwise a case that one run in
+  fifty finds turns up later, failing an unrelated PR on `main` (#4361).
 - `FullLifecycleIntegrationTest` walks create → list → get → update → delete across every entity, mirroring `full-lifecycle.http`; extend it for a new
   cross-entity flow. `ModularityTests` in each module verify Modulith structure and write docs to `build/spring-modulith-docs/`.
 
