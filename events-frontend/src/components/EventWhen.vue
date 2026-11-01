@@ -17,7 +17,7 @@ const localePath = useLocalePath()
 const { changeLines } = useEventChanges()
 
 // A postponed or cancelled show does not happen on this date: the date is struck and its times
-// hidden. A postponed row's new date, if any, is another row (ADR-030).
+// hidden. A postponed row's new date links its row, or is the date the note named (ADR-056).
 const postponed = computed(() => props.event.status === 'POSTPONED')
 const offDate = computed(() => postponed.value || props.event.status === 'CANCELLED')
 const dates = computed(() => (props.event.eventDate ? formatEventDates(props.event) : ''))
@@ -63,6 +63,9 @@ const endNotAnnounced = computed(() => {
         class="text-primary underline-offset-4 hover:underline"
         >{{ formatDate(event.postponedTo.eventDate) }}</RouterLink
       >
+    </p>
+    <p v-else-if="postponed && event.relocatedOn" class="text-body font-medium">
+      {{ t('events.detail.when.postponedTo') }} {{ formatDate(event.relocatedOn) }}
     </p>
     <p v-else-if="postponed" class="text-body text-muted-foreground">
       {{ t('events.detail.when.postponed') }}

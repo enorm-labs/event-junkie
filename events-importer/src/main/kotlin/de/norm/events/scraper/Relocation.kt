@@ -153,20 +153,41 @@ fun resolveDatedRelocation(
     }
 
 /**
- * The new date of a show that moved house and date at once, as the note states it: Lido's
- * "VERSCHOBEN UND VERLEGT AUF DEN 13.04.27 INS HOLE 44". Null on any status but `RELOCATED`, and
- * for a note that names no date other than [eventDate]. No row is matched (ADR-030, #3613).
+ * The new date of a moved show, as the note states it: Lido's "VERSCHOBEN UND VERLEGT AUF DEN
+ * 13.04.27 INS HOLE 44" on a `RELOCATED` row, ufaFabrik's "Verlegt auf den 02.04.2027." on a
+ * `POSTPONED` one. No row is matched (ADR-030, #3613, #4334).
+ *
+ * A note that names [eventDate] before the new date pairs the two, and wins: Die Wühlmäuse lists
+ * "Der 06.11.2026, 20 Uhr verschiebt sich auf den 05.11.2027" for each night of a run. Otherwise the
+ * first new date counts, after [eventDate] on a `POSTPONED` row. Null on any other status, and for a
+ * note that names no such date.
  */
 fun relocatedOn(
     status: String,
     notes: List<String>,
     eventDate: LocalDate
-): LocalDate? =
-    if (status == EventStatus.RELOCATED.name) {
-        notes.firstNotNullOfOrNull { note -> POSTPONED_TO_DATE.findAll(note).mapNotNull(::targetDate).firstOrNull { it != eventDate } }
-    } else {
-        null
-    }
+): LocalDate? {
+    val moved =
+        when (status) {
+            EventStatus.RELOCATED.name -> { date: LocalDate -> date != eventDate }
+            EventStatus.POSTPONED.name -> { date: LocalDate -> date.isAfter(eventDate) }
+            else -> return null
+        }
+    // The pair: the nearest date before an "auf" since the last one is this row's. Nearest, because "vom 05.-08.11.2026
+    // verschoben. Der 05.11.2026 verschiebt sich auf …" names the 8th first.
+    val paired =
+        notes.firstNotNullOfOrNull { note ->
+            val matches = POSTPONED_TO_DATE.findAll(note).toList()
+            matches.withIndex().firstNotNullOfOrNull { (i, match) ->
+                val stretch = note.substring(if (i == 0) 0 else matches[i - 1].range.last + 1, match.range.first)
+                targetDate(match).takeIf { it != eventDate && ANY_DATE.findAll(stretch).lastOrNull()?.let(::targetDate) == eventDate }
+            }
+        }
+    return paired ?: notes.firstNotNullOfOrNull { note -> POSTPONED_TO_DATE.findAll(note).mapNotNull(::targetDate).firstOrNull(moved) }
+}
+
+/** Any date written as digits: "06.11.2026", "29.10.26". */
+private val ANY_DATE = Regex("""(?<!\d)(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)""")
 
 /** The new date of a move: "auf den 01.10.2026", "auf 04.11.2026", "auf den 08.10.26". */
 private val POSTPONED_TO_DATE = Regex("""\bauf\s+(?:den\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)""", RegexOption.IGNORE_CASE)

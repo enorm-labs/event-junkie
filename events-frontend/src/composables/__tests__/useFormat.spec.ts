@@ -85,7 +85,29 @@ describe('formatEventStatus', () => {
     )
     expect(formatEventStatus('RELOCATED', 'Hole 44')).toBe('Moved to Hole 44')
     expect(formatEventStatus('RELOCATED', null, null, '2027-04-13')).toBe('Relocated')
-    expect(formatEventStatus('POSTPONED', null, null, '2027-04-13')).toBe('Postponed')
+  })
+
+  it("names the date a postponed show moved to: the linked row's, else the note's (#4334)", () => {
+    const { formatEventStatus } = format()
+
+    expect(formatEventStatus('POSTPONED', null, null, '2027-04-13')).toBe(
+      'Postponed to Tue, 13 Apr 2027',
+    )
+    expect(formatEventStatus('POSTPONED', null, '2027-04-14', '2027-04-13')).toBe(
+      'Postponed to Wed, 14 Apr 2027',
+    )
+    expect(formatEventStatus('POSTPONED')).toBe('Postponed')
+    // No other status shows the stored date without a house.
+    for (const status of ['SCHEDULED', 'CANCELLED', 'RELOCATED'])
+      expect(formatEventStatus(status, null, null, '2027-04-13')).not.toContain('2027')
+  })
+
+  it("says the note's date of a postponed show in German", () => {
+    i18n.global.locale.value = 'de'
+
+    expect(format().formatEventStatus('POSTPONED', null, null, '2027-11-04')).toBe(
+      'Verschoben auf Do., 4. Nov. 2027',
+    )
   })
 
   it('says it in German', () => {

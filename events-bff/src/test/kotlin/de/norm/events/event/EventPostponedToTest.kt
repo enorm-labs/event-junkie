@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
 import java.time.LocalDate
 
-/** `GET /events/{slug}`: a postponed event names its new date when exactly one row matches (#3093). */
+/** `GET /events/{slug}`: a postponed event names its new date when exactly one row matches, or one on the date its note named (#3093, #4334). */
 class EventPostponedToTest : BaseControllerTest() {
     private val day: LocalDate = LocalDate.now(BERLIN).plusDays(5)
 
@@ -59,6 +59,50 @@ class EventPostponedToTest : BaseControllerTest() {
         }
 
     @Test
+    fun `links the night on the date the note named when two nights match (#4334)`(): Unit =
+        runBlocking {
+            val wuehlmaeuse = insertVenue("Die Wühlmäuse", "die-wuhlmause")
+            val old = postponed(wuehlmaeuse, "Alle Kassen, auch privat", "old")
+            insertEvent(wuehlmaeuse, "Alle Kassen, auch privat", "december", day.plusDays(49))
+            insertEvent(wuehlmaeuse, "Alle Kassen, auch privat", "april", day.plusMonths(6))
+            setRelocatedOn(old, day.plusMonths(6))
+
+            expectPostponedTo("old", "april", day.plusMonths(6))
+        }
+
+    @Test
+    fun `links the first show of the night the note named when that night has two (#4334)`(): Unit =
+        runBlocking {
+            val wuehlmaeuse = insertVenue("Die Wühlmäuse", "die-wuhlmause")
+            val old = postponed(wuehlmaeuse, "Michael Hatzius", "old")
+            insertEvent(wuehlmaeuse, "Michael Hatzius", "matinee", day.plusYears(1))
+            insertEvent(wuehlmaeuse, "Michael Hatzius", "evening", day.plusYears(1))
+            insertEvent(wuehlmaeuse, "Michael Hatzius", "next-night", day.plusYears(1).plusDays(1))
+            setRelocatedOn(old, day.plusYears(1))
+
+            expectPostponedTo("old", "matinee", day.plusYears(1))
+        }
+
+    @Test
+    fun `links nothing and keeps the date the note named when no night matches on it (#4334)`(): Unit =
+        runBlocking {
+            val ufa = insertVenue("ufaFabrik", "ufafabrik")
+            val old = postponed(ufa, "Sebastian Krumbiegel", "old")
+            // The one same-title night is on another date: the note's date wins over the guess.
+            insertEvent(ufa, "Sebastian Krumbiegel", "other", day.plusDays(20))
+            setRelocatedOn(old, day.plusMonths(5))
+
+            expectNoPostponedTo("old")
+            webTestClient
+                .get()
+                .uri("/events/old")
+                .exchange()
+                .expectBody()
+                .jsonPath("$.relocatedOn")
+                .isEqualTo(day.plusMonths(5).toString())
+        }
+
+    @Test
     fun `links nothing from a scheduled night`(): Unit =
         runBlocking {
             val lido = insertVenue("Lido", "lido")
@@ -81,6 +125,17 @@ class EventPostponedToTest : BaseControllerTest() {
         databaseClient
             .sql("UPDATE events.event SET status = :status WHERE id = :id")
             .bind("status", status)
+            .bind("id", eventId)
+            .await()
+    }
+
+    private suspend fun setRelocatedOn(
+        eventId: Long,
+        date: LocalDate
+    ) {
+        databaseClient
+            .sql("UPDATE events.event SET relocated_on = :date WHERE id = :id")
+            .bind("date", date)
             .bind("id", eventId)
             .await()
     }

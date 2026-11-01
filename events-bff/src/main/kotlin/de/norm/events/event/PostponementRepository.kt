@@ -20,6 +20,9 @@ class PostponementRepository(
      * The one later `SCHEDULED` row at the same venue, within [WINDOW_MONTHS], that shares an artist
      * with [event] or has its title. Null when none matches, and when two or more do: a resident act
      * plays the venue every month, and a guess between them is worse than no link.
+     *
+     * A row whose note named the new date (`relocated_on`, ADR-056) links only a match on that date,
+     * the first by id when a night has two shows. None there leaves the page to show the date alone.
      */
     suspend fun newDate(event: EventEntity): PostponedToResponse? {
         if (event.status != EventStatus.POSTPONED.name) return null
@@ -45,8 +48,11 @@ class PostponementRepository(
             .all()
             .collectList()
             .awaitSingle()
-            .singleOrNull { it.sharesArtist || comparable(it.title) == title }
-            ?.let { PostponedToResponse(it.slug, it.eventDate) }
+            .filter { it.sharesArtist || comparable(it.title) == title }
+            .let { matches ->
+                val stated = event.relocatedOn
+                if (stated == null) matches.singleOrNull() else matches.firstOrNull { it.eventDate == stated }
+            }?.let { PostponedToResponse(it.slug, it.eventDate) }
     }
 
     private class Candidate(
