@@ -34,6 +34,14 @@ counter that has not incremented yet — the #1964 defect. The mark is a claim, 
 
 `WOULD FIRE` is not necessarily wrong. On staging today `ej-importer-stale` is one, because `loge` genuinely has not succeeded in 70 hours.
 
+**A drill reads `--check` at once, and the mail later.** `WOULD FIRE` evaluates the query now, but the rule itself runs every `frequency` minutes,
+so the mail arrives up to that long after: an hour for `ej-mail-quota-high` (#4208's drill). Keep the drill's change in place until the mail is in, then
+revert it. The firing also starts the rule's `silence`, 24 hours for that rule, so a real crossing inside that window sends nothing.
+
+**After a rollout, `--check` reads the old pods for about five minutes.** Every rule takes `max()` or `sum()` over all series, and a replaced pod's last
+sample stays in the query window until it ages out. A gauge the new pods already report differently reads unchanged until then. Query it per pod
+(`scripts/o2-query.sh <env> promql '<metric>'`) to see the new value sooner.
+
 **This check earned its place immediately.** The first version of `ej-ingest-shedding` was one rule summing two counters:
 
 ```promql
