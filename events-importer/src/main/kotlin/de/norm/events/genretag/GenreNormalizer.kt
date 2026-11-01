@@ -37,6 +37,7 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "rawknroll" to "Rock",
         // [lookupKey] strips the apostrophes, so "Rock´n´Roll", "Rock'n Roll" and "RocknRoll" share this key.
         "rocknroll" to "Rock'n'Roll",
+        "garagerock" to "Garage-Rock",
         "garagernr" to "Garage-Rock",
         "kraut" to "Krautrock",
         "krautrock" to "Krautrock",
@@ -99,6 +100,7 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "downbeat" to "Downtempo",
         // Whole-token, so `progressive` alone stays a vetoed descriptor (#4044).
         "deepprogressive" to "Progressive House",
+        "progressivehouse" to "Progressive House",
         // M-BIA's Wix `musicStyle`; whole-token for the same reason (#4230).
         "progressivepsytrance" to "Psytrance",
         // Goa trance, the psytrance root; "Goa Trance" collapses to `goatrance`.
@@ -381,9 +383,10 @@ private fun genreTokens(rawGenre: String?): List<String> {
         .map { stripNoise(it) }
         .filter { it.isNotBlank() }
         // Re-split after noise stripping — stripNoise may introduce new commas
-        // (e.g. "EBM und Synthpop" → "EBM, Synthpop")
+        // (e.g. "EBM und Synthpop" → "EBM, Synthpop") — and strip each part again, so the
+        // "Floor" before an "und" goes too ("Hip Hop Floor und Techno Floor").
         .flatMap { it.split(",") }
-        .map { it.trim() }
+        .map { stripNoise(it.trim()) }
         .filter { it.isNotBlank() }
 }
 
@@ -454,7 +457,11 @@ private fun resolveGenreOrNull(token: String): List<String>? {
     logger.info { "No synonym match for genre token '$token', using as-is" }
     val titleCased =
         token.split(" ").joinToString(" ") { word ->
-            word.split('-').joinToString("-") { it.deshoutGenrePart() }.replaceFirstChar { it.uppercaseChar() }
+            // Capitalized before the de-shout, so "dUBSTEP" is "Dubstep" and not a shouted "DUBSTEP".
+            word
+                .split('-')
+                .mapIndexed { index, part -> (if (index == 0) part.replaceFirstChar { it.uppercaseChar() } else part).deshoutGenrePart() }
+                .joinToString("-")
         }
     return listOf(titleCased)
 }

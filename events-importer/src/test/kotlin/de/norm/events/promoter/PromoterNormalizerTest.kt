@@ -53,6 +53,11 @@ class PromoterNormalizerTest {
     }
 
     @Test
+    fun `folds a backtick that stood beside a double quote`() {
+        canonicalPromoterName("Rock`\"n Roll Club") shouldBe "Rock'n Roll Club"
+    }
+
+    @Test
     fun `de-shouts all-caps labels but preserves intentional mixed casing`() {
         assertSoftly {
             canonicalPromoterName("SIMPLY QUIZ") shouldBe "Simply Quiz"
@@ -136,6 +141,14 @@ class PromoterNormalizerTest {
             canonicalPromoterName("MIND Enterprises (wf) GmbH") shouldBe "Mind Enterprises"
             canonicalPromoterName("Live Nation (GSA) –") shouldBe "Live Nation"
             canonicalPromoterName("Loft Gxhjfyw (Gsa)") shouldBe "Loft Gxhjfyw"
+        }
+    }
+
+    @Test
+    fun `keeps a parenthetical when it is all that names the promoter`() {
+        assertSoftly {
+            canonicalPromoterName("& (GSA) Music GmbH") shouldBe "& (Gsa)"
+            canonicalPromoterName("& (Gsa)") shouldBe "& (Gsa)"
         }
     }
 
