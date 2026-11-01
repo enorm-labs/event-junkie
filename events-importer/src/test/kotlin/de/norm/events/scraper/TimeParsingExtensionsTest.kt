@@ -47,4 +47,11 @@ class TimeParsingExtensionsTest {
         labelledClock("Start 20:00amazing", START_LABELS).shouldBeNull()
         labelledClock(null, DOORS_LABELS).shouldBeNull()
     }
+
+    // The accepted limitation in labelledClock's KDoc, found by LabelledClockPropertyTest: pinned so a change to it is a decision.
+    @Test
+    fun `labelledClock reads a date without a year after a label as a clock`() {
+        labelledClock("Vorstellungsbeginn 03.10. um 20 Uhr", START_LABELS) shouldBe LocalTime.of(3, 10)
+        labelledClock("Beginn 20.10.", START_LABELS) shouldBe LocalTime.of(20, 10)
+    }
 }
