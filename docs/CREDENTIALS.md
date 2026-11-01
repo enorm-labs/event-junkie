@@ -204,7 +204,7 @@ Small facts that are annoying to re-derive and are needed exactly when something
 
 - **Node addresses.** The WireGuard tunnel addresses (`10.10.1.1` staging, `10.10.0.1` production), the private
   networks (`10.1.1.0/24` and `10.0.1.0/24`), and each server's public IPv4. Production's database node has a public
-  IPv4 for **egress only**. Its firewall admits nothing inbound, so it is reached at `10.0.1.20` through the k3s
+  IPv4 for **egress only**. Its firewall admits nothing inbound, so it is reached at `10.0.1.21` through the k3s
   node.
 - **The Hetzner project name and Object Storage bucket names.** A bucket name is unique Hetzner-wide, so it is not
   guessable after the fact.

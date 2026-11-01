@@ -57,7 +57,7 @@ the two registries usually agree.
 ## What state this code is in
 
 All three stacks are applied and live. `bootstrap/` holds both DNS zones, the SSH key and the S3 backend on Hetzner's Ceph. Staging is one `cx33` in `nbg1`,
-all-in-one, with no DNS records. Production is a `cpx32` k3s node and a `cpx22` PostgreSQL node (since 2026-10-28, when `cx` could not be placed), x86 because `cax*` cannot be bought in `eu-central`. Both have
+all-in-one, with no DNS records. Production is a `cx33` k3s node and a `cx23` PostgreSQL node, x86 because `cax*` cannot be bought in `eu-central`. Both have
 a PGDATA volume, and a node replacement has been proven to bring the database back with zero rows lost (#460). **Production is public**: `publish_dns` is
 `true`, and setting it to `false` takes the site dark — [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §12 first.
 

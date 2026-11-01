@@ -45,7 +45,7 @@ die() {
 ENV="${1:-}"
 case "$ENV" in
     staging) DB_HOST=10.1.1.10 ;;
-    production) DB_HOST=10.0.1.20 ;;
+    production) DB_HOST=10.0.1.21 ;;
     *) die "expected staging or production, got '${ENV}'" ;;
 esac
 MODE="${2:-write}"
