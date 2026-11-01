@@ -77,14 +77,14 @@ class ListingError(Exception):
     """
 
 
-def fetch_all(host, path):
+def fetch_all(host, path, query=""):
     """Read every page, and check the count against the total the API reports.
 
     The listings carry `totalElements` since #810, so a partial read is detectable rather than
     indistinguishable from a small table."""
     out, page, total = [], 0, 0
     while True:
-        body = request(f"{host}{path}?page={page}&size={PAGE_SIZE}&sort=name,asc")
+        body = request(f"{host}{path}?{query}{'&' if query else ''}page={page}&size={PAGE_SIZE}&sort=name,asc")
         total = body["totalElements"]
         out.extend(body["content"])
         if len(out) >= total:
@@ -195,9 +195,12 @@ def compare_site(args):
         print(f"Cannot read {args.seed}: {e}", file=sys.stderr)
         return EXIT_CANNOT_CHECK
 
-    want = {venue["name"] for venue, _ in seed}
+    # A venue with `closedOn` leaves `/api/venues` and is listed under `?closed=true` (ADR-046).
+    want_open = {venue["name"] for venue, _ in seed if not venue.get("closedOn")}
+    want_closed = {venue["name"] for venue, _ in seed if venue.get("closedOn")}
     try:
-        have = {v["name"] for v in fetch_all(site, "/api/venues")}
+        have_open = {v["name"] for v in fetch_all(site, "/api/venues")}
+        have_closed = {v["name"] for v in fetch_all(site, "/api/venues", "closed=true")}
     except ListingError as e:
         print(f"{e}", file=sys.stderr)
         return EXIT_CANNOT_CHECK
@@ -205,10 +208,10 @@ def compare_site(args):
         print(f"Cannot read the venues at {site}: {e}", file=sys.stderr)
         return EXIT_CANNOT_CHECK
 
-    missing = sorted(want - have)
-    extra = sorted(have - want)
-    print(f"{args.seed}: {len(want)} venues")
-    print(f"{site} serves {len(have)} venues\n")
+    missing = sorted((want_open - have_open) | (want_closed - have_closed))
+    extra = sorted((have_open - want_open) | (have_closed - want_closed))
+    print(f"{args.seed}: {len(want_open)} open and {len(want_closed)} closed venues")
+    print(f"{site} serves {len(have_open)} open and {len(have_closed)} closed venues\n")
     for n in missing:
         print(f"  MISSING FROM THE SITE  {n}")
     for n in extra:
