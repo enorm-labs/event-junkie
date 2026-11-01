@@ -150,6 +150,14 @@ class ActSplittingTest {
     }
 
     // #1556: Tempodrom's `Eiskönigin 1 & 2` was cut into `Eiskönigin 1` and `2`.
+    // Found by ActSplittingPropertyTest: the last act kept its trailing space, and a trailing `und ` billed an empty act.
+    @Test
+    fun `splitSegmentOnConjunctions trims each act and bills no empty one`() {
+        splitSegmentOnConjunctions("Abc Def & Ghi Jkl ") shouldBe listOf("Abc Def", "Ghi Jkl")
+        splitSegmentOnConjunctions("Qg Isxmwci und ") shouldBe listOf("Qg Isxmwci")
+        splitSegmentOnConjunctions("Abc Def ") shouldBe listOf("Abc Def ")
+    }
+
     @Test
     fun `splitSegmentOnConjunctions keeps a sequel or volume number on its show`() {
         splitSegmentOnConjunctions("Eiskönigin 1 & 2") shouldBe listOf("Eiskönigin 1 & 2")
