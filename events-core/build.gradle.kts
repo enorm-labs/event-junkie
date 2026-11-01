@@ -63,6 +63,10 @@ dependencies {
     // See: https://kotest.io/docs/assertions/assertions.html
     testImplementation("io.kotest:kotest-assertions-core:${property("kotest.version")}")
 
+    // Kotest property testing – generated inputs for the money scale. Runs under JUnit 5 through `checkAll`.
+    // See: https://kotest.io/docs/proptest/property-based-testing.html
+    testImplementation("io.kotest:kotest-property:${property("kotest.version")}")
+
     // Pinned one artifact at a time because no BOM above manages it, reusing the gradle.properties
     // property so the two cannot drift. Consumers of the published artifact resolve log4j through
     // their own BOM; this constraint is about this module's own classpath, which is what the CVE

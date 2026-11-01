@@ -36,10 +36,11 @@ Extend what is already here rather than repeating its boilerplate.
 - **A change to a shared name rule (`ArtistNameMapping`) is proven on real titles, not only on cases.** Export the distinct titles read-only
   (`SELECT DISTINCT title FROM event`), run the rule on `main` and on the branch through a throwaway test that writes `title → result`, and diff the two.
   Over 3,303 production titles this found three regressions the unit tests missed.
-- **A pure function on any name also gets a `*PropertyTest`** (`io.kotest:kotest-property`, importer only): `checkAll` over `NameArbs` inside `runTest`,
-  next to the example test. Assert what holds for every input — the output shape, idempotence, case-insensitivity — never a single expected value. A
-  failure prints the input and a seed; pin that input as an example test, then fix the code or the property. Compare letter case char by char:
-  `String.lowercase()` turns `İ` into two characters.
+- **A pure parser or normalizer also gets a `*PropertyTest`** (`io.kotest:kotest-property`, importer and `events-core`): `checkAll` inside `runTest`,
+  next to the example test, with `NameArbs` for names. Assert what holds for every input — a round trip, the output shape, idempotence,
+  case-insensitivity — never a single expected value. A failure prints the input and a seed; pin that input as an example test, then fix the code or
+  the property. Compare letter case char by char: `String.lowercase()` turns `İ` into two characters. **Without `runTest`, write `runBlocking<Unit>`**:
+  a test method that returns `checkAll`'s result is not void, and JUnit 5 skips it without a word.
 - `FullLifecycleIntegrationTest` walks create → list → get → update → delete across every entity, mirroring `full-lifecycle.http`; extend it for a new
   cross-entity flow. `ModularityTests` in each module verify Modulith structure and write docs to `build/spring-modulith-docs/`.
 
