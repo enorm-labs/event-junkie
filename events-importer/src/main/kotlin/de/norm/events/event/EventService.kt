@@ -388,7 +388,8 @@ class EventService(
                 }
             }
 
-        return EventResponse.fromEntity(entity, artists, promoters, genreTags)
+        // Alphabetical, as the BFF answers, so no query plan reorders them (#4381).
+        return EventResponse.fromEntity(entity, artists, promoters, genreTags.sortedWith(String.CASE_INSENSITIVE_ORDER))
     }
 }
 

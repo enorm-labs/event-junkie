@@ -308,7 +308,7 @@ class EventService(
                 requireNotNull(venuesById[event.venueId]) { "Event ${event.id} references missing venue ${event.venueId}" }
             val artistNames =
                 artistLinksByEvent[event.id].orEmpty().sortedBy { it.billingOrder }.mapNotNull { artistsById[it.artistId]?.name }
-            val genreTags = genreLinksByEvent[event.id].orEmpty().mapNotNull { genreNamesById[it.genreTagId] }
+            val genreTags = genreLinksByEvent[event.id].orEmpty().mapNotNull { genreNamesById[it.genreTagId] }.inResponseOrder()
             EventSummaryResponse.fromEntity(
                 event,
                 VenueSummaryResponse.fromEntity(venue, images.serve(venue.imageUrl, CARD_WIDTH)),
@@ -335,7 +335,7 @@ class EventService(
         val tagsById =
             if (links.isEmpty()) emptyMap() else genreTagRepository.findAllById(links.map { it.genreTagId }).toList().associateBy { it.requiredId() }
         return EventGenreTags(
-            names = tagsById.values.map { it.name },
+            names = tagsById.values.map { it.name }.inResponseOrder(),
             derived =
                 links
                     .filter { it.origin != GenreTagOrigin.SOURCE.name }
@@ -343,6 +343,9 @@ class EventService(
                     .toMap()
         )
     }
+
+    /** Alphabetical, so a card and the event page agree and no query plan reorders them (#4381); the poster takes its first family. */
+    private fun List<String>.inResponseOrder(): List<String> = sortedWith(String.CASE_INSENSITIVE_ORDER)
 
     /** Every tag name on an event, and the subset a derivation produced rather than the source (ADR-047), by name. */
     private data class EventGenreTags(
