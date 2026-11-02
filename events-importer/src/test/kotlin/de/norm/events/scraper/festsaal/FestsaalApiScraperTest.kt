@@ -160,9 +160,10 @@ class FestsaalApiScraperTest {
     }
 
     @Test
-    fun `maps a moved-date event to POSTPONED on its new date`() {
+    fun `schedules a moved-date event on its new date`() {
         val festaJunina = event("festsaal:festa-junina-26")
-        festaJunina.status shouldBe "POSTPONED"
+        // The row is the new date, so the show happens on it; POSTPONED struck it out on the site.
+        festaJunina.status shouldBe "SCHEDULED"
         // The event now happens on changed_date (2026-08-01), not the original date (2026-06-27).
         festaJunina.eventDate shouldBe LocalDate.of(2026, 8, 1)
     }

@@ -165,7 +165,8 @@ class FestsaalApiScraper {
             genre = genreNode.takeIf { kindFromGenre == null && kindWordInGenre == null },
             pricePresale = parsePrice(node.price.blankToNull()),
             soldOut = statusCode == STATUS_SOLD_OUT,
-            status = mapStatus(statusCode, sourceId),
+            // The row already sits on the new date, so the show happens on it.
+            status = if (postponed && parseDate(node.changedDate.blankToNull()) != null) "SCHEDULED" else mapStatus(statusCode, sourceId),
             artists = buildArtists(title, node.support.blankToNull(), eventType),
             description = parseDescription(node.layouts),
             statusNote = relocationNote(node.changedText, node.newLocation),
@@ -195,7 +196,7 @@ class FestsaalApiScraper {
 
     /**
      * Maps the `status` code to a domain [EventStatus][de.norm.events.event.EventStatus] name.
-     * Observed: `moved_date` (postponed to `changed_date`), `moved_unknown` (postponed with no new
+     * Observed: `moved_date` (postponed to `changed_date`; the caller stores the row there as scheduled), `moved_unknown` (postponed with no new
      * date, so it keeps `date`), `transferred` (relocated), `cancelled`, `sold_out` (captured
      * separately as the `soldOut` flag, so `SCHEDULED` here) and `custom` (a free-text
      * `changed_text` note we cannot classify — `SCHEDULED`). Any other non-blank code is logged

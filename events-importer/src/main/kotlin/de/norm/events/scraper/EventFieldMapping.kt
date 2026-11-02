@@ -41,7 +41,7 @@ private val POSTPONED_TEXT = Regex("""verschoben|postpon|reschedul""")
  * "auf den 30.05.2027 verlegt" moves the date, not the house: a postponement written with the
  * relocation verb (Hole 44). Only a date after "auf" counts; "verlegt ins" stays a move.
  */
-private val VERLEGT_AUF_DATUM = Regex("""verlegt\s+auf\s+(?:den\s+)?\d|auf\s+(?:den\s+)?\d[\d.]*\s+verlegt""")
+private val VERLEGT_AUF_DATUM = Regex("""verlegt\s+auf\s+(?:de[nm]\s+)?\d|auf\s+(?:de[nm]\s+)?\d[\d.]*\s+verlegt""")
 
 /**
  * A cancellation in a badge: `abgesagt`, `Absage` (#1560), `cancel…`, "fällt aus" / "fällt

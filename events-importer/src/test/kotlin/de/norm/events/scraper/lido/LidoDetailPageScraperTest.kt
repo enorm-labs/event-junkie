@@ -84,4 +84,20 @@ class LidoDetailPageScraperTest {
         val doc = Jsoup.parse("<html><body><main></main></body></html>", sourceUrl)
         scraper.scrape(doc, sourceUrl).shouldBeNull()
     }
+
+    @Test
+    fun `keeps the shouted banner under the subtitle as the status note, which names where the show moved`() {
+        val url = "https://www.lido-berlin.de/events/2026-11-10-sons-of-legion"
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/lido/lido-detail-relocated.html")!!
+                .bufferedReader()
+                .readText()
+        val sonsOfLegion = scraper.scrape(Jsoup.parse(html, url), url)!!
+
+        sonsOfLegion.status shouldBe "RELOCATED"
+        sonsOfLegion.subtitle shouldBe "„Soul to SØL World Tour 2026\""
+        sonsOfLegion.statusNote shouldBe "HOCHVERLEGT IN DAS COLUMBIA THEATER. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE GÜLTIGKEIT!"
+        sonsOfLegion.toEventEntity(venueId = 1, venueSlug = "lido", eventSourceId = 1).relocatedTo shouldBe "Columbia Theater"
+    }
 }
