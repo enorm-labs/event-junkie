@@ -95,6 +95,9 @@ class ATraneProgrammePageScraperTest {
     /** One weekly-session card whose JSON-LD name is the credit and [lines], `<br>`-separated. */
     private fun session(vararg lines: String): ScrapedEvent = card(listOf("A-TRANE PRÄSENTIERT:") + lines)
 
+    /** The guests a weekly session's [line] bills. */
+    private fun guests(line: String): List<String> = session("ANDREAS SCHMIDT & FRIENDS", line).artists.filter { it.role == ArtistRole.SUPPORT }.map { it.name }
+
     /** One card whose JSON-LD name is [lines], `<br>`-separated, starting at [start] with [subtitle] in its markup. */
     private fun card(
         lines: List<String>,
@@ -176,6 +179,34 @@ class ATraneProgrammePageScraperTest {
 
         night.artists.filter { it.role == ArtistRole.SUPPORT }.map { it.name } shouldBe listOf("Hans-Peter Meier", "Anna Lena")
         night.subtitle shouldBe "Heute mit: Hans-Peter Meier, Anna Lena"
+    }
+
+    @Test
+    fun `splits guests the venue joins with a bare hyphen, two words on each side`() {
+        // #4374, event 5171: the venue left out the space after the hyphen.
+        val night = session("ANDREAS SCHMIDT & FRIENDS", "HEUTE MIT: SEBASTIAN MERK-JOHN SCHRÖDER")
+
+        night.artists.map { it.name to it.role } shouldBe
+            listOf("ANDREAS SCHMIDT" to ArtistRole.HEADLINER, "Sebastian Merk" to ArtistRole.SUPPORT, "John Schröder" to ArtistRole.SUPPORT)
+        night.subtitle shouldBe "Heute mit: Sebastian Merk, John Schröder"
+    }
+
+    @Test
+    fun `keeps a double-barrelled guest whole`() {
+        guests("HEUTE MIT: ANNA MÜLLER-LÜDENSCHEIDT") shouldBe listOf("Anna Müller-Lüdenscheidt")
+        guests("HEUTE MIT: HANS-PETER MEYER") shouldBe listOf("Hans-Peter Meyer")
+        // A double-barrelled name beside the join hides where one guest ends, so the run stays one guest, as before #4374.
+        guests("HEUTE MIT: ANNA MÜLLER-LÜDENSCHEIDT-JOHN SCHRÖDER") shouldBe listOf("Anna Müller-Lüdenscheidt-John Schröder")
+        guests("HEUTE MIT: JOHN SCHRÖDER-HANS-PETER MEYER") shouldBe listOf("John Schröder-Hans-Peter Meyer")
+    }
+
+    @Test
+    fun `splits three guests however the venue spaces the dashes`() {
+        guests("HEUTE MIT: SEBASTIAN MERK-JOHN SCHRÖDER- HANS-PETER MEYER") shouldBe
+            listOf("Sebastian Merk", "John Schröder", "Hans-Peter Meyer")
+        guests("HEUTE MIT: SEBASTIAN MERK -JOHN SCHRÖDER – ANNA MÜLLER-LÜDENSCHEIDT") shouldBe
+            listOf("Sebastian Merk", "John Schröder", "Anna Müller-Lüdenscheidt")
+        guests("HEUTE MIT: SEBASTIAN MERK - JOHN SCHRÖDER-ANNA MÜLLER") shouldBe listOf("Sebastian Merk", "John Schröder", "Anna Müller")
     }
 
     @Test
