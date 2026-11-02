@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Asserts that force-import.py reads every source across pages, and refuses a partial listing (#2595).
+"""Asserts that force-import.py reads every source across pages, refuses a partial listing (#2595),
+and resolves a source type to its one slug.
 
 Usage:
     python3 scripts/test_force_import.py
@@ -57,6 +58,21 @@ def main():
     except SystemExit:
         refused = True
     checks.append(("a listing short of totalElements is refused", refused))
+
+    known = {
+        "8mm-bar": {"sourceType": "EIGHT_MM"},
+        "a-trane": {"sourceType": "A_TRANE"},
+        "club-a": {"sourceType": "SHARED"},
+        "club-b": {"sourceType": "SHARED"},
+    }
+    checks.append(("no names means every source", module.resolve([], known) == (sorted(known), [])))
+    checks.append(("a slug passes", module.resolve(["a-trane"], known) == (["a-trane"], [])))
+    checks.append(("a source type maps to its slug", module.resolve(["eight_mm"], known) == (["8mm-bar"], [])))
+    both = module.resolve(["8mm-bar", "EIGHT_MM"], known)
+    checks.append(("a slug and its type are one source", both == (["8mm-bar"], [])))
+    checks.append(("an unknown name is refused", module.resolve(["eight-mm"], known)[1] == ["eight-mm"]))
+    wanted, refused = module.resolve(["shared"], known)
+    checks.append(("a type two sources carry is refused", not wanted and "club-a, club-b" in refused[0]))
 
     failed = [name for name, ok in checks if not ok]
     for name in failed:
