@@ -67,6 +67,10 @@ This is the standard "ship it" flow — the manual equivalent of
       a query: `--click '.venue-map [aria-label^="<Name>"]' --scroll '.venue-map'` on `/en/map` or `/en/venues?view=map&q=<slug>`. The filter sheet below 768 px opens with `--click 'main button[aria-haspopup="dialog"]'`: without `main` the header's search button matches first. Open one shot before you
       trust an identical pair, because a page that never loaded compares identical too. A design rule change needs the picture
       ([design.instructions.md](../instructions/design.instructions.md) § How a rule leaves this list). Mechanics: the [`gh` skill](../../.claude/skills/gh/SKILL.md).
+      **A state that depends on the clock or on data production lacks** — a set playing now, a night on now, a cancelled event — is out of the script's
+      reach. Write a short Playwright script instead: build both sides with `vite build --outDir`, serve each with `vite preview`, answer the event's
+      `/api/**` with `page.route` and a stubbed body with invented names, and fix the time with `page.clock.setFixedTime`. Run it from `events-frontend/` as
+      `node --input-type=module - < script.mjs`, or `@playwright/test` does not resolve. Say in the PR that the shots show a stub (#4369).
       A change to `events-admin/` gets them too, from `scripts/admin-screenshots.sh <path>...`: the same two builds, its API answered from the fixtures in
       `events-admin/screenshot-fixtures/`, and `--click`, `--fill`, `--select` and `--wait` steps for a state such as an open panel or an error. Say in the PR
       that the shots show fixture data.
