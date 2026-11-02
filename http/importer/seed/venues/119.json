@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "[119]",
+        "address": "Storkower Straße 119",
+        "city": "Berlin",
+        "postalCode": "10407",
+        "district": "prenzlauer-berg",
+        "latitude": 52.535508,
+        "longitude": 13.451730,
+        "instagramUrl": "https://www.instagram.com/119.berlin/",
+        "description": "A techno club that opened in October 2026 in the rooms the Kirche von Unten, a former meeting place of the GDR opposition, used on Storkower Straße from 2014.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Techno-Club eröffnete im Oktober 2026 in den Räumen, die die Kirche von Unten, einst Treffpunkt der DDR-Opposition, ab 2014 an der Storkower Straße nutzte.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "programmeUrl": "https://ra.co/clubs/302883",
+        "reviewedAt": "2026-11-02T18:35:35Z"
+    },
+    "sources": []
+}
