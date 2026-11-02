@@ -252,6 +252,28 @@ class Bogen47ApiScraperTest {
     }
 
     @Test
+    fun `scrapePage bills a party's name-and-handle lines as DJs, without the handles`() {
+        // Event 10154 (#4394), handles masked: the credit line closes the run and bills nobody.
+        val event =
+            eventDescribed(
+                "Insolar (Day Into Night)",
+                """<p>the sun went down.</p><p>Eliza b2b Rompa @one.a @two_b<br>Marius Bø @three___c<br>Miran N @four.d<br>""" +
+                    """Greta @five<br>artwork by @six</p>""",
+                eventType = "Party"
+            )
+
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Eliza", "Rompa", "Marius Bø", "Miran N", "Greta").map { it to ArtistRole.DJ }
+    }
+
+    @Test
+    fun `scrapePage bills nobody for two handle lines, a credit or a handle in prose`() {
+        eventDescribed("Two", """<p>Marius Bø @one<br>Greta @two<br>artwork by @three</p>""", eventType = "Party").artists shouldHaveSize 0
+        eventDescribed("Prose", """<p>We welcome @one for her debut.<br>Next, @two takes over.<br>Picture shoot by @three</p>""", eventType = "Party")
+            .artists shouldHaveSize 0
+    }
+
+    @Test
     fun `scrapePage reads one clock line in a party's description as no timetable`() {
         eventDescribed("Circuit Design Sessions", """<p>Sat. 21.11.2026 13:00 - 20:00</p><p>22:00: Doors</p>""", eventType = "Party")
             .artists shouldHaveSize 0

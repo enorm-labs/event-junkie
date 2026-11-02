@@ -87,7 +87,7 @@ internal data class Bogen47Page(
  * are the concert's headliners in listed order, and the title, the night's name, bills no act.
  *
  * **A party bills only what its description names as DJs** ([partyLineup]): a timetable of `23:00–02:00: A b2b B (label)` lines,
- * each act with its set, or a `Joining us are A and B` sentence. Its title names the night, never an act.
+ * each act with its set, a run of `<name> @handle` lines (#4394), or a `Joining us are A and B` sentence. Its title names the night, never an act.
  *
  * The remaining ACF fields are unused defaults: `event_entrance_fee` is `None` throughout, and
  * `event_music_genre`, `event_card_subtitle` and the act repeater are all but always empty. A
@@ -337,6 +337,7 @@ internal fun partyLineup(
                 .map { ScrapedArtist(name = it, role = ArtistRole.DJ, setStart = start, setEnd = end) }
         }
     }
+    handleLineup(description)?.let { return it }
     return JOINING_US
         .find(description.orEmpty())
         ?.groupValues
@@ -347,6 +348,42 @@ internal fun partyLineup(
         ?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         .orEmpty()
 }
+
+/**
+ * The DJs of the first run of [MIN_HANDLE_LINES] or more `<name> @handle [@handle…]` lines, or null when there is none. Blank lines
+ * may sit inside a run; any other line ends it. The handles are dropped, and a credit (`artwork by @…`) is no act and ends the run.
+ */
+private fun handleLineup(description: String?): List<ScrapedArtist>? {
+    val runs = mutableListOf(mutableListOf<String>())
+    description
+        .orEmpty()
+        .lines()
+        .filter { it.isNotBlank() }
+        .forEach { line ->
+            val name =
+                HANDLE_LINE
+                    .matchEntire(line.trim())
+                    ?.groupValues
+                    ?.get(1)
+                    ?.takeUnless { CREDIT_BY.containsMatchIn(it) }
+            if (name == null) runs += mutableListOf<String>() else runs.last() += name
+        }
+    return runs
+        .firstOrNull { it.size >= MIN_HANDLE_LINES }
+        ?.flatMap(::splitBackToBack)
+        ?.map { it.trim() }
+        ?.filterNot { it.isBlank() || isNonArtistName(it) }
+        ?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+}
+
+/** Fewer `<name> @handle` lines than this are a credit or a shout-out, not a line-up. */
+private const val MIN_HANDLE_LINES = 3
+
+/** `Marius Bø @handle`, or `Eliza b2b Rompa @one @two`: a name, then only handles. */
+private val HANDLE_LINE = Regex("""([^@]*[\p{L}\p{N}][^@]*?)(?:\s+@[\w.]+)+""")
+
+/** A credit's name ends in `by`: `artwork by`, `Picture shoot by`. */
+private val CREDIT_BY = Regex("""\bby$""", RegexOption.IGNORE_CASE)
 
 private fun clockTime(text: String): LocalTime = LocalTime.parse(text.replace('.', ':').padStart(CLOCK_LENGTH, '0'))
 
