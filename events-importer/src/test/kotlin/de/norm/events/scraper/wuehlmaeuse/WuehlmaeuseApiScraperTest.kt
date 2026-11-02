@@ -108,6 +108,8 @@ class WuehlmaeuseApiScraperTest {
             billed("Stephan Graf von Bothmer") shouldContainExactly listOf("Stephan Graf von Bothmer")
             billed("Heißmann & Rassau") shouldContainExactly listOf("Heißmann & Rassau")
             billed("Manuel Rubey & Simon Schwarz") shouldContainExactly listOf("Manuel Rubey", "Simon Schwarz")
+            // A couple who share the surname (event 6469, #4375).
+            billed("Sabine & Dirk Steffens") shouldContainExactly listOf("Sabine Steffens", "Dirk Steffens")
             billed("Ingmar Stadelmann trifft Ricarda Lang") shouldContainExactly listOf("Ingmar Stadelmann", "Ricarda Lang")
             billed("Marc Weide präsentiert: Talents of Magic") shouldContainExactly listOf("Marc Weide")
             billed("Frank-Markus Barwasser als Erwin Pelzig") shouldContainExactly listOf("Frank-Markus Barwasser")

@@ -141,6 +141,9 @@ class KlunkerkranichOverviewPageScraperTest {
         // The shared rule keeps an "& the" tail as part of one name (#2269).
         billing("BAERBEL'S BELLEZ w. Kitty & the Cat *live, bisu bisu").map { it.name } shouldContainExactly
             listOf("Kitty & the Cat", "bisu bisu")
+        // A known shared-surname pair gets the surname on both names, as the shared splitters bill it (#4375).
+        billing("A NIGHT w. Sabine & Dirk Steffens *live").map { it.name } shouldContainExactly
+            listOf("Sabine Steffens", "Dirk Steffens")
     }
 
     @Test

@@ -438,6 +438,30 @@ class ActSplittingTest {
     }
 
     @Test
+    fun `a known shared-surname pair bills both names with the surname, and no other billing changes (#4375)`() {
+        val steffens = listOf("Sabine Steffens", "Dirk Steffens")
+        assertSoftly {
+            listOf("Sabine & Dirk Steffens", "Sabine und Dirk Steffens", "SABINE AND DIRK STEFFENS", "Sabíne & Dirk Steffens ").forEach { billing ->
+                withClue(billing) {
+                    splitSupportActs(billing) shouldContainExactly steffens
+                    splitHeadlinerTitle(billing) shouldContainExactly steffens
+                    splitSegmentOnConjunctions(billing) shouldContainExactly steffens
+                }
+            }
+            splitSupportActs("Sabine & Dirk Steffens, Aska") shouldContainExactly steffens + "Aska"
+            splitSupportActs("Aska + Sabine und Dirk Steffens") shouldContainExactly listOf("Aska") + steffens
+            commaListActs("Aska, Sabine & Dirk Steffens") shouldBe listOf("Aska") + steffens
+            splitHeadlinerTitle("Aska, Bilk, Sabine & Dirk Steffens") shouldContainExactly listOf("Aska", "Bilk") + steffens
+            // The general surname rule this pair does not become: each still splits as before.
+            splitSupportActs("Afrob & Ferris MC") shouldContainExactly listOf("Afrob", "Ferris MC")
+            splitSupportActs("Kollegah & Farid Bang") shouldContainExactly listOf("Kollegah", "Farid Bang")
+            splitSupportActs("Sabine & Dirk Müller") shouldContainExactly listOf("Sabine", "Dirk Müller")
+            splitSupportActs("Angus & Julia Stone") shouldContainExactly listOf("Angus & Julia Stone")
+            splitSupportActs("Simon & Garfunkel") shouldContainExactly listOf("Simon & Garfunkel")
+        }
+    }
+
+    @Test
     fun `splitHeadlinerTitle keeps a slash inside a single act name when splitOnSlash is false`() {
         // Madame Claude uses "/" inside one act's name, so its co-bills split only on " + ".
         splitHeadlinerTitle("Morimoto / Wong duo", splitOnSlash = false) shouldContainExactly
