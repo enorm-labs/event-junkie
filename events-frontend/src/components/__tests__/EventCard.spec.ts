@@ -228,6 +228,19 @@ describe('EventCard', () => {
     })
     expect(moved.text()).toContain('Moved to Hole44')
     expect(moved.text()).not.toContain('Relocated')
+    // A house we list goes by its own name, not the note's spelling.
+    const listed = mount(EventCard, {
+      props: {
+        event: {
+          ...event,
+          status: 'RELOCATED',
+          relocatedTo: 'huxleys',
+          movedTo: { venueName: 'Huxleys Neue Welt', venueSlug: 'huxleys-neue-welt' },
+        },
+      },
+      global: { stubs },
+    })
+    expect(listed.text()).toContain('Moved to Huxleys Neue Welt')
     // And when it went, where the note says (#3613).
     const movedOn = mount(EventCard, {
       props: {

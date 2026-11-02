@@ -129,24 +129,30 @@ export function eventCalendarSpan(event: EventDetail): CalendarSpan | null {
   }
 }
 
-/** The house a relocated event moved to, when its note names one. */
+/** The house a relocated event moved to: the venue we list under its own name, else the note's text. */
 export function relocatedTo(event: EventDetail): string | undefined {
-  return (event.status === 'RELOCATED' && event.relocatedTo?.trim()) || undefined
+  if (event.status !== 'RELOCATED') return undefined
+  return (event.movedTo?.venueName ?? event.relocatedTo)?.trim() || undefined
 }
 
 /**
  * `Venue, Room, Street 1, City` — whatever of it is known. A relocated event names the house it
- * moved to first, so a calendar does not send the visitor to the old one.
+ * moved to first, with its address when we list it, so a calendar does not send the visitor to
+ * the old one.
  */
 export function eventLocation(
   event: EventDetail,
   texts: Pick<CalendarTexts, 'movedTo' | 'movedFrom'>,
 ): string | undefined {
   const venue = event.venue
+  const movedFrom = venue?.name ? texts.movedFrom(venue.name) : ''
+  const listed = event.status === 'RELOCATED' ? event.movedTo : undefined
   const movedTo = relocatedTo(event)
-  const parts = movedTo
-    ? [texts.movedTo(movedTo), venue?.name ? texts.movedFrom(venue.name) : '']
-    : [venue?.name, event.room, venue?.address, venue?.city]
+  const parts = listed
+    ? [listed.venueName, listed.address, listed.city, movedFrom]
+    : movedTo
+      ? [texts.movedTo(movedTo), movedFrom]
+      : [venue?.name, event.room, venue?.address, venue?.city]
   const known = parts.filter(Boolean)
   return known.length ? known.join(', ') : undefined
 }

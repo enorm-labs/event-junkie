@@ -1,6 +1,7 @@
 package de.norm.events.account
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.event.seriesDateSwap
 import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
@@ -111,7 +112,7 @@ class PlanChangeStore(
 
     /**
      * Writes one notification per account and event for the changes seen in the window `(from, to]` of events starting
-     * [today] or later. A changed end and a status back to scheduled are left out. With several changes, the most severe
+     * [today] or later. A changed end, a status back to scheduled and a date swapped within a series are left out. With several changes, the most severe
      * names it.
      *
      * An event has one change row per account. A row from before [dayStart] starts over: unread, dated [now]. A row
@@ -132,7 +133,7 @@ class PlanChangeStore(
                     "WHEN c.field = 'START_TIME' THEN 'time' ELSE 'venue' END AS change " +
                     "FROM $EVENTS_SCHEMA.event_change c JOIN $EVENTS_SCHEMA.event e ON e.id = c.event_id " +
                     "JOIN accounts.rsvp r ON r.event_id = c.event_id " +
-                    "WHERE c.seen_at > :from AND c.seen_at <= :to AND e.event_date >= :today " +
+                    "WHERE c.seen_at > :from AND c.seen_at <= :to AND e.event_date >= :today AND NOT ${seriesDateSwap("c", "e")} " +
                     "AND (c.field IN ('EVENT_DATE', 'START_TIME', 'VENUE') " +
                     "OR (c.field = 'STATUS' AND c.new_value IN ('CANCELLED', 'POSTPONED', 'RELOCATED'))) " +
                     "ORDER BY r.account_id, c.event_id, $SEVERITY_OF_FIELD) " +

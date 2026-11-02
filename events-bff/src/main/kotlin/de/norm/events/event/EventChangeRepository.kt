@@ -21,7 +21,8 @@ class EventChangeRepository(
 ) {
     /**
      * The changes of event [eventId] from the last [KEPT_DAYS] days, newest first. A venue change
-     * carries the venue names; a venue deleted since reads as null and is left out.
+     * carries the venue names; a venue deleted since reads as null and is left out, as is a date
+     * swapped within a series ([seriesDateSwap]).
      */
     suspend fun recent(eventId: Long): List<EventChangeResponse> =
         databaseClient
@@ -29,9 +30,10 @@ class EventChangeRepository(
                 """
                 SELECT c.field, c.old_value, c.new_value, c.seen_at, ov.name AS old_venue, nv.name AS new_venue
                 FROM $EVENTS_SCHEMA.event_change c
+                JOIN $EVENTS_SCHEMA.event e ON e.id = c.event_id
                 LEFT JOIN $EVENTS_SCHEMA.venue ov ON ov.id = CASE WHEN c.field = 'VENUE' THEN c.old_value::bigint END
                 LEFT JOIN $EVENTS_SCHEMA.venue nv ON nv.id = CASE WHEN c.field = 'VENUE' THEN c.new_value::bigint END
-                WHERE c.event_id = :eventId AND c.seen_at >= :since
+                WHERE c.event_id = :eventId AND c.seen_at >= :since AND NOT ${seriesDateSwap("c", "e")}
                 ORDER BY c.seen_at DESC, c.id DESC
                 """.trimIndent()
             ).bind("eventId", eventId)

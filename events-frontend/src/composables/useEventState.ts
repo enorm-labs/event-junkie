@@ -25,8 +25,14 @@ export function useEventState(event: () => EventSummary) {
   const isPast = computed(() => isPastEvent(event()))
   // A weekender in its second night: started, not over (ADR-029).
   const isRunning = computed(() => isRunningEvent(event()))
+  // The venue's own name for the house when we list it: the note may say "huxleys".
   const status = computed(() =>
-    formatEventStatus(event().status, event().relocatedTo, null, event().relocatedOn),
+    formatEventStatus(
+      event().status,
+      event().movedTo?.venueName ?? event().relocatedTo,
+      null,
+      event().relocatedOn,
+    ),
   )
 
   // Set only when the time shown is the BFF's guess (#1384); the tile carries it as a title.

@@ -197,24 +197,23 @@ object EventCalendarIcs {
 
     /**
      * `Venue, Room, Street 1, City`, whatever of it is known. Mirrors `eventLocation`. A relocated event names the
-     * house it moved to first, so a calendar does not send the visitor to the old one.
+     * house it moved to first, with its address when we list it, so a calendar does not send the visitor to the old one.
      */
     private fun location(
         locale: String,
         event: EventSummaryResponse,
         room: String?
     ): String? {
-        val here = listOfNotNull(event.venue.name, room, event.venue.address, event.venue.city).filter { it.isNotBlank() }
-        val movedTo = event.movedTo()
+        val movedFrom = MOVED_FROM.getValue(locale).replace(VENUE, event.venue.name)
+        val listed = event.movedTo?.takeIf { event.status == EventStatus.RELOCATED }
+        val noted = event.movedToName()
         val parts =
-            if (movedTo ==
-                null
-            ) {
-                here
-            } else {
-                listOf(MOVED_TO.getValue(locale).replace(VENUE, movedTo), MOVED_FROM.getValue(locale).replace(VENUE, event.venue.name))
+            when {
+                listed != null -> listOfNotNull(listed.venueName, listed.address, listed.city, movedFrom)
+                noted != null -> listOf(MOVED_TO.getValue(locale).replace(VENUE, noted), movedFrom)
+                else -> listOfNotNull(event.venue.name, room, event.venue.address, event.venue.city)
             }
-        return parts.joinToString(", ").ifEmpty { null }
+        return parts.filter { it.isNotBlank() }.joinToString(", ").ifEmpty { null }
     }
 
     /** The line the event page shows above its text, for a postponed or relocated event. */
@@ -224,7 +223,7 @@ object EventCalendarIcs {
     ): String? =
         when {
             event.status == EventStatus.POSTPONED -> POSTPONED_NOTE.getValue(locale)
-            else -> event.movedTo()?.let { MOVED_TO.getValue(locale).replace(VENUE, it) + "." }
+            else -> event.movedToName()?.let { MOVED_TO.getValue(locale).replace(VENUE, it) + "." }
         }
 
     private fun utcStamp(instant: Instant): String = UTC_STAMP.format(instant)
@@ -267,5 +266,5 @@ object EventCalendarIcs {
     }
 }
 
-/** The house a relocated event moved to, when its note names one. */
-private fun EventSummaryResponse.movedTo(): String? = relocatedTo?.takeIf { status == EventStatus.RELOCATED && it.isNotBlank() }
+/** The house a relocated event moved to: the venue we list under its own name, else the note's text. */
+private fun EventSummaryResponse.movedToName(): String? = (movedTo?.venueName ?: relocatedTo)?.takeIf { status == EventStatus.RELOCATED && it.isNotBlank() }

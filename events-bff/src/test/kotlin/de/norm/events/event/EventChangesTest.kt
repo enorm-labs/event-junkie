@@ -64,6 +64,35 @@ class EventChangesTest : BaseControllerTest() {
         }
 
     @Test
+    fun `leaves out a date swapped with another night of the same series, and keeps a real move`(): Unit =
+        runBlocking {
+            val speiche = insertVenue("Speiches Rock & Blueskneipe", "speiche")
+            val tonight = insertEvent(speiche, "Speiches Open Stage", "otto", today.plusDays(1))
+            val later = insertEvent(speiche, "Speiches Open Stage mit Steffen Siegmund", "steffen", today.plusDays(29))
+            insertChange(tonight, "EVENT_DATE", "${today.plusDays(29)}", "${today.plusDays(1)}", daysAgo = 2)
+            insertChange(later, "EVENT_DATE", "${today.plusDays(1)}", "${today.plusDays(29)}", daysAgo = 2)
+            val gig = insertEvent(speiche, "Blues Night", "blues", today.plusDays(8))
+            insertChange(gig, "EVENT_DATE", "${today.plusDays(1)}", "${today.plusDays(8)}", daysAgo = 2)
+
+            for (slug in listOf("otto", "steffen")) {
+                webTestClient
+                    .get()
+                    .uri("/events/$slug")
+                    .exchange()
+                    .expectBody()
+                    .jsonPath("$.changes")
+                    .isEmpty
+            }
+            webTestClient
+                .get()
+                .uri("/events/blues")
+                .exchange()
+                .expectBody()
+                .jsonPath("$.changes[*].field")
+                .isEqualTo(listOf("EVENT_DATE"))
+        }
+
+    @Test
     fun `an event that has not moved carries an empty list`(): Unit =
         runBlocking {
             insertEvent(insertVenue("Lido", "lido"), "A Night", "a-night", today.plusDays(3))
