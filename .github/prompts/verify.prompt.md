@@ -38,7 +38,7 @@ scripts/rules-parity.sh               # applyTo ↔ paths per rule, symlinks res
 scripts/collector-parity.sh           # LogFields ↔ LogContextConfiguration ↔ collector.yaml ↔ PLATFORM_SETUP §7
 scripts/schedule-guard-parity.sh      # every scheduled job carries the enorm-labs/event-junkie guard, so no fork runs a cron
 scripts/scope-parity.sh               # the feat scope list, nine copies, labeller's is canonical
-scripts/secrets-parity.sh             # the secret count SECRETS.md states ↔ the rows its table lists
+scripts/secrets-parity.sh             # the secret count SECRETS.md states ↔ the rows its table lists; the summary ↔ exposure table names
 scripts/sources-parity.sh             # the status counts in EVENT_DATA_SOURCES.md ↔ the rows of the tables they link to
 scripts/features-parity.sh            # PRODUCT_OVERVIEW.md § Surfaces ↔ routes, API paths, public files, e2e specs
 scripts/index-parity.sh               # scripts/README.md ↔ scripts/, every referenced script exists and answers --help
