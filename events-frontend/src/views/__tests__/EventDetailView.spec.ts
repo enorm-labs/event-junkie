@@ -270,6 +270,55 @@ describe('EventDetailView', () => {
     expect(view.text()).toContain('Act 11')
   })
 
+  describe('the set playing now', () => {
+    const tonight: EventDetail = {
+      ...night,
+      eventDate: '2026-10-09',
+      startTime: '20:00',
+      lineup: [
+        { artist: { name: 'Opener' }, role: 'DJ', setStart: '2026-10-09T20:00:00+02:00' },
+        { artist: { name: 'Peak' }, role: 'DJ', setStart: '2026-10-09T21:00:00+02:00' },
+        { artist: { name: 'Closer' }, role: 'DJ', setStart: '2026-10-09T22:00:00+02:00' },
+      ],
+    }
+
+    function row(view: VueWrapper, name: string) {
+      return view.findAll('li').find((li) => li.text().includes(name))!
+    }
+
+    it('dots the set playing now, greys the ones over, and moves on with the clock', async () => {
+      vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+      vi.setSystemTime(new Date('2026-10-09T21:30:00+02:00'))
+      const view = await mountEvent(tonight)
+
+      expect(row(view, 'Peak').text()).toContain('Playing now')
+      expect(row(view, 'Opener').classes()).toContain('text-muted-foreground')
+      expect(row(view, 'Closer').text()).not.toContain('Playing now')
+
+      vi.advanceTimersByTime(60 * 60_000)
+      await flushPromises()
+      expect(row(view, 'Peak').text()).not.toContain('Playing now')
+      expect(row(view, 'Closer').text()).toContain('Playing now')
+    })
+
+    it('keeps the last set live until the night ends', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date('2026-10-09T23:30:00+02:00'))
+      const view = await mountEvent(tonight)
+
+      expect(row(view, 'Closer').text()).toContain('Playing now')
+    })
+
+    it('marks nothing on a cancelled night', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date('2026-10-09T21:30:00+02:00'))
+      const view = await mountEvent({ ...tonight, status: 'CANCELLED' })
+
+      expect(view.text()).not.toContain('Playing now')
+      expect(row(view, 'Opener').classes()).not.toContain('text-muted-foreground')
+    })
+  })
+
   it('shows a lineup of ten in full, with no toggle', async () => {
     const lineup = Array.from({ length: 10 }, (_, index) => ({
       artist: { name: `Act ${index + 1}` },

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
 import BaseBadge from '@/components/BaseBadge.vue'
+import LiveDot from '@/components/LiveDot.vue'
 import PickBadge from '@/components/PickBadge.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
@@ -69,13 +70,7 @@ const rsvp = computed(() => (props.event.slug ? statuses.value[props.event.slug]
           <span v-if="timeHint" class="sr-only">({{ timeHint }})</span>
         </span>
       </span>
-      <span v-if="isLive" class="relative flex size-2 shrink-0">
-        <span
-          class="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping"
-        />
-        <span class="relative inline-flex size-2 rounded-full bg-primary" />
-        <span class="sr-only">{{ t('events.card.onNow') }}</span>
-      </span>
+      <LiveDot v-if="isLive" :label="t('events.card.onNow')" />
       <PickBadge v-if="showsPick" small class="shrink-0 self-center" />
       <component
         :is="as"

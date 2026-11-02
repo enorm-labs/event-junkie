@@ -77,3 +77,30 @@ export function runningOrder(lineup: readonly LineupEntry[]): RunningOrderFloor[
     return { stage, sets }
   })
 }
+
+/** Where a set stands against the clock: over, playing, or still to come. */
+export type SetState = 'past' | 'live' | 'upcoming'
+
+/**
+ * Each timed set's state at `now`, for a night that is on. A set without an end runs until the
+ * next later start on its floor, and the last one until the event ends, which the caller decides
+ * by asking only while the event is on. An untimed set gets no state.
+ */
+export function setStates(
+  floors: readonly RunningOrderFloor[],
+  now: number,
+): Map<RunningOrderSet, SetState> {
+  const states = new Map<RunningOrderSet, SetState>()
+  for (const { sets } of floors) {
+    const starts = sets.map((set) => (set.entry.setStart ? Date.parse(set.entry.setStart) : NaN))
+    sets.forEach((set, index) => {
+      const start = starts[index]!
+      if (Number.isNaN(start)) return
+      const next = starts.slice(index + 1).find((later) => later > start)
+      const end = set.entry.setEnd ? Date.parse(set.entry.setEnd) : next
+      if (now < start) states.set(set, 'upcoming')
+      else states.set(set, end === undefined || now < end ? 'live' : 'past')
+    })
+  }
+  return states
+}
