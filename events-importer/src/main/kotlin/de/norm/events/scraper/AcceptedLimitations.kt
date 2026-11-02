@@ -113,6 +113,7 @@ import de.norm.events.scraper.morphine.MORPHINE_LIMITATIONS
 import de.norm.events.scraper.nachtklub808.NACHTKLUB_808_LIMITATIONS
 import de.norm.events.scraper.neuezukunft.NEUE_ZUKUNFT_LIMITATIONS
 import de.norm.events.scraper.ohm.OHM_LIMITATIONS
+import de.norm.events.scraper.olympiastadion.OLYMPIASTADION_LIMITATIONS
 import de.norm.events.scraper.orangerie.ORANGERIE_LIMITATIONS
 import de.norm.events.scraper.orania.ORANIA_LIMITATIONS
 import de.norm.events.scraper.orwohaus.ORWOHAUS_LIMITATIONS
@@ -307,6 +308,7 @@ object AcceptedLimitations {
             NACHTKLUB_808_LIMITATIONS,
             NEUE_ZUKUNFT_LIMITATIONS,
             OHM_LIMITATIONS,
+            OLYMPIASTADION_LIMITATIONS,
             ORANGERIE_LIMITATIONS,
             ORANIA_LIMITATIONS,
             ORWOHAUS_LIMITATIONS,
