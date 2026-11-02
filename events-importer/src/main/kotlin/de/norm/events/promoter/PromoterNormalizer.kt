@@ -418,6 +418,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "leasingrent" to "LEASING&RENT OÜ",
         // Max-Schmeling-Halle credits "Join Live Events"; both descriptors go, and "Join" reads as a verb (#3577).
         "join" to "Join Live Events",
+        // Badehaus credits the series "MEHR ALS MUSIK"; the strip took "Musik" and left "Mehr Als".
+        "mehrals" to "Mehr Als Musik",
         // Admiralspalast credits "„Aufgeigen.at“ Künstler und Veranstaltungs GmbH"; the brand is the
         // domain (#2331).
         "aufgeigenatkünstler" to "Aufgeigen.at",

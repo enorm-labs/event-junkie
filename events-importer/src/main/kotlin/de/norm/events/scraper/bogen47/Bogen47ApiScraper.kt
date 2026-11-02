@@ -5,6 +5,8 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.NIGHT_ENDS
+import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -21,6 +23,7 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTitleStatus
 import de.norm.events.scraper.refineConcertVenueType
+import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.stripArtistSuffix
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -30,6 +33,7 @@ import tools.jackson.databind.JsonNode
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeParseException
 
 /**
@@ -82,6 +86,9 @@ internal data class Bogen47Page(
  * three or more bullet lines (`- Sin Davis`), with only blank or punctuation lines between them,
  * are the concert's headliners in listed order, and the title, the night's name, bills no act.
  *
+ * **A party bills only what its description names as DJs** ([partyLineup]): a timetable of `23:00–02:00: A b2b B (label)` lines,
+ * each act with its set, or a `Joining us are A and B` sentence. Its title names the night, never an act.
+ *
  * The remaining ACF fields are unused defaults: `event_entrance_fee` is `None` throughout, and
  * `event_music_genre`, `event_card_subtitle` and the act repeater are all but always empty. A
  * description of just `TBA` is dropped.
@@ -90,7 +97,7 @@ internal data class Bogen47Page(
  * @param eventTypes the venue's `acf.event_type` vocabulary beyond the shared synonyms.
  * @see AbstractBogen47WebsiteImporter for the HTTP fetch orchestrator.
  */
-@Suppress("LongComment") // 29 lines: the theme writes the date, the status and the billing all into fields meant for something else.
+@Suppress("LongComment") // 32 lines: the theme writes the date, the status and the billing all into fields meant for something else.
 internal class Bogen47ApiScraper(
     private val eventSource: EventSource,
     private val eventsUrl: String,
@@ -209,7 +216,14 @@ internal class Bogen47ApiScraper(
                     ticketUrl = acf.stringOrNull("event_tickets_url")?.takeIf { it.startsWith("http") },
                     soldOut = soldOut,
                     status = status,
-                    artists = artistsFrom(title, description, eventType),
+                    artists =
+                        if (eventType ==
+                            EventType.PARTY.name
+                        ) {
+                            partyLineup(description, startedAt.toLocalDate())
+                        } else {
+                            artistsFrom(title, description, eventType)
+                        },
                     promoters = organizers(acf.stringOrNull("event_organizer"))
                 ),
             featuredMediaId = post.path("featured_media").asLong(0L).takeIf { it > 0 }
@@ -302,6 +316,53 @@ internal class Bogen47ApiScraper(
         val NAME_JOINER = Regex("""\s+b2b\s+|\s*\bft\.\s*""", RegexOption.IGNORE_CASE)
     }
 }
+
+/**
+ * The DJs a party's description names, in the venue's order: a timetable of two or more `HH:MM–HH:MM: <acts>` lines, each act
+ * with its set, or else the names after `Joining us are`, up to `, alongside` or the sentence's end. A party without either bills
+ * none. A timetable line splits at `b2b` only, because `Manolito & Sons` is one act, and its trailing parenthesis is a label.
+ */
+internal fun partyLineup(
+    description: String?,
+    night: LocalDate
+): List<ScrapedArtist> {
+    val lines = description.orEmpty().lines().mapNotNull { TIMETABLE_LINE.matchEntire(it.trim()) }
+    if (lines.size >= MIN_TIMETABLE_LINES) {
+        val clock = RunningOrderClock(night, NIGHT_ENDS)
+        return lines.flatMap { line ->
+            val (from, to, acts) = line.destructured
+            val (start, end) = clock.slot(clockTime(from), to.blankToNull()?.let(::clockTime))
+            splitBackToBack(acts.replace(TRAILING_PARENTHESIS, "").trim())
+                .filterNot { it.isBlank() || isNonArtistName(it) }
+                .map { ScrapedArtist(name = it, role = ArtistRole.DJ, setStart = start, setEnd = end) }
+        }
+    }
+    return JOINING_US
+        .find(description.orEmpty())
+        ?.groupValues
+        ?.get(1)
+        ?.split(PROSE_LIST_SEPARATOR)
+        ?.map { it.trim() }
+        ?.filterNot { it.isBlank() || isNonArtistName(it) }
+        ?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+        .orEmpty()
+}
+
+private fun clockTime(text: String): LocalTime = LocalTime.parse(text.replace('.', ':').padStart(CLOCK_LENGTH, '0'))
+
+/** Fewer lines than this are a door time or an opening hour, not a running order. */
+private const val MIN_TIMETABLE_LINES = 2
+
+private const val CLOCK_LENGTH = 5
+
+/** `23:00–02:00: FERDI b2b Kühni (melodic)`; the end and the colon after it are optional. */
+private val TIMETABLE_LINE = Regex("""(\d{1,2}[:.]\d{2})\s*(?:[–—-]\s*(\d{1,2}[:.]\d{2}))?\s*:?\s+(\D.*)""")
+
+/** `Joining us are Eline and Carmelina, alongside our residents`: the names up to `, alongside`, a full stop or the line's end. */
+private val JOINING_US = Regex("""\bJoining us (?:are|is)\s+([^.\n]+?)(?:,\s*alongside\b|[.\n]|$)""", RegexOption.IGNORE_CASE)
+
+/** A comma or a spaced `and` between two names in a sentence; `&` stays, as it joins a duo's name. */
+private val PROSE_LIST_SEPARATOR = Regex(""",\s*|\s+and\s+""", RegexOption.IGNORE_CASE)
 
 /**
  * Renders `acf.event_description` — *markup*, not text — to a plain-text blurb. Written in

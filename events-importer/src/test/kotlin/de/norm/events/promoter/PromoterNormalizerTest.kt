@@ -390,6 +390,15 @@ class PromoterNormalizerTest {
         }
     }
 
+    // Badehaus event 12434: "Musik" is a stripped descriptor, but here it is part of the series' name.
+    @Test
+    fun `keeps Mehr Als Musik whole and restores the row the strip had reduced`() {
+        assertSoftly {
+            canonicalPromoterName("MEHR ALS MUSIK") shouldBe "Mehr Als Musik"
+            canonicalPromoterName("Mehr Als") shouldBe "Mehr Als Musik"
+        }
+    }
+
     // #3577: the strip leaves one word that reads as a verb, so the name is pinned whole.
     @Test
     fun `keeps Join Live Events whole and restores the row the strip had reduced`() {

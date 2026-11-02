@@ -1,14 +1,19 @@
 package de.norm.events.scraper.badehaus
 
+import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.isNonArtistName
+import de.norm.events.slug.SlugGenerator
 import org.springframework.stereotype.Component
 
 /**
@@ -57,9 +62,38 @@ class BadehausWebsiteImporter(
             // by the category when the page has one.
             artists =
                 primary.eventType
-                    ?.let { buildArtistsForEventType(fallback.title, fallback.subtitle, it) }
+                    ?.let { nightLineup(fallback.title, fallback.subtitle, it) ?: buildArtistsForEventType(fallback.title, fallback.subtitle, it) }
                     ?: primary.artists.ifEmpty { fallback.artists }
         )
+
+    /**
+     * The acts of a concert night whose subtitle repeats the title and lists the acts after `feat`:
+     * `Mehr Als Musik Clubshow` over `FREE Mehr Als Musik – Clubshow feat Joppe, Amelie, Ciez und JonE`. The title names the night, so it
+     * bills no act. A `feat` after another name (`Butterwegge Solo feat Max Kupke`) is not this shape and keeps the title's billing.
+     */
+    private fun nightLineup(
+        title: String,
+        subtitle: String?,
+        eventType: String
+    ): List<ScrapedArtist>? {
+        if (eventType != EventType.CONCERT.name) return null
+        val match = subtitle?.let { NIGHT_FEAT.find(it) } ?: return null
+        if (!SlugGenerator.slugify(match.groupValues[1]).endsWith(SlugGenerator.slugify(title))) return null
+        return match.groupValues[2]
+            .split(LIST_SEPARATOR)
+            .map { it.trim() }
+            .filterNot { it.isBlank() || isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+            .ifEmpty { null }
+    }
+
+    private companion object {
+        /** `<night> feat <acts>`; the night may carry a `FREE` prefix the title lacks. */
+        val NIGHT_FEAT = Regex("""^(.+?)\s+(?:feat\.?|ft\.|featuring)\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+        /** A comma, or a spaced `und`, `and` or `&`, between two acts. */
+        val LIST_SEPARATOR = Regex(""",\s*|\s+(?:und|and|&)\s+""", RegexOption.IGNORE_CASE)
+    }
 }
 
 val BADEHAUS_LIMITATIONS =
@@ -71,7 +105,7 @@ val BADEHAUS_LIMITATIONS =
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest"
+            "the venue publishes no roster; a concert bills its title and a Support: subtitle, or the acts a subtitle lists after feat"
         ),
         AcceptedLimitation(
             LimitedAspect.PRICE,
