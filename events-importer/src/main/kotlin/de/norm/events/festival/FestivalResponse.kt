@@ -35,7 +35,7 @@ data class FestivalResponse(
             eventCount: Long = 0
         ): FestivalResponse =
             FestivalResponse(
-                id = requireNotNull(entity.id) { "Persisted festival must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 url = entity.url,

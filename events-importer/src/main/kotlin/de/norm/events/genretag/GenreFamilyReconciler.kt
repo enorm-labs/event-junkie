@@ -40,7 +40,7 @@ class GenreFamilyReconciler(
         tags.forEach { tag ->
             val expected = genreFamily(tag.slug)?.slug
             if (tag.family != expected) {
-                changed += genreTagRepository.updateFamily(requireNotNull(tag.id) { "A stored tag has an id" }, expected)
+                changed += genreTagRepository.updateFamily(tag.requiredId(), expected)
             }
         }
         val orphans = tags.filter { genreFamily(it.slug) == null }.map { it.name }.sorted()

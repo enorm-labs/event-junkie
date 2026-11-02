@@ -19,7 +19,7 @@ data class GenreTagResponse(
     companion object {
         fun fromEntity(entity: GenreTagEntity): GenreTagResponse =
             GenreTagResponse(
-                id = requireNotNull(entity.id) { "Persisted genre tag must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 family = entity.family

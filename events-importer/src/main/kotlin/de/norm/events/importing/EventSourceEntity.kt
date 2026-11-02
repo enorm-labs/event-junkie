@@ -113,6 +113,8 @@ data class EventSourceEntity(
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 ) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted event source must have an ID" }
+
     companion object {
         /** Default import interval: once per day (24 hours). */
         const val DEFAULT_IMPORT_INTERVAL_MINUTES = 1440

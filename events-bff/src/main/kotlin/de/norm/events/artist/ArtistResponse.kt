@@ -50,7 +50,7 @@ data class ArtistSummaryResponse(
             image: ServedImage
         ): ArtistSummaryResponse =
             ArtistSummaryResponse(
-                id = requireNotNull(entity.id) { "Persisted artist must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 imageUrl = image.url,
@@ -169,7 +169,7 @@ data class ArtistDetailResponse(
             image: ServedImage
         ): ArtistDetailResponse =
             ArtistDetailResponse(
-                id = requireNotNull(entity.id) { "Persisted artist must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 description = entity.description,

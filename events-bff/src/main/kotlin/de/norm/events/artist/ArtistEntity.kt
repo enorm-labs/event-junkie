@@ -47,4 +47,6 @@ data class ArtistEntity(
     val discogsMatch: String = DiscogsMatch.UNCHECKED.name,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
-)
+) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted artist must have an ID" }
+}

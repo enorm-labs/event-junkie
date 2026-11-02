@@ -95,7 +95,9 @@ data class EventEntity(
     val festivalId: Long? = null,
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
-)
+) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted event must have an ID" }
+}
 
 /**
  * R2DBC entity mapped to the `event_artist` join table.

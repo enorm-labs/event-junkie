@@ -59,7 +59,7 @@ data class VenueSummaryResponse(
             image: ServedImage
         ): VenueSummaryResponse =
             VenueSummaryResponse(
-                id = requireNotNull(entity.id) { "Persisted venue must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 city = entity.city,
@@ -146,7 +146,7 @@ data class VenueListItemResponse(
             characterTags: List<String>
         ): VenueListItemResponse =
             VenueListItemResponse(
-                id = requireNotNull(entity.id) { "Persisted venue must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 city = entity.city,
@@ -269,7 +269,7 @@ data class VenueDetailResponse(
             imported: Boolean
         ): VenueDetailResponse =
             VenueDetailResponse(
-                id = requireNotNull(entity.id) { "Persisted venue must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 address = entity.address,

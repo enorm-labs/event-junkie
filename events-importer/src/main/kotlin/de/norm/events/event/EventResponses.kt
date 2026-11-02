@@ -97,7 +97,7 @@ data class EventResponse(
             genreTagNames: List<String> = emptyList()
         ): EventResponse =
             EventResponse(
-                id = requireNotNull(entity.id) { "Event must be persisted before converting to response" },
+                id = entity.requiredId(),
                 venueId = entity.venueId,
                 title = entity.title,
                 subtitle = entity.subtitle,

@@ -50,7 +50,7 @@ class ArtistOccupationService(
 
     /** Whether the row's act is a comedian, now stored; null when the read is off. */
     private suspend fun read(artist: ArtistEntity): Boolean? {
-        val id = requireNotNull(artist.id) { "A candidate row is persisted" }
+        val id = artist.requiredId()
         val wikidataId = wikidataIdOf(requireNotNull(artist.wikidataUrl) { "A candidate row has a Wikidata link" })
         val held =
             if (wikidataId == null) {

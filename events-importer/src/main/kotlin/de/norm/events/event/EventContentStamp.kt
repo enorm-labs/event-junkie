@@ -46,11 +46,11 @@ class EventContentStamp(
     /** The rows whose hash differs from the stored one, each with whether its stamp moves. */
     private suspend fun writesFor(events: List<EventEntity>): List<Write> {
         if (events.isEmpty()) return emptyList()
-        val ids = events.map { requireNotNull(it.id) }
+        val ids = events.map { it.requiredId() }
         val lineups = eventArtistRepository.findByEventIdIn(ids).toList().groupBy { it.eventId }
         val promoters = eventPromoterRepository.findByEventIdIn(ids).toList().groupBy({ it.eventId }, { it.promoterId })
         return events.mapNotNull { event ->
-            val id = requireNotNull(event.id)
+            val id = event.requiredId()
             val hash = hash(event, lineups[id].orEmpty(), promoters[id].orEmpty())
             when {
                 event.contentChangedAt == null -> Write(id, hash, moved = true)

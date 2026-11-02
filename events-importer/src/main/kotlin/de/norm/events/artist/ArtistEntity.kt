@@ -60,6 +60,8 @@ data class ArtistEntity(
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 ) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted artist must have an ID" }
+
     fun toDomain(): Artist =
         Artist(
             id = id,

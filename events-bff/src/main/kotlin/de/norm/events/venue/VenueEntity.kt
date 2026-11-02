@@ -43,4 +43,6 @@ data class VenueEntity(
     val closedOn: LocalDate? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
-)
+) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted venue must have an ID" }
+}

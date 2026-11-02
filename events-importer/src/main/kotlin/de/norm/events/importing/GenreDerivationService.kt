@@ -45,7 +45,7 @@ class GenreDerivationService(
         val descriptionNames =
             untagged
                 .filter { it.id in music && byArtist[it.id].isNullOrEmpty() }
-                .mapNotNull { event -> descriptionGenres(event.description).takeIf { it.isNotEmpty() }?.let { requireNotNull(event.id) to it } }
+                .mapNotNull { event -> descriptionGenres(event.description).takeIf { it.isNotEmpty() }?.let { event.requiredId() to it } }
                 .toMap()
         val tagIdByName = resolveTagIds(descriptionNames.values.flatten().toSet())
         val desired: Map<Long, Map<Long, GenreTagOrigin>> =

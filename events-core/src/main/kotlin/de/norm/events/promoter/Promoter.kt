@@ -41,4 +41,6 @@ data class Promoter(
     val createdAt: Instant? = null,
     /** Timestamp when this record was last modified. Set by the database. */
     val updatedAt: Instant? = null
-)
+) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted promoter must have an ID" }
+}

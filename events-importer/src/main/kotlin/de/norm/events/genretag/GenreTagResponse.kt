@@ -24,7 +24,7 @@ data class GenreTagResponse(
     companion object {
         fun fromDomain(genreTag: GenreTag): GenreTagResponse =
             GenreTagResponse(
-                id = requireNotNull(genreTag.id) { "GenreTag must be persisted before converting to response" },
+                id = genreTag.requiredId(),
                 name = genreTag.name,
                 slug = genreTag.slug,
                 family = genreTag.family?.slug,

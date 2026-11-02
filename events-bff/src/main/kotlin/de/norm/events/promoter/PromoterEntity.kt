@@ -26,4 +26,6 @@ data class PromoterEntity(
     val descriptionAltLanguage: String? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
-)
+) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted promoter must have an ID" }
+}

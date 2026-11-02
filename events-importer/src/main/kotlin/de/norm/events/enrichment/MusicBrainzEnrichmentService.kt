@@ -77,7 +77,7 @@ class MusicBrainzEnrichmentService(
         }
 
     private suspend fun enrich(artist: ArtistEntity) {
-        val id = requireNotNull(artist.id) { "A candidate row is persisted" }
+        val id = artist.requiredId()
         val mbid = requireNotNull(artist.musicbrainzId) { "An EXACT row carries its MBID (V037)" }
         val entity = musicBrainz.artist(mbid)
         if (entity == null) {

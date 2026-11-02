@@ -87,7 +87,9 @@ data class Artist(
     val createdAt: Instant? = null,
     /** Timestamp when this record was last modified. Set by the database. */
     val updatedAt: Instant? = null
-)
+) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted artist must have an ID" }
+}
 
 /**
  * The verdict of a MusicBrainz lookup on an artist's stored name (ADR-031).

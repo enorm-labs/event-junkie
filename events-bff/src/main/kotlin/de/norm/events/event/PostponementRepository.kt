@@ -26,7 +26,7 @@ class PostponementRepository(
      */
     suspend fun newDate(event: EventEntity): PostponedToResponse? {
         if (event.status != EventStatus.POSTPONED.name) return null
-        val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
+        val eventId = event.requiredId()
         val title = comparable(event.title)
         return databaseClient
             .sql(

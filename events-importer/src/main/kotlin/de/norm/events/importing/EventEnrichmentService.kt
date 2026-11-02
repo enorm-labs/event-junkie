@@ -62,7 +62,7 @@ class EventEnrichmentService(
             }
         val matching = match(upcoming, stored)
 
-        val current = stored.associateByTo(mutableMapOf()) { requireNotNull(it.id) }
+        val current = stored.associateByTo(mutableMapOf()) { it.requiredId() }
         val filledColumns = fillColumns(matching.matched, current) { it.toEventEntity(venueId, venueSlug, eventSourceId, licences = licences) }
         if (filledColumns.isNotEmpty()) eventRepository.saveAll(filledColumns.keys.map { current.getValue(it) }).toList()
 
@@ -107,7 +107,7 @@ class EventEnrichmentService(
         for (event in events) {
             when (val match = matchEnrichment(event, stored)) {
                 is EnrichmentMatch.Matched -> {
-                    matched.add(requireNotNull(match.event.id) to event)
+                    matched.add(match.event.requiredId() to event)
                 }
 
                 EnrichmentMatch.Unmatched -> {

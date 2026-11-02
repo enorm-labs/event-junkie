@@ -9,7 +9,6 @@ import de.norm.events.event.EventService.Companion.MAX_CALENDAR_DAYS
 import de.norm.events.festival.FestivalRepository
 import de.norm.events.festival.FestivalSummaryResponse
 import de.norm.events.genretag.EventGenreTagRepository
-import de.norm.events.genretag.GenreTagEntity
 import de.norm.events.genretag.GenreTagOrigin
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.image.CachedImageGate
@@ -161,7 +160,7 @@ class EventService(
             eventRepository.findBySlug(slug)?.let { withLicenceApplied(listOf(it)).first() }
                 ?: throw EventNotFoundException(slug)
         val event = licensed.event
-        val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
+        val eventId = event.requiredId()
 
         val venue = requireNotNull(venueRepository.findById(event.venueId)) { "Event $eventId references missing venue ${event.venueId}" }
 
@@ -213,7 +212,7 @@ class EventService(
     @Transactional(readOnly = true)
     suspend fun related(slug: String): List<EventSummaryResponse> {
         val event = eventRepository.findBySlug(slug) ?: throw EventNotFoundException(slug)
-        val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
+        val eventId = event.requiredId()
         return summariesFor(hydrateOrdered(eventSearchRepository.related(eventId, event.venueId, event.eventType, event.eventDate, RELATED_LIMIT)))
     }
 
@@ -281,7 +280,7 @@ class EventService(
         if (unlicensed.isEmpty()) return emptyList()
         val licensed = withLicenceApplied(unlicensed)
         val events = licensed.map { it.event }
-        val eventIds = events.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
+        val eventIds = events.map { it.requiredId() }
 
         val venuesById = venueRepository.findByIdIn(events.map { it.venueId }.distinct()).toList().associateBy { it.id }
         // The embedded venue summary carries an `imageUrl` of its own (#833).
@@ -405,6 +404,3 @@ data class CalendarEvent(
     val room: String?,
     val lastModified: Instant
 )
-
-/** The id of a genre tag read back from the database, which is never null once it is persisted. */
-private fun GenreTagEntity.requiredId(): Long = requireNotNull(id) { "Persisted genre tag must have an ID" }

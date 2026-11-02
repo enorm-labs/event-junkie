@@ -18,7 +18,9 @@ data class GenreTagEntity(
     val family: String? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
-)
+) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted genre tag must have an ID" }
+}
 
 /**
  * Read-only R2DBC entity mapped to the `event_genre_tag` join table.

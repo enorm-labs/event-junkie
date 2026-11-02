@@ -107,7 +107,7 @@ data class EventSummaryResponse(
             movedTo: MovedToResponse? = null
         ): EventSummaryResponse =
             EventSummaryResponse(
-                id = requireNotNull(entity.id) { "Persisted event must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 title = entity.title,
                 subtitle = entity.subtitle,
@@ -353,7 +353,7 @@ data class EventDetailResponse(
             festival: FestivalSummaryResponse? = null
         ): EventDetailResponse =
             EventDetailResponse(
-                id = requireNotNull(entity.id) { "Persisted event must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 title = entity.title,
                 subtitle = entity.subtitle,

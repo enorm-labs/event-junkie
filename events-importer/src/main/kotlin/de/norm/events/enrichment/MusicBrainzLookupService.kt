@@ -67,7 +67,7 @@ class MusicBrainzLookupService(
     }
 
     private suspend fun lookup(artist: ArtistEntity) {
-        val id = requireNotNull(artist.id) { "A candidate row is persisted" }
+        val id = artist.requiredId()
         val verdict = MusicBrainzMatcher.decide(artist.name, client.search(artist.name))
         metrics.recordMusicBrainzLookup(verdict.match.name.lowercase())
         artistRepository.storeMusicBrainzVerdict(id, verdict.match.name, verdict.musicbrainzId)
