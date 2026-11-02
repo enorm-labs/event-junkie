@@ -44,3 +44,6 @@ docs/ops/dashboard/status.js
 # frontend's own `node_modules` is covered by `events-frontend/.gitignore`, which is why this entry
 # is needed and a bare `node_modules` is not enough.
 perf/lighthouse/node_modules/
+
+# The heap dump gradle.properties asks for on an OutOfMemoryError lands in the project root, at ~750 MB.
+*.hprof
