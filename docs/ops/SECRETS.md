@@ -138,22 +138,24 @@ For one operator the operational difference is otherwise small, and the deciding
 later" does not un-publish the bytes. That is fine for a value whose exposure requires a future break in X25519 — and it is a different conversation for each
 secret.
 
-| Secret                    | If the ciphertext were ever broken                                                                                        | Worth encrypting into a public repo? |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `events-db`               | A Postgres password for a server reachable only through the private network and WireGuard. Useless without network access | **Yes**                              |
-| `github-dispatch`         | Triggering `repository_dispatch` workflows on `main`. **Stronger than `hetzner` and `events-db`** — see below             | **No** — see below                   |
-| `hetzner`                 | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                    |
-| `openobserve-credentials` | Admin login to every log and metric, **and** Object Storage keys reaching all three buckets                               | **No** — see below                   |
-| `event-junkie-anthropic`  | Someone else spends against one Anthropic workspace, up to its cap. No data of ours, no infrastructure                    | **No** — see below                   |
-| `event-junkie-discogs`    | Someone else searches Discogs as our application, at 60 requests a minute. No data of ours, no infrastructure             | **No** — as the Anthropic key        |
-| `event-junkie-instagram`  | Someone else reads public business accounts as our Meta app, against its rate limit. No data of ours, no write permission | **No** — as the Anthropic key        |
-| `openobserve-smtp`        | Mail sent as `alerts@`, and the alert mail read from that mailbox. Reset in konsoleH in a minute                          | **No** — one mailbox, two clusters   |
-| `events-bff-db`           | The `bff` role's Postgres password, for the same server as `events-db`. Useless without network access                    | **Yes** — as `events-db`             |
-| `postgres-exporter`       | A DSN for the `metrics` role, which reads only the statistics views. Same server, useless without network access          | **Yes** — as `events-db`             |
-| `event-junkie-mail`       | Someone else sends mail as `notify.event-junkie.de`, from anywhere, against the TEM quota and the domain's reputation     | **No** — as the Anthropic key        |
-| `event-junkie-images`     | Read and write on the image bucket, from anywhere. Every bucket of the project if no bucket policy narrows the key        | **No** — as the Anthropic key        |
-| `event-junkie-imgproxy`   | Someone can sign imgproxy URLs. Useless without access to the importer pod, because imgproxy binds `127.0.0.1`            | **No** — a new pair costs nothing    |
-| `sops-age`                | Not applicable. It is the key that decrypts the others                                                                    | **Never** — it is the key            |
+| Secret                    | If the ciphertext were ever broken                                                                                        | Worth encrypting into a public repo?        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `events-db`               | A Postgres password for a server reachable only through the private network and WireGuard. Useless without network access | **Yes**                                     |
+| `github-dispatch`         | Triggering `repository_dispatch` workflows on `main`. **Stronger than `hetzner` and `events-db`** — see below             | **No** — see below                          |
+| `hetzner`                 | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                           |
+| `openobserve-credentials` | Admin login to every log and metric, **and** Object Storage keys reaching all three buckets                               | **No** — see below                          |
+| `event-junkie-anthropic`  | Someone else spends against one Anthropic workspace, up to its cap. No data of ours, no infrastructure                    | **No** — see below                          |
+| `event-junkie-discogs`    | Someone else searches Discogs as our application, at 60 requests a minute. No data of ours, no infrastructure             | **No** — as the Anthropic key               |
+| `event-junkie-instagram`  | Someone else reads public business accounts as our Meta app, against its rate limit. No data of ours, no write permission | **No** — as the Anthropic key               |
+| `openobserve-smtp`        | Mail sent as `alerts@`, and the alert mail read from that mailbox. Reset in konsoleH in a minute                          | **No** — one mailbox, two clusters          |
+| `events-bff-db`           | The `bff` role's Postgres password, for the same server as `events-db`. Useless without network access                    | **Yes** — as `events-db`                    |
+| `postgres-exporter`       | A DSN for the `metrics` role, which reads only the statistics views. Same server, useless without network access          | **Yes** — as `events-db`                    |
+| `event-junkie-mail`       | Someone else sends mail as `notify.event-junkie.de`, from anywhere, against the TEM quota and the domain's reputation     | **No** — as the Anthropic key               |
+| `event-junkie-mail-quota` | Someone else reads the project's Transactional Email, from anywhere. It sends nothing                                     | **No** — as the Anthropic key               |
+| `event-junkie-push`       | Someone else sends notifications as the site to that cluster's subscribers. It reads nothing                              | **No** — a new pair ends every subscription |
+| `event-junkie-images`     | Read and write on the image bucket, from anywhere. Every bucket of the project if no bucket policy narrows the key        | **No** — as the Anthropic key               |
+| `event-junkie-imgproxy`   | Someone can sign imgproxy URLs. Useless without access to the importer pod, because imgproxy binds `127.0.0.1`            | **No** — a new pair costs nothing           |
+| `sops-age`                | Not applicable. It is the key that decrypts the others                                                                    | **Never** — it is the key                   |
 
 **On `github-dispatch`.** The table's logic is exposure cost. A broken `github-dispatch` ciphertext buys `contents: write` on this repository. Under
 ADR-016, what lands on `main` is what the cluster runs, so repository write access is one branch-protection rule away from cluster access. That is the
