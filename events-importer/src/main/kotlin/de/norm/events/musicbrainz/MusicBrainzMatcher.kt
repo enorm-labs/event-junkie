@@ -41,22 +41,27 @@ enum class CandidateNameMatch {
 object MusicBrainzMatcher {
     private const val GERMANY = "DE"
     private val COMBINING_MARKS = Regex("\\p{M}+")
-    private val CONJUNCTIONS = Regex("\\s+(?:and|und|&)\\s+")
+
+    // The lookahead leaves the space after a conjunction for the next one: "a und and b" is "a & & b".
+    private val CONJUNCTIONS = Regex("\\s+(?:and|und|&)(?=\\s)")
     private val WHITESPACE = Regex("\\s+")
     private val HEAD_SEPARATOR = Regex("\\s+[-–—]\\s+|:\\s+")
     private val DIGITS_ONLY = Regex("\\d+")
 
     /**
-     * The comparison form of a name: NFKD without accents, case-folded, `&`/`and`/`und` as one word,
-     * whitespace collapsed, and trailing punctuation dropped. `Motörhead` and `Motorhead` fold alike;
-     * `Simon & Garfunkel` and `Simon and Garfunkel` do too.
+     * The comparison form of a name: NFKD without accents, lowercased with `ß` as `ss` and a final
+     * `ς` as `σ` (as the script's `casefold` reads them), `&`/`and`/`und` as one word, whitespace
+     * collapsed, and trailing punctuation dropped. `Motörhead` and `Motorhead` fold alike; `Weißglut` and `WEISSGLUT` do, and so do
+     * `Simon & Garfunkel` and `Simon and Garfunkel`.
      */
     fun fold(name: String): String =
         Normalizer
             .normalize(name, Normalizer.Form.NFKD)
             .replace(COMBINING_MARKS, "")
             .lowercase()
-            .replace(CONJUNCTIONS, " & ")
+            .replace("ß", "ss")
+            .replace('ς', 'σ')
+            .replace(CONJUNCTIONS, " &")
             .replace(WHITESPACE, " ")
             .trim(' ', '.', ',', '!')
 

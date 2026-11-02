@@ -90,7 +90,8 @@ def fold(s):
     """Casefold, strip accents, collapse whitespace, and read `&` and `and` as one word."""
     n = unicodedata.normalize("NFKD", s)
     n = "".join(c for c in n if not unicodedata.combining(c)).casefold()
-    n = re.sub(r"\s+(?:and|und|&)\s+", " & ", n)
+    # The lookahead leaves the space after a conjunction for the next one: "a und and b" is "a & & b".
+    n = re.sub(r"\s+(?:and|und|&)(?=\s)", " &", n)
     return re.sub(r"\s+", " ", n).strip(" .,!")
 
 
