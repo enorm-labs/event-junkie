@@ -119,7 +119,9 @@ class UfaFabrikMonthPageScraper {
  * support, and the guest of `… – special guest: Dotschy Reinhardt` is support too. Local, because at most
  * venues `mit` opens a night's guests, which is why the shared `WITH_FRAME_PATTERN` is opt-in. `Lacrimosa mit Orchester` and `X mit seiner Band` stay one act.
  * A subtitle that bills `<Act> & Special Guest <Guest>` names the acts of a night the title only names
- * (`Balkan Christmas Night`), and a `Karaoke` label bills nobody (#3731).
+ * (`Balkan Christmas Night`), and a `Karaoke` label bills nobody (#3731). Nor does a show about someone, whose subtitle
+ * reads `Ein musikalischer Abend über …` (events 12457, 12458): its title names the subject, and the house names the
+ * performers only in the blurb.
  */
 internal fun ufaFabrikArtists(
     title: String,
@@ -128,6 +130,7 @@ internal fun ufaFabrikArtists(
     label: String? = null
 ): List<ScrapedArtist> {
     if (label?.contains(KARAOKE, ignoreCase = true) == true) return emptyList()
+    if (subtitle != null && SHOW_ABOUT.containsMatchIn(subtitle)) return emptyList()
     if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle, eventType)
     if (subtitle != null && SPECIAL_GUEST.find(title) == null && (SPECIAL_GUEST.find(subtitle)?.range?.first ?: 0) > 0) {
         return ufaFabrikArtists(subtitle, null, eventType)
@@ -159,6 +162,9 @@ private val SPECIAL_GUEST =
     Regex("""\s*(?:(?:[-–—&+,]|\bmit\b)\s*)?\bspecial\s+guests?\b\s*:?\s*""", RegexOption.IGNORE_CASE)
 
 private const val KARAOKE = "karaoke"
+
+/** `Ein Abend über …`, `Ein musikalischer Abend für …`: a show about a person, not a billing. */
+private val SHOW_ABOUT = Regex("""^\s*ein(?:\s+\p{L}+)?\s+abend\s+(?:über|für)\b""", RegexOption.IGNORE_CASE)
 
 /** A ` mit ` between two acts; the group is the next word, which can keep the name whole. */
 private val MIT = Regex("""\s+mit\s+(\S+)""", RegexOption.IGNORE_CASE)

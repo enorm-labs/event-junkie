@@ -1,6 +1,7 @@
 package de.norm.events.scraper.binuu
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -18,7 +19,8 @@ import tools.jackson.databind.JsonNode
  * adding doors time, description (`text`), ticket URL, promoters and the `performers` roster.
  * Roles come from the structured data: every performer is kept, tagged `SUPPORT` when it appears
  * in the `subtitle_2` support/guest line, else `HEADLINER`; if every performer is support, the
- * first is promoted.
+ * first is promoted. A party that lists its own name as its performer ("Cheers!", event 12478) bills nobody: the name is
+ * the night's, not a DJ's.
  *
  * @see BinuuOverviewPageScraper for overview parsing (discovery, fallback).
  * @see BinuuWebsiteImporter for the HTTP fetch orchestrator.
@@ -57,12 +59,13 @@ class BinuuDetailPageScraper {
         val start = item.stringOrNull("start")
         val subtitle = item.stringOrNull("subtitle")
         val description = parseDescription(item.stringOrNull("text"))
+        val eventType = inferBinuuEventType(title, subtitle)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
             description = description,
             // No category field, so the type is inferred from title/subtitle (inferBinuuEventType).
-            eventType = inferBinuuEventType(title, subtitle),
+            eventType = eventType,
             // Detail pages carry the real date; the sentinel only if absent, then fillGapsFromOverview.
             eventDate = parseBinuuDate(start) ?: UNRESOLVED_EVENT_DATE,
             doorsTime = parseBinuuTime(item.stringOrNull("doors")),
@@ -74,7 +77,7 @@ class BinuuDetailPageScraper {
             soldOut = item.path("soldout").asBoolean(),
             status = mapBinuuStatus(item.stringOrNull("eventStatus"), item.stringOrNull("startOld")),
             statusNote = binuuRelocationNote(item.stringOrNull("eventStatus"), item.stringOrNull("locationNew"), item.stringOrNull("locationArticle")),
-            artists = parseArtists(item),
+            artists = parseArtists(item, title, eventType),
             promoters = parsePromoters(item),
             promoterWebsites = parsePromoterWebsites(item)
         )
@@ -124,10 +127,16 @@ class BinuuDetailPageScraper {
 
     /**
      * The roster from `performers`, `SUPPORT` when the name appears in `subtitle_2`, else
-     * `HEADLINER`; non-artist names dropped; the first promoted if every one was support.
+     * `HEADLINER`; non-artist names dropped; the first promoted if every one was support. At a party, a performer named
+     * as the title is the party's name.
      */
-    private fun parseArtists(item: JsonNode): List<ScrapedArtist> {
-        val performers = item.stringList("performers").filterNot { isNonArtistName(it) }
+    private fun parseArtists(
+        item: JsonNode,
+        title: String,
+        eventType: String
+    ): List<ScrapedArtist> {
+        val partyName = if (eventType == EventType.PARTY.name) folded(title) else null
+        val performers = item.stringList("performers").filterNot { isNonArtistName(it) || folded(it) == partyName }
         if (performers.isEmpty()) return emptyList()
 
         val supportLine = item.stringOrNull("subtitle_2")?.lowercase().orEmpty()
@@ -147,4 +156,7 @@ class BinuuDetailPageScraper {
             ScrapedArtist(name = name, role = role)
         }
     }
+
+    /** Case, spacing and punctuation folded away, so `Cheers!` matches `cheers`. */
+    private fun folded(name: String): String = name.lowercase().filter { it.isLetterOrDigit() }
 }
