@@ -8750,6 +8750,68 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Olympiastadion Berlin
+# ————————————————————————————————————————————————————————————
+
+### --- Create Olympiastadion Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Olympiastadion Berlin",
+    "address": "Olympischer Platz 3",
+    "city": "Berlin",
+    "postalCode": "14053",
+    "district": "charlottenburg",
+    "latitude": 52.514585,
+    "longitude": 13.239814,
+    "websiteUrl": "https://olympiastadion.berlin",
+    "description": "The 1936 Olympic stadium in Westend, modernised from 2000 to 2004 and home to Hertha BSC, where the biggest touring acts play their Berlin stadium concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das Olympiastadion von 1936 in Westend, von 2000 bis 2004 modernisiert und Heimat von Hertha BSC, ist die Bühne für die Berliner Stadionkonzerte der größten Tourneen.",
+    "descriptionAltLanguage": "de",
+    "capacity": 94000,
+    "venueTypes": ["arena"]
+}
+
+> {%
+    client.global.set("venue_id_olympiastadion_berlin", response.body.id);
+    client.test("Olympiastadion Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Olympiastadion Berlin event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_olympiastadion_berlin}},
+    "name": "Olympiastadion Berlin",
+    "url": "https://olympiastadion.berlin/termine-und-tickets/",
+    "sourceType": "OLYMPIASTADION",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Olympiastadion Berlin event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Olympiastadion Berlin import ---
+POST {{importer-host}}/api/admin/event-sources/olympiastadion-berlin/import
+Accept: application/json
+
+> {%
+    client.test("Olympiastadion Berlin import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Orangerie Neukölln
 # ————————————————————————————————————————————————————————————
 

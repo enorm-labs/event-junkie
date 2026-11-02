@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   192 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   193 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -155,6 +155,7 @@ schema change.
 | MS Hoppetosse                    | https://hoppetosse.berlin/                                               | Techno Club  | Shares the CdV listing; winter location only              |
 | Neue Zukunft                     | https://neue-zukunft.org/                                                | Club         | Elfsight Event Calendar widget API                        |
 | OHM                              | https://ohmberlin.com/                                                   | Techno Club  | Year-less dd/MM; only 1–3 nights listed at a time         |
+| Olympiastadion Berlin            | https://olympiastadion.berlin/termine-und-tickets/                       | Arena        | WordPress; list + detail; sport dropped on the event page |
 | Orangerie Neukölln               | https://www.orangerie-nk.de/                                             | Bar          | Static one-pager; JSON-LD ItemList plus cards             |
 | Orania.Berlin                    | https://orania.berlin/concerts                                           | Bar          | TYPO3 Calendarize; three pages of ten; always free        |
 | ORWOhaus                         | https://www.orwohaus.de/veranstaltungen/                                 | Concert Hall | Events-Manager iCal; fixed UTC+1; skips workshops         |
@@ -233,7 +234,7 @@ schema change.
 | Zosch                            | https://www.zosch-berlin.de/                                             | Bar          | Laravel start page; year from the body id                 |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-192 importer classes cover 192 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
+193 importer classes cover 193 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
 `EventSource` entries, the sources against the rows above. The two numbers are equal by chance. Kantine am Berghain is the
 only source without a class of its own. It shares the Berghain importer, and its rows have their own `sourceId` prefix,
 `kantine_am_berghain:`. Ballhaus Berlin is the opposite case. Its class exists, but it has no source, because its
@@ -269,7 +270,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-63 sources have a second language, 115 have none, and 4 are unknown. Fourteen translate the event text on a second page.
+64 sources have a second language, 115 have none, and 4 are unknown. Fifteen translate the event text on a second page.
 Twelve put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -277,12 +278,13 @@ it stores the row, and only when the scraper gave no second language. The second
 language. Each half must read as German or English, so a Russian half stays in the whole text. The SO36 and Zig Zag
 scrapers cut their own text first. Their cut reads line breaks or a pointer line that the stored text does not keep.
 
-Eleven importers also read the page in the other language. They store its event text as the publisher's second language:
+Twelve importers also read the page in the other language. They store its event text as the publisher's second language:
 
 - Bar Tausend and Columbiahalle read the English listing. This adds one request to each run.
 - Bar jeder Vernunft, TIPI am Kanzleramt and Theater im Delphi read the English page of each production. This adds one request for each
   production.
 - silent green reads the English page of each programme entry. This adds one request for each entry.
+- Olympiastadion Berlin reads the English page of each event it keeps. This adds one request for each such event.
 - Orania.Berlin reads the German page of each concert. This adds one request for each concert.
 - ausland reads the German page of each event. This adds one request for each event.
 - HAU1, HAU2 and HAU3 read the German page of each production. This adds one request for each production.
@@ -406,6 +408,7 @@ the upsert stores none.
 | MS Hoppetosse                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Neue Zukunft                     | No              | —                                                            | —                  |                                                                                                                                    |
 | OHM                              | No              | —                                                            | —                  |                                                                                                                                    |
+| Olympiastadion Berlin            | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://olympiastadion.berlin/en/dates-and-tickets/                                                                                |
 | Orangerie Neukölln               | Yes             | `?lang=en` on the link                                       | Not on the listing | https://www.orangerie-nk.de/?lang=en                                                                                               |
 | Orania.Berlin                    | Yes             | English first; `/de/` path, `hreflang`                       | Translated         | https://orania.berlin/de/konzerte                                                                                                  |
 | ORWOhaus                         | No              | —                                                            | —                  |                                                                                                                                    |

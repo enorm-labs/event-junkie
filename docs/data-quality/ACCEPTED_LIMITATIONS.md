@@ -667,6 +667,11 @@ says so.
 | `OHM`                  | `TICKET_URL`       | the programme page links no ticket shop                                                                                                          | —     |
 | `OHM`                  | `EVENT_TYPE`       | the venue publishes no categories; every night is a DJ programme                                                                                 | —     |
 | `OHM`                  | `PROMOTERS`        | the collective of a night is named only in its title                                                                                             | —     |
+| `OLYMPIASTADION`       | `GENRE`            | the stadium names no style for a concert                                                                                                         | —     |
+| `OLYMPIASTADION`       | `PRICE`            | tickets are sold only through the promoter's outside shop, so the page prints no price                                                           | —     |
+| `OLYMPIASTADION`       | `PROMOTERS`        | the page names the ticket shop, not the promoter                                                                                                 | —     |
+| `OLYMPIASTADION`       | `SOLD_OUT`         | the page states no ticket status                                                                                                                 | —     |
+| `OLYMPIASTADION`       | `END_TIME`         | the page gives no end time                                                                                                                       | —     |
 | `ORANGERIE_NEUKOELLN`  | `PER_EVENT_PAGE`   | the one-pager has no page per event; each night links out to Rausgegangen                                                                        | —     |
 | `ORANGERIE_NEUKOELLN`  | `DOORS_TIME`       | each night states one start time                                                                                                                 | —     |
 | `ORANGERIE_NEUKOELLN`  | `END_TIME`         | the programme prints no closing time                                                                                                             | —     |

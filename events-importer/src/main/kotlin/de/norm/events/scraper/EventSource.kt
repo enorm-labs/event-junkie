@@ -354,6 +354,9 @@ enum class EventSource {
     /** OHM Berlin – a small bass and techno club inside the Tresor power-station complex. */
     OHM,
 
+    /** Olympiastadion Berlin – the 1936 stadium in Westend, home of Hertha BSC, which stages a few stadium concerts each summer. */
+    OLYMPIASTADION,
+
     /** Orangerie Neukölln – the café and bar in the neo-baroque orangery of Körnerpark, with free DJ evenings and live Parkside Sessions. */
     ORANGERIE_NEUKOELLN,
 
