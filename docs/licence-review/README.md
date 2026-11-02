@@ -19,7 +19,8 @@ the record. `scripts/apply-licence-review.py` writes it to a database.
    `PROHIBITED`, and a person confirmed it. **Volksbühne Berlin and Volksbühne Prater were read on the
    same day**, for their importer. They share one imprint. Both are `PROHIBITED`, and a person confirmed it. **Renaissance-Theater was read on the same day**, for its importer.
    It is `PROHIBITED`, and a person confirmed it. **ZK/U's images were confirmed `PROHIBITED` on 2026-10-20** (#3567). Its press page limits
-   them to press about ZK/U. Its texts stay `UNCLEAR`.
+   them to press about ZK/U. Its texts stay `UNCLEAR`. **Waldbühne's texts were confirmed `PROHIBITED` on 2026-11-02**, for its
+   importer. Its imprint forbids any use of texts and images without permission. Its images stay `UNCLEAR` until a person decides.
 2. **No source grants a reuse we can rely on.** `PERMITTED` is zero in this review, which reads what
    the venues published. It is not zero on the clusters: ADR-027 sets `translation_licence` to
    `PERMITTED` wherever a venue does not prohibit the description. That is our reading of silence,

@@ -255,6 +255,15 @@ class ArtistNormalizerTest {
     }
 
     @Test
+    fun `completes a surname the Waldbühne bills alone`() {
+        assertSoftly {
+            canonicalArtistName("MAFFAY") shouldBe "Peter Maffay"
+            canonicalArtistName("OERDING") shouldBe "Johannes Oerding"
+            canonicalArtistName("Peter Maffay") shouldBe "Peter Maffay"
+        }
+    }
+
+    @Test
     fun `does not fold two acts that merely share a normalized key`() {
         // "Paul K" is a DJ billed at Ritter Butzke, "Paulk" a live act at Badehaus — same letters,
         // different acts. Only a curated entry may merge artists, and there is none for these.

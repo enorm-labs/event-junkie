@@ -169,6 +169,7 @@ import de.norm.events.scraper.velomax.VELOMAX_LIMITATIONS
 import de.norm.events.scraper.voidclub.VOID_CLUB_LIMITATIONS
 import de.norm.events.scraper.volksbuehne.VOLKSBUEHNE_LIMITATIONS
 import de.norm.events.scraper.wabe.WABE_LIMITATIONS
+import de.norm.events.scraper.waldbuehne.WALDBUEHNE_LIMITATIONS
 import de.norm.events.scraper.weekend.WEEKEND_LIMITATIONS
 import de.norm.events.scraper.weltwirtschaft.WELTWIRTSCHAFT_LIMITATIONS
 import de.norm.events.scraper.wienerblut.WIENER_BLUT_LIMITATIONS
@@ -363,6 +364,7 @@ object AcceptedLimitations {
             VOID_CLUB_LIMITATIONS,
             VOLKSBUEHNE_LIMITATIONS,
             WABE_LIMITATIONS,
+            WALDBUEHNE_LIMITATIONS,
             WEEKEND_LIMITATIONS,
             WELTWIRTSCHAFT_LIMITATIONS,
             WIENER_BLUT_LIMITATIONS,

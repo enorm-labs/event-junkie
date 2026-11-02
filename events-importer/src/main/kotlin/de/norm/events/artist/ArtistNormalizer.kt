@@ -131,6 +131,9 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "formatb" to "Format:B",
         // The act writes its name in capitals, and ESNS, festivalinfo.nl and Säälchen bill it so (#3623).
         "micha" to "MICHA",
+        // The Waldbühne bills a co-headline tour by surnames alone: "MAFFAY + OERDING".
+        "maffay" to "Peter Maffay",
+        "oerding" to "Johannes Oerding",
         // One DJ billed with and without the prefix: the same club, or the same scene at two (/artist-cleanup).
         "djbenwashington" to "Ben Washington",
         "djbuttchin" to "Buttchin",
