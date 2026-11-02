@@ -46,6 +46,7 @@ One step per line: `<env>: <verb> <arguments>`, or `<env> (<when>): <verb> <argu
 | `force-import <slug>[, <slug>…]`/`all` | Fetches those sources without the validators, so a parser fix reaches the rows already stored. A source type (`eight_mm`) that one source carries also works |
 | `check <what to confirm>`              | A read only: logs, the admin or public API, a read-only database query. The text says what passes                                                            |
 | `run <scripts/… command>`              | A script under `scripts/`, exactly as written                                                                                                                |
+| `resolve-reports <id>[, <id>…]`        | Production only. Deletes the open problem reports (#4399) on those event ids, once the fix they reported is live. `/fix-events` writes it                    |
 
 **A new venue** takes this block per environment, in this order, with the venues' names. `--allow-unreviewed` is not optional: Uber Eats Music Hall
 stays unreviewed on purpose (`docs/licence-review/README.md` §6), and `--enable` refuses without it.
@@ -128,10 +129,18 @@ environments in the arguments that are due (see [When a step is due](#the-format
 
     It exits 1 when a source did not refresh and names it. A known failure (a 429 or a DNS error at one venue) is reported, not retried in a loop.
 
-4. **Scripts**, in the order the pull requests merged, from `git checkout --detach <deployed commit>` (see Important). Return to your branch afterwards.
+4. **Resolved reports**, after the forced imports, so the fix is in the stored rows first. One call per event id, over the production forward:
+
+    ```sh
+    curl -sf -X DELETE "localhost:28081/api/admin/reports?eventId=<id>" | jq .resolved
+    ```
+
+    The count goes in the report. A `0` is fine: the operator resolved it in the admin app first.
+
+5. **Scripts**, in the order the pull requests merged, from `git checkout --detach <deployed commit>` (see Important). Return to your branch afterwards.
    On production, a new venue's block stops before its `--enable` line.
 
-5. **Hand-entered rows** of every new venue, on production: `scripts/manual-collisions.py`, then wait for the operator and delete the rows they name
+6. **Hand-entered rows** of every new venue, on production: `scripts/manual-collisions.py`, then wait for the operator and delete the rows they name
    ([A new venue](#the-format-a-pull-request-writes)). Then run the held `--enable` lines. The rows it lists and the ones the operator deleted go in the
    report.
 
