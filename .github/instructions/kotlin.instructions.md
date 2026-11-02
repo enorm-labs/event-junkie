@@ -55,6 +55,10 @@ How code here is written, and where its versions and thresholds live. Comments h
     - **Floors are floors, not targets, and the gap is deliberate.** A floor pinned to today's number fails on one uncovered line and teaches people to lower
       it. Do not raise a floor in the PR that pushes the number up. **If `koverVerify` fails, write the test**; lowering is argued in the PR description.
     - **`-x test` implies `-x koverVerify`** — no execution data, every module 0%. `build-backend.yml` passes both and runs `koverVerify` after `test`.
+    - **The aggregate report merges a class both Boot modules declare under one name.** About 40 do: `EventService`, every shared `*Controller`, the
+      entities. The aggregate keeps one entry for each, with both modules' line hits merged, so its per-class figure measures neither class.
+      `EventService` reads 254/255 there and 152/154 and 173/174 in the two module reports. Read a class from its module's report. The aggregate total, its
+      90% floor and the PR coverage comment count the merged entries too.
 - **Kotlin idioms** per the [official conventions](https://kotlinlang.org/docs/coding-conventions.html): trailing commas at declaration sites, expression
   bodies, named arguments for same-typed or Boolean parameters, read-only collection interfaces, `if`/`when`/`try` as expressions, `filter`/`map` over loops
   where readability holds, default values over overloads, scope functions without deep nesting.
