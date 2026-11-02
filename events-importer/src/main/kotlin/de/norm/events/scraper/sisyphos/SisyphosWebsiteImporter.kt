@@ -38,7 +38,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * early on Sunday would store a merged weekend again without its line-up, because the line-up is
  * replaced by the scrape's (`AssociationSyncService`). A run without the calendar is incomplete,
  * so the stale cleanup cannot remove the nights it did not read. A run without the shop stays
- * complete: the shop answers the cluster 429 on every run, and the cleanup ends at the last
+ * complete: the shop answers the cluster 429 on some runs, and the cleanup ends at the last
  * scraped date, before the shop-only nights. A failed shop is replaced by its nights from the
  * last run that read them; after a restart there are none, and the calendar nights go without a
  * price until the shop answers again. The run fails only when all three sites deliver nothing.
