@@ -680,7 +680,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Beach Neukölln                    | https://www.beach-neukoelln.de/                     | Open Air     | Rental and public-viewing marketing, not a programme            | Promoter feed              |
 | RAW-Gelände                       | —                                                   | Open Air     | Compound, not a venue; `raw-gelaende.de` is gone                | Covered by the houses      |
 | Genezarethkirche                  | https://www.mlg-neukoelln.de/events                 | Concert Hall | Parish calendar: services, rehearsals, courses                  | Promoter feed              |
-| Sensorium                         | http://www.sensorium-club.com                       | Techno Club  | Opened in March 2026 in the former AVA; RA only                 | Site change / manual entry |
+| Sensorium                         | http://www.sensorium-club.com                       | Techno Club  | Opened in March 2026 in the former AVA; nights on Instagram     | Site change / manual entry |
 | Insomnia                          | http://www.insomnia-berlin.de                       | Club         | Browser UA gets 200 now; 6 dated parties, JSON-LD; swinger club | Scope decision             |
 | Bulbul Berlin                     | https://www.bulbulberlin.de                         | Club         | Own site links out to RA for the programme                      | Site change / manual entry |
 | Bar Neun                          | http://barneun.de                                   | Bar          | Squarespace; 1.1 MB of HTML, no event text                      | Headless browser           |

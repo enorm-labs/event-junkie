@@ -10821,6 +10821,7 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["club"],
     "capacity": 400,
+    "instagramUrl": "https://www.instagram.com/sensorium.berlin/",
     "programmeUrl": "https://ra.co/clubs/285963",
     "reviewedAt": "2026-10-07T14:21:58Z"
 }
