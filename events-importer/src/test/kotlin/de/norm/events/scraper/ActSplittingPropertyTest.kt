@@ -90,7 +90,7 @@ class ActSplittingPropertyTest {
         runTest {
             checkAll(PLAIN_NAME, PLAIN_NAME, Arb.element(" & ", " and ", " und ", " AND ")) { first, second, conjunction ->
                 val billing = "$first$conjunction$second"
-                if (!isKnownSingleAct(billing)) {
+                if (knownBillingActs(billing) == null) {
                     splitSegmentOnConjunctions(billing) shouldBe listOf(first, second)
                     splitHeadlinerTitle(billing) shouldBe listOf(first, second)
                 }

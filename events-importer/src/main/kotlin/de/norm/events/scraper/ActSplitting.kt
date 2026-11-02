@@ -80,6 +80,20 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
     )
 
 /**
+ * Billings that join two given names to one shared surname, keyed in `&` form like [KNOWN_SINGLE_ACTS],
+ * mapped to the acts they name. A conjunction split would bill the first given name alone.
+ *
+ * **Name by name, like [KNOWN_SINGLE_ACTS].** A rule that gives a one-word left side the right side's
+ * surname was measured on every upcoming production event: one right and 22 wrong, for example
+ * `Kollegah & Farid Bang` → `Kollegah Bang` (#4375). Nothing in the text separates the two shapes.
+ */
+private val KNOWN_SHARED_SURNAME_PAIRS: Map<String, List<String>> =
+    mapOf(
+        // A couple Die Wühlmäuse bills as one act line (event 6469).
+        "sabine & dirk steffens" to listOf("Sabine Steffens", "Dirk Steffens")
+    )
+
+/**
  * Leading words marking the right-hand side of a conjunction as a band-name tail, unioned in
  * [CONJUNCTION_TAIL_MARKERS]: articles/possessives opening a backing band ("X & the Ys", "X
  * and his Ys", "X und die Ys", "X und seine Freunde"), and collectives naming an unnamed cast
@@ -128,10 +142,26 @@ private val KNOWN_SINGLE_ACTS_FOLDED: Set<String> by lazy { KNOWN_SINGLE_ACTS.ma
 /**
  * True when [name] is a [KNOWN_SINGLE_ACTS] entry, conjunctions normalized to `&` and accents
  * stripped first. Checked at segment level, so `"BLOOD & SUN + SOCIETY OF THE SILVER CROSS"`
- * splits at the `+` into two acts, and "Support: Simon & Garfunkel" is protected. Public because a
- * venue parser with its own act separator asks the same question before splitting (Klunkerkranich, #1760).
+ * splits at the `+` into two acts, and "Support: Simon & Garfunkel" is protected. Splitters ask it
+ * through [knownBillingActs].
  */
-fun isKnownSingleAct(name: String): Boolean = withoutAccents(name.trim().replace(CONJUNCTION_SEPARATOR, " & ").lowercase()) in KNOWN_SINGLE_ACTS_FOLDED
+private fun isKnownSingleAct(name: String): Boolean = knownBillingKey(name) in KNOWN_SINGLE_ACTS_FOLDED
+
+/** [KNOWN_SHARED_SURNAME_PAIRS] with its keys folded as [KNOWN_SINGLE_ACTS_FOLDED] folds its entries. */
+private val KNOWN_SHARED_SURNAME_PAIRS_FOLDED: Map<String, List<String>> by lazy {
+    KNOWN_SHARED_SURNAME_PAIRS.mapKeys { (billing, _) -> withoutAccents(billing) }
+}
+
+/**
+ * The acts a name-by-name list settles for [name]: [name] alone for a [KNOWN_SINGLE_ACTS] entry, the
+ * named acts for a [KNOWN_SHARED_SURNAME_PAIRS] entry, `null` when neither lists it. Every splitter asks
+ * this before it cuts. Public because a venue parser with its own act separator asks the same question
+ * before splitting (Klunkerkranich, #1760).
+ */
+fun knownBillingActs(name: String): List<String>? = if (isKnownSingleAct(name)) listOf(name) else KNOWN_SHARED_SURNAME_PAIRS_FOLDED[knownBillingKey(name)]
+
+/** [name] in the form the name-by-name lists are keyed in: trimmed, conjunctions as `&`, lower case, accents stripped. */
+private fun knownBillingKey(name: String): String = withoutAccents(name.trim().replace(CONJUNCTION_SEPARATOR, " & ").lowercase())
 
 private fun withoutAccents(text: String): String = Normalizer.normalize(text, Normalizer.Form.NFD).replace(COMBINING_MARKS, "")
 
@@ -228,7 +258,7 @@ private val CROSS_BILL_CONTINUATIONS: Set<String> = setOf("and", "und", "feat.",
  * parser that reads its line-up line by line asks the same question (Gretchen).
  */
 fun splitCrossBilled(segment: String): List<String> {
-    if (isKnownSingleAct(segment)) return listOf(segment)
+    knownBillingActs(segment)?.let { return it }
     val cuts =
         CROSS_BILL_SEPARATOR
             .findAll(segment)
@@ -245,7 +275,7 @@ fun splitCrossBilled(segment: String): List<String> {
 }
 
 private fun splitOnConjunctionsOnly(segment: String): List<String> {
-    if (isKnownSingleAct(segment)) return listOf(segment)
+    knownBillingActs(segment)?.let { return it }
     // `Einzige und Exklusive Orchester-Show in Europa!` is billing prose, not two acts (#1580).
     if (PROSE_END.containsMatchIn(segment)) return listOf(segment)
     if (segment.contains(',')) {
@@ -261,13 +291,13 @@ private fun splitOnConjunctionsOnly(segment: String): List<String> {
  * A [KNOWN_SINGLE_ACTS] entry such as `Kitty, Daisy & Lewis` stays whole.
  */
 fun commaListActs(line: String): List<String>? {
-    if (isKnownSingleAct(line)) return listOf(line)
+    knownBillingActs(line)?.let { return it }
     val commas = topLevelCommas(line)
     val parts = cutAt(line, commas.map { it..it }).map { it.trim() }.filter { it.isNotEmpty() }
     val last = parts.lastOrNull() ?: return null
     val endsInConjunction = CONJUNCTION_SEPARATOR.findAll(last).any { !isInsideBrackets(last, it.range.first) }
     if (commas.isEmpty() || !endsInConjunction) return null
-    return parts.flatMap { if (isKnownSingleAct(it)) listOf(it) else cutAtConjunctions(it) }.map { it.trim() }
+    return parts.flatMap { knownBillingActs(it) ?: cutAtConjunctions(it) }.map { it.trim() }
 }
 
 /**
@@ -576,7 +606,7 @@ fun splitHeadlinerTitle(
     if (trimmed.isEmpty()) return listOf(title)
     // A whole title that is one denylisted act is kept intact before any separator split;
     // co-billed occurrences are protected per segment inside splitSegmentOnConjunctions.
-    if (isKnownSingleAct(trimmed)) return listOf(trimmed)
+    knownBillingActs(trimmed)?.let { return it }
 
     val commas = topLevelCommas(trimmed)
     if (commas.size >= MIN_COMMAS_FOR_A_LIST) {
@@ -650,7 +680,7 @@ private val MEETS_SEPARATOR = Regex("""\s+meets\s+""", RegexOption.IGNORE_CASE)
  * (`Tresor meets ENIGMA`, `FALCO MEETS AMADEUS`), and a spaced dash marks a tagline (`… - Piano meets Percussion`).
  */
 private fun splitOnMeets(segment: String): List<String> {
-    if (isKnownSingleAct(segment)) return listOf(segment)
+    knownBillingActs(segment)?.let { return it }
     val cuts =
         MEETS_SEPARATOR
             .findAll(segment)
