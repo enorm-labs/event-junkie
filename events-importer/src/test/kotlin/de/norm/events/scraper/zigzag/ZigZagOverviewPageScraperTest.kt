@@ -9,6 +9,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -69,6 +71,30 @@ class ZigZagOverviewPageScraperTest {
         on(LocalDate.of(2026, 10, 6)).artists.shouldBeEmpty()
         on(LocalDate.of(2026, 11, 27)).artists.shouldBeEmpty()
         on(LocalDate.of(2026, 10, 4)).artists.shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            // Event 12346: the page bills Sergio Medina and his band.
+            "Celebrating Buena Vista Social Club",
+            // Event 12347: the page bills Atrin Madani, Martina Barta and their trio.
+            "Golden Voices: Sinatra, Sammy Davis Jr., Tony Bennett & Beyond"
+        ]
+    )
+    fun `names no act for a night that celebrates an honoree`(title: String) {
+        val html =
+            """
+            <div class="summary-item summary-item-record-type-event">
+              <a href="/program-mai/x" class="summary-title-link">$title</a>
+              <time class="summary-metadata-item summary-metadata-item--date">November 12, 2026</time>
+            </div>
+            """.trimIndent()
+        ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_JAZZ_CLUB, clock)
+            .scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
+            .single()
+            .artists
+            .shouldBeEmpty()
     }
 
     @Test

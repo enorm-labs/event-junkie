@@ -103,7 +103,10 @@ class ZigZagOverviewPageScraper(
         val STYLE = Regex("""^\(([^()]+)\)""")
         val PROGRAMME_SEPARATOR = Regex("""\s+-\s+|:\s+|\s+(?:plays|celebrates?)\s+""", RegexOption.IGNORE_CASE)
 
-        /** The weekly jam and the tribute nights name a format or an honoree, not the band on stage. */
-        val NO_ACT = Regex("""jam session|tribute""", RegexOption.IGNORE_CASE)
+        /**
+         * The weekly jam and the tribute nights name a format or an honoree, not the band on stage:
+         * `A Tribute to Wayne Shorter`, `Celebrating Buena Vista Social Club`, `Golden Voices: Sinatra, … & Beyond`.
+         */
+        val NO_ACT = Regex("""jam session|tribute|^celebrating\s|&\s*beyond$""", RegexOption.IGNORE_CASE)
     }
 }
