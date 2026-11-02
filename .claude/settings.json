@@ -11,5 +11,17 @@
     "gitops-skills@fluxcd": true,
     "kotlin-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -x \"$CLAUDE_PROJECT_DIR/scripts/jdk-env.sh\" ] || \"$CLAUDE_PROJECT_DIR/scripts/jdk-env.sh\" --claude-hook"
+          }
+        ]
+      }
+    ]
   }
 }

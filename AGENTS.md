@@ -204,7 +204,9 @@ Event Junkie discovers music events in Berlin. A **Gradle multi-project build** 
 scripts/dev-env.sh             # the local stack; no arguments prints every command
 ```
 
-Java comes from SDKMAN (`.sdkmanrc`, `sdk env`); target **Java 25**. Infra, chart, k3d, container images, k6 and the frontend commands are in
+Java comes from SDKMAN (`.sdkmanrc`, `sdk env`); target **Java 25**. **An agent's shell never runs `sdk env`** and can inherit a stale `JAVA_HOME`,
+so `./gradlew` builds with the wrong JDK or refuses to start. Claude Code's `SessionStart` hook in `.claude/settings.json` exports the pinned JDK through
+`scripts/jdk-env.sh`; any other agent runs `eval "$(scripts/jdk-env.sh)"` in the same call as its first Gradle command. Infra, chart, k3d, container images, k6 and the frontend commands are in
 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md); the safe-versus-never lists are in [infra/AGENTS.md](infra/AGENTS.md) and [deploy/AGENTS.md](deploy/AGENTS.md).
 `scripts/k3d-rehearsal.sh` is the only thing here that talks to a Kubernetes cluster, and it passes `--context k3d-event-junkie` on every call.
 

@@ -77,7 +77,7 @@ worktree window therefore needs its own SDK and run configurations — see the n
 A worktree checks out tracked files only, so each one needs its own environment:
 
 ```bash
-sdk env                                  # .sdkmanrc is tracked — this just works
+sdk env                                  # .sdkmanrc is tracked — this just works; an agent uses eval "$(scripts/jdk-env.sh)"
 cd events-frontend && npm ci             # for the frontend only; scripts/format-markdown.sh can use the main checkout's oxfmt
 ```
 
