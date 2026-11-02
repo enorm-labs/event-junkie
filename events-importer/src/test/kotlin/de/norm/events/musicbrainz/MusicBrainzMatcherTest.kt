@@ -120,6 +120,12 @@ class MusicBrainzMatcherTest {
             MusicBrainzMatcher.fold("  Die  Ärzte! ") shouldBe "die arzte"
             MusicBrainzMatcher.fold("Panic! At the Disco") shouldBe "panic! at the disco"
         }
+
+        @Test
+        fun `keeps a trailing conjunction a word, however the name is padded`() {
+            MusicBrainzMatcher.fold("Ich und") shouldBe "ich und"
+            MusicBrainzMatcher.fold("  Ich und \t ") shouldBe "ich und"
+        }
     }
 
     @Nested
