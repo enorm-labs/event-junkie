@@ -6,7 +6,7 @@
 // has eight notifications over three days, three of them unread and the first a change to the event marked going, and has no push. Its feeds come from the public /api/events, so the cards are real events. A write answers 204 and
 // changes nothing. An /api/me path this file does not know answers 404 and is logged once, so a new endpoint shows.
 
-const ACCOUNT = { email: 'ada@example.de', locale: 'en', createdAt: '2026-10-01T10:00:00Z' }
+const ACCOUNT = { email: 'ada@example.de', locale: 'en', createdAt: '2026-10-01T10:00:00Z', canReport: true }
 const SEARCHES = [
   { id: '00000000-0000-4000-8000-000000000001', name: 'Techno', query: 'genre=techno', savedAt: '2026-10-02T10:00:00Z' },
   { id: '00000000-0000-4000-8000-000000000002', name: 'Free', query: 'free=true', savedAt: '2026-10-03T10:00:00Z' },
@@ -106,6 +106,8 @@ export async function signIn(context, origin) {
       }
       if (path === '/api/me/searches') return json(route, SEARCHES)
       if (path === '/api/me/rsvps') return json(route, account.rsvps)
+  // Allowed to report (#4399), with nothing reported yet, so an event page shows the button.
+  if (path === '/api/me/reports') return json(route, [])
       if (path === '/api/me/rsvps/upcoming') {
         const content = account.rsvpEvents
         return json(route, { ...EMPTY_PAGE, content, totalElements: content.length, totalPages: 1 })

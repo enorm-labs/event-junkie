@@ -12,7 +12,7 @@
 #
 # Ada's session aims every write the API addresses by id, slug or endpoint at Bob's rows: rename and
 # delete his saved search and his passkey, mark his notification read, unsubscribe his push endpoint,
-# drop his follow and its bell, withdraw his RSVPs. The status codes are printed for the reader. The
+# drop his follow and its bell, withdraw his RSVPs and his problem report. The status codes are printed for the reader. The
 # verdict is Bob's export before and after, because a 404 and a 204 that touched nothing are both
 # correct, and only the rows say which happened. Ada's export must name none of Bob's ids either.
 #
@@ -82,6 +82,7 @@ bob_rows() {
         follows: [.follows[] | {kind, slug, notify}] | sort_by(.kind, .slug),
         searches: [.searches[] | {id, name, query}] | sort_by(.id),
         rsvps: [.rsvps[] | {event, status}] | sort_by(.event),
+        reports: [.reports[] | {event, problems, note}] | sort_by(.event),
         passkeys: [.passkeys[] | {id, name}] | sort_by(.id),
         notifications: [.notifications[] | {id, readAt}] | sort_by(.id),
         push: (.pushSubscriptions | length)
@@ -89,7 +90,7 @@ bob_rows() {
 }
 
 before="$(bob_rows)"
-for kind in follows searches rsvps passkeys notifications; do
+for kind in follows searches rsvps reports passkeys notifications; do
     [[ "$(jq ".$kind | length" <<<"$before")" -gt 0 ]] || fail "Bob has no $kind, so there is nothing to aim at"
 done
 [[ "$(jq .push <<<"$before")" -gt 0 ]] || fail "Bob has no push subscription, so there is nothing to aim at"
@@ -113,6 +114,10 @@ for follow in $(jq -r '.follows[] | "\(.kind)/\(.slug)"' <<<"$before"); do
 done
 for slug in $(jq -r '.rsvps[].event' <<<"$before"); do
     attempt DELETE "/api/me/rsvps/$slug"
+done
+# Ada may not report, so only a withdrawal: a report she stored would be a row of her own.
+for slug in $(jq -r '.reports[].event' <<<"$before"); do
+    attempt DELETE "/api/me/reports/$slug"
 done
 
 after="$(bob_rows)"

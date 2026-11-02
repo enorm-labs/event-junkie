@@ -198,6 +198,8 @@ the first column. It fails in two cases:
 | `/api/me/searches`                     | The account's saved searches, and saving one                                                            |
 | `/api/me/searches/{id}`                | Renaming or deleting a saved search                                                                     |
 | `/api/me/rsvps`                        | The account's RSVPs, event slug to status                                                               |
+| `/api/me/reports`                      | The account's open problem reports, for an account the operator allows (#4399)                          |
+| `/api/me/reports/{slug}`               | Reporting a problem with an event, replacing the report, or withdrawing it                              |
 | `/api/me/rsvps/{slug}`                 | Set, change or withdraw "interested" or "going" for an event                                            |
 | `/api/me/rsvps/upcoming`               | RSVPed events not over yet, by date                                                                     |
 | `/api/me/rsvps/past`                   | RSVPed events that are over, latest first                                                               |

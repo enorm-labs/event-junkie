@@ -381,6 +381,16 @@ const { t } = useI18n()
         not, and sooner if its event leaves the calendar.
       </p>
       <p>
+        <strong>Reporting a problem:</strong> a few accounts that I enable personally see "Report a
+        problem" on an event's page. When you report a problem, I store with your account which
+        event it is about, which problems you ticked, your note if you write one, and when you
+        reported it. Only I read the report, to correct the event. The site shows it to nobody, and
+        no service provider receives it. Once the problem is dealt with, I delete the report. If it
+        stays open, I delete it <strong>60 days</strong> after its last change. You can withdraw it
+        yourself before that. The legal basis is Art. 6 (1) (f) GDPR, my legitimate interest in
+        correct listings, which you share by reporting.
+      </p>
+      <p>
         <strong>Notifications:</strong> if you turn notifications on in a browser, I store that
         browser's subscription: an address at its push service and two keys, with the time you
         turned it on and when the last notification went out. The bell on an artist, a venue or a
@@ -414,7 +424,7 @@ const { t } = useI18n()
       </p>
       <p>
         <strong>Purpose and legal basis:</strong> the account is a service you ask for yourself. The
-        legal basis is Art. 6 (1) (b) GDPR.
+        legal basis is Art. 6 (1) (b) GDPR, and for reports (f), as above.
       </p>
       <p>
         <strong>Protection against abuse:</strong> one address gets at most three links an hour. So
@@ -429,7 +439,8 @@ const { t } = useI18n()
         <strong>24 months</strong>, I delete it, and you get a mail one month before. Every sign-in
         counts as use, and so does every visit while you are signed in. A session ends 30 days after
         its last use, or when you sign out. A link expires after 15 minutes. Expired links and
-        sessions are deleted daily, and notes under the bell after 30 days.
+        sessions are deleted daily, notes under the bell after 30 days, and open reports after 60
+        days.
       </p>
       <p>
         <strong>Do it yourself:</strong> on your account page you can download everything stored as

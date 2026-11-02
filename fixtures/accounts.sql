@@ -15,10 +15,11 @@
 -- Bob holds one row of every kind an id or an endpoint addresses, for `scripts/account-isolation.sh`. Ada holds the
 -- notifications that need a second page.
 
--- Bob has "Reminders on the day" off (#4253), so a client reads both values of the switch.
-INSERT INTO accounts.account (id, email, locale, reminder_push)
-VALUES ('ada00000-0000-4000-8000-000000000001', 'ada@example.de', 'de', true),
-       ('b0b00000-0000-4000-8000-000000000002', 'bob@example.de', 'en', false);
+-- Bob has "Reminders on the day" off (#4253), so a client reads both values of the switch. Bob may report problems
+-- (#4399) and Ada may not, for the same reason.
+INSERT INTO accounts.account (id, email, locale, reminder_push, can_report)
+VALUES ('ada00000-0000-4000-8000-000000000001', 'ada@example.de', 'de', true, false),
+       ('b0b00000-0000-4000-8000-000000000002', 'bob@example.de', 'en', false, true);
 
 INSERT INTO accounts.session (token_hash, account_id, expires_at)
 SELECT encode(sha256(convert_to(t.token, 'UTF8')), 'hex'), t.account_id::uuid, now() + interval '30 days'
@@ -45,6 +46,11 @@ UNION ALL
 SELECT 'ada00000-0000-4000-8000-000000000001'::uuid, id, 'interested' FROM events.event WHERE source_id = 'fixture-free'
 UNION ALL
 SELECT 'b0b00000-0000-4000-8000-000000000002'::uuid, id, 'going' FROM events.event WHERE source_id = 'fixture-sold-out';
+
+-- A problem report (#4399), addressed by the event's slug like an RSVP.
+INSERT INTO accounts.event_report (account_id, event_id, problems, note)
+SELECT 'b0b00000-0000-4000-8000-000000000002'::uuid, id, ARRAY ['ARTISTS', 'OTHER'], 'Fixture report'
+FROM events.event WHERE source_id = 'fixture-sold-out';
 
 -- Placeholders, not key material: nothing verifies this passkey or encrypts to this subscription.
 -- k3d and a local stack have no VAPID key, so no push is ever sent to the endpoint.

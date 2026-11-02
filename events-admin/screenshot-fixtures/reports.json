@@ -1,0 +1,25 @@
+[
+  {
+    "eventId": 418,
+    "slug": "badehaus-die-nerven-2026-11-12",
+    "title": "Die Nerven",
+    "eventDate": "2026-11-12",
+    "venue": "Badehaus",
+    "sourceSlug": "badehaus",
+    "reports": [
+      { "problems": ["ARTISTS", "OTHER"], "note": "The support act is missing", "updatedAt": "2026-11-02T08:10:00Z" }
+    ]
+  },
+  {
+    "eventId": 512,
+    "slug": "sisyphos-sonntag-2026-11-15",
+    "title": "Sonntag",
+    "eventDate": "2026-11-15",
+    "venue": "Sisyphos",
+    "sourceSlug": "sisyphos",
+    "reports": [
+      { "problems": ["DATE_TIME"], "note": null, "updatedAt": "2026-11-02T08:12:00Z" },
+      { "problems": ["DATE_TIME", "PRICE_TICKETS"], "note": "Opens at 23:00", "updatedAt": "2026-11-02T09:00:00Z" }
+    ]
+  }
+]

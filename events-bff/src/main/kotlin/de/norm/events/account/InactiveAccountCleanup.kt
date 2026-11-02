@@ -19,7 +19,7 @@ private val logger = KotlinLogging.logger {}
 /**
  * The deletion route for inactive accounts the privacy notice promises (#3905, LEGAL.md §7.1). Daily:
  * expired links and sessions go, and so do follows of an artist, venue or promoter that no longer
- * exists (#3889) and notifications older than 30 days (#4078). An account unused for 23 months gets a
+ * exists (#3889), notifications older than 30 days (#4078) and problem reports older than 60 days (#4399). An account unused for 23 months gets a
  * warning mail, and one unused for 24 months, warned at least 30 days earlier, is deleted. Use is a
  * sign-in or a renewed session.
  *
@@ -27,13 +27,14 @@ private val logger = KotlinLogging.logger {}
  * hands each account to one replica, so a warning goes out once.
  */
 @Component
-@Suppress("LongParameterList") // One job over six stores, the mailer, its metrics, the clock and the origin its mail links to.
+@Suppress("LongParameterList") // One job over seven stores, the mailer, its metrics, the clock and the origin its mail links to.
 class InactiveAccountCleanup(
     private val accounts: AccountStore,
     private val sessions: SessionStore,
     private val follows: FollowStore,
     private val rsvps: RsvpStore,
     private val notifications: NotificationStore,
+    private val reports: ReportStore,
     private val passkeys: PasskeyStore,
     private val mailer: ObjectProvider<Mailer>,
     private val metrics: AccountMetrics,
@@ -56,6 +57,7 @@ class InactiveAccountCleanup(
         held += step(CleanupOutcome.FOLLOWS_PURGED) { follows.deleteOrphans() }
         held += step(CleanupOutcome.RSVPS_PURGED) { rsvps.deleteOrphans() }
         held += step(CleanupOutcome.NOTIFICATIONS_PURGED) { notifications.deleteExpired(now.minus(NOTIFICATION_KEPT)) }
+        held += step(CleanupOutcome.REPORTS_PURGED) { reports.deleteOrphans() + reports.deleteOlderThan(now.minus(REPORT_KEPT)) }
         held += step(CleanupOutcome.CHALLENGES_PURGED) { passkeys.deleteExpiredChallenges(now) }
         val sender = mailer.ifAvailable
         if (sender == null) {
@@ -129,6 +131,9 @@ class InactiveAccountCleanup(
 
         /** The privacy notice promises 30 days, read or not (#4078). */
         val NOTIFICATION_KEPT: Duration = Duration.ofDays(30)
+
+        /** The privacy notice promises 60 days from the last change, resolved or not (#4399). */
+        val REPORT_KEPT: Duration = Duration.ofDays(60)
 
         /** About a day's share of Scaleway's monthly quota (ADR-054). The rest wait for the next run. */
         const val WARNINGS_PER_RUN = 300

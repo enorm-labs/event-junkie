@@ -17,6 +17,7 @@ class AccountExporter(
     private val notifications: NotificationStore,
     private val pushes: PushSubscriptionStore,
     private val passkeys: PasskeyStore,
+    private val reports: ReportStore,
     private val clock: Clock
 ) {
     suspend fun export(account: Account) =
@@ -34,6 +35,7 @@ class AccountExporter(
             rsvps = rsvps.list(account.id).map(RsvpResponse::of),
             notifications = notifications.list(account.id, Int.MAX_VALUE).map(NotificationResponse::of),
             pushSubscriptions = pushes.list(account.id),
-            passkeys = passkeys.list(account.id)
+            passkeys = passkeys.list(account.id),
+            reports = reports.list(account.id).map(ReportResponse::of)
         )
 }

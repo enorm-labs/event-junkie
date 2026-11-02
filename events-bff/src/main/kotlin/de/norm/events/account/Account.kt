@@ -6,7 +6,7 @@ import java.util.UUID
 /**
  * A row of `accounts.account`. [locale] is the language of every mail to it, `de` or `en`. [lastSignInAt] is the last use: a sign-in,
  * or a session renewed at most daily (#3905). [changePush] is the "Changes to my plans" switch (#4045), [reminderPush]
- * "Reminders on the day" (#4253).
+ * "Reminders on the day" (#4253). [canReport] is the allowlist for "Report a problem" (#4399), set only through the importer's admin API.
  */
 data class Account(
     val id: UUID,
@@ -15,7 +15,8 @@ data class Account(
     val createdAt: Instant,
     val lastSignInAt: Instant,
     val changePush: Boolean = true,
-    val reminderPush: Boolean = true
+    val reminderPush: Boolean = true,
+    val canReport: Boolean = false
 ) {
     /** The address stays out of `toString`, so an account logged by accident does not carry it. */
     override fun toString(): String = "Account(id=$id)"

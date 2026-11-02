@@ -11,6 +11,7 @@ import EventMetaLine, { type MetaItem } from '@/components/EventMetaLine.vue'
 import EventRow from '@/components/EventRow.vue'
 import EventShareActions from '@/components/EventShareActions.vue'
 import RsvpToggle from '@/components/RsvpToggle.vue'
+import ReportProblem from '@/components/ReportProblem.vue'
 import EventWhen from '@/components/EventWhen.vue'
 import ListenLinks from '@/components/ListenLinks.vue'
 import LiveDot from '@/components/LiveDot.vue'
@@ -694,6 +695,9 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
           </Button>
         </EventShareActions>
       </div>
+
+      <!-- For the accounts the operator allows (#4399); everyone else has the mail line at the end. -->
+      <ReportProblem v-if="event.slug" :slug="event.slug" :title="event.title ?? ''" />
 
       <p v-if="enrichmentCredits.length" class="text-meta text-muted-foreground">
         {{ t('events.detail.detailsFrom') }}

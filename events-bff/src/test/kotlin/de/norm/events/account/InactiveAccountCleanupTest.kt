@@ -82,6 +82,7 @@ class InactiveAccountCleanupTest : BaseControllerTest() {
         follows,
         rsvps,
         NotificationStore(databaseClient),
+        ReportStore(databaseClient),
         PasskeyStore(databaseClient),
         StaticListableBeanFactory(if (mailer == null) emptyMap() else mapOf("mailer" to mailer)).getBeanProvider(Mailer::class.java),
         metrics,

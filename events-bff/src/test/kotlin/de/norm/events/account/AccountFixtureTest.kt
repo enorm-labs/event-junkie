@@ -98,6 +98,15 @@ class AccountFixtureTest : BaseControllerTest() {
     }
 
     @Test
+    fun `bob's problem report comes back, for the isolation check to aim at`() {
+        get("/me/reports", bob)
+            .jsonPath("$.length()")
+            .isEqualTo(1)
+            .jsonPath("$[0].problems")
+            .isEqualTo(listOf("ARTISTS", "OTHER"))
+    }
+
+    @Test
     fun `bob's bell holds one unread cancellation of his RSVP`() {
         val bobFixture = fixture.single { it.get("email").asString() == bob.email }
         get("/me/notifications", bob)
@@ -145,10 +154,14 @@ class AccountFixtureTest : BaseControllerTest() {
     }
 
     @Test
-    fun `each account's reminder switch comes back as the fixture states it`() {
+    fun `each account's reminder switch and report flag come back as the fixture states them`() {
         fixture.forEach { row ->
             val account = accounts.getValue(row.get("email").asString())
-            get("/me", account).jsonPath("$.reminderPush").isEqualTo(row.get("reminderPush").asBoolean())
+            get("/me", account)
+                .jsonPath("$.reminderPush")
+                .isEqualTo(row.get("reminderPush").asBoolean())
+                .jsonPath("$.canReport")
+                .isEqualTo(row.get("canReport").asBoolean())
         }
     }
 

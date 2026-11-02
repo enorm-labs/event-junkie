@@ -22,6 +22,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/reports/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Reports a problem with an event, or replaces the account's earlier report on it
+         * @description Only for accounts the operator allows. At least one problem; a note of at most 500 characters, required with OTHER.
+         */
+        put: operations["save"];
+        post?: never;
+        /** Withdraws the account's report on an event. Withdrawing one that does not exist changes nothing */
+        delete: operations["withdraw_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/push": {
         parameters: {
             query?: never;
@@ -175,7 +196,7 @@ export interface paths {
          * Saves the events list's filters under a name
          * @description The query takes the events list's filter keys and `when` (today, weekend, week). Saving the same filters again answers the first search.
          */
-        post: operations["save"];
+        post: operations["save_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -609,6 +630,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account's open problem reports, newest first */
+        get: operations["list_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/notifications": {
         parameters: {
             query?: never;
@@ -620,7 +658,7 @@ export interface paths {
          * The newest notifications, read or not, 20 unless `limit` says otherwise
          * @description Pages with the `Next-Cursor` header: send its value as `before` for the entries after the last one listed. The header is absent on the last page.
          */
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -654,7 +692,7 @@ export interface paths {
             cookie?: never;
         };
         /** Everything the account follows, by name */
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -742,7 +780,7 @@ export interface paths {
             cookie?: never;
         };
         /** List all genre tags alphabetically */
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -782,7 +820,7 @@ export interface paths {
          * Search events with optional filters and pagination
          * @description Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, the list holds only events that have not ended. The first page carries `lead`, the featured event that leads it, when one matches the filters.
          */
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -941,7 +979,7 @@ export interface paths {
          * List artists with pagination and optional name search, sorted by name
          * @description Sort with `sort=name` (A–Z, case-folded). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
          */
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -973,6 +1011,10 @@ export interface components {
     schemas: {
         RsvpRequest: {
             status?: string;
+        };
+        ReportRequest: {
+            problems?: string[];
+            note?: string | null;
         };
         PushKeys: {
             p256dh?: string;
@@ -1057,6 +1099,7 @@ export interface components {
             createdAt?: string;
             changePush?: boolean;
             reminderPush?: boolean;
+            canReport?: boolean;
         };
         PasskeySignIn: {
             credential?: {
@@ -2043,6 +2086,14 @@ export interface components {
              */
             totalPages?: number;
         };
+        ReportResponse: {
+            event?: string;
+            title?: string;
+            problems?: string[];
+            note?: string | null;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
         PushSettings: {
             publicKey?: string | null;
         };
@@ -2105,6 +2156,7 @@ export interface components {
             notifications?: components["schemas"]["NotificationResponse"][];
             pushSubscriptions?: components["schemas"]["PushSubscriptionInfo"][];
             passkeys?: components["schemas"]["PasskeyInfo"][];
+            reports?: components["schemas"]["ReportResponse"][];
         };
         PushSubscriptionInfo: {
             pushService?: string;
@@ -2822,6 +2874,50 @@ export interface operations {
             };
         };
     };
+    save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    withdraw_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     settings: {
         parameters: {
             query?: never;
@@ -3078,7 +3174,7 @@ export interface operations {
             };
         };
     };
-    save: {
+    save_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3775,6 +3871,26 @@ export interface operations {
     };
     list_4: {
         parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReportResponse"][];
+                };
+            };
+        };
+    };
+    list_5: {
+        parameters: {
             query?: {
                 /** @description How many entries, 1 to 50 */
                 limit?: number;
@@ -3822,7 +3938,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -3977,7 +4093,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -4017,7 +4133,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: {
                 /** @description Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted. */
@@ -4378,7 +4494,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query?: {
                 /** @description Search on the artist name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all artists. */

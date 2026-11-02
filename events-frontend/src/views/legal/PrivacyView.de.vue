@@ -415,6 +415,17 @@ const { t } = useI18n()
         Kalender verschwindet.
       </p>
       <p>
+        <strong>Probleme melden:</strong> Einige Konten, die ich persönlich freischalte, sehen auf
+        der Seite eines Events „Problem melden“. Meldest du ein Problem, speichere ich zu deinem
+        Konto, welches Event es betrifft, welche Probleme du angekreuzt hast, deine Notiz, falls du
+        eine schreibst, und wann du gemeldet hast. Nur ich lese die Meldung, um das Event zu
+        korrigieren. Die Seite zeigt sie niemandem, und kein Dienstleister erhält sie. Ist das
+        Problem erledigt, lösche ich die Meldung. Bleibt sie liegen, lösche ich sie
+        <strong>60 Tage</strong> nach ihrer letzten Änderung. Du kannst sie vorher selbst
+        zurückziehen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO, mein berechtigtes Interesse an
+        richtigen Angaben im Kalender, das du mit deiner Meldung teilst.
+      </p>
+      <p>
         <strong>Benachrichtigungen:</strong> Schaltest du Benachrichtigungen in einem Browser ein,
         speichere ich dessen Abonnement: eine Adresse beim Push-Dienst des Browsers und zwei
         Schlüssel, dazu den Zeitpunkt des Einschaltens und der letzten Benachrichtigung. Die Glocke
@@ -452,7 +463,8 @@ const { t } = useI18n()
       </p>
       <p>
         <strong>Zweck und Rechtsgrundlage:</strong> Das Konto ist ein Dienst, den du selbst
-        anforderst. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+        anforderst. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, für Meldungen lit. f (siehe
+        oben).
       </p>
       <p>
         <strong>Schutz vor Missbrauch:</strong> An eine Adresse gehen höchstens drei Links pro
@@ -469,7 +481,7 @@ const { t } = useI18n()
         Mail. Als Nutzung zählt jede Anmeldung und jeder Besuch, bei dem du angemeldet bist. Eine
         Sitzung endet 30 Tage nach ihrer letzten Nutzung oder wenn du dich abmeldest. Ein Link
         verfällt nach 15 Minuten. Abgelaufene Links und Sitzungen lösche ich täglich, Hinweise unter
-        der Glocke nach 30 Tagen.
+        der Glocke nach 30 Tagen, offene Meldungen nach 60 Tagen.
       </p>
       <p>
         <strong>Selbst erledigen:</strong> Auf deiner Kontoseite kannst du alle gespeicherten Daten
