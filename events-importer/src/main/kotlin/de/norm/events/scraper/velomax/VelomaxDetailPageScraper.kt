@@ -31,6 +31,9 @@ import org.jsoup.nodes.Element
  * teasers for *other* events, each with its own date, title and image, and an unscoped read
  * would mix a neighbouring show in.
  *
+ * A moved show names only the hall it left ("aus der Max-Schmeling-Halle verlegt"), and not the
+ * new one, so it reads as moved to a venue not yet announced.
+ *
  * @see VelomaxOverviewPageScraper for the shared listing (discovery, hall filter, fallback).
  * @see <a href="https://www.velodrom.de/events/event/joji-velodrom-2026-08-29">Example detail page</a>
  */
