@@ -142,7 +142,8 @@ histories) and `scripts/version-test.sh` (snapshot versions still order — a ve
 
 ## Gotchas
 
-- **Java 25**: `sdk env` picks up `.sdkmanrc`. No database needed (Testcontainers). No `NVD_API_KEY` needed (`dependencyCheckAggregate` is not in `build`).
+- **Java 25, the build `.sdkmanrc` pins**: Claude Code's `SessionStart` hook sets it. Elsewhere, or when `./gradlew` reports a bad `JAVA_HOME`,
+  prefix the call with `eval "$(scripts/jdk-env.sh)" &&`. No database needed (Testcontainers). No `NVD_API_KEY` needed (`dependencyCheckAggregate` is not in `build`).
 - **`Executable doesn't exist`** on the first e2e run: `npx playwright install chromium` from `events-frontend/`.
 - **Two Gradle daemons clobber `build/classes`**: a full test run while `dev-env.sh` is up fails with `NoClassDefFoundError` in untouched packages.
   `./gradlew --stop`, then build from clean.
