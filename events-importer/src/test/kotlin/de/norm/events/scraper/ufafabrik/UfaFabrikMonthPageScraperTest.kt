@@ -116,6 +116,17 @@ class UfaFabrikMonthPageScraperTest {
     }
 
     @Test
+    fun `bills nobody from the title of a show about someone`() {
+        // Events 12457 and 12458: the title split into "Nina", "Zwischen Himmel" and "Punk *Premiere".
+        ufaFabrikArtists(
+            "NINA - Zwischen Himmel und Punk *Premiere*",
+            "Ein musikalischer Abend über das Leben der unvergleichlichen Nina Hagen",
+            EventType.CONCERT.name,
+            "Musik"
+        ).shouldBeEmpty()
+    }
+
+    @Test
     fun `leaves a mit in a show that is not a concert to the shared rules`() {
         ufaFabrikArtists("Schalala - Das Mitsingding", null, EventType.SHOW.name) shouldBe
             de.norm.events.scraper

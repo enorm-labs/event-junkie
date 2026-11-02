@@ -71,6 +71,14 @@ class BinuuDetailPageScraperTest {
     }
 
     @Test
+    fun `bills nobody at a party that lists its own name as the performer`() {
+        // Event 12478: the payload's performers are ["Cheers!"], the party's own title.
+        val cheers = parseFixture("binuu-detail-cheers.html", "https://binuu.de/de/events/p858vjvye79vewl")
+        cheers.eventType shouldBe "PARTY"
+        cheers.artists shouldBe emptyList()
+    }
+
+    @Test
     fun `tags a performer named in the support line as support`() {
         val twdy =
             parseFixture("binuu-detail-this-will-destroy-you.html", "https://binuu.de/de/events/aufm93tii76xvp5")
