@@ -53,7 +53,7 @@ class AssociationSyncService(
         scrapedEvents: List<ScrapedEvent>,
         keepStored: Map<String, Set<PinnedField>> = emptyMap()
     ): AssociationOutcome {
-        val events = withOwnedLineupsKept(savedEvents, scrapedEvents)
+        val events = promoterSync.splitCoBillings(withOwnedLineupsKept(savedEvents, scrapedEvents))
         val (allBilled, heldBack) = artistSync.billedArtists(events)
         val detailless = events.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
         val pins = AssociationPins(savedEvents, detailless)
@@ -91,15 +91,16 @@ class AssociationSyncService(
      * given only events whose stored rows are none. The gate runs as for a main source, but writes no
      * flags: those describe the main source's import of the event.
      *
-     * @param events each stored main event beside the enrichment event that matched it, keyed by the
+     * @param enriching each stored main event beside the enrichment event that matched it, keyed by the
      *   main event's `sourceId`.
      * @param genreFilled the ids of the events whose genre column this run filled.
      * @return the join tables filled per event id, and the artist rows for the MusicBrainz sweep.
      */
     suspend fun fillEmptyAssociations(
-        events: List<Pair<EventEntity, ScrapedEvent>>,
+        enriching: List<Pair<EventEntity, ScrapedEvent>>,
         genreFilled: Set<Long>
     ): AssociationFill {
+        val events = enriching.map { it.first }.zip(promoterSync.splitCoBillings(enriching.map { it.second }))
         val ids = events.mapNotNull { it.first.id }
         if (ids.isEmpty()) return AssociationFill(emptyMap(), emptySet())
         val withLineup = artistSync.eventIdsWithLineup(ids)

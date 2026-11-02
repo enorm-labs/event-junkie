@@ -2,6 +2,7 @@ package de.norm.events.promoter
 
 import de.norm.events.common.deshoutWord
 import de.norm.events.common.foldTypedApostrophes
+import de.norm.events.slug.SlugGenerator
 
 // Promoter-name canonicalization. One promoter is written many ways ("LOFT", "Loft Concerts
 // GmbH"), so slugging the raw name fragments it; [canonicalPromoterName] reduces variants to one
@@ -71,6 +72,33 @@ fun canonicalPromoterName(raw: String): String {
             .ifBlank { raw.trim() }
     return NAME_CORRECTIONS[canonical.normalizedKey()] ?: canonical
 }
+
+/**
+ * The parts of a credit that joins promoters with a spaced "&" ("Crunch Tapes & Positive
+ * Transmitter"); empty when it joins none. "B&C Productions" has no space, so it is one name.
+ */
+fun coBilledPromoterParts(raw: String): List<String> =
+    raw
+        .split(CO_BILLING_REGEX)
+        .map(String::trim)
+        .filter(String::isNotEmpty)
+        .takeIf { it.size > 1 }
+        .orEmpty()
+
+/**
+ * The promoters a [raw] credit names: its [coBilledPromoterParts] when at least one of them, as
+ * canonicalized and slugged on import, is a stored promoter ([isKnownSlug]); else [raw] whole.
+ * A spaced "&" alone proves nothing: "Kollektiv Kunst & Krawall" is one promoter (#4323).
+ */
+fun splitCoBilledPromoter(
+    raw: String,
+    isKnownSlug: (String) -> Boolean
+): List<String> {
+    val parts = coBilledPromoterParts(raw)
+    return parts.takeIf { it.any { part -> isKnownSlug(SlugGenerator.slugify(canonicalPromoterName(part))) } } ?: listOf(raw)
+}
+
+private val CO_BILLING_REGEX = Regex("""\s+&\s+""")
 
 /** Without a trailing parenthetical, unless it is all that names something ("& (GSA)" keeps it). */
 private fun String.withoutTrailingParenthetical(): String = replace(TRAILING_PAREN_REGEX, "").trim().takeIf { rest -> rest.any(Char::isLetterOrDigit) } ?: this
