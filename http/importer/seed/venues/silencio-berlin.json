@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Silencio Berlin",
+        "address": "Falckensteinstraße 49",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.501041,
+        "longitude": 13.445176,
+        "instagramUrl": "https://www.instagram.com/silencio.berlin/",
+        "description": "A seven-month pop-up of the Paris club Silencio in the former Watergate on the Spree, with a different local collective hosting each weekend.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Pariser Club Silencio bespielt sieben Monate lang die Räume des ehemaligen Watergate an der Spree, jedes Wochenende mit einem anderen lokalen Kollektiv.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "reviewedAt": "2026-11-02T18:20:11Z"
+    },
+    "sources": []
+}

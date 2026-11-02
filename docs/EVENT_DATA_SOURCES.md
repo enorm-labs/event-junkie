@@ -24,7 +24,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   192 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
 
@@ -681,6 +681,8 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | RAW-Gelände                       | —                                                   | Open Air     | Compound, not a venue; `raw-gelaende.de` is gone                | Covered by the houses      |
 | Genezarethkirche                  | https://www.mlg-neukoelln.de/events                 | Concert Hall | Parish calendar: services, rehearsals, courses                  | Promoter feed              |
 | Sensorium                         | http://www.sensorium-club.com                       | Techno Club  | Opened in March 2026 in the former AVA; nights on Instagram     | Site change / manual entry |
+| Silencio Berlin                   | —                                                   | Club         | Pop-up in the former Watergate until May 2027; Instagram only   | Site change / manual entry |
+| [119]                             | —                                                   | Techno Club  | Opened in October 2026; Instagram and RA only                   | Site change / manual entry |
 | Insomnia                          | http://www.insomnia-berlin.de                       | Club         | Browser UA gets 200 now; 6 dated parties, JSON-LD; swinger club | Scope decision             |
 | Bulbul Berlin                     | https://www.bulbulberlin.de                         | Club         | Own site links out to RA for the programme                      | Site change / manual entry |
 | Bar Neun                          | http://barneun.de                                   | Bar          | Squarespace; 1.1 MB of HTML, no event text                      | Headless browser           |
