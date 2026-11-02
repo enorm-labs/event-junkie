@@ -123,6 +123,51 @@ class SisyfanTimetableScraperTest {
     }
 
     @Test
+    fun `a slot that names two acts and their formats bills each act in the slot`() {
+        val html =
+            """
+            <div class="mb-8"><div class="sticky-header"><h2>DIA DE LOS MUERTOS (30.10.2026 - 02.11.2026)</h2>
+            <button @click="setActiveTab(3); ${'$'}dispatch('change-tab', 3)">Strand 🎶</button></div>
+            <div id="dancefloor-3"><table><tbody>
+            <tr x-data="{ currentStart: '2026-11-01T20:00:00+01:00', currentEnd: '2026-11-01T21:00:00+01:00' }">
+            <td><a href="https://sisy.fan/artists/1">Mariachi Leyendas &amp; Folklore Mexico Konzert &amp; Tanz</a></td></tr>
+            </tbody></table></div></div>
+            """.trimIndent()
+        val acts = scraper.scrape(Jsoup.parse(html)).single().artists
+        acts.map { it.name } shouldContainExactly listOf("Mariachi Leyendas", "Folklore Mexico")
+        acts.map { it.stage }.distinct() shouldContainExactly listOf("Strand 🎶")
+        acts.map { it.setStart }.distinct() shouldContainExactly listOf(Instant.parse("2026-11-01T19:00:00Z"))
+        acts.map { it.setEnd }.distinct() shouldContainExactly listOf(Instant.parse("2026-11-01T20:00:00Z"))
+    }
+
+    @Test
+    fun `a format list goes in either joiner and any case, and splits only into as many acts as it names`() {
+        val billed =
+            listOf(
+                "Tasheeno Konzert",
+                "Tasheeno Konzert & Tanz",
+                "Die Ganz Lange Kapelle Vom Kleinen Fluss Am Großen See & Das Tanzensemble Der Mexikanischen Gemeinde Berlin Konzert und Tanz",
+                "Ana & Ben & Cleo LESUNG & performance & Konzert",
+                "Pavelo & Schnell & Folklore Mexico Konzert & Tanz",
+                "Konzert & Tanz",
+                "Tanzkonzert & Tanz"
+            )
+        actsOf(billed) shouldContainExactly
+            listOf(
+                "Tasheeno Konzert",
+                "Tasheeno",
+                "Die Ganz Lange Kapelle Vom Kleinen Fluss Am Großen See",
+                "Das Tanzensemble Der Mexikanischen Gemeinde Berlin",
+                "Ana",
+                "Ben",
+                "Cleo",
+                "Pavelo & Schnell & Folklore Mexico",
+                "Konzert & Tanz",
+                "Tanzkonzert & Tanz"
+            )
+    }
+
+    @Test
     fun `a hybrid or liveact marker is not part of the name, in any case and with an asterisk missing`() {
         val billed =
             listOf(

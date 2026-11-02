@@ -88,7 +88,7 @@ class SisyfanTimetableScraper {
             val end = instantOf(END_PATTERN, slot)
             row
                 .select("a[href*=/artists/]")
-                .map { cleanName(it.text()) }
+                .flatMap { acts(cleanName(it.text())) }
                 .filter { it.isNotEmpty() }
                 .map { ScrapedArtist(name = it, stage = floor, setStart = start, setEnd = end) }
         }
@@ -111,6 +111,18 @@ class SisyfanTimetableScraper {
      */
     private fun cleanName(text: String): String = if (LONE_MARKER.matches(text)) "" else text.replace(SET_MARKERS, "").trim()
 
+    /**
+     * `Mariachi Leyendas & Folklore Mexico Konzert & Tanz` is two acts, each named with its format in order (#4373). The
+     * format list goes, and the rest splits at ` & ` when it names as many acts as the list has formats. Otherwise it is one act.
+     */
+    private fun acts(name: String): List<String> {
+        val list = FORMAT_LIST.find(name) ?: return listOf(name)
+        val rest = name.substring(0, list.range.first).trim()
+        val parts = rest.split(" & ").map { it.trim() }
+        val formats = FORMAT_WORD.findAll(list.value).count()
+        return if (parts.size == formats && parts.none { it.isEmpty() }) parts else listOf(rest)
+    }
+
     companion object {
         const val BASE_URL = "https://sisy.fan"
 
@@ -124,6 +136,11 @@ class SisyfanTimetableScraper {
         /** A bare trailing `Konzert` is kept: without an asterisk it can be part of the name. */
         private val SET_MARKERS =
             Regex("""(?:\s*(?:-\s*live|\(\s*live\s*\)|\*\s*(?:$MARKER)\s*\*?|\b(?:$MARKER)\s*\*))+\s*$""", RegexOption.IGNORE_CASE)
+        private const val FORMAT = "konzert|tanz|lesung|performance"
+        private val FORMAT_WORD = Regex("""\b(?:$FORMAT)\b""", RegexOption.IGNORE_CASE)
+
+        /** Two or more bare formats joined by `&` or `und` that end the name. A single bare `Konzert` is not a list. */
+        private val FORMAT_LIST = Regex("""(?<=\S)\s+(?:$FORMAT)(?:\s+(?:&|und)\s+(?:$FORMAT))+\s*$""", RegexOption.IGNORE_CASE)
         private val LONE_MARKER = Regex("""\s*(?:\*\s*secret\s*\*?|secret\s*\*)\s*""", RegexOption.IGNORE_CASE)
     }
 }
