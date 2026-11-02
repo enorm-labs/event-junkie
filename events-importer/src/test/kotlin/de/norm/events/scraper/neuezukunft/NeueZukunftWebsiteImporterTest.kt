@@ -1,5 +1,6 @@
 package de.norm.events.scraper.neuezukunft
 
+import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
@@ -88,5 +89,12 @@ class NeueZukunftWebsiteImporterTest {
     @Test
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.NEUE_ZUKUNFT
+    }
+
+    /** The programme mixes hardcore, metal, indie and jazz, so one house genre mislabels most nights and blocks the derived tags (#4400). */
+    @Test
+    fun `a concert takes no house genre`() {
+        AcceptedLimitations.houseGenre(EventSource.NEUE_ZUKUNFT, "CONCERT").shouldBeNull()
+        AcceptedLimitations.houseFamilies[EventSource.NEUE_ZUKUNFT.name].shouldBeNull()
     }
 }
