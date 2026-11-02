@@ -41,11 +41,11 @@ work and every other session can be closed once its pull request merges.
 
 One step per line: `<env>: <verb> <arguments>`, or `<env> (<when>): <verb> <arguments>` for a step that is not due at the deployment. The verbs are:
 
-| Verb                                   | Does                                                                                              |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `force-import <slug>[, <slug>…]`/`all` | Fetches those sources without the validators, so a parser fix reaches the rows already stored     |
-| `check <what to confirm>`              | A read only: logs, the admin or public API, a read-only database query. The text says what passes |
-| `run <scripts/… command>`              | A script under `scripts/`, exactly as written                                                     |
+| Verb                                   | Does                                                                                                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `force-import <slug>[, <slug>…]`/`all` | Fetches those sources without the validators, so a parser fix reaches the rows already stored. A source type (`eight_mm`) that one source carries also works |
+| `check <what to confirm>`              | A read only: logs, the admin or public API, a read-only database query. The text says what passes                                                            |
+| `run <scripts/… command>`              | A script under `scripts/`, exactly as written                                                                                                                |
 
 **A new venue** takes this block per environment, in this order, with the venues' names. `--allow-unreviewed` is not optional: Uber Eats Music Hall
 stays unreviewed on purpose (`docs/licence-review/README.md` §6), and `--enable` refuses without it.

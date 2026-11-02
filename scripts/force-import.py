@@ -6,6 +6,7 @@ Dry run by default: it names the sources it would import and writes nothing.
     python3 scripts/force-import.py staging                        # what an all-sources run would import
     python3 scripts/force-import.py staging --apply                # every source on staging
     python3 scripts/force-import.py production badehaus gretchen --apply
+    python3 scripts/force-import.py production eight_mm --apply    # a source type: imports 8mm-bar
 
 A forced import (`?force=true`, #1159) skips the ETag and Last-Modified validators. A parser fix at a
 venue whose page has not changed otherwise stays a 304 on every scheduled import, so this is how a
@@ -50,7 +51,9 @@ def parse_args() -> argparse.Namespace:
         description="Force-import event sources on a cluster through the ej.sh forward. Dry run by default."
     )
     parser.add_argument("env", choices=sorted(PORTS), help="the cluster, as scripts/ej.sh names it")
-    parser.add_argument("slugs", nargs="*", help="the sources to import; none means every source")
+    parser.add_argument(
+        "slugs", nargs="*", help="the sources to import, by slug or by a source type one source carries; none means all"
+    )
     parser.add_argument("--apply", action="store_true", help="trigger the imports; without it nothing is written")
     parser.add_argument("--concurrency", type=int, default=4, help="sources importing at once (default 4)")
     return parser.parse_args()
@@ -105,6 +108,31 @@ def sources(base: str, env: str, fetch=call) -> dict:
     return out
 
 
+def resolve(names: list, known: dict) -> tuple:
+    """The slugs [names] mean, and one line per name that means none.
+
+    A name is a slug, or a source type such as `eight_mm` that exactly one source carries. Release
+    steps get written with the enum name, and the slug (`8mm-bar`) is not derivable from it.
+    """
+    if not names:
+        return sorted(known), []
+    by_type = {}
+    for slug, s in known.items():
+        by_type.setdefault(str(s.get("sourceType") or "").lower(), []).append(slug)
+    wanted, refused = set(), []
+    for name in names:
+        matches = [name] if name in known else sorted(by_type.get(name.lower(), []))
+        if len(matches) == 1:
+            if matches[0] != name:
+                print(f"{name} -> {matches[0]}")
+            wanted.add(matches[0])
+        elif matches:
+            refused.append(f"{name} is the type of {', '.join(matches)}; name the slug")
+        else:
+            refused.append(name)
+    return sorted(wanted), refused
+
+
 def imported_since(source: dict, moment: datetime.datetime) -> bool:
     stamp = source.get("lastImportAt")
     return bool(stamp) and datetime.datetime.fromisoformat(stamp.replace("Z", "+00:00")) >= moment
@@ -121,11 +149,11 @@ def main() -> int:
         return EXIT_CANNOT_RUN
 
     known = sources(base, args.env)
-    unknown = sorted(set(args.slugs) - set(known))
-    if unknown:
-        print(f"Not a source on {args.env}: {', '.join(unknown)}", file=sys.stderr)
+    wanted, refused = resolve(args.slugs, known)
+    if refused:
+        for line in refused:
+            print(f"Not a source on {args.env}: {line}", file=sys.stderr)
         return EXIT_CANNOT_RUN
-    wanted = sorted(args.slugs or known)
 
     if not args.apply:
         print(f"Would force-import {len(wanted)} source(s) on {args.env}, {args.concurrency} at a time:")
