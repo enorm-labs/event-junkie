@@ -39,7 +39,6 @@ import java.time.MonthDay
  * @see JunctionBarDjWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.junction-bar.de/DJ_html/DJ.html">Junction Bar DJ program</a>
  */
-@Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the inline markup needs several small field extractors.
 class JunctionBarDjOverviewPageScraper(
     /** Clock for weekday-based year inference; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)

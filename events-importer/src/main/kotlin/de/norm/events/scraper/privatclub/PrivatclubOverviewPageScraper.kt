@@ -56,7 +56,6 @@ import java.util.Locale
  * @see PrivatclubWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://privatclub-berlin.de/">Privatclub Berlin</a>
  */
-@Suppress("TooManyFunctions")
 class PrivatclubOverviewPageScraper(
     /** Clock for the year-rollover fallback; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)
@@ -85,7 +84,7 @@ class PrivatclubOverviewPageScraper(
      * URL, ticket URL), HTML as fallback and for title, subtitle, genre, description, prices,
      * status, promoter, artists.
      */
-    @Suppress("CyclomaticComplexity", "CyclomaticComplexMethod", "LongMethod") // Cohesive single-event parsing with many optional fields
+    @Suppress("CyclomaticComplexMethod", "LongMethod") // Cohesive single-event parsing with many optional fields
     private fun parseEventWrapper(
         wrapper: Element,
         baseUrl: String
