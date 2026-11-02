@@ -2,6 +2,7 @@ import type { EventDetail, VenueDetail } from '@/api/types'
 import { descriptionFor } from '@/lib/description'
 import { absoluteImageUrl, canonicalUrl, SITE_URL } from '@/lib/seo'
 import { isPastEvent } from '@/lib/format'
+import { eventPlace } from '@/lib/mapPins'
 import { APP_NAME } from '@/lib/pageMeta'
 import { sectionTitle } from '@/lib/staticPages'
 import type { Locale } from '@/i18n/locales'
@@ -124,9 +125,13 @@ function performers(event: EventDetail): JsonLd[] | undefined {
   return names.length ? names.map((name) => ({ '@type': 'PerformingGroup', name })) : undefined
 }
 
-/** The venue, as a `Place` with a postal address — Google requires both for an event. */
+/**
+ * Where the show happens, as a `Place` with a postal address — Google requires both for an event.
+ * A relocated show names the house it moved to when we list that house. Without one it keeps its
+ * own venue, because a document without a location is rejected whole.
+ */
 function eventLocation(event: EventDetail): JsonLd | undefined {
-  const venue = event.venue
+  const venue = eventPlace(event) ?? event.venue
   if (!venue?.name) return undefined
 
   return {

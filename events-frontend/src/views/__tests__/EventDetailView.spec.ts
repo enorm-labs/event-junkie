@@ -172,6 +172,106 @@ describe('EventDetailView', () => {
     expect(hero).toContain('Moved to Hole 44, 13 April 2100')
   })
 
+  const relocated: EventDetail = {
+    ...night,
+    status: 'RELOCATED',
+    relocatedTo: 'huxleys',
+    venue: {
+      slug: 'columbiahalle',
+      name: 'Columbiahalle',
+      address: 'Columbiadamm 13-21',
+      city: 'Berlin',
+      latitude: 52.4839,
+      longitude: 13.3911,
+    },
+  }
+  const huxleys = {
+    venueName: 'Huxleys Neue Welt',
+    venueSlug: 'huxleys-neue-welt',
+    eventSlug: '2099-06-12-huxleys-neue-welt-a-night',
+    address: 'Hasenheide 107-113',
+    city: 'Berlin',
+    latitude: 52.4862,
+    longitude: 13.4206,
+  }
+
+  it('names the house by its own name and links its night under the venue', async () => {
+    const view = await mountEvent({ ...relocated, movedTo: huxleys })
+    const hero = view.find('h1').element.parentElement!.textContent ?? ''
+    const movedTo = view.find('[data-testid="moved-to"]')
+
+    expect(hero).toContain('Moved to Huxleys Neue Welt')
+    expect(movedTo.text()).toBe('Moved to: Huxleys Neue Welt')
+    expect(movedTo.find('a').attributes('href')).toBe(
+      '/en/events/2099-06-12-huxleys-neue-welt-a-night',
+    )
+  })
+
+  it('shows the new house and its address first, the old one muted below, and routes to the new one', async () => {
+    const view = await mountEvent({ ...relocated, movedTo: huxleys })
+    const text = view.text()
+    const movedFrom = view.find('[data-testid="moved-from"]')
+
+    expect(text).toContain('Hasenheide 107-113, Berlin')
+    expect(text).not.toContain('Columbiadamm')
+    expect(text.indexOf('Huxleys Neue Welt')).toBeLessThan(text.indexOf('Originally:'))
+    expect(movedFrom.text()).toBe('Originally: Columbiahalle')
+    expect(movedFrom.classes()).toContain('text-muted-foreground')
+    expect(movedFrom.find('a').attributes('href')).toBe('/en/venues/columbiahalle')
+    expect(view.find('[data-testid="venue-directions-link"]').attributes('href')).toContain(
+      '52.4862,13.4206',
+    )
+  })
+
+  it('says it in German too', async () => {
+    const view = await mountEvent({ ...relocated, movedTo: huxleys }, 'de')
+
+    expect(view.find('[data-testid="moved-to"]').text()).toBe('Verlegt nach: Huxleys Neue Welt')
+    expect(view.find('[data-testid="moved-from"]').text()).toBe('Ursprünglich: Columbiahalle')
+  })
+
+  it("links the house's page when the house does not list the night", async () => {
+    const view = await mountEvent({
+      ...relocated,
+      relocatedTo: 'Hole',
+      movedTo: { venueName: 'Hole44', venueSlug: 'hole-44', eventSlug: null },
+    })
+
+    expect(view.find('[data-testid="moved-to"] a').attributes('href')).toBe('/en/venues/hole-44')
+  })
+
+  it('names a house we do not list as text, keeps the old address and offers no route', async () => {
+    const view = await mountEvent({ ...relocated, relocatedTo: 'rbb Sendesaal' })
+    const hero = view.find('h1').element.parentElement!.textContent ?? ''
+    const movedTo = view.find('[data-testid="moved-to"]')
+
+    expect(hero).toContain('Moved to rbb Sendesaal')
+    expect(movedTo.text()).toBe('Moved to: rbb Sendesaal')
+    expect(movedTo.find('a').exists()).toBe(false)
+    expect(view.text()).toContain('Columbiadamm 13-21, Berlin')
+    expect(view.find('[data-testid="venue-directions-link"]').exists()).toBe(false)
+  })
+
+  it('says the new house is not announced, and offers no route, when the note names none', async () => {
+    const view = await mountEvent({ ...relocated, relocatedTo: null })
+
+    expect(view.find('[data-testid="moved-unannounced"]').text()).toBe(
+      'Moved. The new venue is not announced yet.',
+    )
+    expect(view.find('[data-testid="moved-to"]').exists()).toBe(false)
+    expect(view.text()).toContain('Columbiahalle')
+    expect(view.find('[data-testid="venue-directions-link"]').exists()).toBe(false)
+  })
+
+  it('routes a scheduled night to its own venue', async () => {
+    const view = await mountEvent({ ...relocated, status: 'SCHEDULED', relocatedTo: null })
+
+    expect(view.find('[data-testid="venue-directions-link"]').attributes('href')).toContain(
+      '52.4839,13.3911',
+    )
+    expect(view.find('[data-testid="moved-unannounced"]').exists()).toBe(false)
+  })
+
   it('strikes the date of a cancelled night in the hero and drops its time', async () => {
     const view = await mountEvent({ ...night, status: 'CANCELLED', startTime: '20:00:00' })
     const hero = view.find('h1').element.parentElement!.textContent ?? ''

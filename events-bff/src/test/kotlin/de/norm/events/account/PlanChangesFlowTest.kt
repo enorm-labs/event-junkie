@@ -285,6 +285,21 @@ class PlanChangesFlowTest : BaseControllerTest() {
         }
 
     @Test
+    fun `two nights of a series that swap dates stay silent`() =
+        runBlocking<Unit> {
+            val tonight = insertEvent(club, "Open Stage - mit Otto F.", "open-stage-otto", today.plusDays(7))
+            insertEvent(club, "Open Stage mit Steffen", "open-stage-steffen", today.plusDays(35))
+            going("open-stage-otto")
+            subscribe()
+            changed(tonight, "EVENT_DATE", today.plusDays(35).toString(), today.plusDays(7).toString())
+
+            job.run()
+
+            pushes() shouldBe 0
+            list().jsonPath("$.length()").isEqualTo(0)
+        }
+
+    @Test
     fun `the switch off keeps the notification and sends no push`() =
         runBlocking<Unit> {
             val event = insertEvent(club, "Moderat", "moderat", today.plusDays(7))

@@ -177,6 +177,22 @@ describe('eventLocation', () => {
     expect(eventLocation(moved, DE)).toBe('Verlegt: Säälchen, vorher Lido')
   })
 
+  it('gives the address of the house it moved to when we list that house', () => {
+    const moved: EventDetail = {
+      ...event,
+      status: 'RELOCATED',
+      relocatedTo: 'astra',
+      movedTo: {
+        venueName: 'Astra Kulturhaus',
+        venueSlug: 'astra-kulturhaus',
+        eventSlug: null,
+        address: 'Revaler Str. 99',
+        city: 'Berlin',
+      },
+    }
+    expect(eventLocation(moved, EN)).toBe('Astra Kulturhaus, Revaler Str. 99, Berlin, was Lido')
+  })
+
   it('keeps the venue of a relocated event that does not say where it went', () => {
     expect(eventLocation({ ...event, status: 'RELOCATED' }, EN)).toBe('Lido, Cuvrystr. 7, Berlin')
     expect(eventLocation({ ...event, status: 'RELOCATED', relocatedTo: ' ' }, EN)).toBe(

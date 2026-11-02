@@ -105,8 +105,11 @@ reads the note, then the title, the subtitle and the description. The first hit 
   found in Hole 44's notes while reading them for this decision.
 - The plausibility check treats a `RELOCATED` row as the show's trace, not a concert. It is skipped in the duplicate
   check, and reported only when its destination has no row.
-- A house the site does list gets no link from the origin row. A later change may match `relocated_to` against the
-  venue names a page already has. Nothing in the model stands in its way.
+- The BFF links the origin row to its new house at read time, as `movedTo`. It links the one scheduled row that night
+  at another venue with the same act or title. Without that row, it links the venue that `relocated_to` names, by the
+  prefix rule above. Nothing is stored. `movedTo` carries the venue's address and coordinates. The event page,
+  Directions, the calendar entry, the structured data and the map use them. A move to a house we do not list gets no
+  Directions and no map pin.
 
 ## References
 

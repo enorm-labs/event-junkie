@@ -31,7 +31,7 @@ import { eventPageJsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
 import { formatPrice, isOnNow, isPastEvent, isRunningEvent } from '@/lib/format'
 import { runningOrder, setStates, type RunningOrderSet } from '@/lib/runningOrder'
-import { venuePosition } from '@/lib/mapPins'
+import { eventPlace, venuePosition } from '@/lib/mapPins'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn } from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -206,11 +206,30 @@ function derivedGenreNote(origin: string | undefined): string | undefined {
   return undefined
 }
 // A venue without a coordinate gets no route (#2767).
-const hasDirections = computed(() => venuePosition(event.value?.venue) !== null)
+// A relocated night routes to its new house, and to nowhere when we do not list that house.
+const place = computed(() => (event.value ? eventPlace(event.value) : undefined))
+const hasDirections = computed(() => venuePosition(place.value) !== null)
 
 // A venue move reads under the venue's name, not in the When block (#2725).
 const { changeLines } = useEventChanges()
 const venueChanges = computed(() => changeLines(event.value?.changes, (field) => field === 'VENUE'))
+// A relocated night links the same night at the new house, else the house's page.
+const movedToLink = computed(() => {
+  const movedTo = event.value?.status === 'RELOCATED' ? event.value.movedTo : null
+  if (!movedTo) return null
+  const path = movedTo.eventSlug ? `/events/${movedTo.eventSlug}` : `/venues/${movedTo.venueSlug}`
+  const address = [movedTo.address, movedTo.city].filter(Boolean).join(', ')
+  return { name: movedTo.venueName, to: localePath(path), address }
+})
+// A house we do not list, by the note's own words, or no house at all.
+const movedToText = computed(() =>
+  event.value?.status === 'RELOCATED' && !movedToLink.value
+    ? event.value.relocatedTo?.trim() || null
+    : null,
+)
+const movedUnannounced = computed(
+  () => event.value?.status === 'RELOCATED' && !movedToLink.value && !movedToText.value,
+)
 // A cancelled night shows no price: nothing is on sale (#2916). Every other night says what is
 // known about the price, also when that is nothing (#2963).
 const hasTickets = computed(() => !!event.value && event.value.status !== 'CANCELLED')
@@ -251,7 +270,9 @@ const relatedHeading = computed(() =>
 const metaItems = computed<MetaItem[]>(() => {
   const e = event.value
   if (!e) return []
-  const status = formatEventStatus(e.status, e.relocatedTo, e.postponedTo?.eventDate, e.relocatedOn)
+  // The venue's own name for the house when we know it: the note may say "huxleys" or "Hole".
+  const movedTo = e.movedTo?.venueName ?? e.relocatedTo
+  const status = formatEventStatus(e.status, movedTo, e.postponedTo?.eventDate, e.relocatedOn)
   // A postponed or cancelled show does not happen on this date, so its date is struck and its time dropped.
   const offDate = e.status === 'POSTPONED' || e.status === 'CANCELLED'
   const items: (MetaItem | null)[] = [
@@ -544,23 +565,57 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
 
         <div v-if="event.venue" class="space-y-1">
           <SectionLabel>{{ t('events.detail.venue') }}</SectionLabel>
-          <RouterLink
-            v-if="event.venue.slug"
-            :to="localePath(`/venues/${event.venue.slug}`)"
-            class="text-body font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {{ event.venue.name }}
-          </RouterLink>
-          <p v-else class="text-body font-medium">{{ event.venue.name }}</p>
+          <template v-if="movedToLink">
+            <p class="text-body font-medium" data-testid="moved-to">
+              {{ t('events.detail.movedTo') }}
+              <RouterLink
+                :to="movedToLink.to"
+                class="text-primary underline-offset-4 hover:underline"
+                >{{ movedToLink.name }}</RouterLink
+              >
+            </p>
+            <p v-if="movedToLink.address" class="text-body text-muted-foreground">
+              {{ movedToLink.address }}
+            </p>
+            <p class="text-body text-muted-foreground" data-testid="moved-from">
+              {{ t('events.detail.movedFrom') }}
+              <RouterLink
+                v-if="event.venue.slug"
+                :to="localePath(`/venues/${event.venue.slug}`)"
+                class="underline-offset-4 hover:underline"
+                >{{ event.venue.name }}</RouterLink
+              ><template v-else>{{ event.venue.name }}</template>
+            </p>
+          </template>
+          <template v-else>
+            <RouterLink
+              v-if="event.venue.slug"
+              :to="localePath(`/venues/${event.venue.slug}`)"
+              class="text-body font-medium text-primary underline-offset-4 hover:underline"
+            >
+              {{ event.venue.name }}
+            </RouterLink>
+            <p v-else class="text-body font-medium">{{ event.venue.name }}</p>
+            <p v-if="movedToText" class="text-body font-medium" data-testid="moved-to">
+              {{ t('events.detail.movedTo') }} {{ movedToText }}
+            </p>
+            <p
+              v-else-if="movedUnannounced"
+              class="text-body font-medium"
+              data-testid="moved-unannounced"
+            >
+              {{ t('events.detail.movedUnannounced') }}
+            </p>
+            <p v-if="event.venue.address" class="text-body text-muted-foreground">
+              {{ event.venue.address
+              }}<template v-if="event.venue.city">, {{ event.venue.city }}</template>
+            </p>
+          </template>
           <p v-for="(change, index) in venueChanges" :key="index" class="text-body">
             <span class="font-medium">{{ change.text }}</span
             ><span v-if="change.ago" class="text-muted-foreground"> · {{ change.ago }}</span>
           </p>
-          <p v-if="event.venue.address" class="text-body text-muted-foreground">
-            {{ event.venue.address
-            }}<template v-if="event.venue.city">, {{ event.venue.city }}</template>
-          </p>
-          <p v-if="hasDirections" class="text-body"><DirectionsLink :venue="event.venue" /></p>
+          <p v-if="hasDirections" class="text-body"><DirectionsLink :venue="place" /></p>
         </div>
 
         <div v-if="hasTickets" class="space-y-1">

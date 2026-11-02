@@ -44,13 +44,34 @@ export function venuePosition(
 }
 
 /**
- * Groups events by venue, keeping only venues that can be pinned. The busiest venue comes first,
+ * Where an event happens, as a venue: the house a relocated show moved to when we list it, else
+ * its own venue. Undefined for a relocated show whose new house we do not list, because its own
+ * venue is the wrong place to send anyone.
+ */
+export function eventPlace(
+  event: Pick<EventSummary, 'status' | 'venue' | 'movedTo'>,
+): VenueSummary | undefined {
+  if (event.status !== 'RELOCATED') return event.venue
+  const movedTo = event.movedTo
+  if (!movedTo?.venueSlug) return undefined
+  return {
+    slug: movedTo.venueSlug,
+    name: movedTo.venueName,
+    address: movedTo.address,
+    city: movedTo.city ?? undefined,
+    latitude: movedTo.latitude,
+    longitude: movedTo.longitude,
+  }
+}
+
+/**
+ * Groups events by where they happen ([eventPlace]), keeping only venues that can be pinned. The busiest venue comes first,
  * then by name, so the order is stable between two loads of the same data.
  */
 export function groupByVenue(events: readonly EventSummary[]): VenueEvents[] {
   const groups = new Map<string, VenueEvents>()
   for (const event of events) {
-    const venue = event.venue
+    const venue = eventPlace(event)
     if (!venue?.slug || !venuePosition(venue)) continue
     const group = groups.get(venue.slug)
     if (group) group.events.push(event)

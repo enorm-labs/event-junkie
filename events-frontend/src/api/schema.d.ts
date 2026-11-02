@@ -1639,6 +1639,8 @@ export interface components {
              *     ]
              */
             genreTags?: string[];
+            /** @description For a RELOCATED event, the house it moved to: the one SCHEDULED event that night at another venue with the same act or title, else the venue the note names. Null for every other status, and when neither is certain. */
+            movedTo?: components["schemas"]["MovedToResponse"] | null;
             /** @description The festival an operator linked the event to, or null. Its slug is the events list's `festival` filter */
             festival?: components["schemas"]["FestivalSummaryResponse"] | null;
             /**
@@ -1659,6 +1661,44 @@ export interface components {
              * @example Fête de la Musique 2027
              */
             name?: string;
+        };
+        /** @description Where a relocated event moved to */
+        MovedToResponse: {
+            /**
+             * @description The new venue's name
+             * @example Huxleys Neue Welt
+             */
+            venueName?: string;
+            /**
+             * @description The new venue's slug
+             * @example huxleys-neue-welt
+             */
+            venueSlug?: string;
+            /**
+             * @description The slug of the same night at the new venue. Null when that venue does not list it.
+             * @example 2026-11-02-huxleys-neue-welt-gentleman
+             */
+            eventSlug?: string | null;
+            /**
+             * @description The new venue's street address
+             * @example Hasenheide 107-113
+             */
+            address?: string | null;
+            /**
+             * @description The new venue's city
+             * @example Berlin
+             */
+            city?: string | null;
+            /**
+             * @description The new venue's latitude
+             * @example 52.4862
+             */
+            latitude?: number | null;
+            /**
+             * @description The new venue's longitude
+             * @example 13.4206
+             */
+            longitude?: number | null;
         };
         /** @description Promoter list row */
         PromoterListItemResponse: {
@@ -2438,6 +2478,8 @@ export interface components {
             changes?: components["schemas"]["EventChangeResponse"][];
             /** @description For a POSTPONED event, the one later SCHEDULED event at the same venue with the same act or title. Null for every other status, and when no event or more than one matches. */
             postponedTo?: components["schemas"]["PostponedToResponse"] | null;
+            /** @description For a RELOCATED event, the house it moved to: the one SCHEDULED event that night at another venue with the same act or title, else the venue the note names. Null for every other status, and when neither is certain. */
+            movedTo?: components["schemas"]["MovedToResponse"] | null;
             /** @description The festival an operator linked the event to, or null. Its slug is the events list's `festival` filter */
             festival?: components["schemas"]["FestivalSummaryResponse"] | null;
             /**

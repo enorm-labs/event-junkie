@@ -86,6 +86,8 @@ data class EventSummaryResponse(
     val artistNames: List<String>,
     @Schema(description = GENRE_TAGS_DESCRIPTION, example = "[\"Punk\"]")
     val genreTags: List<String>,
+    @Schema(description = MOVED_TO_DESCRIPTION)
+    val movedTo: MovedToResponse? = null,
     @Schema(description = FESTIVAL_DESCRIPTION)
     val festival: FestivalSummaryResponse? = null,
     @Schema(description = FEATURED_DESCRIPTION, example = "false")
@@ -101,7 +103,8 @@ data class EventSummaryResponse(
             image: ServedImage,
             imageWithheld: Boolean,
             now: Instant,
-            festival: FestivalSummaryResponse? = null
+            festival: FestivalSummaryResponse? = null,
+            movedTo: MovedToResponse? = null
         ): EventSummaryResponse =
             EventSummaryResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -134,6 +137,7 @@ data class EventSummaryResponse(
                 venue = venue,
                 artistNames = artistNames,
                 genreTags = genreTags,
+                movedTo = movedTo,
                 festival = festival,
                 featured = entity.isFeaturedAt(now)
             )
@@ -321,6 +325,8 @@ data class EventDetailResponse(
                 "other status, and when no event or more than one matches."
     )
     val postponedTo: PostponedToResponse? = null,
+    @Schema(description = MOVED_TO_DESCRIPTION)
+    val movedTo: MovedToResponse? = null,
     @Schema(description = FESTIVAL_DESCRIPTION)
     val festival: FestivalSummaryResponse? = null,
     @Schema(description = FEATURED_DESCRIPTION, example = "false")
@@ -342,6 +348,7 @@ data class EventDetailResponse(
             enrichmentSources: List<EnrichmentSourceResponse> = emptyList(),
             changes: List<EventChangeResponse> = emptyList(),
             postponedTo: PostponedToResponse? = null,
+            movedTo: MovedToResponse? = null,
             derivedGenreTags: Map<String, GenreTagOrigin> = emptyMap(),
             festival: FestivalSummaryResponse? = null
         ): EventDetailResponse =
@@ -394,6 +401,7 @@ data class EventDetailResponse(
                 features = features,
                 changes = changes,
                 postponedTo = postponedTo,
+                movedTo = movedTo,
                 festival = festival,
                 featured = entity.isFeaturedAt(now)
             )
@@ -421,6 +429,28 @@ data class PostponedToResponse(
     val slug: String,
     @Schema(description = "The new date", example = "2027-05-08")
     val eventDate: LocalDate
+)
+
+/** The house a relocated show moved to, and its event there when the house lists it. */
+@Schema(description = "Where a relocated event moved to")
+data class MovedToResponse(
+    @Schema(description = "The new venue's name", example = "Huxleys Neue Welt")
+    val venueName: String,
+    @Schema(description = "The new venue's slug", example = "huxleys-neue-welt")
+    val venueSlug: String,
+    @Schema(
+        description = "The slug of the same night at the new venue. Null when that venue does not list it.",
+        example = "2026-11-02-huxleys-neue-welt-gentleman"
+    )
+    val eventSlug: String?,
+    @Schema(description = "The new venue's street address", example = "Hasenheide 107-113")
+    val address: String? = null,
+    @Schema(description = "The new venue's city", example = "Berlin")
+    val city: String? = null,
+    @Schema(description = "The new venue's latitude", example = "52.4862")
+    val latitude: BigDecimal? = null,
+    @Schema(description = "The new venue's longitude", example = "13.4206")
+    val longitude: BigDecimal? = null
 )
 
 /** One move of a date, time, status or venue, as the importer or an operator saw it (#2725). */
@@ -473,6 +503,9 @@ private const val FESTIVAL_DESCRIPTION =
 private const val CHANGES_DESCRIPTION =
     "What moved on the event in the last 14 days, newest first: its date, start, end, status or venue. " +
         "Empty for a new event and for one that has not moved."
+private const val MOVED_TO_DESCRIPTION =
+    "For a RELOCATED event, the house it moved to: the one SCHEDULED event that night at another venue with the same act " +
+        "or title, else the venue the note names. Null for every other status, and when neither is certain."
 private const val RELOCATED_TO_DESCRIPTION =
     "Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status"
 private const val RELOCATED_ON_DESCRIPTION =

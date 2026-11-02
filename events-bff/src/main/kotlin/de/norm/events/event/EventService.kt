@@ -55,6 +55,7 @@ class EventService(
     private val clock: Clock,
     private val eventEnrichmentRepository: EventEnrichmentRepository,
     private val postponementRepository: PostponementRepository,
+    private val relocationRepository: RelocationRepository,
     private val festivalRepository: FestivalRepository
 ) {
     /**
@@ -161,10 +162,7 @@ class EventService(
         val event = licensed.event
         val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
 
-        val venue =
-            requireNotNull(venueRepository.findById(event.venueId)) {
-                "Event $eventId references missing venue ${event.venueId}"
-            }
+        val venue = requireNotNull(venueRepository.findById(event.venueId)) { "Event $eventId references missing venue ${event.venueId}" }
 
         val artistLinks = eventArtistRepository.findByEventId(eventId).toList().sortedBy { it.billingOrder }
         val artistsById = fetchArtists(artistLinks.map { it.artistId })
@@ -218,6 +216,7 @@ class EventService(
             enrichmentSources = eventEnrichmentRepository.findByEventId(eventId),
             changes = eventChangeRepository.recent(eventId),
             postponedTo = postponementRepository.newDate(event),
+            movedTo = relocationRepository.newPlace(event),
             derivedGenreTags = derivedGenreTags,
             festival = event.festivalId?.let { festivalRepository.findById(it) }?.let(FestivalSummaryResponse::fromEntity)
         )
@@ -338,7 +337,9 @@ class EventService(
                 images.serve(event.imageUrl, POSTER_WIDTH),
                 imageWithheld = licensedEvent.imageWithheld,
                 now = now,
-                festival = event.festivalId?.let { festivalsById[it] }?.let(FestivalSummaryResponse::fromEntity)
+                festival = event.festivalId?.let { festivalsById[it] }?.let(FestivalSummaryResponse::fromEntity),
+                // A query per relocated event only: two dozen at most across the whole programme.
+                movedTo = relocationRepository.newPlace(event)
             )
         }
     }

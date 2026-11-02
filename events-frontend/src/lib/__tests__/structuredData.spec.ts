@@ -98,6 +98,38 @@ describe('eventJsonLd', () => {
     })
   })
 
+  it('places a relocated event at the house it moved to, when we list it', () => {
+    const document = eventJsonLd(
+      {
+        ...event,
+        status: 'RELOCATED',
+        movedTo: {
+          venueName: 'Astra Kulturhaus',
+          venueSlug: 'astra-kulturhaus',
+          eventSlug: null,
+          address: 'Revaler Str. 99',
+          city: 'Berlin',
+        },
+      },
+      'en',
+    )!
+
+    expect(document.location).toMatchObject({
+      name: 'Astra Kulturhaus',
+      address: { streetAddress: 'Revaler Str. 99', addressLocality: 'Berlin' },
+      url: 'https://event-junkie.de/en/venues/astra-kulturhaus',
+    })
+  })
+
+  it('keeps the old venue of a relocated event whose new house we do not list', () => {
+    const document = eventJsonLd(
+      { ...event, status: 'RELOCATED', relocatedTo: 'rbb Sendesaal' },
+      'en',
+    )!
+
+    expect(document.location).toMatchObject({ name: 'Lido' })
+  })
+
   // Partial structured data is rejected outright, and it costs a crawl to discover that.
   const required: [string, EventDetail][] = [
     ['a title', { ...event, title: undefined }],

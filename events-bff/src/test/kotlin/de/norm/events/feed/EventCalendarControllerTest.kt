@@ -192,6 +192,20 @@ class EventCalendarControllerTest : BaseControllerTest() {
         }
 
     @Test
+    fun `gives a relocated event the address of the house it moved to when we list that house`(): Unit =
+        runBlocking {
+            val hole = insertVenue("Hole44", "hole44", address = "Hermannstr. 44")
+            insertVenue("Metropol", "metropol", address = "Nollendorfplatz 5")
+            val moved = insertEvent(hole, "Moved", "moved", night)
+            setColumn(moved, "status", "RELOCATED")
+            setColumn(moved, "relocated_to", "metropol")
+
+            val en = vevents(ics()).single()
+            en.value("LOCATION") shouldBe "Metropol\\, Nollendorfplatz 5\\, Berlin\\, was Hole44"
+            en.value("DESCRIPTION")!! shouldStartWith "Moved to Metropol."
+        }
+
+    @Test
     fun `takes the list's filters`(): Unit =
         runBlocking {
             val lido = insertVenue("Lido", "lido")

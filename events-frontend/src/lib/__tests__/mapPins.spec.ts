@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { EventSummary, VenueSummary } from '@/api/types'
 import {
+  eventPlace,
   groupByVenue,
   nearby,
   overlapGroups,
@@ -47,6 +48,48 @@ describe('groupByVenue', () => {
   it('keeps a coordinate of zero, which is a value and not a missing one', () => {
     const zero = { ...ASTRA, latitude: 0, longitude: 0 }
     expect(groupByVenue([event('a', zero)])).toHaveLength(1)
+  })
+})
+
+describe('eventPlace', () => {
+  const movedTo = {
+    venueName: 'Astra Kulturhaus',
+    venueSlug: 'astra',
+    eventSlug: null,
+    address: 'Revaler Str. 99',
+    city: 'Berlin',
+    latitude: 52.507242,
+    longitude: 13.451803,
+  }
+
+  it('is the venue of a night that did not move', () => {
+    expect(eventPlace(event('a', LIDO))).toBe(LIDO)
+  })
+
+  it('is the house a relocated night moved to, when we list it', () => {
+    expect(eventPlace({ ...event('a', LIDO), status: 'RELOCATED', movedTo })).toEqual({
+      slug: 'astra',
+      name: 'Astra Kulturhaus',
+      address: 'Revaler Str. 99',
+      city: 'Berlin',
+      latitude: 52.507242,
+      longitude: 13.451803,
+    })
+  })
+
+  it('is nothing for a relocated night whose new house we do not list', () => {
+    expect(eventPlace({ ...event('a', LIDO), status: 'RELOCATED' })).toBeUndefined()
+  })
+
+  it('pins a relocated night at its new house, and leaves out one we cannot place', () => {
+    const groups = groupByVenue([
+      { ...event('moved', LIDO), status: 'RELOCATED', movedTo },
+      { ...event('unknown', LIDO), status: 'RELOCATED', relocatedTo: 'rbb Sendesaal' },
+      event('b', ASTRA),
+    ])
+    expect(groups.map((g) => [g.venue.slug, g.events.map((e) => e.slug)])).toEqual([
+      ['astra', ['moved', 'b']],
+    ])
   })
 })
 
