@@ -4,6 +4,7 @@ import type { EventSummary } from '@/api/types'
 import EventPoster from '@/components/EventPoster.vue'
 import PosterCardShell from '@/components/PosterCardShell.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
+import LiveDot from '@/components/LiveDot.vue'
 import PickBadge from '@/components/PickBadge.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
@@ -104,13 +105,7 @@ const { t } = useI18n()
     </template>
     <div class="min-w-0 space-y-1">
       <div class="flex min-w-0 items-center gap-2">
-        <span v-if="isLive" class="relative flex size-2 shrink-0">
-          <span
-            class="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping"
-          />
-          <span class="relative inline-flex size-2 rounded-full bg-primary" />
-          <span class="sr-only">{{ t('events.card.onNow') }}</span>
-        </span>
+        <LiveDot v-if="isLive" :label="t('events.card.onNow')" />
         <!--
             Both lines are `truncate`d, so the native `title` spells each out on hover, sharing
             `eventLabel` with the calendar cells. Scoped to the clipped elements, not the card.

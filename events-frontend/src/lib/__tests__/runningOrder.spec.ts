@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { LineupEntry } from '@/api/types'
-import { runningOrder } from '@/lib/runningOrder'
+import { runningOrder, setStates } from '@/lib/runningOrder'
 
 function entry(
   name: string,
@@ -68,5 +68,81 @@ describe('runningOrder', () => {
       '2026-09-27',
       null,
     ])
+  })
+})
+
+describe('setStates', () => {
+  const at = (iso: string) => Date.parse(iso)
+  const names = (floors: ReturnType<typeof runningOrder>, now: number) => {
+    const states = setStates(floors!, now)
+    return Object.fromEntries(
+      floors!.flatMap((floor) =>
+        floor.sets.map((set) => [set.entry.artist?.name, states.get(set) ?? null]),
+      ),
+    )
+  }
+
+  it('marks the set playing now live, the earlier ones past and the later ones upcoming', () => {
+    const floors = runningOrder([
+      entry('Opener', 'Berghain', '2026-09-26T23:59:00+02:00', '2026-09-27T04:30:00+02:00'),
+      entry('Peak', 'Berghain', '2026-09-27T04:30:00+02:00', '2026-09-27T08:30:00+02:00'),
+      entry('Closer', 'Berghain', '2026-09-27T08:30:00+02:00', '2026-09-27T12:00:00+02:00'),
+      entry('Untimed', 'Berghain'),
+    ])
+
+    expect(names(floors, at('2026-09-27T05:00:00+02:00'))).toEqual({
+      Opener: 'past',
+      Peak: 'live',
+      Closer: 'upcoming',
+      Untimed: null,
+    })
+  })
+
+  it('ends a set at its end time even before the next one starts', () => {
+    const floors = runningOrder([
+      entry('A', null, '2026-09-26T20:00:00+02:00', '2026-09-26T20:45:00+02:00'),
+      entry('B', null, '2026-09-26T21:30:00+02:00', '2026-09-26T22:30:00+02:00'),
+    ])
+
+    expect(names(floors, at('2026-09-26T21:00:00+02:00'))).toEqual({ A: 'past', B: 'upcoming' })
+  })
+
+  it('runs a set without an end until the next later start on its floor', () => {
+    const floors = runningOrder([
+      entry('A', null, '2026-09-26T20:00:00+02:00'),
+      entry('B', null, '2026-09-26T20:00:00+02:00'),
+      entry('C', null, '2026-09-26T21:00:00+02:00'),
+    ])
+
+    expect(names(floors, at('2026-09-26T20:30:00+02:00'))).toEqual({
+      A: 'live',
+      B: 'live',
+      C: 'upcoming',
+    })
+    expect(names(floors, at('2026-09-26T21:00:00+02:00'))).toEqual({
+      A: 'past',
+      B: 'past',
+      C: 'live',
+    })
+  })
+
+  it('keeps the last set without an end live, because the caller asks only while the night is on', () => {
+    const floors = runningOrder([entry('Last', null, '2026-09-26T23:00:00+02:00')])
+
+    expect(names(floors, at('2026-09-27T05:00:00+02:00'))).toEqual({ Last: 'live' })
+  })
+
+  it('reads each floor on its own clock', () => {
+    const floors = runningOrder([
+      entry('Main', 'Berghain', '2026-09-26T23:59:00+02:00', '2026-09-27T04:30:00+02:00'),
+      entry('Bar', 'Panorama Bar', '2026-09-27T02:00:00+02:00'),
+      entry('Bar late', 'Panorama Bar', '2026-09-27T06:00:00+02:00'),
+    ])
+
+    expect(names(floors, at('2026-09-27T03:00:00+02:00'))).toEqual({
+      Main: 'live',
+      Bar: 'live',
+      'Bar late': 'upcoming',
+    })
   })
 })

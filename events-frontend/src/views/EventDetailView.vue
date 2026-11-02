@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { ExternalLink, Ticket } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,7 @@ import EventShareActions from '@/components/EventShareActions.vue'
 import RsvpToggle from '@/components/RsvpToggle.vue'
 import EventWhen from '@/components/EventWhen.vue'
 import ListenLinks from '@/components/ListenLinks.vue'
+import LiveDot from '@/components/LiveDot.vue'
 import PickBadge from '@/components/PickBadge.vue'
 import ReportLine from '@/components/ReportLine.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
@@ -28,8 +29,8 @@ import { eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/page
 import { useStructuredData } from '@/composables/useStructuredData'
 import { eventPageJsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
-import { formatPrice, isPastEvent, isRunningEvent } from '@/lib/format'
-import { runningOrder, type RunningOrderSet } from '@/lib/runningOrder'
+import { formatPrice, isOnNow, isPastEvent, isRunningEvent } from '@/lib/format'
+import { runningOrder, setStates, type RunningOrderSet } from '@/lib/runningOrder'
 import { venuePosition } from '@/lib/mapPins'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn } from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
@@ -67,6 +68,19 @@ const showRoles = computed(() => lineup.value.some((entry) => entry.role !== 'HE
 
 // Floors and set times where the venue published a running order (#2002); null for the rest.
 const floors = computed(() => runningOrder(lineup.value))
+
+// The clock the running order is read against, a minute at a time, so the dot moves on by itself.
+const now = ref(Date.now())
+const clock = setInterval(() => (now.value = Date.now()), 60_000)
+onBeforeUnmount(() => clearInterval(clock))
+
+// Which set plays now, and which are over, only while the night is on and still at its venue: a
+// past night's sets are all over, and saying so adds nothing.
+const setState = computed(() => {
+  const e = event.value
+  if (!floors.value || !e || (e.status ?? 'SCHEDULED') !== 'SCHEDULED') return null
+  return isOnNow(e) ? setStates(floors.value, now.value) : null
+})
 
 // The lineup sits above the tickets and the venue, so a festival bill opens folded to keep them near.
 const LINEUP_FOLD_ABOVE = 10
@@ -431,12 +445,28 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
             <li
               v-for="set in floor.sets"
               :key="set.entry.artist?.slug ?? set.entry.artist?.name"
-              class="flex items-baseline gap-3 py-3"
+              :class="[
+                'flex items-baseline gap-3 py-3',
+                setState?.get(set) === 'past' && 'text-muted-foreground',
+              ]"
             >
-              <span class="w-28 shrink-0 text-meta text-muted-foreground tabular-nums">
+              <span
+                class="flex w-28 shrink-0 items-center gap-2 text-meta text-muted-foreground tabular-nums"
+              >
+                <LiveDot
+                  v-if="setState?.get(set) === 'live'"
+                  :label="t('events.detail.playingNow')"
+                />
+                <!-- The dot's room on every other timed row, so the times stay in one column. -->
+                <span v-else-if="setState?.has(set)" class="size-2 shrink-0" aria-hidden="true" />
                 {{ setTimeLabel(set) }}
               </span>
-              <span class="min-w-0 flex-1 text-card-title font-medium">
+              <span
+                :class="[
+                  'min-w-0 flex-1 text-card-title font-medium',
+                  setState?.get(set) === 'live' && 'text-primary',
+                ]"
+              >
                 <RouterLink
                   v-if="set.entry.artist?.slug"
                   :to="localePath(`/artists/${set.entry.artist.slug}`)"
