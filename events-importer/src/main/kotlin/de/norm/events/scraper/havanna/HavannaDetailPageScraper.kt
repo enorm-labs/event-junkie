@@ -26,7 +26,6 @@ import java.time.LocalTime
  * @see HavannaWeeklyNight for the undated model this produces and its expansion into dated events.
  * @see <a href="https://www.havanna-berlin.de/friday">Havanna Friday</a>
  */
-@Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the prose layout needs several small field extractors.
 class HavannaDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 

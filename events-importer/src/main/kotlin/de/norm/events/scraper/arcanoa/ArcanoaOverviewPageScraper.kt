@@ -54,7 +54,7 @@ import java.time.MonthDay
  * @see ArcanoaWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.ssi-media.com/arcanoa/veranst.htm">Arcanoa programme</a>
  */
-@Suppress("LongComment", "TooManyFunctions") // 5 KDoc lines are the 1990s markup itself, which needs many small extractors to parse.
+@Suppress("LongComment") // 5 KDoc lines are the 1990s markup itself.
 class ArcanoaOverviewPageScraper(
     /** Clock for weekday-based year inference; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)

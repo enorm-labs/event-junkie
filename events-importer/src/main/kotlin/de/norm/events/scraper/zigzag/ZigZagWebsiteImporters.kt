@@ -29,7 +29,6 @@ import java.time.Clock
  *
  * @see <a href="https://www.zigzag-jazzclub.berlin/programmneu">Zig Zag programme</a>
  */
-@Suppress("AbstractClassCanBeConcreteClass") // A base for the venue importers below it; an instance of it alone names no venue.
 abstract class AbstractZigZagWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     final override val eventSource: EventSource,

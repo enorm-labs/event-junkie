@@ -50,7 +50,6 @@ import java.time.MonthDay
  * @see DunckerWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.dunckerclub.de/start.html">Duncker Club programme</a>
  */
-@Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the inline markup needs several small field extractors.
 class DunckerOverviewPageScraper(
     /** Clock for weekday-based year inference; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)

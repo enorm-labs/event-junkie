@@ -41,7 +41,6 @@ import java.time.LocalTime
  * @see CassiopeiaOverviewPageScraper for the listing and the fallback fields.
  * @see CassiopeiaWebsiteImporter for the HTTP fetch orchestrator and the merge.
  */
-@Suppress("TooManyFunctions") // Cohesive scraper with private helpers for each parsed field
 class CassiopeiaDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 

@@ -48,7 +48,6 @@ import java.time.MonthDay
  * @see WildAtHeartWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.wildatheartberlin.de/concerts.php">Wild at Heart programme</a>
  */
-@Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the retro markup needs many small field extractors
 class WildAtHeartOverviewPageScraper(
     /** Clock for year inference; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)
