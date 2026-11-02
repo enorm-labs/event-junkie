@@ -13,6 +13,7 @@ import de.norm.events.genretag.GenreTagEntity
 import de.norm.events.genretag.GenreTagOrigin
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.image.CachedImageGate
+import de.norm.events.image.CachedImages
 import de.norm.events.licence.SourceLicences
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.promoter.PromoterSummaryResponse
@@ -170,15 +171,7 @@ class EventService(
         val promoterIds = eventPromoterRepository.findByEventId(eventId).toList().map { it.promoterId }
         val promoterEntities = if (promoterIds.isEmpty()) emptyList() else promoterRepository.findByIdIn(promoterIds).toList()
 
-        val genreLinks = eventGenreTagRepository.findByEventId(eventId).toList()
-        val genreTagsById =
-            if (genreLinks.isEmpty()) emptyMap() else genreTagRepository.findAllById(genreLinks.map { it.genreTagId }).toList().associateBy { it.requiredId() }
-        val genreTags = genreTagsById.values.map { it.name }
-        val derivedGenreTags =
-            genreLinks
-                .filter { it.origin != GenreTagOrigin.SOURCE.name }
-                .mapNotNull { link -> genreTagsById[link.genreTagId]?.let { it.name to GenreTagOrigin.valueOf(link.origin) } }
-                .toMap()
+        val genreTags = genreTagsFor(eventId)
 
         // One lookup for every image this response carries: an embedded venue or artist summary holds
         // an `imageUrl` too, and leaving those unrewritten hands out a venue's own URL (#833).
@@ -187,19 +180,7 @@ class EventService(
                 listOf(event.imageUrl, venue.imageUrl) + artistsById.values.map { it.imageUrl } + promoterEntities.map { it.imageUrl }
             )
         val venueSummary = VenueSummaryResponse.fromEntity(venue, images.serve(venue.imageUrl, CARD_WIDTH))
-        val lineup =
-            artistLinks.mapNotNull { link ->
-                artistsById[link.artistId]?.let { artist ->
-                    LineupEntryResponse(
-                        artist = ArtistSummaryResponse.fromEntity(artist, images.serve(artist.imageUrl, CARD_WIDTH)),
-                        role = ArtistRole.parseOrDefault(link.role),
-                        billingOrder = link.billingOrder,
-                        stage = link.stage,
-                        setStart = link.setStart?.atZone(BERLIN)?.toOffsetDateTime(),
-                        setEnd = link.setEnd?.atZone(BERLIN)?.toOffsetDateTime()
-                    )
-                }
-            }
+        val lineup = lineupFor(artistLinks, artistsById, images)
         val promoters = promoterEntities.map { PromoterSummaryResponse.fromEntity(it, images.serve(it.imageUrl, CARD_WIDTH)) }
 
         return EventDetailResponse.fromEntity(
@@ -207,7 +188,7 @@ class EventService(
             venueSummary,
             lineup,
             promoters,
-            genreTags,
+            genreTags.names,
             eventFeatureRepository.findByEventId(eventId),
             images.serve(event.imageUrl, DETAIL_WIDTH),
             descriptionWithheld = licensed.descriptionWithheld,
@@ -217,7 +198,7 @@ class EventService(
             changes = eventChangeRepository.recent(eventId),
             postponedTo = postponementRepository.newDate(event),
             movedTo = relocationRepository.newPlace(event),
-            derivedGenreTags = derivedGenreTags,
+            derivedGenreTags = genreTags.derived,
             festival = event.festivalId?.let { festivalRepository.findById(it) }?.let(FestivalSummaryResponse::fromEntity)
         )
     }
@@ -348,6 +329,46 @@ class EventService(
         val distinct = artistIds.distinct()
         return if (distinct.isEmpty()) emptyMap() else artistRepository.findByIdIn(distinct).toList().associateBy { it.id }
     }
+
+    /** The genre tags linked to one event, for the detail response. The list path batch-loads its own in [summariesFor]. */
+    private suspend fun genreTagsFor(eventId: Long): EventGenreTags {
+        val links = eventGenreTagRepository.findByEventId(eventId).toList()
+        val tagsById =
+            if (links.isEmpty()) emptyMap() else genreTagRepository.findAllById(links.map { it.genreTagId }).toList().associateBy { it.requiredId() }
+        return EventGenreTags(
+            names = tagsById.values.map { it.name },
+            derived =
+                links
+                    .filter { it.origin != GenreTagOrigin.SOURCE.name }
+                    .mapNotNull { link -> tagsById[link.genreTagId]?.let { it.name to GenreTagOrigin.valueOf(link.origin) } }
+                    .toMap()
+        )
+    }
+
+    /** Every tag name on an event, and the subset a derivation produced rather than the source (ADR-047), by name. */
+    private data class EventGenreTags(
+        val names: List<String>,
+        val derived: Map<String, GenreTagOrigin>
+    )
+
+    /** The lineup entries of [artistLinks], in the order given, skipping a link whose artist row is missing. */
+    private fun lineupFor(
+        artistLinks: List<EventArtistEntity>,
+        artistsById: Map<Long?, ArtistEntity>,
+        images: CachedImages
+    ): List<LineupEntryResponse> =
+        artistLinks.mapNotNull { link ->
+            artistsById[link.artistId]?.let { artist ->
+                LineupEntryResponse(
+                    artist = ArtistSummaryResponse.fromEntity(artist, images.serve(artist.imageUrl, CARD_WIDTH)),
+                    role = ArtistRole.parseOrDefault(link.role),
+                    billingOrder = link.billingOrder,
+                    stage = link.stage,
+                    setStart = link.setStart?.atZone(BERLIN)?.toOffsetDateTime(),
+                    setEnd = link.setEnd?.atZone(BERLIN)?.toOffsetDateTime()
+                )
+            }
+        }
 
     companion object {
         /** Maximum span (inclusive) the calendar endpoint will return in a single request. */
