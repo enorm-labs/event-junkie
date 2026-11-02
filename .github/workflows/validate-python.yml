@@ -81,6 +81,9 @@ jobs:
       - name: manual-collisions folds titles and matches a hand-entered row
         run: python3 scripts/test_manual_collisions.py
 
+      - name: seed-sources --enable leaves a closed venue's source off
+        run: python3 scripts/test_seed_sources.py
+
       - name: osm-venue-coordinates writes only an OpenStreetMap point it can trust
         run: python3 scripts/test_osm_venue_coordinates.py
 

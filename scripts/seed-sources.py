@@ -26,6 +26,8 @@ A venue that closes for good (ADR-046) keeps its source and stops importing:
 
     python3 scripts/seed-sources.py --host <host> --disable <slug> --yes
 
+`--enable` leaves that source off: it skips every source whose venue file carries `closedOn` (#4410).
+
 **This never triggers an import.** The generated `dev-seed.http` does, for a local run; this does not.
 Step 3 hands the sources to the scheduler, which picks them up on its next tick.
 
@@ -107,6 +109,11 @@ def request(url, method="GET", body=None):
         return json.loads(r.read().decode() or "{}")
 
 
+def closed_sources(seed):
+    """{source name: closedOn} for every source of a venue that closed (ADR-046)."""
+    return {source["name"]: venue["closedOn"] for venue, sources in seed if venue.get("closedOn") for source in sources}
+
+
 def enable(args):
     """Step 3. Separated from creation so the licence review has somewhere to happen in between."""
     try:
@@ -116,11 +123,20 @@ def enable(args):
     except (urllib.error.URLError, OSError) as e:
         sys.exit(f"Cannot reach the importer at {args.host}: {e}")
 
+    try:
+        closed = closed_sources(read_seed(args.seed))
+    except (OSError, ValueError, KeyError) as e:
+        sys.exit(f"Cannot read {args.seed}: {e}")
+
     unreviewed = [s["name"] for s in sources if not s.get("descriptionLicence") and not s.get("imageLicence")]
-    disabled = [s for s in sources if not s.get("enabled")]
+    # A venue that closed was disabled on purpose (ADR-046); enabling every disabled source re-opened it (#4410).
+    skipped = [s for s in sources if not s.get("enabled") and s["name"] in closed]
+    disabled = [s for s in sources if not s.get("enabled") and s["name"] not in closed]
     print(f"{args.host}: {len(sources)} sources, {len(disabled)} disabled, {len(unreviewed)} unreviewed")
     for n in unreviewed:
         print(f"  UNREVIEWED  {n}")
+    for s in skipped:
+        print(f"  SKIPPED  {s['slug']} (venue closed {closed[s['name']]})")
     if unreviewed and not args.allow_unreviewed:
         sys.exit(
             "\nRefusing to enable while a source is unreviewed.\n"
@@ -129,7 +145,7 @@ def enable(args):
             "Pass --allow-unreviewed if the absence is the known one."
         )
     if not disabled:
-        print("\nEvery source is already enabled. Nothing to do.")
+        print("\nNo source to enable. Nothing to do.")
         return
     if args.host != LOCAL_HOST and not args.yes:
         sys.exit(f"\nRefusing to write to {args.host} without --yes. It would enable {len(disabled)} sources.")
