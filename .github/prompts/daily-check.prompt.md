@@ -153,6 +153,17 @@ curl -s 'http://localhost:28081/api/admin/venues/manual' | jq --arg cut "$(date 
   '[.[] | select(.programmeCheckedAt == null or (.programmeCheckedAt | sub("\\.[0-9]+"; "")) <= $cut)] | "\(length) manual venues overdue"' -r
 ```
 
+**The problem reports** (#4399). Print one line, `<n> open problem reports`: what allowed accounts reported on event pages and nobody resolved. One or
+more is ACT: "run `/fix-events`", which reads the queue when it gets no argument.
+
+```sh
+curl -sf 'http://localhost:28081/api/admin/reports' | jq -r 'if type == "array" then "\(length) open problem reports" else error end' \
+  || echo 'problem reports: not readable'
+```
+
+`-f` and the type check matter: without them a 404 or an error body counts its fields, and reads as reports. "Not readable" goes under Not checked
+in the report, with the reason: the forward is down, or the release with the route (#4399) has not reached production.
+
 ## Step 6 — The bot pull requests
 
 For each open pull request by `dependabot[bot]`, `renovate[bot]` or `claude[bot]` (`app/…` in the JSON), in that order:
@@ -174,8 +185,8 @@ Write `temp/daily-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/
 2. **State**: the tunnel, both clusters' versions, `release_main`, the unreleased commits, the alerts that fired, one line per rule and cluster, and
    the `/traffic` lines.
 3. **Merged**: each pull request merged in Step 6, with its subject.
-4. **Data**: the flagged new artists and promoters with their verdicts, the `/admin-review` lines with the link to its report, and the manual venues: the overdue
-   line.
+4. **Data**: the flagged new artists and promoters with their verdicts, the `/admin-review` lines with the link to its report, the manual venues: the overdue
+   line, and the open problem reports line.
 5. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone, and the `afk-ok` verdict
    by `/new-issue` step 4 — `afk-ok: yes`, or `afk-ok: no — <the condition that fails>`. Each draft's heading ends in its state, `(unfiled)`; filing
    one rewrites it to `(filed #N)`. [`/maintain`](maintain.prompt.md) reads that marker.
