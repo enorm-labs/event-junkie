@@ -276,6 +276,8 @@ class ArtistNormalizerTest {
             canonicalArtistName("Uppercuts") shouldBe "The Uppercuts"
             canonicalArtistName("The Uppercuts") shouldBe "The Uppercuts"
             canonicalArtistName("Dark Tenor") shouldBe "The Dark Tenor"
+            canonicalArtistName("MAKARA MARCEL") shouldBe "Makara"
+            canonicalArtistName("MAKARA") shouldBe "Makara"
             // Different acts that share a key stay apart.
             canonicalArtistName("DJ Gus") shouldBe "DJ Gus"
             canonicalArtistName("K-Lone") shouldBe "K-Lone"

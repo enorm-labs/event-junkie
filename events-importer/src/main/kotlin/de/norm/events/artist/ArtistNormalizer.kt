@@ -147,7 +147,9 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "traumamia" to "Trauma Mia",
         "limboboys" to "Limbo Boys",
         "uppercuts" to "The Uppercuts",
-        "darktenor" to "The Dark Tenor"
+        "darktenor" to "The Dark Tenor",
+        // 8MM Bar's 8MM Fest line-up adds a stray word to the Bangkok trio that ACUD bills as Makara (#4403).
+        "makaramarcel" to "Makara"
     )
 
 /** Lowercased, punctuation- and space-free lookup key for a name. */
