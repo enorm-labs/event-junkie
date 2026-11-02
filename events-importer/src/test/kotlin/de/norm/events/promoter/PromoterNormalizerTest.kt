@@ -536,4 +536,21 @@ class PromoterNormalizerTest {
             isNonPromoterName("Simply Quiz") shouldBe false
         }
     }
+
+    @Test
+    fun `splits a co-billing at a spaced ampersand only when one side is a stored promoter`() {
+        val stored = setOf("milchmadchen-musikkultur", "concertburo-zahlmann", "crunch-tapes", "positive-transmitter", "kunst")
+        val split = { raw: String -> splitCoBilledPromoter(raw) { it in stored } }
+        assertSoftly {
+            split("Milchmädchen Musikkultur GmbH & Dasmituns") shouldBe listOf("Milchmädchen Musikkultur GmbH", "Dasmituns")
+            split("Concertbüro Zahlmann & Cocomico Theater") shouldBe listOf("Concertbüro Zahlmann", "Cocomico Theater")
+            split("Crunch Tapes & Positive Transmitter") shouldBe listOf("Crunch Tapes", "Positive Transmitter")
+            split("Afro Haus & Crunch Tapes & Purple Events") shouldBe listOf("Afro Haus", "Crunch Tapes", "Purple Events")
+            // No side stored, or no spaced ampersand: one promoter.
+            split("Kollektiv Kunst & Krawall") shouldBe listOf("Kollektiv Kunst & Krawall")
+            split("B&C Productions") shouldBe listOf("B&C Productions")
+            split("LEASING&RENT OÜ") shouldBe listOf("LEASING&RENT OÜ")
+            split("Crunch Tapes") shouldBe listOf("Crunch Tapes")
+        }
+    }
 }

@@ -6,7 +6,9 @@ import de.norm.events.event.EventPromoterRepository
 import de.norm.events.promoter.PromoterEntity
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.promoter.canonicalPromoterName
+import de.norm.events.promoter.coBilledPromoterParts
 import de.norm.events.promoter.isNonPromoterName
+import de.norm.events.promoter.splitCoBilledPromoter
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -25,6 +27,30 @@ class PromoterAssociationSync(
     private val eventPromoterRepository: EventPromoterRepository,
     private val promoterRepository: PromoterRepository
 ) {
+    /**
+     * [events] with each co-billed credit split into its promoters where one of them is stored
+     * ([splitCoBilledPromoter]). Runs before anything reads [ScrapedEvent.promoters], so the
+     * resolve, the sync and the pin count see the same names.
+     */
+    suspend fun splitCoBillings(events: List<ScrapedEvent>): List<ScrapedEvent> {
+        val partSlugs =
+            events
+                .flatMap { it.promoters }
+                .flatMap { coBilledPromoterParts(it) }
+                .mapTo(mutableSetOf()) { SlugGenerator.slugify(canonicalPromoterName(it)) }
+        if (partSlugs.isEmpty()) return events
+        val known = promoterRepository.findBySlugIn(partSlugs).toList().mapTo(mutableSetOf()) { it.slug }
+        return events.map { event ->
+            val promoters = event.promoters.flatMap { raw -> splitCoBilledPromoter(raw) { it in known } }
+            if (promoters == event.promoters) {
+                event
+            } else {
+                logger.debug { "Split co-billed promoters of '${event.sourceId}': ${event.promoters} to $promoters" }
+                event.copy(promoters = promoters)
+            }
+        }
+    }
+
     /**
      * Batch-fetches known promoters by slug and auto-creates the rest.
      *
