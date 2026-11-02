@@ -66,6 +66,7 @@ class LidoDetailPageScraper {
             priceBoxOffice = priceBoxOffice,
             soldOut = block.soldOut,
             status = block.status,
+            statusNote = block.statusNote,
             promoters = block.promoters,
             promoterWebsites = block.promoterWebsites
         )

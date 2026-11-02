@@ -72,9 +72,9 @@ fun resolveRelocation(
  * Decides what a `POSTPONED` status means for the row dated [eventDate]: the date the show left,
  * or the date it moved to.
  *
- * Huxleys prints "vom 06.03.2026 auf den 01.10.2026 verschoben" on the new date's row. A note
- * that names [eventDate] after "auf" makes this row the replacement, so the show happens here:
- * `SCHEDULED`. Any other status, or notes naming another date or none, pass through (#2206).
+ * The venue's note sits on the new date's row too, so a note that names [eventDate] as the new date
+ * makes this row the replacement: `SCHEDULED`, the show happens here (#2206). Any other status, or
+ * notes naming another date or none, pass through. [movedHere] lists the forms a note uses.
  */
 fun resolvePostponement(
     status: String,
@@ -82,8 +82,7 @@ fun resolvePostponement(
     eventDate: LocalDate
 ): String {
     if (status != EventStatus.POSTPONED.name) return status
-    val movedHere = notes.any { note -> POSTPONED_TO_DATE.findAll(note).any { targetDate(it) == eventDate } }
-    return if (movedHere) EventStatus.SCHEDULED.name else status
+    return if (notes.any { movedHere(it, eventDate) }) EventStatus.SCHEDULED.name else status
 }
 
 /**
@@ -189,8 +188,8 @@ fun relocatedOn(
 /** Any date written as digits: "06.11.2026", "29.10.26". */
 private val ANY_DATE = Regex("""(?<!\d)(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)""")
 
-/** The new date of a move: "auf den 01.10.2026", "auf 04.11.2026", "auf den 08.10.26". */
-private val POSTPONED_TO_DATE = Regex("""\bauf\s+(?:den\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)""", RegexOption.IGNORE_CASE)
+/** The new date of a move: "auf den 01.10.2026", "auf 04.11.2026", "auf den 08.10.26", and Columbiahalle's "auf dem 24.10.27". */
+internal val POSTPONED_TO_DATE = Regex("""\bauf\s+(?:de[nm]\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)""", RegexOption.IGNORE_CASE)
 
 /**
  * The house named right after the new date: "auf den 18.03.27 im Säälchen", "auf 04.11.2026 ins
@@ -198,7 +197,7 @@ private val POSTPONED_TO_DATE = Regex("""\bauf\s+(?:den\s+)?(\d{1,2})\.(\d{1,2})
  */
 private val POSTPONED_TO_HOUSE =
     Regex(
-        """\bauf\s+(?:den\s+)?\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2})\s+(?:im|ins|in\s+(?:der|dem|den|das))\s+$NAME_BODY""",
+        """\bauf\s+(?:de[nm]\s+)?\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2})\s+(?:im|ins|in\s+(?:der|dem|den|das))\s+$NAME_BODY""",
         RegexOption.IGNORE_CASE
     )
 

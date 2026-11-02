@@ -132,6 +132,7 @@ class LidoOverviewPageScraper {
             sourceId = "${EventSource.LIDO.sourceIdPrefix}${extractEventSlug(block.sourceUrl)}",
             soldOut = block.soldOut,
             status = block.status,
+            statusNote = block.statusNote,
             promoters = block.promoters,
             promoterWebsites = block.promoterWebsites,
             // Extract support only from the subtitle lines carrying a "Support:" marker, so a note on another
@@ -160,6 +161,8 @@ internal data class LidoEventBlock(
     /** Mapped event type, or `null` without a type label. */
     val eventType: String?,
     val subtitle: String?,
+    /** The shouted banner under the subtitle, such as "HOCHVERLEGT IN DAS COLUMBIA THEATER", which names a move's destination. */
+    val statusNote: String?,
     val soldOut: Boolean,
     val status: String,
     val promoters: List<String>,
@@ -183,6 +186,7 @@ internal fun parseLidoEventBlock(
 
     val statusText = root.textAt(".event-ticket__content__status__label")?.lowercase().orEmpty()
     val (doorsTime, startTime) = parseLidoTimes(root)
+    val (subtitle, notice) = splitSubtitleNotice(root.selectFirst(".event-ticket__content__subtitle")?.textLines(keepBlankLines = true).orEmpty())
 
     return LidoEventBlock(
         title = title,
@@ -191,8 +195,9 @@ internal fun parseLidoEventBlock(
         doorsTime = doorsTime,
         startTime = startTime,
         eventType = refineConcertVenueType(mapEventType(root.textAt(".event-ticket__type__label")), title),
-        // The status label already says sold out, postponed or relocated, so the banner below the subtitle is dropped.
-        subtitle = splitSubtitleNotice(root.selectFirst(".event-ticket__content__subtitle")?.textLines(keepBlankLines = true).orEmpty()).first,
+        // The status label already says sold out, postponed or relocated; the banner below the subtitle names where to.
+        subtitle = subtitle,
+        statusNote = notice,
         soldOut = statusText.contains("ausverkauft") || statusText.contains("sold out"),
         status = parseEventStatus(statusText),
         promoters = parseLidoPresenters(root),
