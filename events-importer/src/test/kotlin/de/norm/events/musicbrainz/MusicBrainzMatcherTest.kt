@@ -28,6 +28,19 @@ class MusicBrainzMatcherTest {
         MusicBrainzMatcher.nameMatch("Pici", candidate("Pici Mazzei")) shouldBe CandidateNameMatch.NONE
     }
 
+    @Test
+    fun `fold reads ß as ss and a final sigma as sigma, as the script's casefold does, so a shouted billing still matches`() {
+        MusicBrainzMatcher.fold("WEISSGLUT") shouldBe MusicBrainzMatcher.fold("Weißglut")
+        MusicBrainzMatcher.nameMatch("Weissglut", candidate("Weißglut")) shouldBe CandidateNameMatch.NAME
+        MusicBrainzMatcher.fold("ΧΆΡΗΣ ΑΛΕΞΊΟΥ") shouldBe MusicBrainzMatcher.fold("Χάρης Αλεξίου")
+    }
+
+    @Test
+    fun `fold reads two conjunctions in a row as two`() {
+        MusicBrainzMatcher.fold("Me und and You") shouldBe "me & & you"
+        MusicBrainzMatcher.fold("Me und and You") shouldBe MusicBrainzMatcher.fold("Me & & You")
+    }
+
     @Nested
     inner class Verdicts {
         @Test
