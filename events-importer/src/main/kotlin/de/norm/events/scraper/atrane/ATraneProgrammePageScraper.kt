@@ -41,8 +41,9 @@ import java.time.format.DateTimeParseException
  *
  * The sidemen lines (`Feat: A-B-C`, `WITH: A-B`) bill no artists: they split names on hyphens
  * that double-barrelled names also carry. A weekly session's guests (`HEUTE MIT: A- B`) are
- * billed, because they are split on a hyphen followed by a space only (#2706). A `SPECIAL GUEST:`
- * line names one guest, unsplit, who is billed unless the title already bills them (#3105); a
+ * billed, because they are split on a dash with a space beside it (#2706), or on a bare hyphen with
+ * two words on each side (#4374). A `SPECIAL GUEST:` line names one guest, unsplit, who is billed
+ * unless the title already bills them (#3105); a
  * `SPECIAL GUESTS:` line is split on `&` and commas. A `MEETS` line bills the act it names, its quoted
  * name alone when members follow (`MEETS "THE SHAWN & WOLF» Shawn Grocott & Wolfgang Meyer`). A title that only leads in to the act
  * (`WEIHNACHTLICH BESINNLICHES MIT:`) stays the title, and the line below it is the act.
@@ -166,7 +167,12 @@ class ATraneProgrammePageScraper {
         acts: List<String>,
         guestIndex: Int
     ): Billing {
-        val guests = acts[guestIndex].split(GUEST_SEPARATOR).map(::deshout).filter { it.isNotEmpty() && !isNonArtistName(it) }
+        val guests =
+            acts[guestIndex]
+                .split(GUEST_SEPARATOR)
+                .flatMap(::splitRunTogether)
+                .map(::deshout)
+                .filter { it.isNotEmpty() && !isNonArtistName(it) }
         val subtitle = acts.take(guestIndex).drop(1) + "Heute mit: ${guests.joinToString(", ")}" + acts.drop(guestIndex + 1)
         return Billing(acts.first(), subtitle.filter { it.isNotEmpty() }.joinToString(" · "), guests)
     }
@@ -249,10 +255,28 @@ class ATraneProgrammePageScraper {
         val QUOTED_NAME = Regex("""^[«"„“]([^»"“”]+)[»"“”]""")
         val GUESTS_SEPARATOR = Regex("""\s*[&,]\s*""")
         val LEAD_IN = Regex("""\bmit:$""", RegexOption.IGNORE_CASE)
-        val GUEST_SEPARATOR = Regex("""\s*[-–]\s+""")
+        val GUEST_SEPARATOR = Regex("""\s*[-–]\s+|\s+[-–]\s*""")
 
         val NOT_A_STYLE = Regex("""live concert|eintritt frei""", RegexOption.IGNORE_CASE)
         val FREE_ENTRY = Regex("""eintritt frei|no cover""", RegexOption.IGNORE_CASE)
         val CONCESSION = Regex("""student""", RegexOption.IGNORE_CASE)
     }
+}
+
+private val BARE_HYPHEN = Regex("""(?<=\S)-(?=\S)""")
+private val WORD_GAP = Regex("""\s+""")
+
+/**
+ * Two guests the venue joined with a bare hyphen (`SEBASTIAN MERK-JOHN SCHRÖDER`, #4374). A hyphen splits only when
+ * the text between it and the hyphens beside it holds two words on each side, so a double-barrelled name
+ * (`ANNA MÜLLER-LÜDENSCHEIDT`, `HANS-PETER MEYER`) stays whole, and so does a run that has one beside the join.
+ */
+private fun splitRunTogether(guests: String): List<String> {
+    fun words(text: String) = text.trim().split(WORD_GAP).count { it.isNotEmpty() }
+    val segments = guests.split(BARE_HYPHEN)
+    val split = mutableListOf(segments.first())
+    segments.zipWithNext { before, after ->
+        if (words(before) >= 2 && words(after) >= 2) split += after else split[split.lastIndex] += "-$after"
+    }
+    return split.map { it.trim() }
 }
