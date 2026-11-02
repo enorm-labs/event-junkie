@@ -33,8 +33,8 @@ import java.time.LocalTime
  * - **A changed date is stated twice.** An `.abgesagtausverkauft` badge reads `Abgesagt`, and a
  * separate `.aenderungen` line explains what happened ("Wird in die Columbiahalle verlegt.
  * Tickets behalten ihre Gültigkeit!"). Where that line says *verlegt*, the truthful status is
- * [EventStatus.RELOCATED], not cancelled — and the line is kept at the head of the description,
- * since the status alone does not say where the show went.
+ * [EventStatus.RELOCATED], not cancelled, and the line heads the description. A target after
+ * "auf den" ("auf den Berliner Festplatz") is not read: elsewhere "auf den" gives a new date.
  * - **The doors time may be `tba`.** A date announced a year ahead states `Einlass` as "tba";
  * that must stay `null`, not become a time.
  * - **The category is a WordPress taxonomy class** on the `<article>`
