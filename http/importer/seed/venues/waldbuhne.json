@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Waldbühne",
+        "address": "Glockenturmstraße 1",
+        "city": "Berlin",
+        "postalCode": "14053",
+        "district": "charlottenburg",
+        "latitude": 52.515547,
+        "longitude": 13.229525,
+        "websiteUrl": "https://www.waldbuehne-berlin.de",
+        "description": "An open-air amphitheatre for 22,290 people, built for the 1936 Olympics in a wooded ravine beside the Olympiastadion and modelled on the theatre at Epidaurus, with rock, pop, Schlager and classical concerts from May to September.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Amphitheater unter freiem Himmel für 22.290 Menschen, zu den Olympischen Spielen 1936 in einer bewaldeten Schlucht neben dem Olympiastadion nach dem Vorbild des Theaters von Epidauros gebaut, mit Rock, Pop, Schlager und Klassik von Mai bis September.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air"],
+        "capacity": 22290
+    },
+    "sources": [
+        {
+            "name": "Waldbühne",
+            "url": "https://www.waldbuehne-berlin.de/programm-und-tickets/",
+            "sourceType": "WALDBUEHNE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

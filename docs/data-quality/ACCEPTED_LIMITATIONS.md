@@ -1012,6 +1012,10 @@ says so.
 | `WABE`                 | `DOORS_TIME`       | the site prints one time per night, the start                                                                                                    | —     |
 | `WABE`                 | `GENRE`            | the category names a format such as `Konzert`, and a style appears only in the prose                                                             | —     |
 | `WABE`                 | `PROMOTERS`        | most nights name a presenter only in the prose, if at all                                                                                        | —     |
+| `WALDBUEHNE`           | `START_TIME`       | a date months ahead prints `tbd` for doors and start until the promoter sets them                                                                | —     |
+| `WALDBUEHNE`           | `DOORS_TIME`       | a date months ahead prints `tbd` for doors and start until the promoter sets them                                                                | —     |
+| `WALDBUEHNE`           | `PRICE`            | a date not yet on sale or sold out has a JSON-LD offer with no price                                                                             | —     |
+| `WALDBUEHNE`           | `GENRE`            | the JSON-LD and the event pages carry no genre field                                                                                             | —     |
 | `WEEKEND`              | `SUBTITLE`         | the listing prints a title and a blurb, no second title line                                                                                     | —     |
 | `WEEKEND`              | `EVENT_TYPE`       | the site names no category; every night is a club night                                                                                          | —     |
 | `WEEKEND`              | `DOORS_TIME`       | the listing prints a start and an end time and no doors time                                                                                     | —     |
