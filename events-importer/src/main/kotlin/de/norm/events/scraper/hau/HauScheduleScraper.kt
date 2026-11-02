@@ -120,7 +120,11 @@ class HauScheduleScraper(
             else -> EventType.SHOW
         }
 
-    /** The DJs of a `DJ set by A & B` night; the act of a concert. A staged work bills nothing: its line names an artist, a company or a series alike. */
+    /**
+     * The DJs of a `DJ set by A & B` night; the act of a concert. A staged work bills nothing: its line names an artist, a company or a series alike.
+     * A party line can bill more than its DJs, one credit per `/` part: `With DJ sets by A, B a.o. / Live performance by C / MC D & E`. The
+     * `Live performance by` part is a live act, and any other part names the hosts, who are no act.
+     */
     private fun artists(
         type: EventType,
         title: String,
@@ -129,15 +133,15 @@ class HauScheduleScraper(
         when (type) {
             EventType.PARTY -> {
                 listOfNotNull(subtitle, title)
-                    .firstNotNullOfOrNull {
+                    .firstOrNull {
                         DJ_SET
                             .find(it)
                             ?.groupValues
                             ?.get(1)
-                            ?.blankToNull()
-                    }?.let(::splitSegmentOnConjunctions)
+                            ?.isNotBlank() == true
+                    }?.split(CREDIT_BREAK)
                     .orEmpty()
-                    .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+                    .flatMap(::creditedActs)
             }
 
             EventType.CONCERT -> {
@@ -148,6 +152,22 @@ class HauScheduleScraper(
                 emptyList()
             }
         }
+
+    /** The acts one `/` part of a party line credits, or none when the part credits a host. */
+    private fun creditedActs(credit: String): List<ScrapedArtist> {
+        val (names, role) =
+            DJ_SET.find(credit)?.let { it.groupValues[1] to ArtistRole.DJ }
+                ?: LIVE_BY.find(credit)?.let { it.groupValues[1] to ArtistRole.LIVE }
+                ?: return emptyList()
+        // A credit lists names, never a band with a comma in it, so each comma is a break.
+        return names
+            .replace(AND_OTHERS, "")
+            .split(',')
+            .flatMap(::splitSegmentOnConjunctions)
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .map { ScrapedArtist(name = it, role = role) }
+    }
 
     private fun parseYearMonth(text: String?): YearMonth? =
         text?.replace(' ', ' ')?.blankToNull()?.let {
@@ -165,6 +185,13 @@ class HauScheduleScraper(
         private val MONTH_LINK_TITLE: DateTimeFormatter = DateTimeFormatter.ofPattern("MM-yyyy")
         private val DOORS = Regex("""Doors:\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
         private val DJ_SET = Regex("""\bDJ[ -]sets?\b(?:\s+by\s+(.+))?""", RegexOption.IGNORE_CASE)
+        private val LIVE_BY = Regex("""\blive\s+(?:performance|act|concert)\s+by\s+(.+)""", RegexOption.IGNORE_CASE)
+
+        /** The `/` between two credits; a slash inside a name has no spaces round it. */
+        private val CREDIT_BREAK = Regex("""\s+/\s+""")
+
+        /** `a.o.`, `u.a.` or `and others` closing a list of names. */
+        private val AND_OTHERS = Regex("""\s*(?:,\s*)?\b(?:a\.\s?o\.|u\.\s?a\.|and others)\s*$""", RegexOption.IGNORE_CASE)
         private val STAGED = setOf("performance", "dance", "theatre", "game")
 
         /**

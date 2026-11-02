@@ -112,7 +112,7 @@ says so.
 | `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights                 | —     |
 | `BERGHAIN`             | `PRICE`            | some Kantine concert pages print no figure in their tickets block                                                                                | —     |
 | `BADEHAUS`             | `START_TIME`       | some pages print only the doors, `19:00 UHR` beside the date and at most an `Einlass` or `Doors` line below it, and no start                     | —     |
-| `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
+| `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; a concert bills its title and a Support: subtitle, or the acts a subtitle lists after feat                        | —     |
 | `BADEHAUS`             | `PRICE`            | the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note         | —     |
 | `BADEHAUS`             | `GENRE`            | the subtitle names a style on some nights and is prose or a tour name on others, so about four in ten nights carry no genre                      | —     |
 | `BADEHAUS`             | `PROMOTERS`        | the venue credits itself as the promoter on its own nights, so the stored promoter is the venue                                                  | —     |

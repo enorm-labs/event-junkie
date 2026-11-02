@@ -165,6 +165,44 @@ class BadehausWebsiteImporterTest {
             after.artists shouldHaveSize 0
         }
 
+    // Event 12434: the subtitle repeats the night's name and lists its acts after "feat"; the title billed itself as the act.
+    @Test
+    fun `bills the acts a night's subtitle lists after feat, not the night's name`() =
+        runTest {
+            events(importNight("Mehr Als Musik Clubshow", "FREE Mehr Als Musik &#8211; Clubshow feat Joppe, Amelie, Ciez und JonE"))
+                .single()
+                .artists
+                .map { it.name } shouldBe listOf("Joppe", "Amelie", "Ciez", "JonE")
+        }
+
+    @Test
+    fun `keeps the title's act when feat follows another name`() =
+        runTest {
+            events(importNight("Sollowege", "Butterwegge Solo feat Max Kupke")).single().artists.map { it.name } shouldBe listOf("Sollowege")
+        }
+
+    /** Imports one card with [title] and [subtitle] whose page is categorised Concert. */
+    private suspend fun importNight(
+        title: String,
+        subtitle: String
+    ): ImportResult {
+        val url = "https://badehaus-berlin.com/events/night/"
+        val card =
+            """
+            <div><div class="eventlistimg"><a href="$url"><img src="https://badehaus-berlin.com/p.jpg"/></a></div>
+              <div class="nomargin"><p class="eventinfo">Do. 03.12.2026 | 19:00 UHR</p>
+                <h2><a href="$url">$title</a></h2><p>$subtitle</p></div></div>
+            """.trimIndent()
+        val page =
+            """
+            <div class="post-meta"><a href="https://badehaus-berlin.com/events/categories/concert/" rel="category tag">Concert</a></div>
+            <div class="em-event-single"><h3>Do. 03.12.2026 | 19:00 UHR</h3><h1>$title</h1></div>
+            """.trimIndent()
+        coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns FetchResult.Success(Jsoup.parse(card, sourceUrl), null, null)
+        coEvery { htmlFetcher.fetchDocument(url) } returns Jsoup.parse(page, url)
+        return importer.importEvents(sourceUrl)
+    }
+
     // The venue files a dance workshop under Interactive; the card's inferred CONCERT billed its name as the act (#3100).
     @Test
     fun `types an Interactive night as other and bills no act`() =

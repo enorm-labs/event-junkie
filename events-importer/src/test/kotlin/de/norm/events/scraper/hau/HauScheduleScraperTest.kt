@@ -62,6 +62,32 @@ class HauScheduleScraperTest {
     }
 
     @Test
+    fun `bills a party line's DJs and live act and leaves its hosts out`() {
+        // Event 12380: the DJs end in "a.o.", and the hosts' part names no act.
+        val page =
+            Jsoup.parse(
+                """
+                <div class="month"><div class="month-box"><h3>December 2026</h3></div>
+                <ul><li class="day" data-filterDate="05-12"><ul><li class="item">
+                  <div class="floats"><strong>15:00</strong></div>
+                  <a class="event-venue" data-venue="HAU2">HAU2</a>
+                  <div class="info-wrap"><h3>Queer Ping Pong #2</h3>
+                    <h4>With DJ sets by Gudrun Gut, Diamin a.o. / Live performance by NYYA / MC Beyefendi &amp; Camila Malenchini</h4>
+                    <div class="cat-box"><ul><li class="cat">Music</li></ul></div></div>
+                  <a class="show-btn" href="/en/programme/pdetail/queer-ping-pong-2/">Details</a>
+                </li></ul></li></ul></div>
+                """.trimIndent(),
+                url
+            )
+
+        val event = hau2.scrape(page, url).single()
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists.map { it.name to it.role } shouldBe
+            listOf("Gudrun Gut" to ArtistRole.DJ, "Diamin" to ArtistRole.DJ, "NYYA" to ArtistRole.LIVE)
+    }
+
+    @Test
     fun `types staged works as shows that bill no act, and talks as readings`() {
         val events = hau1.scrape(october, url) + hau2.scrape(october, url)
 

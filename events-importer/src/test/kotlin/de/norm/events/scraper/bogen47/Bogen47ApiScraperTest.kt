@@ -209,6 +209,55 @@ class Bogen47ApiScraperTest {
     }
 
     @Test
+    fun `scrapePage bills a party's timetable as DJs with their sets`() {
+        // Event 12349: a b2b splits, a label in brackets goes, and the "&" in a crew's name stays.
+        val event =
+            eventDescribed(
+                "Melodic showcase",
+                """<p>See you!</p><p>23:00–02:00: FERDI b2b Kühni (melodic)</p><p>02:00–04:00: Olga Korol (Body Parts)</p>""" +
+                    """<p>04:00–06:00: Manolito &amp; Sons</p>""",
+                eventType = "Party"
+            )
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("FERDI", "Kühni", "Olga Korol", "Manolito & Sons").map { it to ArtistRole.DJ }
+        val night = LocalDate.of(2026, 9, 28)
+        event.artists.first().setStart shouldBe night.atTime(23, 0).atZone(BERLIN).toInstant()
+        event.artists.first().setEnd shouldBe
+            night
+                .plusDays(1)
+                .atTime(2, 0)
+                .atZone(BERLIN)
+                .toInstant()
+        event.artists.last().setStart shouldBe
+            night
+                .plusDays(1)
+                .atTime(4, 0)
+                .atZone(BERLIN)
+                .toInstant()
+    }
+
+    @Test
+    fun `scrapePage bills the guests a party's description says are joining`() {
+        // Event 12348: the residents after "alongside" go unnamed.
+        val event =
+            eventDescribed(
+                "SUPERSONIC",
+                """<p>Joining us are Eline and Carmelina, alongside our trusted SUPERSONIC residents, each bringing their own flavour.</p>""",
+                eventType = "Party"
+            )
+
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Eline" to ArtistRole.DJ, "Carmelina" to ArtistRole.DJ)
+    }
+
+    @Test
+    fun `scrapePage reads one clock line in a party's description as no timetable`() {
+        eventDescribed("Circuit Design Sessions", """<p>Sat. 21.11.2026 13:00 - 20:00</p><p>22:00: Doors</p>""", eventType = "Party")
+            .artists shouldHaveSize 0
+    }
+
+    @Test
     fun `scrapePage keeps a title's support act beside a bulleted line-up`() {
         val event = eventDescribed("Showcase + Lily Seabird (support)", """- Sin Davis\n\n- Lilyth\n\n- t1m""")
 
