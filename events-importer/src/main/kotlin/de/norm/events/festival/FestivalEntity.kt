@@ -20,4 +20,6 @@ data class FestivalEntity(
     val noticeEn: String,
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
-)
+) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted festival must have an ID" }
+}

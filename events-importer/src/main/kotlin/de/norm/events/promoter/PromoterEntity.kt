@@ -27,6 +27,8 @@ data class PromoterEntity(
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 ) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted promoter must have an ID" }
+
     fun toDomain(): Promoter =
         Promoter(
             id = id,

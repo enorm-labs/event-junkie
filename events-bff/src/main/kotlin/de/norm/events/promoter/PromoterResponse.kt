@@ -47,7 +47,7 @@ data class PromoterSummaryResponse(
             image: ServedImage
         ): PromoterSummaryResponse =
             PromoterSummaryResponse(
-                id = requireNotNull(entity.id) { "Persisted promoter must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 websiteUrl = entity.websiteUrl,
@@ -112,7 +112,7 @@ data class PromoterDetailResponse(
             image: ServedImage
         ): PromoterDetailResponse =
             PromoterDetailResponse(
-                id = requireNotNull(entity.id) { "Persisted promoter must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 websiteUrl = entity.websiteUrl,
@@ -168,7 +168,7 @@ data class PromoterListItemResponse(
             row: PromoterListRow
         ): PromoterListItemResponse =
             PromoterListItemResponse(
-                id = requireNotNull(entity.id) { "Persisted promoter must have an ID" },
+                id = entity.requiredId(),
                 slug = entity.slug,
                 name = entity.name,
                 websiteUrl = entity.websiteUrl,

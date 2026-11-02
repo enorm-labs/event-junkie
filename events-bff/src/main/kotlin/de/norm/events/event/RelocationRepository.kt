@@ -38,7 +38,7 @@ class RelocationRepository(
     }
 
     private suspend fun candidates(event: EventEntity): List<Candidate> {
-        val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
+        val eventId = event.requiredId()
         return databaseClient
             .sql(
                 """

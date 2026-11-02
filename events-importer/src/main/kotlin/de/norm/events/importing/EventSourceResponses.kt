@@ -98,7 +98,7 @@ data class EventSourceResponse(
     companion object {
         fun fromEntity(entity: EventSourceEntity): EventSourceResponse =
             EventSourceResponse(
-                id = requireNotNull(entity.id) { "Persisted entity must have an ID" },
+                id = entity.requiredId(),
                 venueId = entity.venueId,
                 name = entity.name,
                 slug = entity.slug,

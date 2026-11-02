@@ -51,7 +51,7 @@ data class PromoterResponse(
     companion object {
         fun fromDomain(promoter: Promoter): PromoterResponse =
             PromoterResponse(
-                id = requireNotNull(promoter.id) { "Persisted promoter must have an ID" },
+                id = promoter.requiredId(),
                 name = promoter.name,
                 slug = promoter.slug,
                 websiteUrl = promoter.websiteUrl,

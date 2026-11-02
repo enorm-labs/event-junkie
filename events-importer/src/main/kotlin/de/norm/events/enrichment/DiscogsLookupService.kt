@@ -88,7 +88,7 @@ class DiscogsLookupService(
 
     /** The search, then for an EXACT match its newest release (rule 5, #2054): one more request for about one row in six. */
     private suspend fun lookup(artist: ArtistEntity) {
-        val id = requireNotNull(artist.id) { "A candidate row is persisted" }
+        val id = artist.requiredId()
         val found = DiscogsMatcher.decide(artist.name, client.search(artist.name))
         val newestRelease = found.discogsId?.let { client.newestReleaseYear(it) }
         val earliestYear = Year.now(ZoneOffset.UTC).value - properties.recentReleaseYears

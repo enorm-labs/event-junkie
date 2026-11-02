@@ -70,7 +70,9 @@ data class EventEntity(
     val featuredUntil: Instant? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
-)
+) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted event must have an ID" }
+}
 
 /**
  * Read-only R2DBC entity mapped to the `event_artist` join table.

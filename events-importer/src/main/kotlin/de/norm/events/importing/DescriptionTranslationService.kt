@@ -99,7 +99,7 @@ class DescriptionTranslationService(
         if (!licences.allowsTranslation()) {
             return TranslationRunResponse(sourceSlug = slug, permitted = false, candidates = 0, translated = 0, engine = engine.id)
         }
-        val id = requireNotNull(source.id) { "Event source must be persisted" }
+        val id = source.requiredId()
         val candidates =
             eventRepository
                 .findTranslationCandidates(id)
@@ -136,7 +136,7 @@ class DescriptionTranslationService(
         // The engine's lines — a failed call, a refusal, a rejected result — name the event through
         // the context, so the engine stays ignorant of what it translates.
         val result =
-            withContext(LogContext.forEvent(requireNotNull(event.id) { "A translation candidate is a stored row" })) {
+            withContext(LogContext.forEvent(event.requiredId())) {
                 engine.translate(request)
             }
         metrics.recordTranslation(result)

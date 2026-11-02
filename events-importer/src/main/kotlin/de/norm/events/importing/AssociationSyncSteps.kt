@@ -41,7 +41,7 @@ internal fun <T> eventAssociationContext(
     existingByEventId: Map<Long, List<T>>,
     foreignKeyExtractor: (T) -> Long
 ): EventAssociationContext<T> {
-    val eventId = requireNotNull(saved.id) { "Saved event must have an ID" }
+    val eventId = saved.requiredId()
     val existing = existingByEventId[eventId].orEmpty()
     return EventAssociationContext(
         eventId = eventId,

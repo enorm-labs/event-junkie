@@ -289,7 +289,7 @@ class EventUpsertService(
         if (pairs.isEmpty()) return
         changeLog.record(
             pairs.map { (old, new) -> old.copy(id = new.id) to new },
-            pairs.associate { (old, new) -> requireNotNull(new.id) to requireNotNull(old.id) }
+            pairs.associate { (old, new) -> new.requiredId() to old.requiredId() }
         )
         logger.info { "Logged ${pairs.size} date move(s) across a re-keyed source id on event source $eventSourceId" }
     }

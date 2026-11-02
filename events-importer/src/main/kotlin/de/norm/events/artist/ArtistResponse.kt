@@ -109,7 +109,7 @@ data class ArtistResponse(
     companion object {
         fun fromDomain(artist: Artist): ArtistResponse =
             ArtistResponse(
-                id = requireNotNull(artist.id) { "Persisted artist must have an ID" },
+                id = artist.requiredId(),
                 name = artist.name,
                 slug = artist.slug,
                 description = artist.description,

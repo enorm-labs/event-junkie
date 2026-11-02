@@ -23,6 +23,8 @@ data class GenreTagEntity(
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 ) {
+    fun requiredId(): Long = requireNotNull(id) { "Persisted genre tag must have an ID" }
+
     fun toDomain(): GenreTag =
         GenreTag(
             id = id,

@@ -86,7 +86,7 @@ data class VenueResponse(
     companion object {
         fun fromDomain(venue: Venue): VenueResponse =
             VenueResponse(
-                id = requireNotNull(venue.id) { "Persisted venue must have an ID" },
+                id = venue.requiredId(),
                 name = venue.name,
                 slug = venue.slug,
                 address = venue.address,

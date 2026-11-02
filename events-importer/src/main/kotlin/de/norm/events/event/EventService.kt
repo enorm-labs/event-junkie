@@ -64,7 +64,7 @@ class EventService(
         val (entities, total) = pageOf(pageable, filter)
         if (entities.isEmpty()) return PageResponse.of(emptyList(), pageable, total)
 
-        val eventIds = entities.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
+        val eventIds = entities.map { it.requiredId() }
 
         val artistsByEventId = eventArtistRepository.findByEventIdIn(eventIds).toList().groupBy { it.eventId }
         val promotersByEventId = eventPromoterRepository.findByEventIdIn(eventIds).toList().groupBy { it.eventId }
@@ -145,7 +145,7 @@ class EventService(
         // The venue slug in the event slug, for "Open Decks" at two venues on one date.
         val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
         val saved = eventRepository.save(request.toEventEntity(slug))
-        val eventId = requireNotNull(saved.id) { "Persisted event must have an ID" }
+        val eventId = saved.requiredId()
 
         val artistResponses = saveArtistAssociations(eventId, request.artists)
         val promoterIdResponses = savePromoterAssociations(eventId, request.promoterIds)
@@ -286,7 +286,7 @@ class EventService(
             artistRepository
                 .findAllById(requestedIds)
                 .toList()
-                .map { requireNotNull(it.id) { "Persisted artist must have an ID" } }
+                .map { it.requiredId() }
                 .toSet()
         val missingIds = requestedIds - existingIds
         if (missingIds.isNotEmpty()) throw ArtistNotFoundException(missingIds.first())
@@ -314,7 +314,7 @@ class EventService(
             promoterRepository
                 .findAllById(requestedIds)
                 .toList()
-                .map { requireNotNull(it.id) { "Persisted promoter must have an ID" } }
+                .map { it.requiredId() }
                 .toSet()
         val missingIds = requestedIds - existingIds
         if (missingIds.isNotEmpty()) throw PromoterNotFoundException(missingIds.first())
@@ -354,7 +354,7 @@ class EventService(
                         )
                 EventGenreTagEntity(
                     eventId = eventId,
-                    genreTagId = requireNotNull(tag.id) { "GenreTag must be persisted before creating association" }
+                    genreTagId = tag.requiredId()
                 )
             }
         eventGenreTagRepository.saveAll(entities).toList()
@@ -373,7 +373,7 @@ class EventService(
         promoterIds: List<Long>? = null,
         genreTagNames: List<String>? = null
     ): EventResponse {
-        val eventId = requireNotNull(entity.id) { "Persisted event must have an ID" }
+        val eventId = entity.requiredId()
         val artists =
             artistResponses ?: eventArtistRepository.findByEventId(eventId).toList().map { EventArtistResponse.fromEntity(it) }
         val promoters = promoterIds ?: eventPromoterRepository.findByEventId(eventId).toList().map { it.promoterId }
@@ -557,6 +557,3 @@ private suspend fun FestivalRepository.ensureFestivalOf(request: EventRequest) {
     val festivalId = request.festivalId?.orElse(null) ?: return
     if (!existsById(festivalId)) throw FestivalNotFoundException(festivalId)
 }
-
-/** The id of a genre tag read back from the database, which is never null once it is persisted. */
-private fun GenreTagEntity.requiredId(): Long = requireNotNull(id) { "Persisted genre tag must have an ID" }

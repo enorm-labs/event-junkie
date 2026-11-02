@@ -307,7 +307,7 @@ class EventImportService(
         staleCleanup: StaleCleanup
     ): UpsertOutcome =
         transactionalOperator.executeAndAwait {
-            val sourceId = requireNotNull(source.id) { "Event source must be persisted before importing" }
+            val sourceId = source.requiredId()
             eventUpsertService.upsertAndCleanup(events, source.venueId, venueSlug, sourceId, licences, staleCleanup)
         }
 
@@ -325,7 +325,7 @@ class EventImportService(
     ): ImportResultResponse {
         val outcome =
             transactionalOperator.executeAndAwait {
-                val sourceId = requireNotNull(source.id) { "Event source must be persisted before importing" }
+                val sourceId = source.requiredId()
                 eventEnrichmentService.enrich(result.events, source.venueId, venueSlug, sourceId, licences)
             }
         metrics.recordEnrichmentOutcome(source.slug, outcome)
@@ -381,7 +381,7 @@ class EventImportService(
      * [ScheduledImportService.resetStuckSources] (default 30 minutes).
      */
     private suspend fun claimForImport(source: EventSourceEntity): EventSourceEntity? {
-        val sourceId = requireNotNull(source.id) { "Cannot claim an unpersisted event source" }
+        val sourceId = source.requiredId()
         val expectedVersion = requireNotNull(source.version) { "Cannot claim an event source without a version" }
         val claimedAt = Instant.now(clock)
         if (eventSourceRepository.claimForImport(sourceId, expectedVersion, claimedAt) == 0) {
@@ -521,7 +521,7 @@ class EventImportService(
         try {
             eventSourceRepository.save(mutation(source))
         } catch (e: OptimisticLockingFailureException) {
-            val sourceId = requireNotNull(source.id) { "Cannot retry save for unpersisted event source" }
+            val sourceId = source.requiredId()
             logger.warn(e) { "Optimistic locking conflict for source '${source.slug}' (id=$sourceId), re-fetching and retrying" }
             val freshSource =
                 eventSourceRepository.findById(sourceId)
