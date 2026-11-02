@@ -658,7 +658,7 @@ says so.
 | `NACHTKLUB_808`        | `PROMOTERS`        | the collective of a night is named only in its title                                                                                             | —     |
 | `NEUE_ZUKUNFT`         | `PER_EVENT_PAGE`   | the calendar widget exposes no per-event URLs                                                                                                    | —     |
 | `NEUE_ZUKUNFT`         | `PRICE`            | the calendar widget prints no figure; each show links out to an external ticket shop                                                             | —     |
-| `NEUE_ZUKUNFT`         | `GENRE`            | the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank; every music night takes the house's Psychedelic              | —     |
+| `NEUE_ZUKUNFT`         | `GENRE`            | the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank; a night takes its genre from its acts or its text, or none   | —     |
 | `NEUE_ZUKUNFT`         | `ARTISTS`          | a series night (Jazz After Dark, Future Bash Reloaded) names no act, and a fest bills its line-up only in prose                                  | —     |
 | `NEUE_ZUKUNFT`         | `IMAGE`            | the calendar widget sets no cover image on upcoming shows                                                                                        | —     |
 | `NEUE_ZUKUNFT`         | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |

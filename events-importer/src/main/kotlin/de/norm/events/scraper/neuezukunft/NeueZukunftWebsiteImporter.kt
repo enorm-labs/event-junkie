@@ -48,13 +48,12 @@ val NEUE_ZUKUNFT_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the calendar widget prints no figure; each show links out to an external ticket shop"),
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank; every music night takes the house's Psychedelic"
+            "the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank; a night takes its genre from its acts or its text, or none"
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
             "a series night (Jazz After Dark, Future Bash Reloaded) names no act, and a fest bills its line-up only in prose"
         ),
         AcceptedLimitation(LimitedAspect.IMAGE, "the calendar widget sets no cover image on upcoming shows"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
-        houseGenre = "Psychedelic"
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )
