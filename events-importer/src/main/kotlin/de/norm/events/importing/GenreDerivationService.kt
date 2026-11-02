@@ -19,7 +19,8 @@ import org.springframework.stereotype.Service
 /**
  * Derives genre tags for the events whose source publishes none (ADR-047). Runs inside the import transaction, after the genre sync.
  *
- * A music event takes the source tags its billed acts carry on their other events, past or upcoming. A support act does not count.
+ * A music event takes the source tags its billed acts carry on their other events, past or upcoming. A support act does not count, and a
+ * DJ billing and a live billing do not lend each other tags: one name can be a resident DJ and a band (#4411).
  * An event still untagged takes the genre words of its description ([descriptionGenres]). A derived tag never feeds another derivation.
  */
 @Service
@@ -120,6 +121,7 @@ class GenreDerivationService(
             SELECT ea.event_id, egt.genre_tag_id
             FROM $EVENTS_SCHEMA.event_artist ea
             JOIN $EVENTS_SCHEMA.event_artist other ON other.artist_id = ea.artist_id AND other.event_id <> ea.event_id
+                AND (other.role = 'DJ') = (ea.role = 'DJ')
             JOIN $EVENTS_SCHEMA.event_genre_tag egt ON egt.event_id = other.event_id AND egt.origin = 'SOURCE'
             JOIN $EVENTS_SCHEMA.genre_tag gt ON gt.id = egt.genre_tag_id
             WHERE ea.event_id = ANY(:ids) AND ea.role <> 'SUPPORT'

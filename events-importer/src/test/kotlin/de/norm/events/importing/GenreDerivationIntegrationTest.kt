@@ -112,6 +112,20 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
     }
 
     @Test
+    fun `a DJ billing and a live billing do not lend each other tags, so the concert falls through to its description`() {
+        runBlocking {
+            sync(persistEvent("duncker:5", eventType = "PARTY"), listOf("Spy" to ArtistRole.DJ), genre = "Indie, Alternative")
+            val concert = persistEvent("neue-zukunft:5", description = "Bay Area punk giants back on tour")
+            sync(concert, listOf("Spy" to ArtistRole.HEADLINER))
+            val party = persistEvent("duncker:6", eventType = "PARTY")
+            sync(party, listOf("Spy" to ArtistRole.DJ))
+
+            tagsOf(concert) shouldBe mapOf("Punk" to GenreTagOrigin.DESCRIPTION.name)
+            tagsOf(party) shouldBe mapOf("Indie" to "ARTIST", "Alternative" to "ARTIST")
+        }
+    }
+
+    @Test
     fun `a derived tag never feeds another derivation`() {
         runBlocking {
             sync(persistEvent("lido:3"), listOf("Act A" to ArtistRole.HEADLINER), genre = "Jazz")

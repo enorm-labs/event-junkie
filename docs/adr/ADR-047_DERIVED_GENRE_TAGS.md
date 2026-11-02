@@ -38,8 +38,9 @@ The rules:
 1. **A source tag always wins.** The importer derives tags only for an event with no `SOURCE` tag. When the source publishes a genre later, the derived tags
    go. A derived tag that the source then names becomes a `SOURCE` tag.
 2. **Only a concert, a party or a festival gets a derived tag.** A reading about punk is not a punk night.
-3. **`ARTIST`: the `SOURCE` tags of the billed acts' other events, past or upcoming.** A support act does not count. A derived tag never feeds another
-   derivation. The three most frequent tags stay.
+3. **`ARTIST`: the `SOURCE` tags of the billed acts' other events, past or upcoming.** A support act does not count. A DJ billing takes tags only from
+   the act's other DJ billings. A live billing takes tags only from its other live billings. One name can be a resident DJ and a band (see #4411). A derived
+   tag never feeds another derivation. The three most frequent tags stay.
 4. **`DESCRIPTION`: the vocabulary words of the description, only when rule 3 gives nothing.** A word or two adjacent words must be a key of
    `GENRE_SYNONYMS`, so the text never creates a new genre. A support or guest marker ends the part of a sentence that counts. The markers
    are "support", "Support von", "special guest", "plus" and "+". It also ignores a key that prose uses in another sense, such as "house", "world" or "swing". It ignores a short quoted
