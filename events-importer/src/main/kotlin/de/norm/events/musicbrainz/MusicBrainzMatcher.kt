@@ -42,8 +42,9 @@ object MusicBrainzMatcher {
     private const val GERMANY = "DE"
     private val COMBINING_MARKS = Regex("\\p{M}+")
 
+    // Runs on collapsed, trimmed text, so a name's last word is never a conjunction however it is padded.
     // The lookahead leaves the space after a conjunction for the next one: "a und and b" is "a & & b".
-    private val CONJUNCTIONS = Regex("\\s+(?:and|und|&)(?=\\s)")
+    private val CONJUNCTIONS = Regex(" (?:and|und|&)(?= )")
     private val WHITESPACE = Regex("\\s+")
     private val HEAD_SEPARATOR = Regex("\\s+[-–—]\\s+|:\\s+")
     private val DIGITS_ONLY = Regex("\\d+")
@@ -61,8 +62,9 @@ object MusicBrainzMatcher {
             .lowercase()
             .replace("ß", "ss")
             .replace('ς', 'σ')
-            .replace(CONJUNCTIONS, " &")
             .replace(WHITESPACE, " ")
+            .trim(' ')
+            .replace(CONJUNCTIONS, " &")
             .trim(' ', '.', ',', '!')
 
     fun decide(
