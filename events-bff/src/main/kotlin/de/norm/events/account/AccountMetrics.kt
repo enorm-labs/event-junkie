@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicLong
  * holders that [AccountGaugeRefresh] sets, because a gauge supplier runs on the scrape thread and must not query.
  */
 @Component
+@Suppress("TooManyFunctions") // One typed record overload per meter, so a caller can only move the series its enum names.
 class AccountMetrics(
     private val registry: MeterRegistry
 ) {
@@ -19,6 +20,7 @@ class AccountMetrics(
     private val signIns = SignInOutcome.entries.associateWith { registry.counter(SIGN_IN, TAG_OUTCOME, it.tag) }
     private val searches = SavedSearchAction.entries.associateWith { registry.counter(SAVED_SEARCH, TAG_ACTION, it.tag) }
     private val rsvps = RsvpAction.entries.associateWith { registry.counter(RSVP, TAG_ACTION, it.tag) }
+    private val reports = ReportAction.entries.associateWith { registry.counter(REPORT, TAG_ACTION, it.tag) }
     private val pushes = PushAction.entries.associateWith { registry.counter(PUSH, TAG_ACTION, it.tag) }
     private val passkeys = PasskeyOutcome.entries.associateWith { registry.counter(PASSKEY, TAG_OUTCOME, it.tag) }
     private val cleanup = CleanupOutcome.entries.associateWith { registry.counter(CLEANUP, TAG_OUTCOME, it.tag) }
@@ -56,6 +58,8 @@ class AccountMetrics(
     fun record(action: SavedSearchAction) = searches.getValue(action).increment()
 
     fun record(action: RsvpAction) = rsvps.getValue(action).increment()
+
+    fun record(action: ReportAction) = reports.getValue(action).increment()
 
     fun record(action: PushAction) = pushes.getValue(action).increment()
 
@@ -97,6 +101,9 @@ class AccountMetrics(
 
         /** `bff.account.rsvp{action}`: RSVPs set or changed, and withdrawn (#3892). */
         const val RSVP = "bff.account.rsvp"
+
+        /** `bff.account.report{action}`: problem reports stored, replaced and withdrawn, and those refused at the limit (#4399). */
+        const val REPORT = "bff.account.report"
 
         /** `bff.account.push{action}`: browsers subscribed and unsubscribed, and bells turned on and off (#3894). What was sent is `bff.push.sent`. */
         const val PUSH = "bff.account.push"
@@ -180,6 +187,9 @@ enum class CleanupOutcome(
     /** Notifications older than 30 days, or whose event the importer removed (#4078). */
     NOTIFICATIONS_PURGED("notifications_purged"),
 
+    /** Problem reports older than 60 days, or whose event the importer removed (#4399). */
+    REPORTS_PURGED("reports_purged"),
+
     /** Passkey challenges nobody answered (#3888). */
     CHALLENGES_PURGED("challenges_purged"),
 
@@ -212,6 +222,17 @@ enum class RsvpAction(
 ) {
     SET("set"),
     WITHDRAW("withdraw")
+}
+
+enum class ReportAction(
+    val tag: String
+) {
+    STORE("stored"),
+    REPLACE("replaced"),
+    WITHDRAW("withdrawn"),
+
+    /** Refused at the limit of open reports. */
+    REFUSED("refused")
 }
 
 enum class PushAction(

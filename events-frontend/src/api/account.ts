@@ -209,6 +209,51 @@ export async function withdrawRsvp(slug: string): Promise<void> {
   await unwrap(api.DELETE('/api/me/rsvps/{slug}', { params: { path: { slug } } }))
 }
 
+/** The boxes of "Report a problem" (#4399), in the order the form shows them. */
+export const REPORT_PROBLEMS = [
+  'ARTISTS',
+  'TITLE',
+  'DATE_TIME',
+  'STATUS',
+  'PRICE_TICKETS',
+  'TYPE_GENRE',
+  'NOT_AN_EVENT',
+  'DUPLICATE',
+  'OTHER',
+] as const
+export type ReportProblem = (typeof REPORT_PROBLEMS)[number]
+
+/** The account's open report on an event, as the form pre-fills it. */
+export interface OpenReport {
+  problems: ReportProblem[]
+  note: string
+}
+
+/** The account's open problem reports, as event slug to report. Only accounts that may report have any. */
+export async function fetchReports(): Promise<Record<string, OpenReport>> {
+  const reports = (await unwrap(api.GET('/api/me/reports'))) ?? []
+  return Object.fromEntries(
+    reports.map((r) => [
+      r.event ?? '',
+      { problems: (r.problems ?? []) as ReportProblem[], note: r.note ?? '' },
+    ]),
+  )
+}
+
+export async function saveReport(slug: string, report: OpenReport): Promise<void> {
+  const note = report.note.trim()
+  await unwrap(
+    api.PUT('/api/me/reports/{slug}', {
+      params: { path: { slug } },
+      body: { problems: report.problems, note: note || undefined },
+    }),
+  )
+}
+
+export async function withdrawReport(slug: string): Promise<void> {
+  await unwrap(api.DELETE('/api/me/reports/{slug}', { params: { path: { slug } } }))
+}
+
 /** RSVPed events not over yet, by date. */
 export async function fetchRsvpUpcoming(page = 0): Promise<EventSummaryPage> {
   return unwrap(api.GET('/api/me/rsvps/upcoming', { params: { query: { page, size: 20 } } }))

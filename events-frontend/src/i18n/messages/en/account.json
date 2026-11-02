@@ -113,6 +113,33 @@
       "none": "Nothing planned yet. Press Interested or Going on an event's page."
     }
   },
+  "report": {
+    "open": "Report a problem",
+    "edit": "Edit report",
+    "title": "Report a problem: {title}",
+    "close": "Close",
+    "legend": "What is wrong? Tick all that apply.",
+    "note": "Note (optional)",
+    "noteRequired": "Note (needed for “Something else”)",
+    "send": "Send report",
+    "update": "Update report",
+    "withdraw": "Withdraw report",
+    "thanks": "Reported — thanks.",
+    "failed": "That did not work. Please try again.",
+    "forbidden": "This account cannot report problems.",
+    "tooMany": "You have 30 open reports. Wait until some are resolved.",
+    "problems": {
+      "ARTISTS": "Wrong or missing artists",
+      "TITLE": "Title is garbled",
+      "DATE_TIME": "Wrong date or time",
+      "STATUS": "Cancelled or postponed status is wrong",
+      "PRICE_TICKETS": "Price or ticket link wrong or missing",
+      "TYPE_GENRE": "Wrong event type or genre",
+      "NOT_AN_EVENT": "Should not be listed (private, workshop, …)",
+      "DUPLICATE": "Listed twice",
+      "OTHER": "Something else"
+    }
+  },
   "push": {
     "title": "Notifications",
     "intro": "A push to this browser when an artist, venue or promoter you follow has a new date. Choose which ones with the bell on",

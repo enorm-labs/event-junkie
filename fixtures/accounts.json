@@ -6,7 +6,8 @@
       "id": "ada00000-0000-4000-8000-000000000001",
       "session": "fixture-session-ada",
       "savedSearchId": "ada00000-0000-4000-8000-000000000011",
-      "reminderPush": true
+      "reminderPush": true,
+      "canReport": false
     },
     {
       "email": "bob@example.de",
@@ -17,7 +18,8 @@
       "passkeyId": "b0b00000-0000-4000-8000-000000000021",
       "pushEndpoint": "https://fcm.googleapis.com/fcm/send/fixture-bob",
       "notificationId": "b0b00000-0000-4000-8000-000000000031",
-      "reminderPush": false
+      "reminderPush": false,
+      "canReport": true
     }
   ]
 }

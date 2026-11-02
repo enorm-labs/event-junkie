@@ -36,6 +36,7 @@ class AccountPathTest {
             "/api/me",
             "/api/me/searches",
             "/api/me/rsvps",
+            "/api/me/reports",
             "/api/me/follows",
             "/api/me/push",
             "/api/auth/session"

@@ -29,6 +29,12 @@ const router = createRouter({
       meta: { title: 'Data-quality worklist' },
     },
     {
+      path: '/reports',
+      name: 'reports',
+      component: () => import('@/views/ReportsView.vue'),
+      meta: { title: 'Problem reports' },
+    },
+    {
       path: '/suggestions',
       name: 'suggestions',
       component: () => import('@/views/SuggestionsView.vue'),

@@ -21,10 +21,13 @@ data class AccountResponse(
     /** "Changes to my plans" (#4045): a push when an event marked as interested or going changes. */
     val changePush: Boolean,
     /** "Reminders on the day" (#4253): a push on the day of an event marked as interested or going. */
-    val reminderPush: Boolean
+    val reminderPush: Boolean,
+    /** Whether the event page offers "Report a problem" (#4399): an allowlist the operator keeps. */
+    val canReport: Boolean
 ) {
     companion object {
-        fun of(account: Account) = AccountResponse(account.email, account.locale, account.createdAt, account.changePush, account.reminderPush)
+        fun of(account: Account) =
+            AccountResponse(account.email, account.locale, account.createdAt, account.changePush, account.reminderPush, account.canReport)
     }
 }
 
@@ -53,7 +56,9 @@ data class AccountExport(
     /** One per browser with push notifications on (#3894): the push service's host, never the endpoint. */
     val pushSubscriptions: List<PushSubscriptionInfo>,
     /** The passkeys (#3888): name and dates, never the key. */
-    val passkeys: List<PasskeyInfo>
+    val passkeys: List<PasskeyInfo>,
+    /** The open problem reports (#4399). Resolving one deletes it. */
+    val reports: List<ReportResponse>
 )
 
 data class NotifyRequest(

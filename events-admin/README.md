@@ -52,6 +52,11 @@ with the earliest pick that matches the visitor's filters (#1262), so a second p
 event again and PUTs it back with `featuredUntil: null`. The event editor has an "Our pick until" field, a Berlin date and time. Save sends the instant it
 names, sends `null` when the field is cleared, and leaves `featuredUntil` out when the field is untouched, so the importer keeps the stored pick.
 
+Reports (`src/views/ReportsView.vue`, `/reports`) lists `GET /api/admin/reports`: the problems allowed accounts reported on event pages (#4399), one row per
+event, by event date, with the ticked problems as badges and the notes. The title opens the event on the public site. Resolve sends
+`DELETE /api/admin/reports?eventId=<id>`, which deletes every report on the event, so resolve once the fix is live or the verdict is final. The allowlist has
+no page: `http/importer/reports.http` sets it.
+
 Venues to review (`src/views/VenueReviewView.vue`) lists `GET /api/admin/venues/needs-review`: the venues without an importer whose site failed three monthly checks
 in a row (#2812), longest-failing first. "Still open" sets `reviewedAt` to now. "Closed on…" asks for the last open day and sets `closedOn` (ADR-046). The default
 day is the day the site began to fail. Each action reads the venue and sends it back in full with one field changed, because the PUT replaces the whole venue.

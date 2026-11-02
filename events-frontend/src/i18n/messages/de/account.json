@@ -113,6 +113,33 @@
       "none": "Noch nichts geplant. Drück auf einer Eventseite auf Interessiert oder Dabei."
     }
   },
+  "report": {
+    "open": "Problem melden",
+    "edit": "Meldung bearbeiten",
+    "title": "Problem melden: {title}",
+    "close": "Schließen",
+    "legend": "Was stimmt nicht? Kreuze alles Zutreffende an.",
+    "note": "Notiz (optional)",
+    "noteRequired": "Notiz (nötig bei „Etwas anderes“)",
+    "send": "Meldung senden",
+    "update": "Meldung ändern",
+    "withdraw": "Meldung zurückziehen",
+    "thanks": "Gemeldet – danke.",
+    "failed": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
+    "forbidden": "Dieses Konto kann keine Probleme melden.",
+    "tooMany": "Du hast 30 offene Meldungen. Warte, bis einige erledigt sind.",
+    "problems": {
+      "ARTISTS": "Falsche oder fehlende Künstler",
+      "TITLE": "Titel ist verstümmelt",
+      "DATE_TIME": "Falsches Datum oder Uhrzeit",
+      "STATUS": "Abgesagt/verschoben stimmt nicht",
+      "PRICE_TICKETS": "Preis oder Ticketlink falsch oder fehlt",
+      "TYPE_GENRE": "Falscher Veranstaltungstyp oder Genre",
+      "NOT_AN_EVENT": "Gehört nicht hierher (privat, Workshop, …)",
+      "DUPLICATE": "Doppelt gelistet",
+      "OTHER": "Etwas anderes"
+    }
+  },
   "push": {
     "title": "Benachrichtigungen",
     "intro": "Eine Push-Nachricht an diesen Browser, wenn ein Act, eine Location oder ein Veranstalter, dem du folgst, einen neuen Termin hat. Welche, wählst du mit der Glocke auf",
