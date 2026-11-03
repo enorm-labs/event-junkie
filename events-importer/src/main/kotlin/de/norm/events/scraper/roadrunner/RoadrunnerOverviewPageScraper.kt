@@ -220,8 +220,9 @@ class RoadrunnerOverviewPageScraper(
      * The labelled line-up, one [LineupEntry] per label in page order. A label's acts follow it on
      * the same paragraph (`Live: UNSTRUT, BOXI BARRÉ`) or fill the next paragraph with text
      * (`Live:` then `THE JETS (UK) + SMOKESTACK LIGHTNIN’`). A paragraph that opens with `+` after
-     * that continues the list. A bracketed note on its own line ("(Celtic Punk from Australia)")
-     * is not an act.
+     * that continues the list, unless it names the night's format (`+ Aftershow Party mit Record
+     * Hop`, #4423). An act line ends at a doors line in the same paragraph. A bracketed note on its
+     * own line ("(Celtic Punk from Australia)") is not an act.
      */
     private fun parseLineup(block: List<Element>): List<LineupEntry> {
         val entries = mutableListOf<LineupEntry>()
@@ -241,11 +242,11 @@ class RoadrunnerOverviewPageScraper(
                     index++
                 }
             }
-            while (index < block.size && block[index].text().trim().startsWith("+")) {
+            while (index < block.size && isContinuation(block[index])) {
                 paragraphs.add(block[index++])
             }
             val role = LINEUP_ROLES.getValue(match.groupValues[1].lowercase().replace(WHITESPACE, " "))
-            val text = (listOf(inline) + paragraphs.drop(1).map { it.text() }).joinToString(" + ")
+            val text = (listOf(inline) + paragraphs.drop(1).map { actText(it) }).joinToString(" + ")
             entries += LineupEntry(paragraphs, splitActs(text).map { ScrapedArtist(name = it, role = role) })
         }
         return entries
@@ -278,11 +279,22 @@ class RoadrunnerOverviewPageScraper(
             .takeWhile { titleElement(it) == null }
             .firstOrNull { PRESENTS_LINE.matches(it.text().trim()) }
 
-    /** A paragraph that can carry a bare label's acts: text that is no label, doors line, link, flyer or note. */
+    /** A paragraph that can carry a bare label's acts: text in front of any doors line that is no label, link, flyer or note. */
     private fun isActLine(p: Element): Boolean {
-        val text = p.text().trim()
-        return text.isNotBlank() && !isDotsOnly(text) && !LINEUP_LABEL.matches(text) && !DOORS_LINE.containsMatchIn(text) &&
-            !text.startsWith("(") && p.selectFirst("a[href^=http], img") == null
+        val text = actText(p)
+        return text.isNotBlank() && !isDotsOnly(text) && !LINEUP_LABEL.matches(text) && !text.startsWith("(") && p.selectFirst("a[href^=http], img") == null
+    }
+
+    /** A `+` paragraph that carries more acts, not a format such as an aftershow party. */
+    private fun isContinuation(p: Element): Boolean {
+        val text = actText(p)
+        return text.startsWith("+") && !FORMAT_CONTINUATION.containsMatchIn(text)
+    }
+
+    /** A paragraph's text up to its doors line: `+ THE ROUND UP BOYS (D)` without a following `Einlass: 20:00 Uhr`. */
+    private fun actText(p: Element): String {
+        val text = p.text()
+        return (DOORS_LINE.find(text)?.let { text.substring(0, it.range.first) } ?: text).trim()
     }
 
     /**
@@ -429,6 +441,13 @@ class RoadrunnerOverviewPageScraper(
 
         /** The gap after a closing bracket that has more text behind it: the end of an act. */
         private val AFTER_BRACKET = Regex("""(?<=\))\s+(?=\S)""")
+
+        /**
+         * A `+` line that names a format, not an act: `+ Aftershow Party mit Record Hop`, `+ Party with DJ`. A bare `Party` opens a band
+         * name too (`+ PARTY HATS`), so it counts only with its `mit` or `with`. A `Record Hop:` with its colon is a label.
+         */
+        private val FORMAT_CONTINUATION =
+            Regex("""^\+\s*(?:after[\s-]?show|record\s+hop|party\s+(?:mit|with))\b(?!\s*:)""", RegexOption.IGNORE_CASE)
 
         /** A `Dee-jay:` or `DJ:` in front of a record hop's name. */
         private val DJ_PREFIX = Regex("""^\s*(?:dee-?jay|dj)\s*:\s*""", RegexOption.IGNORE_CASE)
