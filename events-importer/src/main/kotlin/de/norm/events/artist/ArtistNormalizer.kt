@@ -5,6 +5,7 @@ import de.norm.events.common.foldTypedApostrophes
 import de.norm.events.common.isCapitals
 import de.norm.events.common.isMixedCase
 import de.norm.events.common.isShortInitialism
+import de.norm.events.common.isVowellessInitialism
 import de.norm.events.slug.SlugGenerator
 
 // Artist-name canonicalization for the scraper pipeline.
@@ -20,8 +21,9 @@ import de.norm.events.slug.SlugGenerator
 // ALL-CAPS word is title-cased by [deshoutWord], which `common` shares with the promoter
 // normalizer and which documents the tokens it leaves alone. Two rules read the whole name rather
 // than one token:
-//   - a name that is a *single* short all-caps token ("JJ", "MØ") is an initialism far more often
-//     than a shouted word, and [isShortInitialism] keeps it verbatim. A short word inside a longer
+//   - a name that is a *single* short all-caps token ("JJ", "MØ"), or one of up to five capitals
+//     without a vowel ("CCTV", "TZK"), is an initialism far more often than a shouted word, and
+//     [isShortInitialism] and [isVowellessInitialism] keep it verbatim. A short word inside a longer
 //     shouted name still de-shouts ("WARS OF ATTRITION" -> "Wars of Attrition");
 //   - a name with a mixed-case word ([isMixedCase]) is not shouted, so a lone all-caps word in it
 //     is an initialism and stays as written ("HB&P Soundsystem", "ABF & Friends", #3507). Two
@@ -38,7 +40,7 @@ fun canonicalArtistName(raw: String): String {
     val trimmed = raw.trim().foldTypedApostrophes()
     val tokens = trimmed.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
     val canonical =
-        if (tokens.size == 1 && tokens[0].isShortInitialism()) {
+        if (tokens.size == 1 && (tokens[0].isShortInitialism() || tokens[0].isVowellessInitialism())) {
             tokens[0]
         } else {
             tokens.deshoutBilling().joinToString(" ").ifBlank { trimmed }
@@ -152,7 +154,36 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "uppercuts" to "The Uppercuts",
         "darktenor" to "The Dark Tenor",
         // 8MM Bar's 8MM Fest line-up adds a stray word to the Bangkok trio that ACUD bills as Makara (#4403).
-        "makaramarcel" to "Makara"
+        "makaramarcel" to "Makara",
+        // One-word acts that write their name in capitals, as their venue's own prose and MusicBrainz do. Each has a
+        // vowel, so no rule tells it from a shouted word, and `SIND` and `CAVE` are words inside other names.
+        "muna" to "MUNA",
+        "naft" to "NAFT",
+        "jas" to "JAS",
+        "rian" to "RIAN",
+        "røry" to "RØRY",
+        "tära" to "TÄRA",
+        "sind" to "SIND",
+        "rapk" to "RAPK",
+        "unnv" to "UNNV",
+        "jud" to "JUD",
+        "cave" to "CAVE",
+        "emf" to "EMF",
+        // Wild at Heart's German punk band, billed `"WHAT" (Punk-Rock - D)`.
+        "what" to "WHAT",
+        // Spellings the de-shouter cannot reach: Huxleys' `MR. HURLEY UND DIE PULVERAFFEN`, Neue Zukunft's `D*B*S`,
+        // and Orwohaus's `TOKTOK VS. SOFFY O`, each written as MusicBrainz and the act's own prose write it.
+        "mrhurleyunddiepulveraffen" to "Mr. Hurley & Die Pulveraffen",
+        "dbs" to "DxBxSx",
+        "toktokvssoffyo" to "Toktok vs. Soffy O.",
+        // One act stored twice, which the operator confirmed (/artist-cleanup): Der Weiße Hase's techno
+        // nights, KitKat's Symbiotikka residents, one Eschschloraque night billing both, Zig Zag with and without
+        // `The`, and Beate Uwe dropping the apostrophe.
+        "dontom" to "Don Tom",
+        "ladybird" to "LadyBird",
+        "djmoe" to "M.O.E.",
+        "djangoreinhardtorchestra" to "The Django Reinhardt Orchestra",
+        "ravedamor" to "Rave d’Amor"
     )
 
 /** Lowercased, punctuation- and space-free lookup key for a name. */

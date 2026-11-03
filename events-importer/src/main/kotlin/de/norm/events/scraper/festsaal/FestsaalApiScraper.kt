@@ -147,6 +147,7 @@ class FestsaalApiScraper {
                 ?: kindWordInGenre
                 ?: EventType.CONCERT.name
 
+        val description = parseDescription(node.layouts)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
@@ -167,8 +168,8 @@ class FestsaalApiScraper {
             soldOut = statusCode == STATUS_SOLD_OUT,
             // The row already sits on the new date, so the show happens on it.
             status = if (postponed && parseDate(node.changedDate.blankToNull()) != null) "SCHEDULED" else mapStatus(statusCode, sourceId),
-            artists = buildArtists(title, node.support.blankToNull(), eventType),
-            description = parseDescription(node.layouts),
+            artists = buildArtists(title, node.support.blankToNull(), eventType, description),
+            description = description,
             statusNote = relocationNote(node.changedText, node.newLocation),
             promoters = promoters(node)
         )
@@ -258,11 +259,14 @@ class FestsaalApiScraper {
      * dedicated field, the authoritative source, split via [splitSupportActs]; other types
      * (parties, festivals, quizzes) name an event, not an artist, so none. Non-artist noise
      * (placeholders, role labels, festival labels) is filtered by the shared [isNonArtistName].
+     * A show of another act's songs names that act in a [SONGS_OF_LINE], and its title is the show, not
+     * a band: `ANNA` above "Die Lieder von Rosenstolz & Anna R. live" bills no headliner.
      */
     private fun buildArtists(
         title: String,
         support: String?,
-        eventType: String
+        eventType: String,
+        description: String?
     ): List<ScrapedArtist> {
         if (eventType != EventType.CONCERT.name) return emptyList()
         val supportActs =
@@ -271,7 +275,8 @@ class FestsaalApiScraper {
                 .orEmpty()
                 .filterNot(::isNonArtistName)
                 .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
-        return headlinersFromTitle(title) + supportActs
+        val songsOfAnotherAct = description?.lineSequence()?.any { SONGS_OF_LINE.containsMatchIn(it) } == true
+        return headlinersFromTitle(title).takeUnless { songsOfAnotherAct }.orEmpty() + supportActs
     }
 
     /** Rewrites the CMS `html_url` from the admin host to the public host, or rebuilds it from the [slug]. */
@@ -409,6 +414,9 @@ private data class FestsaalGenre(
 private data class FestsaalImage(
     val downloadUrl: String? = null
 )
+
+/** A description line that opens a show of another act's songs: "Die Lieder von Rosenstolz & Anna R. live". */
+private val SONGS_OF_LINE = Regex("""^\s*die\s+lieder\s+von\b""", RegexOption.IGNORE_CASE)
 
 /** The Wagtail block type of a rich-text block inside a layout. */
 private const val TEXT_ITEM = "item_text"
