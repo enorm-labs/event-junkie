@@ -213,12 +213,11 @@ class SchokoladenOverviewPageScraperTest {
         fun `derives headliner artists from co-billed title, stripping genre annotations`() {
             val concert = scrape().first { it.sourceId == "schokoladen:e20260711" }
 
-            // The subtitle's "& after 22h: No Tears For The Creatures Of The Night DJs (punk, …)" is the aftershow.
+            // The subtitle's "& after 22h: No Tears For The Creatures Of The Night DJs (punk, …)" names the night, not its DJs.
             concert.artists shouldContainExactly
                 listOf(
                     ScrapedArtist(name = "MOLOCH", role = ArtistRole.HEADLINER, titleDerived = true),
-                    ScrapedArtist(name = "PINK WONDER", role = ArtistRole.HEADLINER, titleDerived = true),
-                    ScrapedArtist(name = "No Tears For The Creatures Of The Night", role = ArtistRole.DJ)
+                    ScrapedArtist(name = "PINK WONDER", role = ArtistRole.HEADLINER, titleDerived = true)
                 )
         }
 

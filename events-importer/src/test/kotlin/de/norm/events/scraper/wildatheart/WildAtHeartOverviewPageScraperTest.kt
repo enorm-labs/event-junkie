@@ -206,4 +206,11 @@ class WildAtHeartOverviewPageScraperTest {
         val html = "<html><body><table><tr><td>No events yet</td></tr></table></body></html>"
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl) shouldHaveSize 0
     }
+
+    @Test
+    fun `a DJs line names each DJ, and a one-word name keeps its DJ`() {
+        splitDjs("DJs Peter + Louie Wray") shouldBe listOf("DJ Peter", "Louie Wray")
+        splitDjs("DJ Peter") shouldBe listOf("DJ Peter")
+        splitDjs("Djs Kim & Lisa Wu") shouldBe listOf("DJ Kim", "Lisa Wu")
+    }
 }

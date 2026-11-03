@@ -114,6 +114,17 @@ class LuxOverviewPageScraperTest {
     }
 
     @Test
+    fun `a genre note under a DJ bills no act`() {
+        parse(
+            """
+            <section><div class="when">Sa<br>24.10.</div>
+            <div class="details"><h2>LA LA LUX</h2>
+            <p><strong>ZiegelMukke<br>electropop - weird tunes<br>wave - alternative - vinyl only</strong></p></div></section>
+            """.trimIndent()
+        ).single().artists.map { it.name } shouldContainExactly listOf("ZiegelMukke")
+    }
+
+    @Test
     fun `a night without a readable date or title is skipped`() {
         parse(
             """

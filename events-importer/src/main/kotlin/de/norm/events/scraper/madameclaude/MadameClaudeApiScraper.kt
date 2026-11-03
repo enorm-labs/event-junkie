@@ -335,6 +335,9 @@ private val DJ_ACT_SEPARATOR = Regex("""\s*\+\s*""")
 /** A `DJ ` prefix on one act of a concert bill: `DJ Troy Mytea`. */
 private val DJ_PREFIX = Regex("""^\s*dj\s""", RegexOption.IGNORE_CASE)
 
+/** The format word after a pair the venue writes with a slash: `Morimoto / Wong duo` is the duo `Morimoto / Wong`. */
+private val PAIR_FORMAT_TAIL = Regex("""(?<=/\s?\S{1,40})\s+(?:duo|trio)$""", RegexOption.IGNORE_CASE)
+
 /**
  * The format a live night is billed under after the act's name: `343 Labs Live Electronic Showcase` (#3753).
  * The bare `Live Electronic Showcase` is the house night and names no act.
@@ -357,7 +360,13 @@ internal fun concertArtists(title: String): List<ScrapedArtist> {
     return headlinersFromTitle(title, splitOnSlash = false)
         .map { artist ->
             val billed = if (artist.name.lowercase() in djSegments) artist.copy(role = ArtistRole.DJ) else artist
-            billed.copy(name = billed.name.replace(SHOWCASE_FORMAT_TAIL, "").trim())
+            billed.copy(
+                name =
+                    billed.name
+                        .replace(SHOWCASE_FORMAT_TAIL, "")
+                        .replace(PAIR_FORMAT_TAIL, "")
+                        .trim()
+            )
         }.filterNot { it.name.isBlank() }
 }
 

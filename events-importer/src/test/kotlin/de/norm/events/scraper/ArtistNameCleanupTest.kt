@@ -76,6 +76,34 @@ class ArtistNameCleanupTest {
     }
 
     @Test
+    fun `stripArtistSuffix drops a concert word after a dash and a live-at line`() {
+        stripArtistSuffix("Unlimited Sonic Use - Weihnachtskonzert") shouldBe "Unlimited Sonic Use"
+        stripArtistSuffix("Nadia Lafi - Konzert") shouldBe "Nadia Lafi"
+        stripArtistSuffix("SBP4 – New Album Live at FRANNZ") shouldBe "SBP4"
+        // A concert word inside the name, and a live-at without a dash, stay.
+        stripArtistSuffix("Konzertchor Berlin") shouldBe "Konzertchor Berlin"
+        stripArtistSuffix("Live at Leeds") shouldBe "Live at Leeds"
+    }
+
+    @Test
+    fun `stripArtistSuffix drops the band a shouted act comes from`() {
+        stripArtistSuffix("SIR OLIVER SKARDY of PITURA FRESKA") shouldBe "SIR OLIVER SKARDY"
+        // A shouted `OF` belongs to the name.
+        stripArtistSuffix("WALLS OF JERICHO") shouldBe "WALLS OF JERICHO"
+        stripArtistSuffix("Sons of Legion") shouldBe "Sons of Legion"
+    }
+
+    // --- stripFriendsTail ---
+
+    @Test
+    fun `stripFriendsTail drops a session's friends and keeps a bracket before them`() {
+        stripFriendsTail("DAVID HAYNES AND FRIENDS") shouldBe "DAVID HAYNES"
+        stripFriendsTail("The Hamburg Blues Band & Friends") shouldBe "The Hamburg Blues Band"
+        stripFriendsTail("Clive (Splitting Image) and friends") shouldBe "Clive (Splitting Image) and friends"
+        stripFriendsTail("Four Friends") shouldBe "Four Friends"
+    }
+
+    @Test
     fun `stripArtistSuffix drops a soft hyphen from any act`() {
         stripArtistSuffix("Jean-\u00ADLuc Guionnet") shouldBe "Jean-Luc Guionnet"
         stripArtistSuffix("Kraft\u00ADwerk live", fromTitle = true) shouldBe "Kraftwerk"

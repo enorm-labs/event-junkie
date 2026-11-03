@@ -150,6 +150,7 @@ class GoldenGateOverviewPageScraper {
         lineupHeading
             ?.textLines()
             .orEmpty()
+            .flatMap { it.split(SPACED_SLASH) }
             .flatMap(::splitSegmentOnConjunctions)
             .map { it.trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
@@ -199,3 +200,6 @@ class GoldenGateOverviewPageScraper {
             }
     }
 }
+
+/** Two DJs on one line: `Gingerblack / Sharhok Dini`. Unspaced, a slash stays inside a name. */
+private val SPACED_SLASH = Regex("""\s+/\s+""")

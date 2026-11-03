@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.isForChildren
+import de.norm.events.scraper.stripFriendsTail
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -199,7 +200,7 @@ class KesselhausCalendarScraperTest {
         val event = scrapeOne(title = title, subtitle = subtitle)
 
         event.artists.shouldNotBeEmpty()
-        event.artists shouldBe buildArtistsForEventType(title, subtitle, EventType.CONCERT.name)
+        event.artists shouldBe buildArtistsForEventType(stripFriendsTail(title), subtitle, EventType.CONCERT.name)
     }
 
     @Test

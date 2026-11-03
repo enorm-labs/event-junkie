@@ -12,7 +12,7 @@ import java.text.Normalizer
  * Placeholder names for an unannounced artist ("TBA", "TBD", "TBC", "N.N."), never artist rows.
  */
 private val PLACEHOLDER_NAMES =
-    setOf("tba", "tbd", "tbc", "tba.", "tbd.", "tbc.", "nn", "n.n.", "nn.")
+    setOf("tba", "tbd", "tbc", "tba.", "tbd.", "tbc.", "nn", "n.n.", "nn.", "surprise", "dj surprise")
 
 /**
  * A "more acts to come" continuation: `+ more`, `& more`, `and more`, `+ more tba`, `more tba`,
@@ -79,17 +79,18 @@ fun isNonArtistLabel(name: String): Boolean = BARE_ROLE_LABEL.matches(name.trim(
 
 /** A whole string that is a role label, with or without its colon. */
 private val BARE_ROLE_LABEL =
-    Regex("""^(?:$SUPPORT_LABELS|feat\.?|featuring|w/)\s*:?\s*$""", RegexOption.IGNORE_CASE)
+    Regex("""^(?:(?:local\s+)?(?:$SUPPORT_LABELS)|feat\.?|featuring|w/)\s*:?\s*$""", RegexOption.IGNORE_CASE)
 
 /**
  * Curated event-segment labels, an aftershow/afterparty/warm-up/event-start slot listed in the lineup, with
  * any leading qualifier (`ACID AFTERSHOW`, `TECHNO AFTERPARTY`) and the `aftershow`/`after
  * show`/`after-show` spellings. Matched fully anchored by [isEventSegmentLabel], so the band
- * `"AFTERHOURS"` and the venue's `"Warm Up im Franken"` are kept. Curated because flat lineup
+ * `"AFTERHOURS"` and the venue's `"Warm Up im Franken"` are kept. An after-show line with its door time goes whole:
+ * `Aftershow Party mit Record Hop Einlass: 20:00 Uhr`. Without one, `AfterShow mit Dr. Kimble` stays, as it names a DJ. Curated because flat lineup
  * text carries no structural signal; add families as they appear.
  */
 private val EVENT_SEGMENT_PATTERN =
-    Regex("""(?:\S+ )*after[ -]?show(?: party)?|(?:\S+ )*after[ -]?party|warm[ -]?up|event[ -]?start""", RegexOption.IGNORE_CASE)
+    Regex("""(?:\S+ )*after[ -]?show(?:[ -]party)?(?: mit \S.*\beinlass\b.*)?|(?:\S+ )*after[ -]?party|warm[ -]?up|event[ -]?start""", RegexOption.IGNORE_CASE)
 
 /**
  * Whether the whole trimmed, whitespace-collapsed [name] is an [EVENT_SEGMENT_PATTERN] label.
@@ -255,7 +256,9 @@ private val NON_ARTIST_NAMES: Set<String> =
         "nightwash",
         "smash comedy deluxe",
         // A touring band contest billed as the act at Maschinenhaus; its acts are not named.
-        "sph music masters"
+        "sph music masters",
+        // SO36's queer party, billed as its title.
+        "butch*walk"
     ) + BILLED_SERIES_NAMES
 
 /**

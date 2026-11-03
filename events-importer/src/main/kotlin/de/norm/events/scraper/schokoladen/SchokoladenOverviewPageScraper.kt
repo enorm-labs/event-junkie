@@ -413,7 +413,7 @@ private fun aftershowDjs(subtitle: String?): List<ScrapedArtist> {
                 .replace(DJ_LABEL, "")
                 .replace(DJ_SUFFIX, "")
                 .trim()
-        }.filterNot { it.isBlank() || isNonArtistName(it) }
+        }.filterNot { it.isBlank() || isNonArtistName(it) || it.split(WHITESPACE).size > MAX_DJ_NAME_WORDS }
         .distinct()
         .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 }
@@ -427,6 +427,9 @@ private val DJ_NOTE = Regex("""\s*\([^)]*(?:\)|$)""")
 
 /** An unnamed guest slot at the end of the lineup, `& Guests`; a collective rule would keep it on the name before. */
 private val GUEST_TAIL = Regex("""\s*[&+]\s*guests?\s*$""", RegexOption.IGNORE_CASE)
+
+/** The most words a DJ's name runs to; a longer one is the night's name: `No Tears For The Creatures Of The Night DJs`. */
+private const val MAX_DJ_NAME_WORDS = 4
 
 /** A night's name before its DJs: `Under the Wires w/ DJs …`. */
 private const val NIGHT_WITH = " w/ "

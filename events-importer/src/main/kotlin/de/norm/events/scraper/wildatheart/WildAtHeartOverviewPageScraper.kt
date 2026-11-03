@@ -93,7 +93,12 @@ class WildAtHeartOverviewPageScraper(
 
         val genre = parseGenre(row.textAt(".stil-country"))
         val supportNames = row.select(".supportband").map { stripQuotes(it.text()) }.filter { it.isNotBlank() }
-        val djNames = row.select(".dj").map { it.text().trim() }.filter { it.isNotBlank() }
+        val djNames =
+            row
+                .select(".dj")
+                .map { it.text().trim() }
+                .filter { it.isNotBlank() }
+                .flatMap(::splitDjs)
 
         // A `.headlines` banner only decorates a real event (band present); when it *is* the title
         // (bandless row) it is not repeated as a subtitle.
@@ -205,3 +210,20 @@ class WildAtHeartOverviewPageScraper(
         private val AB_UHR_PATTERN = Regex("""\bab\s+(\d{1,2})(?:[:.](\d{2}))?\s*Uhr\b""", RegexOption.IGNORE_CASE)
     }
 }
+
+/**
+ * A `DJs` line names each of its DJs: `DJs Peter + Louie Wray` is `DJ Peter` and `Louie Wray`. A one-word name keeps the
+ * `DJ` the line gave it, which tells it apart from every other Peter.
+ */
+internal fun splitDjs(line: String): List<String> {
+    val names = DJS_LINE.matchEntire(line)?.groupValues?.get(1) ?: return listOf(line)
+    return names
+        .split(DJS_SEPARATOR)
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .map { if (' ' in it) it else "DJ $it" }
+}
+
+private val DJS_LINE = Regex("""djs\s+(.+)""", RegexOption.IGNORE_CASE)
+
+private val DJS_SEPARATOR = Regex("""\s+[+&]\s+|\s*,\s*""")

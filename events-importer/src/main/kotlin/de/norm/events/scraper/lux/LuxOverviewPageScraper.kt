@@ -116,7 +116,7 @@ class LuxOverviewPageScraper(
         night
             .select(".details > p strong")
             .flatMap { it.brLines() }
-            .filterNot { TIME_LINE.matches(it) || isNonArtistName(it) }
+            .filterNot { TIME_LINE.matches(it) || GENRE_NOTE.matches(it) || isNonArtistName(it) }
             .distinct()
 
     private fun Element.flatTextAt(selector: String): String? = selectFirst(selector)?.text()?.collapseWhitespace().blankToNull()
@@ -134,6 +134,10 @@ class LuxOverviewPageScraper(
 
         /** `21.00 Uhr`, `Tür 21.00 Uhr`, `21.00 - Late`: a line that holds only the night's clock. */
         val TIME_LINE = Regex("""^(?:(tür|einlass)\s*:?\s*)?(?:ab\s+)?(\d{1,2})[.:](\d{2})(?:\s*uhr)?(?:\s*[-–].*)?$""", RegexOption.IGNORE_CASE)
+
+        /** A line of lower-case genre words joined by dashes under a DJ: `electropop - weird tunes`. */
+        val GENRE_NOTE = Regex("""\p{Ll}[\p{Ll}\s]*(?:\s-\s\p{Ll}[\p{Ll}\s]*)+""")
+
         const val DOORS_GROUP = 1
         const val HOUR_GROUP = 2
         const val MINUTE_GROUP = 3

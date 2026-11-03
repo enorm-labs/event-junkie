@@ -88,7 +88,7 @@ class KulturhausSpandauApiScraper {
                     .path("artists")
                     .toList()
                     .mapNotNull { it.stringOrNull("title")?.let(::decodeHtmlEntities)?.blankToNull() }
-                    .map { ScrapedArtist(it) }
+                    .map { ScrapedArtist(companyBeforeDirector(it)) }
         ).forChildrenIf(childrensPhrase(categories, rawTitle, subtitle, node.path("maximum_age").asInt(0)))
     }
 
@@ -155,3 +155,20 @@ private val NOT_A_SHOW = Regex("""auktion""", RegexOption.IGNORE_CASE)
 
 /** An editor's hidden `<p hidden …>` tag, or a `<br>`, inside a title. */
 private val EDITOR_TAG = Regex("""<p[\s_-]+hidden[^>]*>|<br\s*/?>""", RegexOption.IGNORE_CASE)
+
+/**
+ * A company and the person who leads it, which the API bills as one artist: `TheaterGeist / Annegret Geist`. The company
+ * stays when it carries the person's surname. Any other `/` pair is left whole.
+ */
+internal fun companyBeforeDirector(name: String): String {
+    val parts = name.split(SPACED_SLASH)
+    val surname =
+        parts
+            .getOrNull(1)
+            ?.trim()
+            ?.substringAfterLast(' ')
+            ?.lowercase() ?: return name
+    return if (parts.size == 2 && surname.length > 2 && surname in parts[0].lowercase()) parts[0].trim() else name
+}
+
+private val SPACED_SLASH = Regex("""\s+/\s+""")

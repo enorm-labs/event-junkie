@@ -202,4 +202,12 @@ class MadameClaudeApiScraperTest {
         page.postCount shouldBe 2
         page.events shouldBe scraper.scrape("[{}, {\"id\": \"not a number\"}]")
     }
+
+    @Test
+    fun `cuts the format word after a slash pair and keeps a pair without one`() {
+        concertArtists("Matthew Ryals + Morimoto / Wong duo + Song-Ming Ang + Forrest Gimp (DJ-Set)").map { it.name } shouldContainExactly
+            listOf("Matthew Ryals", "Morimoto / Wong", "Song-Ming Ang", "Forrest Gimp")
+        concertArtists("drekka + Zimmermann / Lienhard").map { it.name } shouldContainExactly listOf("drekka", "Zimmermann / Lienhard")
+        concertArtists("Brad Mehldau Trio").map { it.name } shouldContainExactly listOf("Brad Mehldau Trio")
+    }
 }

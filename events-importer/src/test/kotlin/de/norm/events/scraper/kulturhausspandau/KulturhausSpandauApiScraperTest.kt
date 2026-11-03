@@ -118,4 +118,11 @@ class KulturhausSpandauApiScraperTest {
     private companion object {
         const val SOURCE_URL = "https://kulturhaus-spandau.de/wp-json/eventmanager/v1/events"
     }
+
+    @Test
+    fun `bills the company, not the director the API names beside it`() {
+        companyBeforeDirector("TheaterGeist / Annegret Geist") shouldBe "TheaterGeist"
+        companyBeforeDirector("Zimmermann / Lienhard") shouldBe "Zimmermann / Lienhard"
+        companyBeforeDirector("Theater Anna") shouldBe "Theater Anna"
+    }
 }

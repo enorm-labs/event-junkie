@@ -116,6 +116,6 @@ class Richten25OverviewPageScraper {
         val NIGHT_NAME = Regex("""\b(?:series|evening|night|benefit|solidarity|festival)\b""", RegexOption.IGNORE_CASE)
         val FORMAT_LABEL = Regex("""\d+\s+(?:solos?|duos?|trios?|sets?)""", RegexOption.IGNORE_CASE)
         val MORE_TAIL = Regex("""\s+(?:and|&)\s+more\.*\s*$""", RegexOption.IGNORE_CASE)
-        val MEMBER_SEPARATOR = Regex(""",\s*|\s+&\s+|\s+and\s+|\s+/\s+""")
+        val MEMBER_SEPARATOR = Regex(""",\s*|\s+&\s+|\s+and\s+|\s+/\s+|\s+\+\s+""")
     }
 }

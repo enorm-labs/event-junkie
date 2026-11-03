@@ -27,6 +27,7 @@ class EventFieldMappingTest {
     @Test
     fun `stripTitleStatusMarker strips a trailing scheduling note and stray dash`() {
         stripTitleStatusMarker("Iggi Kelly Nachholtermin vom 28.04.26-") shouldBe "Iggi Kelly"
+        stripTitleStatusMarker("Wird verlegt: Deep Purple") shouldBe "Deep Purple"
         stripTitleStatusMarker("The Dear Hunter -Nachholtermin vom 30.09.2025.") shouldBe "The Dear Hunter"
         stripTitleStatusMarker(cleanEventTitle("DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY  WIRD VERSCHOBEN").text) shouldBe
             "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY"

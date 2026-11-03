@@ -21,6 +21,7 @@ import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
 import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.stripFriendsTail
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -100,7 +101,7 @@ class ATraneProgrammePageScraper {
             free = tags.any { FREE_ENTRY.containsMatchIn(it) },
             status = event.schemaStatus(),
             artists =
-                buildArtistsForEventType(act, null, EventType.CONCERT.name) +
+                buildArtistsForEventType(stripFriendsTail(act), null, EventType.CONCERT.name) +
                     guests
                         .filterNot { names(act, it) }
                         .distinctBy { it.lowercase() }

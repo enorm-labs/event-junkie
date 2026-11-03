@@ -528,4 +528,18 @@ class NonArtistNamesTest {
         isNonArtistName("FLEEZE - FLIRT RECORDS") shouldBe false
         isNonArtistName("MASTER BOOT RECORD") shouldBe false
     }
+
+    @Test
+    fun `isNonArtistName refuses a surprise slot, a local support slot and an after-show line`() {
+        isNonArtistName("Surprise") shouldBe true
+        isNonArtistName("DJ Surprise") shouldBe true
+        isNonArtistName("Local Support") shouldBe true
+        isNonArtistName("Aftershow Party mit Record Hop Einlass: 20:00 Uhr") shouldBe true
+        isNonArtistName("Butch*walk") shouldBe true
+        // A name that only holds the words stays.
+        isNonArtistName("Surprise Chef") shouldBe false
+        isNonArtistName("Support Lesbiens") shouldBe false
+        isNonArtistName("AFTERHOURS") shouldBe false
+        isNonArtistName("AfterShow mit Dr. Kimble") shouldBe false
+    }
 }
