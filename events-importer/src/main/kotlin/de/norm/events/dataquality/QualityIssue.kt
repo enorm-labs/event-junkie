@@ -12,6 +12,10 @@ private const val TITLE_DERIVED_SINGLETON_PREDICATE = "EXISTS ($ONE_EVENT_TITLE_
 
 private const val TITLE_DERIVED_UNMATCHED_PREDICATE = "EXISTS ($ONE_EVENT_TITLE_DERIVED AND a.musicbrainz_match = 'NONE')"
 
+/** An event that states no price at all: a free event or a `price_note` states one. The report, the gate and the worklist share it. */
+internal const val MISSING_PRICE_PREDICATE =
+    "e.price_presale IS NULL AND e.price_box_office IS NULL AND e.free = false AND e.price_note IS NULL"
+
 private const val FLAGGED_AT_IMPORT_PREDICATE = "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_quality_flag f WHERE f.event_id = e.id)"
 
 /** The title-derived acts of `e` with their MusicBrainz verdicts, in a stable order. */
@@ -79,7 +83,7 @@ enum class QualityIssue(
      */
     MISSING_PRICE(
         Dimension.COMPLETENESS,
-        "e.price_presale IS NULL AND e.price_box_office IS NULL AND e.free = false AND e.price_note IS NULL",
+        MISSING_PRICE_PREDICATE,
         "json_build_array(e.title, e.price_presale, e.price_box_office, e.free, e.price_note)"
     ),
 

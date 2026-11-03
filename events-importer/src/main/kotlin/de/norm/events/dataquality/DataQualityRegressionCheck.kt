@@ -26,9 +26,9 @@ import java.time.LocalDate
  * denominator, and the second counts names rather than events. The [NOT_JUDGED] review queues are
  * skipped as well.
  *
- * `flaggedAtImport` is judged on the [FLAGGED_AT_IMPORT_KEPT_OUT] series and reported under its own
- * name (#3148). A review flag such as `UNCERTAIN_PARTY_FEATURE` fills a queue and costs the event
- * nothing, so a new review kind must not read as a regression against a median from before it existed.
+ * Two metrics are judged on a narrower series under their own name: `flaggedAtImport` on
+ * [FLAGGED_AT_IMPORT_KEPT_OUT], as a review flag costs the event nothing (#3148), and `missingPrice`
+ * on [MISSING_PRICE_UPCOMING], as a far-ahead night rarely has a presale yet (#4420).
  *
  * A series whose metric maps to an aspect the source declares in its `VenueLimitations` is measured
  * but never [Verdict.regressed] (#3195). The source does not publish that field reliably, so its share
@@ -49,6 +49,20 @@ object DataQualityRegressionCheck {
 
     /** The snapshot series of `flaggedAtImport` without the events flagged only for review. */
     const val FLAGGED_AT_IMPORT_KEPT_OUT = "flaggedAtImportKeptOut"
+
+    /**
+     * The snapshot series of `missingPrice` over the events dated in the next [PRICE_WINDOW_DAYS] days,
+     * today included (#4420). Its `totalEvents` counts those events alone, so [MIN_EVENTS] does too. A
+     * venue that announces far-ahead nights without a presale must not read as a scraper that lost its
+     * prices. The snapshot keeps the full `missingPrice` series for the dashboard.
+     */
+    const val MISSING_PRICE_UPCOMING = "missingPriceUpcoming"
+
+    /**
+     * How far ahead a missing price counts as a gap: events dated from today up to, not including,
+     * today plus this many days. A threshold, not a product rule: change it if the alert stays noisy or goes quiet.
+     */
+    const val PRICE_WINDOW_DAYS = 30L
 
     private const val PERCENT = 100.0
 
@@ -85,15 +99,17 @@ object DataQualityRegressionCheck {
 
     /** The metric each judged snapshot series is reported as. */
     private val METRIC_OF_SERIES =
-        QualityIssue.KEYS.associateWith { it } - NOT_JUDGED.map { it.key }.toSet() - QualityIssue.FLAGGED_AT_IMPORT.key +
-            (FLAGGED_AT_IMPORT_KEPT_OUT to QualityIssue.FLAGGED_AT_IMPORT.key)
+        QualityIssue.KEYS.associateWith { it } - NOT_JUDGED.map { it.key }.toSet() - QualityIssue.FLAGGED_AT_IMPORT.key -
+            QualityIssue.MISSING_PRICE.key + (FLAGGED_AT_IMPORT_KEPT_OUT to QualityIssue.FLAGGED_AT_IMPORT.key) +
+            (MISSING_PRICE_UPCOMING to QualityIssue.MISSING_PRICE.key)
 
     /**
      * One judged source and metric.
      *
      * [baselinePct] is `null` when the source had too few days of history or too few events today to
      * be judged; [regressed] is then false. [limitationAccepted] is true when the source declares the
-     * metric's aspect; the share can then get [worse] without being [regressed].
+     * metric's aspect; the share can then get [worse] without being [regressed]. [windowDays] is set
+     * when the share counts only the events of that many days ahead, and [totalEvents] then counts them alone.
      */
     data class Verdict(
         val source: String,
@@ -101,7 +117,8 @@ object DataQualityRegressionCheck {
         val todayPct: Double,
         val baselinePct: Double?,
         val totalEvents: Long,
-        val limitationAccepted: Boolean = false
+        val limitationAccepted: Boolean = false,
+        val windowDays: Long? = null
     ) {
         val worse: Boolean
             get() = baselinePct != null && todayPct - baselinePct > MAX_WORSENING_POINTS
@@ -143,7 +160,8 @@ object DataQualityRegressionCheck {
                     todayPct = share(row),
                     baselinePct = if (judged) median(past) else null,
                     totalEvents = row.totalEvents,
-                    limitationAccepted = accepts(declaredAspects[row.sourceSlug].orEmpty(), row.metric)
+                    limitationAccepted = accepts(declaredAspects[row.sourceSlug].orEmpty(), row.metric),
+                    windowDays = PRICE_WINDOW_DAYS.takeIf { row.metric == QualityIssue.MISSING_PRICE.key }
                 )
             }
     }

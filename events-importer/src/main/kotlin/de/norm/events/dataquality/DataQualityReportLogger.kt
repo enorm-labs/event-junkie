@@ -107,7 +107,10 @@ class DataQualityReportLogger(
                     .toList()
                     .associateBy { it.sourceSlug to it.metric }
 
-            val rows =
+            val upcoming =
+                service.upcomingPriceGaps(today, today.plusDays(DataQualityRegressionCheck.PRICE_WINDOW_DAYS))
+
+            val measured =
                 report.perSource.flatMap { source ->
                     measurements(source).map { (metric, count) ->
                         val key = source.source to metric
@@ -122,6 +125,7 @@ class DataQualityReportLogger(
                         )
                     }
                 }
+            val rows = measured + upcomingPriceRows(today, report.perSource.map { it.source }, upcoming, existing)
             snapshots.saveAll(rows).toList()
 
             // One line, not one per metric: a daily summary somebody actually reads in an aggregated
@@ -149,6 +153,29 @@ class DataQualityReportLogger(
         purgePastDismissals()
     }
 
+    /**
+     * One `missingPriceUpcoming` row per source, the regression gate's price series (#4420). Its
+     * `totalEvents` counts only the events of the window, and a source with none gets 0 of 0, which
+     * the gate skips. No gauge: the count means nothing on the dashboard without its own denominator.
+     */
+    private fun upcomingPriceRows(
+        today: LocalDate,
+        sources: List<String>,
+        upcoming: Map<String, UpcomingPriceRow>,
+        existing: Map<Pair<String, String>, DataQualitySnapshotEntity>
+    ): List<DataQualitySnapshotEntity> =
+        sources.map { source ->
+            val window = upcoming[source]
+            DataQualitySnapshotEntity(
+                id = existing[source to DataQualityRegressionCheck.MISSING_PRICE_UPCOMING]?.id,
+                snapshotDate = today,
+                sourceSlug = source,
+                metric = DataQualityRegressionCheck.MISSING_PRICE_UPCOMING,
+                metricCount = window?.missingPrice ?: 0L,
+                totalEvents = window?.totalEvents ?: 0L
+            )
+        }
+
     /** Its own catch, so a failed snapshot still purges, and a failed purge leaves the snapshot alone. */
     @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: measurement must not be able to fail the application
     private suspend fun purgePastDismissals() {
@@ -168,15 +195,17 @@ class DataQualityReportLogger(
      * table, and inside the same catch, so it cannot stop the scheduler either. One WARN per regressed source and metric:
      * the alert says that something regressed, and this line says which source, which metric and by
      * how much. A share that got worse on a declared limitation gets an INFO line and no alert (#3195).
+     * The `missingPrice` line counts only the events of the next [DataQualityRegressionCheck.PRICE_WINDOW_DAYS] days, and says so (#4420).
      */
     private suspend fun checkForRegressions(
         today: LocalDate,
         rows: List<DataQualitySnapshotEntity>
     ) {
         judge(today, rows).filter { it.worse }.forEach { verdict ->
+            val events = verdict.windowDays?.let { "${verdict.totalEvents} events in the next $it days" } ?: "${verdict.totalEvents} events"
             val numbers =
                 "${verdict.metric} of ${verdict.source} is at ${pct(verdict.todayPct)}% " +
-                    "against a 7-day median of ${pct(verdict.baselinePct ?: 0.0)}% (${verdict.totalEvents} events)"
+                    "against a 7-day median of ${pct(verdict.baselinePct ?: 0.0)}% ($events)"
             logger.at(if (verdict.regressed) Level.WARN else Level.INFO) {
                 message =
                     if (verdict.regressed) {
