@@ -190,7 +190,7 @@ class ClassificationRunnerTest {
             checks("a" to 1)
             val runner = runner()
             lastSuccess() shouldBe START.epochSecond.toDouble()
-            registry.find(ClassificationMetrics.TOKEN_BUDGET).gauge()!!.value() shouldBe BUDGET.toDouble()
+            registry.find("importer.classification.token_budget").gauge()!!.value() shouldBe BUDGET.toDouble()
 
             now = START.plusSeconds(3600)
             runner.runNightly()
@@ -228,7 +228,7 @@ class ClassificationRunnerTest {
             lastSuccess() shouldBe START.epochSecond.toDouble()
         }
 
-    private fun lastSuccess() = registry.find(ClassificationMetrics.LAST_SUCCESS).gauge()!!.value()
+    private fun lastSuccess() = registry.find("importer.classification.last_success").gauge()!!.value()
 
     private fun runner(maxPerRun: Int = 50) =
         ClassificationRunner(

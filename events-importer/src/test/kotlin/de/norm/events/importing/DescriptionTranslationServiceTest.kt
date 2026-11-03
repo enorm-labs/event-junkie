@@ -229,7 +229,7 @@ class DescriptionTranslationServiceTest {
             service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 0
 
             coVerify(exactly = 0) { engine.translate(any()) }
-            registry.find(ImporterMetrics.TRANSLATIONS).counters().sumOf { it.count() } shouldBe 0.0
+            registry.find("importer.translations").counters().sumOf { it.count() } shouldBe 0.0
         }
 
     // The hash is what makes a re-import cheap: an unchanged description needs no second call.
