@@ -54,7 +54,8 @@ class LabsaalCalendarScraper {
                 .orEmpty()
                 .split(',')
                 .mapNotNull { it.blankToNull() }
-        if (!isProgramme(title, categories)) return null
+        val slug = extractEventSlug(url)
+        if (!isProgramme(title, categories, slug)) return null
         val rawDescription = entry["DESCRIPTION"]?.text
         val description = htmlParagraphText(rawDescription?.replace(LINK_NOTE, ""))
         val (doors, startTime) = orderDoorsBeforeStart(labelledClock(description, DOORS_LABELS), start.toLocalTime())
@@ -72,7 +73,7 @@ class LabsaalCalendarScraper {
             startTime = startTime?.takeUnless { it == doors },
             imageUrl = entry["ATTACH"]?.takeIf { it.params["FMTTYPE"]?.startsWith("image/") == true }?.value,
             sourceUrl = url,
-            sourceId = "${EventSource.LABSAAL.sourceIdPrefix}${extractEventSlug(url)}",
+            sourceId = "${EventSource.LABSAAL.sourceIdPrefix}$slug",
             ticketUrl = rawDescription?.let { TICKET_LINK.find(it)?.groupValues?.get(1) },
             pricePresale = prices.presale,
             priceBoxOffice = prices.boxOffice,
@@ -127,14 +128,17 @@ class LabsaalCalendarScraper {
 
         /**
          * Whether an entry is programme: filed under [PROGRAMME_CATEGORY], not a workshop or course
-         * ([PARTICIPATION], EVENT_SCOPE.md §3.2), and not a trip to a venue elsewhere ([AWAY]).
+         * ([PARTICIPATION], EVENT_SCOPE.md §3.2), and not a trip to a venue elsewhere ([AWAY]). The page's
+         * [slug] keeps the title the entry was first published with, so it can name a workshop the title
+         * has lost: `kindertanzen-im-labsaal-workshop-in-den-herbsferien-468` (event 12520).
          */
         fun isProgramme(
             title: String,
-            categories: List<String>
+            categories: List<String>,
+            slug: String? = null
         ): Boolean =
             PROGRAMME_CATEGORY in categories &&
-                !PARTICIPATION.containsMatchIn(title.substringBefore(" und ")) &&
+                listOfNotNull(title, slug?.replace('-', ' ')).none { PARTICIPATION.containsMatchIn(it.substringBefore(" und ")) } &&
                 !AWAY.containsMatchIn(title)
     }
 }

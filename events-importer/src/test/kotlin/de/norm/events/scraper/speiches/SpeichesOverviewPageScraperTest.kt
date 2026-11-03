@@ -1,6 +1,7 @@
 package de.norm.events.scraper.speiches
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -65,16 +66,30 @@ class SpeichesOverviewPageScraperTest {
         on("2026-10-20", "18:00").artists.map { it.name } shouldContainExactly listOf("Kurt Buschmann", "Proud Fools")
     }
 
-    private fun actsOfRow(text: String): List<String> {
+    private fun concertRow(text: String): ScrapedEvent {
         val link = "javascript:va_info1(\"veranstaltungen_info.php?auswahl_lfdnr=48310\")"
         val html =
             "<table><tr><td><a href='$link'>Sa&nbsp;24.10.</a></td><td><a href='$link'>20.00</a></td>" +
                 "<td><a href='$link'>Konzert</a><br>Ort: Speiche</td><td></td><td><a href='$link'>$text</a></td></tr></table>"
-        return SpeichesOverviewPageScraper(clock)
-            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
-            .single()
-            .artists
-            .map { it.name }
+        return SpeichesOverviewPageScraper(clock).scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+    }
+
+    private fun actsOfRow(text: String): List<String> = concertRow(text).artists.map { it.name }
+
+    @Test
+    fun `keeps a name written all lower case whole`() {
+        // Event 12518.
+        actsOfRow("glass and stone - famous rock cover and best own blues mit Heinz Glass und Edward Stone<br>Eintritt frei") shouldContainExactly
+            listOf("glass and stone")
+    }
+
+    @Test
+    fun `a Lesung label makes a Konzert row a reading that bills its authors`() {
+        // Event 12519.
+        val reading = concertRow("Lesung: Martin Puttke, Bastienne Voss - Vater und Tochter lesen aus ihren Debüts -Vier Irre - auf verschlungenen Wegen-")
+
+        reading.eventType shouldBe EventType.READING.name
+        reading.artists.map { it.name } shouldContainExactly listOf("Martin Puttke", "Bastienne Voss")
     }
 
     @Test

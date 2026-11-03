@@ -109,6 +109,9 @@ class LabsaalCalendarScraperTest {
         LabsaalCalendarScraper.isProgramme("VOLKSTANZ Workshop mit ANTOINE SENGERS", programme) shouldBe false
         LabsaalCalendarScraper.isProgramme("Tanzkurs im LabSaal", programme) shouldBe false
         LabsaalCalendarScraper.isProgramme("QIGONG Kurs 1", programme) shouldBe false
+        // Event 12520: the title lost the word the slug keeps.
+        LabsaalCalendarScraper.isProgramme("Kindertanzen im LabSaal", programme, "kindertanzen-im-labsaal-workshop-in-den-herbsferien-468") shouldBe false
+        LabsaalCalendarScraper.isProgramme("Swinging TanzT und Swing-Workshop", programme, "swinging-tanzt-und-swing-workshop") shouldBe true
         LabsaalCalendarScraper.isProgramme("Popsong Singers", listOf("Alle Gruppen Termine", "Popsong Singers")) shouldBe false
     }
 
