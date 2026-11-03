@@ -54,7 +54,6 @@ class HtmlFetcher(
      * @param cookies sent verbatim, for a source that serves its programme only to a request that
      * carries one: without `rosa_age_ok` ROSA renders its age gate and no events. A cookie belongs
      * to one venue, so the value stays in that importer.
-     * @return a [FetchResult].
      */
     suspend fun fetch(
         url: String,
@@ -88,8 +87,6 @@ class HtmlFetcher(
     /**
      * Fetches and parses HTML from [url] without conditional headers, for secondary pages; parsing
      * on the IO dispatcher.
-     *
-     * @return a parsed Jsoup [Document].
      */
     suspend fun fetchDocument(url: String): Document {
         val body = fetchRawBody(url)
