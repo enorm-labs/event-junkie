@@ -255,29 +255,71 @@ class KesselhausCalendarScraperTest {
         kesselhaus.scrape(Jsoup.parse("<html><body></body></html>", url), url).shouldBeEmpty()
     }
 
+    @ParameterizedTest
+    @CsvSource("kesselhaus, KESSELHAUS", "maschinenhaus, MASCHINENHAUS")
+    fun `drops a gala whose ticket button admits invited guests only, and keeps the public night beside it`(
+        venue: String,
+        room: KesselhausRoom
+    ) {
+        // Verbatim from "Most Wanted: Music", 2026-11-03 (#4422).
+        val label = """{"pretitle":"Ticket Button","title":"Eintritt nur für geladene Gäste","icon":"smart_button"}"""
+        val invitation = """[{"alt":"Eintritt nur für geladene Gäste","label":$label,"type":"/categories//pos//subs//ticket"}]"""
+        val page =
+            calendarPage(
+                Card("gala", "Most Wanted: Music", "listen to berlin-Award", invitation, venue),
+                Card("public", "17 Hippies", "", """[{"A":"35","type":"/categories//pos//subs//ticket"}]""", venue)
+            )
+
+        val events = KesselhausCalendarScraper(room, clock).scrape(Jsoup.parse(page, url), url)
+
+        events.map { it.title } shouldBe listOf("17 Hippies")
+    }
+
+    @Test
+    fun `drops a night whose subtitle says it is private, but keeps a play titled Geschlossene Gesellschaft`() {
+        val page =
+            calendarPage(
+                Card("private", "Firmenfeier", "Geschlossene Gesellschaft"),
+                Card("play", "Geschlossene Gesellschaft", "von Jean-Paul Sartre")
+            )
+
+        kesselhaus.scrape(Jsoup.parse(page, url), url).map { it.subtitle } shouldBe listOf("von Jean-Paul Sartre")
+    }
+
     /** One concert card on a calendar page of its own, with the transfer state the CMS writes, `&`-escaped as `&a;`. */
     private fun scrapeOne(
         title: String,
         subtitle: String,
         tickets: String = "[]"
     ) = kesselhaus
-        .scrape(Jsoup.parse(calendarPage(title, subtitle, tickets), url), url)
+        .scrape(Jsoup.parse(calendarPage(Card("e1", title, subtitle, tickets)), url), url)
         .single()
 
-    private fun calendarPage(
-        title: String,
-        subtitle: String,
-        tickets: String
-    ): String {
-        val base =
-            """{"venue":"/venues//kesselhaus","start":"2027-01-09T19:00:00.000Z","topics":["/categories//event-topics//subs//concerts"],"tickets":$tickets}"""
-        val text = """{"title":"$title","subtitle":"$subtitle"}"""
-        val state = """{"store.x.doc:/events//e1/meta:base/1":$base,"store.x.doc:/events//e1/meta:de/1":$text}"""
-        val escaped = state.replace("&", "&a;").replace("\"", "&q;")
+    private data class Card(
+        val id: String,
+        val title: String,
+        val subtitle: String,
+        val tickets: String = "[]",
+        val venue: String = "kesselhaus"
+    )
+
+    private fun calendarPage(vararg cards: Card): String {
+        val documents =
+            cards.joinToString(",") { card ->
+                val topics = """["/categories//event-topics//subs//concerts"]"""
+                val base = """{"venue":"/venues//${card.venue}","start":"2027-01-09T19:00:00.000Z","topics":$topics,"tickets":${card.tickets}}"""
+                val text = """{"title":"${card.title}","subtitle":"${card.subtitle}"}"""
+                """"store.x.doc:/events//${card.id}/meta:base/1":$base,"store.x.doc:/events//${card.id}/meta:de/1":$text"""
+            }
+        val escaped = "{$documents}".replace("&", "&a;").replace("\"", "&q;")
+        val items =
+            cards.joinToString("\n") {
+                """<div class="item" data-id="${it.id}" data-use="default" data-part="2027-01"><span class="category">Konzert</span></div>"""
+            }
         return """
-            <div class="item" data-id="e1" data-use="default" data-part="2027-01"><span class="category">Konzert</span></div>
-            <script id="serverApp-state" type="application/json">$escaped</script>
-            """.trimIndent()
+            |$items
+            |<script id="serverApp-state" type="application/json">$escaped</script>
+            """.trimMargin()
     }
 
     private fun fixture(name: String): String =
