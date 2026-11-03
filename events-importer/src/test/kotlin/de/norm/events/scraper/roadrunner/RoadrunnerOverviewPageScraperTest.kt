@@ -221,6 +221,59 @@ class RoadrunnerOverviewPageScraperTest {
     }
 
     @Test
+    fun `stops a continued Live list at an aftershow line and keeps the doors line out of every act`() {
+        // The December page, verbatim but for the ticket link and the prose (#4423).
+        val html =
+            """
+            <html><body>
+              <p class="Stil62"><strong>Freitag 18. Dezember: </strong></p>
+              <p class="Stil62"><strong>ROCKIN&rsquo; &amp; ROLLIN&rsquo; X-MAS PARTY</strong></p>
+              <p class="Stil11"><strong>Live:  </strong></p>
+              <p class="Stil11"><strong>BIG SANDY &amp; HIS FLY-RITE BOYS (USA) </strong></p>
+              <p><span class="Stil11"><strong>+ THE ROUND UP BOYS (D)</strong></span><br>
+              </p>
+              <p class="Stil62"><strong>+  Aftershow Party mit Record Hop</strong><br>
+                  <strong>Einlass:  20:00 Uhr</strong></p>
+              <p>Seit ihrer Gründung im Jahr 1988 in Südkalifornien.</p>
+            </body></html>
+            """.trimIndent()
+
+        val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        event.title shouldBe "ROCKIN’ & ROLLIN’ X-MAS PARTY"
+        event.billing() shouldBe listOf("BIG SANDY & HIS FLY-RITE BOYS" to ArtistRole.HEADLINER, "THE ROUND UP BOYS" to ArtistRole.HEADLINER)
+        event.doorsTime shouldBe LocalTime.of(20, 0)
+        event.description shouldBe "Seit ihrer Gründung im Jahr 1988 in Südkalifornien."
+    }
+
+    @Test
+    fun `bills an act that shares its paragraph with the doors line, after a label and after a plus`() {
+        val html =
+            """
+            <html><body>
+              <p class="Stil62">Samstag, 4. Juli:</p>
+              <p class="Stil62">SUMMER STOMP</p>
+              <p class="Stil11">Live:</p>
+              <p class="Stil11">THE MIGHTY LONG-NAMED ROCKABILLY ORCHESTRA OF SOUTH NEUKÖLLN (D)<br>Einlass: 19:30 Uhr</p>
+              <p class="Stil11">Support:</p>
+              <p class="Stil11">THE OPENERS (UK)</p>
+              <p class="Stil11">+ PARTY HATS<br>Einlass: 19:30 Uhr</p>
+              <p class="Stil62">+ Party with DJ Somebody</p>
+            </body></html>
+            """.trimIndent()
+
+        val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        event.billing() shouldBe
+            listOf(
+                "THE MIGHTY LONG-NAMED ROCKABILLY ORCHESTRA OF SOUTH NEUKÖLLN" to ArtistRole.HEADLINER,
+                "THE OPENERS" to ArtistRole.SUPPORT,
+                "PARTY HATS" to ArtistRole.SUPPORT
+            )
+        event.doorsTime shouldBe LocalTime.of(19, 30)
+    }
+
+    @Test
     fun `reads an inline Live list, and a Support line as confirming the title is the act`() {
         val autumnClock = Clock.fixed(Instant.parse("2026-09-05T10:00:00Z"), ZoneOffset.UTC)
         val events =
