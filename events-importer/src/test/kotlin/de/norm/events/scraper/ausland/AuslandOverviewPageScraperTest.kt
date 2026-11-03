@@ -39,6 +39,19 @@ class AuslandOverviewPageScraperTest {
     }
 
     @Test
+    fun `splits two acts a line-up line joins with a double slash`() {
+        val html =
+            """
+            <section class="event listitem"><h2>Caroline Cecilia Tallone + Ju Ray'm // Chiseling Clouds</h2>
+            <a itemprop="url" href="/event/caroline"></a><p class="date">Wednesday, 09 December, 2026 - 20:00</p>
+            <p class="artistinfo">Chiseling Clouds<br>Caroline Cecilia Tallone // K Lì</p></section>
+            """.trimIndent()
+        val event = AuslandOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        event.artists.map { it.name } shouldContainExactly listOf("Chiseling Clouds", "Caroline Cecilia Tallone", "K Lì")
+    }
+
+    @Test
     fun `takes the series line as the subtitle and the first slide of a gallery as the image`() {
         val event = bySlug("all-the-rivers-flow-light-trees")
 

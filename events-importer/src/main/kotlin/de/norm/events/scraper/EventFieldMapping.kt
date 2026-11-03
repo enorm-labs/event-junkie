@@ -72,7 +72,7 @@ fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?
 
 /**
  * A status marker glued to the front or end of a title (`Olga Myko - Abgesagt`, `(cancelled) The
- * Act`, `The Act [ABGESAGT!]`, `MOLIY - *Abgesagt*`, `POSTPONED: Nina`, `VENUE ÄNDERUNG: Jazeek`)
+ * Act`, `The Act [ABGESAGT!]`, `MOLIY - *Abgesagt*`, `POSTPONED: Nina`, `Wird verlegt: Deep Purple`, `VENUE ÄNDERUNG: Jazeek`)
  * with its separator and its brackets, stars or dashes, one or a run (#2985, Zig-Zag's
  * `----ABGESAGT----- Jeff Lorber Fusion`, #4219). Whole
  * words only: "Abgesagte Lesung" is a title, not a marker. A
@@ -81,7 +81,7 @@ fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?
  */
 private val TITLE_STATUS_MARKER =
     Regex(
-        """^\s*[(\[*-]*\s*(?:abgesagt|absage|cancell?ed|postponed|venue\s?(?:ä|ae)nderung)\b!?\s*[)\]*-]*\s*[-–—:|]*\s*""" +
+        """^\s*[(\[*-]*\s*(?:abgesagt|absage|cancell?ed|postponed|wird\s+verlegt|venue\s?(?:ä|ae)nderung)\b!?\s*[)\]*-]*\s*[-–—:|]*\s*""" +
             """|\s*[-–—:|]*\s*[(\[*-]*\s*\b(?:abgesagt|absage|cancell?ed|postponed|venue\s?(?:ä|ae)nderung)!?\s*[)\]*-]*\s*$""",
         RegexOption.IGNORE_CASE
     )

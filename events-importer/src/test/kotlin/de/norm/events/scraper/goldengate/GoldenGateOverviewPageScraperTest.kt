@@ -105,6 +105,12 @@ class GoldenGateOverviewPageScraperTest {
     }
 
     @Test
+    fun `splits two DJs a spaced slash joins`() {
+        val parsed = scraper.scrape(headings("Do. 29. Oktober 2026 - 23:59", "Anxiety Night", "Lolu Menayed<br>Gingerblack / Sharhok Dini"), baseUrl)
+        parsed.single().artists.map { it.name } shouldContainExactly listOf("Lolu Menayed", "Gingerblack", "Sharhok Dini")
+    }
+
+    @Test
     fun `a b2b slot reaches the import boundary whole, which splits it into two DJs`() {
         val parsed = scraper.scrape(headings("Do. 01. Oktober 2026 - 23:59", "Cura", "Thor Rixon<br>Anaté b2b Shira Kela"), baseUrl)
         parsed.single().artists.map { it.name } shouldContainExactly listOf("Thor Rixon", "Anaté b2b Shira Kela")

@@ -178,6 +178,14 @@ class ArcanoaOverviewPageScraperTest {
         }
 
         @Test
+        fun `bills no act for a night named as a format`() {
+            val event = scraper.scrape(fragment("Fr 02.10.Live: Arcana A Night Of Flow<br>Sa 03.10.Live: Patch of Green"), baseUrl)
+
+            event.map { it.title to it.artists.map { a -> a.name } } shouldBe
+                listOf("Arcana A Night Of Flow" to emptyList(), "Patch of Green" to listOf("Patch of Green"))
+        }
+
+        @Test
         fun `skips an entry whose date does not exist`() {
             val events = scraper.scrape(fragment("Do 31.10.Live: Real Band<br>Fr 32.10.Live: Impossible Band"), baseUrl)
 

@@ -42,6 +42,19 @@ class Richten25OverviewPageScraperTest {
     }
 
     @Test
+    fun `bills each act of a set joined by a plus`() {
+        val html =
+            """<astro-island props="{&quot;x&quot;:[0,&quot;&lt;section class=\&quot;event-list\&quot;&gt;&lt;h2&gt;Upcoming Events&lt;/h2&gt;""" +
+                """&lt;ul&gt;&lt;li&gt;&lt;strong&gt;November 5, 2026: &lt;/strong&gt; """ +
+                """Christoph Gallio, Dominic Lash &amp; Mark Sanders // Ackern 76 + Chris Pitsiokos""" +
+                """&lt;/li&gt;&lt;/ul&gt;&lt;/section&gt;&quot;]}"></astro-island>"""
+
+        val night = Richten25OverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        night.artists.map { it.name } shouldBe listOf("Christoph Gallio", "Dominic Lash", "Mark Sanders", "Ackern 76", "Chris Pitsiokos")
+    }
+
+    @Test
     fun `bills the members of a night named before its colon, without its more-to-come tail`() {
         val night = events.first { it.eventDate == LocalDate.of(2026, 10, 21) }
 

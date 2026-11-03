@@ -78,12 +78,17 @@ class AuslandOverviewPageScraper {
     private fun lineup(item: Element): List<ScrapedArtist> =
         item
             .textLinesAt("p.artistinfo")
+            .flatMap { it.split(SPACED_DOUBLE_SLASH) }
+            .map { it.trim() }
             .filterNot { isPlaceholderName(it) || isNonArtistName(it) }
             .distinct()
             .map { ScrapedArtist(name = it) }
 
     private companion object {
         const val WORKSHOP = "workshop"
+
+        /** Two acts on one line-up line: `Caroline Cecilia Tallone // K Lì`. */
+        val SPACED_DOUBLE_SLASH = Regex("""\s+//\s+""")
 
         val LISTING_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE, dd MMMM, yyyy", Locale.ENGLISH)
 

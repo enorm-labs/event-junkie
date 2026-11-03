@@ -108,6 +108,22 @@ class LidoOverviewPageScraperTest {
             )
     }
 
+    // The 2026-10-17 heavy-rock disco: a club night named in brackets, not an act.
+    @Test
+    fun `a club night named in brackets bills no act`() {
+        val html =
+            """
+            <html><body><article class="event-ticket" data-realdate="2026-10-17 23:00:00 +0200">
+              <div class="event-ticket__content__title"><a href="/events/2026-10-17-paranoid">P ▲ R ▲ N ● I ► (PARANOID CLUB)</a></div>
+            </article></body></html>
+            """.trimIndent()
+        scraper
+            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+            .single()
+            .artists
+            .shouldBeEmpty()
+    }
+
     // The XANDRIA subtitle on the 2026-10-11 overview (#3104).
     @Test
     fun `reads a support act from each subtitle line`() {

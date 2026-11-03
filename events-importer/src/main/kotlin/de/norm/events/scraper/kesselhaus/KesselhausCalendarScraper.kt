@@ -26,6 +26,7 @@ import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.stripFriendsTail
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -160,7 +161,7 @@ class KesselhausCalendarScraper(
             soldOut = SOLD_OUT in notes,
             status = statusOf(notes),
             statusNote = subtitle?.takeIf { RELOCATED in notes },
-            artists = buildArtistsForEventType(title, subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) }
+            artists = buildArtistsForEventType(stripFriendsTail(title), subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) }
         ).forChildrenIf(category?.takeIf { it.equals(CHILDRENS_CATEGORY, ignoreCase = true) })
     }
 

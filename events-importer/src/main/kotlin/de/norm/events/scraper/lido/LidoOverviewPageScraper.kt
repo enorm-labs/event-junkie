@@ -109,7 +109,7 @@ class LidoOverviewPageScraper {
                         boardLines.firstOrNull() ?: title,
                         supportSubtitleLines(boardLines.drop(1)),
                         eventType
-                    )
+                    ).filterNot { CLUB_NIGHT.containsMatchIn(it.name) }
             )
         }
 
@@ -142,7 +142,7 @@ class LidoOverviewPageScraper {
                     block.title,
                     supportSubtitleLines(article.textLinesAt(".event-ticket__content__subtitle")),
                     block.eventType
-                )
+                ).filterNot { CLUB_NIGHT.containsMatchIn(it.name) }
         )
     }
 }
@@ -254,3 +254,6 @@ private fun parseLidoPresenterWebsites(root: Element): Map<String, String> =
             val url = link.absUrl("href").takeIf { it.startsWith("http") }
             if (name != null && url != null) name to url else null
         }.toMap()
+
+/** A club night named in brackets after its title: `P ▲ R ▲ N ● I ► (PARANOID CLUB)` bills no act. */
+private val CLUB_NIGHT = Regex("""\(\s*[^()]*\bclub\s*\)\s*$""", RegexOption.IGNORE_CASE)

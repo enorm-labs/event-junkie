@@ -316,7 +316,7 @@ class ArcanoaOverviewPageScraper(
         private val RECURRING_FORMAT_PATTERN =
             Regex(
                 """\barcanoa\b|open\s*stage|freie\s+bühne|\bjam[\s-]*session\b|\bjam\b|spielleute|mittelalter""" +
-                    """|liedermacherfestival|singersongwriter|workshop""",
+                    """|liedermacherfestival|singersongwriter|workshop|\ba\s+night\s+of\b""",
                 RegexOption.IGNORE_CASE
             )
     }

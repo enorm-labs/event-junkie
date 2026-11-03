@@ -33,7 +33,7 @@ internal const val DASHED_QUOTED_SHOW = """\s+[-–—]\s+"[^"\s][^"]*\s[^"]*[^"
  * a `– Zusatzshow` dash tail, and a work title in German quotes (`KARAT „45 Jahre Der blaue
  * Planet“`); straight quotes stay, because `Voodoo Jürgens und die "Ansa Panier"` names the band.
  *
- * A tribute act's `– A tribute to <X>` or `Tribute Band` tail goes (#2882). A bare `<X> Tribute` is the name acts tour under.
+ * A tribute act's `– A tribute to <X>` or `Tribute Band` tail goes (#2882), and so do `- Weihnachtskonzert` and `- … Live at <venue>`.
  *
  * The boundaries keep real names intact: hyphen tails need `<space>-<space>` and a marker
  * ("BAD COMPANY LEGACY - Dave Colwell" is left alone); the year is anchored at the end ("Blink -
@@ -76,7 +76,9 @@ internal val ARTIST_SUFFIX_PATTERN =
             """|\s+[-–—]\s+(?:a\s+)?tribute\s+to\s+\S.*$""" +
             """|\s+[-–—]\s+tribute\s?band\s*$""" +
             """|(?<=\S)\s+(?:$TOUR_REGION[\s-]+tour|(?:$TOUR_REGION[\s-]+)?\p{L}*tournee)\s*$""" +
-            """|(?<=\S)\s+tribute\s+band\s*$""",
+            """|(?<=\S)\s+tribute\s+band\s*$""" +
+            """|\s+[-–—]\s+\p{L}*konzert\s*$""" +
+            """|\s+[-–—]\s+\S.*\blive\s+at\s+\S.*$""",
         RegexOption.IGNORE_CASE
     )
 
@@ -172,7 +174,9 @@ private val CASED_TAILS: List<Regex> =
         // `schluma Heulen am Wasser 2026`: a lowercase act before a capitalised work title and its year.
         Regex("""^(\p{Ll}[\p{Ll}\d]+)\s+\p{Lu}\p{Ll}.*\s(?:19|20)\d{2}$"""),
         // `Exofa - Altern.RockPop`: a genre tag abbreviated with a dot inside one word.
-        Regex("""^(.+?)\s+[-–—]\s+\p{L}+\p{Ll}\.\p{Lu}\p{L}+$""")
+        Regex("""^(.+?)\s+[-–—]\s+\p{L}+\p{Ll}\.\p{Lu}\p{L}+$"""),
+        // `SIR OLIVER SKARDY of PITURA FRESKA`: a shouted act, a lower-case `of` and the band it comes from.
+        Regex("""^(\P{Ll}*\p{Lu}\P{Ll}*?)\s+of\s+\P{Ll}*\p{Lu}\P{Ll}*$""")
     )
 
 /** A denylisted whole title (`THE REVIVAL TOUR`, a package tour) is left whole, so the denylist still drops it. */
@@ -442,3 +446,13 @@ private fun stripShoutedTourTail(name: String): String {
             tail.none { it.isLowerCase() }
     return if (isShoutedTail && head.any { it.isLowerCase() }) head else name
 }
+
+/**
+ * An `& Friends` tail that names a session, not a band: A-Trane's `DAVID HAYNES AND FRIENDS` and Maschinenhaus's `The
+ * Hamburg Blues Band & Friends` bill the act and its guests. [stripArtistSuffix] keeps the tail, because a band can carry
+ * it (`Feo & Friends`), so a venue whose sessions use it calls this. A bracket before it keeps it:
+ * `Clive (Splitting Image) and friends`.
+ */
+fun stripFriendsTail(name: String): String = name.replace(FRIENDS_TAIL, "").trim().ifBlank { name }
+
+private val FRIENDS_TAIL = Regex("""(?<=[^\s)])\s+(?:&|and|und)\s+(?:friends|freunde)\s*$""", RegexOption.IGNORE_CASE)
