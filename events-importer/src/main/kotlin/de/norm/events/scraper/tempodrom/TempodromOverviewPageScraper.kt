@@ -313,10 +313,11 @@ private fun performerFromFormatLine(subtitle: String): List<ScrapedArtist> =
 
 /**
  * A format line that bills a show of another artist's songs: "Die Show - Die beste Wolfgang Petry Party geht weiter",
- * "Die Show 2027 - … - Mit den Hits von Wolfgang Petry". "Die Show" counts only at the start: a comedian's tour line
- * also ends in one ("HITVERDÄCHTIG – DIE MUSIK-COMEDY-STAND-UP-SHOW").
+ * "Die Show 2027 - … - Mit den Hits von Wolfgang Petry", "… Mit den größten Hits von Michael Jackson". "Die Show" counts
+ * only at the start: a comedian's tour line also ends in one ("HITVERDÄCHTIG – DIE MUSIK-COMEDY-STAND-UP-SHOW").
  */
-internal val TRIBUTE_SHOW = Regex("""^\s*die\s+show\b|\bmit\s+den\s+hits\s+von\b|\bparty\s+geht\s+weiter\b""", RegexOption.IGNORE_CASE)
+internal val TRIBUTE_SHOW =
+    Regex("""^\s*die\s+show\b|\bmit\s+den\s+(?:\S+\s+)?hits\s+von\b|\bparty\s+geht\s+weiter\b""", RegexOption.IGNORE_CASE)
 
 /** The act after `performed by`, to the end of the line. */
 internal val PERFORMED_BY = Regex("""\bperformed\s+by\s+(\S.*)$""", RegexOption.IGNORE_CASE)

@@ -17,7 +17,7 @@ class ArtistNormalizerTest {
     fun `de-shouts all-caps act names to a clean display form`() {
         assertSoftly {
             canonicalArtistName("GREEN LUNG") shouldBe "Green Lung"
-            canonicalArtistName("MUNA") shouldBe "Muna"
+            canonicalArtistName("NESS") shouldBe "Ness"
             canonicalArtistName("THE BUTLERS") shouldBe "The Butlers"
             canonicalArtistName("EL FLECHA NEGRA") shouldBe "El Flecha Negra"
         }
@@ -98,8 +98,8 @@ class ArtistNormalizerTest {
             canonicalArtistName("MØ") shouldBe "MØ"
             // Scoped to the whole name: a short word inside a multi-word name still de-shouts.
             canonicalArtistName("WARS OF ATTRITION") shouldBe "Wars Of Attrition"
-            // Three-plus letters stay a title-cased shouted word (accepted residual).
-            canonicalArtistName("MUNA") shouldBe "Muna"
+            // Three-plus letters with a vowel stay a title-cased shouted word (accepted residual).
+            canonicalArtistName("JUMI") shouldBe "Jumi"
         }
     }
 
@@ -290,6 +290,68 @@ class ArtistNormalizerTest {
             // Different acts that share a key stay apart.
             canonicalArtistName("DJ Gus") shouldBe "DJ Gus"
             canonicalArtistName("K-Lone") shouldBe "K-Lone"
+        }
+    }
+
+    // Bar Tausend's `CCTV`, Gretchen's `SML`, SO36's `TZK`, ufaFabrik's `BTMK` and Kesselhaus's `TMBM` were stored title-cased.
+    @Test
+    fun `keeps a one-word name of up to five capitals without a vowel`() {
+        assertSoftly {
+            canonicalArtistName("CCTV") shouldBe "CCTV"
+            canonicalArtistName("SML") shouldBe "SML"
+            canonicalArtistName("TZK") shouldBe "TZK"
+            canonicalArtistName("BTMK") shouldBe "BTMK"
+            canonicalArtistName("TMBM") shouldBe "TMBM"
+            canonicalArtistName("LMP") shouldBe "LMP"
+            // A name with a vowel, or of more words, still de-shouts.
+            canonicalArtistName("ASH") shouldBe "Ash"
+            canonicalArtistName("CCTV LIVE") shouldBe "Cctv Live"
+            canonicalArtistName("WARS OF ATTRITION") shouldBe "Wars Of Attrition"
+            // A spelling the venue styles itself is kept.
+            canonicalArtistName("Kwsk") shouldBe "Kwsk"
+            artistSlugFor("CCTV") shouldBe "cctv"
+        }
+    }
+
+    // Astra bills `BIGA*RANX`, and its prose writes `Biga*Ranx`.
+    @Test
+    fun `de-shouts each part of a name a star joins`() {
+        canonicalArtistName("BIGA*RANX") shouldBe "Biga*Ranx"
+        artistSlugFor("BIGA*RANX") shouldBe "biga-ranx"
+    }
+
+    // Names #4440 would copy onto a shouted title (/artist-cleanup).
+    @Test
+    fun `writes the capitals and spellings the acts use themselves`() {
+        assertSoftly {
+            canonicalArtistName("MUNA") shouldBe "MUNA"
+            canonicalArtistName("Muna") shouldBe "MUNA"
+            canonicalArtistName("RØRY") shouldBe "RØRY"
+            canonicalArtistName("TÄRA") shouldBe "TÄRA"
+            canonicalArtistName("SIND") shouldBe "SIND"
+            canonicalArtistName("WHAT") shouldBe "WHAT"
+            canonicalArtistName("MR. HURLEY UND DIE PULVERAFFEN") shouldBe "Mr. Hurley & Die Pulveraffen"
+            canonicalArtistName("D*B*S") shouldBe "DxBxSx"
+            canonicalArtistName("D*B*S*") shouldBe "DxBxSx"
+            canonicalArtistName("TOKTOK VS. SOFFY O") shouldBe "Toktok vs. Soffy O."
+            // The word stays a word inside a longer name.
+            canonicalArtistName("SIND WIR SCHON DA") shouldBe "Sind Wir Schon Da"
+            canonicalArtistName("NICK CAVE") shouldBe "Nick Cave"
+            artistSlugFor("RØRY") shouldBe "rory"
+            artistSlugFor("TÄRA") shouldBe "tara"
+        }
+    }
+
+    @Test
+    fun `folds the merges the operator confirmed onto the survivor`() {
+        assertSoftly {
+            artistSlugFor("DonTom") shouldBe "don-tom"
+            artistSlugFor("Lady Bird") shouldBe "ladybird"
+            artistSlugFor("DJ M.o.E") shouldBe "m-o-e"
+            artistSlugFor("Django Reinhardt Orchestra") shouldBe "the-django-reinhardt-orchestra"
+            artistSlugFor("Rave d Amor") shouldBe "rave-damor"
+            // moe., the US jam band, keeps its own row.
+            artistSlugFor("moe.") shouldBe "moe"
         }
     }
 }

@@ -16,17 +16,19 @@ package de.norm.events.common
 //     when a whole name is an initialism instead, via [isShortInitialism].
 //
 // The artist normalizer also reads the whole billing, via [isMixedCase] and [isCapitals], and keeps
-// "HB&P Soundsystem" as written. Otherwise a genuine all-caps name of three or more letters that is
-// not in [ACRONYMS] ("NVST", "MGMT") is title-cased here like any shouted word, since nothing here
-// tells the two apart. MusicBrainz is the lookup table: an artist with an EXACT match takes
-// MusicBrainz's spelling when it differs from the stored name in letter case only, and the slug
-// stays (ArtistEnrichment, #2317). A promoter has no
-// such lookup. Display-only either way: slugs are case-insensitive, so the resolved row is unaffected.
+// "HB&P Soundsystem" as written, and keeps a one-word name without a vowel ([isVowellessInitialism]).
+// Otherwise a genuine all-caps name of three or more letters that is not in [ACRONYMS] ("MUNA",
+// "NAFT") is title-cased here like any shouted word, since nothing here tells the two apart.
+// MusicBrainz is the lookup table: an artist with an EXACT match takes MusicBrainz's spelling when it
+// differs from the stored name in letter case only, and the slug stays (ArtistEnrichment, #2317). A
+// promoter has no such lookup. Display-only either way: slugs are case-insensitive, so the resolved row is unaffected.
 
 /**
  * Title-cases a shouted word (see [isShoutedWord]); returns any other token unchanged. A hyphen
  * joins words, so each part is de-shouted on its own: "K-POP" to "K-Pop", "DJ-SLOT" to "DJ-Slot"
- * (#1846). A token with a digit or a stylising character stays whole, as before ("BLINK-182").
+ * (#1846). A `*` joins words too when each side has two letters or more: "BIGA*RANX" to "Biga*Ranx".
+ * A star beside one letter censors a word, which stays whole ("F*CK" to "F*ck"). A token with a
+ * digit or a stylising character stays whole, as before ("BLINK-182").
  */
 fun String.deshoutWord(): String =
     when {
@@ -41,7 +43,14 @@ fun String.deshoutWord(): String =
  */
 fun deshout(name: String): String = name.trim().split(' ').joinToString(" ") { it.deshoutWord() }
 
-private fun String.deshoutPart(): String = if (isShoutedWord()) titleCaseKeepingPunctuation() else this
+private fun String.deshoutPart(): String {
+    val starred = split('*')
+    return when {
+        starred.size > 1 && starred.all { part -> part.count(Char::isLetter) >= 2 } -> starred.joinToString("*") { it.deshoutPart() }
+        isShoutedWord() -> titleCaseKeepingPunctuation()
+        else -> this
+    }
+}
 
 /**
  * Whether the token is a short initialism to keep verbatim: only letters, no lowercase, and at
@@ -51,6 +60,14 @@ private fun String.deshoutPart(): String = if (isShoutedWord()) titleCaseKeeping
  * ("WARS OF ATTRITION" -> "Wars of Attrition").
  */
 fun String.isShortInitialism(): Boolean = length <= SHORT_INITIALISM_MAX_LEN && any { it.isLetter() } && none { it.isLowerCase() || it.isDigit() }
+
+/**
+ * Whether the token is a vowelless initialism to keep verbatim: only capital letters, at most
+ * [VOWELLESS_INITIALISM_MAX_LEN] of them, and none a vowel ("CCTV", "TZK", "BTMK"). A name with a
+ * vowel can be a word ("MUNA", "SIND") and stays a shouted one. Like [isShortInitialism], callers
+ * apply it to a whole name, never to every token.
+ */
+fun String.isVowellessInitialism(): Boolean = length <= VOWELLESS_INITIALISM_MAX_LEN && all { it.isLetter() && it.isUpperCase() && it !in VOWELS }
 
 /**
  * Whether the token has a capital and a lowercase letter ("Soundsystem", "GreyZone"): a billing that
@@ -65,6 +82,12 @@ private fun Char.isCasedLowercase(): Boolean = isLowerCase() && this != 'ß'
 
 /** Max length of an all-caps token kept as an initialism rather than de-shouted. */
 private const val SHORT_INITIALISM_MAX_LEN = 2
+
+/** Max length of a vowelless all-caps token kept as an initialism ("TMBM"). */
+private const val VOWELLESS_INITIALISM_MAX_LEN = 5
+
+/** The capitals that make a token pronounceable, `Y` among them ("SHY", "LYNX"). */
+private val VOWELS = "AEIOUYÄÖÜÅØÆŒÉÈÊÁÀÂÍÌÎÓÒÔÚÙÛÝ".toSet()
 
 /**
  * A token is a shouted word — safe to title-case — when it has letters, no lowercase, no

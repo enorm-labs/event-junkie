@@ -388,6 +388,21 @@ class FestsaalApiScraperTest {
           "genre": {"id": 7, "title": "$genre"}}]}
         """.trimIndent()
 
+    // `ANNA – Lass es Liebe sein` minted `Anna` (/artist-cleanup): the cast is a musical actress the title does not name.
+    @Test
+    fun `bills no headliner for a show of another act's songs`() {
+        val parsed = scraper.scrape(apiWithText("<p>Anna – Lass es Liebe sein</p><p>Die Lieder von Rosenstolz &amp; Anna R. live</p>"))
+
+        parsed.single().artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `keeps the headliner of a band whose text mentions the songs of another`() {
+        val parsed = scraper.scrape(apiWithText("<p>Die Band spielt die Lieder von gestern und heute.</p>"))
+
+        parsed.single().artists.map { it.name } shouldContainExactly listOf("Band")
+    }
+
     /** One scheduled event whose single `item_text` block holds [html]. */
     private fun apiWithText(html: String): String =
         """

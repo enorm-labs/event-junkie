@@ -28,6 +28,36 @@ class NameCasingTest {
     }
 
     @Test
+    fun `de-shouts each part a star joins, and keeps a censored word whole`() {
+        assertSoftly {
+            "BIGA*RANX".deshoutWord() shouldBe "Biga*Ranx"
+            "BUTCH*WALK".deshoutWord() shouldBe "Butch*Walk"
+            "F*CK".deshoutWord() shouldBe "F*ck"
+            "D*B*S".deshoutWord() shouldBe "D*b*s"
+            "FLINTA*".deshoutWord() shouldBe "Flinta*"
+            "K-POP*STARS".deshoutWord() shouldBe "K-Pop*Stars"
+        }
+    }
+
+    @Test
+    fun `calls a one-word name of up to five capitals without a vowel an initialism`() {
+        assertSoftly {
+            "CCTV".isVowellessInitialism() shouldBe true
+            "TZK".isVowellessInitialism() shouldBe true
+            "BTMK".isVowellessInitialism() shouldBe true
+            "KMFDM".isVowellessInitialism() shouldBe true
+            // A vowel, a sixth letter, a lowercase letter or a digit makes it something else.
+            "MUNA".isVowellessInitialism() shouldBe false
+            "LYNX".isVowellessInitialism() shouldBe false
+            "TÝR".isVowellessInitialism() shouldBe false
+            "GŒRNS".isVowellessInitialism() shouldBe false
+            "SCHMRZ".isVowellessInitialism() shouldBe false
+            "Cctv".isVowellessInitialism() shouldBe false
+            "SBP4".isVowellessInitialism() shouldBe false
+        }
+    }
+
+    @Test
     fun `leaves a mixed-case token as it is`() {
         "O'neill".deshoutWord() shouldBe "O'neill"
     }
