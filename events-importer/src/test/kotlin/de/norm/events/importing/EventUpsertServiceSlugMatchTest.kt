@@ -89,7 +89,8 @@ class EventUpsertServiceSlugMatchTest {
                 mockk(relaxed = true),
                 mockk(relaxed = true),
                 mockk(relaxed = true),
-                mockk(relaxed = true)
+                mockk(relaxed = true),
+                ActTitleCasing(mockk())
             )
         coEvery { eventRepository.findBySourceIdIn(any()) } returns emptyFlow()
         coEvery { eventRepository.findBySlugIn(any()) } returns emptyFlow()

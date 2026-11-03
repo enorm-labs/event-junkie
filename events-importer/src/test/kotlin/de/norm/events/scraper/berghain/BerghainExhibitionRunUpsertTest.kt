@@ -2,6 +2,7 @@ package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.importing.ActTitleCasing
 import de.norm.events.importing.AssociationSyncService
 import de.norm.events.importing.EventUpsertService
 import de.norm.events.importing.PerformerTyping
@@ -46,7 +47,8 @@ class BerghainExhibitionRunUpsertTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
-            mockk(relaxed = true)
+            mockk(relaxed = true),
+            ActTitleCasing(mockk { coEvery { storedNames(any()) } returns emptyMap() })
         )
 
     private val sourceUrl = "https://www.berghain.berlin/de/program/"

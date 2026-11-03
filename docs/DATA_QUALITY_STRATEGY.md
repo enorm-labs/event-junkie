@@ -23,17 +23,18 @@ prioritises the wrong pillar.
 
 Data quality is enforced by **deterministic, curated-list normalizers applied at the scrape → domain mapping boundary**. The building blocks:
 
-| Concern             | Mechanism                                                                                      | Location                                                       |
-| ------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Artist display name | `canonicalArtistName` — de-shout, casing-only; an `EXACT` row takes MusicBrainz's case (#2317) | `artist/ArtistNormalizer.kt`, `enrichment/ArtistEnrichment.kt` |
-| Promoter identity   | `canonicalPromoterName` — strip trailing descriptors, fold typos via `NAME_CORRECTIONS`        | `promoter/PromoterNormalizer.kt`                               |
-| De-shouting         | `deshoutWord` and the `ACRONYMS` it keeps in capitals, shared by both of the above             | `common/NameCasing.kt`                                         |
-| Non-artist titles   | `isNonArtistName` (`NON_ARTIST_NAMES` denylist), `stripArtistSuffix`                           | `scraper/NonArtistNames.kt`, `scraper/ArtistNameCleanup.kt`    |
-| Act name at sync    | `stripArtistSuffix` + `isNonArtistName` once more on every line-up entry (#301)                | `importing/ArtistAssociationSync`                              |
-| Series tail at sync | `unglueSeriesTails` — the head, when it is already an `EXACT` MusicBrainz row (#302)           | `importing/ArtistAssociationSync`                              |
-| Promoter co-billing | `splitCoBilledPromoter` — split at a spaced `&` when one side is a stored promoter (#4323)     | `importing/PromoterAssociationSync`                            |
-| Title-as-headliner  | `buildArtistsForEventType` / `buildArtistList`                                                 | `scraper/ArtistNameMapping.kt`                                 |
-| Genre tags          | `GenreNormalizer` — synonym map + `NON_GENRE_TOKENS` stop-list + `looksLikeGenre` gate         | `genretag/GenreNormalizer.kt`                                  |
+| Concern             | Mechanism                                                                                        | Location                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Artist display name | `canonicalArtistName` — de-shout, casing-only; an `EXACT` row takes MusicBrainz's case (#2317)   | `artist/ArtistNormalizer.kt`, `enrichment/ArtistEnrichment.kt` |
+| Promoter identity   | `canonicalPromoterName` — strip trailing descriptors, fold typos via `NAME_CORRECTIONS`          | `promoter/PromoterNormalizer.kt`                               |
+| De-shouting         | `deshoutWord` and the `ACRONYMS` it keeps in capitals, shared by both of the above               | `common/NameCasing.kt`                                         |
+| Event title casing  | `ActTitleCasing` — a title in capitals that is a billed act takes the stored artist name (#4425) | `importing/ActTitleCasing.kt`                                  |
+| Non-artist titles   | `isNonArtistName` (`NON_ARTIST_NAMES` denylist), `stripArtistSuffix`                             | `scraper/NonArtistNames.kt`, `scraper/ArtistNameCleanup.kt`    |
+| Act name at sync    | `stripArtistSuffix` + `isNonArtistName` once more on every line-up entry (#301)                  | `importing/ArtistAssociationSync`                              |
+| Series tail at sync | `unglueSeriesTails` — the head, when it is already an `EXACT` MusicBrainz row (#302)             | `importing/ArtistAssociationSync`                              |
+| Promoter co-billing | `splitCoBilledPromoter` — split at a spaced `&` when one side is a stored promoter (#4323)       | `importing/PromoterAssociationSync`                            |
+| Title-as-headliner  | `buildArtistsForEventType` / `buildArtistList`                                                   | `scraper/ArtistNameMapping.kt`                                 |
+| Genre tags          | `GenreNormalizer` — synonym map + `NON_GENRE_TOKENS` stop-list + `looksLikeGenre` gate           | `genretag/GenreNormalizer.kt`                                  |
 
 This is sound, cheap, and fast — and it should stay the first pass. But it has three _structural_ weaknesses that adding more curated entries will never
 resolve:

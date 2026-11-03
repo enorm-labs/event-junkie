@@ -2,6 +2,7 @@ package de.norm.events.scraper.gaertenderwelt
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.importing.ActTitleCasing
 import de.norm.events.importing.AssociationSyncService
 import de.norm.events.importing.EventUpsertService
 import de.norm.events.importing.PerformerTyping
@@ -45,7 +46,8 @@ class GaertenDerWeltExhibitionRunUpsertTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
-            mockk(relaxed = true)
+            mockk(relaxed = true),
+            ActTitleCasing(mockk())
         )
 
     private val eventSourceId = 1L
