@@ -227,6 +227,7 @@ same slug within 60 seconds comes from the SPA. `renderers` counts these per age
 | Renderer      | Pages a day | Share rendered | Window (s) |
 | ------------- | ----------- | -------------- | ---------- |
 | AhrefsBot     | 5,700       | 99%            | 0–1        |
+| ShapBot       | 3,800       | 97%            | 1–5        |
 | Reflectionbot | 1,000       | 93%            | 1–6        |
 | Baiduspider   | 700         | 87%            | 3–23       |
 | Googlebot     | 230         | 67%            | 2–12       |
