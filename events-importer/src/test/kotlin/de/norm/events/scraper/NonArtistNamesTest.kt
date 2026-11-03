@@ -518,4 +518,14 @@ class NonArtistNamesTest {
         isNonArtistName("2raumwohnung") shouldBe false
         isNonArtistName("UFO 361") shouldBe false
     }
+
+    @Test
+    fun `isNonArtistName refuses a record label`() {
+        isNonArtistName("Lada Recordings") shouldBe true
+        isNonArtistName("puzzekazze records") shouldBe true
+        // A band named for records, and a DJ named before a dash, stay.
+        isNonArtistName("The Records") shouldBe false
+        isNonArtistName("FLEEZE - FLIRT RECORDS") shouldBe false
+        isNonArtistName("MASTER BOOT RECORD") shouldBe false
+    }
 }

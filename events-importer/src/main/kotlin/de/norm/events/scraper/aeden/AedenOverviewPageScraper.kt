@@ -10,6 +10,7 @@ import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
 import de.norm.events.slug.SlugGenerator
@@ -116,7 +117,7 @@ class AedenOverviewPageScraper {
                     .replaceFirst(LINEUP_LABEL, "")
                     .replaceFirst(LEADING_CONJUNCTION, "")
                     .replace(UNSURE_MARK, "")
-                    .trim()
+                    .let(::stripLineupBracket)
             }.filter { it.isNotBlank() && !isAnnouncementPlaceholder(it) && !isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }

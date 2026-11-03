@@ -152,7 +152,7 @@ class RenateOverviewPageScraperTest {
     @Test
     fun `groups the DJs by the floor they play on`() {
         val night = event(LocalDate.of(2026, 8, 7), "Renate Klubnacht")
-        stageOf(night, "GARDEN") shouldContainExactly listOf("SERA (Live)")
+        stageOf(night, "GARDEN") shouldContainExactly listOf("SERA")
         stageOf(night, "GREEN") shouldContainExactly listOf("Cleymoore", "NOB", "So-Fi")
         stageOf(night, "BLACK") shouldContainExactly listOf("Delta Division", "Mruda", "N ska")
     }
@@ -189,7 +189,7 @@ class RenateOverviewPageScraperTest {
     fun `does not read the workshop timetable or club policy as acts`() {
         val night = event(LocalDate.of(2026, 8, 22), "Renate Garten")
         stageOf(night, "GARDEN") shouldContainExactly
-            listOf("Sameer Rahat (live)", "Pés de Barro (live Band)", "O.M.Theorem")
+            listOf("Sameer Rahat", "Pés de Barro", "O.M.Theorem")
         // The policy block is repeated verbatim on every night and holds no lineup.
         events.flatMap { it.artists }.none { it.name.contains("Respect") } shouldBe true
         events.flatMap { it.artists }.none { it.name.startsWith("Workshops") } shouldBe true
@@ -203,13 +203,10 @@ class RenateOverviewPageScraperTest {
     }
 
     @Test
-    fun `keeps an act billed on two floors only once`() {
-        // "Remoto Records" hosts both the garden and the green floor that night. Storing it twice
-        // would violate the event_artist unique constraint on (event_id, artist_id) and fail the
-        // whole import, so the first billing wins.
+    fun `bills no record label that hosts a floor`() {
+        // "Remoto Records" hosts both the garden and the green floor that night: a label, not an act.
         val night = event(LocalDate.of(2026, 8, 27), "Renate Klubnacht")
-        night.artists.map { it.name } shouldContainExactly listOf("Remoto Records")
-        night.artists.single().stage shouldBe "GARDEN"
+        night.artists shouldBe emptyList()
     }
 
     @Test

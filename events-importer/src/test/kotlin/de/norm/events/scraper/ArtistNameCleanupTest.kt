@@ -10,6 +10,72 @@ class ArtistNameCleanupTest {
     // --- stripArtistSuffix ---
 
     @Test
+    fun `stripArtistSuffix drops the members a bracket names after the act`() {
+        assertSoftly {
+            stripArtistSuffix("FRØSA (Sige Alarcon & Frølar)") shouldBe "FRØSA"
+            stripArtistSuffix("Spice Boys (Carpenter Effect & Zylenth )") shouldBe "Spice Boys"
+            stripArtistSuffix("Futschi & Fako (Kaufmann + Leon Licht)") shouldBe "Futschi & Fako"
+            stripArtistSuffix("Ursula K. Le Gunfingers (80HDJ and Otto Vlotto)") shouldBe "Ursula K. Le Gunfingers"
+            stripArtistSuffix("The Evil B-Side Twins ( DJ Tool & Yazzus)") shouldBe "The Evil B-Side Twins"
+            stripArtistSuffix("Melange Quartett (Mel & Michel Band)") shouldBe "Melange Quartett"
+            // A b2b pair in the bracket names a duo's members too (#1759).
+            stripArtistSuffix("WAFFEL Delirium (ANNAWAFFEL b2b Disko Delirium)") shouldBe "WAFFEL Delirium"
+            // A single name, a bracket inside the name, and one that is the whole name stay.
+            stripArtistSuffix("Sickboyrari (Black Kray)") shouldBe "Sickboyrari (Black Kray)"
+            stripArtistSuffix("Ingebrigt Håker Flaten (Exit) Knarr") shouldBe "Ingebrigt Håker Flaten (Exit) Knarr"
+            stripArtistSuffix("Clive (Splitting Image) and friends") shouldBe "Clive (Splitting Image) and friends"
+            stripArtistSuffix("(A & B)") shouldBe "(A & B)"
+        }
+    }
+
+    @Test
+    fun `stripArtistSuffix drops what an initialism stands for`() {
+        stripArtistSuffix("LMP (LesMainsPopulaires)") shouldBe "LMP"
+        stripArtistSuffix("K.A.O.S. - Kein Abend Ohne Schnaps") shouldBe "K.A.O.S."
+        // Spaced words in brackets, and a tail whose initials differ, stay.
+        stripArtistSuffix("Oct (On Company Time)") shouldBe "Oct (On Company Time)"
+        stripArtistSuffix("OCT (ON COMPANY TIME)") shouldBe "OCT (ON COMPANY TIME)"
+        stripArtistSuffix("DZ - DEATHRAY") shouldBe "DZ - DEATHRAY"
+    }
+
+    @Test
+    fun `stripArtistSuffix drops a home town before or after a place tail`() {
+        stripArtistSuffix("Siousie (Leipzig)") shouldBe "Siousie"
+        stripArtistSuffix("Sol Angel (Colombia) - Madrid") shouldBe "Sol Angel"
+        stripArtistSuffix("Isolation Berlin") shouldBe "Isolation Berlin"
+    }
+
+    // --- stripLineupBracket ---
+
+    @Test
+    fun `stripLineupBracket drops the crew, label, home town or note a line-up puts after a DJ`() {
+        assertSoftly {
+            stripLineupBracket("Allen (Basse Frequenze)") shouldBe "Allen"
+            stripLineupBracket("Levandream (Garderöbe)") shouldBe "Levandream"
+            stripLineupBracket("DJ Burdi Call (Brudi love)") shouldBe "DJ Burdi Call"
+            stripLineupBracket("Hitomi (An Toi)") shouldBe "Hitomi"
+            stripLineupBracket("Luca Saporito (Audiofly)") shouldBe "Luca Saporito"
+            stripLineupBracket("Serokolo 7 (Nyege Nyege)") shouldBe "Serokolo 7"
+            stripLineupBracket("mølly (on molly)") shouldBe "mølly"
+            stripLineupBracket("suzueri (Elico Suzuki)") shouldBe "suzueri"
+            stripLineupBracket("Pauline Murray (Penetration)") shouldBe "Pauline Murray"
+            stripLineupBracket("Saida Makhmudzade (Dance Movement)") shouldBe "Saida Makhmudzade"
+            stripLineupBracket("V. (Opera live)") shouldBe "V."
+            stripLineupBracket("Coco Cobra [Queerpool]") shouldBe "Coco Cobra"
+            stripLineupBracket("Manolo. [Body Language]") shouldBe "Manolo."
+        }
+    }
+
+    @Test
+    fun `stripLineupBracket keeps a bracket inside a name or one that is the whole name`() {
+        stripLineupBracket("Michael(a) Daoud") shouldBe "Michael(a) Daoud"
+        stripLineupBracket("ALL(H)OURS") shouldBe "ALL(H)OURS"
+        stripLineupBracket("Ingebrigt Håker Flaten (Exit) Knarr") shouldBe "Ingebrigt Håker Flaten (Exit) Knarr"
+        stripLineupBracket("[o1 Temp]") shouldBe "[o1 Temp]"
+        stripLineupBracket("Vibrant as Fu)(K") shouldBe "Vibrant as Fu)(K"
+    }
+
+    @Test
     fun `stripArtistSuffix drops a soft hyphen from any act`() {
         stripArtistSuffix("Jean-\u00ADLuc Guionnet") shouldBe "Jean-Luc Guionnet"
         stripArtistSuffix("Kraft\u00ADwerk live", fromTitle = true) shouldBe "Kraftwerk"
@@ -464,7 +530,7 @@ class ArtistNameCleanupTest {
         stripArtistSuffix("Dice Actors Live on Stage") shouldBe "Dice Actors"
         stripArtistSuffix("Live on Stage") shouldBe "Live on Stage"
         stripArtistSuffix("Guy Offenbach (& Original Karaoke Band)") shouldBe "Guy Offenbach"
-        stripArtistSuffix("Los Refrescos (Dandy Jack & Argenis Brito)") shouldBe "Los Refrescos (Dandy Jack & Argenis Brito)"
+        stripArtistSuffix("Los Refrescos (Dandy Jack & Argenis Brito)") shouldBe "Los Refrescos"
         stripArtistSuffix("SHADEN (أنا إمرأة تعبانة) Show") shouldBe "SHADEN"
         stripArtistSuffix("The Rocky Horror Show") shouldBe "The Rocky Horror Show"
         stripArtistSuffix("TUTTI BOUNCE - 360 ° (Live) Show") shouldBe "TUTTI BOUNCE - 360 ° (Live) Show"

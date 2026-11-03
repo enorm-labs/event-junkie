@@ -13,6 +13,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.stripLineupBracket
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -111,7 +112,8 @@ class BeateUweOverviewPageScraper {
             .split(OUTSIDE_PARENTHESES_COMMA)
             .flatMap { it.split(B2B_SEPARATOR) }
             .mapNotNull { act ->
-                val name = stripArtistSuffix(act.replace(SET_NOTE, "").trim()).blankToNull()?.takeUnless(::isNonArtistName) ?: return@mapNotNull null
+                val name =
+                    stripArtistSuffix(stripLineupBracket(act.replace(SET_NOTE, ""))).blankToNull()?.takeUnless(::isNonArtistName) ?: return@mapNotNull null
                 ScrapedArtist(name = name, role = if (LIVE_MARK.containsMatchIn(act)) ArtistRole.LIVE else ArtistRole.DJ)
             }.distinctBy { it.name.lowercase() }
 

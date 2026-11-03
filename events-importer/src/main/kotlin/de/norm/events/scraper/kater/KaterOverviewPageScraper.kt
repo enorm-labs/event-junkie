@@ -20,6 +20,7 @@ import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -193,7 +194,7 @@ class KaterOverviewPageScraper(
      */
     private fun splitActs(line: String): List<String> =
         (if (line.contains('(')) listOf(line) else line.split(B2B_SEPARATOR).flatMap(::splitSegmentOnConjunctions))
-            .map { stripArtistSuffix(it.replace(FORMAT_MARKER, "").trim()) }
+            .map { stripArtistSuffix(stripLineupBracket(it.replace(FORMAT_MARKER, "").trim())) }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
 
     /** A night's span, once each half's year has been inferred. */

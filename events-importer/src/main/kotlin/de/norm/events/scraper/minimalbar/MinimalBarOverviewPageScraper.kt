@@ -19,6 +19,7 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -141,6 +142,7 @@ class MinimalBarOverviewPageScraper {
                         .replace(CREW_TAIL, "")
                         .replace(HOUSE_TAG, "")
                         .replace(LABEL_TAG, "")
+                        .let(::stripLineupBracket)
                 )
             }.filterNot(::isNonArtistName)
 

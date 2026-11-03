@@ -109,16 +109,16 @@ class ClubDerVisionaereProgrammePageScraperTest {
     }
 
     @Test
-    fun `splits co-billed and back-to-back slots but keeps parenthesised names whole`() {
+    fun `splits co-billed and back-to-back slots but never at a bracketed member list`() {
         val discoSour = clubEvents.first { it.sourceId == "club_der_visionaere:41775" }
-        // "// Yapacc & Pakkadej LIVE" → two live acts; the bracketed member list of
-        // "Los Refrescos (…)" is one act, and the "(3)" Resident Advisor disambiguator comes off.
+        // "// Yapacc & Pakkadej LIVE" → two live acts; "Los Refrescos (…)" is one act whose bracket names its
+        // members, and the "(3)" Resident Advisor disambiguator comes off.
         discoSour.artistNames() shouldContainExactly
             listOf(
                 "James Dean Brown",
                 "Yapacc",
                 "Pakkadej",
-                "Los Refrescos (Dandy Jack & Argenis Brito)",
+                "Los Refrescos",
                 "Tau Car",
                 "Chica Paula",
                 "himeee",
@@ -128,19 +128,19 @@ class ClubDerVisionaereProgrammePageScraperTest {
             )
 
         // "// XDB b2b Onirik" → two DJs; "// Ctrl+Opt & Gwenan" splits at the conjunction
-        // only, leaving the "+" inside Ctrl+Opt's own name intact.
+        // only, leaving the "+" inside Ctrl+Opt's own name intact. "Gwenan (Phase Space Live)" is
+        // the same Gwenan, so the later billing is dropped.
         val offTheGrid = clubEvents.first { it.sourceId == "club_der_visionaere:41777" }
         offTheGrid.artistNames() shouldContainExactly
             listOf(
                 "David Hornung",
-                "Gwenan (Phase Space Live)",
+                "Gwenan",
                 "Karine",
                 "Shakolin",
                 "Lola Haro",
                 "XDB",
                 "Onirik",
-                "Ctrl+Opt",
-                "Gwenan"
+                "Ctrl+Opt"
             )
     }
 

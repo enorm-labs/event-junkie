@@ -3,6 +3,7 @@ package de.norm.events.scraper.morphine
 import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.stripLineupBracket
 
 // How a Morphine Raum `ul.lineup` set line becomes its acts. Every case is asserted in
 // MorphineFieldMappingTest.
@@ -38,7 +39,7 @@ internal fun morphineSetLineActs(
     // The title is a film or a work only beside another name; a night titled after its one act keeps it.
     return names
         .filterNot { names.size > 1 && it.equals(title, ignoreCase = true) }
-        .map { stripArtistSuffix(it) }
+        .map { stripArtistSuffix(stripLineupBracket(it)) }
         .filter { it.isNotBlank() }
         .distinctBy { it.lowercase() }
 }

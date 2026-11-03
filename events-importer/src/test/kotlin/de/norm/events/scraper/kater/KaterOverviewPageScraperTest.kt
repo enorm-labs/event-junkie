@@ -259,10 +259,10 @@ class KaterOverviewPageScraperTest {
     }
 
     @Test
-    fun `keeps a parenthesised duo whole instead of splitting it at its members`() {
-        // "Double Penetration (FLOWWW b2b Joe Cleen)" is one act, not two.
+    fun `bills a duo by its name instead of splitting it at its members`() {
+        // "Double Penetration (FLOWWW b2b Joe Cleen)" is one act, not two; the bracket names its members.
         val names = events.flatMap { it.artists }.map { it.name }
-        names.contains("Double Penetration (FLOWWW b2b Joe Cleen)") shouldBe true
+        names.contains("Double Penetration") shouldBe true
         names.none { it == "Double Penetration (FLOWWW" } shouldBe true
     }
 

@@ -13,6 +13,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
+import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
 import de.norm.events.slug.SlugGenerator
@@ -143,10 +144,11 @@ class OhmOverviewPageScraper(
 
     private fun lineupEntries(line: String): List<ScrapedArtist> {
         val room =
-            ROOM_GROUP.matchEntire(line) ?: return listOf(ScrapedArtist(line, if (LIVE_ANNOTATION.containsMatchIn(line)) ArtistRole.LIVE else ArtistRole.DJ))
+            ROOM_GROUP.matchEntire(line)
+                ?: return listOf(ScrapedArtist(stripLineupBracket(line), if (LIVE_ANNOTATION.containsMatchIn(line)) ArtistRole.LIVE else ArtistRole.DJ))
         val (stage, acts) = room.destructured
         val role = if (LIVE_WORD.containsMatchIn(acts)) ArtistRole.LIVE else ArtistRole.DJ
-        return splitSegmentOnConjunctions(acts).map { ScrapedArtist(it.replace(LIVE_WORD, "").trim(), role, stage = stage) }
+        return splitSegmentOnConjunctions(acts).map { ScrapedArtist(stripLineupBracket(it.replace(LIVE_WORD, "")), role, stage = stage) }
     }
 }
 

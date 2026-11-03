@@ -86,10 +86,10 @@ class BeateUweOverviewPageScraperTest {
     }
 
     @Test
-    fun `a set annotation comes off and a group's members in brackets stay with it`() {
+    fun `a set annotation and a group's members in brackets come off`() {
         acts("2026-10-31").map { it.first } shouldContainExactly listOf("AKA AKA", "MALÏ", "Miss Kitchen")
         acts("2026-11-06").map { it.first } shouldContainExactly
-            listOf("karete bu", "Bibsi Swift", "Bouncy Sally", "Spice Boys (Carpenter Effect & Zylenth )", "e.Kato")
+            listOf("karete bu", "Bibsi Swift", "Bouncy Sally", "Spice Boys", "e.Kato")
     }
 
     @Test

@@ -445,14 +445,23 @@ private fun isUnbilledSlot(name: String): Boolean = isGuestSlotLabel(name) || PR
  * True when [name] must never be stored as an artist: a placeholder ("TBA"), a bare role label
  * ("Special Guest"), a segment ("Acid Aftershow"), an event ("Shred Fest"), a "DJ set" label, a
  * guest slot ("+ Guest"), a programme item ("+ Darkroom"), a curated title ("The Revival Tour"), a
- * head-count ("20 DJ's"), a night name ("Autumn Bash 2026"), or a name that slugs to nothing ("-"). The single predicate applied
- * wherever names are resolved.
+ * head-count ("20 DJ's"), a record label ("Lada Recordings"), a night name ("Autumn Bash 2026"), or a name that slugs to
+ * nothing ("-"). The single predicate applied wherever names are resolved.
  */
 fun isNonArtistName(name: String): Boolean =
     isPlaceholderName(name) || isNonArtistLabel(name) || isEventSegmentLabel(name) ||
         isNonArtistEvent(name) || isScoreConcertTitle(name) || isDjSetFormatLabel(name) || isUnbilledSlot(name) || isDenylistedNonArtist(name) ||
         isTitleFragment(name) || isSlugless(name) || isBareNumber(name) || isTimeRange(name) || isNumberedVolume(name) ||
-        isHeadCount(name)
+        isHeadCountOrLabel(name)
+
+/**
+ * A record label billed in a line-up: `Lada Recordings` at Golden Gate, `puzzekazze records` at L.U.X. A band named
+ * `The Records` stays, and so does a DJ named before a dash: `FLEEZE - FLIRT RECORDS`.
+ */
+private val RECORD_LABEL = Regex("""(?!the\s)[^-–—\s][^-–—]*\s(?:records|recordings)""", RegexOption.IGNORE_CASE)
+
+/** Whether [name] counts performers ([HEAD_COUNT]) or names a [RECORD_LABEL]: a line-up entry that is no act. */
+private fun isHeadCountOrLabel(name: String): Boolean = isHeadCount(name) || RECORD_LABEL.matches(name.trim())
 
 /**
  * A number of performers rather than a performer: Gretchen bills `Afro Haus Soundsystem / + 20 DJ's`
