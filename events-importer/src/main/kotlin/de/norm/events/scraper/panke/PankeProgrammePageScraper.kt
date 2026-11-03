@@ -258,7 +258,7 @@ internal fun featuredActs(title: String): List<ScrapedArtist> {
  * (event 12333), `Aantz [ambient/drone/Berlin] + UnoX [experimental dub/Berlin]` (event 12328). An
  * untagged `+` joins a series and a guest as often as two acts, so it bills nobody.
  */
-internal fun markedBill(title: String): List<ScrapedArtist> {
+private fun markedBill(title: String): List<ScrapedArtist> {
     val bill = title.substringAfter(": ").replace(LIVE_AT_PANKE, "").trim()
     val acts =
         bill.split(PLUS_SEPARATOR).map {
@@ -279,7 +279,7 @@ internal fun markedBill(title: String): List<ScrapedArtist> {
  * The title as the act, when a body line presents it: `Kingstar präsentiert` above `ATTIC 109`
  * (event 12332). A promoter presents a band by name; a series is presented in the title itself.
  */
-internal fun presentedAct(
+private fun presentedAct(
     lines: List<String>,
     title: String
 ): List<ScrapedArtist> {

@@ -505,7 +505,7 @@ private fun EventRequest.requireRelocationFitsStatus() {
  * an explicit null clears it. An edit that changes [storedStatus] to one that is not a move clears both,
  * so no stale destination stays. An edit that leaves the status alone keeps what the import stored.
  */
-internal fun EventEntity.withRelocationFrom(
+private fun EventEntity.withRelocationFrom(
     request: EventRequest,
     storedStatus: String? = null
 ): EventEntity =
