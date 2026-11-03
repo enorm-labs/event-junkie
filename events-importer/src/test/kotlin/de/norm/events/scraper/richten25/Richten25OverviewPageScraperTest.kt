@@ -61,9 +61,43 @@ class Richten25OverviewPageScraperTest {
     }
 
     @Test
+    fun `bills the performers after a count of sets, and the band before it`() {
+        val night = nightOf("TV-Play: Axel Dörner &amp; Sayori Izawa // 3 SOLOS: Siri Salminen / Jean-Luc Guionnet / Lotus Eddé Khouri")
+
+        night.artists.map { it.name } shouldBe listOf("TV-Play", "Siri Salminen", "Jean-Luc Guionnet", "Lotus Eddé Khouri")
+    }
+
+    @Test
+    fun `reads any count of solos, duos, trios or sets as a format label`() {
+        nightOf("2 Duos: Anna Webber &amp; Ben Kono").artists.map { it.name } shouldBe listOf("Anna Webber", "Ben Kono")
+        nightOf("1 Set: Ava Mendoza").artists.map { it.name } shouldBe listOf("Ava Mendoza")
+        nightOf("4 trios: Ada Ryu, Ben Ott").artists.map { it.name } shouldBe listOf("Ada Ryu", "Ben Ott")
+    }
+
+    @Test
+    fun `bills a band whose name only starts with a number`() {
+        nightOf("3 Doors Down: Brad Arnold &amp; Chris Henderson").artists.map { it.name } shouldBe listOf("3 Doors Down")
+        nightOf("3 Solos Ensemble: Ada Ryu &amp; Ben Ott").artists.map { it.name } shouldBe listOf("3 Solos Ensemble")
+        nightOf("Sumpf Trio: Tkacz, Daszkiewicz &amp; Doskocz").artists.map { it.name } shouldBe listOf("Sumpf Trio")
+    }
+
+    @Test
     fun `yields nothing for a page without the embed`() {
         Richten25OverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    /** One night in the embed's shape; the lineup is escaped once, as the island's attribute carries it. */
+    private fun nightOf(lineup: String) =
+        Richten25OverviewPageScraper()
+            .scrape(
+                Jsoup.parse(
+                    """<astro-island props="{&quot;x&quot;:[0,&quot;&lt;section class=\&quot;event-list\&quot;&gt;&lt;h2&gt;Upcoming Events&lt;/h2&gt;""" +
+                        """&lt;ul&gt;&lt;li&gt;&lt;strong&gt;November 2, 2026: &lt;/strong&gt; $lineup""" +
+                        """&lt;/li&gt;&lt;/ul&gt;&lt;/section&gt;&quot;]}"></astro-island>""",
+                    baseUrl
+                ),
+                baseUrl
+            ).single()
 
     private fun fixture(name: String): String =
         javaClass.classLoader

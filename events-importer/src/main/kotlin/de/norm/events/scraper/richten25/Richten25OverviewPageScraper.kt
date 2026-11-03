@@ -23,7 +23,8 @@ import java.time.format.DateTimeParseException
  * Each night is `<strong>October 8, 2026: </strong>` and a lineup, its sets parted by `//`. A set reads either
  * `Name, Name & Name`, which bills each musician, or `Band: members`, which bills the band. A prefix with a word such as
  * `Series`, `Evening` or `Benefit` names the night, not an act, so its members are billed: `Solidarity Evening in Support
- * of …: Laura.aLL, Carla Boregas, … and more..` (#3280). The `and more..` tail announces nobody and is cut before the
+ * of …: Laura.aLL, Carla Boregas, … and more..` (#3280). So does a count of sets, such as `3 SOLOS: Siri Salminen / Jean-Luc
+ * Guionnet / …` (#4421), whose members a single `/` parts. The `and more..` tail announces nobody and is cut before the
  * split, because a bare `more..` would read as the band More. A second embed lists past nights and is not read.
  * The page names no time, price or image.
  */
@@ -96,7 +97,7 @@ class Richten25OverviewPageScraper {
                 val prefixed = PREFIX.find(set)
                 when {
                     prefixed == null -> set.replace(MORE_TAIL, "").split(MEMBER_SEPARATOR)
-                    NIGHT_NAME.containsMatchIn(prefixed.groupValues[1]) -> prefixed.groupValues[2].replace(MORE_TAIL, "").split(MEMBER_SEPARATOR)
+                    namesNoAct(prefixed.groupValues[1]) -> prefixed.groupValues[2].replace(MORE_TAIL, "").split(MEMBER_SEPARATOR)
                     else -> listOf(prefixed.groupValues[1])
                 }
             }.map { it.trim() }
@@ -104,13 +105,17 @@ class Richten25OverviewPageScraper {
             .distinct()
             .map { ScrapedArtist(name = it) }
 
+    /** A night's name, or a count of sets such as `3 SOLOS`: either way the members after the colon are the acts. */
+    private fun namesNoAct(prefix: String): Boolean = NIGHT_NAME.containsMatchIn(prefix) || FORMAT_LABEL.matches(prefix)
+
     private companion object {
         const val UPCOMING = "Upcoming Events"
         val NIGHT = Regex("""^([A-Z][a-z]+ \d{1,2}, \d{4}):\s*(.+)$""")
         val SET_SEPARATOR = Regex("""\s*//\s*""")
         val PREFIX = Regex("""^\s*([^:,&]+?):\s*(.+)$""")
         val NIGHT_NAME = Regex("""\b(?:series|evening|night|benefit|solidarity|festival)\b""", RegexOption.IGNORE_CASE)
+        val FORMAT_LABEL = Regex("""\d+\s+(?:solos?|duos?|trios?|sets?)""", RegexOption.IGNORE_CASE)
         val MORE_TAIL = Regex("""\s+(?:and|&)\s+more\.*\s*$""", RegexOption.IGNORE_CASE)
-        val MEMBER_SEPARATOR = Regex(""",\s*|\s+&\s+|\s+and\s+""")
+        val MEMBER_SEPARATOR = Regex(""",\s*|\s+&\s+|\s+and\s+|\s+/\s+""")
     }
 }
