@@ -155,6 +155,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | 800A Bar & Cabaret  | `EightHundredAHomePageScraper.toEvent`                   | The `workshop` category: the paid improv and songwriting courses                                                             |
 | Interkosmos         | `InterkosmosApiScraper.event`                            | The `Yoga` event type, or a title that names a `Workshop` or `basteln`                                                       |
 | Ballhaus Berlin     | `BallhausBerlinTerminePageScraper.OUT_OF_SCOPE`          | The `Vintage Market`, a `Geschlossene Gesellschaft` and the `Yes Choir !` sing-along                                         |
+| Kesselhaus          | `KesselhausCalendarScraper.isInvitationOnly`             | A ticket label or subtitle that says `nur für geladene Gäste`, `Geschlossene Gesellschaft` or `Privatveranstaltung`          |
 | ausland             | `AuslandOverviewPageScraper.parseItem`                   | A title that names a `workshop`                                                                                              |
 | Weltwirtschaft      | `WeltwirtschaftApiScraper.BRUNCH`                        | A title that names a `Brunch`                                                                                                |
 | Galiläakirche       | `isOutOfScope` (`GalilaeakircheOverviewPageScraper.kt`)  | A title that names a `Markt` or an `Auktion`, whatever category it is filed under                                            |

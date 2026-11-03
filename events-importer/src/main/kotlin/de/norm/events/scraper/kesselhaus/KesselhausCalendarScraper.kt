@@ -13,6 +13,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.forChildrenIf
+import de.norm.events.scraper.isClosedToPublic
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
@@ -45,7 +46,7 @@ import java.time.format.DateTimeParseException
  * category label and the cover. Everything else is in the page's `serverApp-state` transfer state, one
  * `meta:base` (room, start in UTC, tickets, notes, topics) and one `meta:de` (title, pretitle, subtitle)
  * document per event. The event's own page adds the text, as `text` blocks in its `body:de` document.
- * Past cards are dropped here, sparing their event pages.
+ * Past cards are dropped here, sparing their event pages, and so is a night closed to the public.
  */
 class KesselhausCalendarScraper(
     private val room: KesselhausRoom,
@@ -128,12 +129,16 @@ class KesselhausCalendarScraper(
             logger.warn { "Kesselhaus event $id has no title or start, skipping" }
             return null
         }
-        val notes = base.path("notes").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
         val subtitle = text.stringOrNull("subtitle")
+        val tickets = base.path("tickets").toList()
+        if (isInvitationOnly(tickets, subtitle, text.stringOrNull("pretitle"))) {
+            logger.debug { "Kesselhaus event $id ('$title') is closed to the public, skipping" }
+            return null
+        }
+        val notes = base.path("notes").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
         val topics = base.path("topics").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
         val category = card.textAt(".category")
         val eventType = eventTypeOf(category, topics)
-        val tickets = base.path("tickets").toList()
         return ScrapedEvent(
             title = title,
             subtitle = subtitle ?: text.stringOrNull("pretitle"),
@@ -180,6 +185,19 @@ class KesselhausCalendarScraper(
             .filterNot(::isNonArtistName)
             .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
     }
+
+    /**
+     * A gala whose ticket button reads `Eintritt nur für geladene Gäste` instead of linking a shop (#4422). The title is not read,
+     * because a play can be called `Geschlossene Gesellschaft`.
+     */
+    private fun isInvitationOnly(
+        tickets: List<JsonNode>,
+        subtitle: String?,
+        pretitle: String?
+    ): Boolean =
+        tickets.any { isClosedToPublic(it.stringOrNull("alt")) || isClosedToPublic(it.path("label").stringOrNull("title")) } ||
+            isClosedToPublic(subtitle) ||
+            isClosedToPublic(pretitle)
 
     /** A night filed as a concert but tagged as a party and not as a concert is a DJ night. */
     private fun eventTypeOf(
