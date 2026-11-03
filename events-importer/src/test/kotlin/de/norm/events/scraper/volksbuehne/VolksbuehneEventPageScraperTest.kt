@@ -1,7 +1,11 @@
 package de.norm.events.scraper.volksbuehne
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -41,6 +45,32 @@ class VolksbuehneEventPageScraperTest {
         page.applyTo(fallback).typeIsFallback shouldBe false
         page.applyTo(labelled).eventType shouldBe EventType.CONCERT.name
         page.applyTo(labelled).description shouldBe "Text"
+    }
+
+    @Test
+    fun `reads the writer line's names`() {
+        scraper.scrape(page("volksbuehne-event-a-year-without-summer.html")).shouldNotBeNull().writers shouldContainExactly listOf("Florentina Holzinger")
+    }
+
+    @Test
+    fun `bills the writer line only on a concert the page types and the listing billed nobody`() {
+        val writers = listOf("Mira Mann", "Isabel Lewis")
+        val concert = VolksbuehneEventPage(description = null, imageUrl = null, eventType = EventType.CONCERT, writers = writers)
+        val billed = event(EventType.SHOW, typeIsFallback = true).copy(artists = listOf(ScrapedArtist(name = "Limboboys", role = ArtistRole.HEADLINER)))
+
+        concert.applyTo(event(EventType.SHOW, typeIsFallback = true)).artists shouldBe writers.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+        concert.applyTo(billed).artists.map { it.name } shouldContainExactly listOf("Limboboys")
+        concert.applyTo(event(EventType.CONCERT, typeIsFallback = false)).artists.shouldBeEmpty()
+        concert
+            .copy(eventType = EventType.SHOW)
+            .applyTo(event(EventType.SHOW, typeIsFallback = true))
+            .artists
+            .shouldBeEmpty()
+        concert
+            .copy(eventType = EventType.READING)
+            .applyTo(event(EventType.SHOW, typeIsFallback = true))
+            .artists
+            .shouldBeEmpty()
     }
 
     @Test

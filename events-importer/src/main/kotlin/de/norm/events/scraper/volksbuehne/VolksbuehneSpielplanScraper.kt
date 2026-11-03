@@ -76,7 +76,10 @@ class VolksbuehneSpielplanScraper(
         ).forChildrenIf(childrensShowPhrase(title, addition))
     }
 
-    /** The performers of a concert or a party, from its `mit A, B und C` line; a staged work's line names a cast or a host alike. */
+    /**
+     * The performers of a concert or a party, from its `mit A, B und C` line; a staged work's line names a cast or a host alike.
+     * A concert's addition may also name its acts bare, alone or after a `<title> ·` ([bareNames]).
+     */
     private fun artists(
         type: EventType?,
         addition: String?
@@ -87,22 +90,22 @@ class VolksbuehneSpielplanScraper(
                 EventType.PARTY -> ArtistRole.DJ
                 else -> return emptyList()
             }
-        val names = WITH_LINE.find(addition.orEmpty())?.groupValues?.get(1) ?: return emptyList()
-        return names
-            .replace(LIVE_TAIL, "")
-            .split(LIST_SEPARATOR)
-            .mapNotNull { it.blankToNull() }
-            .filterNot { '*' in it || isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = role) }
+        val withLine = WITH_LINE.find(addition.orEmpty())?.groupValues?.get(1)
+        val names = withLine?.let(::splitNames) ?: addition.takeIf { type == EventType.CONCERT }?.let(::bareNames).orEmpty()
+        return names.map { ScrapedArtist(name = it, role = role) }
     }
 
     companion object {
         private const val ISO_DATE_LENGTH = 10
+        private const val MAX_NAME_WORDS = 6
 
         /** `mit A, B und C`, or `mit DJ-Sets und Performances von A, B und C`: the names after the last `von`. */
         private val WITH_LINE = Regex("""^mit\s+(?:.*\bvon\s+)?(.+)$""", RegexOption.IGNORE_CASE)
         private val LIVE_TAIL = Regex("""\s+[-–]\s+live$""", RegexOption.IGNORE_CASE)
         private val LIST_SEPARATOR = Regex(""",\s*|\s+(?:und|&)\s+""")
+
+        /** A word that makes a segment a sentence (`für 1 Performerin, 4 Videos …`, `Nach dem Roman von …`), or a `Regie:` credit. */
+        private val SENTENCE_CUE = Regex("""\b(?:nach|von|für|between)\b|:""", RegexOption.IGNORE_CASE)
 
         /** The format label's first keyword types the row: `Konzert und Künstler*innengespräch` is a concert, `Screening und Gespräch` a screening. */
         private val LABEL_TYPES: List<Pair<Regex, EventType>> =
@@ -139,5 +142,27 @@ class VolksbuehneSpielplanScraper(
                 .filter { it.isNotBlank() }
                 .drop(1)
                 .joinToString("-")
+
+        /**
+         * The names of a list line, without a `- live` tail, a group credit (`Workshop-Teilnehmer*innen`) or a non-act name.
+         * Also reads the page's writer line ([VolksbuehneEventPage]).
+         */
+        fun splitNames(line: String): List<String> =
+            line
+                .replace(LIVE_TAIL, "")
+                .split(LIST_SEPARATOR)
+                .mapNotNull { it.blankToNull() }
+                .filterNot { '*' in it || isNonArtistName(it) }
+
+        /**
+         * The acts a concert's addition names without `mit`: the segment after its last `·`, or the whole addition. A segment
+         * that reads as a sentence or a credit, or holds a name of more than six words, is a subtitle and bills nobody (#4438).
+         */
+        private fun bareNames(addition: String): List<String> {
+            val segment = addition.substringAfterLast('·').trim()
+            if (SENTENCE_CUE.containsMatchIn(segment)) return emptyList()
+            val names = splitNames(segment)
+            return if (names.any { it.split(' ').size > MAX_NAME_WORDS }) emptyList() else names
+        }
     }
 }
