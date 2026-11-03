@@ -70,6 +70,49 @@ class VolksbuehneEventPageScraperTest {
         scraper.scrape(Jsoup.parse(html)).shouldNotBeNull().eventType shouldBe type
     }
 
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "Russendisko gegen den Krieg | PARTY",
+            "Tangonacht | PARTY",
+            "Milonga im Roter Salon | PARTY",
+            "Disco Night | PARTY",
+            "Community Bar | OTHER",
+            "Discover the Archive | OTHER",
+            "Diskurs: Theater und Krieg | OTHER",
+            "Russendisko gegen den Krieg – eine lange Nacht mit Wladimir Kaminer, Musik aus Osteuropa und Gästen bis in den Morgen | PARTY"
+        ]
+    )
+    fun `types a social event without a text from its name`(
+        name: String,
+        type: EventType
+    ) {
+        val html =
+            """<script type="application/ld+json">{"@type": "SocialEvent", "name": "$name", """ +
+                """"startDate": "2026-12-24T23:00:00+01:00", "endDate": "2026-12-25T04:00:00+01:00"}</script>"""
+
+        scraper.scrape(Jsoup.parse(html)).shouldNotBeNull().eventType shouldBe type
+    }
+
+    @Test
+    fun `lets a text that decides the type win over the name`() {
+        val html =
+            """<script type="application/ld+json">{"@type": "SocialEvent", "name": "Disco Ball"}</script>""" +
+                """<section class="texts"><section class="block text-block"><div class="text"><p>Ein Ballroom-Abend mit Kategorien.</p></div></section></section>"""
+
+        scraper.scrape(Jsoup.parse(html)).shouldNotBeNull().eventType shouldBe EventType.SHOW
+    }
+
+    @Test
+    fun `reads the name when the text decides nothing`() {
+        val html =
+            """<script type="application/ld+json">{"@type": "SocialEvent", "name": "Tangonacht"}</script>""" +
+                """<section class="texts"><section class="block text-block"><div class="text"><p>Jeden zweiten Dienstag im Salon.</p></div></section></section>"""
+
+        scraper.scrape(Jsoup.parse(html)).shouldNotBeNull().eventType shouldBe EventType.PARTY
+    }
+
     @Test
     fun `returns nothing for a page without an event or a text`() {
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>")).shouldBeNull()

@@ -41,7 +41,10 @@ class VolksbuehneEventPageScraper {
         return VolksbuehneEventPage(
             description = description,
             imageUrl = event?.schemaImageUrl() ?: document.attrAt("meta[property=og:image]", "content"),
-            eventType = event?.stringOrNull("@type")?.let { SCHEMA_TYPES[it] }?.let { if (it == EventType.OTHER) socialEventType(description) else it }
+            eventType =
+                event?.stringOrNull("@type")?.let { SCHEMA_TYPES[it] }?.let {
+                    if (it == EventType.OTHER) socialEventType(description, event.stringOrNull("name")) else it
+                }
         )
     }
 
@@ -51,19 +54,26 @@ class VolksbuehneEventPageScraper {
     private companion object {
         /**
          * A `SocialEvent` is a ball, a dance night or a festival bar. The text tells them apart: a ballroom ball is a
-         * staged competition people watch, a night on a dancefloor is a party, and the bar stays OTHER (#4009). The text
-         * is read here and never stored: the source's licence withholds it.
+         * staged competition people watch, a night on a dancefloor is a party, and the bar stays OTHER (#4009). Many
+         * pages carry no text, so a text that decides nothing leaves it to the name: a disco or a tango night is a party.
+         * The text is read here and never stored: the source's licence withholds it.
          */
-        fun socialEventType(description: String?): EventType =
+        fun socialEventType(
+            description: String?,
+            name: String?
+        ): EventType =
             when {
-                description == null -> EventType.OTHER
-                BALLROOM.containsMatchIn(description) -> EventType.SHOW
-                DANCE_NIGHT.containsMatchIn(description) -> EventType.PARTY
+                description != null && BALLROOM.containsMatchIn(description) -> EventType.SHOW
+                description != null && DANCE_NIGHT.containsMatchIn(description) -> EventType.PARTY
+                name != null && DANCE_NIGHT_NAME.containsMatchIn(name) -> EventType.PARTY
                 else -> EventType.OTHER
             }
 
         val BALLROOM = Regex("""\bballroom|\bkiki\b""", RegexOption.IGNORE_CASE)
         val DANCE_NIGHT = Regex("""tanzfläche|dancefloor|\bparty\b""", RegexOption.IGNORE_CASE)
+
+        /** `Russendisko`, `Disco Night`, `Tangonacht`, `Milonga`; the suffix list keeps `Discover` and `Diskurs` out. */
+        val DANCE_NIGHT_NAME = Regex("""dis[ck]o(?:\b|thek|nacht|abend)|tangonacht|\bmilonga""", RegexOption.IGNORE_CASE)
 
         /** A `SocialEvent` is resolved by [socialEventType]. */
         val SCHEMA_TYPES =
