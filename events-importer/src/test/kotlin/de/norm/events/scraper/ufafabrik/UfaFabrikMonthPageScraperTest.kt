@@ -116,6 +116,13 @@ class UfaFabrikMonthPageScraperTest {
     }
 
     @Test
+    fun `bills nobody from a title that names a show`() {
+        // Event 10726: the a-cappella group's Christmas show was billed as the act "Gretchens Christmas Party".
+        billing("Gretchens Christmas Party - Fällt aus!").shouldBeEmpty()
+        billing("Die große Swing Revue").shouldBeEmpty()
+    }
+
+    @Test
     fun `bills nobody from the title of a show about someone`() {
         // Events 12457 and 12458: the title split into "Nina", "Zwischen Himmel" and "Punk *Premiere".
         ufaFabrikArtists(

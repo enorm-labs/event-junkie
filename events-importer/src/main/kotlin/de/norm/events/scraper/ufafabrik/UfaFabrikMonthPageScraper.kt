@@ -121,7 +121,8 @@ class UfaFabrikMonthPageScraper {
  * A subtitle that bills `<Act> & Special Guest <Guest>` names the acts of a night the title only names
  * (`Balkan Christmas Night`), and a `Karaoke` label bills nobody (#3731). Nor does a show about someone, whose subtitle
  * reads `Ein musikalischer Abend über …` (events 12457, 12458): its title names the subject, and the house names the
- * performers only in the blurb.
+ * performers only in the blurb. A title act ending in `Party`, `Show`, `Revue` or `Gala` is the show's name, not an act
+ * (`Gretchens Christmas Party`, #4419); a subtitle's acts and a special guest still count.
  */
 internal fun ufaFabrikArtists(
     title: String,
@@ -143,7 +144,8 @@ internal fun ufaFabrikArtists(
             .orEmpty()
             .map { it.copy(role = ArtistRole.SUPPORT) }
     val (fromTitle, fromSubtitle) = buildArtistsForEventType(billing, subtitle, eventType).partition { it.titleDerived }
-    return fromTitle.flatMap(::splitAtMit) + guests.flatMap(::splitAtMit) + fromSubtitle
+    val headliners = fromTitle.filterNot { SHOW_TITLE.containsMatchIn(it.name) }.flatMap(::splitAtMit)
+    return headliners + guests.flatMap(::splitAtMit) + fromSubtitle
 }
 
 private fun splitAtMit(artist: ScrapedArtist): List<ScrapedArtist> {
@@ -165,6 +167,9 @@ private const val KARAOKE = "karaoke"
 
 /** `Ein Abend über …`, `Ein musikalischer Abend für …`: a show about a person, not a billing. */
 private val SHOW_ABOUT = Regex("""^\s*ein(?:\s+\p{L}+)?\s+abend\s+(?:über|für)\b""", RegexOption.IGNORE_CASE)
+
+/** The last word of a show's name, not an act's. `Night` is not one: `Balkan Christmas Night` bills its acts in the subtitle. */
+private val SHOW_TITLE = Regex("""\b(?:party|show|revue|gala)\s*$""", RegexOption.IGNORE_CASE)
 
 /** A ` mit ` between two acts; the group is the next word, which can keep the name whole. */
 private val MIT = Regex("""\s+mit\s+(\S+)""", RegexOption.IGNORE_CASE)
