@@ -322,7 +322,7 @@ internal class Bogen47ApiScraper(
  * with its set, or else the names after `Joining us are`, up to `, alongside` or the sentence's end. A party without either bills
  * none. A timetable line splits at `b2b` only, because `Manolito & Sons` is one act, and its trailing parenthesis is a label.
  */
-internal fun partyLineup(
+private fun partyLineup(
     description: String?,
     night: LocalDate
 ): List<ScrapedArtist> {
