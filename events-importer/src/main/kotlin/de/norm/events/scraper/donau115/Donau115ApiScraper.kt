@@ -92,15 +92,20 @@ class Donau115ApiScraper(
         )
     }
 
-    /** `A | B | C` and `A/ B/ C` bill a group by its members, and a quoted work, `#11` or `SOLO` is not part of an act's name. */
-    private fun artistsOf(name: String): List<ScrapedArtist> =
-        headlinersFromTitle(name.replace(MEMBER_SEPARATOR, " + ").replace(SERIES_NUMBER, "")).mapNotNull { artist ->
+    /**
+     * `A | B | C` and `A/ B/ C` bill a group by its members, and a quoted work, `#11` or `SOLO` is not part of an act's name.
+     * The house's own variety series bills only the guests after its edition (event 12516).
+     */
+    private fun artistsOf(name: String): List<ScrapedArtist> {
+        val billed = name.replace(HOUSE_SERIES_EDITION, "").blankToNull() ?: return emptyList()
+        return headlinersFromTitle(billed.replace(MEMBER_SEPARATOR, " + ").replace(SERIES_NUMBER, "")).mapNotNull { artist ->
             artist.name
                 .replace(QUOTED_WORK, "")
                 .replace(SOLO_TAIL, "")
                 .blankToNull()
                 ?.let { artist.copy(name = it) }
         }
+    }
 
     private fun firstTime(
         label: Regex,
@@ -130,6 +135,9 @@ class Donau115ApiScraper(
 
         /** `Two-Song Tuesday (MUSIC STARTS 20:00)`: the time is read, then cut from the title. */
         val TIMED_PARENTHESIS = Regex("""\s*\([^)]*\d{1,2}[:.]\d{2}[^)]*\)""")
+
+        /** `Domingo Fantástico #7`, `Domingo Fantástico X with Antajayú and Isa Otoya`: the series, its edition and the `with`. */
+        val HOUSE_SERIES_EDITION = Regex("""^Domingo Fantástico\b(?:\s+(?:#\d+|[IVXLC]+\b))?(?:\s+with\b)?\s*""", RegexOption.IGNORE_CASE)
 
         val SERIES = Regex("""\b(?:two-song tuesday|open stage|open mic|jam)\b""", RegexOption.IGNORE_CASE)
 

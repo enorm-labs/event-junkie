@@ -35,6 +35,8 @@ import kotlin.math.abs
  * - **The text** is `<act> - <style> - Eintritt immer frei`: the first part is the title, the rest the
  * subtitle, and the entry note sets [ScrapedEvent.free]. The house series (`Jazz am Sonntag`,
  * `Speiches Open Stage`) name no act in the title; `Jazz am Sonntag` names its band before `spielt`.
+ * - **A `Lesung:` label** opens a reading the table files as `Konzert` (event 12519). It is a [EventType.READING],
+ * and the names after the label are its authors.
  * - **`rockradio.de-live`** is the radio's own broadcast from the pub, a talk as often as a band. It is a
  * [EventType.READING] when the text names an interview or `im Gespräch`, else [EventType.OTHER].
  *
@@ -65,6 +67,7 @@ class SpeichesOverviewPageScraper(
         val subtitle = segments.drop(1).joinToString(" – ").ifBlank { null }
         val eventType =
             when {
+                READING_LABEL.containsMatchIn(title) -> EventType.READING
                 cells[KIND_CELL].selectFirst("a")?.text() == CONCERT_KIND -> EventType.CONCERT
                 TALK.containsMatchIn(segments.joinToString(" ")) -> EventType.READING
                 else -> EventType.OTHER
@@ -86,7 +89,7 @@ class SpeichesOverviewPageScraper(
             sourceId = "${EventSource.SPEICHES.sourceIdPrefix}$id",
             genre = normalizeGenre(subtitle).filter(::isGenreLabel).joinToString(", ").ifBlank { null },
             free = FREE_ENTRY.containsMatchIn(cells[TEXT_CELL].text()),
-            artists = if (eventType == EventType.CONCERT) actsOf(title, subtitle) else emptyList()
+            artists = if (eventType == EventType.CONCERT || READING_LABEL.containsMatchIn(title)) actsOf(title, subtitle) else emptyList()
         )
     }
 
@@ -142,9 +145,10 @@ class SpeichesOverviewPageScraper(
     }
 
     /**
-     * The acts of a concert: the band before `spielt` in a house series, otherwise the title's names
-     * without a country tag, an instrument note (`Marcos Coll m-harp`), a band's line-up after `=`, a series label before `:`,
-     * or a genre list glued on with a dash (`Tom Blacksmith (ITA/D )- Blues, Soul`).
+     * The acts of a concert or the authors of a reading: the band before `spielt` in a house series, otherwise the title's names
+     * without a country tag, an instrument note (`Marcos Coll m-harp`), a band's line-up after `=`, a label before `:`,
+     * or a genre list glued on with a dash (`Tom Blacksmith (ITA/D )- Blues, Soul`). A name written all lower case,
+     * such as the duo `glass and stone` (event 12518), is one act: it has no instrument note, and its `and` joins no bill.
      */
     private fun actsOf(
         title: String,
@@ -161,9 +165,13 @@ class SpeichesOverviewPageScraper(
                 .replace(SERIES_LABEL, "")
         return names
             .split(", ")
-            .map { INSTRUMENT_NOTE.replace(it, "").trim() }
-            .flatMap { headlinersFromTitle(it) }
-            .distinctBy { it.name }
+            .flatMap { name ->
+                if (name.first().isLowerCase()) {
+                    listOf(ScrapedArtist(name = name.trim(), role = ArtistRole.HEADLINER))
+                } else {
+                    headlinersFromTitle(INSTRUMENT_NOTE.replace(name, "").trim())
+                }
+            }.distinctBy { it.name }
     }
 
     /** [names] without a `- Blues, Soul` tail, cut only when every part of it is a genre. */
@@ -180,6 +188,7 @@ class SpeichesOverviewPageScraper(
         const val TEXT_CELL = 4
         const val HOUSE_PLACE = "Speiche"
         const val CONCERT_KIND = "Konzert"
+        val READING_LABEL = Regex("""^Lesung\s*:""", RegexOption.IGNORE_CASE)
         val TALK = Regex("""\bim\s+gespräch\b|\binterview\b""", RegexOption.IGNORE_CASE)
 
         /** The table prints `20.00`. */

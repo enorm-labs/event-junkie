@@ -110,6 +110,21 @@ class Donau115ApiScraperTest {
     }
 
     @Test
+    fun `scrape bills the guests of the house variety series, not the series`() {
+        val json =
+            """{"a":{"bandName":"Domingo Fantástico X with Antajayú and Isa Otoya","date":"2026-11-22","live":true},""" +
+                """"b":{"bandName":"Domingo Fantástico IX","date":"2026-11-29","live":true},""" +
+                """"c":{"bandName":"Domingo Fantástico #7","date":"2026-12-06","live":true}}"""
+
+        val nights = scraper.scrape(json, sourceUrl).associateBy { it.eventDate.toString() }
+
+        nights.getValue("2026-11-22").title shouldBe "Domingo Fantástico X with Antajayú and Isa Otoya"
+        nights.getValue("2026-11-22").artists.map { it.name } shouldContainExactly listOf("Antajayú", "Isa Otoya")
+        nights.getValue("2026-11-29").artists.shouldBeEmpty()
+        nights.getValue("2026-12-06").artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `scrape keeps a night without an image`() {
         on("2026-11-28").imageUrl.shouldBeNull()
     }

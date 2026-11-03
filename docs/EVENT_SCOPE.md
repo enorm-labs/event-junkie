@@ -142,7 +142,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Haus der Statistik  | `HausDerStatistikMonthPageScraper.isParticipationFormat` | Every format tag is `Workshop`, `Werkstatt`, `Treffen`, `Kochen` or `Diskussion`                                             |
 | Alte Münze          | `AlteMuenzeApiScraper.typeOf`                            | No category, or only `Führung`, `Workshop` or `Sport`                                                                        |
 | Alte Münze          | `AlteMuenzeApiScraper.isProgramme`                       | The `Brunch` category, beside any other                                                                                      |
-| LabSaal             | `LabsaalCalendarScraper.isProgramme`                     | A feed entry outside `Alle Veranstaltungen`, or a `Workshop` or `…kurs` named before any `und`                               |
+| LabSaal             | `LabsaalCalendarScraper.isProgramme`                     | A feed entry outside `Alle Veranstaltungen`, or a `Workshop` or `…kurs` named before any `und` in the title or the page slug |
 | Brotfabrik          | `BrotfabrikApiScraper.isStageProgramme`                  | Only the categories `Bühne` and `Literatur`: no cinema, courses or gallery days                                              |
 | Café Köpenick       | `programmeType` in `CafeKoepenickCalendarScraper.kt`     | A title with no band bill, open stage or format word, such as `Küfa` or `Beratung`                                           |
 | ZK/U                | `isZkuParticipationFormat` (`ZkuCalendarScraper.kt`)     | A market, `Workshop`, `OPENHAUS` open studios, a meeting, a reading group or a course                                        |
