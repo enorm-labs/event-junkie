@@ -13,6 +13,8 @@ class DataQualityRegressionCheckTest {
     private val genre = QualityIssue.MISSING_GENRE.key
     private val flagged = QualityIssue.FLAGGED_AT_IMPORT.key
     private val keptOut = DataQualityRegressionCheck.FLAGGED_AT_IMPORT_KEPT_OUT
+    private val price = QualityIssue.MISSING_PRICE.key
+    private val priceUpcoming = DataQualityRegressionCheck.MISSING_PRICE_UPCOMING
 
     private fun row(
         daysAgo: Long,
@@ -136,7 +138,7 @@ class DataQualityRegressionCheckTest {
 
     @Test
     fun `every QualityIssue but the review queues is checked`() {
-        val series = QualityIssue.KEYS - flagged + keptOut
+        val series = QualityIssue.KEYS - flagged + keptOut - price + priceUpcoming
         val today = series.map { row(0, 50, metric = it) }
         val history = series.flatMap { metric -> (1L..3L).map { row(it, 0, metric = metric) } }
 
@@ -213,11 +215,56 @@ class DataQualityRegressionCheckTest {
         DataQualityRegressionCheck.check(listOf(row(0, 31)), week(20, 20, 20), declared).single().regressed shouldBe true
         DataQualityRegressionCheck
             .check(
-                listOf(row(0, 31, metric = QualityIssue.MISSING_PRICE.key)),
-                (1L..3L).map { row(it, 20, metric = QualityIssue.MISSING_PRICE.key) },
+                listOf(row(0, 31, metric = priceUpcoming)),
+                (1L..3L).map { row(it, 20, metric = priceUpcoming) },
                 declared
             ).single()
             .regressed shouldBe true
+    }
+
+    @Test
+    fun `missingPrice is judged on the next 30 days only, and reported under its own name`() {
+        // Sisyphos on 2026-11-03: 31 far-ahead nights without a presale lifted the share over every event.
+        val today = listOf(row(0, 90, metric = price), row(0, 20, total = 40, metric = priceUpcoming))
+        val history = (1L..7L).flatMap { listOf(row(it, 70, metric = price), row(it, 8, total = 40, metric = priceUpcoming)) }
+
+        val verdict = DataQualityRegressionCheck.check(today, history).single()
+
+        verdict.metric shouldBe price
+        verdict.todayPct shouldBe 50.0
+        verdict.baselinePct shouldBe 20.0
+        verdict.totalEvents shouldBe 40L
+        verdict.windowDays shouldBe DataQualityRegressionCheck.PRICE_WINDOW_DAYS
+        verdict.regressed shouldBe true
+    }
+
+    @Test
+    fun `a far-ahead batch without a price is no regression while the next 30 days hold steady`() {
+        val today = listOf(row(0, 90, metric = price), row(0, 4, total = 20, metric = priceUpcoming))
+        val history = (1L..7L).flatMap { listOf(row(it, 70, metric = price), row(it, 4, total = 20, metric = priceUpcoming)) }
+
+        DataQualityRegressionCheck.check(today, history).single().regressed shouldBe false
+    }
+
+    @Test
+    fun `a source without an event in the next 30 days gets no price verdict`() {
+        val today = listOf(row(0, 0, total = 0, metric = priceUpcoming))
+        val history = (1L..7L).map { row(it, 0, total = 0, metric = priceUpcoming) }
+
+        DataQualityRegressionCheck.check(today, history).shouldBeEmpty()
+    }
+
+    @Test
+    fun `the ten-event minimum counts the events of the next 30 days`() {
+        val today = listOf(row(0, 9, total = 9, metric = priceUpcoming))
+        val history = (1L..7L).map { row(it, 0, total = 20, metric = priceUpcoming) }
+
+        DataQualityRegressionCheck.check(today, history).single().baselinePct shouldBe null
+    }
+
+    @Test
+    fun `no other metric carries a window`() {
+        DataQualityRegressionCheck.check(listOf(row(0, 31)), week(20, 20, 20)).single().windowDays shouldBe null
     }
 
     @Test

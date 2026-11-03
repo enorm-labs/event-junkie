@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import kotlin.math.round
 
 /**
@@ -43,6 +44,18 @@ class DataQualityService(
             overall = rollUp(perSource),
             perSource = perSource
         )
+    }
+
+    /**
+     * Per source label, the events dated in `[from, until)` and how many of them state no price
+     * (#4420). The regression gate reads this; the report keeps the count over every event.
+     */
+    suspend fun upcomingPriceGaps(
+        from: LocalDate,
+        until: LocalDate
+    ): Map<String, UpcomingPriceRow> {
+        val slugsById = sourceSlugsById()
+        return repository.upcomingPricePerSource(from, until).toList().associateBy { label(it.eventSourceId, slugsById) }
     }
 
     /** A page of the events failing one metric. */

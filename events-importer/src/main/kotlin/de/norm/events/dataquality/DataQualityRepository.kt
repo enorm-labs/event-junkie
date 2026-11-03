@@ -6,6 +6,7 @@ import de.norm.events.importing.QualityFlagKind.Companion.REVIEW_KINDS_SQL
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
+import java.time.LocalDate
 
 /**
  * The measurements, as raw SQL, because R2DBC derives none of this.
@@ -45,8 +46,7 @@ interface DataQualityRepository : CoroutineCrudRepository<EventEntity, Long> {
             COUNT(*) FILTER (WHERE NOT EXISTS
                 (SELECT 1 FROM $EVENTS_SCHEMA.event_promoter ep WHERE ep.event_id = e.id))
                                                                            AS missing_promoter,
-            COUNT(*) FILTER (WHERE e.price_presale IS NULL AND e.price_box_office IS NULL
-                AND e.free = false AND e.price_note IS NULL)               AS missing_price,
+            COUNT(*) FILTER (WHERE $MISSING_PRICE_PREDICATE)               AS missing_price,
             COUNT(*) FILTER (WHERE e.start_time IS NULL)                   AS missing_start_time,
             COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_source es
                 WHERE es.id = e.event_source_id AND es.licence_reviewed_at IS NULL))
@@ -71,6 +71,29 @@ interface DataQualityRepository : CoroutineCrudRepository<EventEntity, Long> {
         """
     )
     fun aggregatePerSource(): Flow<SourceQualityRow>
+
+    /**
+     * Per source, the events dated from [from] up to but not including [until], and how many of them
+     * state no price (#4420). The regression gate judges `missingPrice` on these: a far-ahead night
+     * usually has no presale yet, so the share over every event moves with the venue's planning horizon.
+     *
+     * A source with no event in the window has no row. Every status counts, as in [aggregatePerSource].
+     */
+    @Query(
+        """
+        SELECT
+            e.event_source_id                                              AS event_source_id,
+            COUNT(*)                                                       AS total_events,
+            COUNT(*) FILTER (WHERE $MISSING_PRICE_PREDICATE)               AS missing_price
+        FROM $EVENTS_SCHEMA.event e
+        WHERE e.event_date >= :from AND e.event_date < :until
+        GROUP BY e.event_source_id
+        """
+    )
+    fun upcomingPricePerSource(
+        from: LocalDate,
+        until: LocalDate
+    ): Flow<UpcomingPriceRow>
 
     /**
      * Distinct artist names linked to each source's events, for the one metric SQL cannot express.
@@ -111,6 +134,13 @@ data class SourceQualityRow(
     val titleDerivedUnmatched: Long,
     val flaggedAtImport: Long,
     val flaggedAtImportKeptOut: Long
+)
+
+/** One row of [DataQualityRepository.upcomingPricePerSource]. `eventSourceId` null means the `manual` bucket. */
+data class UpcomingPriceRow(
+    val eventSourceId: Long?,
+    val totalEvents: Long,
+    val missingPrice: Long
 )
 
 /** One `(source, artist name)` pair — see [DataQualityRepository.artistNamesPerSource]. */

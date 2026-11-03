@@ -691,7 +691,8 @@ rule(
 # each source's `QualityIssue` shares with their median over the seven days before, in
 # `data_quality_snapshot`, and sets `data_quality_regression{source,metric}` to 1 for a
 # share more than ten points worse on a source with at least ten events
-# (`DataQualityRegressionCheck`). The comparison happens in the importer because the
+# (`DataQualityRegressionCheck`). `missingPrice` is judged over the events of the next
+# 30 days only, and its ten-event minimum counts those (#4420). The comparison happens in the importer because the
 # baseline is the table; PromQL would need a week of gauge history, which a restart
 # empties until the next 03:00.
 #
@@ -712,7 +713,9 @@ rule(
     "HELD_BACK_PROMOTER_NAME, GENRE_EQUALS_TITLE, NON_GENRE_TOKEN), not the review flag "
     "UNCERTAIN_PARTY_FEATURE (#3148). A metric whose field the source declares as an accepted "
     "limitation (`VenueLimitations`) is not judged (#3195), nor are the review queues "
-    "titleDerivedSingletons and titleDerivedUnmatched (#3314). The importer's WARN line "
+    "titleDerivedSingletons and titleDerivedUnmatched (#3314). missingPrice counts only the events "
+    "that start in the next 30 days, because a far-ahead night rarely has a presale yet (#4420). "
+    "The importer's WARN line "
     "`Data quality regressed` names the source, the metric and both numbers; "
     "`GET /api/admin/data-quality/worklist?issue=<metric>&source=<slug>` lists the events.",
     "sum(max by (source, metric) (data_quality_regression) > bool 0)",
