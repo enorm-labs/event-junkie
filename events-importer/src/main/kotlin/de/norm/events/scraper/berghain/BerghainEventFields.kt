@@ -5,6 +5,7 @@ import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.stripLineupBracket
 
 /**
  * Maps a Berghain floor label to its signature music genre.
@@ -109,7 +110,7 @@ private const val KANTINE_MARKER = "Kantine"
 internal fun splitSlot(text: String): List<String> =
     text
         .split(SLOT_SEPARATOR)
-        .map { it.replace(SLOT_DESCRIPTION, "").replace(SLOT_WORK, "").trim() }
+        .map { stripLineupBracket(it.replace(SLOT_DESCRIPTION, "").replace(SLOT_WORK, "").trim()) }
         .filter { it.isNotBlank() && !isNonArtistName(it) }
 
 /**

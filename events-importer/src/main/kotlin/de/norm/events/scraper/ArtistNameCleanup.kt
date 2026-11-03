@@ -129,7 +129,9 @@ fun stripArtistSuffix(
         if (next == stripped || next.isBlank()) return@repeat
         stripped = next
     }
-    val untailed = stripPlaysTail(stripWorkTitle(stripPlaceTail(stripShoutedTourTail(stripTrailingParenthetical(stripped)))))
+    // A place tail can hide an origin tag in front of it: `Sol Angel (Colombia) - Madrid`.
+    val unplaced = stripTrailingParenthetical(stripPlaceTail(stripShoutedTourTail(stripTrailingParenthetical(stripAcronymExpansion(stripped)))))
+    val untailed = stripPlaysTail(stripWorkTitle(unplaced))
     return stripCasedTail(stripGenitiveShow(stripTrailingSeparator(untailed)))
 }
 
@@ -227,11 +229,50 @@ private val SQUARE_TAG =
 /**
  * A trailing band affiliation, which is never an alias: a comma or slash list (`(WIRE, IMMERSION)`,
  * `(Bauhaus / Love & Rockets)`) or an opener (`(ex-EINSTÜRZENDE NEUBAUTEN, …)`, `(von Spandau
- * Ballet)`) (#1561, #1761). A single bare name in parentheses (`(PENETRATION)`, `(Black Kray)`) is
- * undecidable between the two and stays.
+ * Ballet)`) (#1561, #1761). Two names joined by `&`, `+`, `and`, `und` or `b2b` are the act's members:
+ * `Spice Boys (Carpenter Effect & Zylenth)`. A single bare name in parentheses (`(PENETRATION)`, `(Black Kray)`) is
+ * undecidable between the two and stays; [stripLineupBracket] drops it where the line-up decides.
  */
 private val AFFILIATION_TAG =
-    Regex("""\s*\((?:$AFFILIATION_OPENER[^()]*|[^(),]+,[^()]*|[^()/]+/[^()]*)\)\s*$""", RegexOption.IGNORE_CASE)
+    Regex(
+        """\s*\((?:$AFFILIATION_OPENER[^()]*|[^(),]+,[^()]*|[^()/]+/[^()]*|[^()]*\S\s+(?:&|\+|and|und|b2b)\s+\S[^()]*)\)\s*$""",
+        RegexOption.IGNORE_CASE
+    )
+
+/**
+ * A trailing bracket in a line-up that bills one act per entry: the act's crew, label, home town, real name, members or a
+ * set note (`Allen (Basse Frequenze)`, `Hitomi (An Toi)`, `Coco Cobra [Queerpool]`, `V. (Opera live)`). [stripArtistSuffix]
+ * keeps a single bare name in brackets, because a title can carry an alias the same way, so a scraper whose line-up never
+ * does calls this. A bracket glued to a word (`Michael(a) Daoud`) stays, and so does one whose act would slug to nothing
+ * without it: `@ (US, 4AD)`.
+ */
+fun stripLineupBracket(name: String): String {
+    val stripped = name.trim().replace(LINEUP_BRACKET, "").trim()
+    return if (isSlugless(stripped)) name.trim() else stripped
+}
+
+private val LINEUP_BRACKET = Regex("""(?<=\S)\s+(?:\([^()]+\)|\[[^\[\]]+])$""")
+
+/**
+ * An initialism followed by what it stands for, in one camel-cased word in brackets or in words after a dash:
+ * `LMP (LesMainsPopulaires)`, `K.A.O.S. - Kein Abend Ohne Schnaps`. Spaced words in brackets stay, so
+ * `OCT (On Company Time)` is left to the operator.
+ */
+private val ACRONYM_EXPANSION = Regex("""^((?:\p{Lu}\.?){2,6})(?:\s*\((\p{Lu}[\p{L}]*)\)|\s+[-–—]\s+(\p{Lu}[\p{L}\s]*))$""")
+
+/** Drops an [ACRONYM_EXPANSION] when the expansion's initials spell the head. */
+private fun stripAcronymExpansion(name: String): String {
+    val match = ACRONYM_EXPANSION.matchEntire(name) ?: return name
+    val head = match.groupValues[1]
+    val expansion = match.groupValues[2].ifEmpty { match.groupValues[3] }
+    val initials =
+        if (match.groupValues[2].isNotEmpty()) {
+            expansion.filter { it.isUpperCase() }
+        } else {
+            expansion.split(WHITESPACE).filter { it.isNotBlank() }.joinToString("") { it.take(1) }
+        }
+    return if (initials.equals(head.filter { it.isLetter() }, ignoreCase = true)) head else name
+}
 
 /** A trailing alias, which a venue that bills the alias too lists twice: `CFL (AKA KRUMELUR)`, `Foo (a.k.a. Bar)`. */
 private val ALIAS_TAG = Regex("""\s*\((?:aka|a\.k\.a\.?)(?:\s|(?<=\.))[^()]*\)\s*$""", RegexOption.IGNORE_CASE)
@@ -370,7 +411,7 @@ internal const val COUNTRY_NAMES =
         "|denmark|dänemark|sweden|schweden|norway|norwegen|finland|finnland|iceland|island|poland|polen|czechia|tschechien" +
         "|hungary|ungarn|greece|griechenland|turkey|türkei|israel|russia|russland|ukraine|georgia|georgien" +
         "|japan|korea|china|india|indien|thailand|indonesia|indonesien|australia|australien|new zealand|neuseeland" +
-        "|south africa|südafrika|nigeria|ghana|senegal|mali|berlin|hamburg|köln|münchen|wien|zürich|london|paris|seoul"
+        "|south africa|südafrika|nigeria|ghana|senegal|mali|berlin|hamburg|köln|leipzig|münchen|wien|zürich|london|paris|madrid|seoul"
 
 /** Minimum words in a shouted tail before it reads as a tour/album name rather than an act. */
 private const val MIN_SHOUTED_TAIL_WORDS = 2

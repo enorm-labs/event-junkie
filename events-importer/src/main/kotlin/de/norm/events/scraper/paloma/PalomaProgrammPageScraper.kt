@@ -14,6 +14,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.stripLineupBracket
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -69,7 +70,7 @@ class PalomaProgrammPageScraper(
             startTime = parseTime(match.groupValues[TIME_GROUP]),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.PALOMA.sourceIdPrefix}$date",
-            artists = djs.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+            artists = djs.map { ScrapedArtist(name = stripLineupBracket(it), role = ArtistRole.DJ) }
         )
     }
 

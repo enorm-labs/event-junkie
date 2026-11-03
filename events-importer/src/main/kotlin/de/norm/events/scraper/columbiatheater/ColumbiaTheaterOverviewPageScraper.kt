@@ -22,6 +22,7 @@ import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -209,7 +210,8 @@ internal fun columbiaTheaterArtists(
  * Split on the space-padded `+`, then safe conjunctions ([splitSegmentOnConjunctions]) — **not**
  * commas, unlike the shared [splitSupportActs]: the venue writes a guest's band affiliations in
  * parentheses ("Budgie (SIOUXSIE & THE BANSHEES, THE SLITS)") and a comma split would tear them
- * apart. [stripArtistSuffix] then removes the affiliation so the guest lands on their own row (#1561).
+ * apart. [stripLineupBracket] and [stripArtistSuffix] then remove the affiliation, a single band name included
+ * (`Pauline Murray (PENETRATION)`), so the guest lands on their own row (#1561).
  */
 private fun parseSupportRow(row: String): List<ScrapedArtist> {
     val label = SUPPORT_ROW_LABEL.find(row)
@@ -220,7 +222,7 @@ private fun parseSupportRow(row: String): List<ScrapedArtist> {
         .removePrefix("+")
         .split(ACT_SEPARATOR)
         .flatMap(::splitSegmentOnConjunctions)
-        .map { stripArtistSuffix(it.trim()) }
+        .map { stripArtistSuffix(stripLineupBracket(it)) }
         .filter { it.isNotBlank() }
         .filterNot(::isNonArtistName)
         .map { ScrapedArtist(name = it, role = role) }

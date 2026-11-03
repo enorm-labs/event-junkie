@@ -17,6 +17,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.splitSegmentOnConjunctions
+import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
 import de.norm.events.slug.SlugGenerator
@@ -254,7 +255,7 @@ class RenateOverviewPageScraper(
      */
     private fun splitActs(line: String): List<String> =
         (if (line.contains('(')) listOf(line) else line.split(B2B_SEPARATOR).flatMap(::splitSegmentOnConjunctions))
-            .map { it.trim() }
+            .map { stripLineupBracket(it.trim()) }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
 
     private companion object {

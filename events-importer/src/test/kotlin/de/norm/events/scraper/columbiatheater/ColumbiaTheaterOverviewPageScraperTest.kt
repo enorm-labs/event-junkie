@@ -97,14 +97,14 @@ class ColumbiaTheaterOverviewPageScraperTest {
     }
 
     @Test
-    fun `drops a guest's parenthesised band affiliations, keeping a single name that may be an alias`() {
-        // The comma list and the `ex-` opener are affiliations (#1561); `(PENETRATION)` alone could be an alias and stays.
+    fun `drops a guest's parenthesised band affiliations`() {
+        // The comma list and the `ex-` opener are affiliations (#1561), and in a billing row a single name is one too.
         val johnRobb = event("20260926-john-robb-mark-reeder")
         johnRobb.artists shouldContainExactly
             listOf(
                 ScrapedArtist("John Robb", ArtistRole.HEADLINER, titleDerived = true),
                 ScrapedArtist("Mark Reeder", ArtistRole.HEADLINER, titleDerived = true),
-                ScrapedArtist("Pauline Murray (PENETRATION)", ArtistRole.SUPPORT),
+                ScrapedArtist("Pauline Murray", ArtistRole.SUPPORT),
                 ScrapedArtist("Colin Newman", ArtistRole.SUPPORT),
                 ScrapedArtist("Budgie", ArtistRole.SUPPORT),
                 ScrapedArtist("Annette Benjamin", ArtistRole.SUPPORT),

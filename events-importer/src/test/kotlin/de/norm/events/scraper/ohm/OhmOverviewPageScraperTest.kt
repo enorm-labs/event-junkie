@@ -151,8 +151,8 @@ class OhmOverviewPageScraperTest {
                 "CH3LO" to ArtistRole.DJ,
                 "DJ TOWER" to ArtistRole.DJ,
                 "Huamaniser" to ArtistRole.DJ,
-                "V. (OPERA live)" to ArtistRole.LIVE,
-                "SPICY LAB (VCO & THIRTEEN DOZE)" to ArtistRole.DJ
+                "V." to ArtistRole.LIVE,
+                "SPICY LAB" to ArtistRole.DJ
             )
     }
 
@@ -216,7 +216,7 @@ class OhmOverviewPageScraperTest {
                 "Asphalt DJ" to ArtistRole.DJ,
                 "Jesse G" to ArtistRole.DJ,
                 "DJ Heartbreak" to ArtistRole.DJ,
-                "Reduks (LIVE)" to ArtistRole.LIVE,
+                "Reduks" to ArtistRole.LIVE,
                 "Shuray & Walle" to ArtistRole.DJ,
                 "Naomi" to ArtistRole.DJ
             )

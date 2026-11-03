@@ -17,6 +17,7 @@ import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -244,7 +245,7 @@ class ClubDerVisionaereProgrammePageScraper(
                 .trim()
         val role = if (sectionIsLive || LIVE_MARKER_PATTERN.containsMatchIn(cleaned)) ArtistRole.LIVE else ArtistRole.DJ
         return splitActs(cleaned)
-            .map(::stripArtistSuffix)
+            .map { stripArtistSuffix(stripLineupBracket(it).replace(GEAR_LIVE_TAIL, "")) }
             .filterNot(::isUnannouncedAct)
             .map { ScrapedArtist(name = it, role = role, stage = stage, setStart = setStart) }
     }
@@ -286,6 +287,9 @@ class ClubDerVisionaereProgrammePageScraper(
 
         /** The venue's own bullet for a lineup entry. */
         private const val ACT_MARKER = "//"
+
+        /** The machine a live set is played on, before its `Live`: `Maria Wildeis TC80 Live`. */
+        private val GEAR_LIVE_TAIL = Regex("""(?<=\S)\s+[A-Z]{1,3}-?\d{2,4}\s+(?i:live)$""")
 
         /** `&nbsp;` as Jsoup renders it — normalised so name splitting sees ordinary spaces. */
         private const val NON_BREAKING_SPACE = '\u00A0'

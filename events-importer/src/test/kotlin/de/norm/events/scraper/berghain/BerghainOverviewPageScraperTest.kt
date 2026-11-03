@@ -173,7 +173,7 @@ class BerghainOverviewPageScraperTest {
 
     // The duo `@` with its origin and label: the comma split once stored `4AD)` as an act (#3793).
     @Test
-    fun `a comma inside brackets stays with the act`() {
+    fun `a comma inside brackets bills no second act`() {
         val html =
             """
             <html><body>
@@ -192,7 +192,7 @@ class BerghainOverviewPageScraperTest {
             """.trimIndent()
         val event = scraper.scrape(Jsoup.parse(html, kantineUrl), kantineUrl).single()
 
-        event.artists.map { it.name } shouldContainExactly listOf("@ (US, 4AD)")
+        event.artists.map { it.name } shouldContainExactly listOf("@")
         event.artists.map { stripArtistSuffix(it.name) } shouldContainExactly listOf("@")
     }
 
