@@ -2,6 +2,7 @@ package de.norm.events.scraper.downstairs
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.importing.ActTitleCasing
 import de.norm.events.importing.AssociationSyncService
 import de.norm.events.importing.EventUpsertService
 import de.norm.events.importing.PerformerTyping
@@ -43,7 +44,8 @@ class DownstairsSoldElsewhereUpsertTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
-            mockk(relaxed = true)
+            mockk(relaxed = true),
+            ActTitleCasing(mockk())
         )
 
     private val sourceUrl = "https://www.downstairscomedy.shop/catalog/tickets?limit=100&use_sold=true&use_pagy=true&view_type=list"

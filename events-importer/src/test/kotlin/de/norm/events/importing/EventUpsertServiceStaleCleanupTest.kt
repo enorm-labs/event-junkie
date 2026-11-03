@@ -88,7 +88,8 @@ class EventUpsertServiceStaleCleanupTest {
                 contentStamp = mockk(relaxed = true),
                 enrichmentRepository = mockk(relaxed = true),
                 featureSync = mockk(relaxed = true),
-                changeLog = mockk(relaxed = true)
+                changeLog = mockk(relaxed = true),
+                actTitleCasing = ActTitleCasing(mockk())
             )
 
         // Default stubs for the upsert pipeline (we're testing stale cleanup, not upsert)

@@ -73,18 +73,7 @@ class ArtistAssociationSync(
                 .filter { isSlugless(it.name) }
                 .forEach { logger.warn { "Dropping artist '${it.name}' of '${event.sourceId}': its name slugs to nothing" } }
         }
-        val stripped =
-            scrapedEvents.associate { event ->
-                val festival = event.resolvedEventType() == EventType.FESTIVAL
-                event.sourceId to
-                    event.artists
-                        .map { it.copy(name = stripTitleStatusMarker(it.name)) }
-                        .flatMap { artist -> splitGuest(artist) }
-                        .flatMap { artist -> splitOnEmoji(artist) }
-                        .flatMap { artist -> splitBackToBack(artist) }
-                        .map { it.copy(name = stripArtistSuffix(it.name, fromTitle = it.titleDerived)) }
-                        .filterNot { artistRefusal(it.name) != null || (it.titleDerived && festival) }
-            }
+        val stripped = scrapedEvents.associate { event -> event.sourceId to strippedArtists(event) }
         val promoterSlugsById = scrapedEvents.associate { event -> event.sourceId to event.promoters.map(::artistSlugFor).toSet() }
         val promoterNamed =
             stripped.flatMap { (sourceId, artists) ->
@@ -151,6 +140,16 @@ class ArtistAssociationSync(
                 val headRow = exactBySlug[artistSlugFor(head)]
                 if (headRow != null && exactBySlug[artistSlugFor(name)] == null) name to headRow.name else null
             }.toMap()
+    }
+
+    /**
+     * The stored name of each of [slugs] that has a row, by slug: its own, or the renamed row its former slug
+     * points to (#3289). [ActTitleCasing] reads it before the merge creates anything.
+     */
+    suspend fun storedNames(slugs: Set<String>): Map<String, String> {
+        if (slugs.isEmpty()) return emptyMap()
+        val own = artistRepository.findBySlugIn(slugs).toList().associate { it.slug to it.name }
+        return own + artistsByFormerSlug(slugs - own.keys).mapValues { it.value.name }
     }
 
     // -- Resolution --
@@ -299,6 +298,22 @@ class ArtistAssociationSync(
             eventArtistRepository.saveAll(toInsert).toList()
         }
     }
+}
+
+/**
+ * The acts of [event] after the steps [ArtistAssociationSync.billedArtists] applies to each name alone: the status
+ * marker, a bracketed guest, an emoji run and a `b2b` slot split off, the suffix stripped, and a refused name or a
+ * festival's title-derived name dropped.
+ */
+internal fun strippedArtists(event: ScrapedEvent): List<ScrapedArtist> {
+    val festival = event.resolvedEventType() == EventType.FESTIVAL
+    return event.artists
+        .map { it.copy(name = stripTitleStatusMarker(it.name)) }
+        .flatMap { artist -> splitGuest(artist) }
+        .flatMap { artist -> splitOnEmoji(artist) }
+        .flatMap { artist -> splitBackToBack(artist) }
+        .map { it.copy(name = stripArtistSuffix(it.name, fromTitle = it.titleDerived)) }
+        .filterNot { artistRefusal(it.name) != null || (it.titleDerived && festival) }
 }
 
 /** Why the gate keeps [name] off a lineup, or null when the name may stay. */

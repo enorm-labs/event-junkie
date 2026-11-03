@@ -43,7 +43,8 @@ class EventUpsertService(
     /** The fields enrichment sources filled, which this import keeps where it has none (ADR-043). */
     private val enrichmentRepository: EventEnrichmentRepository,
     private val featureSync: EventFeatureSync,
-    private val changeLog: EventChangeLog
+    private val changeLog: EventChangeLog,
+    private val actTitleCasing: ActTitleCasing
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -156,8 +157,10 @@ class EventUpsertService(
 
         val discriminators = slugDiscriminators(scrapedEvents)
         val enriched = enrichedFields(existingBySourceId.values)
+        val actTitles = actTitleCasing.titles(scrapedEvents)
         val fromSource = { scraped: ScrapedEvent, existing: EventEntity? ->
-            scraped.toEventEntity(venueId, venueSlug, eventSourceId, existing, discriminators[scraped.sourceId], licences)
+            val row = scraped.toEventEntity(venueId, venueSlug, eventSourceId, existing, discriminators[scraped.sourceId], licences)
+            actTitles[scraped.sourceId]?.let { row.copy(title = it) } ?: row
         }
         val keep = { row: EventEntity, existing: EventEntity? -> PinnedField.keepPinned(row, existing).keepEnriched(existing, enriched) }
         val build = { scraped: ScrapedEvent, existing: EventEntity? -> keep(fromSource(scraped, existing), existing) }
