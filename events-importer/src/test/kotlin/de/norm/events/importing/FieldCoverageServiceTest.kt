@@ -260,7 +260,7 @@ class FieldCoverageServiceTest {
                 .tags(ImporterMetrics.TAG_SOURCE, "alpha", ImporterMetrics.TAG_FIELD, "genre")
                 .gauge()!!
                 .value() shouldBe 0.25
-            registry.find(ImporterMetrics.FIELD_COVERAGE).gauges().size shouldBe TrackedField.entries.size
+            registry.find("importer.source.field_coverage").gauges().size shouldBe TrackedField.entries.size
         }
 
     private companion object {

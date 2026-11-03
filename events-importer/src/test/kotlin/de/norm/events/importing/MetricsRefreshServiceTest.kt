@@ -62,7 +62,7 @@ class MetricsRefreshServiceTest {
 
             service.refreshGauges()
 
-            registry.get(EnrichmentMetrics.MUSICBRAINZ_UNCHECKED).gauge().value() shouldBe 5730.0
+            registry.get("importer.musicbrainz.unchecked").gauge().value() shouldBe 5730.0
         }
 
     @Test
@@ -72,7 +72,7 @@ class MetricsRefreshServiceTest {
 
             service.refreshGauges()
 
-            registry.get(EnrichmentMetrics.DISCOGS_UNCHECKED).gauge().value() shouldBe 2242.0
+            registry.get("importer.discogs.unchecked").gauge().value() shouldBe 2242.0
         }
 
     /**
@@ -90,7 +90,7 @@ class MetricsRefreshServiceTest {
             failedSources("dns") shouldBe 12.0
             failedSources("parse") shouldBe 1.0
             failedSources("http_forbidden") shouldBe 0.0
-            ScrapeFailureReason.ALL.forEach { reason -> registry.find(ImporterMetrics.SOURCES_FAILED).tag("reason", reason).gauge() shouldNotBe null }
+            ScrapeFailureReason.ALL.forEach { reason -> registry.find("importer.sources.failed").tag("reason", reason).gauge() shouldNotBe null }
         }
 
     @Test

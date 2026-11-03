@@ -199,7 +199,7 @@ class InstagramDraftRunnerTest {
     @Test
     fun `the age starts with the runner, moves when a pass ends, and stays after a refused access`() =
         runTest {
-            val lastSuccess = registry.find(InstagramMetrics.LAST_SUCCESS).gauge()!!
+            val lastSuccess = registry.find("instagram.pass.last_success").gauge()!!
             lastSuccess.value() shouldBe 0.0
             var now = clock.instant()
             val moving =

@@ -306,7 +306,7 @@ class InactiveAccountCleanupTest : BaseControllerTest() {
         lastSuccess(registry) shouldBe clock.instant.epochSecond.toDouble()
     }
 
-    private fun lastSuccess(registry: MeterRegistry) = registry.find(AccountMetrics.CLEANUP_LAST_SUCCESS).gauge()!!.value()
+    private fun lastSuccess(registry: MeterRegistry) = registry.find("bff.accounts.cleanup.last_success").gauge()!!.value()
 
     private fun failedSteps(registry: MeterRegistry) =
         registry

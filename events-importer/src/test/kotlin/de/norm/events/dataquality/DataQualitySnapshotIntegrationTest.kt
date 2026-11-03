@@ -297,7 +297,7 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
                     .value()
             regression(QualityIssue.MISSING_GENRE.key) shouldBe 1.0
             regression(QualityIssue.MISSING_PRICE.key) shouldBe 0.0
-            registry.find(DataQualityMetrics.REGRESSION_GAUGE).gauges().size shouldBe 2
+            registry.find("data.quality.regression").gauges().size shouldBe 2
             // The 03:00 run logged the per-verdict lines already; a rollout must not repeat them.
             lines.none { it.level == ch.qos.logback.classic.Level.WARN } shouldBe true
             lines.map { it.formattedMessage } shouldBe
@@ -315,7 +315,7 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
 
             val lines = captureLogs { logger(DataQualityMetrics(registry)).publishStoredRegressions() }
 
-            registry.find(DataQualityMetrics.REGRESSION_GAUGE).gauges() shouldBe emptyList()
+            registry.find("data.quality.regression").gauges() shouldBe emptyList()
             lines.none { it.level == ch.qos.logback.classic.Level.WARN } shouldBe true
             lines.map { it.formattedMessage } shouldBe
                 listOf("No data-quality snapshot for $today yet; the regression gauge waits for the nightly run")
