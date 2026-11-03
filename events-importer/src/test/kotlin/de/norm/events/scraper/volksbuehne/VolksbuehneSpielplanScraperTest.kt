@@ -12,6 +12,8 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -73,6 +75,54 @@ class VolksbuehneSpielplanScraperTest {
         party.eventType shouldBe EventType.PARTY.name
         party.artists.first() shouldBe ScrapedArtist(name = "Leslie Garcia", role = ArtistRole.DJ)
         showcase.artists.map { it.name } shouldContainExactly listOf("Sarmen Almond", "Anna Clementi")
+    }
+
+    @Test
+    fun `bills a concert's bare names after the title, and no subtitle that reads as a sentence`() {
+        val punk = main.first { it.title == "Vergessene Arbeitskämpfe – Ein Punk-Abend" }
+        val identityFactory = main.first { it.title == "identity factory (solo version)" }
+
+        punk.artists shouldContainExactly
+            listOf(ScrapedArtist(name = "KAOS", role = ArtistRole.HEADLINER), ScrapedArtist(name = "MANGEL", role = ArtistRole.HEADLINER))
+        identityFactory.eventType shouldBe EventType.CONCERT.name
+        identityFactory.artists.shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "Konzert | Gibrana Cervantes & Geraldo Salas | Gibrana Cervantes;Geraldo Salas",
+            "Konzert | Määäääääääh! Der große Schafsschererstreik · Limboboys, Isolationsgemeinschaft | Limboboys;Isolationsgemeinschaft",
+            "Konzert | Between Concert, Reading, Rehearsal, and Happening | ''",
+            "Konzert | Moderation: Teresa Bücker | ''",
+            "Konzert | Ein Abend mit den schönsten Liedern aus vier Jahrzehnten Pop | ''",
+            "Party | Gibrana Cervantes & Geraldo Salas | ''",
+            "Lesung | Gibrana Cervantes & Geraldo Salas | ''"
+        ]
+    )
+    fun `reads bare names from a concert's addition only`(
+        label: String,
+        addition: String,
+        names: String
+    ) {
+        val html =
+            """
+            <section id="performances"><ul><li class="activity">
+              <p class="activity__time"><time datetime="2026-12-14T20:00:00+01:00">20:00</time></p>
+              <p class="activity__stage">Große Bühne</p>
+              <h3 class="activity__title"><a href="/produktionen/row/20261214-1900/">Row</a></h3>
+              <p class="activity__title_addition">$addition</p>
+              <p class="activity__production-type-label">$label</p>
+            </li></ul></section>
+            """.trimIndent()
+
+        VolksbuehneSpielplanScraper(VolksbuehneHouse.ROSA_LUXEMBURG_PLATZ)
+            .scrape(Jsoup.parse(html, url), url)
+            .single()
+            .artists
+            .map { it.name } shouldBe
+            names.split(';').filter { it.isNotBlank() }
     }
 
     @Test

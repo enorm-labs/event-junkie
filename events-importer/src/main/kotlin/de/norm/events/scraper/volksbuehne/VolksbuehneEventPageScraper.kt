@@ -1,28 +1,38 @@
 package de.norm.events.scraper.volksbuehne
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.textAt
 import org.jsoup.nodes.Document
 
 /** What one Volksbühne performance page adds to its row. */
 data class VolksbuehneEventPage(
     val description: String?,
     val imageUrl: String?,
-    val eventType: EventType?
+    val eventType: EventType?,
+    /** The names of the page's writer line, which names a director or an author on a staged work and the performers on a concert. */
+    val writers: List<String> = emptyList()
 ) {
-    /** The page's text and image; its schema.org type replaces the listing's only where the listing named no format. */
+    /**
+     * The page's text and image; its schema.org type replaces the listing's only where the listing named no format. A concert
+     * only the page types bills its writer line when the listing billed nobody (#4438).
+     */
     fun applyTo(event: ScrapedEvent): ScrapedEvent {
         val confirmedType = eventType?.takeIf { event.typeIsFallback }
+        val writerActs = writers.takeIf { confirmedType == EventType.CONCERT }.orEmpty().map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
         return event.copy(
             description = description ?: event.description,
             imageUrl = imageUrl ?: event.imageUrl,
             eventType = confirmedType?.name ?: event.eventType,
-            typeIsFallback = event.typeIsFallback && confirmedType == null
+            typeIsFallback = event.typeIsFallback && confirmedType == null,
+            artists = event.artists.ifEmpty { writerActs }
         )
     }
 }
@@ -31,7 +41,7 @@ data class VolksbuehneEventPage(
  * Pure parser for one Volksbühne performance page (`/produktionen/<slug>/<yyyyMMdd-HHmm>/` or a
  * series evening). The text is the first `section.text-block`; the JSON-LD event carries the image
  * and a schema.org type (`DanceEvent`, `LiteraryEvent`) that names the format the listing leaves
- * out. Its `endDate` is not read: many pages give `23:00` whatever the show's length.
+ * out. The writer line (`p.production__writer`) is the listing's own. Its `endDate` is not read: many pages give `23:00` whatever the show's length.
  */
 class VolksbuehneEventPageScraper {
     fun scrape(document: Document): VolksbuehneEventPage? {
@@ -39,6 +49,7 @@ class VolksbuehneEventPageScraper {
         val description = description(document)
         if (event == null && description == null) return null
         return VolksbuehneEventPage(
+            writers = document.textAt("p.production__writer")?.let(VolksbuehneSpielplanScraper::splitNames).orEmpty(),
             description = description,
             imageUrl = event?.schemaImageUrl() ?: document.attrAt("meta[property=og:image]", "content"),
             eventType =
