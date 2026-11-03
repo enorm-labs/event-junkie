@@ -154,6 +154,55 @@ class PrivatclubOverviewPageScraperTest {
     }
 
     @Nested
+    inner class PartyDjsAndContests {
+        private fun card(
+            type: String,
+            title: String,
+            content: String = ""
+        ) = """
+            <div class="event_wrapper skewed">
+                <a href="https://privatclub-berlin.de/event/x/" class="event_header">
+                    <span class="datum_part1">Fr. 19.</span> <span class="datum_part2">Februar</span>
+                    <div class="zeile_typ"><div class="event_typ">$type</div></div>
+                    <span class="titel">$title</span>
+                </a>
+                <div class="event_detail"><div class="zeile content">$content</div></div>
+            </div>
+            """.trimIndent()
+
+        @Test
+        fun `bills the DJs of a party's DJ paragraph without their brackets`() {
+            // Event 12512 and its sister nights.
+            val html =
+                card(
+                    "Party",
+                    "Dance Dance Revolution",
+                    "<p>Musikwünsche könnt ihr gerne posten oder am Abend persönlich bei den DJs.</p>" +
+                        "<p>DJs:<br />\n&#8211; Palme (Factory)<br />\n&#8211; Rebel L (Resident-DJ)</p>"
+                )
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.map { it.name to it.role } shouldBe listOf("Palme" to ArtistRole.DJ, "Rebel L" to ArtistRole.DJ)
+        }
+
+        @Test
+        fun `bills nobody at a party with no DJ paragraph`() {
+            val event = scraper.scrape(Jsoup.parse(card("Party", "Soul Explosion", "<p>Dj King Dynamite begann 1998.</p>"), baseUrl), baseUrl).single()
+
+            event.artists.shouldBeEmpty()
+        }
+
+        @Test
+        fun `bills no act at an Emergenza contest night`() {
+            // Event 12511: the title was billed as the act.
+            val event = scraper.scrape(Jsoup.parse(card("Konzert", "EMERGENZA BERLIN"), baseUrl), baseUrl).single()
+
+            event.eventType shouldBe "CONCERT"
+            event.artists.shouldBeEmpty()
+        }
+    }
+
+    @Nested
     inner class StatusHandling {
         @Test
         fun `detects sold out status`() {

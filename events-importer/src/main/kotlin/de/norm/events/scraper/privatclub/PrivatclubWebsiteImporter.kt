@@ -31,5 +31,8 @@ val PRIVATCLUB_LIMITATIONS =
     VenueLimitations(
         EventSource.PRIVATCLUB,
         AcceptedLimitation(LimitedAspect.PRICE, "about half the nights print a genre line and a start time but no price"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the song slam is a concert that names none of its contestants")
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the song slam and Emergenza's band contest name none of their contestants, and a party names its DJs only in a `DJs:` paragraph"
+        )
     )

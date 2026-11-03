@@ -1,10 +1,12 @@
 package de.norm.events.scraper.privatclub
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
@@ -153,9 +155,14 @@ class PrivatclubOverviewPageScraper(
         // "Örtlicher Veranstalter"
         val promoters = parsePromoterName(detail)?.let { listOf(it) }.orEmpty()
 
-        // Concerts: title is the headliner, support from the subtitle's "Support: <name>";
-        // parties and festivals extract none. See buildArtistsForEventType.
-        val artists = if (eventTypeText.equals(SONG_SLAM, ignoreCase = true)) emptyList() else buildArtistsForEventType(title, subtitle, eventType)
+        // Concerts: title is the headliner, support from the subtitle's "Support: <name>". A party bills the DJs of its
+        // `DJs:` paragraph, else none. A contest night names no act. See buildArtistsForEventType.
+        val artists =
+            when {
+                eventTypeText.equals(SONG_SLAM, ignoreCase = true) || CONTEST_TITLE.containsMatchIn(title) -> emptyList()
+                eventType == EventType.PARTY.name -> parseDjs(detail)
+                else -> buildArtistsForEventType(title, subtitle, eventType)
+            }
 
         return ScrapedEvent(
             title = title,
@@ -397,6 +404,9 @@ class PrivatclubOverviewPageScraper(
 
         private val VENUE_EVENT_TYPES = mapOf(SONG_SLAM.lowercase() to EventType.CONCERT.name)
 
+        /** Emergenza, a touring band contest: its title names the contest, and the bands are not published (event 12511). */
+        private val CONTEST_TITLE = Regex("""^\s*emergenza\b""", RegexOption.IGNORE_CASE)
+
         /** The label before a price line's amounts: `AK: `, `Eintritt: `, `Tickets: `. */
         private val PRICE_LABEL = Regex("""^[^:]*:\s*""")
 
@@ -413,3 +423,39 @@ class PrivatclubOverviewPageScraper(
                 .toFormatter(Locale.GERMAN)
     }
 }
+
+/**
+ * The DJs of a party's `DJs:` paragraph, one per dashed line (event 12512): `DJs:<br>– Palme (Factory)<br>– Rebel L
+ * (Resident-DJ)`. The bracket, a home club or a resident note, is not the name.
+ */
+private fun parseDjs(detail: Element?): List<ScrapedArtist> {
+    val paragraph =
+        detail?.select(".zeile.content p")?.firstOrNull {
+            DJ_LABEL.matches(
+                it
+                    .wholeText()
+                    .trim()
+                    .lineSequence()
+                    .first()
+            )
+        }
+    return paragraph
+        ?.wholeText()
+        ?.lines()
+        ?.drop(1)
+        ?.mapNotNull { line ->
+            DJ_LINE
+                .find(line.trim())
+                ?.groupValues
+                ?.get(1)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+        }?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+        .orEmpty()
+}
+
+/** The label line of a party's DJ paragraph. */
+private val DJ_LABEL = Regex("""djs?\s*:""", RegexOption.IGNORE_CASE)
+
+/** One dashed DJ line; the name stops before a bracket. */
+private val DJ_LINE = Regex("""^[-–—]\s*([^(]+)""")

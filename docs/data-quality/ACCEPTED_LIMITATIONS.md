@@ -757,7 +757,7 @@ says so.
 | `PKH_WAREHOUSE`        | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
 | `PKH_WAREHOUSE`        | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the home page                                                                     | —     |
 | `PRIVATCLUB`           | `PRICE`            | about half the nights print a genre line and a start time but no price                                                                           | —     |
-| `PRIVATCLUB`           | `ARTISTS`          | the song slam is a concert that names none of its contestants                                                                                    | —     |
+| `PRIVATCLUB`           | `ARTISTS`          | the song slam and Emergenza's band contest name none of their contestants, and a party names its DJs only in a `DJs:` paragraph                  | —     |
 | `PUNCHLINE`            | `IMAGE`            | the date list carries no image                                                                                                                   | —     |
 | `PUNCHLINE`            | `TICKET_URL`       | the date list links no ticket shop; tickets sell on Ticketmaster                                                                                 | —     |
 | `PUNCHLINE`            | `PRICE`            | the club publishes no price; Ticketmaster states it                                                                                              | —     |
