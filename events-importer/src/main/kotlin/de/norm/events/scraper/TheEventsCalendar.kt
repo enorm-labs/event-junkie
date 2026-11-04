@@ -60,7 +60,7 @@ fun parseTecPage(
  * API's `next_rest_url` up to [maxPages]. The cursor carries the date window the first page
  * chose; a hand-built `page=2` without it answers 404.
  */
-suspend fun ApiClient.walkTecEvents(
+private suspend fun ApiClient.walkTecEvents(
     source: EventSource,
     url: String,
     maxPages: Int,
