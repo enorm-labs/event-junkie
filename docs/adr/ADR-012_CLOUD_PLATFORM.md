@@ -792,8 +792,8 @@ retention become more load-bearing, not less — [LEGAL.md](../LEGAL.md) §7.5.
 
 ## References
 
-- [Hetzner Cloud price adjustment, 15 June 2026](https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/) — current CX/CPX/CAX/CCX
-  pricing
+- [Hetzner price adjustment, 15 June 2026](https://www.hetzner.com/pressroom/standardization-and-price-adjustment-of-our-server-products/) — all dedicated
+  servers and cloud plans
 - [Hetzner Cloud](https://www.hetzner.com/cloud/) · [
   `hetznercloud/hcloud` Terraform provider](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs)
 - [AWS Fargate pricing](https://aws.amazon.com/fargate/pricing/) · [Amazon VPC pricing (NAT Gateway, IPv4)](https://aws.amazon.com/vpc/pricing/)

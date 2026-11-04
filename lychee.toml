@@ -33,6 +33,15 @@ exclude = [
   # Refuse or stall any client without a browser fingerprint.
   "^https://www\\.euipo\\.europa\\.eu/",
   "^https://www\\.gnu\\.org/",
+  "^https://(www\\.)?scaleway\\.com/",
+  # Answer a GitHub runner 403, or 423 for the A100 site, and answer other networks 200.
+  "^https://a100-wegbassen\\.de/",
+  "^https://documentation\\.mailjet\\.com/",
+  "^https://medium\\.com/",
+  "^https://support\\.discogs\\.com/",
+  "^https://www\\.npmjs\\.com/",
+  # Time out from a GitHub runner, and answer other networks 200.
+  "^https://www\\.gesetze-im-internet\\.de/",
   # Its terms forbid automated access.
   "^https://([a-z]+\\.)?ra\\.co/",
 ]
