@@ -219,7 +219,7 @@ says so.
 | `DOWNSTAIRS`           | `PROMOTERS`        | the club presents every show itself                                                                                                              | —     |
 | `DRUGSTORE`            | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |
 | `DRUGSTORE`            | `TICKET_URL`       | the youth centre sells no tickets online                                                                                                         | —     |
-| `DRUGSTORE`            | `DOORS_TIME`       | radar gives one time per night, and the prose names the doors where it differs                                                                   | —     |
+| `DRUGSTORE`            | `DOORS_TIME`       | radar gives one time per night, and only some descriptions label the doors                                                                       | —     |
 | `DRUGSTORE`            | `PRICE`            | radar lists no price on most nights                                                                                                              | —     |
 | `DRUGSTORE`            | `PROMOTERS`        | radar names no promoter                                                                                                                          | —     |
 | `DSTRKT`               | `SUBTITLE`         | each night is a title, a date, a start time and a ticket link                                                                                    | —     |
