@@ -34,7 +34,7 @@ import java.time.MonthDay
  * blocks (`t001`). Each block holds a year-less `FRI 23 OCTOBER 9PM` line, a title of one or two
  * lines and a line-up text. The year comes from the English weekday, or the nearest date without one.
  *
- * Line-up lines are split into DJs. A line with "by" credits an installation or a curator, and a
+ * Line-up lines are split into DJs, without a leading `LINE UP:` label. A line with "by" credits an installation or a curator, and a
  * ticket line is a notice: both become the description. A credit line still bills the names after
  * `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`, up to the end of that sentence, and the names between
  * `JOINED BY` and `ON THE DECKS`. A title line `INVITES <act>` bills that act first. A night with
@@ -133,13 +133,13 @@ class StudioIiiiOverviewPageScraper(
         return parseClock("$startHour:${startMinute.ifEmpty { "00" }}", inherited.ifEmpty { null }) to end
     }
 
-    /** The acts of the line-up lines, which may break a comma list across lines; a `(CLUBROOM)` tail is the act's room. */
+    /** The acts of the line-up lines, which may break a comma list across lines; a `(CLUBROOM)` tail is the act's room, and `(PERFORMANCE)` is its format. */
     private fun lineupActs(
         lines: List<String>,
         role: ArtistRole = ArtistRole.DJ
     ): List<ScrapedArtist> =
         lines
-            .map { unwrapLine(it.trim().trimEnd(',', '/')) }
+            .map { unwrapLine(it.trim().replace(LINE_UP_LABEL, "").trimEnd(',', '/')) }
             .filterNot(::isEditorNote)
             .joinToString(" / ")
             .split(ACT_SEPARATOR)
@@ -147,7 +147,7 @@ class StudioIiiiOverviewPageScraper(
             .flatMap(::splitSegmentOnConjunctions)
             .mapNotNull { part ->
                 val room = ROOM.find(part)
-                val name = stripArtistSuffix(part.removeRange(room?.range ?: IntRange.EMPTY)).blankToNull()
+                val name = stripArtistSuffix(part.removeRange(room?.range ?: IntRange.EMPTY).replace(PERFORMANCE_TAIL, "")).blankToNull()
                 val stage =
                     room
                         ?.groupValues
@@ -245,5 +245,7 @@ class StudioIiiiOverviewPageScraper(
         const val MIN_NOTE_LOWERCASE_WORDS = 2
         val MORE_TBA = Regex("""\s*(?:&|\+|and)\s*more(?:\s+tba)?\.*$""", RegexOption.IGNORE_CASE)
         val ROOM = Regex("""\s*\((\p{L}*room)\)""", RegexOption.IGNORE_CASE)
+        val LINE_UP_LABEL = Regex("""^line[\s-]?up\s*:\s*""", RegexOption.IGNORE_CASE)
+        val PERFORMANCE_TAIL = Regex("""\s*\(performance\)\s*$""", RegexOption.IGNORE_CASE)
     }
 }
