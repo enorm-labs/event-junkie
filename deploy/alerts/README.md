@@ -203,6 +203,21 @@ reason to widen the rule. `ej-source-never-succeeded` covers the other end: a so
 **36h, not 24h**, for the reason [#617](https://github.com/enorm-labs/event-junkie/issues/617) gives about the dashboard panel: the interval _is_ 24h, so a 24h
 threshold flags the whole catalogue every day as a matter of routine, and a rule that fires every day is a rule that gets muted.
 
+## `ej-rate-limit-storm`: who sent the requests
+
+No log holds a client's address. Traefik logs nothing, and nginx writes `ej_no_ip` ([LEGAL.md](../../docs/LEGAL.md) §7). The user agent is what is left, in the frontend's access lines.
+Put the minute the rule fired into the `regexp_like`, in nginx's format:
+
+```sh
+scripts/o2-query.sh production sql "SELECT regexp_replace(body, '^.*\"([^\"]*)\"\$', '\$1') AS agent, COUNT(*) AS n FROM default \
+  WHERE k8s_app_component = 'frontend' AND regexp_like(body, '^\[04/Nov/2026:13:03') GROUP BY agent ORDER BY n DESC LIMIT 5" --hours 6
+```
+
+**These lines hold only the requests the limit let through.** A 429 ends at Traefik, so the rejected requests are not in them. The sender can also write any name it likes.
+
+- **One scanner's name over many 403s and 404s** is the limit working. On 2026-11-04 that query returned 638 lines for `TLM-Audit-Scanner/2.0`, in eight seconds. Change nothing.
+- **Browser agents across ordinary pages** suggest a shared address, such as a carrier NAT. Only then is `ingress.rateLimit` worth weighing.
+
 ## The account rules, and what to do when one fires
 
 Sign-in is the only way into an account, and the daily cleanup is the deletion route the privacy notice promises (LEGAL.md §7.1). Both fail without a sound

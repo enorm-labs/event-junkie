@@ -1056,7 +1056,7 @@
     "stream_name": "traefik_entrypoint_requests_total",
     "is_real_time": false,
     "enabled": true,
-    "description": "Traefik's rate limits rejected more than 100 requests in 15 minutes: 50/s per source, or 100 in flight per host, which answer the same bare 429. Production rejected none in the week before this rule, and one first visit spends about 30 of a 250-request burst. Either a client is being stopped, which is the limit working, or a shared carrier-NAT address is over it and visitors get half-loaded pages. Find the address before changing `ingress.rateLimit`.",
+    "description": "Traefik's rate limits rejected more than 100 requests in 15 minutes: 50/s per source, or 100 in flight per host, which answer the same bare 429. Production rejected none in the week before this rule, and one first visit spends about 30 of a 250-request burst. Either a client is being stopped, which is the limit working, or a shared carrier-NAT address is over it and visitors get half-loaded pages. No log holds the address. Read the user agents of the frontend's access lines in the minute it fired. One scanner's name over many 403s and 404s is the limit working. Browser agents across ordinary pages suggest a shared address, and only then is `ingress.rateLimit` worth weighing.",
     "query_condition": {
       "type": "promql",
       "promql": "sum(increase(traefik_entrypoint_requests_total{code=\"429\"}[15m]))",
