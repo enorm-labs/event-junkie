@@ -1,7 +1,9 @@
 package de.norm.events.scraper.studioiiii
 
+import de.norm.events.artist.canonicalArtistName
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
+import de.norm.events.importing.strippedArtists
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -231,6 +233,30 @@ class StudioIiiiOverviewPageScraperTest {
     fun `an act keeps its own bracket, an abbreviation stop and a joined name`() {
         lineup("SOLO", "SICKBOYRARI (BLACK KRAY)", "Harry Connick Jr.", "DJ SoundCloud b2b McCarthy", "BabyNymph.") shouldContainExactly
             listOf("SOLO", "SICKBOYRARI (BLACK KRAY)", "Harry Connick Jr.", "DJ SoundCloud b2b McCarthy", "BabyNymph")
+    }
+
+    @Test
+    fun `a line-up label bills nobody and the first act keeps its name`() {
+        val lostinit = "LINE UP: DJ IDLESTEDT, GATO, HUMANANGST, YYD1GITAL, SERANE, ABUGLITSCH<br>SAINTCHRISTBABY"
+        scrapeOne(cover("fri 13 NOVEMBER 10PM", title = "LOSTINIT", descr = lostinit)).artists.map { canonicalArtistName(it.name) } shouldContainExactly
+            listOf("DJ Idlestedt", "Gato", "Humanangst", "YYD1GITAL", "Serane", "Abuglitsch", "Saintchristbaby")
+    }
+
+    @Test
+    fun `a performance tail is no part of the act's name`() {
+        val vakuum = "LINE UP: OLAFUR MOWA (PERFORMANCE)<br>SOFTMATTER, BLEAC B2B AMELIE KAHL, MARIA MAGDALENA, MAPPINE B2B COQ DE LA MAISON "
+        val event = scrapeOne(cover("thur 12 NOVEMBER 7PM", title = "VAKUUM MAGAZINE", descr = vakuum))
+
+        strippedArtists(event).map { canonicalArtistName(it.name) } shouldContainExactly
+            listOf("Olafur Mowa", "Softmatter", "Bleac", "Amelie Kahl", "Maria Magdalena", "Mappine", "Coq De LA Maison")
+        event.description.shouldBeNull()
+    }
+
+    @Test
+    fun `any spelling of the label comes off, on its own line too, and a name that only opens with it stays`() {
+        lineup("Line-Up: ANA", "lineup : BEN") shouldContainExactly listOf("ANA", "BEN")
+        lineup("LINE UP:", "ANA, BEN") shouldContainExactly listOf("ANA", "BEN")
+        lineup("LINE UP SOUNDSYSTEM", "ANA (PERFORMANCE) GROUP") shouldContainExactly listOf("LINE UP SOUNDSYSTEM", "ANA (PERFORMANCE) GROUP")
     }
 
     @Test
