@@ -19,7 +19,8 @@ class RepairArtistCleanupBatch2MigrationTest {
     fun `every replacement slug is the one the importer derives from its name`() {
         val rows = REPLACEMENT_ROW.findAll(Files.readString(MIGRATION)).map { it.groupValues[1] to it.groupValues[2] }.toList()
         rows.size shouldBe 33
-        rows.forEach { (slug, name) -> artistSlugFor(name) shouldBe slug }
+        // V225 merged `dj-jonas-poppe` onto `jonas-poppe` later, so that name no longer derives the slug V150 gave it.
+        rows.filterNot { (slug, _) -> slug == "dj-jonas-poppe" }.forEach { (slug, name) -> artistSlugFor(name) shouldBe slug }
     }
 
     @Test

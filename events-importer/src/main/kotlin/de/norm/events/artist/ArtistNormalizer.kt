@@ -183,7 +183,20 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "ladybird" to "LadyBird",
         "djmoe" to "M.O.E.",
         "djangoreinhardtorchestra" to "The Django Reinhardt Orchestra",
-        "ravedamor" to "Rave d’Amor"
+        "ravedamor" to "Rave d’Amor",
+        // The same, decided by the operator (V225): one DJ billed with and without `DJ `, and one act spelled with
+        // and without a space. `DJ Rokit` and `DJ PayPaul` stay apart on purpose.
+        "djoberstpanizza" to "Oberst Panizza",
+        "djjonaspoppe" to "Jonas Poppe",
+        "djginadorio" to "Gina d'Orio",
+        "djlarsvegas" to "Lars Vegas",
+        "djmanubeatz" to "Manu Beatz",
+        "djmissparker" to "Miss Parker",
+        "djtestbild" to "Testbild",
+        "muffcase" to "Muff Case",
+        "lushlab" to "Lush Lab",
+        "traumtrax" to "TraumTrax",
+        "rifraf" to "Rif Raf"
     )
 
 /** Lowercased, punctuation- and space-free lookup key for a name. */

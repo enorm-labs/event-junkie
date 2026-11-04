@@ -354,4 +354,25 @@ class ArtistNormalizerTest {
             artistSlugFor("moe.") shouldBe "moe"
         }
     }
+
+    @Test
+    fun `folds the V225 merges onto the survivor and leaves the two kept pairs apart`() {
+        assertSoftly {
+            artistSlugFor("DJ Oberst Panizza") shouldBe "oberst-panizza"
+            artistSlugFor("DJ JONAS POPPE") shouldBe "jonas-poppe"
+            artistSlugFor("DJ gina d’orio") shouldBe "gina-d-orio"
+            artistSlugFor("DJ Lars Vegas") shouldBe "lars-vegas"
+            canonicalArtistName("DJ Manu Beatz") shouldBe "Manu Beatz"
+            canonicalArtistName("MANU BEATZ") shouldBe "Manu Beatz"
+            artistSlugFor("DJ Miss Parker") shouldBe "miss-parker"
+            artistSlugFor("DJ Testbild") shouldBe "testbild"
+            canonicalArtistName("Muffcase") shouldBe "Muff Case"
+            canonicalArtistName("LUSHLAB") shouldBe "Lush Lab"
+            canonicalArtistName("Traum Trax") shouldBe "TraumTrax"
+            canonicalArtistName("RifRaf") shouldBe "Rif Raf"
+            // No shared rule strips `DJ `, so the pairs the operator kept apart stay two rows.
+            artistSlugFor("DJ Rokit") shouldBe "dj-rokit"
+            artistSlugFor("DJ PayPaul") shouldBe "dj-paypaul"
+        }
+    }
 }
