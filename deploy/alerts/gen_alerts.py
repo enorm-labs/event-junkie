@@ -1087,8 +1087,10 @@ rule(
     "100 in flight per host, which answer the same bare 429. Production rejected none in the "
     "week before this rule, and one first visit spends about 30 of a 250-request burst. Either "
     "a client is being stopped, which is the limit working, or a shared carrier-NAT address is "
-    "over it and visitors get half-loaded pages. Find the address before changing "
-    "`ingress.rateLimit`.",
+    "over it and visitors get half-loaded pages. No log holds the address. Read the user agents "
+    "of the frontend's access lines in the minute it fired. One scanner's name over many 403s "
+    "and 404s is the limit working. Browser agents across ordinary pages suggest a shared "
+    "address, and only then is `ingress.rateLimit` worth weighing.",
     'sum(increase(traefik_entrypoint_requests_total{code="429"}[15m]))',
     ">",
     100,
