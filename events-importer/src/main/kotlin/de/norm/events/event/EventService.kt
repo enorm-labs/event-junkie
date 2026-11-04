@@ -1,5 +1,6 @@
 package de.norm.events.event
 
+import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistNotFoundException
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.common.PageResponse
@@ -12,6 +13,7 @@ import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.genretag.normalizeGenre
+import de.norm.events.promoter.PromoterEntity
 import de.norm.events.promoter.PromoterNotFoundException
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.slug.SlugGenerator
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.relational.core.query.Criteria
+import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ServerWebInputException
@@ -280,16 +283,7 @@ class EventService(
     ): List<EventArtistResponse> {
         if (artists.isEmpty()) return emptyList()
 
-        // Batch-validate all referenced artists in a single query
-        val requestedIds = artists.map { it.artistId }.toSet()
-        val existingIds =
-            artistRepository
-                .findAllById(requestedIds)
-                .toList()
-                .map { it.requiredId() }
-                .toSet()
-        val missingIds = requestedIds - existingIds
-        if (missingIds.isNotEmpty()) throw ArtistNotFoundException(missingIds.first())
+        artistRepository.requireAllExist(artists.map { it.artistId }.toSet(), ArtistEntity::requiredId, ::ArtistNotFoundException)
 
         // Batch-persist all associations in a single saveAll call
         val entities = artists.map { it.toEventArtistEntity(eventId, previousLineup) }
@@ -308,16 +302,7 @@ class EventService(
     ): List<Long> {
         if (promoterIds.isEmpty()) return emptyList()
 
-        // Batch-validate all referenced promoters in a single query
-        val requestedIds = promoterIds.toSet()
-        val existingIds =
-            promoterRepository
-                .findAllById(requestedIds)
-                .toList()
-                .map { it.requiredId() }
-                .toSet()
-        val missingIds = requestedIds - existingIds
-        if (missingIds.isNotEmpty()) throw PromoterNotFoundException(missingIds.first())
+        promoterRepository.requireAllExist(promoterIds.toSet(), PromoterEntity::requiredId, ::PromoterNotFoundException)
 
         // Batch-persist all associations in a single saveAll call
         val entities =
@@ -557,4 +542,17 @@ data class EventListFilter(
 private suspend fun FestivalRepository.ensureFestivalOf(request: EventRequest) {
     val festivalId = request.festivalId?.orElse(null) ?: return
     if (!existsById(festivalId)) throw FestivalNotFoundException(festivalId)
+}
+
+/**
+ * Fails with the exception [notFound] builds for the first of [requestedIds] this repository does
+ * not hold. One `findAllById` query, so a lineup of ten artists costs one round trip.
+ */
+private suspend fun <T : Any> CoroutineCrudRepository<T, Long>.requireAllExist(
+    requestedIds: Set<Long>,
+    idOf: (T) -> Long,
+    notFound: (Long) -> RuntimeException
+) {
+    val missingIds = requestedIds - findAllById(requestedIds).toList().mapTo(mutableSetOf(), idOf)
+    if (missingIds.isNotEmpty()) throw notFound(missingIds.first())
 }
