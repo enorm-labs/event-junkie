@@ -204,6 +204,13 @@ class InselApiScraperTest {
         event.genre.shouldBeNull()
     }
 
+    @Test
+    fun `bills the acts after a dashed night's with`() {
+        // Event 12704.
+        single("Fire On The Island - Grateful Nights with Barko Waltz and Blueroomess").artists.map { it.name } shouldContainExactly
+            listOf("Barko Waltz", "Blueroomess")
+    }
+
     private fun single(name: String): ScrapedEvent {
         val json = """{"data":{"allDatoCmsEvent":{"edges":[{"node":{"name":"$name","time":"2026-10-12T20:00:00+02:00"}}]}}}"""
         return scraper.scrape(json, sourceUrl).shouldNotBeNull().single()

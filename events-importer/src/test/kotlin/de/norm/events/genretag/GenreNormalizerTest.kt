@@ -16,6 +16,14 @@ import org.junit.jupiter.api.Test
  */
 class GenreNormalizerTest {
     @Test
+    fun `reads Drugstore's glued styles as the styles they are`() {
+        // Events 10664 to 10667.
+        normalizeGenre("Psych Doom, Blackened Doom, Fuzzed out PsychDoom") shouldBe listOf("Psych Doom", "Blackened Doom")
+        normalizeGenre("BlackMetal, Antifascist BlackMetal, Oldschool DeathMetal") shouldBe listOf("Metal")
+        normalizeGenre("Experimental Black Gaze, Post BlackMetal, Dungeon Synth / Noise") shouldBe listOf("Metal", "Dungeon Synth", "Noise")
+    }
+
+    @Test
     fun `null input returns empty list`() {
         normalizeGenre(null).shouldBeEmpty()
     }

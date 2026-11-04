@@ -79,6 +79,17 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "straightedgehardcore" to "Hardcore",
         // Delimiter-less compound label some venues write concatenated (Wild at Heart)
         "stonerpsychedelicmetal" to "Metal",
+        // Drugstore's radar bills glue the words and add an adjective. The spaced forms already reach Metal word by word.
+        "blackmetal" to "Metal",
+        "deathmetal" to "Metal",
+        "antifascistblackmetal" to "Metal",
+        "postblackmetal" to "Metal",
+        "experimentalblackgaze" to "Metal",
+        "oldschooldeathmetal" to "Metal",
+        "psychdoom" to "Psych Doom",
+        "fuzzedoutpsychdoom" to "Psych Doom",
+        // Whole-token, or the word-level `synth` makes it Synthpop.
+        "dungeonsynth" to "Dungeon Synth",
         // Electronic family
         "electronic" to "Electronic",
         "electronica" to "Electronic",

@@ -118,6 +118,19 @@ class KesselhausCalendarScraperTest {
     }
 
     @Test
+    fun `bills the support acts a subtitle lists after a plus`() {
+        // Event 7055.
+        val event = scrapeOne(title = "President", subtitle = "+ Dreamwake + Vianova")
+
+        event.artists.map { it.name to it.role } shouldBe
+            listOf(
+                "President" to ArtistRole.HEADLINER,
+                "Dreamwake" to ArtistRole.SUPPORT,
+                "Vianova" to ArtistRole.SUPPORT
+            )
+    }
+
+    @Test
     fun `takes a support act from the subtitle`() {
         val events = kesselhaus.scrape(calendar, url) + maschinenhaus.scrape(calendar, url)
         val withSupport = events.filter { it.subtitle?.startsWith("Support:") == true }
