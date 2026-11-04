@@ -13,7 +13,8 @@ first** and **keep**, and removes only what the operator confirms.
   state, and by `git cherry` for a branch without a PR.
 - **Never delete a remote branch.** GitHub deletes a merged PR's branch itself. Deleting the head branch of an open PR closes the PR.
 - **Never discard work.** No `git worktree remove --force` on a dirty worktree, no `git branch -D` on a branch with a `+` line in `git cherry` and no merged
-  PR, no `git stash drop`. Such an item goes to **ask first** with what would be lost.
+  PR, no `git stash drop`. `git worktree remove` deletes gitignored files without `--force` and without a word, so a worktree that holds one no build creates
+  again is not **safe**. Such an item goes to **ask first** with what would be lost.
 - **Never touch the current worktree, the main checkout or `main`.**
 - `git --no-pager`, `gh` non-interactive. Run each removal on its own, never chained.
 
@@ -36,8 +37,13 @@ For each worktree except the main checkout and the current one, collect:
 git -C "$wt" status --short --branch            # dirty? ahead of upstream?
 git -C "$wt" log -1 --format='%cr %s'           # last commit
 gh pr list --head "$branch" --state all --json number,state,mergedAt --limit 5
+# gitignored files a removal deletes, without what a build creates again
+git -C "$wt" ls-files --others --ignored --exclude-standard |
+  grep -Ev '(^|/)(build|node_modules|\.gradle|\.kotlin|dist|__pycache__)(/|$)'
 ```
 
+- **Ignored files**: `git status` shows none of them, and `temp/` is the likely place, because AGENTS.md sends plans there. Any line of output moves a worktree
+  that would be **safe** to **ask first**, and the report names the files. The operator decides; do not copy them anywhere first.
 - **`locked`**: `claude agent … (pid N start …)` names the agent process. `ps -p N -o lstart=` shows whether it still runs. A live PID with the same start
   time is **keep**. A dead PID is an orphaned agent worktree: classify it by its contents like any other, and unlock it before removal.
 - **Detached HEAD**: compare `HEAD` with `origin/main` by `git cherry origin/main HEAD`. No `+` line means nothing is lost.
@@ -68,16 +74,17 @@ For an **ask first** branch, show what would be lost: `git --no-pager log --onel
 Lead with the verdict, then the three lists. Every line carries its evidence.
 
 ```text
-Git cleanup: 5 safe, 2 ask first, 3 keep
+Git cleanup: 5 safe, 3 ask first, 3 keep
 
 SAFE — nothing is lost
-  1. worktree ../event-junkie-tresor  [feat/tresor]   clean, PR #2412 MERGED
+  1. worktree ../event-junkie-tresor  [feat/tresor]   clean, no ignored files, PR #2412 MERGED
   2. branch fix/old-thing                              PR #2390 MERGED
   3. branch worktree-agent-a09d20f49d4de3d23           no PR, git cherry: 0 commits not on main
 
 ASK FIRST
   4. branch new-findings                               PR #2101 CLOSED unmerged, 2 commits not on main
   5. .claude/worktrees/agent-ae3c420946e7ccc78         not registered, 410 MB
+  6. worktree ../event-junkie-afk-heavy  [fix/old-plan]  clean, PR #2398 MERGED, would delete temp/2398-plan.md, temp/2398-audit.md
 
 KEEP
   agent-a108f4514a53c0057   locked, pid 56025 alive
