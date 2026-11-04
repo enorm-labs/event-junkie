@@ -154,6 +154,23 @@ for (const detail of detailRoutes) {
   })
 }
 
+test.describe('an artist reached by a former slug', () => {
+  test('lands on the artist, and the URL and the canonical name the current slug', async ({
+    page,
+  }) => {
+    await page.route(/\/api\/artists\//, (route) => json(route, artistBody))
+
+    await page.goto('/en/artists/old-mock-artist')
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Mock Artist' })).toBeVisible()
+    await expect(page).toHaveURL(/\/en\/artists\/mock-artist$/)
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      /\/en\/artists\/mock-artist$/,
+    )
+  })
+})
+
 test.describe('a past event', () => {
   const pastEventBody = { ...eventBody, eventDate: isoDaysFromNow(-30) }
 

@@ -37,6 +37,16 @@ export function bffPath(kind: EntityKind, slug: string): string {
   return `/api/${kind}/${slug}`
 }
 
+/**
+ * The path a page's canonical names. An artist's former slug answers with the artist (#4447), so
+ * the slug comes from the entity: the old URL declares the current one as the page, as the SPA's
+ * route replace does for a visitor.
+ */
+export function canonicalPath(kind: EntityKind, requestedPath: string, entity: unknown): string {
+  const { slug } = entity as { slug?: string | null }
+  return slug ? `/${kind}/${slug}` : requestedPath
+}
+
 interface SizedEntity {
   intrinsicWidth?: number | null
   intrinsicHeight?: number | null

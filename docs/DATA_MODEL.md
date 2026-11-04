@@ -436,6 +436,8 @@ The next read then writes MusicBrainz's letter case on an `EXACT` row.
 **A rename keeps the old slug (#3289).** A changed name changes the slug, and the import finds an artist by the slug of the scraped name.
 So `PUT /api/admin/artists/{id}` writes the old slug to `artist_slug_alias`, and the import looks a slug up there when no `artist` row has it.
 The next import of an event that bills the old name then bills the renamed artist, and creates no new row.
+The public API reads the same table: `GET /api/artists/{slug}` returns the artist when no `artist` row has the slug (#4447).
+The response carries the current slug, and the artist page replaces its URL with it.
 A rename back to a former slug removes that alias.
 The admin API refuses a new artist or a rename whose slug is the alias of another artist, with a 409.
 Deleting the artist deletes its aliases.

@@ -3,6 +3,7 @@ package de.norm.events.artist
 import de.norm.events.BaseControllerTest
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitRowsUpdated
 
 class ArtistControllerTest : BaseControllerTest() {
@@ -258,4 +259,71 @@ class ArtistControllerTest : BaseControllerTest() {
             .expectStatus()
             .isNotFound
     }
+
+    @Test
+    fun `GET artist by an alias slug returns the surviving artist under its own slug`(): Unit =
+        runBlocking {
+            insertAlias("dj-testbild", insertArtist("Testbild", "testbild"))
+
+            webTestClient
+                .get()
+                .uri("/artists/dj-testbild")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.slug")
+                .isEqualTo("testbild")
+                .jsonPath("$.name")
+                .isEqualTo("Testbild")
+        }
+
+    @Test
+    fun `GET artist by a slug that is both an alias and a live artist returns the live artist`(): Unit =
+        runBlocking {
+            insertArtist("Same Name", "same-name")
+            insertAlias("same-name", insertArtist("Renamed Act", "renamed-act"))
+
+            webTestClient
+                .get()
+                .uri("/artists/same-name")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.slug")
+                .isEqualTo("same-name")
+        }
+
+    @Test
+    fun `GET artist with a long slug resolves its alias and stays 404 when it is unknown`(): Unit =
+        runBlocking {
+            val longSlug = "the-act-with-the-very-long-name-".repeat(10).trimEnd('-')
+            insertAlias(longSlug, insertArtist("Short Name", "short-name"))
+
+            webTestClient
+                .get()
+                .uri("/artists/$longSlug")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.slug")
+                .isEqualTo("short-name")
+            webTestClient
+                .get()
+                .uri("/artists/$longSlug-unknown")
+                .exchange()
+                .expectStatus()
+                .isNotFound
+        }
+
+    private suspend fun insertAlias(
+        slug: String,
+        artistId: Long
+    ) = databaseClient
+        .sql("INSERT INTO events.artist_slug_alias (slug, artist_id) VALUES (:slug, :artistId)")
+        .bind("slug", slug)
+        .bind("artistId", artistId)
+        .await()
 }

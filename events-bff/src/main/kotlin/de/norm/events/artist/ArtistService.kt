@@ -42,13 +42,17 @@ class ArtistService(
     }
 
     /**
-     * Finds a single artist by [slug].
+     * Finds a single artist by [slug], or by a slug that is its alias, so an old link still opens the act (#4447).
+     * The response carries the artist's own slug. A live artist wins over an alias with the same slug.
      *
      * @throws ArtistNotFoundException if no artist with the given slug exists.
      */
     @Transactional(readOnly = true)
     suspend fun findBySlug(slug: String): ArtistDetailResponse {
-        val entity = artistRepository.findBySlug(slug) ?: throw ArtistNotFoundException(slug)
+        val entity =
+            artistRepository.findBySlug(slug)
+                ?: artistRepository.findByAliasSlug(slug)
+                ?: throw ArtistNotFoundException(slug)
         val image = cachedImageGate.forUrl(entity.imageUrl, DETAIL_WIDTH)
         return ArtistDetailResponse.fromEntity(entity, image)
     }

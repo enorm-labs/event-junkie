@@ -995,7 +995,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a single artist by slug */
+        /**
+         * Get a single artist by slug
+         * @description A former slug of the artist returns the artist too. The response's `slug` is the current one.
+         */
         get: operations["findBySlug_3"];
         put?: never;
         post?: never;
