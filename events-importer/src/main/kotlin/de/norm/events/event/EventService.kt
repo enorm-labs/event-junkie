@@ -17,6 +17,7 @@ import de.norm.events.promoter.PromoterEntity
 import de.norm.events.promoter.PromoterNotFoundException
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.slug.SlugGenerator
+import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueNotFoundException
 import de.norm.events.venue.VenueRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -145,9 +146,7 @@ class EventService(
         festivalRepository.ensureFestivalOf(request)
         request.requireRelocationFitsStatus()
 
-        // The venue slug in the event slug, for "Open Decks" at two venues on one date.
-        val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
-        val saved = eventRepository.save(request.toEventEntity(slug))
+        val saved = eventRepository.save(request.toEventEntity(request.slugAt(venue)))
         val eventId = saved.requiredId()
 
         val artistResponses = saveArtistAssociations(eventId, request.artists)
@@ -215,7 +214,7 @@ class EventService(
             if (request.eventDate == existing.eventDate && request.venueId == existing.venueId && request.title == existing.title) {
                 existing.slug
             } else {
-                SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
+                request.slugAt(venue)
             }
         // Remap via the shared factory, then keep what the request never owns: identity, audit, and
         // the columns the importer derives (#2249).
@@ -272,9 +271,9 @@ class EventService(
     }
 
     /**
-     * Validates that all referenced artists exist in one [findAllById] query, persists the
-     * associations with the importer-owned columns of [previousLineup] (see [toEventArtistEntity]),
-     * and returns the [EventArtistResponse] list.
+     * Validates that all referenced artists exist, persists the associations with the
+     * importer-owned columns of [previousLineup] (see [toEventArtistEntity]), and returns the
+     * [EventArtistResponse] list.
      */
     private suspend fun saveArtistAssociations(
         eventId: Long,
@@ -285,7 +284,6 @@ class EventService(
 
         artistRepository.requireAllExist(artists.map { it.artistId }.toSet(), ArtistEntity::requiredId, ::ArtistNotFoundException)
 
-        // Batch-persist all associations in a single saveAll call
         val entities = artists.map { it.toEventArtistEntity(eventId, previousLineup) }
         eventArtistRepository.saveAll(entities).toList()
 
@@ -293,8 +291,8 @@ class EventService(
     }
 
     /**
-     * Validates that all referenced promoters exist in one [findAllById] query, persists the
-     * associations, and returns the promoter IDs.
+     * Validates that all referenced promoters exist, persists the associations, and returns the
+     * promoter IDs.
      */
     private suspend fun savePromoterAssociations(
         eventId: Long,
@@ -304,7 +302,6 @@ class EventService(
 
         promoterRepository.requireAllExist(promoterIds.toSet(), PromoterEntity::requiredId, ::PromoterNotFoundException)
 
-        // Batch-persist all associations in a single saveAll call
         val entities =
             promoterIds.map { promoterId ->
                 EventPromoterEntity(eventId = eventId, promoterId = promoterId)
@@ -436,6 +433,9 @@ internal fun EventArtistRequest.toEventArtistEntity(
         setEnd = previous?.setEnd
     )
 }
+
+/** The slug of this event at [venue]. The venue slug keeps "Open Decks" at two venues on one date apart. */
+private fun EventRequest.slugAt(venue: VenueEntity): String = SlugGenerator.slugify("$eventDate-${venue.slug}-$title")
 
 /**
  * Maps an [EventRequest] and pre-computed [slug] onto a new [EventEntity]: the one request-to-
