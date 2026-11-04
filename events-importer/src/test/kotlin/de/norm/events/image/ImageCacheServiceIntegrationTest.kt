@@ -270,7 +270,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
 
             outcome.unchanged shouldBe 1
             // The hash must survive a 304, or an unchanged image would lose the object it points at.
-            val row = repository.findBySourceUrl(url)!!
+            val row = rowOf(url)
             row.contentHash shouldBe "kept"
             row.fetchedAt shouldBe fetchedAt
             // A 304 moves the refresh clock, so the next pass asks about other images (#2785).
@@ -287,7 +287,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
             val outcome = storingService().refreshBatch()
 
             outcome.fetched shouldBe 1
-            val row = repository.findBySourceUrl(url)!!
+            val row = rowOf(url)
             row.contentHash shouldBe sha256Hex(pngBytes())
             variantRepository.findByCachedImageId(row.id!!).toList() shouldBe emptyList()
         }
@@ -299,7 +299,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
 
             storingService().refreshBatch()
 
-            val row = repository.findBySourceUrl(url)!!
+            val row = rowOf(url)
             variantRepository.findByCachedImageId(row.id!!).toList().map { it.storageKey } shouldBe listOf("staging/derived/kept/512.jpg")
         }
 
@@ -364,7 +364,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
 
             storingService().refreshBatch().unchanged shouldBe 1
 
-            val row = repository.findBySourceUrl(url)!!
+            val row = rowOf(url)
             row.failedAt.shouldBeNull()
             row.failureReason.shouldBeNull()
             row.contentHash shouldBe "kept"
@@ -466,6 +466,8 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
             }
         return result to appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage }
     }
+
+    private suspend fun rowOf(url: String): CachedImageEntity = repository.findAll().toList().single { it.sourceUrl == url }
 
     private suspend fun dueNow(): List<CachedImageEntity> {
         val properties = ImageProperties()

@@ -27,8 +27,6 @@ private const val IMAGE_URL_SOURCES = """
 
 @Repository
 interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Long> {
-    suspend fun findBySourceUrl(sourceUrl: String): CachedImageEntity?
-
     /**
      * Image URLs that no [CachedImageEntity] covers yet, from all four tables.
      *

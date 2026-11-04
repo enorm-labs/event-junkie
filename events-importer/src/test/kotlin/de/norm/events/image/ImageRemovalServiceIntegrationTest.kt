@@ -82,7 +82,12 @@ class ImageRemovalServiceIntegrationTest : BaseControllerTest() {
             // Two derivatives and the original.
             outcome.objects shouldBe 3
             repository.findById(taken)!!.deletedAt.shouldNotBeNull()
-            repository.findBySourceUrl("https://theirs.test/one.jpg")!!.deletedAt.shouldBeNull()
+            repository
+                .findAll()
+                .toList()
+                .single { it.sourceUrl == "https://theirs.test/one.jpg" }
+                .deletedAt
+                .shouldBeNull()
             objectExists("staging/originals/aaa") shouldBe false
             objectExists("staging/originals/bbb") shouldBe true
         }
