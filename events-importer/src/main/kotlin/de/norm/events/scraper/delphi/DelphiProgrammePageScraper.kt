@@ -44,7 +44,7 @@ import java.time.LocalDateTime
  *
  * The venue's labels are **formats**, not musical genres — `Tanz`, `Theater`, `Dialog & Lesung`
  * — so they drive the event type. Only the two naming a genre ([MUSIC_GENRE_LABELS]) are also
- * stored as one. A row without a label is typed from its title and teaser ([CONCERT_CUES]).
+ * stored as one. A row without a label is typed from its title and teaser ([unlabelledRowType]).
  *
  * Only a concert bills acts. Its line-up comes from its `p.stabText` credit line, where the row has
  * one: the title there is often the programme (`Kunstlieder aus Lateinamerika`), not the act (#2899).
@@ -157,7 +157,7 @@ class DelphiProgrammePageScraper {
                         if (isCandlelightProgramme(title)) {
                             emptyList()
                         } else {
-                            buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType)
+                            buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType) + guestActOf(title)
                         }
                     }
                 } else {
@@ -217,8 +217,8 @@ class DelphiProgrammePageScraper {
 /**
  * The format labels mapped onto the model's types. No dance or theatre type exists, so a
  * staged performance of either kind is a [EventType.SHOW] — the call the AEG venues make for
- * their ballet — and so are `Varieté` and `Performance`. `Dialog & Lesung` is a talk or
- * reading; the two music labels are concerts.
+ * their ballet — and so are `Varieté`, `Revue` and `Performance`. `Dialog & Lesung` is a talk or
+ * reading; `Comedy & Kabarett` is comedy; the two music labels are concerts.
  */
 private val DELPHI_CATEGORY_SYNONYMS =
     mapOf(
@@ -227,17 +227,19 @@ private val DELPHI_CATEGORY_SYNONYMS =
         "musiktheater" to EventType.SHOW.name,
         "musical & show" to EventType.SHOW.name,
         "varieté" to EventType.SHOW.name,
+        "revue" to EventType.SHOW.name,
         "performance" to EventType.SHOW.name,
         "dialog & lesung" to EventType.READING.name,
+        "comedy & kabarett" to EventType.COMEDY.name,
         "kammermusik" to EventType.CONCERT.name,
         "elektronische musik" to EventType.CONCERT.name
     )
 
 /**
- * The type of a row the venue left unlabelled: [EventType.CONCERT] where its title or teaser names a
- * concert cue ([CONCERT_CUES]), [EventType.SHOW] where the title bills a wrestling, burlesque or circus
- * night ([billsVarietyShow]), else [EventType.OTHER]. Not the whole shared title classifier: its party
- * and screening keywords are written for club and concert listings, not a theatre's.
+ * The type of a row the venue left unlabelled, from the house's own words: [CONCERT_CUES], a variety or
+ * drag title, [COMEDY_CUE], then a music tour ([billsMusicTour]). A drag title goes before the comedy cue
+ * because a drag night's text also names comedy. Not the whole shared title classifier: its party and
+ * screening keywords are written for club and concert listings, not a theatre's.
  */
 private fun unlabelledRowType(
     title: String,
@@ -246,13 +248,24 @@ private fun unlabelledRowType(
     val haystack = listOfNotNull(title, teaser).joinToString(" ").lowercase()
     return when {
         CONCERT_CUES.any { it in haystack } -> EventType.CONCERT.name
-        billsVarietyShow(title) -> EventType.SHOW.name
+        billsVarietyShow(title) || DRAG_TITLE.containsMatchIn(title) -> EventType.SHOW.name
+        COMEDY_CUE.containsMatchIn(haystack) -> EventType.COMEDY.name
+        billsMusicTour(haystack) -> EventType.CONCERT.name
         else -> EventType.OTHER.name
     }
 }
 
+/** A tour playing songs or an album is a concert. A bare `Tournee` can be a theatre company's. */
+private fun billsMusicTour(haystack: String): Boolean = "tournee" in haystack && ("songs" in haystack || "album" in haystack)
+
 /** The house's words for a concert in an unlabelled row: `Solo-Konzert`, `Songwriterin`, `Folksongs`. */
 private val CONCERT_CUES = listOf("konzert", "songwriter", "folk")
+
+/** Matches lower-cased text. `Comedian Harmonists` is a vocal ensemble's name, and its tribute nights are concerts. */
+private val COMEDY_CUE = Regex("""\bcomed(?:y|ian(?!\s+harmonists))""")
+
+/** Anchored, because `Imagine Dragons` stands in a concert title (events 12694, 12695). */
+private val DRAG_TITLE = Regex("""\bdrag(?:\b|queen|king|show)""", RegexOption.IGNORE_CASE)
 
 /**
  * Whether [teaser] credits [name] as an author of the work, not a performer: `mit Musik von
@@ -284,8 +297,22 @@ internal fun delphiBilledTitle(title: String): String =
         .replaceFirst(HOUSE_SERIES, "")
         .replaceFirst(ALL_STARS_LABEL, "")
         .replaceFirst(WORK_TAIL, "")
+        .replaceFirst(GUEST_BRACKET, "")
         .replace(SATELLITES_TYPO) { if (it.value == it.value.uppercase()) "SATELLITES" else "Satellites" }
         .ifBlank { title }
+
+/** The guest a title brackets behind the act: `Mark Eitzel (+ Our Man In The Field)` (event 12700). */
+private fun guestActOf(title: String): List<ScrapedArtist> =
+    GUEST_BRACKET
+        .find(title)
+        ?.groupValues
+        ?.get(1)
+        ?.trim()
+        ?.takeUnless { isNonArtistName(it) }
+        ?.let { listOf(ScrapedArtist(name = it, role = ArtistRole.SUPPORT)) }
+        .orEmpty()
+
+private val GUEST_BRACKET = Regex("""\s*\(\+\s*([^)]+)\)\s*$""")
 
 /**
  * A touring string quartet plays other bands' songs: `Candlelight: Coldplay & Imagine Dragons | Rock-Hymnen`
