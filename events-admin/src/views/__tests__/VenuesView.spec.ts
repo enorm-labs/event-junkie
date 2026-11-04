@@ -5,7 +5,13 @@ import type { AdminVenue, CharacterTag } from '@/api/venues'
 import VenuesView from '@/views/VenuesView.vue'
 
 function venue(id: number, name: string, closedOn: string | null = null): AdminVenue {
-  return { id, name, slug: name.toLowerCase().replace(/\W+/g, '-'), closedOn }
+  return {
+    id,
+    name,
+    slug: name.toLowerCase().replace(/\W+/g, '-'),
+    closedOn,
+    programmeFamilies: [],
+  }
 }
 
 /** 148 open venues, then two the importer sorts among them by name, one of them closed. */

@@ -7,7 +7,8 @@
       "city": "Berlin",
       "address": "Budapester Straße 38-40",
       "district": "charlottenburg",
-      "closedOn": null
+      "closedOn": null,
+      "programmeFamilies": ["electronic"]
     },
     {
       "id": 93,

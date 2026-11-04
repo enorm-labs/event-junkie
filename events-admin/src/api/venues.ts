@@ -10,6 +10,8 @@ export interface AdminVenue {
   slug: string
   /** The last day the venue was open; null while it is open. */
   closedOn: string | null
+  /** Slugs of the genre families the venue mostly programmes, derived nightly. */
+  programmeFamilies: string[]
 }
 
 interface Page<T> {
@@ -35,8 +37,8 @@ export async function fetchAllVenues(fetchFn: typeof fetch = fetch): Promise<Adm
     }
     const body = (await response.json()) as Page<AdminVenue>
     total = body.totalElements
-    for (const { id, name, slug, closedOn } of body.content) {
-      byId.set(id, { id, name, slug, closedOn })
+    for (const { id, name, slug, closedOn, programmeFamilies } of body.content) {
+      byId.set(id, { id, name, slug, closedOn, programmeFamilies })
     }
     if (body.content.length === 0 || byId.size >= total) break
   }
