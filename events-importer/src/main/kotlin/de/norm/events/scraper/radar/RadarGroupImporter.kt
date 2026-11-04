@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hasFreeEntryPhrase
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.time.LocalTime
 
 /**
  * An importer for one radar.squat.net group, which is one venue's programme ([parseRadarEvents]).
@@ -33,6 +34,9 @@ abstract class RadarGroupImporter(
 
     /** The acts and the genre a row bills. */
     protected open fun lineup(event: RadarEvent): Lineup = Lineup()
+
+    /** The row's times; a venue whose prose says more than radar's one time per night overrides it. */
+    protected open fun times(event: RadarEvent): Times = Times(start = event.start.toLocalTime())
 
     /** The row's title; a venue whose titles name only the format ("Konzert") overrides it to name the bill. */
     protected open fun title(
@@ -65,12 +69,14 @@ abstract class RadarGroupImporter(
 
     private fun toScrapedEvent(event: RadarEvent): ScrapedEvent {
         val lineup = lineup(event)
+        val times = times(event)
         return ScrapedEvent(
             title = title(event, lineup),
             description = event.description,
             eventType = eventType(event),
             eventDate = event.start.toLocalDate(),
-            startTime = event.start.toLocalTime(),
+            doorsTime = times.doors,
+            startTime = times.start,
             endDate = event.end?.toLocalDate(),
             endTime = event.end?.toLocalTime(),
             sourceUrl = event.url,
@@ -86,5 +92,11 @@ abstract class RadarGroupImporter(
     data class Lineup(
         val artists: List<ScrapedArtist> = emptyList(),
         val genre: String? = null
+    )
+
+    /** What [times] reads off a row. */
+    data class Times(
+        val start: LocalTime,
+        val doors: LocalTime? = null
     )
 }
