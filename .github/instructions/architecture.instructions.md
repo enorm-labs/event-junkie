@@ -134,7 +134,7 @@ which helper lives where — is not repeated; `grep` answers that.
     - **`scanProjects` stays unset.** The plugin matches `project.path` (`:events-core`), not `project.name`, so a name list matches nothing and the report reads
       `Dependencies Scanned: 0` while the CVSS gate passes trivially — live here until 2026-08-05. **A green OWASP run is not evidence the scan looked at
       anything**; read `Dependencies Scanned` (baseline ~208).
-    - **`skipConfigurations` excludes the build-tool classpaths** (`detekt`, `detektPlugins`, `ktlint*`, the compiler-plugin ones), which carry old Kotlin and
+    - **`skipConfigurations` excludes the build-tool classpaths** (`detekt`, `detektPlugins`, `ktlint*`, the Kotlin compiler and plugin ones), which carry old Kotlin and
       logging copies that never ship. Add nothing that ships. Matching is `contains` with no globbing, so a renamed tool configuration silently rejoins the scan.
     - **Suppression `packageUrl` regexes fail open when scoped wrong** — `org.jetbrains.(kotlin|kotlinx)/` missed `org.jetbrains.intellij.deps.kotlinx`. Check a
       pattern against the real package URLs in the HTML report.
