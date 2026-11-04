@@ -93,4 +93,69 @@ class DrugstoreTimesTest {
     fun `the labels without a colon are not this reader's shape`() {
         times("Doors 7pm | Start 8pm") shouldBe unread
     }
+
+    @Test
+    fun `Beginn alone gives the start and no doors, in the words radar prints`() {
+        parseDrugstoreTimes("Beginn: 19 Uhr", LocalTime.of(18, 0)) shouldBe Times(start = LocalTime.of(19, 0))
+    }
+
+    @Test
+    fun `Beginn at or before radar's time keeps radar's time, as after midnight the row cannot hold it`() {
+        times("Beginn: 19 Uhr") shouldBe unread
+        parseDrugstoreTimes("Beginn: 1 Uhr", LocalTime.of(23, 0)) shouldBe Times(start = LocalTime.of(23, 0))
+    }
+
+    @Test
+    fun `Beginn beside doors reads as the start`() {
+        times("Doors: 7pm\nBeginn: 20:30 Uhr") shouldBe Times(start = LocalTime.of(20, 30), doors = LocalTime.of(19, 0))
+    }
+
+    @Test
+    fun `a compound ending in Beginn and a Beginn without a colon are not read`() {
+        parseDrugstoreTimes("Konzertbeginn: 19 Uhr", LocalTime.of(18, 0)) shouldBe Times(start = LocalTime.of(18, 0))
+        parseDrugstoreTimes("Beginn 19 Uhr", LocalTime.of(18, 0)) shouldBe Times(start = LocalTime.of(18, 0))
+    }
+
+    @Test
+    fun `a text that holds a Start and a Beginn or two of either is not read`() {
+        times("Doors: 7pm\nStart: 8pm\nBeginn: 9pm") shouldBe unread
+        parseDrugstoreTimes("Freitag Beginn: 19 Uhr\nSamstag Beginn: 20 Uhr", LocalTime.of(18, 0)) shouldBe Times(start = LocalTime.of(18, 0))
+    }
+
+    @Test
+    fun `bare hours give the doors and the start, in the words radar prints`() {
+        parseDrugstoreTimes("Doors 18 | Start 19", LocalTime.of(18, 0)) shouldBe Times(start = LocalTime.of(19, 0), doors = LocalTime.of(18, 0))
+    }
+
+    @Test
+    fun `bare hours read in any case, and take the rules of the labels`() {
+        times("doors 18|start 19") shouldBe Times(start = LocalTime.of(19, 0), doors = LocalTime.of(18, 0))
+        times("Doors 20 | Start 20") shouldBe Times(start = LocalTime.of(20, 0))
+        times("Doors 21 | Start 20") shouldBe unread
+    }
+
+    @Test
+    fun `bare hours that may be a 12-hour clock or run past midnight are not read`() {
+        times("Doors 6 | Start 7") shouldBe unread
+        times("Doors 12 | Start 13") shouldBe unread
+        times("Doors 23 | Start 00") shouldBe unread
+    }
+
+    @Test
+    fun `the bare-hour shape does not read part of a clock, a date or a longer number`() {
+        times("Doors 18 | Start 19:30") shouldBe unread
+        times("Doors 18 | Start 19.10.2026") shouldBe unread
+        times("Doors 18 | Start 190") shouldBe unread
+        times("Indoors 18 | Start 19") shouldBe unread
+    }
+
+    @Test
+    fun `a text that holds the bare-hour shape twice is not read`() {
+        times("Friday Doors 18 | Start 19\nSaturday Doors 17 | Start 18") shouldBe unread
+    }
+
+    @Test
+    fun `a non-breaking space in the bare-hour shape does not hide it`() {
+        times("Doors\u00A018\u00A0|\u00A0Start\u00A019") shouldBe Times(start = LocalTime.of(19, 0), doors = LocalTime.of(18, 0))
+    }
 }

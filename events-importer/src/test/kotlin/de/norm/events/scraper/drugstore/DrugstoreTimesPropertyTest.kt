@@ -32,6 +32,21 @@ class DrugstoreTimesPropertyTest {
         }
 
     @Test
+    fun `any two bare hours past noon give doors before the start, or radar's time alone`() =
+        runTest {
+            checkAll(Arb.int(13..23), Arb.int(13..23), clock) { doors, start, radarTime ->
+                val times = parseDrugstoreTimes("Doors $doors | Start $start", radarTime)
+
+                times shouldBe
+                    when {
+                        doors < start -> Times(start = LocalTime.of(start, 0), doors = LocalTime.of(doors, 0))
+                        doors == start -> Times(start = LocalTime.of(start, 0))
+                        else -> Times(start = radarTime)
+                    }
+            }
+        }
+
+    @Test
     fun `a text with no label keeps radar's time`() =
         runTest {
             checkAll(Arb.string(), clock) { text, radarTime ->
