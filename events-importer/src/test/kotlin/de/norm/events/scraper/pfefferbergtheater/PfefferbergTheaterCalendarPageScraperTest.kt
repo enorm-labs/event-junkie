@@ -1,10 +1,13 @@
 package de.norm.events.scraper.pfefferbergtheater
 
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.forChildrenPhrase
 import de.norm.events.scraper.isForChildren
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
@@ -51,8 +54,7 @@ class PfefferbergTheaterCalendarPageScraperTest {
     fun `reads every performance and marks the children's theatre for-children`() {
         events shouldHaveSize 109
         events.map { it.sourceId }.distinct() shouldHaveSize events.size
-        events.count { it.genre == "Kindertheater" } shouldBe 28
-        events.filter { it.isForChildren }.map { it.genre }.distinct() shouldContainExactly listOf("Kindertheater")
+        events.filter { it.isForChildren }.map { it.forChildrenPhrase } shouldBe List(28) { "Kindertheater" }
         events.last().eventDate shouldBe LocalDate.of(2027, 11, 23)
     }
 
@@ -109,10 +111,50 @@ class PfefferbergTheaterCalendarPageScraperTest {
         events.first { it.title == "Comedy Slam Berlin" }.eventType shouldBe "COMEDY"
         events.first { it.title == "Barbaren Barbies" }.run {
             eventType shouldBe "SHOW"
-            genre shouldBe "Neuer Zirkus"
+            genre shouldBe null
         }
         events.first { it.title.startsWith("Constantin Schreiber") }.typeIsFallback shouldBe true
         events.none { it.genre.orEmpty().contains("Studis") } shouldBe true
+    }
+
+    @Test
+    fun `stores no format label of the house as a genre`() {
+        (events + maerchen).flatMap { normalizeGenre(it.genre) }.distinct() shouldContainExactly listOf("Queer")
+        events.mapNotNull { it.genre }.distinct() shouldContainExactlyInAnyOrder listOf("Comedy", "Visual Comedy", "Tanz", "Queer")
+    }
+
+    @Test
+    fun `keeps the type of a row whose only labels are formats`() {
+        mapOf(
+            "31069" to "SHOW", // Modernes Theater
+            "31861" to "SHOW", // Kindertheater
+            "27910" to "SHOW", // Neuer Zirkus, and the ticket offer
+            "31227" to "SHOW", // Shows
+            "31605" to "COMEDY" // Kabarett & Artistik, and the ticket offer
+        ).forEach { (id, type) ->
+            withClue(id) {
+                event(id).genre shouldBe null
+                event(id).eventType shouldBe type
+                event(id).typeIsFallback shouldBe false
+            }
+        }
+    }
+
+    @Test
+    fun `keeps a label beside a format label`() {
+        event("34296").run {
+            genre shouldBe "Queer"
+            eventType shouldBe "SHOW"
+        }
+    }
+
+    @Test
+    fun `still marks a Kindertheater row for-children without its genre`() {
+        event("31861").run {
+            genre shouldBe null
+            isForChildren shouldBe true
+            forChildrenPhrase shouldBe "Kindertheater"
+        }
     }
 
     @Test

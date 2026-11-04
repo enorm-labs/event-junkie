@@ -93,7 +93,7 @@ class PfefferbergTheaterCalendarPageScraper {
         return runCatching { LocalDate.of(year.toInt(), month.toInt(), day.toInt()) }.getOrNull()
     }
 
-    /** The category and the extra labels, less those that mark the ticket offer or the run, and the one the READING type already says. */
+    /** The category and the extra labels, less those that name a format, the ticket offer or the run. [categoryType] reads the category before this filter. */
     private fun genres(
         tags: List<String>,
         labels: Map<String, String>
@@ -108,7 +108,9 @@ class PfefferbergTheaterCalendarPageScraper {
         const val CANCELLED = "abgesagt"
         const val SOLD_OUT = "ausverkauft"
 
-        val NON_GENRE_LABEL = Regex("""Studis & Azubis|Premieren|Lesungen/Buchpremieren""")
+        /** `Kabarett & Artistik` goes whole, because the genre normalizer vetoes `Kabarett` and would keep `Artistik` as a tag. */
+        val NON_GENRE_LABEL =
+            Regex("""Studis & Azubis|Premieren|Lesungen/Buchpremieren|Kindertheater|Neuer Zirkus|Modernes Theater|Shows|Kabarett & Artistik""")
 
         /** The category label of the house's children's theatre, Coq au Vin and its guests (#3796). */
         const val CHILDRENS_CATEGORY = "Kindertheater"

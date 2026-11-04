@@ -74,6 +74,6 @@ val PFEFFERBERG_THEATER_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per performance"),
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the fairy-tale season page has no categories, and the calendar's comedy and dance categories name a format, not a music genre"
+            "the fairy-tale season page has no categories, and the calendar's categories name a format, not a music genre"
         )
     )
