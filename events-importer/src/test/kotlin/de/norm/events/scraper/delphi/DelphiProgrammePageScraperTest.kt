@@ -56,6 +56,30 @@ class DelphiProgrammePageScraperTest {
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
+    /** One row on a one-month page, with the markup the venue renders. An empty [label] leaves the cell empty, as on the page. */
+    private fun scrapedRow(
+        title: String,
+        teaser: String,
+        label: String = ""
+    ): ScrapedEvent {
+        val labelCell = if (label.isEmpty()) "" else "$label<br /> <br />"
+        val html =
+            """
+            <h2 class="month">März 2027</h2>
+            <table class="program_table"><tr>
+              <td><div class="eventHeader"><h3><big>16</big>&nbsp;&nbsp;Di</h3><p>20:00 Uhr</p></div></td>
+              <td><h3 class="eventTitel"><a href="index.php?prod=566">$title</a></h3><p class="teaserText">$teaser</p></td>
+              <td><span class="hideOnMobile">$labelCell</span><span class="kein-ticket-link"> </span></td>
+            </tr></table>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+    }
+
+    private fun typeOfUnlabelled(
+        title: String,
+        teaser: String
+    ): String? = scrapedRow(title, teaser).eventType
+
     @Test
     fun `discovers one event per performance, not per production`() {
         // 24 rows across five month headings, resolving to 14 productions.
@@ -123,6 +147,82 @@ class DelphiProgrammePageScraperTest {
         val wrestling = credits.single { it.sourceId == "theater_im_delphi:546/2026-10-17-17:00" }
         wrestling.eventType shouldBe EventType.SHOW.name
         wrestling.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types a comedy tour from its Comedy label and bills no act`() {
+        // Event 12701, verbatim. Only a concert bills acts, so the title's `- <tour>` split never runs.
+        val tour =
+            scrapedRow(
+                title = "Jordan Prince - Royal Highness Comedy Tour 2027",
+                teaser =
+                    "Mit seiner einzigartigen Sicht auf das Leben in Deutschland hat Comedian und Content-Creator Jordan Prince zunächst Online " +
+                        "ein großes Publikum begeistert, das schon bald auch zahlreich in seine Live-Auftritte strömte. Im Frühjahr 2027 bringt er seinen " +
+                        "bissigen, selbstironischen Humor im Rahmen seiner bisher größten Tour erneut auf die Bühne.",
+                label = "Comedy & Kabarett"
+            )
+        tour.eventType shouldBe EventType.COMEDY.name
+        tour.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types a drag show from its Revue label and bills no act`() {
+        // Events 12691 and 12692, verbatim. `by DUCT TAPE` names the producer, not an act.
+        val drag =
+            scrapedRow(
+                title = "A Berlin Drag Queens CHRISTMAS SHOW by DUCT TAPE",
+                teaser =
+                    "Dieses Weihnachten bringt DUCT TAPE die Berliner Drag-Szene für zwei ganz besondere Abende im Theater im Delphi zusammen.<br />\n" +
+                        "Am 4. und 5. Dezember wird Weihnachten gefeiert mit zwei unterschiedlichen gigantischen Berlin Allstars Line-ups. ",
+                label = "Revue"
+            )
+        drag.eventType shouldBe EventType.SHOW.name
+        drag.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types an unlabelled music tour as a concert and bills the act and its guest`() {
+        // Event 12700, verbatim.
+        val tour =
+            scrapedRow(
+                title = "Mark Eitzel (+ Our Man In The Field)",
+                teaser =
+                    "Mark Eitzel (American Music Club) kommt für seine erste Tournee seit zehn Jahren nach Deutschland. Neben älteren Klassikern des " +
+                        "American Music Club, die auf einem neuen Box-Set erscheinen werden, wird Mark Songs aus früheren Soloalben und einer neuen Vinyl-EP spielen."
+            )
+        tour.eventType shouldBe EventType.CONCERT.name
+        tour.artists.map { it.name to it.role } shouldBe
+            listOf("Mark Eitzel" to ArtistRole.HEADLINER, "Our Man In The Field" to ArtistRole.SUPPORT)
+    }
+
+    @Test
+    fun `types an unlabelled row as comedy from a word in its title or teaser`() {
+        typeOfUnlabelled("Royal Highness Comedy Tour", "Zehn Abende.") shouldBe EventType.COMEDY.name
+        typeOfUnlabelled("Royal Highness", "Mit dem Comedian Max Beispiel.") shouldBe EventType.COMEDY.name
+    }
+
+    @Test
+    fun `keeps a vocal ensemble's name out of the comedy cue`() {
+        typeOfUnlabelled("Die Comedian Harmonists", "Ein Abend mit ihren Liedern.") shouldBe EventType.OTHER.name
+    }
+
+    @Test
+    fun `types an unlabelled drag title as a show, even where the teaser names comedy`() {
+        // The production text of events 12691 and 12692 reads "voller Drag, Comedy, Live-Gesang".
+        typeOfUnlabelled("Berlin Drag Night", "Ein Spektakel voller Drag und Comedy.") shouldBe EventType.SHOW.name
+        typeOfUnlabelled("Dragshow Berlin", "Ein Abend.") shouldBe EventType.SHOW.name
+    }
+
+    @Test
+    fun `does not read drag out of a band's name`() {
+        // Events 12694 and 12695 carry this title.
+        typeOfUnlabelled("Imagine Dragons Tribute", "Ein Abend.") shouldBe EventType.OTHER.name
+    }
+
+    @Test
+    fun `leaves a theatre tour without songs or an album out of the concerts`() {
+        typeOfUnlabelled("Der Besuch", "Das Ensemble kommt auf seiner Tournee nach Berlin.") shouldBe EventType.OTHER.name
+        typeOfUnlabelled("Neue Songs", "Ein Abend in Berlin.") shouldBe EventType.OTHER.name
     }
 
     @Test

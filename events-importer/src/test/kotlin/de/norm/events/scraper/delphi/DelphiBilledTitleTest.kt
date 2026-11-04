@@ -19,6 +19,8 @@ class DelphiBilledTitleTest {
         delphiBilledTitle("Delphis Orakel") shouldBe "Delphis Orakel"
         // Event 12693.
         delphiBilledTitle("Patrick Wolf - Yulenite") shouldBe "Patrick Wolf"
+        // Event 12700: the guest is billed apart.
+        delphiBilledTitle("Mark Eitzel (+ Our Man In The Field)") shouldBe "Mark Eitzel"
         // Event 11842: the band brings its All Stars formation.
         // The house misspells the band; its production page spells it Savoy Satellites.
         delphiBilledTitle("SAVOY SATTELITES – All Stars feat. Emil Wahlgren") shouldBe "SAVOY SATELLITES feat. Emil Wahlgren"
