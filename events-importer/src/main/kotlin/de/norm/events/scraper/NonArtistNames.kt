@@ -251,6 +251,7 @@ private val NON_ARTIST_NAMES: Set<String> =
         // three Wühlmäuse shows, a Kesselhaus sampler concert and comedy brand, a Downstairs show.
         "pater brown",
         "die weihnachtsengel",
+        "rocking round the xmas tree",
         "generation xy",
         "unter meinem bett",
         "nightwash",

@@ -161,7 +161,9 @@ class KesselhausCalendarScraper(
             soldOut = SOLD_OUT in notes,
             status = statusOf(notes),
             statusNote = subtitle?.takeIf { RELOCATED in notes },
-            artists = buildArtistsForEventType(stripFriendsTail(title), subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) }
+            artists =
+                buildArtistsForEventType(stripFriendsTail(title), subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) } +
+                    plusSupport(subtitle, eventType)
         ).forChildrenIf(category?.takeIf { it.equals(CHILDRENS_CATEGORY, ignoreCase = true) })
     }
 
@@ -185,6 +187,20 @@ class KesselhausCalendarScraper(
             .map(::stripArtistSuffix)
             .filterNot(::isNonArtistName)
             .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+    }
+
+    /** The support acts of a subtitle that only lists them: `+ Dreamwake + Vianova` (event 7055), `+ Gouge Away`. */
+    private fun plusSupport(
+        subtitle: String?,
+        eventType: String
+    ): List<ScrapedArtist> {
+        val line = subtitle?.trim().orEmpty()
+        if (eventType != EventType.CONCERT.name || !line.startsWith("+")) return emptyList()
+        return line
+            .split('+')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
     }
 
     /**

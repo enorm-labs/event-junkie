@@ -10,6 +10,12 @@ import kotlin.time.measureTimedValue
 
 // Focused tests for NonArtistNames — one test per behaviour.
 class NonArtistNamesTest {
+    @Test
+    fun `a Christmas party's name is no act`() {
+        // Frannz Club, event 12600.
+        isNonArtistName("Rocking Round The Xmas Tree") shouldBe true
+    }
+
     // --- isPlaceholderName ---
 
     @Test

@@ -64,7 +64,7 @@ class PfefferbergTheaterCalendarPageScraperTest {
         fil.eventDate shouldBe LocalDate.of(2026, 12, 15)
         fil.startTime shouldBe LocalTime.of(20, 0)
         fil.eventType shouldBe "READING"
-        fil.genre shouldBe "Lesungen/Buchpremieren"
+        fil.genre shouldBe null
         fil.soldOut shouldBe true
         fil.status shouldBe "SCHEDULED"
         fil.sourceUrl shouldBe "https://pfefferberg-theater.de/spielplan/kalender/lesung-fil-01/"

@@ -87,6 +87,35 @@ class OraniaOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills the acts a December teaser names, not the programme in the title`() {
+        val cases =
+            mapOf(
+                // Event 12606.
+                "with Benedikt Jahnel" to listOf("Benedikt Jahnel"),
+                // Event 12607.
+                "with Amadeus Chiodi (sax) & Stanley Schätzke (piano)" to listOf("Amadeus Chiodi", "Stanley Schätzke"),
+                "with the Carolyn del Rosario Trio" to listOf("Carolyn del Rosario Trio")
+            )
+        cases.forEach { (teaser, acts) ->
+            val html =
+                """
+                <div class="calendarize"><div class="event-list-item">
+                  <div class="event-date">12</div><div class="event-month">Dec 2026</div><div class="event-time">9:00 pm</div>
+                  <div class="media-body"><span class="event-category">Orania.Piano</span>
+                  <h2><a href="/oraniaconcerts/event/event/x-20261212">German Christmas Songs Reimagined</a></h2>
+                  <p>$teaser</p></div>
+                </div></div>
+                """.trimIndent()
+            val url = "https://orania.berlin/concerts"
+            scraper
+                .scrape(Jsoup.parse(html, url), url)
+                .single()
+                .artists
+                .map { it.name } shouldContainExactly acts
+        }
+    }
+
+    @Test
     fun `skips the programme notices that carry no series tag`() {
         val events = scrape("orania-overview-page-last.html", "https://orania.berlin/concerts/page/3")
 

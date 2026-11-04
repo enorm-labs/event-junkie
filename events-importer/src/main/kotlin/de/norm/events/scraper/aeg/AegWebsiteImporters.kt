@@ -1,5 +1,6 @@
 package de.norm.events.scraper.aeg
 
+import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
@@ -40,7 +41,8 @@ abstract class AbstractAegVenueImporter(
      * none cleanly: its heading appends "in der <venue>", and it renders neither a date nor a
      * cancellation this parser reads. The detail page contributes doors time, description, ticket
      * link and, when the description has a `Line Up:` list, the roster. Otherwise the roster comes
-     * from the listing, where the clean title lives.
+     * from the listing, where the clean title lives. Its description also settles what a listing's
+     * `Wird verlegt:` moved ([statusAfterNotice]).
      *
      * **The roster is re-derived here, and only here, when the description can add to it.** The two
      * halves the rule needs never meet before this point: the title and its acts are the listing's,
@@ -52,7 +54,7 @@ abstract class AbstractAegVenueImporter(
     ): ScrapedEvent =
         primary.withGapsFrom(fallback).copy(
             title = fallback.title,
-            status = fallback.status,
+            status = statusAfterNotice(fallback.status, primary.description),
             artists = billedActs(primary, fallback)
         )
 
@@ -125,3 +127,19 @@ val AEG_LIMITATIONS =
 // Stateless, so every importer in this file shares one of each.
 private val OVERVIEW_SCRAPER = AegOverviewPageScraper()
 private val DETAIL_SCRAPER = AegDetailPageScraper()
+
+/**
+ * `Wird verlegt:` on the listing reads as a move of house, and the description can say the date moved instead: `Bereits gekaufte
+ * Tickets behalten ihre Gültigkeit für den Nachholtermin` (event 2952). The listing's status stands otherwise.
+ */
+internal fun statusAfterNotice(
+    listingStatus: String,
+    description: String?
+): String =
+    if (listingStatus == EventStatus.RELOCATED.name && description != null && MAKE_UP_DATE.containsMatchIn(description)) {
+        EventStatus.POSTPONED.name
+    } else {
+        listingStatus
+    }
+
+private val MAKE_UP_DATE = Regex("""\b(?:Nachholtermin|Ersatztermin)\b""", RegexOption.IGNORE_CASE)

@@ -154,7 +154,11 @@ class DelphiProgrammePageScraper {
             artists =
                 if (eventType == EventType.CONCERT.name) {
                     creditedActs(row, teaser).ifEmpty {
-                        buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType)
+                        if (isCandlelightProgramme(title)) {
+                            emptyList()
+                        } else {
+                            buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType)
+                        }
                     }
                 } else {
                     emptyList()
@@ -272,14 +276,27 @@ private val MUSIC_GENRE_LABELS = setOf("Kammermusik", "Elektronische Musik")
 
 /**
  * The part of [title] that bills an act: `"Delphis Orakel – Stroum"` is the house's bar series presenting
- * Stroum, and only Stroum is billed (#2072). A band's `– All Stars` line-up label goes too: the act is the band.
+ * Stroum, and only Stroum is billed (#2072). A band's `– All Stars` line-up label goes too: the act is the band, and so
+ * does the work after a spaced hyphen: `Patrick Wolf - Yulenite` (event 12693).
  */
 internal fun delphiBilledTitle(title: String): String =
     title
         .replaceFirst(HOUSE_SERIES, "")
         .replaceFirst(ALL_STARS_LABEL, "")
+        .replaceFirst(WORK_TAIL, "")
         .replace(SATELLITES_TYPO) { if (it.value == it.value.uppercase()) "SATELLITES" else "Satellites" }
         .ifBlank { title }
+
+/**
+ * A touring string quartet plays other bands' songs: `Candlelight: Coldplay & Imagine Dragons | Rock-Hymnen`
+ * (events 12694, 12695). The names in the title are not on stage, and the quartet goes unnamed.
+ */
+internal fun isCandlelightProgramme(title: String): Boolean = CANDLELIGHT.containsMatchIn(title)
+
+private val CANDLELIGHT = Regex("""^\s*candlelight\b""", RegexOption.IGNORE_CASE)
+
+/** The hyphen is spaced, and only a hyphen: the house's en dash marks a series or a line-up label above. */
+private val WORK_TAIL = Regex("""\s+-\s+.+$""")
 
 /** The house misspells the Savoy Satellites in its titles; the band's own text on the production page does not. */
 private val SATELLITES_TYPO = Regex("""\bSattelites\b""", RegexOption.IGNORE_CASE)

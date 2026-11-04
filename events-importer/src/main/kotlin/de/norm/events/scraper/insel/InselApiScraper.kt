@@ -227,10 +227,11 @@ class InselApiScraper(
      * is the act; origin tags stripped, non-artists dropped. The `… w/ <acts>` frame now lives in the
      * shared [headlinersFromTitle] and is requested with `unpackWithFrame`, opt-in because `w/` joins
      * collaborators at some venues; Insel's `w/` titles always name the night first. The bullet split
-     * runs first: `w/` never appears after a bullet in this feed.
+     * runs first: `w/` never appears after a bullet in this feed. A night named before a dash bills what follows its `with`:
+     * `Fire On The Island - Grateful Nights with Barko Waltz and Blueroomess` (event 12704).
      */
     private fun headliners(title: String): List<ScrapedArtist> =
-        headlinersFromTitle(title.substringBefore(BULLET_SEPARATOR).trim(), unpackWithFrame = true)
+        headlinersFromTitle(title.substringBefore(BULLET_SEPARATOR).trim().replaceFirst(DASHED_NIGHT_WITH, ""), unpackWithFrame = true)
             .map { it.copy(name = stripOriginTag(it.name)) }
             .filterNot { isNonArtistName(it.name) }
             .distinctBy { it.name.lowercase() }
@@ -247,6 +248,8 @@ class InselApiScraper(
 
         /** The `•` the venue separates a title's act, city and format with. */
         const val BULLET_SEPARATOR = '•'
+
+        val DASHED_NIGHT_WITH = Regex("""^.+?\s[-–—]\s.+?\swith\s+""", RegexOption.IGNORE_CASE)
     }
 }
 

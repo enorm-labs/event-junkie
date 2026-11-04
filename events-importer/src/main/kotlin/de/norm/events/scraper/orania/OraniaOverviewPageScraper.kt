@@ -1,11 +1,15 @@
 package de.norm.events.scraper.orania
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -25,7 +29,8 @@ import java.util.Locale
  * Special") dated at midnight, not a concert, and is skipped. A title can name the act's
  * programme after it ([PROGRAMME_TAIL]); the artists come from the part before. A title can also
  * name the programme first and the act after `with the` ([PROGRAMME_LEAD]); the artists come from
- * the part after.
+ * the part after. The December programmes put the act in the teaser instead, `with Matti Klein` ([TEASER_BILL]), and the
+ * teaser then wins over the title.
  */
 class OraniaOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -72,9 +77,21 @@ class OraniaOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = oraniaSourceId(sourceUrl),
             free = true,
-            artists = buildArtistsForEventType(title.replace(PROGRAMME_TAIL, "").replaceFirst(PROGRAMME_LEAD, ""), subtitle, eventType)
+            artists =
+                teaserBill(subtitle).ifEmpty {
+                    buildArtistsForEventType(title.replace(PROGRAMME_TAIL, "").replaceFirst(PROGRAMME_LEAD, ""), subtitle, eventType)
+                }
         )
     }
+
+    /** The acts of a [TEASER_BILL], without the instrument each carries: `Amadeus Chiodi (sax) & Stanley Schätzke (piano)`. */
+    private fun teaserBill(teaser: String?): List<ScrapedArtist> =
+        teaser
+            ?.let { TEASER_BILL.matchEntire(it.trim()) }
+            ?.let { splitSupportActs(it.groupValues[1].replace(INSTRUMENT, "")) }
+            .orEmpty()
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
 
     /** The day (`02`) and the month with its year (`Oct 2026`), printed in two elements. */
     private fun parseDate(item: Element): LocalDate? {
@@ -98,6 +115,11 @@ class OraniaOverviewPageScraper {
          * (event 12241). Only `with the` marks it, because a bare `with` can join two acts.
          */
         val PROGRAMME_LEAD = Regex("""^.+?\s+with\s+the\s+""", RegexOption.IGNORE_CASE)
+
+        /** A teaser that is nothing but the bill: `with Rolf Zielke`, `with the Carolyn del Rosario Trio` (events 12606 to 12610). */
+        val TEASER_BILL = Regex("""^with\s+(?:the\s+)?(.+)$""", RegexOption.IGNORE_CASE)
+
+        val INSTRUMENT = Regex("""\s*\([^)]*\)""")
 
         val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
     }

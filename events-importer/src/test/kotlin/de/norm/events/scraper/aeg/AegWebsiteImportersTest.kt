@@ -171,6 +171,15 @@ class AegWebsiteImportersTest {
         }
 
     @Test
+    fun `reads a move whose description names a make-up date as a postponement`() {
+        // Event 2952.
+        val notice = "Bereits gekaufte Tickets behalten ihre Gültigkeit für den Nachholtermin."
+        statusAfterNotice(EventStatus.RELOCATED.name, notice) shouldBe EventStatus.POSTPONED.name
+        statusAfterNotice(EventStatus.RELOCATED.name, "Das Konzert findet im Tempodrom statt.") shouldBe EventStatus.RELOCATED.name
+        statusAfterNotice(EventStatus.CANCELLED.name, notice) shouldBe EventStatus.CANCELLED.name
+    }
+
+    @Test
     fun `keeps the listing's cancellation through the merge`() =
         runTest {
             // The detail page states no status, so the listing's "ABGESAGT:" prefix must survive.

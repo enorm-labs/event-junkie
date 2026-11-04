@@ -106,6 +106,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         // Pop
         "pop" to POP,
         "synthpop" to POP,
+        "dungeon-synth" to ELECTRONIC,
         "synthie-pop" to POP,
         "electropop" to POP,
         "k-pop" to POP,
@@ -168,6 +169,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "power-metal" to METAL,
         "neue-deutsche-harte" to METAL,
         "post-metal" to METAL,
+        "psych-doom" to METAL,
         // Post-Punk & Wave
         "post-punk" to WAVE,
         "new-wave" to WAVE,
