@@ -167,7 +167,11 @@ class VenueSiteCheckIntegrationTest : BaseControllerTest() {
             repeat(3) { service.runOnce() }
             store.findNeedsReview(VenueSiteCheckService.REVIEW_THRESHOLD) shouldHaveSize 1
 
-            databaseClient.sql("UPDATE events.venue SET reviewed_at = now() WHERE slug = 'dead-club'").await()
+            // From the stored value, not now(): failing_since has the JVM's clock, and the container's can lag it (#4467).
+            databaseClient
+                .sql("UPDATE events.venue SET reviewed_at = :reviewedAt WHERE slug = 'dead-club'")
+                .bind("reviewedAt", failingSince("dead-club").shouldNotBeNull().plusSeconds(1))
+                .await()
 
             store.findNeedsReview(VenueSiteCheckService.REVIEW_THRESHOLD).shouldBeEmpty()
         }
