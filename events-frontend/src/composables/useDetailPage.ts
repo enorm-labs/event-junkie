@@ -16,6 +16,7 @@ export type DetailKind = 'venue' | 'artist' | 'promoter'
 
 /** What `BaseDetailView` and the page meta read from the entity. */
 interface DetailEntity extends Described, AttributedImage {
+  slug?: string | null
   name?: string | null
   imageSources?: ImageSource[] | null
   intrinsicWidth?: number | null
@@ -83,6 +84,10 @@ export function useDetailPage<T extends DetailEntity>(
     entity.value ? descriptionFor(entity.value, locale.value as Locale) : null,
   )
 
+  // An artist's old link answers with the artist before its view replaces the route (#4447). The
+  // entity's own slug keeps the old one out of the follow request and the report mail.
+  const entitySlug = computed(() => entity.value?.slug ?? slug.value)
+
   const detail = computed(() => ({
     kind: kindLabel.value,
     loading: loading.value,
@@ -105,9 +110,9 @@ export function useDetailPage<T extends DetailEntity>(
     emptyText: t(`detail.${kind}.empty`),
     past,
     followKind: kind,
-    followSlug: slug.value,
+    followSlug: entitySlug.value,
     reportText: t(`detail.${kind}.report`),
-    reportPath: `/${kind}s/${slug.value}`,
+    reportPath: `/${kind}s/${entitySlug.value}`,
   }))
 
   return { entity, description, detail }

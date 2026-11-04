@@ -3,7 +3,7 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import type { ReadableStream } from 'node:stream/web'
 
-import { bffPath, entityMeta } from './meta.ts'
+import { bffPath, canonicalPath, entityMeta } from './meta.ts'
 import { rewriteHead } from './rewrite.ts'
 import {
   type EntityKind,
@@ -304,7 +304,13 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
     const { meta, image, structuredData } = entityMeta(route.kind, entity, route.locale)
     send(
       response,
-      rewriteHead(html, { meta, image, structuredData, locale: route.locale, path: route.path }),
+      rewriteHead(html, {
+        meta,
+        image,
+        structuredData,
+        locale: route.locale,
+        path: canonicalPath(route.kind, route.path, entity),
+      }),
     )
   } catch (error) {
     // A 404 from the BFF is an unknown slug, which the SPA renders as its own not-found page.

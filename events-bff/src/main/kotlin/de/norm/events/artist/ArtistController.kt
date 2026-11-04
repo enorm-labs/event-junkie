@@ -49,7 +49,10 @@ class ArtistController(
     }
 
     @GetMapping("/{slug}")
-    @Operation(summary = "Get a single artist by slug")
+    @Operation(
+        summary = "Get a single artist by slug",
+        description = "A former slug of the artist returns the artist too. The response's `slug` is the current one."
+    )
     suspend fun findBySlug(
         @Parameter(description = "Unique artist slug.", example = "actors", required = true)
         @PathVariable slug: String

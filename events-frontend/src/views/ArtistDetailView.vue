@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import DetailLinks, { type DetailLink } from '@/components/DetailLinks.vue'
 import CreditLine from '@/components/CreditLine.vue'
@@ -12,6 +13,21 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 
 const { entity: artist, description, detail } = useDetailPage('artist', useArtist, artistPageMeta)
+
+// A merged or renamed artist's old slug answers with the artist under its own slug (#4447). A
+// replace, so Back skips the old URL, and the canonical and a share name one page.
+const route = useRoute()
+const router = useRouter()
+watch(artist, (found) => {
+  if (route.name === 'artist' && found?.slug && found.slug !== route.params.slug) {
+    void router.replace({
+      name: 'artist',
+      params: { ...route.params, slug: found.slug },
+      query: route.query,
+      hash: route.hash,
+    })
+  }
+})
 
 const links = computed(() =>
   [
