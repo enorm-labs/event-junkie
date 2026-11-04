@@ -26,6 +26,7 @@ import java.time.format.DateTimeParseException
  * of …: Laura.aLL, Carla Boregas, … and more..` (#3280). So does a count of sets, such as `3 SOLOS: Siri Salminen / Jean-Luc
  * Guionnet / …` (#4421), whose members a single `/` parts. The `and more..` tail announces nobody and is cut before the
  * split, because a bare `more..` would read as the band More. A second embed lists past nights and is not read.
+ * The text cannot tell a band from a work's title, so `Work: performers` bills the title. Such a night needs a lineup pin (ADR-042).
  * The page names no time, price or image.
  */
 class Richten25OverviewPageScraper {
