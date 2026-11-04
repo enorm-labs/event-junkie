@@ -260,18 +260,13 @@ private val CROSS_BILL_CONTINUATIONS: Set<String> = setOf("and", "und", "feat.",
 fun splitCrossBilled(segment: String): List<String> {
     knownBillingActs(segment)?.let { return it }
     val cuts =
-        CROSS_BILL_SEPARATOR
-            .findAll(segment)
-            .filter { !isInsideBrackets(segment, it.range.first) }
-            .filter { match ->
-                segment
-                    .substring(match.range.last + 1)
-                    .substringBefore(' ')
-                    .lowercase() !in CROSS_BILL_CONTINUATIONS
-            }.map { it.range }
-            .toList()
-    if (cuts.isEmpty()) return listOf(segment)
-    return cutAt(segment, cuts).map { it.trim() }.filter { it.isNotBlank() }.ifEmpty { listOf(segment) }
+        cutsOutsideBrackets(segment, CROSS_BILL_SEPARATOR).filter { cut ->
+            segment
+                .substring(cut.last + 1)
+                .substringBefore(' ')
+                .lowercase() !in CROSS_BILL_CONTINUATIONS
+        }
+    return piecesAt(segment, cuts)
 }
 
 private fun splitOnConjunctionsOnly(segment: String): List<String> {
@@ -295,7 +290,7 @@ fun commaListActs(line: String): List<String>? {
     val commas = topLevelCommas(line)
     val parts = cutAt(line, commas.map { it..it }).map { it.trim() }.filter { it.isNotEmpty() }
     val last = parts.lastOrNull() ?: return null
-    val endsInConjunction = CONJUNCTION_SEPARATOR.findAll(last).any { !isInsideBrackets(last, it.range.first) }
+    val endsInConjunction = cutsOutsideBrackets(last, CONJUNCTION_SEPARATOR).isNotEmpty()
     if (commas.isEmpty() || !endsInConjunction) return null
     return parts.flatMap { knownBillingActs(it) ?: cutAtConjunctions(it) }.map { it.trim() }
 }
@@ -306,18 +301,13 @@ fun commaListActs(line: String): List<String>? {
  */
 private fun cutAtConjunctions(segment: String): List<String> {
     val cuts =
-        CONJUNCTION_SEPARATOR
-            .findAll(segment)
-            .filter { !isInsideBrackets(segment, it.range.first) }
-            .filter { match ->
-                val nextWord = segment.substring(match.range.last + 1).trimStart().substringBefore(' ')
-                // `Eiskönigin 1 & 2` is one billing: a number after the conjunction is a
-                // sequel or a volume, not a second act (#1556).
-                nextWord.lowercase() !in CONJUNCTION_TAIL_MARKERS && !isBareNumber(nextWord)
-            }.map { it.range }
-            .toList()
-    if (cuts.isEmpty()) return listOf(segment)
-    return cutAt(segment, cuts).map { it.trim() }.filter { it.isNotBlank() }.ifEmpty { listOf(segment) }
+        cutsOutsideBrackets(segment, CONJUNCTION_SEPARATOR).filter { cut ->
+            val nextWord = segment.substring(cut.last + 1).trimStart().substringBefore(' ')
+            // `Eiskönigin 1 & 2` is one billing: a number after the conjunction is a
+            // sequel or a volume, not a second act (#1556).
+            nextWord.lowercase() !in CONJUNCTION_TAIL_MARKERS && !isBareNumber(nextWord)
+        }
+    return piecesAt(segment, cuts)
 }
 
 /**
@@ -354,6 +344,26 @@ private const val MIN_COMMAS_FOR_A_LIST = 2
  * parenthetical and the bill is delimited by something else entirely.
  */
 private fun topLevelCommas(text: String): List<Int> = text.indices.filter { text[it] == ',' && !isInsideBrackets(text, it) }
+
+/** Where [separator] matches in [text] outside any bracket. */
+private fun cutsOutsideBrackets(
+    text: String,
+    separator: Regex
+): List<IntRange> =
+    separator
+        .findAll(text)
+        .map { it.range }
+        .filter { !isInsideBrackets(text, it.first) }
+        .toList()
+
+/** The trimmed, non-blank pieces of [segment] at [cuts], or [segment] as given when no cut or no piece is left. */
+private fun piecesAt(
+    segment: String,
+    cuts: List<IntRange>
+): List<String> {
+    if (cuts.isEmpty()) return listOf(segment)
+    return cutAt(segment, cuts).map { it.trim() }.filter { it.isNotBlank() }.ifEmpty { listOf(segment) }
+}
 
 /** Splits [text] at the given separator [cuts], dropping the separators themselves. */
 private fun cutAt(
@@ -397,12 +407,7 @@ private val TRAILING_ANNOTATION = Regex("""\([^()]*\)\s*$""")
  * `(Ostgut Ton, 2019 • 43 min • vinyl)`, where the bullets are the label's own punctuation.
  */
 private fun bulletCoBill(title: String): List<String>? {
-    val cuts =
-        BULLET_SEPARATOR
-            .findAll(title)
-            .filter { !isInsideBrackets(title, it.range.first) }
-            .map { it.range }
-            .toList()
+    val cuts = cutsOutsideBrackets(title, BULLET_SEPARATOR)
     if (cuts.isEmpty()) return null
     val segments = cutAt(title, cuts).map { it.trim() }.filter { it.isNotBlank() }
     return segments.takeIf { it.size > 1 && it.all { segment -> TRAILING_ANNOTATION.containsMatchIn(segment) } }
@@ -628,12 +633,7 @@ fun splitHeadlinerTitle(
     val separator = if (splitOnSlash) SAFE_TITLE_SEPARATOR else PLUS_ONLY_TITLE_SEPARATOR
     // Bracket-aware: a `/` or `+` inside a parenthetical belongs to that act's own affiliation
     // list, not to a co-bill — see [isInsideBrackets].
-    val hardCuts =
-        separator
-            .findAll(trimmed)
-            .filter { !isInsideBrackets(trimmed, it.range.first) }
-            .map { it.range }
-            .toList()
+    val hardCuts = cutsOutsideBrackets(trimmed, separator)
 
     val acts =
         cutAt(trimmed, hardCuts)
@@ -655,13 +655,7 @@ private val INVITES_SEPARATOR = Regex("""\s+invites?\s+""", RegexOption.IGNORE_C
  * stay whole.
  */
 private fun splitOnInvites(segment: String): List<String> {
-    val cuts =
-        INVITES_SEPARATOR
-            .findAll(segment)
-            .filter { !isInsideBrackets(segment, it.range.first) }
-            .map { it.range }
-            .toList()
-    val sides = cutAt(segment, cuts).map { it.trim() }
+    val sides = cutAt(segment, cutsOutsideBrackets(segment, INVITES_SEPARATOR)).map { it.trim() }
     val hostIsAct =
         sides
             .firstOrNull()
@@ -681,13 +675,7 @@ private val MEETS_SEPARATOR = Regex("""\s+meets\s+""", RegexOption.IGNORE_CASE)
  */
 private fun splitOnMeets(segment: String): List<String> {
     knownBillingActs(segment)?.let { return it }
-    val cuts =
-        MEETS_SEPARATOR
-            .findAll(segment)
-            .filter { !isInsideBrackets(segment, it.range.first) }
-            .map { it.range }
-            .toList()
-    val sides = cutAt(segment, cuts).map { it.trim() }
+    val sides = cutAt(segment, cutsOutsideBrackets(segment, MEETS_SEPARATOR)).map { it.trim() }
     val coBill =
         sides.size == 2 &&
             sides.none { it.isEmpty() || isGenreLabel(it) || DASH_SEPARATOR.containsMatchIn(it) } &&
