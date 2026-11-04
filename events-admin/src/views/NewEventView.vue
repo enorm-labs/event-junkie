@@ -12,6 +12,7 @@ import {
   toCreateRequest,
 } from '@/api/events'
 import { approveDraft, fetchDraft, formFromDraft, type InstagramDraft } from '@/api/instagramDrafts'
+import { suggestedGenre } from '@/api/genreSuggestion'
 import { type AdminVenue, fetchAllVenues } from '@/api/venues'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -70,6 +71,25 @@ watch(
   () => {
     needsConfirm.value = null
     void checkSameDay()
+  },
+)
+
+/** The genre the form last suggested. [genreEdited] stops suggestions once the operator changes the field, clearing it included. */
+const genreSuggestion = ref('')
+let genreEdited = false
+const genreIsSuggested = computed(() => form.genre !== '' && form.genre === genreSuggestion.value)
+
+function suggestGenre() {
+  if (genreEdited) return
+  genreSuggestion.value = suggestedGenre(venue.value?.programmeFamilies ?? [], form.eventType)
+  form.genre = genreSuggestion.value
+}
+
+watch(() => [venue.value, form.eventType], suggestGenre)
+watch(
+  () => form.genre,
+  (genre) => {
+    if (genre !== genreSuggestion.value) genreEdited = true
   },
 )
 
@@ -157,6 +177,8 @@ async function save(addAnother: boolean) {
     if (addAnother) {
       const { venueId, eventDate } = form
       Object.assign(form, emptyNewEventForm(), { venueId, eventDate })
+      genreEdited = false
+      suggestGenre()
       await nextTick()
       document.getElementById('new-event-title')?.focus()
     }
@@ -264,7 +286,16 @@ async function save(addAnother: boolean) {
 
     <label class="flex flex-col gap-1.5 sm:col-span-2" for="new-event-genre">
       <span class="text-sm font-medium">Genre</span>
-      <Input id="new-event-genre" v-model="form.genre" name="genre" placeholder="No genre" />
+      <Input
+        id="new-event-genre"
+        v-model="form.genre"
+        name="genre"
+        placeholder="No genre"
+        :aria-describedby="genreIsSuggested ? 'new-event-genre-hint' : undefined"
+      />
+      <span v-if="genreIsSuggested" id="new-event-genre-hint" class="text-xs text-muted-foreground">
+        Suggested from the venue's programme. Change or clear it if this night differs.
+      </span>
     </label>
 
     <label class="flex flex-col gap-1.5" for="new-event-presale">

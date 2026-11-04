@@ -19,6 +19,7 @@ function venue(n: number) {
     slug: `venue-${n}`,
     city: 'Berlin',
     closedOn: null,
+    programmeFamilies: ['electronic'],
   }
 }
 
@@ -38,7 +39,13 @@ describe('fetchAllVenues', () => {
     const venues = await fetchAllVenues(fetchFn)
 
     expect(venues).toHaveLength(150)
-    expect(venues[0]).toEqual({ id: 1, name: 'Venue 1', slug: 'venue-1', closedOn: null })
+    expect(venues[0]).toEqual({
+      id: 1,
+      name: 'Venue 1',
+      slug: 'venue-1',
+      closedOn: null,
+      programmeFamilies: ['electronic'],
+    })
     expect(String(fetchFn.mock.calls[1]?.[0])).toBe(
       '/api/admin/venues?page=1&size=100&sort=name,asc',
     )

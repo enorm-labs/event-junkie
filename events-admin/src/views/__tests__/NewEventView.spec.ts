@@ -119,8 +119,29 @@ beforeEach(() => {
   checkFails = false
   vi.stubGlobal('fetch', fetchMock)
   api.fetchAllVenues.mockResolvedValue([
-    { id: 3, name: 'Another Bar', slug: 'another-bar', closedOn: null },
-    { id: 7, name: 'Kulturhaus X', slug: 'kulturhaus-x', closedOn: null },
+    { id: 3, name: 'Another Bar', slug: 'another-bar', closedOn: null, programmeFamilies: [] },
+    { id: 7, name: 'Kulturhaus X', slug: 'kulturhaus-x', closedOn: null, programmeFamilies: [] },
+    {
+      id: 11,
+      name: 'Techno Club',
+      slug: 'techno-club',
+      closedOn: null,
+      programmeFamilies: ['electronic'],
+    },
+    {
+      id: 12,
+      name: 'Jazz Club',
+      slug: 'jazz-club',
+      closedOn: null,
+      programmeFamilies: ['jazz-blues'],
+    },
+    {
+      id: 13,
+      name: 'Mixed Hall',
+      slug: 'mixed-hall',
+      closedOn: null,
+      programmeFamilies: ['electronic', 'rock'],
+    },
   ])
 })
 
@@ -373,6 +394,124 @@ describe('NewEventView', () => {
     })
     expect(api.approveDraft).toHaveBeenCalledWith(12, 9001)
     expect(router.currentRoute.value.name).toBe('drafts')
+  })
+
+  describe('the genre suggestion', () => {
+    async function mountEmpty(path = '/events/new') {
+      const router = await routerAt(path)
+      mount(NewEventView, { attachTo: document.body, global: { plugins: [router] } })
+      await flushPromises()
+    }
+    const hint = () => body().querySelector('#new-event-genre-hint')
+
+    it('opens with the family of a one-family venue, says so, and POSTs it', async () => {
+      api.createEvent.mockResolvedValue(saved())
+      await mountEmpty()
+
+      await fill({ venueId: '11', title: 'Klubnacht', eventDate: '2026-11-14' })
+
+      expect(field('genre').value).toBe('Electronic')
+      expect(hint()!.textContent).toContain("Suggested from the venue's programme")
+      expect(field('genre').getAttribute('aria-describedby')).toBe('new-event-genre-hint')
+
+      await submitWith('save')
+      expect(api.createEvent.mock.calls[0]![0]).toMatchObject({ genre: 'Electronic' })
+    })
+
+    it('stays empty at a venue with no family or with several', async () => {
+      await mountEmpty()
+
+      await fill({ venueId: '7' })
+      expect(field('genre').value).toBe('')
+      await fill({ venueId: '13' })
+      expect(field('genre').value).toBe('')
+      expect(hint()).toBeNull()
+    })
+
+    it('follows the venue and the type while the operator has not changed the field', async () => {
+      await mountEmpty()
+
+      await fill({ venueId: '11' })
+      await fill({ venueId: '12' })
+      expect(field('genre').value).toBe('Jazz')
+
+      await fill({ eventType: 'COMEDY' })
+      expect(field('genre').value).toBe('')
+      expect(hint()).toBeNull()
+
+      await fill({ eventType: 'PARTY' })
+      expect(field('genre').value).toBe('Jazz')
+    })
+
+    it('never overwrites a genre the operator typed', async () => {
+      await mountEmpty()
+      await fill({ venueId: '11' })
+
+      await fill({ genre: 'Hardtechno' })
+      expect(hint()).toBeNull()
+      await fill({ venueId: '12' })
+      await fill({ eventType: 'PARTY' })
+
+      expect(field('genre').value).toBe('Hardtechno')
+    })
+
+    it('keeps a genre typed before the venue is chosen', async () => {
+      await mountEmpty()
+
+      await fill({ genre: 'House' })
+      await fill({ venueId: '11' })
+
+      expect(field('genre').value).toBe('House')
+    })
+
+    it('keeps a cleared field empty', async () => {
+      await mountEmpty()
+      await fill({ venueId: '11' })
+
+      await fill({ genre: '' })
+      await fill({ eventType: 'PARTY' })
+      await fill({ venueId: '12' })
+
+      expect(field('genre').value).toBe('')
+    })
+
+    it('"Save and add another" suggests again, after a typed genre too', async () => {
+      api.createEvent.mockResolvedValue(saved())
+      await mountEmpty()
+      await fill({ venueId: '11', title: 'Klubnacht', eventDate: '2026-11-14', genre: 'House' })
+
+      await submitWith('saveAndAddAnother')
+
+      expect(field('title').value).toBe('')
+      expect(field('genre').value).toBe('Electronic')
+      expect(hint()).not.toBeNull()
+    })
+
+    it('suggests for a venue that ?venue= names, once the venues have loaded', async () => {
+      await mountEmpty('/events/new?venue=11')
+
+      expect(field('genre').value).toBe('Electronic')
+    })
+
+    it('suggests in the form opened from an Instagram draft', async () => {
+      api.fetchDraft.mockResolvedValue({
+        id: 12,
+        venueId: 11,
+        venueName: 'Techno Club',
+        permalink: 'https://www.instagram.com/p/DeTbTdosF6F/',
+        caption: 'Klubnacht',
+        flyerText: null,
+        eventDate: '2026-11-14',
+        startTime: null,
+        title: 'Klubnacht',
+        acts: [],
+        pricePresale: null,
+        priceBoxOffice: null,
+      } as unknown as InstagramDraft)
+      await mountEmpty('/events/new?draft=12')
+
+      expect(field('genre').value).toBe('Electronic')
+    })
   })
 
   it('chooses the venue that ?venue= names, as the Manual venues page links it', async () => {
