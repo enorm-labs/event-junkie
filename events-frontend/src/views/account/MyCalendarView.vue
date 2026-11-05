@@ -21,6 +21,7 @@ import { useCompactView } from '@/composables/useCompactView'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useSession } from '@/composables/useSession'
 import { toCalendarInput } from '@/lib/calendarEvent'
+import { clampToCalendarWindow } from '@/lib/dateRanges'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 
 const { t } = useI18n()
@@ -74,18 +75,10 @@ async function more(which: 'upcoming' | 'past') {
   }
 }
 
-/** Clamps a range to the BFF's 92-day maximum, as the public calendar does. */
-function clampTo(from: string, to: string): string {
-  const max = new Date(from)
-  max.setDate(max.getDate() + 92)
-  const maxIso = max.toISOString().slice(0, 10)
-  return to > maxIso ? maxIso : to
-}
-
 // Driven by EventCalendar's `datesSet`, which also fires on its first render.
 async function loadRange({ from, to }: { from: string; to: string }) {
   try {
-    const data = await fetchRsvpCalendar(from, clampTo(from, to))
+    const data = await fetchRsvpCalendar(from, clampToCalendarWindow(from, to))
     calendarEvents.value = data.map((event) => toCalendarInput(event, localePath))
   } catch (e) {
     problem.value = describeError(e, 'errors.subject.myCalendar')

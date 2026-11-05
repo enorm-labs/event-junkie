@@ -9,6 +9,7 @@ import { describeError } from '@/api/client'
 import { retryTransient } from '@/api/retry'
 import { fetchCalendarEvents } from '@/composables/useEvents'
 import { toCalendarInput } from '@/lib/calendarEvent'
+import { clampToCalendarWindow } from '@/lib/dateRanges'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { beginContentLoad } from '@/composables/useViewLoaded'
@@ -26,14 +27,6 @@ let generation = 0
 /** The visible window, as last reported by the calendar — null until its first render. */
 const range = ref<{ from: string; to: string } | null>(null)
 
-/** Clamps a range to the BFF's 92-day maximum (no built-in view exceeds it, but be safe). */
-function clampTo(from: string, to: string): string {
-  const max = new Date(from)
-  max.setDate(max.getDate() + 92)
-  const maxIso = max.toISOString().slice(0, 10)
-  return to > maxIso ? maxIso : to
-}
-
 async function load() {
   if (!range.value) return
   const call = ++generation
@@ -42,7 +35,7 @@ async function load() {
   retrying.value = false
   try {
     const data = await retryTransient(
-      () => fetchCalendarEvents(from, clampTo(from, to), filters.value),
+      () => fetchCalendarEvents(from, clampToCalendarWindow(from, to), filters.value),
       {
         isStale: () => call !== generation,
         onRetry: () => {

@@ -1,6 +1,7 @@
-// Shortcut date ranges for the events filter bar — the questions people actually ask
-// ("what's on today?", "anything this weekend?") rather than two dates they have to pick.
-// All arithmetic is on the Berlin calendar date, matching the rest of the app.
+// Date ranges the app asks the BFF for: the filter bar's shortcuts — the questions people
+// actually ask ("what's on today?", "anything this weekend?") rather than two dates they have
+// to pick — and the window the calendar endpoints accept.
+// Preset arithmetic is on the Berlin calendar date, matching the rest of the app.
 
 import { addDays, todayIso } from './format'
 
@@ -68,4 +69,16 @@ export function activePresetKey(
     const { from, to } = preset.range()
     return from === shown.from && to === shown.to
   })?.key
+}
+
+/** The widest range the BFF's calendar endpoints accept, in days, counting both ends — `EventService.MAX_CALENDAR_DAYS`. */
+const MAX_CALENDAR_DAYS = 92
+
+/**
+ * Narrows [to] so the range stays inside that window. No built-in calendar view exceeds it, but
+ * a request that does is a 400, and both calendar pages drive their range from the widget.
+ */
+export function clampToCalendarWindow(from: string, to: string): string {
+  const lastDay = addDays(from, MAX_CALENDAR_DAYS - 1)
+  return to > lastDay ? lastDay : to
 }
