@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Festival } from '@/api/festivals'
 import FestivalsView from '@/views/FestivalsView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function festival(id: number, name: string, firstDay: string, lastDay = firstDay): Festival {
   return {
@@ -22,13 +23,6 @@ function festival(id: number, name: string, firstDay: string, lastDay = firstDay
 
 let stored: Festival[] = []
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 beforeEach(() => {
   stored = [

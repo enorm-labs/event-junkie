@@ -9,6 +9,7 @@ import {
   triggerImport,
   updateSource,
 } from '../eventSources'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function source(n: number): EventSource {
   return {
@@ -72,12 +73,6 @@ describe('fetchAllSources', () => {
     await expect(fetchAllSources(fetchFn)).rejects.toThrow('HTTP 502')
   })
 })
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
 
 describe('one source', () => {
   it('reads a source by its slug', async () => {

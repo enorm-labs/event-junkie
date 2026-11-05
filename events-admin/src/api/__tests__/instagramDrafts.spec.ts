@@ -10,6 +10,7 @@ import {
   type InstagramDraft,
   switchVenueOff,
 } from '@/api/instagramDrafts'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function adminEvent(overrides: Partial<AdminEvent> = {}): AdminEvent {
   return {
@@ -69,13 +70,6 @@ function draft(overrides: Partial<InstagramDraft> = {}): InstagramDraft {
     createdAt: '2026-10-15T04:30:00Z',
     ...overrides,
   }
-}
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
 }
 
 describe('groupByNight', () => {

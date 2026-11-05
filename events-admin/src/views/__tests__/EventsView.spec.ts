@@ -5,6 +5,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import type { AdminEvent } from '@/api/events'
 import EventEditor from '@/components/EventEditor.vue'
 import EventsView from '@/views/EventsView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 const LONG_TITLE =
   'An Extraordinarily Long Evening of Improvised Jazz, Spoken Word and Open Decks Until the Sun Comes Up Over the Spree'
@@ -45,13 +46,6 @@ function event(overrides: Partial<AdminEvent>): AdminEvent {
 let found: AdminEvent[] = []
 let totalPages = 1
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })

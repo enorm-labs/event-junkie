@@ -11,6 +11,7 @@ import {
   setCharacterTag,
   VENUE_CHARACTER_TAGS,
 } from '../venues'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function venue(n: number) {
   return {
@@ -176,9 +177,6 @@ describe('isHttpsUrl', () => {
 })
 
 describe('character tags', () => {
-  const json = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
-
   it('reads the tags of one venue', async () => {
     const fetchFn = vi.fn<typeof fetch>(async () =>
       json([{ tag: 'queer', sourceUrl: 'https://so36.com/about' }]),

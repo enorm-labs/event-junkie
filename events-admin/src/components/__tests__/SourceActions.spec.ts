@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { EventSource } from '@/api/eventSources'
 import SourceActions from '@/components/SourceActions.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function source(overrides: Partial<EventSource> = {}): EventSource {
   return {
@@ -23,12 +24,6 @@ function source(overrides: Partial<EventSource> = {}): EventSource {
     ...overrides,
   }
 }
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
 
 /**
  * Answers a POST with `actionResponse` and each GET with the next of `reads`; the last read

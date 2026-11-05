@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { NeedsReviewVenue, VenueDetail } from '@/api/venues'
 import VenueReviewView from '@/views/VenueReviewView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function row(overrides: Partial<NeedsReviewVenue>): NeedsReviewVenue {
   return {
@@ -68,13 +69,6 @@ const {
 
 let listed: NeedsReviewVenue[] = []
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 beforeEach(() => {
   fetchMock.mockImplementation(async (input, init) => {

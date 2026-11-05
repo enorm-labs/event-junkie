@@ -5,6 +5,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import type { AdminEvent } from '@/api/events'
 import type { Suggestion } from '@/api/suggestions'
 import SuggestionsView from '@/views/SuggestionsView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function suggestion(overrides: Partial<Suggestion>): Suggestion {
   return {
@@ -60,13 +61,6 @@ const event: AdminEvent = {
 let listed: Suggestion[] = []
 let acceptStatus = 200
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 beforeEach(() => {
   listed = []
