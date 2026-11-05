@@ -214,7 +214,7 @@ jobs:
       # The other three value sets live in each cluster's HelmRelease and cannot be named in a suite. This
       # extracts `spec.values` from each and re-runs the invariant suites, so the assertions gate what Flux
       # deploys — and carries the assertions *between* files no single render can see: no pinned image tag,
-      # `dependsOn` on a ClusterIssuer, every third-party chart pinned.
+      # the ClusterIssuer outside the release, every third-party chart pinned.
       - name: Assert on the cluster configurations
         run: scripts/cluster-assertions.sh "$CHART"
 

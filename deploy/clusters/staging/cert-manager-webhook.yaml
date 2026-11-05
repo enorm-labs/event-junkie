@@ -44,8 +44,8 @@ spec:
         namespace: flux-system
       interval: 1h
   values:
-    # Must match `certManager.clusterIssuer.dns01.webhookGroupName` in the application HelmRelease: a
-    # mismatch is not an error, it is a challenge never delivered.
+    # Must match `groupName` in `issuer/cluster-issuer.yaml`: a mismatch is not an error, it is a
+    # challenge never delivered.
     groupName: "acme.hetzner.com"
     replicaCount: 1
     resources:

@@ -30,6 +30,7 @@ resources:
   - traefik-host-ports.yaml
   # The Signal bridge (#271).
   - signal-bridge.yaml
+  - issuer-kustomization.yaml
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml

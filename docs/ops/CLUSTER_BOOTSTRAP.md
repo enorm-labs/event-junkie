@@ -596,8 +596,8 @@ same addresses. True publishes the apex and `www`, and `prod-check` disappears i
 **The throwaway name exists because production solves HTTP-01**, which needs Let's Encrypt to reach the host _by name_. With nothing resolving, no certificate
 can issue and the whole TLS path stays untested until the day it matters. One name nobody is looking for exercises all of it.
 
-The application chart creates the real `letsencrypt-production` ClusterIssuer, so before it is installed you need a temporary one. It **must not** share that
-name. Otherwise the chart's install collides with a resource Helm does not own:
+The `cluster-issuer` Kustomization creates the real `letsencrypt-production` ClusterIssuer. On a fresh cluster it reports a failure until cert-manager's CRDs
+exist, then it succeeds on a retry. The rehearsal uses a temporary issuer, which **must not** share that name, because you delete it afterwards:
 
 ```sh
 # ClusterIssuer letsencrypt-rehearsal: acme-v02, http01 solver, ingressClassName traefik.

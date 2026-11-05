@@ -13,6 +13,9 @@ reasoning is load-bearing, it _reverses_ an earlier decision, and one of its con
 **Partially superseded by [ADR-022](ADR-022_SHARED_CLUSTER_BASE.md) (2026-09-02).** The _When to revisit_ entry below fired, and #953 answered it: seven
 files moved to a shared `deploy/clusters/base/`. The rest of this decision stands, and the flat layout was right for the size the repository had here.
 
+**Amended (2026-11-05, [#4445](https://github.com/enorm-labs/event-junkie/issues/4445)).** The ClusterIssuer left the application release, because a release
+waits for everything it renders. The application release no longer needs the `dependsOn` that _Ordering is bought for free_ describes below.
+
 **Partially supersedes [ADR-012](ADR-012_CLOUD_PLATFORM.md).** That ADR chose Hetzner and accepted a known weakness.
 _"GitHub Actions cannot use OIDC against Hetzner. A deploy authenticates with a scoped kubeconfig or deploy key, held
 as a repository secret and rotated deliberately. This is a genuine step down from AWS/GCP OIDC, and deserves to be

@@ -1,0 +1,22 @@
+# Keeps the ClusterIssuer out of the application release, which waits for everything it renders: a Let's
+# Encrypt outage would fail its upgrade and its rollback (#4445). `wait: false` keeps that outage from
+# failing this object too. A Kustomization cannot name a HelmRelease in `dependsOn`, so on a fresh cluster
+# this fails on an unknown kind and retries until cert-manager's CRDs exist.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-issuer
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      Applies the ClusterIssuer on its own, so that its readiness gates no deploy.
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 2m
+  path: ./deploy/clusters/production/issuer
+  prune: true
+  wait: false
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

@@ -9,10 +9,10 @@
 #      configuration lives in each cluster's HelmRelease (#414), which is not a values document, so
 #      `spec.values` is extracted and handed to `helm unittest --values`.
 #
-#   2. **Assert on relationships between files**: no published HelmRelease pins an image tag, a
-#      release creating a ClusterIssuer declares `dependsOn`, every third-party chart is pinned to
-#      one version, a release creating its own namespace has that namespace declared with a Pod
-#      Security Admission level.
+#   2. **Assert on relationships between files**: no published HelmRelease pins an image tag, the
+#      ClusterIssuer stays out of the release and in a Kustomization that does not wait, every
+#      third-party chart is pinned to one version, a release creating its own namespace has that
+#      namespace declared with a Pod Security Admission level.
 #
 # Usage: scripts/cluster-assertions.sh [chart-dir] [clusters-dir]
 #
@@ -154,30 +154,57 @@ check_database_cidr() {
     done
 }
 
-# --- 2b. A ClusterIssuer needs cert-manager to already be there ---------------------------------
+# --- 2b. The ClusterIssuer gates no deploy --------------------------------------------------------
 #
-# The API server rejects an unknown kind, so a HelmRelease with `certManager.clusterIssuer.create:
-# true` and no `dependsOn` installs nothing at all — workloads included — on the first bootstrap of a
-# new cluster, looking like a chart bug. #265 added the dependency; this keeps it.
-check_cluster_dependencies() {
-    printf '\n== cluster dependencies ==\n'
+# A release waits for everything it renders, so an issuer inside it turns a Let's Encrypt outage into
+# a failed upgrade and a failed rollback (#4445). Every part fails quietly: nothing shows until the
+# next outage, or until a certificate names an issuer that does not exist.
+check_cluster_issuers() {
+    printf '\n== cluster issuers ==\n'
 
-    local file cluster creates depends
+    local file dir cluster name issuer kustomization
     for file in "$CLUSTERS_DIR"/*/helm-release.yaml; do
         [[ -e "$file" ]] || continue
-        cluster="$(basename "$(dirname "$file")")"
+        dir="$(dirname "$file")"
+        cluster="$(basename "$dir")"
         current_case="$cluster"
 
-        creates="$(yq -N '.spec.values.certManager.clusterIssuer.create // false' "$file")"
-        [[ "$creates" == "true" ]] || continue
-
-        depends="$(yq -N '.spec.dependsOn[].name // ""' "$file")"
-        if [[ -n "$(printf '%s' "$depends" | tr -d '[:space:]')" ]]; then
-            pass "creates a ClusterIssuer and declares dependsOn ($(printf '%s' "$depends" | tr '\n' ' '))"
+        if [[ "$(yq -N '.spec.values.certManager.clusterIssuer.create // false' "$file")" == "true" ]]; then
+            fail "the release renders a ClusterIssuer" \
+                "the release waits for it, so an ACME outage fails every upgrade and rollback; use issuer/"
         else
-            fail "creates a ClusterIssuer but declares no dependsOn" \
-                "the release renders a cert-manager.io/v1 kind; without cert-manager installed first the
-whole release fails on an unknown kind, not just the issuer"
+            pass "the release renders no ClusterIssuer"
+        fi
+
+        # No `//` here: yq reads `false // x` as x, and production inherits the chart's default.
+        [[ "$(yq -N '.spec.values.ingress.tls.enabled' "$file")" != "false" ]] || continue
+
+        name="$(yq -N '.spec.values.certManager.clusterIssuer.name // ""' "$file")"
+        issuer="$dir/issuer/cluster-issuer.yaml"
+        kustomization="$dir/issuer-kustomization.yaml"
+        if [[ -e "$issuer" && "$(yq -N '.metadata.name' "$issuer")" == "$name" ]]; then
+            pass "the Ingress names the issuer that issuer/ creates ($name)"
+        else
+            fail "the Ingress names '$name', which issuer/cluster-issuer.yaml does not create" \
+                "cert-manager then waits for that issuer, and no certificate is issued"
+        fi
+
+        if [[ -e "$kustomization" &&
+            "$(yq -N '.spec.wait // false' "$kustomization")" == "false" &&
+            "$(yq -N '.spec.healthChecks // [] | length' "$kustomization")" == "0" &&
+            "$(yq -N '.spec.path' "$kustomization")" == "./deploy/clusters/$cluster/issuer" ]]; then
+            pass "issuer-kustomization.yaml applies issuer/ and does not wait"
+        else
+            fail "issuer-kustomization.yaml waits on the issuer, or applies another path" \
+                "a wait makes an ACME outage fail this object, and it needs the path of its own cluster"
+        fi
+
+        if yq -N '.resources[]' "$dir/kustomization.yaml" | grep -qx 'issuer-kustomization.yaml' &&
+            yq -N '.resources[]' "$dir/issuer/kustomization.yaml" | grep -qx 'cluster-issuer.yaml'; then
+            pass "both kustomization.yaml files list the issuer's files"
+        else
+            fail "a kustomization.yaml does not list the issuer's files" \
+                "a file not named in resources never reaches the cluster, and it still renders and lints"
         fi
     done
 }
@@ -314,7 +341,7 @@ main() {
 
     check_image_tags
     check_database_cidr
-    check_cluster_dependencies
+    check_cluster_issuers
     check_noindex
     check_version_pins
     check_namespace_governance

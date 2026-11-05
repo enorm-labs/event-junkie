@@ -627,7 +627,8 @@ The chart annotates its Ingress with `cert-manager.io/cluster-issuer` and lets c
 resource of its own. Two things about the split are decisions rather than defaults:
 
 - **The `ClusterIssuer` template is off by default.** A ClusterIssuer is cluster-scoped, so a chart that owns one cannot be installed twice on the same
-  cluster. That is exactly what the k3d rehearsal does. Staging's `HelmRelease` turns it on, and production points at an issuer created out of band.
+  cluster. That is exactly what the k3d rehearsal does. Staging and production also leave it off. Their `cluster-issuer` Kustomization applies
+  `deploy/clusters/<env>/issuer/`, so that a Let's Encrypt outage does not fail a deploy (#4445).
 - **The solver is a value**, `http01` or `dns01`. The chart renders the solver. The Hetzner DNS webhook it names is installed separately, not as a chart
   dependency.
 
