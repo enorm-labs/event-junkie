@@ -2,8 +2,7 @@
 {{- $issuer := .Values.certManager.clusterIssuer }}
 {{- $args := dict "ctx" $ "component" "certmanager" }}
 {{- /* Off by default because a ClusterIssuer is cluster-scoped: a chart that owns one cannot be
-   installed twice on one cluster, which the k3d rehearsal (#263) does. Staging and production
-   create the issuer once, out of band, and `certManager.clusterIssuer.name` points at it.
+   installed twice on one cluster, which the k3d rehearsal (#263) does.
 
    No `crds/` directory either: Helm has no story for upgrading or deleting CRDs a chart
    installed, so cert-manager's belong to cert-manager (#265); this chart renders only instances. */}}
@@ -14,6 +13,11 @@ metadata:
   name: {{ $issuer.name | quote }}
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      Tells cert-manager how to request this environment's certificates from Let's Encrypt.
+    {{- /* Helm reads this from the deployed manifest. `create: false` then leaves the live issuer for Flux to adopt (see #4445). */}}
+    helm.sh/resource-policy: keep
 spec:
   acme:
     {{- /* Defaults to Let's Encrypt staging. Production allows 50 certificates per registered domain
