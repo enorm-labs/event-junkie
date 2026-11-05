@@ -1,5 +1,6 @@
 package de.norm.events.scraper.hausderstatistik
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractMonthPagesWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
@@ -7,7 +8,9 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.querySeparator
+import de.norm.events.slug.SlugGenerator
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -22,6 +25,9 @@ import org.springframework.stereotype.Component
  * and the price note ([HausDerStatistikEventPageScraper]). Its organiser line is not read, because
  * it often names a private person with an e-mail address. The `/en/` pages carry the German event
  * text unchanged, so the site has no second language.
+ *
+ * An exhibition has one row and one page per open day, and the days fold into one run ([foldRuns]).
+ * The show's name keys the run, because each page has its own slug (`…-saalfeld-2`).
  */
 @Component
 class HausDerStatistikWebsiteImporter(
@@ -30,6 +36,19 @@ class HausDerStatistikWebsiteImporter(
     override val eventSource: EventSource = EventSource.HAUS_DER_STATISTIK
 
     override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = HausDerStatistikEventPageScraper()::scrape
+
+    override fun foldRuns(events: List<ScrapedEvent>): List<ScrapedEvent> {
+        val shows =
+            events
+                .filter { it.eventType == EventType.EXHIBITION.name }
+                .mapNotNull { event -> HausDerStatistikMonthPageScraper.exhibitionShowName(event.title)?.let { event.sourceId to it } }
+                .toMap()
+        return events
+            .map { event -> shows[event.sourceId]?.let { event.copy(title = it) } ?: event }
+            .collapseExhibitionRuns { event ->
+                shows[event.sourceId]?.let { "${EventSource.HAUS_DER_STATISTIK.sourceIdPrefix}exhibition-${SlugGenerator.slugify(it)}" }
+            }
+    }
 
     override fun monthPageUrls(
         entry: Document,

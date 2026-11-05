@@ -22,7 +22,8 @@ import org.jsoup.nodes.Element
  * Parser for one Haus der Statistik month page (`/programm/?typ=veranstaltung&monat[]=2026-10`).
  * Each `.teaser.event` row carries an ISO `time[datetime]`, the time span, the title, a teaser
  * and the venue's format tags. The tags type the row, and a row whose every tag is a
- * participation format is dropped ([isParticipationFormat]).
+ * participation format is dropped ([isParticipationFormat]). The venue leaves some open days of an
+ * exhibition without a tag, so a title such as `Exhibition is open! <show>` types the row too.
  */
 class HausDerStatistikMonthPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -50,7 +51,9 @@ class HausDerStatistikMonthPageScraper {
 
         val startTime = parseClockPrefix(dateTime.substringAfter('T', ""))
         val endTime = parseTime(row.textAt(".teaser__meta span")?.substringAfter('–', "")?.trim())
-        val eventType = tags.firstNotNullOfOrNull { mapEventType(it, TAG_TYPES) }
+        val eventType =
+            tags.firstNotNullOfOrNull { mapEventType(it, TAG_TYPES) }
+                ?: EventType.EXHIBITION.name.takeIf { exhibitionShowName(title) != null }
         return ScrapedEvent(
             title = title,
             description = row.textAt(".teaser__content"),
@@ -81,6 +84,11 @@ class HausDerStatistikMonthPageScraper {
          * files its regular discussion rounds there; a talk also carries `Vortrag`.
          */
         private val PARTICIPATION_TAGS = setOf("workshop", "werkstatt", "treffen", "kochen", "diskussion")
+
+        private val EXHIBITION_DAY_TITLE = Regex("""^Exhibition\s+(?:Opening\s*:|is open\s*!?)\s*(.+)$""", RegexOption.IGNORE_CASE)
+
+        /** The show's name in a title that opens one day of an exhibition, or null for any other title. */
+        fun exhibitionShowName(title: String): String? = EXHIBITION_DAY_TITLE.find(title)?.groupValues?.get(1)
 
         /**
          * Whether every format tag of a row names a participation format (EVENT_SCOPE.md §3.2): an

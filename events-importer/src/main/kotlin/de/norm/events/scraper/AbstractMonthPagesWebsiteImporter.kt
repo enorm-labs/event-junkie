@@ -43,6 +43,9 @@ abstract class AbstractMonthPagesWebsiteImporter(
     /** The page that several rows share, as one production's performances do, read once per page. */
     protected open val sharedPages: SharedPages<*>? = null
 
+    /** The rows of every month as the venue's events. A venue that lists one show on many days folds them here. */
+    protected open fun foldRuns(events: List<ScrapedEvent>): List<ScrapedEvent> = events
+
     final override suspend fun importEvents(
         url: String,
         etag: String?,
@@ -56,7 +59,7 @@ abstract class AbstractMonthPagesWebsiteImporter(
                 scrape(htmlFetcher.fetchDocument(monthUrl), monthUrl)
             }
         val enriched = htmlFetcher.withEventPages(months.items.distinctBy { it.sourceId }, eventPageOwns, ::hasEventPage, enrichFromEventPage)
-        val events = htmlFetcher.withSharedPages(enriched, sharedPages)
+        val events = foldRuns(htmlFetcher.withSharedPages(enriched, sharedPages))
         logger.info { "Scraped ${events.size} $venueName event(s) across ${monthUrls.size} month page(s)" }
         return ImportResult.Success(events = events, etag = null, lastModified = null, complete = months.complete)
     }
