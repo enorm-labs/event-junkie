@@ -39,7 +39,7 @@ git -C "$wt" log -1 --format='%cr %s'           # last commit
 gh pr list --head "$branch" --state all --json number,state,mergedAt --limit 5
 # gitignored files a removal deletes, without what a build creates again
 git -C "$wt" ls-files --others --ignored --exclude-standard |
-  grep -Ev '(^|/)(build|node_modules|\.gradle|\.kotlin|dist|__pycache__)(/|$)'
+  grep -Ev '(^|/)(build|node_modules|\.gradle|\.kotlin|dist|dist-injector|playwright-report|test-results|__pycache__)(/|$)'
 ```
 
 - **Ignored files**: `git status` shows none of them, and `temp/` is the likely place, because AGENTS.md sends plans there. Any line of output moves a worktree
