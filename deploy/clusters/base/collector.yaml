@@ -46,7 +46,7 @@ spec:
   chart:
     spec:
       chart: opentelemetry-operator
-      version: "0.128.0"
+      version: "0.129.0"
       sourceRef:
         kind: HelmRepository
         name: open-telemetry
@@ -101,7 +101,7 @@ spec:
   chart:
     spec:
       chart: openobserve-collector
-      version: "0.8.2"
+      version: "0.8.3"
       # The shared source, not a second object at the same URL (#1080).
       sourceRef:
         kind: HelmRepository
@@ -397,7 +397,7 @@ spec:
   chart:
     spec:
       chart: openobserve-collector
-      version: "0.8.2"
+      version: "0.8.3"
       sourceRef:
         kind: HelmRepository
         name: openobserve
