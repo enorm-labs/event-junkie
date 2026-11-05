@@ -24,10 +24,10 @@ class InstagramMetrics(
     }
 
     /** Stamps a pass that ended at [at]. */
-    fun passSucceeded(at: Instant) = lastSuccess.set(at.epochSecond)
+    fun markSucceeded(at: Instant) = lastSuccess.set(at.epochSecond)
 
     /** Starts the age at [at], when the runner starts, so a pass a release broke still ages. A pass that ended first is kept. */
-    fun seedPass(at: Instant) {
+    fun seed(at: Instant) {
         lastSuccess.accumulateAndGet(at.epochSecond, ::maxOf)
     }
 

@@ -66,7 +66,7 @@ class InstagramDraftRunner(
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     init {
-        metrics.seedPass(clock.instant())
+        metrics.seed(clock.instant())
     }
 
     /** Starts a read of one venue in the background. An unknown or switched-off venue and a running pass fail here. */
@@ -149,7 +149,7 @@ class InstagramDraftRunner(
             }
         }
         // A refused access is not stamped, though `ej-instagram-access-refused` fires first: the pass did not read the venues.
-        if (stop != InstagramPassStop.ACCESS_REFUSED) metrics.passSucceeded(clock.instant())
+        if (stop != InstagramPassStop.ACCESS_REFUSED) metrics.markSucceeded(clock.instant())
         return InstagramPassResult(read, switchedOn.size - read, drafts, calls, removed, stop).also { report(it, switchedOn.size) }
     }
 
