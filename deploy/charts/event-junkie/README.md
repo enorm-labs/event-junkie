@@ -65,10 +65,7 @@ Only the values worth a decision are listed. Every property is documented in
 | `ingress.host`                               | `event-junkie.de`       | The only name routed to the applications                                                                             |
 | `ingress.redirectHosts`                      | five names, see values  | 308 to `ingress.host`, with its own certificate. Empty renders no redirect Ingress and no `redirectRegex`            |
 | `ingress.httpsRedirect`                      | `true`                  | 308 from plain HTTP to HTTPS on the app Ingress only, and only with `tls.enabled`, so HTTP-01 still works (#1891)    |
-| `certManager.clusterIssuer.create`           | `false`                 | A ClusterIssuer is a cluster-scoped singleton — see below                                                            |
-| `certManager.clusterIssuer.server`           | ACME **staging**        | Deliberately not production. 50 certificates per registered domain per week, and burning it costs seven days         |
-| `certManager.clusterIssuer.solver`           | `http01`                | `dns01` for staging, which has no public address for HTTP-01 to reach                                                |
-| `certManager.clusterIssuer.dns01.*`          | official webhook        | `groupName: acme.hetzner.com` and a `tokenSecretKeyRef` — see below, the community forks differ on both              |
+| `certManager.clusterIssuer.name`             | `letsencrypt-staging`   | The issuer the Ingress annotation names. The chart does not create it — see below                                    |
 | `ingress.noindex`                            | `false`                 | Marks an environment as not-production: the header, plus a disallow-all `robots.txt` and empty sitemap               |
 | `tests.smoke.enabled`                        | `false`                 | The post-deploy k6 smoke through the Ingress (#1697). On per cluster, after `verifyTls` is right for its certificate |
 | `tests.smoke.verifyTls`                      | `true`                  | `false` on staging only: Let's Encrypt's staging CA is untrusted on purpose. Production verifies                     |
@@ -280,35 +277,17 @@ subsequent upgrade with an immutable-field error, which nobody sees until the _s
 
 ### cert-manager's CRDs are cert-manager's
 
-The chart ships no `crds/` directory and creates no `Certificate`: the ingress-shim annotation makes
-cert-manager create it. Helm has no story for upgrading or deleting CRDs a chart installed, so owning
-somebody else's is how a chart acquires a resource it can never safely change.
+The chart ships no `crds/` directory, and creates no `Certificate` and no ClusterIssuer: the
+ingress-shim annotation makes cert-manager create the certificate. Helm has no story for upgrading or
+deleting CRDs a chart installed, so owning somebody else's is how a chart acquires a resource it can
+never safely change.
 
-`certManager.clusterIssuer.create` is off by default because a ClusterIssuer is cluster-scoped, and
-a chart that owns one cannot be installed twice on the same cluster — which is exactly what the k3d
-rehearsal needs to do.
-
-Staging and production leave it off as well. Their issuer is `deploy/clusters/<env>/issuer/`, applied
-by its own Flux Kustomization, because a release waits for everything it renders: an issuer inside
-it would turn a Let's Encrypt outage into a failed upgrade and a failed rollback (#4445).
-[`../../../scripts/cluster-assertions.sh`](../../../scripts/cluster-assertions.sh) fails the build
-if a release renders one again. Since #265 cert-manager itself is a `HelmRelease` in each cluster
-directory rather than a manual install.
-
-### The DNS-01 solver names Hetzner's own webhook, not a fork
-
-`solver: dns01` renders a webhook solver, and the shape of it is version-specific in a way that
-fails late. Hetzner shut the old `dns.hetzner.com` API down in **May 2026**; the community webhooks
-that still dominate search results speak it, install cleanly, report Ready and then fail at
-challenge time. This chart renders the official one:
-
-- `groupName: acme.hetzner.com` — the forks use `.cloud`
-- `config.tokenSecretKeyRef: {name, key}` — the forks take `secretName`/`secretKey`
-- the token is an ordinary **hcloud** token, and the Secret must live in **cert-manager's**
-  namespace, because that is where a ClusterIssuer resolves secret references
-
-The chart renders the solver; it does not install the webhook, and rendering a solver that names one
-is not the same as depending on it.
+The issuer is `deploy/clusters/<env>/issuer/`, applied by its own Flux Kustomization, because a release
+waits for everything it renders: an issuer inside it would turn a Let's Encrypt outage into a failed
+upgrade and a failed rollback (#4445). `certManager.clusterIssuer.name` only names it.
+[`../../../scripts/cluster-assertions.sh`](../../../scripts/cluster-assertions.sh) fails the build if
+the chart gains one again. Since #265 cert-manager itself is a `HelmRelease` in each cluster directory
+rather than a manual install.
 
 ### `ingress.noindex` is four parts that must agree
 

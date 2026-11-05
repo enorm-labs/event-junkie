@@ -321,7 +321,7 @@ This document is about what happens on every commit afterwards.
 
 The one property worth carrying across, because it constrains the chart rather than the runbook: **the ClusterIssuer gates no deploy.** A release waits for
 everything it renders. An issuer inside it would turn a Let's Encrypt outage into a failed upgrade and a failed rollback. The `cluster-issuer` Kustomization
-applies the issuer from `deploy/clusters/<env>/issuer/` and does not wait. `scripts/cluster-assertions.sh` fails the build if a release renders an issuer again.
+applies the issuer from `deploy/clusters/<env>/issuer/` and does not wait. `scripts/cluster-assertions.sh` fails the build if the chart gains an issuer again.
 
 ## What is not automated, and why
 

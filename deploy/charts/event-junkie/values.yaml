@@ -1,7 +1,6 @@
-# Default values for the event-junkie chart — production-shaped, per the Helm guide. Two deliberate
-# exceptions: `database.host` and `database.existingSecret` are empty because there is no safe default,
-# and `certManager.clusterIssuer.server` points at Let's Encrypt *staging*, the wrong default costing
-# seven days. Conventions: camelCase keys, strings quoted, maps over arrays. A property gets a comment
+# Default values for the event-junkie chart — production-shaped, per the Helm guide. One deliberate
+# exception: `database.host` and `database.existingSecret` are empty because there is no safe default.
+# Conventions: camelCase keys, strings quoted, maps over arrays. A property gets a comment
 # when it has something to say, naming the key where it could be read against more than one.
 
 # nameOverride replaces the chart name in resource names and in `app.kubernetes.io/name`.
@@ -586,32 +585,9 @@ networkPolicy:
 
 certManager:
   clusterIssuer:
-    # certManager.clusterIssuer.name is the issuer the ingress annotation points at. It must already
-    # exist unless `create` is true.
+    # certManager.clusterIssuer.name is the issuer the ingress annotation points at. The chart does not
+    # create it: `deploy/clusters/<env>/issuer/` does, because a release waits for what it renders (#4445).
     name: "letsencrypt-staging"
-    # certManager.clusterIssuer.create renders the ClusterIssuer from this chart, off by default: a
-    # ClusterIssuer is a cluster-scoped singleton, so a chart owning one cannot be installed twice on a
-    # cluster, which the k3d rehearsal does. `helm install` fails outright without cert-manager.
-    create: false
-    # certManager.clusterIssuer.email receives Let's Encrypt expiry warnings.
-    email: ""
-    # certManager.clusterIssuer.server defaults to the ACME *staging* endpoint; production allows 50
-    # certificates per domain per week, and burning that costs seven days.
-    server: "https://acme-staging-v02.api.letsencrypt.org/directory"
-    # certManager.clusterIssuer.solver is `http01` or `dns01`. Staging has no public address for
-    # HTTP-01 to reach (PLATFORM_SETUP §4a), so it uses dns01 against Hetzner DNS.
-    solver: "http01"
-    dns01:
-      tokenSecret:
-        # certManager.clusterIssuer.dns01.tokenSecret.name holds a **Hetzner Cloud** API token (not a dead
-        # `dns.hetzner.com` one), read by the webhook. Not created by this chart, and it must live in
-        # cert-manager's own namespace: a ClusterIssuer resolves references against the cluster resource
-        # namespace.
-        name: "hetzner"
-        key: "token"
-      # certManager.clusterIssuer.dns01.webhookGroupName: `.com` is the official webhook's; the forks use
-      # `.cloud` and speak the dead API.
-      webhookGroupName: "acme.hetzner.com"
 
 # Renders the `helm test` hook pods under `templates/tests/`. #414 wires Flux's `test.enable` to
 # them: both run after every install and upgrade, and a failure rolls the release back.

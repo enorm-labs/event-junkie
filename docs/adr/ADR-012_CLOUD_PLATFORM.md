@@ -625,8 +625,8 @@ The cost is that the edge was doing three jobs and now nobody is:
 - **Rate limiting and DDoS** — a Traefik rate-limit middleware plus the BFF's existing `PerHostThrottlingFilter`, over Hetzner's volumetric protection. This is
   now work rather than a free by-product, and it belongs to [#268](https://github.com/enorm-labs/event-junkie/issues/268).
 - **TLS certificates** — cert-manager, and the Helm chart provisions it. `deploy/charts/event-junkie` sets the
-  `cert-manager.io/cluster-issuer` annotation on the Ingress. It also ships an optional `ClusterIssuer`, off by
-  default, because that is a cluster-scoped singleton. It deliberately does **not** install
+  `cert-manager.io/cluster-issuer` annotation on the Ingress. Each cluster directory holds the `ClusterIssuer`, not the chart
+  ([#4445](https://github.com/enorm-labs/event-junkie/issues/4445)). The chart deliberately does **not** install
   cert-manager itself or own its CRDs — that is [#265](https://github.com/enorm-labs/event-junkie/issues/265). Traefik's own ACME client was not taken, for the
   reasons in [docs/ops/PLATFORM_SETUP.md](../ops/PLATFORM_SETUP.md) §6.
 - **CDN caching of the SPA bundle** — not replaced, and not worth replacing. One nginx serving a few content-hashed megabytes to Berlin-scale traffic, with 20 TB
