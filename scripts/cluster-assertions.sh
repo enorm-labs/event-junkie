@@ -10,9 +10,9 @@
 #      `spec.values` is extracted and handed to `helm unittest --values`.
 #
 #   2. **Assert on relationships between files**: no published HelmRelease pins an image tag, the
-#      ClusterIssuer stays out of the release and in a Kustomization that does not wait, every
-#      third-party chart is pinned to one version, a release creating its own namespace has that
-#      namespace declared with a Pod Security Admission level.
+#      ClusterIssuer stays out of the release and in a Kustomization that does not wait, a failing
+#      Kustomization reaches a red workflow run, every third-party chart is pinned to one version, a
+#      release creating its own namespace has that namespace declared with a Pod Security Admission level.
 #
 # Usage: scripts/cluster-assertions.sh [chart-dir] [clusters-dir]
 #
@@ -210,6 +210,51 @@ check_cluster_issuers() {
     done
 }
 
+# --- 2b-i. A Kustomization that fails is heard ------------------------------------------------------
+#
+# The controller reports a failed apply only as an event (#4491). An object missing from the Alert
+# sends none, and one missing from the workflow's `types` dispatches into nothing on GitHub. Both look
+# exactly like a healthy cluster.
+check_kustomization_alerts() {
+    printf '\n== failing Kustomizations reach a workflow ==\n'
+
+    local workflow="$REPO_ROOT/.github/workflows/flux-source-failure.yml"
+    local dir cluster notification name found
+    for notification in "$CLUSTERS_DIR"/*/notification.yaml; do
+        [[ -e "$notification" ]] || continue
+        dir="$(dirname "$notification")"
+        cluster="$(basename "$dir")"
+        current_case="$cluster"
+
+        found=0
+        # shellcheck disable=SC2016 # yq's own expression, not shell.
+        while IFS= read -r name; do
+            [[ -n "$name" ]] || continue
+            found=1
+            if NAME="$name" yq -N -e 'select(.kind == "Alert" and .metadata.name == "apply-failure") | .spec.eventSources[] | select(.kind == "Kustomization" and .name == strenv(NAME))' "$notification" >/dev/null 2>&1; then
+                pass "the apply-failure Alert names $name"
+            else
+                fail "the apply-failure Alert does not name $name" \
+                    "the cluster sends no event when it fails, and nothing else reports a failed apply"
+            fi
+            if yq -N '.on.repository_dispatch.types[]' "$workflow" | grep -qx "Kustomization/$name.flux-system"; then
+                pass "flux-source-failure.yml listens for $name"
+            else
+                fail "flux-source-failure.yml does not list Kustomization/$name.flux-system" \
+                    "an unmatched dispatch leaves no trace on GitHub"
+            fi
+        done < <(find "$dir" -name '*.yaml' -print0 |
+            xargs -0 yq -N 'select(.kind == "Kustomization" and (.apiVersion | test("toolkit.fluxcd.io"))) | .metadata.name' | grep -v '^---$' | sort -u)
+
+        # An empty list would pass every line above.
+        if ((found == 1)); then
+            pass "found this cluster's Kustomizations"
+        else
+            fail "found no Flux Kustomization under $dir" "this check then proves nothing"
+        fi
+    done
+}
+
 # --- 2b-ii. Exactly one environment may be indexable --------------------------------------------
 #
 # `ingress.noindex` defaults to `false`, so *forgetting* it makes an environment indexable — an
@@ -343,6 +388,7 @@ main() {
     check_image_tags
     check_database_cidr
     check_cluster_issuers
+    check_kustomization_alerts
     check_noindex
     check_version_pins
     check_namespace_governance

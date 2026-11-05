@@ -121,7 +121,8 @@ is the map and the traps.
   is the deployment's first success**. `UpgradeSucceeded` and `TestSucceeded` are both successes, so without the third condition one reconcile audits the site
   twice and reports two medians for one release. A `deployment_status` trigger cannot replace any of it — a status created with `GITHUB_TOKEN` starts no
   workflow.
-  `flux-source-failure.yml` (#1454) — the other listener, on `OCIRepository/event-junkie.flux-system` from each cluster's `source-failure` Alert; a failed
+  `flux-source-failure.yml` (#1454) — the other listener, on `OCIRepository/event-junkie.flux-system` from each cluster's `source-failure` Alert, and on each
+  Kustomization from its `apply-failure` Alert (#4491), whose failed apply is reported only as that event. A failed
   signature or an unreachable registry keeps the last artifact and emits no HelmRelease event, so this job is **red by construction** — the one shape GitHub
   mails about. The one exception is the publish race (#2031): on `no signatures found` it waits a minute, resolves the cluster's version with
   `scripts/deployed-versions.sh`, and ends green when `cosign verify` passes against that cluster's `spec.verify`. **Neither can be tested from a PR**: `repository_dispatch` runs the default branch only, so both fail loudly on an unrecognised payload.

@@ -1,7 +1,8 @@
 # Makes a failing Flux source visible on GitHub (#1454). Each cluster's `source-failure` Alert fires a
 # `repository_dispatch` when the OCIRepository reports an error — a chart failing cosign verification
 # (#1425), an unreachable registry, a range matching nothing. source-controller keeps the last good
-# artifact and the HelmRelease emits no event, so `deployment-status.yml` records nothing.
+# artifact and the HelmRelease emits no event, so `deployment-status.yml` records nothing. The
+# `apply-failure` Alert does the same for a Kustomization that fails to apply (#4491).
 #
 # THIS JOB IS RED BY CONSTRUCTION, with one exception: a failed run is the one shape GitHub mails
 # anyone about — the actor is the `github-dispatch` PAT's owner. The dispatch type is Flux's own
@@ -11,11 +12,14 @@
 # The exception is the publish race (#2031). `release.yml` pushes the chart and signs it seconds
 # later, and a poll in between reports `no signatures found`. That dispatch ends green when, a minute
 # on, the version the cluster selects verifies against the cluster's own `spec.verify`.
-name: Flux Source Failure
+name: Flux Failure
 
 on:
   repository_dispatch:
-    types: [ OCIRepository/event-junkie.flux-system ]
+    types:
+      - OCIRepository/event-junkie.flux-system
+      - Kustomization/flux-system.flux-system
+      - Kustomization/cluster-issuer.flux-system
 
 # The checkout only: the race check reads the cluster's source and `scripts/deployed-versions.sh`.
 permissions:
@@ -118,10 +122,11 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           echo "::notice title=Signature race on ${CLUSTER}::${VERIFIED} verifies; the source takes it on its next poll."
 
-      - name: Fail with the source's own message
+      - name: Fail with Flux's own message
         if: steps.race.outputs.verified == ''
         env:
           CLUSTER: ${{ github.event.client_payload.metadata.cluster }}
+          OBJECT: ${{ github.event.action }}
           REASON: ${{ github.event.client_payload.reason }}
           MESSAGE: ${{ github.event.client_payload.message }}
           REVISION: ${{ github.event.client_payload.metadata.revision }}
@@ -129,7 +134,7 @@ jobs:
         run: |
           set -euo pipefail
           {
-            echo "## ${CLUSTER:-unknown cluster} — OCIRepository event-junkie failed"
+            echo "## ${CLUSTER:-unknown cluster} — ${OBJECT} failed"
             echo
             echo "| Field | Value |"
             echo "| --- | --- |"
@@ -141,5 +146,5 @@ jobs:
             echo "${MESSAGE:-no message in the payload}"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "::error title=Flux source failed on ${CLUSTER:-unknown cluster}::${REASON:-?}: ${MESSAGE:-no message in the payload}"
+          echo "::error title=${OBJECT} failed on ${CLUSTER:-unknown cluster}::${REASON:-?}: ${MESSAGE:-no message in the payload}"
           exit 1
