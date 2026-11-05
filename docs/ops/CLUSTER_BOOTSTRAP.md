@@ -199,6 +199,8 @@ kubectl --context event-junkie-staging create secret generic github-dispatch -n 
   --from-literal=token="<the event-junkie-staging-github-dispatch PAT>"
 ```
 
+**The owner of this PAT receives the Flux failure emails.** Set up that account as [PLATFORM_SETUP.md §3.1](PLATFORM_SETUP.md#31-deployment-visibility-on-github) tells you.
+
 **Verify before Flux depends on it** — this also exercises the `pg_hba` private-network rule:
 
 ```sh
