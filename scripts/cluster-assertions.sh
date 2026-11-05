@@ -162,19 +162,20 @@ check_database_cidr() {
 check_cluster_issuers() {
     printf '\n== cluster issuers ==\n'
 
+    current_case="chart"
+    if grep -rlE '^kind: *ClusterIssuer' "$CHART_DIR/templates" >/dev/null; then
+        fail "the chart renders a ClusterIssuer" \
+            "the release waits for it, so an ACME outage fails every upgrade and rollback; use issuer/"
+    else
+        pass "the chart renders no ClusterIssuer"
+    fi
+
     local file dir cluster name issuer kustomization
     for file in "$CLUSTERS_DIR"/*/helm-release.yaml; do
         [[ -e "$file" ]] || continue
         dir="$(dirname "$file")"
         cluster="$(basename "$dir")"
         current_case="$cluster"
-
-        if [[ "$(yq -N '.spec.values.certManager.clusterIssuer.create // false' "$file")" == "true" ]]; then
-            fail "the release renders a ClusterIssuer" \
-                "the release waits for it, so an ACME outage fails every upgrade and rollback; use issuer/"
-        else
-            pass "the release renders no ClusterIssuer"
-        fi
 
         # No `//` here: yq reads `false // x` as x, and production inherits the chart's default.
         [[ "$(yq -N '.spec.values.ingress.tls.enabled' "$file")" != "false" ]] || continue

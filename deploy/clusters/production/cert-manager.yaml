@@ -4,8 +4,7 @@
 #
 # The difference: **no DNS-01 webhook here.** Production has a public address, so it solves ACME over
 # HTTP-01 and needs no Hetzner API token in the cluster at all. That is one fewer credential and one
-# fewer component on the environment that matters most, and it is why `helm-release.yaml` depends on
-# this release directly rather than on a webhook.
+# fewer component on the environment that matters most.
 #
 # The sameness: identical versions and identical resource requests. cert-manager's footprint tracks
 # the size of the cluster, not the traffic through it, so there is nothing here to scale up — and

@@ -72,12 +72,6 @@ ingress:
       average: 5000
       burst: 10000
 
-certManager:
-  clusterIssuer:
-    # Nothing to create: with `tls.enabled: false` no annotation references an issuer, and a
-    # ClusterIssuer would fail the install on an unknown kind.
-    create: false
-
 # The rehearsal's PostgreSQL is on the host, reached through `host.k3d.internal` — an address k3d
 # assigns at cluster-create time, so `0.0.0.0/0` stands in and the rule still constrains the **port**.
 # Weaker than the /32 the real environments set, and the one policy the rehearsal cannot prove tight.

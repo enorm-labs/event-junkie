@@ -86,7 +86,7 @@ when the window moved it; read the last commit's diff when it did not, and say `
 
 ### A04 · Cryptographic Failures
 
-- **Evidence:** `templates/clusterissuer.yaml` and each cluster's `helm-release.yaml` (`certManager`, `tls`), `values.yaml` `ingress.securityHeaders.hsts`,
+- **Evidence:** each cluster's `issuer/cluster-issuer.yaml` and `helm-release.yaml` (`tls`), `values.yaml` `ingress.securityHeaders.hsts`,
   `docs/ops/SECRETS.md` (what is encrypted with SOPS/age, what is created by hand, the imgproxy key and salt), `curl -sI "$SITE_URL/" | grep -i strict`.
 - **Question:** what is plaintext in transit or at rest, and is any of it a secret? The database's disk on the node, the backups' encryption, the tunnel.
   Claim only what a file says: SECRETS.md and BACKUPS.md are the source, not memory.

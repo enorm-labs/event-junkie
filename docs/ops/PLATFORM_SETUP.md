@@ -624,17 +624,15 @@ token the old console issued stopped working with it. Six or so community webhoo
 ### How the chart splits it
 
 The chart annotates its Ingress with `cert-manager.io/cluster-issuer` and lets cert-manager's ingress-shim create the `Certificate`. It owns no `Certificate`
-resource of its own. Two things about the split are decisions rather than defaults:
+resource and no `ClusterIssuer`. Two things about the split are decisions rather than defaults:
 
-- **The `ClusterIssuer` template is off by default.** A ClusterIssuer is cluster-scoped, so a chart that owns one cannot be installed twice on the same
-  cluster. That is exactly what the k3d rehearsal does. Staging and production also leave it off. Their `cluster-issuer` Kustomization applies
-  `deploy/clusters/<env>/issuer/`, so that a Let's Encrypt outage does not fail a deploy (#4445).
-- **The solver is a value**, `http01` or `dns01`. The chart renders the solver. The Hetzner DNS webhook it names is installed separately, not as a chart
-  dependency.
+- **Each cluster holds its `ClusterIssuer`.** The `cluster-issuer` Kustomization applies `deploy/clusters/<env>/issuer/`, so that a Let's Encrypt outage does
+  not fail a deploy (#4445). The chart holds only the name of the issuer.
+- **The solver is in the issuer file**: `http01` on production and `dns01` on staging. The Hetzner DNS webhook that staging names is installed separately.
 
 **The chart ships no `crds/` directory and must not gain one.** Helm has no story for upgrading or deleting CRDs a chart installed. Owning cert-manager's is
-therefore how a chart acquires a resource it can never safely change. The consequence: **`helm install` fails outright if cert-manager is not already
-present**, because the API server rejects an unknown kind. It is not a race that resolves itself.
+therefore how a chart acquires a resource it can never safely change. The chart renders no cert-manager kind, so `helm install` does not need cert-manager. Without
+cert-manager, the Ingress gets no certificate.
 
 The chart uses five Traefik `Middleware` objects, each for something the Ingress API cannot express. Two are redirects. `redirectRegex` sends the
 redirect hosts to the apex, and `redirectScheme` sends plain HTTP to HTTPS on the app Ingress (#1891). The others are the security headers, `noindex` and

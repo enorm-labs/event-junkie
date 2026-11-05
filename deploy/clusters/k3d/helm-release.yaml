@@ -90,11 +90,6 @@ spec:
         # the database and route to each other. Adding certificate issuance would mean installing
         # cert-manager into k3d and debugging ACME against a name that does not exist.
         enabled: false
-    certManager:
-      clusterIssuer:
-        # Nothing to create — with `tls.enabled: false` no annotation references an issuer, and k3d
-        # has no cert-manager, so a ClusterIssuer here would fail the install on an unknown kind.
-        create: false
     # On, as values-k3d.yaml has it: the Flux path runs the smoke hook (#1697) too, so `flux-verify`
     # sees two hooks complete against the published chart, over the route a visitor takes.
     tests:

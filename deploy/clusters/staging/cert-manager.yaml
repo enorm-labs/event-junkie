@@ -1,6 +1,5 @@
-# cert-manager on staging. The chart's ClusterIssuer template renders a `cert-manager.io/v1` object,
-# so **cert-manager must already be installed or the application release fails outright** at an
-# unknown kind — why `helm-release.yaml` declares `dependsOn`.
+# cert-manager on staging. On a fresh cluster the `cluster-issuer` Kustomization retries until this
+# release has installed the CRDs.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:

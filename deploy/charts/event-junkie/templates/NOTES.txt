@@ -47,16 +47,3 @@ the schema exists and its readiness probe fails until the importer has finished 
 no init container and no Helm hook ordering the two on purpose — Kubernetes already retries, and the
 alternative is a startup dependency that has to be maintained forever. It self-heals. Treat it as an
 incident only if it is still restarting after the importer's pod reports ready.
-{{- if .Values.certManager.clusterIssuer.create }}
-
-A ClusterIssuer named {{ .Values.certManager.clusterIssuer.name | quote }} was created by this release.
-It is cluster-scoped, so a second release of this chart on the same cluster must set
-certManager.clusterIssuer.create=false and point at this one by name.
-{{- end }}
-{{- if and .Values.ingress.tls.enabled (contains "acme-staging" .Values.certManager.clusterIssuer.server) }}
-
-The certificate comes from Let's Encrypt STAGING, so browsers will not trust it. That is the default
-and it is the right default: the production endpoint allows 50 certificates per registered domain
-per week, and burning that costs seven days. Switch certManager.clusterIssuer.server only once the
-staging certificate has issued cleanly.
-{{- end }}

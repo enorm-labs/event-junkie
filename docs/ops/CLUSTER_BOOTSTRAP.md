@@ -471,7 +471,7 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 ```
 
 > **The issuer will say `(STAGING)`, and that is deliberate — the certificate is not browser-trusted.**
-> `certManager.clusterIssuer.server` points at Let's Encrypt's _staging_ ACME endpoint. The production rate limit is **per registered domain**, and
+> `deploy/clusters/staging/issuer/cluster-issuer.yaml` points at Let's Encrypt's _staging_ ACME endpoint. The production rate limit is **per registered domain**, and
 > `event-junkie.de` is the same registered domain production uses. Burning it here would lock production out for a week.
 >
 > So `https://staging.event-junkie.de` shows a certificate warning, by choice. What it proves is the **mechanism**: DNS-01 through the Hetzner webhook, for a
