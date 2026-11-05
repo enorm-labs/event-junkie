@@ -219,6 +219,11 @@ export function addDays(isoDate: string, days: number): string {
   return date.toISOString().slice(0, 10)
 }
 
+/** ISO-8601 weekday of an ISO date: 1 for Monday to 7 for Sunday. */
+export function isoWeekday(isoDate: string): number {
+  return new Date(`${isoDate}T00:00:00Z`).getUTCDay() || 7
+}
+
 /** The fields that decide whether an event is over. */
 export type EventSpan = {
   eventDate?: string | null

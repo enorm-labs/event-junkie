@@ -1,15 +1,8 @@
 import type { EventInput } from '@fullcalendar/vue3'
 
 import type { EventSummary } from '@/api/types'
-import { isPastEvent } from '@/lib/format'
+import { addDays, isPastEvent } from '@/lib/format'
 import { isLiveNow } from '@/lib/longRuns'
-
-/** The ISO date one day after `isoDate`, for FullCalendar's exclusive all-day `end`. */
-function dayAfter(isoDate: string): string {
-  const next = new Date(`${isoDate}T12:00:00Z`)
-  next.setUTCDate(next.getUTCDate() + 1)
-  return next.toISOString().slice(0, 10)
-}
 
 /**
  * The calendar's entry for an event. A span with both times is a timed block from start to end;
@@ -27,7 +20,7 @@ export function toCalendarInput(
   const end = timed
     ? `${event.endDate ?? event.eventDate}T${event.endTime}`
     : event.endDate
-      ? dayAfter(event.endDate)
+      ? addDays(event.endDate, 1) // FullCalendar's all-day `end` is exclusive.
       : undefined
   return {
     title: event.title ?? '',
