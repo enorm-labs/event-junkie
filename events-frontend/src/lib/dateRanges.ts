@@ -3,7 +3,7 @@
 // to pick — and the window the calendar endpoints accept.
 // Preset arithmetic is on the Berlin calendar date, matching the rest of the app.
 
-import { addDays, todayIso } from './format'
+import { addDays, isoWeekday, todayIso } from './format'
 
 /** An inclusive date range as ISO `YYYY-MM-DD` strings, the shape the BFF's from/to expect. */
 export interface DateRange {
@@ -13,11 +13,6 @@ export interface DateRange {
 
 const FRIDAY = 5
 const SUNDAY = 7
-
-/** ISO-8601 weekday for a date: 1 = Monday … 7 = Sunday (the EU convention this app uses). */
-function isoWeekday(isoDate: string): number {
-  return new Date(`${isoDate}T00:00:00Z`).getUTCDay() || 7
-}
 
 /** Today only. */
 export function today(): DateRange {

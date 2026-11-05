@@ -1,4 +1,4 @@
-import { addDays, todayIso } from '@/lib/format'
+import { addDays, daysBetween, isoWeekday, todayIso } from '@/lib/format'
 
 /**
  * ISO 8601 weeks for the week page (#2728): Monday to Sunday, week 1 holding the year's first
@@ -14,11 +14,6 @@ export interface IsoWeek {
 
 const SHAPE = /^(\d{4})-(\d{2})$/
 
-/** 1 for Monday to 7 for Sunday, of an ISO date. */
-function isoWeekday(isoDate: string): number {
-  return new Date(`${isoDate}T00:00:00Z`).getUTCDay() || 7
-}
-
 /** The Monday of week 1: the Monday on or before 4 January, which is always in week 1. */
 function firstMonday(year: number): string {
   const january4 = `${String(year).padStart(4, '0')}-01-04`
@@ -29,11 +24,7 @@ function firstMonday(year: number): string {
 export function isoWeekOf(isoDate: string): IsoWeek {
   const thursday = addDays(isoDate, 4 - isoWeekday(isoDate))
   const year = Number(thursday.slice(0, 4))
-  const days = Math.round(
-    (Date.parse(`${thursday}T00:00:00Z`) - Date.parse(`${firstMonday(year)}T00:00:00Z`)) /
-      86_400_000,
-  )
-  return { year, week: Math.floor(days / 7) + 1 }
+  return { year, week: Math.floor(daysBetween(firstMonday(year), thursday) / 7) + 1 }
 }
 
 /** 52 or 53: 28 December is always in the year's last week. */
