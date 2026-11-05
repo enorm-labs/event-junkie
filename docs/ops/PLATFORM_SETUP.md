@@ -462,13 +462,16 @@ hash. A HelmRelease event reports the _chart version_, and an OCIRepository even
 and earns a `422` against a commit that does not exist. The mechanism that solves exactly this, `originRevision`, lives in kustomize-controller and has no
 counterpart in helm-controller. **The provider is fine. The pairing is not.**
 
-Three things that were not obvious until it was built:
+Four things that were not obvious until it was built:
 
 - **The revision Flux reports is a chart version, not a commit.** The workflow parses the commit back out of the version string — both shapes
   `scripts/version.sh` produces encode it. **And it is not quite the string `version.sh` wrote:** helm-controller appends the chart's OCI digest as SemVer build
   metadata, so what arrives is `0.1.1-snapshot.20260819153524.g3b1c09e+97ec754320b5`. That suffix is split off before matching.
 - **The dispatch token needs `contents: write`**, which is a strong scope for a cluster to hold. It is therefore one PAT **per cluster**, so revoking one does
   not take the other down. It is also why that secret stays hand-made rather than encrypted into git — [SECRETS.md](SECRETS.md).
+- **The failure email depends on the GitHub settings of one person.** GitHub sends the email for a red run to the actor of the run, and the actor is the owner of the
+  dispatch PAT. That account must set **Email** for Actions in its notification settings, and its custom routing must name an address that someone reads. No check in
+  this repository can read these settings, and a red run does not prove that an email went out. When the PAT gets a new owner, send one test dispatch and look in the inbox.
 - **`staging` and `production` exist as GitHub environments, but nothing declares them with `environment:` on a job.** That distinction is the point. A
   job-level `environment:` is what protection rules and environment secrets attach to, and neither is wanted. Promotion to production is a merge, so branch
   protection already gates it in the place the change actually happens. The Deployments tab is a **read-only history, not a gate**. Leave every protection rule
