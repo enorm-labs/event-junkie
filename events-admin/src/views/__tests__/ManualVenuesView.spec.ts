@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 
 import type { ManualVenue } from '@/api/venues'
 import ManualVenuesView from '@/views/ManualVenuesView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 const NOW = Date.parse('2026-10-19T12:00:00Z')
 const DAY = 24 * 60 * 60 * 1000
@@ -22,13 +23,6 @@ function venue(overrides: Partial<ManualVenue>): ManualVenue {
 
 let listed: ManualVenue[] = []
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 async function routerAt(path: string): Promise<Router> {
   const router = createRouter({

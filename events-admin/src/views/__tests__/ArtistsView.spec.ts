@@ -5,6 +5,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import type { MusicBrainzCandidate, ReviewArtist } from '@/api/artists'
 import type { AdminEvent } from '@/api/events'
 import ArtistsView from '@/views/ArtistsView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 const LONG_NAME =
   'The Extraordinarily Long-Named Gentlemen of the Late-Night Neukölln Brass and String Collective'
@@ -68,13 +69,6 @@ let billed: AdminEvent[] = []
 let candidates: MusicBrainzCandidate[] = []
 let candidateStatus = 200
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })

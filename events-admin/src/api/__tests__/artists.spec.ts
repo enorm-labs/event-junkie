@@ -8,13 +8,7 @@ import {
   type MusicBrainzCandidate,
   setMusicBrainzId,
 } from '../artists'
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function candidate(overrides: Partial<MusicBrainzCandidate> = {}): MusicBrainzCandidate {
   return {

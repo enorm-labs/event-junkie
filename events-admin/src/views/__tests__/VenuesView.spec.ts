@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AdminVenue, CharacterTag } from '@/api/venues'
 import VenuesView from '@/views/VenuesView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function venue(id: number, name: string, closedOn: string | null = null): AdminVenue {
   return {
@@ -18,13 +19,6 @@ function venue(id: number, name: string, closedOn: string | null = null): AdminV
 let all: AdminVenue[] = []
 let tags: CharacterTag[] = []
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 beforeEach(() => {
   all = [

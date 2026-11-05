@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ReportedEvent } from '@/api/reports'
 import ReportsView from '@/views/ReportsView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 const tonight: ReportedEvent = {
   eventId: 418,
@@ -24,13 +25,6 @@ const tonight: ReportedEvent = {
 let events: ReportedEvent[] = []
 let resolveStatus = 200
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 beforeEach(() => {
   events = [tonight]

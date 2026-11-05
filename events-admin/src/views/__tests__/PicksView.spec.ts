@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AdminEvent } from '@/api/events'
 import PicksView from '@/views/PicksView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function event(id: number, title: string, eventDate: string, featuredUntil: string | null) {
   return {
@@ -39,13 +40,6 @@ function event(id: number, title: string, eventDate: string, featuredUntil: stri
 
 let picks: AdminEvent[] = []
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 beforeEach(() => {
   picks = [

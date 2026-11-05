@@ -9,13 +9,7 @@ import {
   type Suggestion,
   suggestionsUrl,
 } from '../suggestions'
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
+import { json } from '@/lib/__tests__/jsonResponse'
 
 // Every field the PUT carries holds a value, so a field the round trip drops fails a test.
 const stored: AdminEvent = {

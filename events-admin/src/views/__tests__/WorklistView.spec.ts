@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 
 import type { WorklistDismissal, WorklistEntry } from '@/api/dataQuality'
 import WorklistView from '@/views/WorklistView.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function entry(overrides: Partial<WorklistEntry> = {}): WorklistEntry {
   return {
@@ -37,13 +38,6 @@ let entries: WorklistEntry[] = []
 let dismissed = 0
 let dismissStatus = 201
 const fetchMock = vi.fn<typeof fetch>()
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
 
 beforeEach(() => {
   entries = [entry()]

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { EventSource } from '@/api/eventSources'
 import SourceEditForm from '@/components/SourceEditForm.vue'
+import { json } from '@/lib/__tests__/jsonResponse'
 
 function source(overrides: Partial<EventSource> = {}): EventSource {
   return {
@@ -23,12 +24,6 @@ function source(overrides: Partial<EventSource> = {}): EventSource {
     ...overrides,
   }
 }
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
 
 function stubFetch(response: () => Response) {
   const fetchFn = vi.fn<typeof fetch>(async () => response())
