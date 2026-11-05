@@ -8,30 +8,25 @@ CLUSTER_BOOTSTRAP.md has the commands and the reasons for each step. See [§ Bui
 ## The short version
 
 ```sh
-infra/order-next-pair.sh production                  # 1. waits for cx33 + cx23, orders them, stops when the pair is complete
-infra/order-next-pair.sh staging --no-fallback       # 2. after step 1: a cx33 for the rehearsal
-scripts/rebuild-node.sh staging --next               # 3. the rehearsal: build, prepare, cutover, finish, apply
-scripts/cutover.sh staging prepare                   #    merge #4196 while it waits
-scripts/rebuild-node.sh production --next            # 4. production: build the new cluster while the old one serves
-scripts/cutover.sh production prepare                #    merge #4197 while it waits, then git pull
-scripts/cutover.sh production cutover                #    about 8 minutes of downtime
+scripts/cutover.sh production prepare                # merge #4197 while it waits, then git pull
+scripts/cutover.sh production cutover                # about 8 minutes of downtime
+scripts/cutover.sh production finish                 # then infra/apply.sh production --allow-replace
 ```
 
-- **Production orders first, staging after.** Both wait for the same cx33 stock, and the production pair is the one that saves money.
-- **Staging rehearses before production cuts over.** The production pair stays idle until the rehearsal passes. Idle, it costs about €0.06 an hour.
-- **Merge a switch PR only while its `prepare` waits.** If you merge it earlier, the running app loses its database.
+- **Merge #4197 only while `prepare` waits.** If you merge it earlier, the running app loses its database.
+- **Cut no release between `prepare` and `finish`.** The first install on the new cluster and a rollback both take the newest chart.
+- **Do the cutover before 2026-12-27.** The certificates renew on that date. After it, the new cluster needs Let's Encrypt directly after `resume`.
+- **Staging does not rehearse this cutover.** See [Background and history](#background-and-history).
 
 ## State
 
 | Item                                                                 | State                                                                                       |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | `next_pair` in the module (#4165), ordering what is for sale (#4176) | merged                                                                                      |
-| `scripts/rebuild-node.sh --next` (#4185)                             | merged, not run on a real cluster                                                           |
-| `scripts/cutover.sh` (#4193)                                         | merged, not run on a real cluster                                                           |
-| Staging switch PR (#4196)                                            | draft, sets OpenObserve's prefix `staging-2/` (#4302). Merge during `staging prepare`       |
+| `scripts/rebuild-node.sh --next` (#4185)                             | merged, ran on production on 2026-10-30                                                     |
+| `scripts/cutover.sh` (#4193, #4488)                                  | merged, not run on a real cluster                                                           |
 | Production switch PR (#4197)                                         | draft, sets OpenObserve's prefix `production-2/` (#4302). Merge during `production prepare` |
-| Production pair, cx33 + cx23                                         | ordered 2026-10-30 22:27: `production-k3s-next` and `production-postgres-next`              |
-| Staging rehearsal pair, cx33                                         | not ordered: `order-next-pair.sh staging --no-fallback` waits for cx33 stock                |
+| Production pair, cx33 + cx23                                         | built: `production-k3s-next` and `production-postgres-next`                                 |
 
 ## 1. Order the production pair
 
@@ -40,31 +35,25 @@ scripts/cutover.sh production cutover                #    about 8 minutes of dow
 
 It ordered a cx33, not the cx43 fallback, so #4197 needs no change.
 
-## 2. Rehearse on staging
-
-Staging has one node, so the rehearsal moves the volume to the new k3s node. It does not test a dedicated database node.
-
-- [ ] `infra/order-next-pair.sh staging --no-fallback`
-- [ ] `scripts/rebuild-node.sh staging --next`. Record the time it takes. The target is under 15 minutes after the server exists.
-- [ ] `scripts/db-dump.sh staging`. It rehearses the production copy.
-- [ ] `scripts/cutover.sh staging prepare`. Merge #4196 while it waits. Then `git pull`.
-- [ ] `scripts/cutover.sh staging cutover`. Record the downtime that the script prints.
-- [ ] Check `https://staging.event-junkie.de/` through the tunnel, and `scripts/cluster-state.sh staging`.
-- [ ] `scripts/cutover.sh staging finish`, then `infra/apply.sh staging --allow-replace`. The count must be 0 to add, 2 to change, 3 to destroy.
-- [ ] Add the `retire-staging` rule for `staging/` to `infra/bootstrap/storage.tf`, and apply bootstrap. This proves that Hetzner applies a prefix filter.
-      On 15 days after the apply, check that `staging/` is empty, then remove the rule.
-- [ ] Write the times and every defect into #4128. Fix each defect before step 3.
-
-## 3. Before the production window
+## 2. Before the production window
 
 - [x] **Run the restore drill (#4152).** It passed on staging on 2026-10-31. Restore to serving took about 13 seconds. See BACKUPS.md §9.
 - [x] **Check the OpenObserve prefix.** Two writers on `production/` do not damage the stream: each instance reads, compacts and expires only
       what its own file list holds. The old instance's files then need a new prefix and a `retire-*` rule (#4302).
-- [ ] `scripts/rebuild-node.sh production --next`
-- [ ] Choose a quiet hour for the window.
+- [x] `scripts/rebuild-node.sh production --next`
+- [ ] **Check the new cluster.** Bring its tunnel up with `scripts/cluster-access.sh production --next`. Both tunnels use one address, so a kube context fails
+      with `x509: certificate signed by unknown authority` when the other tunnel is up. This cause is probable, not proven. Then check these items with the context `event-junkie-production-next`:
+    - `get endpoints kubernetes` shows only `10.0.1.11:6443`.
+    - Every pod is `Running` or `Completed`.
+    - The Kustomization `cluster-issuer` and the ClusterIssuer `letsencrypt-production` are ready.
+    - The Secrets `event-junkie-tls` and `event-junkie-tls-redirect` keep their `cert-manager.io/issuer-name` and `cert-manager.io/alt-names` annotations.
+- [ ] Choose a quiet hour, and keep about an hour free.
 
-## 4. The production window
+## 3. The production window
 
+- [ ] Turn off the corporate TLS proxy. If it stays on, step `site` can fail its certificate check while the site works.
+- [ ] Load the SSH key into the agent with `ssh-add`. The script's SSH cannot ask for a passphrase.
+- [ ] Check that no release cut is running or planned until `finish`.
 - [ ] Take a fresh base backup:
 
     ```sh
@@ -79,6 +68,7 @@ Staging has one node, so the rehearsal moves the volume to the new k3s node. It 
 
 - [ ] `scripts/cutover.sh production prepare`. Merge #4197 while it waits. Then `git pull`.
 - [ ] `scripts/cutover.sh production cutover`. Type `yes`. The site is down until step `site`.
+- [ ] Change `10.0.1.20` to `10.0.1.21` in the `Host` line of `~/.ssh/config`. Your own SSH commands then use the right key. The scripts do not need this.
 - [ ] Check `https://event-junkie.de/`, healthchecks.io and `scripts/cluster-state.sh production`.
 - [ ] Compare the row counts with the dump: `scripts/db-dump.sh production --check <the .counts file it printed>`. The importer writes after `resume`, so
       a difference in `events.event` or `events.event_source` after that is expected.
@@ -86,12 +76,15 @@ Staging has one node, so the rehearsal moves the volume to the new k3s node. It 
 **If a step fails,** run `scripts/cutover.sh production cutover --from <step>` after the fix. Every step checks what is already done. **To go back,**
 run `scripts/cutover.sh production rollback`. Rollback works until `finish`. Then revert #4197 before you resume Flux on the old cluster.
 
-## 5. Finish
+Rollback starts PostgreSQL on the old node, and adds the old cluster's deploy key back if `follow-up` deleted it. It does the key last, so GitHub cannot hold the
+site down. `prepare` suspends only the `flux-system` Kustomization. The Kustomization `cluster-issuer` and the chart's OCIRepository on the old cluster do not stop.
+
+## 4. Finish
 
 - [ ] `scripts/cutover.sh production finish`. It copies the state to `~/.event-junkie/cutover-production/` first.
 - [ ] `infra/apply.sh production --allow-replace`, with no `-var next_pair`. Expect 0 to add, 5 to change and 6 to destroy.
 - [ ] Add the `retire-production` rule for `production/` to `infra/bootstrap/storage.tf`, and apply bootstrap. See OPENOBSERVE.md § Changing the prefix.
-      On 15 days after the apply, check that `production/` is empty, then remove the rule.
+      On 15 days after the apply, check that `production/` is empty, then remove the rule. This check is also the first proof that Hetzner applies a prefix filter.
 - [ ] **Read the plan before you type yes.** The volume has no delete protection on production.
     - A line destroys or replaces `hcloud_volume.postgres`: answer no.
     - A line adds or replaces a server: answer no.
@@ -105,7 +98,11 @@ run `scripts/cutover.sh production rollback`. Rollback works until `finish`. The
 - The data stays on the `production-pgdata` volume. Nothing copies it, and nothing formats it. `postgres.sh` contains no `mkfs`.
 - `cutover` stops PostgreSQL cleanly and shuts the node down before it detaches the volume.
 - `postgres.sh` adopts the cluster on the volume. It does not start if the volume is not mounted, or if the major version is different.
-- wal-g archives every WAL segment, and the fresh base backup of step 4 is the newest restore point.
+- wal-g archives every WAL segment, and the fresh base backup of section 3 is the newest restore point.
 - Until `finish`, `rollback` moves the volume back to the old database node.
 
 Hetzner's server backups do not include the volume. They are no copy of the database.
+
+## Background and history
+
+Staging was to rehearse this cutover first (#4196). Its second pair needs two more Primary IPs, and the project holds 10, with none free. Hetzner's list does not show the limit, so 10 is probably the limit. Hetzner refused the order with `Primary IP limit exceeded`. Staging already runs on cx33, so it saves nothing by a move. The rehearsal also could not test a dedicated database node, because staging has one node. Production therefore goes without it, and staging keeps its node and its prefix `staging/`.
