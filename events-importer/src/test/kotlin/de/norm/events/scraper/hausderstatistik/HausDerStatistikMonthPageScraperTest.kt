@@ -81,6 +81,29 @@ class HausDerStatistikMonthPageScraperTest {
     }
 
     @Test
+    fun `types an untagged open day of an exhibition by its title, as event 12930`() {
+        val html =
+            """
+            <div class="listing">
+              <div class="teaser event"><time datetime="2026-11-14T16:00:00+01:00">14.11.</time>
+                <a href="https://hausderstatistik.org/event/exhibition-is-open-webbing-5/" rel="bookmark"><div class="teaser__header"><p class="title is-4">Exhibition is open! Webbing</p></div></a></div>
+              <div class="teaser event"><time datetime="2026-11-15T16:00:00+01:00">15.11.</time>
+                <a href="https://hausderstatistik.org/event/exhibition-talk/" rel="bookmark"><div class="teaser__header"><p class="title is-4">Exhibition Talk</p></div></a></div>
+            </div>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, monthUrl), monthUrl).map { it.eventType } shouldContainExactly listOf(EventType.EXHIBITION.name, null)
+    }
+
+    @Test
+    fun `reads the show's name only from a title that opens a day of an exhibition`() {
+        HausDerStatistikMonthPageScraper.exhibitionShowName("Exhibition Opening: Webbing, Weaving by A") shouldBe "Webbing, Weaving by A"
+        HausDerStatistikMonthPageScraper.exhibitionShowName("Exhibition is open! Webbing, Weaving, by A") shouldBe "Webbing, Weaving, by A"
+        HausDerStatistikMonthPageScraper.exhibitionShowName("Exhibition Talk") shouldBe null
+        HausDerStatistikMonthPageScraper.exhibitionShowName("Open Burner Embassy") shouldBe null
+    }
+
+    @Test
     fun `calls a row participation only when every tag names a participation format`() {
         HausDerStatistikMonthPageScraper.isParticipationFormat(listOf("Werkstatt", "Workshop")) shouldBe true
         HausDerStatistikMonthPageScraper.isParticipationFormat(listOf("Diskussion")) shouldBe true

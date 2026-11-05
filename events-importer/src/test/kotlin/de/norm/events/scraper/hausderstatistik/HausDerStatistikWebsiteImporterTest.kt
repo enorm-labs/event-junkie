@@ -1,5 +1,6 @@
 package de.norm.events.scraper.hausderstatistik
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
@@ -16,6 +17,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 import java.time.LocalTime
 
 class HausDerStatistikWebsiteImporterTest {
@@ -80,6 +82,39 @@ class HausDerStatistikWebsiteImporterTest {
 
             result.events shouldHaveSize 2
             result.complete shouldBe false
+        }
+
+    @Test
+    fun `folds the open days of an exhibition into one run, as events 12925 to 12930`() =
+        runTest {
+            val base = "https://hausderstatistik.org/event/"
+            val rows =
+                listOf(
+                    listOf("2026-11-09T18:00:00+01:00", "exhibition-opening-webbing", "Exhibition Opening: Webbing, Weaving by A", "Ausstellung"),
+                    listOf("2026-11-11T16:00:00+01:00", "exhibition-is-open-webbing-2", "Exhibition is open! Webbing, Weaving, by A", ""),
+                    listOf("2026-11-14T16:00:00+01:00", "exhibition-is-open-webbing-5", "Exhibition is open! Webbing, Weaving, by A", ""),
+                    listOf("2026-11-14T17:00:00+01:00", "abend", "Abend", "")
+                )
+            val listing =
+                rows.joinToString("", "<div class='listing'>", "</div>") { row ->
+                    "<div class='teaser event'><time datetime='${row[0]}'></time><a href='$base${row[1]}/' rel='bookmark'>" +
+                        "<div class='teaser__header'><p class='title'>${row[2]}</p></div></a>" +
+                        "<div class='button-group'><a class='button'>${row[3]}</a></div></div>"
+                }
+            coEvery { htmlFetcher.fetchDocument(monthUrl("2026-11")) } returns Jsoup.parse(listing, monthUrl("2026-11"))
+            rows.forEach { row -> coEvery { htmlFetcher.fetchDocument("$base${row[1]}/") } throws HttpFetchException(404, "$base${row[1]}/") }
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            val run = result.events.single { it.sourceId == "haus_der_statistik:exhibition-webbing-weaving-by-a" }
+            run.title shouldBe "Webbing, Weaving by A"
+            run.eventType shouldBe EventType.EXHIBITION.name
+            run.eventDate shouldBe LocalDate.parse("2026-11-09")
+            run.endDate shouldBe LocalDate.parse("2026-11-14")
+            run.endTime.shouldBeNull()
+            run.startTime shouldBe LocalTime.parse("18:00")
+            result.events.single { it.sourceId == "haus_der_statistik:abend" }.title shouldBe "Abend"
+            result.events shouldHaveSize 4
         }
 
     @Test
