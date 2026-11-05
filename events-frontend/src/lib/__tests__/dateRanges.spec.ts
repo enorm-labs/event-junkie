@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { activePresetKey, DATE_PRESETS, nextSevenDays, thisWeekend, today } from '@/lib/dateRanges'
+import {
+  activePresetKey,
+  clampToCalendarWindow,
+  DATE_PRESETS,
+  nextSevenDays,
+  thisWeekend,
+  today,
+} from '@/lib/dateRanges'
 
 /** Freezes the clock at midday Berlin time on the given date, so the day never straddles. */
 function freezeOn(isoDate: string) {
@@ -70,5 +77,27 @@ describe('date range presets', () => {
         expect(from <= to, `${preset.key} on 2026-08-0${day}`).toBe(true)
       }
     }
+  })
+})
+
+describe('calendar window clamp', () => {
+  it('leaves a range the BFF accepts alone', () => {
+    expect(clampToCalendarWindow('2026-05-01', '2026-05-31')).toBe('2026-05-31')
+  })
+
+  it('keeps the 92nd day, the last the BFF accepts', () => {
+    expect(clampToCalendarWindow('2026-05-01', '2026-07-31')).toBe('2026-07-31')
+  })
+
+  it('narrows the 93rd day, the first the BFF refuses', () => {
+    expect(clampToCalendarWindow('2026-05-01', '2026-08-01')).toBe('2026-07-31')
+  })
+
+  it('narrows a range far past the window', () => {
+    expect(clampToCalendarWindow('2026-05-01', '2026-12-31')).toBe('2026-07-31')
+  })
+
+  it('reaches the same day across a daylight-saving change', () => {
+    expect(clampToCalendarWindow('2026-01-01', '2026-12-31')).toBe('2026-04-02')
   })
 })
