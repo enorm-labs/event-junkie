@@ -25,7 +25,7 @@ import tools.jackson.databind.JsonNode
  * Pure JSON parser for The Cloud's **The Events Calendar** REST API; the page shape and the field readers are [parseTecPage]'s.
  *
  * - **Every event is filed under `Night Club`**, so a night is a party unless its title bills a live show
- *   (`LIVE ON STAGE: …`, `… LIVE IN BERLIN`), which is a concert of the act it names.
+ *   (`LIVE ON STAGE: …`, `… LIVE IN BERLIN`, `… Live`), which is a concert of the act it names.
  * - **The API time can be the doors**: when the prose prints `Einlass` at that time, the start is the `Start` or `Event` clock.
  * - **`website` is the promoter's ticket link**, copied from social media with `fbclid` and `utm_*` attached; those go.
  */
@@ -88,13 +88,16 @@ class TheCloudApiScraper {
     }
 
     private companion object {
-        val LIVE_SHOW = Regex("""\bLIVE\s+(?:ON\s+STAGE|IN\s+BERLIN)\b""", RegexOption.IGNORE_CASE)
+        /** `LIVE` needs `ON STAGE` or `IN BERLIN` after it unless it ends the title, because `Live Music Night` bills no act. */
+        const val LIVE_CUE = """LIVE(?:\s+(?:ON\s+STAGE|IN\s+BERLIN)\b|\s*$)"""
 
-        /** `LIVE ON STAGE: ВУИНДЛИЯ`, `NAIROBI NIGHTS PRÄSENTIERT RAYVANNY — LIVE IN BERLIN`, `ENCA LIVE ON STAGE ★ CLUB …`. */
+        val LIVE_SHOW = Regex("""\b$LIVE_CUE""", RegexOption.IGNORE_CASE)
+
+        /** `LIVE ON STAGE: ВУИНДЛИЯ`, `NAIROBI NIGHTS PRÄSENTIERT RAYVANNY — LIVE IN BERLIN`, `ENCA LIVE ON STAGE ★ CLUB …`, `QUEST PISTOLS Live`. */
         val LIVE_ACT_PATTERNS =
             listOf(
                 Regex("""^LIVE\s+ON\s+STAGE\s*:\s*(.+)$""", RegexOption.IGNORE_CASE),
-                Regex("""^(?:.+?\bPRÄSENTIERT\s+)?(.+?)\s*[—–-]?\s+LIVE\s+(?:ON\s+STAGE|IN\s+BERLIN)\b""", RegexOption.IGNORE_CASE)
+                Regex("""^(?:.+?\bPRÄSENTIERT\s+)?(.+?)\s*[—–-]?\s+$LIVE_CUE""", RegexOption.IGNORE_CASE)
             )
 
         /** The words before the show's own clock when the API time is the doors: `START: 23:00`, `Event: 19:00–22:00`. */

@@ -23,6 +23,13 @@ class TheCloudApiScraperTest {
 
     private fun event(slug: String) = page.events.single { it.sourceId == "the_cloud:$slug" }
 
+    private fun titled(title: String) =
+        scraper
+            .scrapePage(
+                """{"events": [{"slug": "a", "title": "$title", "url": "https://thecloud.berlin/event/a/", "start_date": "2026-11-07 18:00:00"}]}"""
+            ).events
+            .single()
+
     @Test
     fun `reads every event of the one page`() {
         page.events shouldHaveSize 11
@@ -68,6 +75,24 @@ class TheCloudApiScraperTest {
         val enca = event("enca-live-on-stage-%e2%98%85-club-the-cloud-berlin")
         enca.eventType shouldBe EventType.CONCERT.name
         enca.artists.map { it.name } shouldContainExactly listOf("ENCA")
+    }
+
+    @Test
+    fun `a title that ends in Live is a concert of its act, as event 12923`() {
+        val show = titled("QUEST PISTOLS Live")
+
+        show.eventType shouldBe EventType.CONCERT.name
+        show.artists.map { it.name } shouldContainExactly listOf("QUEST PISTOLS")
+    }
+
+    @Test
+    fun `live anywhere else in a title bills no act`() {
+        listOf("Live Music Night", "Live", "LIVE RADIO PARTY").forEach { title ->
+            val night = titled(title)
+
+            night.eventType shouldBe EventType.PARTY.name
+            night.artists.shouldBeEmpty()
+        }
     }
 
     @Test
