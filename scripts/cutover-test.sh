@@ -109,6 +109,7 @@ case "$*" in
         echo $((n + 1)) >"$FAKE/host-reads"
         if [ "$n" -ge "${FAKE_SWITCH_AFTER:-1}" ]; then echo "$FAKE_NEW_HOST"; else echo old; fi ;;
     "get helmrelease event-junkie -n flux-system -o jsonpath={.spec.suspend}") echo true ;;
+    "get secret flux-system -n flux-system -o jsonpath={.data.identity\.pub}") echo 'ssh-ed25519 OLDFLUX flux' | base64 ;;
     "get helmrelease openobserve -n flux-system -o jsonpath={.spec.values.config.ZO_S3_BUCKET_PREFIX}")
         env="${ctx#event-junkie-}"
         if [[ "$ctx" == *-next ]]; then echo "${FAKE_NEXT_PREFIX:-${env%-next}-2/}"; else echo "$env/"; fi ;;
@@ -124,8 +125,22 @@ cat >"$BIN/ssh" <<'EOF'
 record ssh "$@"
 case "$*" in
     *"SELECT 1"*) echo 1 ;;
-    *step.sh*) [ -z "${FAKE_DB_FAIL:-}" ] ;;
+    *step.sh*)
+        # The real step.sh keeps a failure in a file until something removes it.
+        [[ "$*" != *"rm -f /run/event-junkie-boot-failed"* ]] || rm -f "$FAKE/boot-failed"
+        [ -z "${FAKE_DB_FAIL:-}" ] || touch "$FAKE/boot-failed"
+        [ ! -e "$FAKE/boot-failed" ] ;;
+    *wal-g/releases*) [ -z "${FAKE_DOWNLOAD_FAIL:-}" ] ;;
+    *" true")
+        n="$(cat "$FAKE/node-tries" 2>/dev/null || echo 0)"
+        echo $((n + 1)) >"$FAKE/node-tries"
+        [ "$n" -ge "${FAKE_NODE_LATE:-0}" ] ;;
 esac
+EOF
+cat >"$BIN/gh" <<'EOF'
+#!/usr/bin/env bash
+record gh "$@"
+[ "$1" != api ] || cat "$FAKE/keys.json"
 EOF
 cat >"$BIN/sudo" <<'EOF'
 #!/usr/bin/env bash
@@ -161,7 +176,8 @@ fail() {
 
 # setup <env>: a fresh project with both pairs running, the old tunnel up, and the switch PR not merged.
 setup() {
-    rm -rf "$WORK/cutover" "$WORK/run" "$WORK"/*.log "$WORK"/frozen-* "$WORK/host-reads"
+    rm -rf "$WORK/cutover" "$WORK/run" "$WORK"/*.log "$WORK"/frozen-* "$WORK/host-reads" "$WORK/node-tries" "$WORK/boot-failed"
+    echo '[]' >"$WORK/keys.json"
     mkdir -p "$WORK/run" "$EJ_WG_DIR"
     touch "$WORK/run/$1.name"
     printf '[Interface]\nPrivateKey = X=\n[Peer]\nPublicKey  = OLDKEY=\nEndpoint   = 203.0.113.10:51820\n' >"$EJ_WG_DIR/$1.conf"
@@ -263,7 +279,9 @@ before "cutover" "kubectl --context event-junkie-production scale deployment -n 
 before "cutover" "-J ops@10.10.0.1 ops@10.0.1.20 sudo -u postgres psql -qc CHECKPOINT" "api POST /servers/2/actions/shutdown"
 before "cutover" "api POST /servers/3/actions/shutdown" "api POST /primary_ips/11/actions/assign"
 before "cutover" "api POST /primary_ips/11/actions/assign" "api POST /servers/3/actions/poweron"
-before "cutover" "cluster-access production --server-key NEXTKEY=" "-J ops@10.10.0.1 ops@10.0.1.21 sudo /opt/event-junkie/step.sh postgres"
+before "cutover" "cluster-access production --server-key NEXTKEY=" "-J ops@10.10.0.1 ops@10.0.1.21 sudo rm -f /run/event-junkie-boot-failed && sudo /opt/event-junkie/step.sh postgres"
+has "cutover" "-o UserKnownHostsFile=$HOME/.ssh/known_hosts.production-next -o StrictHostKeyChecking=accept-new -J ops@10.10.0.1 ops@10.0.1.21 sudo bash -c"
+before "cutover" "wal-g/releases" "kubectl --context event-junkie-production scale deployment"
 before "cutover" "step.sh postgres" "flux --context event-junkie-production resume helmrelease event-junkie"
 before "cutover" "site https://event-junkie.de/api/events?size=1" "rebuild-node production --from secrets"
 grep -qF zq9xtoken "$WORK/events.log" && fail "cutover: the Hetzner token reached an argument"
@@ -275,6 +293,7 @@ run "rerun" 0 "yes" production cutover --from power-off
 grep -E '^api POST .*/(assign|unassign|attach|detach|shutdown|poweroff|poweron)' "$WORK/events.log" && fail "rerun: changed the project again"
 
 # 5. Rollback puts the IPv4, the temporary IPv4 and the volume back, with the old server key.
+: >"$WORK/events.log"
 run "rollback" 0 "" production rollback
 [ "$(q '.ips[] | select(.id == 11) | .assignee_id')" = 1 ] || fail "rollback: the IPv4 is not back on the old k3s node"
 [ "$(q '.ips[] | select(.id == 15) | .assignee_id')" = 3 ] || fail "rollback: the temporary IPv4 is not back"
@@ -283,6 +302,9 @@ run "rollback" 0 "" production rollback
 has "rollback" "cluster-access production --server-key OLDKEY="
 has "rollback" "kubectl --context event-junkie-production scale deployment -n event-junkie -l app.kubernetes.io/component=importer --replicas=1"
 grep -qF "revert the switch PR" <<<"$OUT" || fail "rollback: does not say to revert the switch PR"
+before "rollback" "ops@10.0.1.20 sudo systemctl start postgresql" "flux --context event-junkie-production resume helmrelease event-junkie"
+before "rollback" "site https://event-junkie.de/api/events?size=1" "gh repo deploy-key add"
+has "rollback" "--title flux-system-main-flux-system-./deploy/clusters/production -R enorm-labs/event-junkie"
 
 # 6. Staging has one node: the volume moves with the k3s node, and PostgreSQL is reached over the tunnel alone.
 setup staging
@@ -292,9 +314,9 @@ merge_switch
 run "staging cutover" 0 "yes" staging cutover
 [ "$(q '.volumes[0].server')" = 3 ] || fail "staging: the volume is not on the new k3s node"
 [ "$(q '.ips[] | select(.id == 11) | .assignee_id')" = 3 ] || fail "staging: the IPv4 is not on the new k3s node"
-has "staging" "ssh -i $HOME/.ssh/id_ed25519_hetzner -o BatchMode=yes -o ConnectTimeout=5 ops@10.10.1.1 sudo /opt/event-junkie/step.sh postgres"
+has "staging" "ssh -i $HOME/.ssh/id_ed25519_hetzner -o BatchMode=yes -o ConnectTimeout=5 ops@10.10.1.1 sudo rm -f /run/event-junkie-boot-failed && sudo /opt/event-junkie/step.sh postgres"
 has "staging" "site https://staging.event-junkie.de/"
-! grep -qF -- "-J ops@10.10.1.1" "$WORK/events.log" || fail "staging: jumped to a database node"
+! grep -E -- "-J ops@10.10.1.1 .*step.sh" "$WORK/events.log" || fail "staging: jumped to a database node"
 
 # 7. finish refuses a config that does not name the new pair, then moves the state in order.
 setup production
@@ -322,6 +344,46 @@ grep -qF "0 to add, 5 to change, 6 to destroy" <<<"$OUT" || fail "finish: expect
 : >"$WORK/events.log"
 run "finish rerun" 0 "" production finish
 grep -q '^tofu state mv' "$WORK/events.log" && fail "finish rerun: moved state again"
+
+# 8. A failed download stops the cutover before the confirm, and changes nothing.
+setup production
+run "prepare for recovery" 0 "" production prepare
+merge_switch
+: >"$WORK/events.log"
+FAKE_DOWNLOAD_FAIL=1 run "download down" 1 "yes" production cutover
+grep -qF "nothing changed" <<<"$OUT" || fail "download down: does not say nothing changed"
+! grep -q '^api ' "$WORK/events.log" || fail "download down: called $(grep '^api ' "$WORK/events.log" | head -1)"
+[ ! -e "$WORK/cutover/down-since" ] || fail "download down: reached the confirm"
+
+# 9. A database node that boots after the k3s node gets its host key read again, and no step runs without it.
+: >"$WORK/events.log"
+FAKE_NODE_LATE=9 run "node never answers" 1 "yes" production cutover
+grep -qF "no ssh to production-postgres-next" <<<"$OUT" || fail "node never answers: $OUT"
+! grep -qF "step.sh" "$WORK/events.log" || fail "node never answers: ran the database step"
+rm -f "$WORK/node-tries"
+: >"$WORK/events.log"
+FAKE_NODE_LATE=2 run "node late" 0 "yes" production cutover --from access
+[ "$(grep -cF "cluster-access production --server-key NEXTKEY=" "$WORK/events.log")" = 3 ] ||
+    fail "node late: read the host key $(grep -cF "cluster-access production" "$WORK/events.log") times, expected 3"
+
+# 10. A database step that failed can be run again after the fix: its failure does not stay on the node.
+FAKE_DB_FAIL=1 run "database fails" 1 "" production cutover --from database
+grep -qF "postgres.sh or backups.sh failed" <<<"$OUT" || fail "database fails: $OUT"
+run "database rerun" 0 "" production cutover --from database
+
+# 11. A rollback right after `stop-db` moves nothing, and still brings PostgreSQL back on the old node.
+setup production
+run "prepare for early rollback" 0 "" production prepare
+: >"$WORK/events.log"
+run "early rollback" 0 "" production rollback
+has "early rollback" "ops@10.0.1.20 sudo systemctl start postgresql"
+! grep -E '^api POST .*/(shutdown|poweroff|assign|unassign|attach|detach)' "$WORK/events.log" || fail "early rollback: changed the project"
+
+# 12. A rollback before `follow-up` finds the deploy key in place and adds none.
+echo '[{"id":7,"title":"t","key":"ssh-ed25519 OLDFLUX"}]' >"$WORK/keys.json"
+: >"$WORK/events.log"
+run "key in place" 0 "" production rollback --from deploy-key
+! grep -qF "deploy-key add" "$WORK/events.log" || fail "key in place: added it again"
 
 if [ "$FAILURES" -gt 0 ]; then
     echo "cutover-test: $FAILURES failure(s)" >&2

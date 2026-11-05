@@ -9,7 +9,8 @@
 #   cutover    check confirm stop-app stop-db power-off move-ip move-volume power-on access database resume site
 #              follow-up rename                     the site is down from `stop-app` to `site`
 #   finish     check backup state                   `tofu state mv`, then the apply to type, with its expected count
-#   rollback   power-off move-back power-on access resume site       the old pair serves again; only before `finish`
+#   rollback   power-off move-back power-on access database resume site deploy-key
+#                                                   the old pair serves again; only before `finish`
 #   --from     start at that step; every step checks what is done, so a rerun from the top also works
 #
 # The database address in deploy/clusters/<env> changes with the database, and both clusters read
@@ -25,7 +26,7 @@
 # place. `rename` gave the old names away first, so the renames cannot collide.
 #
 # The operator runs it, with the Hetzner token from infra/.envrc. It never runs `tofu apply`.
-# Requires: curl, jq, ssh, kubectl, flux, sudo, wg-quick, direnv, tofu.
+# Requires: curl, jq, ssh, kubectl, flux, gh, sudo, wg-quick, direnv, tofu.
 
 set -euo pipefail
 
@@ -51,6 +52,7 @@ TRIES="${EJ_TRIES:-60}"
 SLEEP="${EJ_SLEEP:-5}"
 SWITCH_TRIES="${EJ_SWITCH_TRIES:-120}"
 SWITCH_SLEEP="${EJ_SWITCH_SLEEP:-30}"
+REPO_SLUG=enorm-labs/event-junkie
 APP_HR=event-junkie
 O2_STS=openobserve-openobserve-standalone
 
@@ -73,7 +75,7 @@ case "$PHASE" in
     prepare) STEPS="freeze switch logs" ;;
     cutover) STEPS="check confirm stop-app stop-db power-off move-ip move-volume power-on access database resume site follow-up rename" ;;
     finish) STEPS="check backup state" ;;
-    rollback) STEPS="power-off move-back power-on access resume site" ;;
+    rollback) STEPS="power-off move-back power-on access database resume site deploy-key" ;;
     *) die "expected prepare, cutover, finish or rollback, got '${PHASE}'" ;;
 esac
 shift 2
@@ -256,6 +258,28 @@ attach_volume() {
     act "/volumes/$VOLUME/actions/attach" "{\"server\":$1,\"automount\":false}"
 }
 
+# reach_db_node <server> <private ip> <server key>: cluster-access skips the host key of a node that does
+# not answer yet, and then every ssh to it fails. So each try reads the key again.
+reach_db_node() {
+    for _ in $(seq 1 "$TRIES"); do
+        if on "$1" "$2" true 2>/dev/null; then
+            return 0
+        fi
+        "$CLUSTER_ACCESS" "$ENV" --server-key "$3" >/dev/null || true
+        sleep "$SLEEP"
+    done
+    die "no ssh to $(name "$1") at $2 after power-on"
+}
+db_answers() {
+    for _ in $(seq 1 "$TRIES"); do
+        if [ "$(on "$1" "$2" "sudo -u postgres psql -tAc 'SELECT 1'")" = 1 ]; then
+            return 0
+        fi
+        sleep "$SLEEP"
+    done
+    die "PostgreSQL does not answer on $(name "$1")"
+}
+
 # access <server key>: the k3s node needs a minute after power-on before the tunnel answers.
 access() {
     for _ in $(seq 1 "$TRIES"); do
@@ -330,6 +354,20 @@ step_logs() {
 
 # --- cutover --------------------------------------------------------------------------------------
 
+# Expands on the node, whose bootstrap.env names the wal-g version.
+# shellcheck disable=SC2016
+DOWNLOAD_CHECK='sudo bash -c "source /etc/event-junkie/bootstrap.env && for url in https://www.postgresql.org/media/keys/ACCC4CF8.asc https://apt.postgresql.org/pub/repos/apt/dists/\$(lsb_release -cs)-pgdg/InRelease https://github.com/wal-g/wal-g/releases/download/\$WALG_VERSION/wal-g-pg-24.04-amd64.tar.gz; do curl -fsSL --range 0-0 -m 15 -o /dev/null \"\$url\" || exit 1; done"'
+
+# `database` fetches these during the downtime, so an outage must stop the cutover before the confirm.
+# Through the running k3s node, with the file `--next` keeps this node's host key in.
+check_downloads() {
+    [ "$(status "$TARGET")" = running ] || return 0
+    "${base_ssh[@]}" -o UserKnownHostsFile="$HOME/.ssh/known_hosts.$ENV-next" -o StrictHostKeyChecking=accept-new \
+        -J "ops@$TUNNEL_IP" "ops@$TARGET_IP" "$DOWNLOAD_CHECK" ||
+        die "$(name "$TARGET") cannot fetch what step database needs: wait for that outage to end, nothing changed"
+    log "$(name "$TARGET") reaches the PostgreSQL repository and the wal-g release"
+}
+
 step_check() {
     if [ "$PHASE" = finish ]; then
         if ! grep -Eq "k3s_private_ip[[:space:]]*=[[:space:]]*\"$NEW_K3S_IP\"" "$MAIN_TF" ||
@@ -348,6 +386,7 @@ step_check() {
         tunnel_to "$ENV"
         [ "$(k get kustomization flux-system -n flux-system -o jsonpath='{.spec.suspend}')" = true ] ||
             die "Flux on $CTX is not frozen: run 'scripts/cutover.sh $ENV prepare' first"
+        check_downloads
     fi
     log "the switch PR is pulled, Flux on the old cluster is frozen, and the next pair exists"
 }
@@ -425,17 +464,31 @@ step_power_on() {
 }
 
 step_access() {
+    local key
     if [ "$PHASE" = rollback ]; then
-        access "$(cat "$STATE_DIR/old-server-key")"
+        key="$(cat "$STATE_DIR/old-server-key")"
+        access "$key"
+        reach_db_node "$SOURCE" "$SOURCE_IP" "$key"
     else
-        access "$(peer_key "$WG_DIR/$ENV-next.conf")"
+        key="$(peer_key "$WG_DIR/$ENV-next.conf")"
+        access "$key"
+        reach_db_node "$TARGET" "$TARGET_IP" "$key"
     fi
 }
 
 step_database() {
-    on "$TARGET" "$TARGET_IP" 'sudo /opt/event-junkie/step.sh postgres && sudo /opt/event-junkie/step.sh backups && sudo /opt/event-junkie/step.sh --result' ||
+    # A failure between `stop-db` and `power-off` moves nothing, so no boot restarts PostgreSQL there.
+    if [ "$PHASE" = rollback ]; then
+        on "$SOURCE" "$SOURCE_IP" 'sudo systemctl start postgresql' || die "cannot start PostgreSQL on $(name "$SOURCE")"
+        db_answers "$SOURCE" "$SOURCE_IP"
+        log "PostgreSQL runs on $(name "$SOURCE")"
+        return 0
+    fi
+    # step.sh appends a failure to this file and --result reads it, so without the rm a rerun fails after the fix.
+    # cloud-init runs its steps on the first boot only, so after power-on the file holds only this step's failures.
+    on "$TARGET" "$TARGET_IP" 'sudo rm -f /run/event-junkie-boot-failed && sudo /opt/event-junkie/step.sh postgres && sudo /opt/event-junkie/step.sh backups && sudo /opt/event-junkie/step.sh --result' ||
         die "postgres.sh or backups.sh failed on $(name "$TARGET"): /var/log/event-junkie/<name>.log there"
-    [ "$(on "$TARGET" "$TARGET_IP" "sudo -u postgres psql -tAc 'SELECT 1'")" = 1 ] || die "PostgreSQL does not answer on $(name "$TARGET")"
+    db_answers "$TARGET" "$TARGET_IP"
     log "PostgreSQL runs on $(name "$TARGET") from the volume"
 }
 
@@ -464,7 +517,7 @@ step_site() {
 }
 
 # The in-place rebuild's last steps: github-dispatch, the wal-g credential and `walg check`, the old
-# deploy key deleted, every HelmRelease ready, alerts and dashboards, and its own verify.
+# deploy key deleted (`rollback` adds it back), every HelmRelease ready, alerts and dashboards, and its own verify.
 step_follow_up() { "$REBUILD_NODE" "$ENV" --from secrets; }
 
 step_rename() {
@@ -496,6 +549,23 @@ step_move_back() {
     assign_ipv4 "$TEMP_V4" "$NEW_K3S"
     attach_volume "$SOURCE"
     log "the IPv4 and the volume are back on the old pair. Flux there stays frozen: revert the switch PR before 'flux resume kustomization flux-system'"
+}
+
+# `follow-up` deleted the old cluster's key, and its Flux needs the key to read Git after the resume.
+# The same title as rebuild-node.sh, so the next cutover's `follow-up` deletes it again. After `site`:
+# a GitHub outage must not hold the site down.
+step_deploy_key() {
+    local pub keys
+    pub="$(k get secret flux-system -n flux-system -o jsonpath='{.data.identity\.pub}' | base64 -d | awk '{ print $1 " " $2 }')"
+    [ -n "$pub" ] || die "flux-system on $CTX holds no identity.pub"
+    keys="$(gh api "repos/$REPO_SLUG/keys")"
+    if jq -e --arg k "$pub" 'any(.[]; (.key | split(" ")[0:2] | join(" ")) == $k)' <<<"$keys" >/dev/null; then
+        log "the deploy key of $CTX is on $REPO_SLUG"
+        return 0
+    fi
+    printf '%s\n' "$pub" >"$WORK/deploy-key.pub"
+    gh repo deploy-key add "$WORK/deploy-key.pub" --title "flux-system-main-flux-system-./deploy/clusters/$ENV" -R "$REPO_SLUG" >/dev/null
+    log "the deploy key of $CTX is back on $REPO_SLUG"
 }
 
 # --- finish ---------------------------------------------------------------------------------------
