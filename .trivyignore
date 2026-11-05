@@ -1,8 +1,8 @@
 # Vulnerabilities waived for the container image scan in .github/workflows/release.yml.
 #
 # **Empty is the goal.** It went back to empty on 2026-08-17 (#492), on 2026-09-05 (#770), on
-# 2026-09-15 (#1273), on 2026-10-17 (#3071) and on 2026-10-26 (#3703), each time by fixing the
-# image rather than by amending the waiver.
+# 2026-09-15 (#1273), on 2026-10-17 (#3071), on 2026-10-26 (#3703) and on 2026-11-05 (#4188), each
+# time by fixing the image rather than by amending the waiver.
 #
 # The gate blocks a release on CRITICAL and HIGH findings **that have a fix available**; unfixed ones
 # are already excluded by `--ignore-unfixed` and do not belong here. So an entry in this file means
@@ -43,52 +43,26 @@
 # ---------------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------
 #
-# 2026-10-26 — back to empty for the fifth time, and by the mechanism every entry is required to
-# carry. The CVE-2026-111943 waiver (Go `crypto/x509` in the imgproxy sidecar, added 2026-10-21,
-# #3703) named its own deletion condition — "an imgproxy release built with Go 1.27.3 or later" —
-# and v4.0.20 is one, five days later and three weeks before the calendar date it also carried. A
-# digest bump deleted it, as #1273's entry went in September and #3071's three went in October.
+# 2026-11-05 — back to empty for the sixth time, and again by the mechanism every entry is required
+# to carry. Two waivers died in one digest bump: CVE-2026-116587 (go-jose 4.1.4, added 2026-10-29,
+# #4188) and CVE-2026-109518 (apt 3.2.0, added the same morning). Both named "an imgproxy release
+# carries the fixed version" as the deletion condition, and v4.0.22 carries go-jose 4.1.7 and apt
+# 3.2.1ubuntu0.1 — three weeks before the 2026-11-26 revisit date both also carried.
 # **A waiver written to expire is a waiver that expires**; that is why the reason has to say what
 # would end it.
 #
 # **The bump is verified by scanning the candidate, never by reading its release notes.** v4.0.19
-# builds imgproxy itself with Go 1.27.3 and would have satisfied the condition as written, but it
-# moved the base to ubuntu:26.04 and brought in `usr/bin/pebble` at Go 1.27.1 — carrying
+# builds imgproxy itself with Go 1.27.3 and would have satisfied #3703's condition as written, but
+# it moved the base to ubuntu:26.04 and brought in `usr/bin/pebble` at Go 1.27.1 — carrying
 # CVE-2026-78667, CVE-2026-78669 and CVE-2026-97031, the three findings #3071 had just removed, in
-# the very binary whose eight waivers taught the lesson above. v4.0.20 ships without it. A release
-# that fixes the finding you are chasing can arrive with a second copy of one you already closed.
+# the very binary whose eight waivers taught the lesson above. A release that fixes the finding you
+# are chasing can arrive with a second copy of one you already closed. Scan both architectures:
+# Alpine and Ubuntu build each separately, and the gate reads amd64 (#1118).
 #
-# **imgproxy has now been the cause four times** — #1273 (grpc-go), #3071 and #3703 (the Go
-# stdlib), and go-jose below. #4188 answered the question the note above names, and ADR-020
-# § When to revisit records the answer: waive each episode and wait, because each earlier one ended
+# **imgproxy has now been the cause five times** — #1273 (grpc-go), #3071 and #3703 (the Go
+# stdlib), and #4188's two. #4188 answered the question the note above names, and ADR-020
+# § When to revisit records the answer: waive each episode and wait, because every one so far ended
 # with an upstream release within weeks. **The revisit date is the expiry.** A waiver that reaches
 # it with no imgproxy release carrying the fix triggers our own build of imgproxy on a current Go
 # toolchain, as a new issue. ADR-020's option B (Thumbnailator) is not the exit.
 # ---------------------------------------------------------------------------------------------
-
-# 2026-10-29 — CVE-2026-116587, `github.com/go-jose/go-jose/v4` 4.1.4, in the imgproxy sidecar
-# (#4188). Fixed in 4.1.6. The fix cannot be taken: v4.0.21 is the newest imgproxy release and it
-# still builds against go-jose 4.1.4, so the chart stays on the v4.0.20 digest it pins. The
-# advisory is a DoS when go-jose parses a JWK with an RSA key.
-# Reachability: imgproxy binds to localhost in the importer pod and only the importer calls it
-# (THREAT_MODEL.md B10). Its one TLS peer is Hetzner Object Storage, and nothing we configure gives
-# it a JWK. That is a reading of our configuration, not of imgproxy's code.
-# Delete when an imgproxy release carries go-jose 4.1.6 or later, by bumping the chart digest.
-# Revisit on 2026-11-26. Waived by the #4188 decision (ADR-020 § When to revisit): if no such
-# release exists by then, this waiver expires and our own imgproxy build starts as a new issue.
-CVE-2026-116587
-
-# 2026-11-05 — CVE-2026-109518, `apt` and `libapt-pkg7.0` 3.2.0, in the imgproxy sidecar's
-# ubuntu 26.04 layer. Fixed in 3.2.1ubuntu0.1. The fix cannot be taken: v4.0.21, published
-# 2026-11-02, carries the same 3.2.0, so there is no release to bump the chart digest to. The
-# advisory is an on-path attacker tampering with packages that apt downloads.
-# Reachability: `dpkg -L apt` puts the advisory's code in /usr/bin/apt* and
-# /usr/lib/apt/methods/http, and nothing in the running sidecar executes any of it. entrypoint.sh
-# sets LD_PRELOAD for the chosen malloc and then `exec`s imgproxy, so imgproxy is PID 1 and no cron
-# daemon runs. `ldd /opt/imgproxy/bin/imgproxy` links no libapt-pkg. The image ships
-# `APT::Periodic::Enable "0"`, and readOnlyRootFilesystem denies apt its lists and cache anyway.
-# Delete when an imgproxy release carries apt 3.2.1ubuntu0.1 or later, by bumping the chart digest.
-# Verify by scanning that release, never by reading its notes.
-# Revisit on 2026-11-26, the date the waiver above already carries, so both episodes are weighed
-# together under ADR-020 § When to revisit.
-CVE-2026-109518
