@@ -117,6 +117,7 @@ is the map and the traps.
   Reports are artifacts; nothing opens an issue; no `pull_request` trigger, decided.
 - `deployment-status.yml` (#565) — turns Flux's `repository_dispatch` (`HelmRelease/event-junkie.flux-system`) into a GitHub deployment. Parses the commit
   out of the chart version through `scripts/version.sh`'s two shapes — change one, change this — after stripping helm-controller's `+<digest>` build metadata.
+  The run goes red on the first failure since the last success on that deployment, and the repeats stay green (#4499): one outage wrote 46 failures to one deployment.
   Since #1698 it carries a second job: `lighthouse`, `needs: record`, which calls `lighthouse.yml` when the deployment is `production` and `success` **and that
   is the deployment's first success**. `UpgradeSucceeded` and `TestSucceeded` are both successes, so without the third condition one reconcile audits the site
   twice and reports two medians for one release. A `deployment_status` trigger cannot replace any of it — a status created with `GITHUB_TOKEN` starts no
