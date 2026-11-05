@@ -9,6 +9,9 @@
 # THIS WORKFLOW CANNOT BE TESTED FROM A PULL REQUEST: `repository_dispatch` runs workflows from the
 # default branch only. Everything below fails loudly on a payload it does not recognise, because a
 # silent default writes a plausible lie into a permanent timeline.
+#
+# A FAILED ROLLOUT GOES RED ONCE (#4499): a red run is the one shape GitHub mails anyone about, and one
+# outage sent 46 failures to a single deployment. Only the first since the last success fails the run.
 name: Deployment Status
 
 on:
@@ -184,6 +187,11 @@ jobs:
               ...context.repo, deployment_id: deploymentId, per_page: 100,
             });
             const alreadySucceeded = statuses.some((status) => status.state === 'success');
+            // `inactive` and `in_progress` say nothing about the outcome, and `Progressing` between two
+            // failures must not restart the streak.
+            const lastOutcome = statuses
+              .filter((status) => status.state === 'success' || status.state === 'failure')
+              .sort((a, b) => b.id - a.id)[0]?.state;
 
             await github.rest.repos.createDeploymentStatus({
               ...context.repo,
@@ -219,6 +227,14 @@ jobs:
                 ['Cluster', metadata.cluster ?? '—'],
               ])
               .write();
+
+            // Last, so the failure is on the timeline before the run goes red. By the suffix rule above a
+            // later success ends the streak, so a failure after it mails again.
+            if (state === 'failure' && lastOutcome !== 'failure') {
+              core.setFailed(`${environment}: ${reason}: ${event.message ?? ''}`);
+            } else if (state === 'failure') {
+              core.info(`${environment} at ${sha.slice(0, 7)} was already failing; this run stays green.`);
+            }
 
   # Lighthouse against the public site, after a production deployment that succeeded (#1698). Staging
   # is never audited from here and cannot be: it has no public name (ADR-033).
