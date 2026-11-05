@@ -447,13 +447,15 @@ running?" is a question for Flux — which is what the next section puts back on
 
 ### 3.1 Deployment visibility on GitHub
 
-Flux's **notification-controller** reports back through a `githubdispatch` Provider and two Alerts per cluster, in
+Flux's **notification-controller** reports back through a `githubdispatch` Provider and three Alerts per cluster, in
 `deploy/clusters/<cluster>/notification.yaml`. `github-dispatch` watches the HelmRelease. Its `repository_dispatch` reaches
 [`.github/workflows/deployment-status.yml`](../../.github/workflows/deployment-status.yml), which records a deployment on an environment named after the
 cluster. `source-failure` watches the OCIRepository at `eventSeverity: error`. Its dispatch reaches
 [`.github/workflows/flux-source-failure.yml`](../../.github/workflows/flux-source-failure.yml), which goes red (#1454). A chart that fails verification keeps the last
 good artifact installed. One failure ends green: `no signatures found` for a chart that verifies one minute later. That is the publish race
 between `helm push` and `cosign sign` (#2031). The HelmRelease turns not-Ready with the source's message but emits no event, so the first Alert alone never reports it.
+`apply-failure` watches each Kustomization at `eventSeverity: error`, and its dispatch reaches the same workflow (#4491). While `flux-system` fails, a merged cluster file
+does not reach the cluster. The controller counts no reconcile error for it, so no metric shows it. `cluster-assertions.sh` fails when a Kustomization has no route.
 
 **The `github` commit-status provider does not work for this workload and is deliberately absent.** notification-controller's `parseRevision` requires a git
 hash. A HelmRelease event reports the _chart version_, and an OCIRepository event reports `<tag>@sha256:<digest>`. The latter passes as a valid-looking SHA-256

@@ -69,3 +69,26 @@ spec:
   eventMetadata:
     env: staging
     cluster: staging
+---
+# A Kustomization that fails to apply (#4491). While `flux-system` fails, a merged cluster file does not
+# reach this cluster. The controller reports it only as this event: it counts no reconcile error.
+# Name each one: `cluster-assertions.sh` holds this list and the workflow's `types` to the cluster's.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: apply-failure
+  namespace: flux-system
+spec:
+  providerRef:
+    name: github-dispatch
+  eventSeverity: error
+  eventSources:
+    - kind: Kustomization
+      name: flux-system
+      namespace: flux-system
+    - kind: Kustomization
+      name: cluster-issuer
+      namespace: flux-system
+  eventMetadata:
+    env: staging
+    cluster: staging
