@@ -67,8 +67,9 @@
 # ---------------------------------------------------------------------------------------------
 
 # 2026-10-29 — CVE-2026-116587, `github.com/go-jose/go-jose/v4` 4.1.4, in the imgproxy sidecar
-# (#4188). Fixed in 4.1.6. The fix cannot be taken: v4.0.20 is the newest imgproxy release and the
-# chart already pins it. The advisory is a DoS when go-jose parses a JWK with an RSA key.
+# (#4188). Fixed in 4.1.6. The fix cannot be taken: v4.0.21 is the newest imgproxy release and it
+# still builds against go-jose 4.1.4, so the chart stays on the v4.0.20 digest it pins. The
+# advisory is a DoS when go-jose parses a JWK with an RSA key.
 # Reachability: imgproxy binds to localhost in the importer pod and only the importer calls it
 # (THREAT_MODEL.md B10). Its one TLS peer is Hetzner Object Storage, and nothing we configure gives
 # it a JWK. That is a reading of our configuration, not of imgproxy's code.
@@ -76,3 +77,18 @@
 # Revisit on 2026-11-26. Waived by the #4188 decision (ADR-020 § When to revisit): if no such
 # release exists by then, this waiver expires and our own imgproxy build starts as a new issue.
 CVE-2026-116587
+
+# 2026-11-05 — CVE-2026-109518, `apt` and `libapt-pkg7.0` 3.2.0, in the imgproxy sidecar's
+# ubuntu 26.04 layer. Fixed in 3.2.1ubuntu0.1. The fix cannot be taken: v4.0.21, published
+# 2026-11-02, carries the same 3.2.0, so there is no release to bump the chart digest to. The
+# advisory is an on-path attacker tampering with packages that apt downloads.
+# Reachability: `dpkg -L apt` puts the advisory's code in /usr/bin/apt* and
+# /usr/lib/apt/methods/http, and nothing in the running sidecar executes any of it. entrypoint.sh
+# sets LD_PRELOAD for the chosen malloc and then `exec`s imgproxy, so imgproxy is PID 1 and no cron
+# daemon runs. `ldd /opt/imgproxy/bin/imgproxy` links no libapt-pkg. The image ships
+# `APT::Periodic::Enable "0"`, and readOnlyRootFilesystem denies apt its lists and cache anyway.
+# Delete when an imgproxy release carries apt 3.2.1ubuntu0.1 or later, by bumping the chart digest.
+# Verify by scanning that release, never by reading its notes.
+# Revisit on 2026-11-26, the date the waiver above already carries, so both episodes are weighed
+# together under ADR-020 § When to revisit.
+CVE-2026-109518
