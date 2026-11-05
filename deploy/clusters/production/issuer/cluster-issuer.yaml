@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  # `certManager.clusterIssuer.name` in `../helm-release.yaml` names this. `cluster-assertions.sh` keeps them equal.
+  name: letsencrypt-production
+  annotations:
+    kubernetes.io/description: >-
+      Tells cert-manager how to request this environment's certificates from Let's Encrypt.
+spec:
+  acme:
+    # The real ACME endpoint, the only place in this repository it appears. 50 certificates per
+    # registered domain per week, and `event-junkie.de` is the same registered domain staging uses —
+    # which is why staging stays on the ACME staging endpoint.
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: hello@event-junkie.de
+    privateKeySecretRef:
+      name: letsencrypt-production-account-key
+    solvers:
+      # HTTP-01 works here, unlike staging: production has a public address, so no DNS-01 webhook and no token.
+      - http01:
+          ingress:
+            ingressClassName: traefik

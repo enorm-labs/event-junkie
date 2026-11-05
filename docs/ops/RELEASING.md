@@ -319,9 +319,9 @@ The first answers _"does the delivery mechanism work?"_, the second _"does my ch
 **Not here — [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md).** That is a different lifecycle: it happens once per cluster, from a laptop, and then never again.
 This document is about what happens on every commit afterwards.
 
-The one property worth carrying across, because it constrains the chart rather than the runbook: **order is enforced, not assumed.** The chart renders a
-`cert-manager.io/v1` ClusterIssuer, and the API server rejects unknown kinds — so without cert-manager the whole application release fails, workloads included.
-`dependsOn` is what orders it. `scripts/cluster-assertions.sh` fails the build if a release that creates an issuer stops declaring one.
+The one property worth carrying across, because it constrains the chart rather than the runbook: **the ClusterIssuer gates no deploy.** A release waits for
+everything it renders. An issuer inside it would turn a Let's Encrypt outage into a failed upgrade and a failed rollback. The `cluster-issuer` Kustomization
+applies the issuer from `deploy/clusters/<env>/issuer/` and does not wait. `scripts/cluster-assertions.sh` fails the build if a release renders an issuer again.
 
 ## What is not automated, and why
 

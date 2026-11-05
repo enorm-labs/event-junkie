@@ -147,8 +147,8 @@ The decision is [ADR-016](../docs/adr/ADR-016_GITOPS_DELIVERY.md), the path is [
 cert-manager on both clusters, Hetzner's DNS-01 webhook and OpenObserve besides. Four rules, all of which fail quietly:
 
 - **Pin the version exactly; never a range.** `scripts/cluster-assertions.sh` rejects anything but `X.Y.Z` or `vX.Y.Z`.
-- **A release that renders a ClusterIssuer declares `dependsOn` cert-manager**, or the whole application release fails on a fresh cluster looking like a chart
-  bug. Asserted.
+- **The ClusterIssuer lives in `deploy/clusters/<env>/issuer/`, never in a release.** A release waits for everything it renders, so a Let's Encrypt outage
+  would fail the upgrade and the rollback (#4445). Its Kustomization sets `wait: false` and retries until cert-manager's CRDs exist. Asserted.
 - **Hetzner's own webhook (`cert-manager-webhook-hetzner` from `charts.hetzner.cloud`, `groupName` `acme.hetzner.com`, `tokenSecretKeyRef`), never a fork.**
   The old `dns.hetzner.com` API is gone; forks install, report Ready and fail at challenge time.
 - **Bump staging before production, and expect to edit two files**: the `HelmRelease` exists per cluster, its `HelmRepository` is shared in `base/` (#953, #1080).

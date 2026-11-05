@@ -1,0 +1,33 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  # `certManager.clusterIssuer.name` in `../helm-release.yaml` names this. `cluster-assertions.sh` keeps them equal.
+  name: letsencrypt-staging-dns
+  annotations:
+    kubernetes.io/description: >-
+      Tells cert-manager how to request this environment's certificates from Let's Encrypt.
+spec:
+  acme:
+    # The ACME *staging* endpoint, and it stays there (#265): rate limits are per registered domain and
+    # `event-junkie.de` is the same one here, so burning the limit would lock out production. Production
+    # issues over HTTP-01, so this endpoint has nothing left to rehearse but account registration.
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # A role mailbox, not a person (docs/LEGAL.md §6).
+    email: hello@event-junkie.de
+    privateKeySecretRef:
+      name: letsencrypt-staging-dns-account-key
+    solvers:
+      # Not a preference: HTTP-01 needs Let's Encrypt to reach the host, and this environment exists to
+      # stop that. The TXT record is public; the A record never exists. The webhook answering it is
+      # `cert-manager-webhook.yaml`. The token is the one thing NOT automated, created once per cluster in
+      # `cert-manager` — not `event-junkie`, because a ClusterIssuer resolves secret references against
+      # cert-manager's namespace: `kubectl create secret generic hetzner -n cert-manager
+      # --from-literal=token=<hcloud token, read+write>`.
+      - dns01:
+          webhook:
+            groupName: acme.hetzner.com
+            solverName: hetzner
+            config:
+              tokenSecretKeyRef:
+                name: hetzner
+                key: token

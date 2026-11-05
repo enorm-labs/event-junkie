@@ -286,15 +286,14 @@ somebody else's is how a chart acquires a resource it can never safely change.
 
 `certManager.clusterIssuer.create` is off by default because a ClusterIssuer is cluster-scoped, and
 a chart that owns one cannot be installed twice on the same cluster — which is exactly what the k3d
-rehearsal needs to do. Staging's HelmRelease turns it on, because staging is its own cluster with
-one release on it.
+rehearsal needs to do.
 
-Since #265 cert-manager itself is a `HelmRelease` in each cluster directory rather than a manual
-install, and every release that sets `create: true` declares `dependsOn` so the CRDs exist first.
+Staging and production leave it off as well. Their issuer is `deploy/clusters/<env>/issuer/`, applied
+by its own Flux Kustomization, because a release waits for everything it renders: an issuer inside
+it would turn a Let's Encrypt outage into a failed upgrade and a failed rollback (#4445).
 [`../../../scripts/cluster-assertions.sh`](../../../scripts/cluster-assertions.sh) fails the build
-if one stops doing so — without the dependency
-the _whole_ release fails on the unknown kind, workloads included, on the first bootstrap of a new
-cluster, and it reads like a bug in this chart.
+if a release renders one again. Since #265 cert-manager itself is a `HelmRelease` in each cluster
+directory rather than a manual install.
 
 ### The DNS-01 solver names Hetzner's own webhook, not a fork
 

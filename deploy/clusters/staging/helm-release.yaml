@@ -16,11 +16,6 @@ spec:
   # puts that into every resource.
   releaseName: event-junkie
   targetNamespace: event-junkie
-  # This release renders a ClusterIssuer, a `cert-manager.io/v1` kind, so without cert-manager the
-  # whole release fails at an unknown kind. Naming the webhook gets both, and the webhook is what has
-  # to answer before the DNS-01 solver means anything.
-  dependsOn:
-    - name: cert-manager-webhook-hetzner
   # Not the OCIRepository's clock: that one asks "is there a new chart?", this one "does the cluster
   # still match?" — the drift check. A new snapshot still reconciles immediately through the source.
   interval: 10m
@@ -162,23 +157,8 @@ spec:
         secretName: "event-junkie-staging-tls"
     certManager:
       clusterIssuer:
-        # Created here because staging is its own cluster with exactly one release, so the singleton problem
-        # does not arise.
-        create: true
+        # The object is `issuer/cluster-issuer.yaml`, applied apart from this release (#4445).
         name: "letsencrypt-staging-dns"
-        # A role mailbox, not a person (docs/LEGAL.md §6).
-        email: "hello@event-junkie.de"
-        # Not a preference: HTTP-01 needs Let's Encrypt to reach the host, and this environment exists to
-        # stop that. The TXT record is public; the A record never exists. The webhook answering it is
-        # `cert-manager-webhook.yaml`. The token is the one thing NOT automated, created once per cluster in
-        # `cert-manager` — not `event-junkie`, because a ClusterIssuer resolves secret references against
-        # cert-manager's namespace: `kubectl create secret generic hetzner -n cert-manager
-        # --from-literal=token=<hcloud token, read+write>`.
-        solver: "dns01"
-        # The ACME *staging* endpoint, and it stays there (#265): rate limits are per registered domain and
-        # `event-junkie.de` is the same one here, so burning the limit would lock out production. Production
-        # issues over HTTP-01, so this endpoint has nothing left to rehearse but account registration.
-        server: "https://acme-staging-v02.api.letsencrypt.org/directory"
     tests:
       smoke:
         # The k6 hook (#1697), first here: a week without a false rollback is what production waits for.

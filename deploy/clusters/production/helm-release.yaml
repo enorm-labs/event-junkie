@@ -12,11 +12,6 @@ metadata:
 spec:
   releaseName: event-junkie
   targetNamespace: event-junkie
-  # This release renders a ClusterIssuer, so without cert-manager the whole release fails at an unknown
-  # kind. Production names cert-manager directly where staging names the DNS-01 webhook: HTTP-01 works
-  # against an address the internet can reach.
-  dependsOn:
-    - name: cert-manager
   interval: 10m
   chartRef:
     kind: OCIRepository
@@ -124,15 +119,8 @@ spec:
           reportOnly: false
     certManager:
       clusterIssuer:
-        create: true
+        # The object is `issuer/cluster-issuer.yaml`, applied apart from this release (#4445).
         name: "letsencrypt-production"
-        email: "hello@event-junkie.de"
-        # HTTP-01 works here, unlike staging: production has a public address, so no DNS-01 webhook and no token.
-        solver: "http01"
-        # The real ACME endpoint, the only place in this repository it appears. 50 certificates per
-        # registered domain per week, and `event-junkie.de` is the same registered domain staging uses —
-        # which is why staging stays on the ACME staging endpoint.
-        server: "https://acme-v02.api.letsencrypt.org/directory"
     tests:
       smoke:
         # The k6 hook (#1697), second here: staging carried it first, through 64 reconciles with no
