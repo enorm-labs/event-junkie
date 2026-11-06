@@ -27,7 +27,7 @@ class PasticheWebsiteImporter(
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "the Pastiche programme", PasticheProgrammePageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.PASTICHE
     override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = PasticheEventPageScraper()::enrich
-    override val eventPageOwns: Set<ScrapedField> = setOf(ScrapedField.DESCRIPTION, ScrapedField.IMAGE)
+    override val eventPageOwns: Set<ScrapedField> = setOf(ScrapedField.DESCRIPTION, ScrapedField.IMAGE, ScrapedField.START_TIME)
 
     override fun hasEventPage(event: ScrapedEvent): Boolean = !PROGRAMME_PAGE.containsMatchIn(event.sourceUrl)
 

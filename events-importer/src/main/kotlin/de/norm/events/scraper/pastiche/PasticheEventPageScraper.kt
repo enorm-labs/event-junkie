@@ -3,6 +3,7 @@ package de.norm.events.scraper.pastiche
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.endOn
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -13,6 +14,9 @@ import java.net.URLEncoder
  * `media-item` and the text in the second `column-unit` beside it. A `media-item` names only a hash; the
  * file name comes from the page's media list in its scripts. The price sits in a Cargo shop widget that
  * the page renders with JavaScript, so it is not read.
+ *
+ * The page's `h1` also states the night's times, and they win over the programme's. The two often disagree, and the
+ * venue does not say which is right. This page is the one that sells the night's tickets.
  */
 class PasticheEventPageScraper {
     fun enrich(
@@ -23,7 +27,15 @@ class PasticheEventPageScraper {
         val text = content.selectFirst("column-set > column-unit[slot=1]")?.paragraphText()
         val poster = content.selectFirst("media-item[hash]")?.attr("hash")?.let { posterUrl(document, it) }
         if (text == null && poster == null) return null
-        return event.copy(description = text ?: event.description, imageUrl = poster ?: event.imageUrl)
+        return event.copy(description = text ?: event.description, imageUrl = poster ?: event.imageUrl).withTimesOf(content)
+    }
+
+    /** This event with the start and end in the page's heading, or unchanged when the heading has no readable start. */
+    private fun ScrapedEvent.withTimesOf(content: Element): ScrapedEvent {
+        val times = content.select("h1").firstNotNullOfOrNull { TIME_RANGE.find(it.text()) } ?: return this
+        val start = readClock(times.groupValues[1]) ?: return this
+        val end = times.groupValues[2].blankToNull()?.let(::readClock)
+        return copy(startTime = start, endDate = end?.let { endOn(eventDate, start, it) }, endTime = end)
     }
 
     private fun posterUrl(

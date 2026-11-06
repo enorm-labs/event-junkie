@@ -5,7 +5,9 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -15,6 +17,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.time.LocalTime
 
 class PasticheWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
@@ -40,6 +43,27 @@ class PasticheWebsiteImporterTest {
                 .imageUrl
                 .orEmpty() shouldStartWith "https://freight.cargo.site/"
             coVerify(exactly = 0) { htmlFetcher.fetchDocument(url) }
+        }
+
+    @Test
+    fun `stores the event page's start over the programme's, and keeps a stored start when the page fails`() =
+        runTest {
+            val page =
+                """<div class="pages"><bodycopy><h1>Thurs, 22nd October<br />20:00 - 22:30</h1>""" +
+                    """<column-set><column-unit slot="1">Text.</column-unit></column-set></bodycopy></div>"""
+            coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(fixture("pastiche-programme.html"), url), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://pasticheinternational.com/")
+            coEvery { htmlFetcher.fetchDocument(ramziUrl) } returns Jsoup.parse(page, ramziUrl)
+
+            val result = importer.importEvents(url)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val (read, failed) = result.events
+            read.startTime shouldBe LocalTime.of(20, 0)
+            read.endTime shouldBe LocalTime.of(22, 30)
+            failed.detailUnavailable shouldBe true
+            failed.detailPageOwns shouldContain ScrapedField.START_TIME
         }
 
     @Test

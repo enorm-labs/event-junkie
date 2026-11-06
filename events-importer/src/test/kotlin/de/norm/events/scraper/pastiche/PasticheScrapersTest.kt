@@ -143,11 +143,50 @@ class PasticheScrapersTest {
     }
 
     @Test
+    fun `takes the start and end from the event page's heading, as event 13056`() {
+        val enriched = PasticheEventPageScraper().enrich(listing(), eventPage("<h1>Thurs, 12th November &nbsp; &nbsp;<br />\n20:00 - 23:00<br />\n</h1>"))
+
+        enriched?.startTime shouldBe LocalTime.of(20, 0)
+        enriched?.endTime shouldBe LocalTime.of(23, 0)
+        enriched?.endDate shouldBe listing().eventDate
+    }
+
+    @Test
+    fun `clears the programme's end when the event page states a start alone`() {
+        val enriched = PasticheEventPageScraper().enrich(listing(), eventPage("<h1>Thurs, 12th November<br />20:00</h1>"))
+
+        enriched?.startTime shouldBe LocalTime.of(20, 0)
+        enriched?.endTime.shouldBeNull()
+        enriched?.endDate.shouldBeNull()
+    }
+
+    @Test
+    fun `reads past an empty heading to the one with the times, as event 13059`() {
+        val enriched = PasticheEventPageScraper().enrich(listing(), eventPage("<h1><br /></h1><h1>Sun, 22th November<br />20:00 - 22:30</h1>"))
+
+        enriched?.endTime shouldBe LocalTime.of(22, 30)
+    }
+
+    @Test
+    fun `keeps the programme's times when the event page states none`() {
+        val enriched = PasticheEventPageScraper().enrich(listing(), eventPage("<h1>Thurs, 12th November</h1>"))
+
+        enriched?.startTime shouldBe listing().startTime
+        enriched?.endTime shouldBe listing().endTime
+    }
+
+    @Test
     fun `returns nothing for an event page without content`() {
         PasticheEventPageScraper().enrich(listing(), Jsoup.parse("<html><body></body></html>", ramziUrl)).shouldBeNull()
     }
 
     private fun listing() = events.first().copy(description = "short")
+
+    private fun eventPage(heading: String) =
+        Jsoup.parse(
+            """<div class="pages"><bodycopy>$heading<column-set><column-unit slot="1">Text.</column-unit></column-set></bodycopy></div>""",
+            ramziUrl
+        )
 
     private fun row(
         date: String,
