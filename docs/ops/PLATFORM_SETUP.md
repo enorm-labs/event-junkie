@@ -832,6 +832,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.sources.failed{reason}`                | Gauge                                 | Sources currently FAILED, per reason, read from the row — one venue's DNS or ours    |
 | `importer.source.events_future{source}`          | Gauge                                 | Future events held per source — **the silently-broken-scraper alarm** (#700)         |
 | `importer.source.days_since_future_event`        | Gauge, tagged `source`, `known_quiet` | How long a source has held no future event; a floor, with the known venues marked    |
+| `importer.source.last_event_count{source}`       | Gauge                                 | Events the last run read. No series before the first count (#4540)                   |
 | `importer.source.field_coverage{source,field}`   | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor         |
 | `bff.events.served`                              | Counter, tagged endpoint              | Is anyone actually using it                                                          |
 | `db.events{horizon="all"\|"future"}`             | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end         |

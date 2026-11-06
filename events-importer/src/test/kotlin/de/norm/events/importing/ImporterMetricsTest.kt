@@ -378,5 +378,29 @@ class ImporterMetricsTest {
                 .gauge()!!
                 .value() shouldBe 365.0
         }
+
+        // The rule reads the zero, so a zero publishes like any other number (#4540).
+        @Test
+        fun `last_event_count is published per source, and a zero is published like any other number`() {
+            metrics.publishLastEventCount("busy", 41)
+            metrics.publishLastEventCount("scrapes-nothing", 0)
+            metrics.publishLastEventCount("busy", 38)
+
+            registry
+                .find("importer.source.last_event_count")
+                .tag("source", "busy")
+                .gauges()
+                .size shouldBe 1
+            registry
+                .find("importer.source.last_event_count")
+                .tag("source", "busy")
+                .gauge()!!
+                .value() shouldBe 38.0
+            registry
+                .find("importer.source.last_event_count")
+                .tag("source", "scrapes-nothing")
+                .gauge()!!
+                .value() shouldBe 0.0
+        }
     }
 }

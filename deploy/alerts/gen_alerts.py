@@ -16,6 +16,7 @@ it produces an alert that never fires rather than an error.
     a source that never worked     -> ej-source-never-succeeded   (#618)
     a source that emptied out      -> ej-source-emptied           (#700)
     a source quiet for a month     -> ej-source-quiet             (#1498)
+    a source that scrapes nothing  -> ej-source-scrapes-nothing   (#4540)
     a data-quality share regressed -> ej-data-quality-regression  (#2604)
     metrics being dropped          -> ej-ingest-shedding          (#625)
     Kubernetes events not arriving -> ej-k8s-events-stalled       (#3198)
@@ -433,6 +434,27 @@ rule(
     ">",
     0,
     stream_name="importer_source_days_since_future_event",
+    period_minutes=15,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+# The two rules above read the rows stored, and an empty scrape keeps those; this reads the
+# scrape (#4540). Three days, because one empty night is normal on a daily interval. The
+# `offset 3d` half needs that much history, so `--check` says NO DATA for three days after a deploy.
+rule(
+    "ej-source-scrapes-nothing",
+    "A source has read no event for three days while it holds rows ahead, so its parser may have "
+    "stopped matching. The run still reports SUCCESS and the rows stay, so no other rule sees it. "
+    "A venue with nothing on stays with `ej-source-quiet`. Which source: "
+    "`scripts/o2-query.sh <env> promql 'max by (source) (importer_source_last_event_count) == 0'`, "
+    "against the same query on `importer_source_events_future`.",
+    "sum((max by (source) (max_over_time(importer_source_last_event_count[3d])) == bool 0)"
+    " * (max by (source) (importer_source_last_event_count offset 3d) == bool 0)"
+    " * (max by (source) (importer_source_events_future) > bool 0))",
+    ">",
+    0,
+    stream_name="importer_source_last_event_count",
     period_minutes=15,
     frequency_minutes=60,
     silence_minutes=24 * 60,

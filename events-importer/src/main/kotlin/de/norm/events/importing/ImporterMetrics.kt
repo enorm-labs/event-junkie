@@ -51,6 +51,9 @@ class ImporterMetrics(
      */
     private val futureEvents = ConcurrentHashMap<String, AtomicLong>()
 
+    /** Events each source's last run read, backing the `last_event_count` gauge (#4540). */
+    private val lastEventCounts = ConcurrentHashMap<String, AtomicLong>()
+
     /** Days since each source last held a future event, backing the `days_since_future_event` gauge (#1498). */
     private val daysSinceFutureEvent = ConcurrentHashMap<String, AtomicLong>()
 
@@ -248,6 +251,17 @@ class ImporterMetrics(
     }
 
     /**
+     * `importer.source.last_event_count{source}`: how many events the source's last run read (#4540).
+     * [SOURCE_EVENTS_FUTURE] counts stored rows, and an empty scrape keeps them, so it misses a parser that stopped matching.
+     */
+    fun publishLastEventCount(
+        sourceSlug: String,
+        count: Long
+    ) {
+        lastEventCounts.publishPerSource(sourceSlug, SOURCE_LAST_EVENT_COUNT, count)
+    }
+
+    /**
      * `importer.source.days_since_future_event{source,known_quiet}`: how long this source has held
      * no future event, in days (#1498). `ej-source-emptied` reads [SOURCE_EVENTS_FUTURE] against a
      * week of history, so four sources sat at zero for a year and no rule could see them; a
@@ -431,6 +445,9 @@ class ImporterMetrics(
          * [publishFutureEvents]; not `_total`, see [DB_EVENTS].
          */
         const val SOURCE_EVENTS_FUTURE = "importer.source.events_future"
+
+        /** `importer.source.last_event_count{source}` (#4540). See [publishLastEventCount]. */
+        const val SOURCE_LAST_EVENT_COUNT = "importer.source.last_event_count"
 
         /**
          * `importer.source.days_since_future_event{source,known_quiet}` (#1498). See
