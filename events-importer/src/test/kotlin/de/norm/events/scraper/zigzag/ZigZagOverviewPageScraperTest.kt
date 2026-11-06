@@ -79,10 +79,21 @@ class ZigZagOverviewPageScraperTest {
             // Event 12346: the page bills Sergio Medina and his band.
             "Celebrating Buena Vista Social Club",
             // Event 12347: the page bills Atrin Madani, Martina Barta and their trio.
-            "Golden Voices: Sinatra, Sammy Davis Jr., Tony Bennett & Beyond"
+            "Golden Voices: Sinatra, Sammy Davis Jr., Tony Bennett & Beyond",
+            // Event 12837: the page bills the five musicians.
+            "The Jazz Crusaders and Beyond"
         ]
     )
     fun `names no act for a night that celebrates an honoree`(title: String) {
+        singleNight(title).artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `keeps the act of a title that ends in a word ending in and, then Beyond`() {
+        singleNight("Thousand Beyond").artists.map { it.name } shouldBe listOf("Thousand Beyond")
+    }
+
+    private fun singleNight(title: String): ScrapedEvent {
         val html =
             """
             <div class="summary-item summary-item-record-type-event">
@@ -90,11 +101,9 @@ class ZigZagOverviewPageScraperTest {
               <time class="summary-metadata-item summary-metadata-item--date">November 12, 2026</time>
             </div>
             """.trimIndent()
-        ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_JAZZ_CLUB, clock)
+        return ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_JAZZ_CLUB, clock)
             .scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
             .single()
-            .artists
-            .shouldBeEmpty()
     }
 
     @Test
