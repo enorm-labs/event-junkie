@@ -346,12 +346,16 @@ A configured route is not a working route (#704). Each row is a rule that fired 
 | 2026-09-24 | production | none: `ej-image-store-unreachable` fired on its own after `apply.sh` | yes — fired 08:08Z, mail at the forward target |
 | 2026-10-15 | production | none: `ej-image-store-unreachable` fired on Hetzner fsn1 S3 503s     | yes — fired 23:30Z and 01:30Z, two mails       |
 | 2026-10-18 | production | none: `ej-image-store-unreachable` fired on Hetzner fsn1 S3 503s     | yes — fired 13:40Z and 15:45Z, two mails       |
+| 2026-11-06 | production | none: `ej-image-store-unreachable` fired on Hetzner fsn1 S3 503s     | yes — fired 09:10Z, one mail                   |
 
 **The production rows are real firings, not induced ones.** They went through the same template, destination, SMTP login and egress rule as any other rule.
 The 2026-09-24 firing is a false alarm, tracked in #1807. The 2026-10-15 firing is a true alarm. From 23:00Z to 02:05Z, 57 BFF reads from Object Storage in
 fsn1 failed with 503 after all SDK retries. Hetzner had an open fsn1 Object Storage incident at that time. The 2026-10-18 firing is a true alarm too. From 13:39Z
 to 17:27Z, 225 BFF reads failed the same way, about 65 of them manual checks. Hetzner's fsn1 Object Storage incident started at 13:28Z, but at
 13:50Z the status page did not show it yet. OpenObserve keeps its own data in the same fsn1 storage, so its queries failed or came back empty during the outage.
+The 2026-11-06 firing is a true alarm too. From 09:09Z to 09:27Z, 4 BFF reads failed with 503 after all SDK retries. The count comes from `kubectl logs` on both BFF pods.
+Of 6 images fetched by hand during that time, 5 took 6 to 16 seconds and 1 timed out at 30 seconds. Hetzner's fsn1 Object Storage incident started at 08:55Z
+and named only specific buckets.
 
 **Scaling a deployment down does not trip a rule on production.** The `event-junkie` HelmRelease has drift detection on, so helm-controller restores the
 replica count within minutes. `ej-site-down` needs five minutes at zero. To induce it there, suspend the HelmRelease first and resume it after. Staging's
