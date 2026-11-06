@@ -47,7 +47,7 @@ import java.time.format.DateTimeParseException
  * unless the title already bills them (#3105); a
  * `SPECIAL GUESTS:` line is split on `&` and commas. A `MEETS` line bills the act it names, its quoted
  * name alone when members follow (`MEETS "THE SHAWN & WOLF» Shawn Grocott & Wolfgang Meyer`). A title that only leads in to the act
- * (`WEIHNACHTLICH BESINNLICHES MIT:`) stays the title, and the line below it is the act.
+ * (`WEIHNACHTLICH BESINNLICHES MIT:`) joins the line below it, the act, to make the title (#4548).
  * An availability banner (`LETZTEN PLÄTZE AN DER BAR`, `AUSVERKAUFT`) can head the lines; it is
  * dropped like the credit (#3165).
  *
@@ -139,8 +139,10 @@ class ATraneProgrammePageScraper {
             } else {
                 val rest = acts.drop(actIndex.coerceAtLeast(0)).filter { it.isNotEmpty() }
                 rest.firstOrNull()?.let { title ->
-                    val act = rest.getOrNull(1)?.takeIf { LEAD_IN.containsMatchIn(title) } ?: title
-                    Billing(title, rest.drop(1).joinToString(" · ").ifEmpty { null }, act = act)
+                    // A lead-in takes the line below it, the act, into the title.
+                    val act = rest.getOrNull(1)?.takeIf { LEAD_IN.containsMatchIn(title) }
+                    val below = rest.drop(if (act == null) 1 else 2).joinToString(" · ").ifEmpty { null }
+                    Billing(act?.let { "${title.removeSuffix(":")} $it" } ?: title, below, act = act ?: title)
                 }
             }
         return billing?.let { it.copy(guests = it.guests + body.flatMap(::lineGuests)) }
