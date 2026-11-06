@@ -162,7 +162,6 @@ class PasticheProgrammePageScraper(
         private const val TICKETS = "Tickets"
         private const val FREE = "Free"
         private val DAY = Regex("""^(\p{L}+)\.?,?\s+(\d{1,2})(?:st|nd|rd|th)?\.?\s+(\p{L}+)""", RegexOption.IGNORE_CASE)
-        private val TIME_RANGE = Regex("""(\d{1,2}[:.]\d{2})\s*(?:[-–]\s*(\d{1,2}[:.]\d{2}))?""")
         private val MONTHS = Month.entries.associateBy { it.getDisplayName(TextStyle.SHORT, Locale.ENGLISH).take(MONTH_PREFIX).lowercase() }
         private val OUT_OF_SCOPE = Regex("""\bworkshops?\b|\brecord fairs?\b|\bplattenb(?:ö|oe)rse\b""", RegexOption.IGNORE_CASE)
         private val WORKSHOP = Regex("""\bworkshops?\b""", RegexOption.IGNORE_CASE)
@@ -249,7 +248,10 @@ class PasticheProgrammePageScraper(
     }
 }
 
-private fun readClock(text: String): LocalTime? = parseClock(text.replace('.', ':'))
+/** `21:00 - 23:00`, or a start alone. */
+internal val TIME_RANGE = Regex("""(\d{1,2}[:.]\d{2})\s*(?:[-–]\s*(\d{1,2}[:.]\d{2}))?""")
+
+internal fun readClock(text: String): LocalTime? = parseClock(text.replace('.', ':'))
 
 private fun pageSlug(url: String): String = URI(url).path.trim('/')
 
