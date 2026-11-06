@@ -256,6 +256,8 @@ private val NON_ARTIST_NAMES: Set<String> =
         "unter meinem bett",
         "nightwash",
         "smash comedy deluxe",
+        // Huxleys' package tour; only the page's prose names its five acts (#4513).
+        "rock legends",
         // A touring band contest billed as the act at Maschinenhaus; its acts are not named.
         "sph music masters",
         // SO36's queer party, billed as its title.

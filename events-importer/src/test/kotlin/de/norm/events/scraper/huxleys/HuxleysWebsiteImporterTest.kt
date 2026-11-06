@@ -178,6 +178,15 @@ class HuxleysWebsiteImporterTest {
         }
 
     @Test
+    fun `stores no act for a package tour through the merge`() =
+        runTest {
+            // The merge rebuilds the lineup from the listing's title, so the detail page alone proves nothing (#4513).
+            val rockLegends = event(importer.importEvents(overviewUrl), "2026-11-06-rock-legends")
+            rockLegends.title shouldBe "Rock Legends"
+            rockLegends.artists.shouldBeEmpty()
+        }
+
+    @Test
     fun `keeps a card whose permalink is a bare post id, dated from its detail page`() =
         runTest {
             // The live card as the listing prints it: a year-less `.date` cell and no ISO prefix in the link.
