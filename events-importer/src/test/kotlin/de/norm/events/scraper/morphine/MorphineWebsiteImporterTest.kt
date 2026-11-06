@@ -117,6 +117,26 @@ class MorphineWebsiteImporterTest {
         }
 
     @Test
+    fun `keeps the detail page's labelled prices and ticket link through the overview merge`() =
+        runTest {
+            val ahmedUrl = "http://www.morphinerecords.com/events/ahmed-maher-maktoub"
+            val overview =
+                """<div class="list-events"><a class="link-overlay" href="/events/ahmed-maher-maktoub">""" +
+                    """<span>05.11.26</span><span>Ahmed Maher - Maktoub Album Release</span></a></div>"""
+            coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(overview, overviewUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(ahmedUrl) } returns
+                Jsoup.parse(fixture("morphine-detail-album-release.html"), ahmedUrl)
+
+            val ahmed = event(importer.importEvents(overviewUrl), "ahmed-maher-maktoub")
+
+            ahmed.pricePresale shouldBe BigDecimal("20")
+            ahmed.priceBoxOffice shouldBe BigDecimal("25")
+            ahmed.priceNote shouldBe null
+            ahmed.ticketUrl shouldBe "https://www.tickettailor.com/events/ahmedmaher/2428316"
+        }
+
+    @Test
     fun `prefers the detail lineup over the title-derived headliner`() =
         runTest {
             val birds = event(importer.importEvents(overviewUrl), "all-about-birds-jon-rose-hinterland")

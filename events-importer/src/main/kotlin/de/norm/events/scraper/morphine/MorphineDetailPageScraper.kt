@@ -11,6 +11,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.headlinersFromTitle
+import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
@@ -36,11 +37,10 @@ import java.time.LocalTime
  * the header `"Friday, 07.08.26, door  20:00"` plus a nested `ul.lineup` whose first entry's
  * time is the start, whose every name is a performer, and whose every time is that set's start. `.block.paypal` is an advance-ticket
  * form: its hidden `amount` input is the presale price, and it posts to PayPal rather than
- * linking, so the button is the only way to buy and there is no ticket URL. `.block.priceevent`
- * is free text the venue also uses for house rules, so [readPriceNote] requires a pricing signal
- * and [parseDoorPrice] stores a figure only for a single unambiguous amount — a sliding scale or
- * donation range, most nights, has no field. `.block.paragraph` keeps its `<br>` breaks, which
- * is how the instrument credits are written ("Jon Rose | violin & field recordings").
+ * linking, so that button gives no ticket URL. `.block.priceevent` is free text the venue also
+ * uses for house rules, so [readPriceNote] requires a pricing signal. See [readPricing] for what
+ * it stores; a sliding scale or donation range has no field. `.block.paragraph` keeps its `<br>`
+ * breaks, which is how the instrument credits are written ("Jon Rose | violin & field recordings").
  *
  * **The lineup names carry more than the act**, and the shared splitters resolve them only as
  * far as a structural signal allows: a `/`-separated co-bill without spaces stays one name,
@@ -83,7 +83,7 @@ class MorphineDetailPageScraper {
         // The day header's own text; the nested `ul.lineup` is read separately.
         val dayLine = overlay.selectFirst("div.block.day")?.ownText()
         val lineup = readLineup(overlay)
-        val priceNote = readPriceNote(overlay.textAt("div.block.priceevent > p"))
+        val pricing = readPricing(overlay)
 
         val eventDate = parseDayLineDate(dayLine)
         val doorsTime = parseDayLineDoors(dayLine)
@@ -98,9 +98,10 @@ class MorphineDetailPageScraper {
             imageUrl = overlay.imgSrcAt("div.block.image img"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.MORPHINE.sourceIdPrefix}${extractEventSlug(sourceUrl)}",
-            pricePresale = readPaypalPrice(overlay),
-            priceBoxOffice = parseDoorPrice(priceNote),
-            priceNote = priceNote,
+            ticketUrl = pricing.ticketUrl,
+            pricePresale = pricing.presale,
+            priceBoxOffice = pricing.boxOffice,
+            priceNote = pricing.note,
             soldOut = cleanedTitle.soldOut,
             artists =
                 readPerformers(overlay).ifEmpty {
@@ -241,6 +242,23 @@ class MorphineDetailPageScraper {
             .blankToNull()
 
     /**
+     * The prices and the ticket link of the first `.block.priceevent` paragraph, plus the PayPal form's presale price. The note
+     * leaves out the anchors, whose label is no price (#4515), and goes when [parseAdvanceAndDoor] has stored all it says. A link
+     * counts only in a paragraph about prices: the box also carries house rules, and a link there is not a ticket shop.
+     */
+    private fun readPricing(overlay: Element): Pricing {
+        val paragraph = overlay.selectFirst("div.block.priceevent > p")
+        val note = readPriceNote(paragraph?.clone()?.apply { select("a").remove() }?.text())
+        val advanceAndDoor = parseAdvanceAndDoor(note)
+        return Pricing(
+            presale = readPaypalPrice(overlay) ?: advanceAndDoor?.advance,
+            boxOffice = advanceAndDoor?.door ?: parseDoorPrice(note),
+            note = note.takeIf { advanceAndDoor == null },
+            ticketUrl = paragraph?.takeIf { readPriceNote(it.text()) != null }?.hrefAt("a[href]")
+        )
+    }
+
+    /**
      * The presale price from the PayPal form's hidden inputs, or `null` without a form. Guarded on
      * `currency_code` so a non-EUR form is never stored as euros — `EventEntity` has no per-event
      * currency (all scraped venues are in Berlin).
@@ -257,6 +275,14 @@ class MorphineDetailPageScraper {
     private data class LineupEntry(
         val startTime: String,
         val name: String
+    )
+
+    /** What [readPricing] found: every field `null` when the page states it nowhere. */
+    private data class Pricing(
+        val presale: BigDecimal?,
+        val boxOffice: BigDecimal?,
+        val note: String?,
+        val ticketUrl: String?
     )
 
     private companion object {
