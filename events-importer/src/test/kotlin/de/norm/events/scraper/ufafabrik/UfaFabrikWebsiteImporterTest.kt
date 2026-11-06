@@ -98,6 +98,17 @@ class UfaFabrikWebsiteImporterTest {
         }
 
     @Test
+    fun `stores no act for a series night through the merge with its show page`() =
+        runTest {
+            stubPages()
+            val result = importer.importEvents(sourceUrl, null, null)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val nights = result.events.filter { it.title == "Samba Made in Berlin" }
+            nights shouldHaveSize 2
+            nights.flatMap { it.artists }.shouldBeEmpty()
+        }
+
+    @Test
     fun `passes NotModified through`() =
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns FetchResult.NotModified

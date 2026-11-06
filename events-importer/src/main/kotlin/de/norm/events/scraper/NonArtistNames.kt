@@ -177,7 +177,9 @@ private val BILLED_SERIES_NAMES: Set<String> =
         "berlin beat invasion",
         "urban spree klubnacht",
         "urban spree",
-        "methods of dance"
+        "methods of dance",
+        // ufaFabrik's `Samba Made in Berlin`, each edition its own acts (#4514). TRAILING_CITY drops `Berlin` before the match.
+        "samba made in"
     )
 
 /**
