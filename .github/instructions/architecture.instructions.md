@@ -133,7 +133,8 @@ which helper lives where — is not repeated; `grep` answers that.
 - **OWASP Dependency-Check** (`dependencyCheckAggregate`, fails on CVSS ≥ 7, suppressions in `owasp-suppressions.xml`):
     - **`scanProjects` stays unset.** The plugin matches `project.path` (`:events-core`), not `project.name`, so a name list matches nothing and the report reads
       `Dependencies Scanned: 0` while the CVSS gate passes trivially — live here until 2026-08-05. **A green OWASP run is not evidence the scan looked at
-      anything**; read `Dependencies Scanned` (baseline ~208).
+      anything**; read `Dependencies Scanned` (baseline ~268). A `continue-on-error` step always shows conclusion `success`, too;
+      [`security-report.prompt.md`](../prompts/security-report.prompt.md) has the detail.
     - **`skipConfigurations` excludes the build-tool classpaths** (`detekt`, `detektPlugins`, `ktlint*`, the Kotlin compiler and plugin ones), which carry old Kotlin and
       logging copies that never ship. Add nothing that ships. Matching is `contains` with no globbing, so a renamed tool configuration silently rejoins the scan.
     - **Suppression `packageUrl` regexes fail open when scoped wrong** — `org.jetbrains.(kotlin|kotlinx)/` missed `org.jetbrains.intellij.deps.kotlinx`. Check a
