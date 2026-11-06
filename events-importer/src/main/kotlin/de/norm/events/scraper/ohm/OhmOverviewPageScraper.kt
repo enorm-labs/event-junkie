@@ -3,6 +3,7 @@ package de.norm.events.scraper.ohm
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -95,7 +96,7 @@ class OhmOverviewPageScraper(
             sourceUrl = baseUrl,
             sourceId = "${EventSource.OHM.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             soldOut = cleanedTitle.soldOut,
-            artists = parseLineup(item)
+            artists = parseLineup(item, title)
         )
     }
 
@@ -115,45 +116,99 @@ class OhmOverviewPageScraper(
     /**
      * The roster from the `<br>`-separated `.event-lineup` block. The *title* is a party or
      * collective name (`"Ouch x FemmeDecks"`), never an act, so not minted. A bracket annotates
-     * a line (#1756): `(Live Painting)` or `(Sonic Visual Installation)` is not a music act and is
-     * dropped, `(OPERA live)` bills a `HEADLINER`, every other line a `DJ`. The bracket stays on the
-     * name, because `V.` alone would merge into another act's `v` slug.
+     * a line (#1756): `(Live Painting)` or `(Art Exhibition)` is not a music act and is dropped,
+     * `(OPERA live)` bills a `LIVE` act, every other line a `DJ`. The bracket comes off the name.
      *
      * A night in parts heads each part with its start (`Panel Talk [ 20:00 ]`, `Club [ 22:00 ]`).
      * A heading is never an act, and the lines under a talk heading are speakers, not DJs.
+     * A night that mixes disciplines heads them with `::` instead: see [musicLines].
      *
      * A line wholly in square
      * brackets (`[ All Night Long ]`) is a set note on the line above, never a performer (#2417).
      * A set length in round brackets (`Pariah (4h set)`) comes off the act, or it mints a second one (#2439).
      * A room heading its acts in brackets (`Vorraum (Harba & Delta Division Live)`) bills each act on that stage.
      * A numbered guest slot (`+ Guest 1`) is a placeholder, never an act (#3512).
+     * A trailing `/` is the venue's punctuation (`Rabih Beaini/`, `TBA/`), a `& friends` names nobody, and a credit
+     * opening `Live Visuals by` is not a music act (#4505).
      */
-    private fun parseLineup(item: Element): List<ScrapedArtist> {
+    private fun parseLineup(
+        item: Element,
+        title: String
+    ): List<ScrapedArtist> {
         var inTalk = false
-        return item
-            .textLinesAt(".event-lineup")
+        return musicLines(item.textLinesAt(".event-lineup").map { it.replace(TRAILING_SLASH, "") }, title)
             .filter { line ->
                 val heading = SECTION_HEADING.containsMatchIn(line)
                 if (heading) inTalk = TALK_HEADING.containsMatchIn(line)
                 !heading && !inTalk
             }.filterNot { SET_NOTE.matches(it) }
-            .map { it.replace(SET_LENGTH_NOTE, "").trim() }
-            .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) || GUEST_SLOT.matches(it) }
+            .map { it.replace(SET_LENGTH_NOTE, "").replace(FRIENDS_TAIL, "").trim() }
+            .flatMap { it.split(SPECIAL_GUEST_JOIN) }
+            .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) || GUEST_SLOT.matches(it) || VISUALS_CREDIT.containsMatchIn(it) }
             .flatMap(::lineupEntries)
+            .filterNot { isNonArtistName(it.name) }
+    }
+
+    /**
+     * The lines under a `:: music` heading, when a night has `::` headings at all (#4505). The lines above the first
+     * heading are a tagline (`a greeting to a shadow...`) and the lines under `:: art` are visual artists. A night
+     * with no such heading is every line.
+     */
+    private fun musicLines(
+        lines: List<String>,
+        title: String
+    ): List<String> {
+        if (lines.none { it.startsWith(DISCIPLINE_HEADING_MARK) }) return lines
+        var inMusic = false
+        val music =
+            lines.filter { line ->
+                val heading = line.startsWith(DISCIPLINE_HEADING_MARK)
+                if (heading) inMusic = MUSIC_HEADING.containsMatchIn(line)
+                !heading && inMusic
+            }
+        if (music.isEmpty()) logger.warn { "OHM night '$title' has :: headings and no act under a music heading, billing nobody" }
+        return music
     }
 
     private fun lineupEntries(line: String): List<ScrapedArtist> {
-        val room =
-            ROOM_GROUP.matchEntire(line)
-                ?: return listOf(ScrapedArtist(stripLineupBracket(line), if (LIVE_ANNOTATION.containsMatchIn(line)) ArtistRole.LIVE else ArtistRole.DJ))
+        val room = ROOM_GROUP.matchEntire(line)
+        if (room == null) {
+            val role = if (LIVE_ANNOTATION.containsMatchIn(line)) ArtistRole.LIVE else ArtistRole.DJ
+            return actsOfLine(stripLineupBracket(line)).map { ScrapedArtist(it, role) }
+        }
         val (stage, acts) = room.destructured
         val role = if (LIVE_WORD.containsMatchIn(acts)) ArtistRole.LIVE else ArtistRole.DJ
         return splitSegmentOnConjunctions(acts).map { ScrapedArtist(stripLineupBracket(it.replace(LIVE_WORD, "")), role, stage = stage) }
     }
+
+    /**
+     * [name] cut into its co-billed acts. A `b2b` line stays whole here: the import boundary splits it, and the pair on
+     * either side of the `b2b` is one slot (`Shuray & Walle b2b Naomi`).
+     */
+    private fun actsOfLine(name: String): List<String> = if (B2B_SEPARATOR.containsMatchIn(name)) listOf(name) else splitSegmentOnConjunctions(name)
 }
 
-/** A bracket naming a contribution that is not music: `(Live Painting)`, `(Sonic Visual Installation)`. */
-private val NON_MUSIC_ANNOTATION = Regex("""\([^()]*\b(?:painting|visuals?|installation|vjs?)\b[^()]*\)""", RegexOption.IGNORE_CASE)
+/** A bracket naming a contribution that is not music: `(Live Painting)`, `(Sonic Visual Installation)`, `(Art Exhibition)`. */
+private val NON_MUSIC_ANNOTATION =
+    Regex("""\([^()]*\b(?:painting|visuals?|installation|vjs?|art|exhibition|sculpture|photography)\b[^()]*\)""", RegexOption.IGNORE_CASE)
+
+/** A line crediting the visuals: `Live Visuals by Traynor`. */
+private val VISUALS_CREDIT = Regex("""^(?:live\s+)?visuals?\s+by\b""", RegexOption.IGNORE_CASE)
+
+/** What opens a heading over one discipline of a night: `:: music`, `:: art`. */
+private const val DISCIPLINE_HEADING_MARK = "::"
+
+/** A `::` heading whose lines are acts. */
+private val MUSIC_HEADING = Regex("""\bmusi[ck]\b""", RegexOption.IGNORE_CASE)
+
+/** The venue's punctuation at the end of a line: `Rabih Beaini/`. `AC/DC` keeps its slash. */
+private val TRAILING_SLASH = Regex("""\s*/+\s*$""")
+
+/** A `& friends` that names nobody, before the end of the line or a bracket: `Tim Reaper & friends`. */
+private val FRIENDS_TAIL = Regex("""\s+(?:&|\+|and|und)\s+friends(?=\s*(?:\(|$))""", RegexOption.IGNORE_CASE)
+
+/** A guest joined to the act before it, outside a bracket: `Viiaan, special guest Dakn`. */
+private val SPECIAL_GUEST_JOIN = Regex("""\s*,\s*special\s+guests?:?\s+(?![^()]*\))""", RegexOption.IGNORE_CASE)
 
 /** An unnamed guest slot: `+ Guest 1`, `Guests`. `Guest Lister` is an act. */
 private val GUEST_SLOT = Regex("""\+?\s*guests?(?:\s*\d+)?""", RegexOption.IGNORE_CASE)

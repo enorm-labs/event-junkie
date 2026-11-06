@@ -287,6 +287,145 @@ class OhmOverviewPageScraperTest {
         guestNight.artists.map { it.name } shouldBe listOf("Guest Lister")
     }
 
+    /** The day the `ohm-overview-disciplines.html` listing was captured. */
+    private val novemberClock: Clock = Clock.fixed(Instant.parse("2026-11-06T12:00:00Z"), ZoneId.of("Europe/Berlin"))
+
+    private val disciplines: List<ScrapedEvent> by lazy { scrape("ohm-overview-disciplines.html", novemberClock) }
+
+    private fun billing(title: String) = disciplines.first { it.title == title }.artists.map { it.name to it.role }
+
+    private fun lineupOf(vararg lines: String): List<String> {
+        val html =
+            """
+            <ul class="event-list"><li class="event-item">
+                <div class="event-date"><h2>20/11</h2></div>
+                <h2 class="event-title">Night</h2>
+                <div class="event-lineup">${lines.joinToString("<br />")}</div>
+            </li></ul>
+            """.trimIndent()
+        return OhmOverviewPageScraper(novemberClock)
+            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+            .single()
+            .artists
+            .map { it.name }
+    }
+
+    @Test
+    fun `reads only the music section of a night headed by discipline, without the trailing slashes`() {
+        billing("KOOKOO") shouldBe
+            listOf(
+                "Marta De Pascalis" to ArtistRole.LIVE,
+                "Rabih Beaini" to ArtistRole.DJ,
+                "Mieko Suzuki" to ArtistRole.DJ,
+                "ARA" to ArtistRole.DJ
+            )
+    }
+
+    @Test
+    fun `reads every line of a night without a discipline heading`() {
+        lineupOf("Rrose", "a tagline that is an act") shouldBe listOf("Rrose", "a tagline that is an act")
+    }
+
+    @Test
+    fun `bills nobody when no section of a night is music`() {
+        lineupOf(":: art", "CARLY FISCHER", ":: talk", "Someone").shouldBeEmpty()
+    }
+
+    @Test
+    fun `resumes at a later music heading, and takes a heading in any case or with a slash`() {
+        lineupOf("tagline", ":: art", "Painter", ":: MUSIC/", "Rrose/", ":: art/", "Sculptor") shouldBe listOf("Rrose")
+    }
+
+    @Test
+    fun `an exhibition credit is no act, and a performer's bracket keeps the act billed`() {
+        billing("LA CASITA") shouldBe
+            listOf(
+                "Rrose" to ArtistRole.DJ,
+                "Renáta G. Polonkai" to ArtistRole.LIVE,
+                "Serena Landriel" to ArtistRole.DJ
+            )
+    }
+
+    @Test
+    fun `a placeholder with a trailing slash bills nobody`() {
+        billing("Anarchy in the Club").shouldBeEmpty()
+        lineupOf("/", "TBA /").shouldBeEmpty()
+    }
+
+    @Test
+    fun `keeps a slash inside a name`() {
+        lineupOf("AC/DC", "AC/DC/") shouldBe listOf("AC/DC", "AC/DC")
+    }
+
+    @Test
+    fun `drops a trailing and friends and keeps the act`() {
+        billing("Neighbourhood") shouldBe listOf("Tim Reaper" to ArtistRole.DJ)
+        lineupOf("Tim Reaper & Friends (live)", "Friends of Dean & friends") shouldBe listOf("Tim Reaper", "Friends of Dean")
+        lineupOf("Peter & Friends Of Mine") shouldBe listOf("Peter & Friends Of Mine")
+    }
+
+    @Test
+    fun `splits an ampersand pair and reads a shared live bracket as live for both`() {
+        billing("JiāLa 2 Year Anniversary") shouldBe
+            listOf(
+                "CosmoCxndy" to ArtistRole.DJ,
+                "Jiannyuh" to ArtistRole.DJ,
+                "Temple Rat" to ArtistRole.LIVE,
+                "Linchi" to ArtistRole.LIVE,
+                "Jing Lekker" to ArtistRole.DJ,
+                "Short Finger" to ArtistRole.DJ,
+                "ENNIO" to ArtistRole.DJ,
+                "Mohamad Kafarsoussa" to ArtistRole.DJ
+            )
+    }
+
+    @Test
+    fun `drops a visuals credit and leaves a b2b line for the import boundary`() {
+        billing("Sneaker Social Club") shouldBe
+            listOf(
+                "Demdike Stare" to ArtistRole.LIVE,
+                "ojoo" to ArtistRole.DJ,
+                "Appleblim b2b Tempestfeather" to ArtistRole.DJ,
+                "Low End Activist" to ArtistRole.DJ
+            )
+        lineupOf("Visuals by Traynor", "Visuals Department") shouldBe listOf("Visuals Department")
+    }
+
+    @Test
+    fun `splits a line at a special guest`() {
+        billing("Last Resort x Radical Sounds Latin America").map { it.first } shouldBe
+            listOf("Siete Catorce", "Orieta Chrem", "Viiaan", "Dakn داكنْ", "Mauricio Takara", "Basy Tropikalne")
+        lineupOf("Viiaan, special guest TBA") shouldBe listOf("Viiaan")
+        lineupOf("Viiaan (with X, special guest Y)") shouldBe listOf("Viiaan")
+    }
+
+    @Test
+    fun `splits a cross-billed pair and keeps a name that ends in X`() {
+        billing("TETAS LOCAS").map { it.first } shouldBe listOf("Hypercosita", "Mama Snake", "Isa GT", "JASSS", "Kontronatura", "LIL RISK", "Sanaz")
+        lineupOf("Sadat X") shouldBe listOf("Sadat X")
+    }
+
+    @Test
+    fun `leaves a known duo and a backing band whole`() {
+        lineupOf("Chase & Status", "Jack & The Band") shouldBe listOf("Chase & Status", "Jack & The Band")
+    }
+
+    @Test
+    fun `changes no night the new rules do not name`() {
+        billing("poems").map { it.first } shouldBe listOf("Scratcha DVA", "Shannen SP", "Genus Aix", "dérive", "pesadj")
+        billing("Tresor x RA25").map { it.first } shouldBe
+            listOf(
+                "Beatrice M. b2b Appleblim b2b Peverelist",
+                "Chloe Lula",
+                "gyrofield",
+                "Nídia",
+                "Paperclip Minimiser",
+                "Pavel Milyakov",
+                "Ship Sket",
+                "Slimzee"
+            )
+    }
+
     // The fixtures predate the posters, which the venue added in September 2026 (#1777).
     @Test
     fun `reads the night's poster and leaves the image empty where there is none`() {
