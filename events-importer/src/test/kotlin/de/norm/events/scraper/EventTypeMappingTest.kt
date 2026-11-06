@@ -336,6 +336,13 @@ class EventTypeMappingTest {
         classifyByGenreKeyword("Songslam Pop") shouldBe null
     }
 
+    @Test
+    fun `classifyByGenreKeyword keeps a reading named beside jazz a concert, and any other reading a reading`() {
+        classifyByGenreKeyword("Christmas Vocal Jazz & Lesung") shouldBe null
+        classifyByGenreKeyword("Musikkabarett & Lesung") shouldBe "READING"
+        classifyByGenreKeyword("Lesung & Gespräch") shouldBe "READING"
+    }
+
     // --- refineConcertVenueType ---
 
     @Test

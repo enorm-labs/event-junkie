@@ -355,7 +355,8 @@ fun inferVenueFormatType(
  * tags a reading `genre = "Lesung"`, Cassiopeia an immersive show `genre = "Immersive
  * Ausstellung"`, leaving the title cue-less. Narrower than the title classifier: only a
  * screening, a reading or an exhibition, formats a music venue never lists as a genre, so
- * "Techno" or "Spoken Word, Jazz" never reclassifies a concert. Same whole-word guards
+ * "Techno" or "Spoken Word, Jazz" never reclassifies a concert. A reading named beside jazz
+ * (A-Trane's `Christmas Vocal Jazz & Lesung`, #4548) stays a concert too. Same whole-word guards
  * (`\bslam\b`, `\bkino\b`).
  */
 fun classifyByGenreKeyword(genre: String): String? {
@@ -363,14 +364,16 @@ fun classifyByGenreKeyword(genre: String): String? {
     return when {
         isScreeningTitle(genre) -> EventType.SCREENING.name
 
-        READING_TITLE_KEYWORDS.any { it in haystack } ||
-            READING_TITLE_WORD_PATTERN.containsMatchIn(haystack) -> EventType.READING.name
+        !JAZZ_WORD_PATTERN.containsMatchIn(haystack) &&
+            (READING_TITLE_KEYWORDS.any { it in haystack } || READING_TITLE_WORD_PATTERN.containsMatchIn(haystack)) -> EventType.READING.name
 
         EXHIBITION_TITLE_KEYWORDS.any { it in haystack } -> EventType.EXHIBITION.name
 
         else -> null
     }
 }
+
+private val JAZZ_WORD_PATTERN = Regex("""\bjazz\b""")
 
 /** The generic "unclassified" category labels a venue may emit (as opposed to a specific kind). */
 private val GENERIC_OTHER_TYPES = setOf(EventType.OTHER.name)

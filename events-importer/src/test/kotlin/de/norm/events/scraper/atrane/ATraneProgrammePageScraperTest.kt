@@ -250,11 +250,26 @@ class ATraneProgrammePageScraperTest {
                 )
             )
 
-        night.title shouldBe "WEIHNACHTLICH BESINNLICHES MIT:"
-        night.subtitle shouldBe
-            "THOMAS QUASTHOFF · FEAT: ROLF ZIELKE / PETER WENIGER / OLAF CASIMIR / THOMAS ALKIER · SPECIAL GUESTS: JUTTA SPEIDEL & SIMON OSLENDER"
+        night.title shouldBe "WEIHNACHTLICH BESINNLICHES MIT THOMAS QUASTHOFF"
+        night.subtitle shouldBe "FEAT: ROLF ZIELKE / PETER WENIGER / OLAF CASIMIR / THOMAS ALKIER · SPECIAL GUESTS: JUTTA SPEIDEL & SIMON OSLENDER"
         night.artists.map { it.name to it.role } shouldBe
             listOf("THOMAS QUASTHOFF" to ArtistRole.HEADLINER, "JUTTA SPEIDEL" to ArtistRole.SUPPORT, "SIMON OSLENDER" to ArtistRole.SUPPORT)
+    }
+
+    @Test
+    fun `a lead-in with nothing below it stays the title, with no subtitle`() {
+        val night = card(listOf("A-TRANE PRÄSENTIERT:", "WEIHNACHTLICH BESINNLICHES MIT:"))
+
+        night.title shouldBe "WEIHNACHTLICH BESINNLICHES MIT:"
+        night.subtitle shouldBe null
+    }
+
+    @Test
+    fun `stores a night tagged jazz and reading as a concert, and one tagged reading alone as a reading`() {
+        val night = card(listOf("WEIHNACHTLICH BESINNLICHES MIT:", "THOMAS QUASTHOFF"))
+
+        night.copy(genre = "Christmas Vocal Jazz & Lesung").resolvedEventType() shouldBe EventType.CONCERT
+        night.copy(genre = "Lesung").resolvedEventType() shouldBe EventType.READING
     }
 
     @Test
