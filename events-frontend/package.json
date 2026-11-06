@@ -60,9 +60,9 @@
     "@shadcn/lint": "0.2.3",
     "@tailwindcss/vite": "4.3.3",
     "@tsconfig/node26": "26.0.1",
-    "@types/estree": "1.0.9",
+    "@types/estree": "1.0.10",
     "@types/jsdom": "30.0.0",
-    "@types/node": "26.6.5",
+    "@types/node": "26.6.6",
     "@vitejs/plugin-vue": "6.0.10",
     "@vitest/coverage-v8": "5.0.5",
     "@vitest/eslint-plugin": "1.6.28",
@@ -87,7 +87,7 @@
     "vite": "8.3.5",
     "vite-plugin-vue-devtools": "8.2.1",
     "vitest": "5.0.5",
-    "vue-tsc": "3.3.13"
+    "vue-tsc": "3.3.14"
   },
   "//overrides": "GHSA-3g3m-2fjr-6pw4 (glob, AbortSignal cancellation bypass, fixed in 14.0.2) and GHSA-g3hv-75wg-m249 (minimatch, denial of service via globparts amplification, fixed in 11.0.1). The fix is a major in each case, and the build tooling that pulls them in (eslint's config-array, js-beautify under @vue/test-utils, the npm libraries under license-checker) declares the older one, so no bump reaches it. Both are build-time only: `node_modules` never enters the frontend image, which copies `dist/` and `docker/nginx.conf` into nginx. Drop each entry once `npm ls glob minimatch` shows every parent on the fixed major.",
   "overrides": {
