@@ -106,12 +106,23 @@ private const val KANTINE_MARKER = "Kantine"
  * The performers one lineup slot names: `Agata B2B Cunt Remember` is two acts, `Booty Carrell DJ
  * (Vinyl) Warm-up` is one. Shared by the programme and the event page, so a running-order slot
  * names the acts the programme billed. Why each split is safe: [BerghainOverviewPageScraper].
+ * A [PROGRAMME_ITEM] names no act, whatever it holds.
  */
 internal fun splitSlot(text: String): List<String> =
-    text
-        .split(SLOT_SEPARATOR)
-        .map { stripLineupBracket(it.replace(SLOT_DESCRIPTION, "").replace(SLOT_WORK, "").trim()) }
-        .filter { it.isNotBlank() && !isNonArtistName(it) }
+    if (PROGRAMME_ITEM.matches(text.trim())) {
+        emptyList()
+    } else {
+        text
+            .split(SLOT_SEPARATOR)
+            .map { stripLineupBracket(it.replace(SLOT_DESCRIPTION, "").replace(SLOT_WORK, "").trim()) }
+            .filter { it.isNotBlank() && !isNonArtistName(it) }
+    }
+
+/**
+ * A slot wholly in double quotes is the title of a talk or a market on a concert night (#4506). The label that says
+ * so is a span of its own, absent from the programme page. An act that only opens with a quote, a nickname, stays.
+ */
+private val PROGRAMME_ITEM = Regex("""^".*"$""")
 
 /**
  * The work an act presents in its slot: `Robert Henke presents Dust`. The performer opens a Berghain slot, so the
