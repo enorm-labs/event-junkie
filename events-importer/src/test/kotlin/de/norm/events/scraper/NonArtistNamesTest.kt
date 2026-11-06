@@ -16,6 +16,23 @@ class NonArtistNamesTest {
         isNonArtistName("Rocking Round The Xmas Tree") shouldBe true
     }
 
+    @Test
+    fun `a package tour's name is no act, in any spelling`() {
+        // Huxleys, event 731 (#4513).
+        isNonArtistName("Rock Legends") shouldBe true
+        isNonArtistName("ROCK LEGENDS") shouldBe true
+        isNonArtistName("  Rock   Legends ") shouldBe true
+        isNonArtistName("Rock Legends Berlin") shouldBe true
+        isNonArtistName("Rock Legends 2") shouldBe true
+    }
+
+    @Test
+    fun `the denylist entry for a package tour matches the whole name only`() {
+        isNonArtistName("Legends") shouldBe false
+        isNonArtistName("Rock Legend") shouldBe false
+        isNonArtistName("The Rock Legends Band") shouldBe false
+    }
+
     // --- isPlaceholderName ---
 
     @Test

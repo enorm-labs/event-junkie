@@ -88,6 +88,15 @@ class HuxleysDetailPageScraperTest {
     }
 
     @Test
+    fun `bills no act for a package tour named as the title`() {
+        // Only the page's prose names the five performers (#4513).
+        val rockLegends = scrape("huxleys-detail-cancelled.html", "2026-11-06-rock-legends")
+        rockLegends.shouldNotBeNull()
+        rockLegends.title shouldBe "Rock Legends"
+        rockLegends.artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `parses a stated price and keeps the fee qualifier as a note`() {
         val currentJoys = scrape("huxleys-detail-relocated.html", "2026-08-18-current-joys")
         currentJoys.shouldNotBeNull()
