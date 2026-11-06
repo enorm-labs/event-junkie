@@ -62,7 +62,7 @@ jobs:
       # on the runner for the A01 render.
       - name: Run /owasp-top-10
         id: claude
-        uses: anthropics/claude-code-action@d70510b174a1244958df0b03166a54912811f3e6 # v1
+        uses: anthropics/claude-code-action@4845bacbb38b3c4b15d948f035349786f678e068 # v1
         env:
           ACTIONS_GITHUB_TOKEN: ${{ github.token }}
         with:
