@@ -15,8 +15,9 @@
 #
 # A flag is a lead, not a verdict: is-title (the name is the part of a "<name> | <tag>" title before the bar), pipe, year,
 # day ("Tag 1", "Day 2"), keyword (festival, presents, tour, release, support, mit, feat. …), cut (ends in "…"),
-# long (over 40 characters), line-up (opens with `line up`), unbilled (no event links it). The event shown is the earliest
-# that bills the artist.
+# long (over 40 characters), line-up (opens with `line up`), heading (opens with `::`), slash (ends in `/`), x (a ` x ` join),
+# aka, friends (`& friends`), visuals (`visuals by`), unbilled (no event links it). The event shown is the earliest that
+# bills the artist.
 #
 # --kind promoters prints the same shape, with `near` in place of `role`: an older promoter whose slug, without its
 # hyphens, equals or starts the new one's (`d2mberlin` beside `d2m-berlin`). Its flags: is-title (the name is the night's
@@ -159,6 +160,12 @@ WITH fresh AS (
             CASE WHEN name ~ '(…|\.\.\.)$' THEN 'cut' END,
             CASE WHEN length(name) > 40 THEN 'long' END,
             CASE WHEN name ~* '^line[ -]?up\M' THEN 'line-up' END,
+            CASE WHEN name ~ '^\s*::' THEN 'heading' END,
+            CASE WHEN name ~ '/\s*$' THEN 'slash' END,
+            CASE WHEN name ~* '\S\s+x\s+\S' THEN 'x' END,
+            CASE WHEN name ~* '(\maka\M|\ma\.k\.a)' THEN 'aka' END,
+            CASE WHEN name ~* '&\s*friends\M' THEN 'friends' END,
+            CASE WHEN name ~* '\mvisuals?\s+by\M' THEN 'visuals' END,
             CASE WHEN title IS NULL THEN 'unbilled' END
         ) AS flags
     FROM billed
