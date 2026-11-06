@@ -151,14 +151,18 @@ private const val SHOW_NAME_SMALL_WORD_LENGTH = 3
  */
 private val SHOW_NAME_TAIL = Regex("""^(.*\p{Ll}.*?)\s+[-–—]\s+(\p{Lu}\S*(?:\s+(?:\p{Lu}\S*|\p{Ll}{1,$SHOW_NAME_SMALL_WORD_LENGTH})){2,})$""")
 
+/** A record's quoted title and the show that releases it: `“FRIBERTY I”-Releaseshow`. */
+private val QUOTED_RECORD_RELEASE_TAIL = Regex("""(?<=\S)\s+[“„"][^”“"]+[”“"]-Releaseshow$""", RegexOption.IGNORE_CASE)
+
 /**
  * The act a title-billed [name] names, without the show the venue writes after it (#3704):
- * `Winona Riders - El Sueño de Dominar el Planeta se Renueva` and `DIAMONDSONYMYDICK LIVE BERLIN`.
+ * `Winona Riders - El Sueño de Dominar el Planeta se Renueva`, `DIAMONDSONYMYDICK LIVE BERLIN`
+ * and `FRIBERTY “FRIBERTY I”-Releaseshow`.
  * The head before a dash must carry a lowercase letter, so a shouted name with a dash (`DZ - DEATHRAY`) stays.
  */
 internal fun urbanSpreeActName(name: String): String {
     val withoutShow = SHOW_NAME_TAIL.matchEntire(name)?.groupValues?.get(1) ?: name
-    return withoutShow.replace(LIVE_IN_BERLIN_TAIL, "")
+    return withoutShow.replace(LIVE_IN_BERLIN_TAIL, "").replace(QUOTED_RECORD_RELEASE_TAIL, "")
 }
 
 /**

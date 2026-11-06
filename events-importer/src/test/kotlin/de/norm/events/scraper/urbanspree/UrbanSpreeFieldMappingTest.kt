@@ -126,6 +126,18 @@ class UrbanSpreeFieldMappingTest {
         urbanSpreeActName("Live Berlin") shouldBe "Live Berlin"
     }
 
+    @Test
+    fun `urbanSpreeActName cuts a quoted record's Releaseshow`() {
+        urbanSpreeActName("Friberty “Friberty I”-Releaseshow") shouldBe "Friberty"
+        urbanSpreeActName("FRIBERTY “FRIBERTY I”-Releaseshow") shouldBe "FRIBERTY"
+    }
+
+    @Test
+    fun `urbanSpreeActName keeps a quoted word that opens no Releaseshow`() {
+        urbanSpreeActName("Lee “Scratch” Perry") shouldBe "Lee “Scratch” Perry"
+        urbanSpreeActName("Friberty") shouldBe "Friberty"
+    }
+
     // --- urbanSpreeStatus ---
 
     @Test

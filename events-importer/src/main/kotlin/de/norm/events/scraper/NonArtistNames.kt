@@ -510,9 +510,12 @@ private val TIME_RANGE = Regex("""\d{1,2}(?:[:.]\d{2})?\s*[-–]\s*\d{1,2}(?:[:.
 /** Whether [name] is only a [TIME_RANGE]. */
 private fun isTimeRange(name: String): Boolean = TIME_RANGE.matches(name.trim())
 
+/** A `w/` with nothing after it: the guest of `Whacking Activation w/` was cut off. `B/Annimali` and `O/H/R` keep their slash. */
+private val DANGLING_WITH = Regex("""\sw/$""", RegexOption.IGNORE_CASE)
+
 /**
  * A candidate still carrying a title's `|` separator ("SKETCHY SESSIONS | jazz") is a slice of
- * the title (#1494). No performer writes a pipe; length says nothing, since "…And You Will Know
- * Us by the Trail of Dead" is one band.
+ * the title (#1494), and so is one ending on a [DANGLING_WITH]. No performer writes a pipe; length
+ * says nothing, since "…And You Will Know Us by the Trail of Dead" is one band.
  */
-private fun isTitleFragment(name: String): Boolean = name.contains('|')
+private fun isTitleFragment(name: String): Boolean = name.contains('|') || DANGLING_WITH.containsMatchIn(name.trim())

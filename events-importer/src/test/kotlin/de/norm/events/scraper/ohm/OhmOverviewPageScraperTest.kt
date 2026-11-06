@@ -347,6 +347,11 @@ class OhmOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads a set note in brackets off the act`() {
+        lineupOf("V. (Opera live)", "Renáta G. Polonkai (Live Soprano)") shouldBe listOf("V.", "Renáta G. Polonkai")
+    }
+
+    @Test
     fun `a placeholder with a trailing slash bills nobody`() {
         billing("Anarchy in the Club").shouldBeEmpty()
         lineupOf("/", "TBA /").shouldBeEmpty()

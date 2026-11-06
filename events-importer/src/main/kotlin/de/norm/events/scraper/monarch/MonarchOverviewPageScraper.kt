@@ -114,8 +114,8 @@ class MonarchOverviewPageScraper {
             sourceId = "${EventSource.MONARCH.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = ticketUrl,
             status = status,
-            // Only a concert's title names the headliner; parties/club nights extract none.
-            artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+            // Only a concert's title names the headliner; parties/club nights extract none, and a numbered session names none either.
+            artists = if (NUMBERED_SESSION.matches(title)) emptyList() else buildArtistsForEventType(title, subtitle = null, eventType = eventType)
         )
     }
 
@@ -194,6 +194,9 @@ class MonarchOverviewPageScraper {
 
         /** The "(KONZERT)" concert marker suffix, case-insensitive. */
         private val KONZERT_PATTERN = Regex("""\(\s*konzert\s*\)""", RegexOption.IGNORE_CASE)
+
+        /** An edition of a series, which names no act: `LEAKED SESSION 04`. `Session Victim` and `Berlin Session Strings` carry no number. */
+        private val NUMBERED_SESSION = Regex("""\S.*\ssession\s+\d+""", RegexOption.IGNORE_CASE)
 
         /** The "ABGESAGT" (cancelled) flag, matched as a whole word anywhere in the title. */
         private val ABGESAGT_PATTERN = Regex("""\babgesagt\b""", RegexOption.IGNORE_CASE)

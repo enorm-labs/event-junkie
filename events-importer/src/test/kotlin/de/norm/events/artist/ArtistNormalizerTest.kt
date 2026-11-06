@@ -48,6 +48,16 @@ class ArtistNormalizerTest {
     }
 
     @Test
+    fun `OHM's V dot takes a slug of its own and the dark-wave act keeps v`() {
+        assertSoftly {
+            artistSlugFor("V.", "ohm:2026-09-24-la-casita") shouldBe "v-2"
+            artistSlugFor("V.", "schokoladen:e20260904") shouldBe "v"
+            artistSlugFor("V.") shouldBe "v"
+            artistSlugFor("V", "lido:2026-12-26-she-past-away") shouldBe "v"
+        }
+    }
+
+    @Test
     fun `every source scope is the sourceId prefix of a real source`() {
         val prefixes = EventSource.entries.map { it.sourceIdPrefix }.toSet()
         sourceScopedArtistSlugPrefixes.filterNot { it in prefixes }.shouldBeEmpty()
@@ -373,6 +383,18 @@ class ArtistNormalizerTest {
             // No shared rule strips `DJ `, so the pairs the operator kept apart stay two rows.
             artistSlugFor("DJ Rokit") shouldBe "dj-rokit"
             artistSlugFor("DJ PayPaul") shouldBe "dj-paypaul"
+        }
+    }
+
+    @Test
+    fun `folds the V229 merges onto the survivor and leaves another DJ alone`() {
+        assertSoftly {
+            canonicalArtistName("DJ Louie Wray") shouldBe "Louie Wray"
+            canonicalArtistName("Panamamama") shouldBe "Panama Mama"
+            artistSlugFor("DJ Louie Wray") shouldBe "louie-wray"
+            artistSlugFor("Panamamama") shouldBe "panama-mama"
+            // Wild at Heart's other DJ on the same line keeps the prefix that tells him apart.
+            artistSlugFor("DJ Peter") shouldBe "dj-peter"
         }
     }
 }
