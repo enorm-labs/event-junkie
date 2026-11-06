@@ -2040,6 +2040,12 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "com.tngtech.archunit:archunit",
+          "version": "1.4.2",
+          "url": "https://github.com/TNG/ArchUnit",
+          "ecosystem": "backend"
+        },
+        {
           "name": "jakarta.activation:jakarta.activation-api",
           "version": "2.1.4",
           "url": "https://github.com/jakartaee/jaf-api",
@@ -2438,24 +2444,6 @@
       ]
     },
     {
-      "license": "0BSD",
-      "url": "https://opensource.org/license/0bsd",
-      "components": [
-        {
-          "name": "com.tngtech.archunit:archunit",
-          "version": "1.4.2",
-          "url": "https://github.com/TNG/ArchUnit",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "tslib",
-          "version": "2.8.1",
-          "url": "https://github.com/Microsoft/tslib",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
       "license": "LGPL-2.1",
       "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
       "components": [
@@ -2470,6 +2458,18 @@
           "version": "1.5.38",
           "url": "http://www.qos.ch",
           "ecosystem": "backend"
+        }
+      ]
+    },
+    {
+      "license": "0BSD",
+      "url": "https://opensource.org/license/0bsd",
+      "components": [
+        {
+          "name": "tslib",
+          "version": "2.8.1",
+          "url": "https://github.com/Microsoft/tslib",
+          "ecosystem": "frontend"
         }
       ]
     },
