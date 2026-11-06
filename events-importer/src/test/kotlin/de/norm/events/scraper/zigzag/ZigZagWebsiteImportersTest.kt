@@ -128,6 +128,40 @@ class ZigZagWebsiteImportersTest {
         }
 
     @Test
+    fun `bills The Jazz Crusaders and Beyond from its page, not from its title`() =
+        runTest {
+            val listing =
+                """
+                <div class="summary-item summary-item-record-type-event">
+                  <a href="/program-mai/asdwwww" class="summary-title-link">The Jazz Crusaders and Beyond</a>
+                  <time class="summary-metadata-item summary-metadata-item--date">November 14, 2026</time>
+                </div>
+                """.trimIndent()
+            val page =
+                """
+                <div class="eventitem-column-content">
+                  <h3>Fuasi Abdul-Khaliq - ten sax (USA)</h3>
+                  <h3>Kelvin Sholar - piano USA)</h3>
+                  <h3>Geoffroy de Masure - trombone (FR)</h3>
+                  <h3>Charles Sammons - bass (USA)</h3>
+                  <h3>Kenny Martin - drums (USA)</h3>
+                </div>
+                """.trimIndent()
+            coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(listing, listingUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(page, firstArg<String>()) }
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events
+                .single()
+                .artists
+                .map { it.name } shouldBe
+                listOf("Fuasi Abdul-Khaliq", "Kelvin Sholar", "Geoffroy de Masure", "Charles Sammons", "Kenny Martin")
+        }
+
+    @Test
     fun `prices a box-office-only night at the door`() =
         runTest {
             stubListing()

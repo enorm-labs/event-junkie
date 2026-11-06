@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zigzag
 
+import de.norm.events.artist.artistSlugFor
 import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -106,6 +107,30 @@ class ZigZagDetailPageScraperTest {
             )
 
         detail.artists.map { it.name } shouldBe listOf("JOHANN GIESECKE", "Leander Neidig")
+    }
+
+    // Event 12837's page, verbatim: the venue dropped the opening bracket of Kelvin Sholar's country.
+    @Test
+    fun `reads a country that lost its opening bracket`() {
+        val detail =
+            scraper.scrape(
+                Jsoup.parse(
+                    """
+                    <div class="eventitem-column-content">
+                      <h3>Fuasi Abdul-Khaliq - ten sax (USA)</h3>
+                      <h3>Kelvin Sholar - piano USA)</h3>
+                      <h3>Geoffroy de Masure - trombone (FR)</h3>
+                      <h3>Charles Sammons - bass (USA)</h3>
+                      <h3>Kenny Martin - drums (USA)</h3>
+                    </div>
+                    """.trimIndent()
+                )
+            )
+
+        detail.artists.map { it.name } shouldBe
+            listOf("Fuasi Abdul-Khaliq", "Kelvin Sholar", "Geoffroy de Masure", "Charles Sammons", "Kenny Martin")
+        // Production stores artist 7563 as `Fuasi Abdul Khaliq`, and this name has to reach that row.
+        artistSlugFor(detail.artists.first().name) shouldBe artistSlugFor("Fuasi Abdul Khaliq")
     }
 
     @Test

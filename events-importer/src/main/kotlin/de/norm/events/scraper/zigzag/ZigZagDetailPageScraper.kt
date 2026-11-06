@@ -37,8 +37,9 @@ data class ZigZagDetail(
  *
  * The line-up comes before the "(for English please scroll down)" line, one musician a line:
  * `Name - instrument (country)` in `h3` or `p` elements, or in one `h3` broken by `<br>`. The dash
- * can be an en dash or lack the space before it, and the country can be missing. Each name is a
- * headliner, because a band has no support act; the instrument has no field to go to.
+ * can be an en dash or lack the space before it, and the country can be missing or lack its opening
+ * bracket. Each name is a headliner, because a band has no support act; the instrument has no field
+ * to go to.
  */
 class ZigZagDetailPageScraper {
     fun scrape(document: Document): ZigZagDetail {
@@ -96,8 +97,11 @@ class ZigZagDetailPageScraper {
         val ADMISSION = Regex("""eintritt\s*:?\s*\d+(?:,\d{2})?\s*€""", RegexOption.IGNORE_CASE)
         val LOCATION = Regex("""location[^:]*:.{0,120}""", RegexOption.IGNORE_CASE)
 
-        /** `Mette Nadja Hansen - Vocals (DK)`, `JOHANN GIESECKE- Trombone`; a comma in the name or a full stop means a blurb line. */
-        val LINEUP_LINE = Regex("""(\p{L}[^,.!?:;()]{1,60}?)\s*[-–]\s+\p{L}[^.!?:;()]{0,40}?(?:\s*\(\p{L}{2,3}\))?""")
+        /**
+         * `Mette Nadja Hansen - Vocals (DK)`, `JOHANN GIESECKE- Trombone`, `Kelvin Sholar - piano USA)`;
+         * a comma in the name or a full stop means a blurb line.
+         */
+        val LINEUP_LINE = Regex("""(\p{L}[^,.!?:;()]{1,60}?)\s*[-–]\s+\p{L}[^.!?:;()]{0,40}?(?:\s*\(?\p{L}{2,3}\))?""")
         const val MAX_NAME_WORDS = 5
     }
 }

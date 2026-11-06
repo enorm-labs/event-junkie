@@ -105,8 +105,9 @@ class ZigZagOverviewPageScraper(
 
         /**
          * The weekly jam and the tribute nights name a format or an honoree, not the band on stage:
-         * `A Tribute to Wayne Shorter`, `Celebrating Buena Vista Social Club`, `Golden Voices: Sinatra, … & Beyond`.
+         * `A Tribute to Wayne Shorter`, `Celebrating Buena Vista Social Club`, `Golden Voices: Sinatra, … & Beyond`,
+         * `The Jazz Crusaders and Beyond`.
          */
-        val NO_ACT = Regex("""jam session|tribute|^celebrating\s|&\s*beyond$""", RegexOption.IGNORE_CASE)
+        val NO_ACT = Regex("""jam session|tribute|^celebrating\s|(?:&|\band)\s*beyond$""", RegexOption.IGNORE_CASE)
     }
 }
