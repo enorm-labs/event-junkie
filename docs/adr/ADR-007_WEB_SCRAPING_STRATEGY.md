@@ -588,7 +588,7 @@ venue that changes its wrapping keeps working. The venue's own rules, such as wh
 | `JsonNode.schemaOffers()` / `schemaSoldOut()`   | `offers` as a list; sold out when every offer is `SoldOut` or `OutOfStock`                     |
 
 **`TheEventsCalendar.kt`** — the reader for a WordPress venue on The Events Calendar. Its REST API
-(`/wp-json/tribe/events/v1/events`) returns the whole upcoming programme. Cosmic Comedy and Comedy Café Berlin use it today.
+(`/wp-json/tribe/events/v1/events`) returns the events that start from today, or from the `start_date` in the request. Cosmic Comedy and Comedy Café Berlin use it today.
 The page shape, the cursor walk and the field readers live here. The venue maps each event in its own scraper.
 
 | Extension / Function                                   | Purpose                                                                                   |

@@ -1,11 +1,19 @@
 package de.norm.events.scraper
 
+import de.norm.events.common.BERLIN
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import io.mockk.coEvery
+import io.mockk.mockk
+import io.mockk.slot
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.json.JsonMapper
+import java.time.Clock
+import java.time.Instant
+import java.time.Period
 
-/** Unit tests for [tecSourceId], the key every slug-keyed venue on The Events Calendar builds. */
+/** Unit tests for [tecSourceId], the key every slug-keyed venue on The Events Calendar builds, and the first request of [AbstractTecImporter]. */
 class TheEventsCalendarTest {
     private val mapper = JsonMapper.builder().build()
 
@@ -57,5 +65,47 @@ class TheEventsCalendarTest {
         sourceId(null) shouldBe "soulcat:opera-days"
         sourceId("not a url/2026-08-25/") shouldBe "soulcat:opera-days"
         sourceId("https://venue.example/?p=123/2026-08-25") shouldBe "soulcat:opera-days"
+    }
+
+    private fun importer(
+        client: ApiClient,
+        lookback: Period?
+    ) = object : AbstractTecImporter(
+        client,
+        "Venue",
+        { TecPage(emptyList(), null) },
+        1,
+        lookback,
+        Clock.fixed(Instant.parse("2026-11-06T12:00:00Z"), BERLIN)
+    ) {
+        override val eventSource = EventSource.SOULCAT
+    }
+
+    private fun requestedUrl(
+        sourceUrl: String,
+        lookback: Period?
+    ): String {
+        val client: ApiClient = mockk()
+        val requested = slot<String>()
+        coEvery { client.fetchJson(capture(requested)) } returns "{}"
+        runTest { importer(client, lookback).importEvents(sourceUrl) }
+        return requested.captured
+    }
+
+    @Test
+    fun `asks for the plain programme with no look-back`() {
+        requestedUrl("https://venue.example/events", null) shouldBe "https://venue.example/events?per_page=50"
+    }
+
+    @Test
+    fun `starts a look-back that far before today`() {
+        requestedUrl("https://venue.example/events", TEC_RUNNING_LOOKBACK) shouldBe
+            "https://venue.example/events?start_date=2026-07-09&per_page=50"
+    }
+
+    @Test
+    fun `adds a look-back to a source URL that already holds a query`() {
+        requestedUrl("https://venue.example/events?categories=buehne", TEC_RUNNING_LOOKBACK) shouldBe
+            "https://venue.example/events?categories=buehne&start_date=2026-07-09&per_page=50"
     }
 }

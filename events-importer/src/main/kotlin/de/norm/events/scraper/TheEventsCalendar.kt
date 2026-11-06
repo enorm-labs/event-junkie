@@ -1,18 +1,23 @@
 package de.norm.events.scraper
 
+import de.norm.events.common.BERLIN
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import java.net.URI
 import java.net.URISyntaxException
+import java.time.Clock
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Period
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 // The reader for a WordPress venue on The Events Calendar, whose REST API
-// (`/wp-json/tribe/events/v1/events`) returns the whole upcoming programme. The venue maps each
-// event; the page shape, the cursor walk and the field readers live here.
+// (`/wp-json/tribe/events/v1/events`) returns the events that start from today, or from the
+// `start_date` the request names. The venue maps each event; the page shape, the cursor walk and
+// the field readers live here.
 
 private val logger = KotlinLogging.logger {}
 
@@ -24,6 +29,13 @@ private const val TEC_TEMPLATE_BLOCKS = ".tribe-events-schedule, .tribe-block"
 
 /** The plugin's largest page, so a programme takes the fewest requests. */
 private const val TEC_PER_PAGE = 50
+
+/**
+ * How far back a venue that maps exhibitions asks for events. The API filters on the start, so a
+ * run leaves a plain response on its opening day. Alte Münze's longest run since 2025 is 89 days.
+ * A venue of single nights passes none: the past events would only cost pages (#4544).
+ */
+val TEC_RUNNING_LOOKBACK: Period = Period.ofDays(120)
 
 /** One page of the events endpoint: its events, mapped, and the API's own cursor to the next page, or null on the last. */
 data class TecPage(
@@ -74,13 +86,17 @@ private suspend fun ApiClient.walkTecEvents(
 /**
  * Base class for a venue on The Events Calendar: walk its events endpoint with [walkTecEvents] and
  * return every page's events. The API sends no validators, so every run is a [ImportResult.Success].
- * [maxPages] is the runaway guard; [venueName] is how the log line names the source.
+ * [maxPages] is the runaway guard; [venueName] is how the log line names the source. With
+ * [runningLookback] the walk starts that far before today, and `dropPastEvents` removes what has
+ * ended at the upsert.
  */
 abstract class AbstractTecImporter(
     private val apiClient: ApiClient,
     private val venueName: String,
     private val scrapePage: (String) -> TecPage,
-    private val maxPages: Int
+    private val maxPages: Int,
+    private val runningLookback: Period? = null,
+    private val clock: Clock = Clock.system(BERLIN)
 ) : EventImporter {
     // javaClass.name, so the log names the concrete importer rather than this base.
     private val importLogger = KotlinLogging.logger(javaClass.name)
@@ -90,10 +106,12 @@ abstract class AbstractTecImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val listing = apiClient.walkTecEvents(eventSource, url, maxPages, scrapePage)
+        val listing = apiClient.walkTecEvents(eventSource, windowedUrl(url), maxPages, scrapePage)
         importLogger.info { "Scraped ${listing.items.size} event(s) from $venueName across ${listing.pages} page(s)" }
         return ImportResult.Success(events = listing.items, etag = null, lastModified = null, complete = listing.complete)
     }
+
+    private fun windowedUrl(url: String): String = runningLookback?.let { "$url${url.querySeparator()}start_date=${LocalDate.now(clock).minus(it)}" } ?: url
 }
 
 /** The local `start_date` or `end_date`, or null when missing or malformed. */

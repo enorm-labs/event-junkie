@@ -1,5 +1,6 @@
 package de.norm.events.scraper.pas
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HttpFetchException
@@ -15,12 +16,14 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.Instant
 
 class PasWebsiteImporterTest {
     private val apiClient: ApiClient = mockk()
-    private val importer = PasWebsiteImporter(apiClient)
+    private val importer = PasWebsiteImporter(apiClient, Clock.fixed(Instant.parse("2026-11-06T12:00:00Z"), BERLIN))
     private val sourceUrl = "https://pas-berlin.org/wp-json/tribe/events/v1/events"
-    private val firstPageUrl = "$sourceUrl?per_page=50"
+    private val firstPageUrl = "$sourceUrl?start_date=2026-07-09&per_page=50"
 
     @BeforeEach
     fun setUp() {
