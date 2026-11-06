@@ -50,6 +50,25 @@ class UrbanSpreeOverviewPageScraperTest {
         scrapeListing() shouldHaveSize 9
     }
 
+    // #4534: this page writes its attribute names in lower case, as data-datestart and data-dateend.
+    @Test
+    fun `scrape reads every card of the live exhibitions category page`() {
+        val exhibitionsUrl = "https://www.urbanspree.com/program/exhibitions/"
+
+        val events = scraper.scrape(fixture("urbanspree-exhibitions.html", exhibitionsUrl), exhibitionsUrl)
+
+        events shouldHaveSize 9
+        events.all { it.eventType == EventType.EXHIBITION.name } shouldBe true
+        events.first().let {
+            it.sourceUrl shouldBe "https://www.urbanspree.com/program/exhibitions/wholetrain-20.html"
+            it.sourceId shouldBe "urban_spree:exhibitions/wholetrain-20"
+            it.eventDate shouldBe LocalDate.of(2026, 11, 6)
+            it.startTime shouldBe null
+            it.endDate shouldBe LocalDate.of(2026, 11, 28)
+        }
+        events.last().endDate shouldBe LocalDate.of(2025, 10, 4)
+    }
+
     @Test
     fun `scrape reads all fields of a fully populated card`() {
         val event = scrapeListing()[1]

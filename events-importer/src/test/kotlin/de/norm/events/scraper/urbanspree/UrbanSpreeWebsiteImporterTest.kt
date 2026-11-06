@@ -44,6 +44,7 @@ class UrbanSpreeWebsiteImporterTest {
     private val page2Url = "https://www.urbanspree.com/program/?page=2"
     private val page3Url = "https://www.urbanspree.com/program/?page=3"
     private val page4Url = "https://www.urbanspree.com/program/?page=4"
+    private val exhibitionsUrl = "https://www.urbanspree.com/program/exhibitions/"
 
     private val clock = Clock.fixed(LocalDate.of(2026, 7, 30).atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)
 
@@ -68,6 +69,7 @@ class UrbanSpreeWebsiteImporterTest {
         coEvery { htmlFetcher.fetchDocument(page2Url) } returns fixture("urbanspree-overview-page2.html", page2Url)
         coEvery { htmlFetcher.fetchDocument(page3Url) } returns fixture("urbanspree-overview-past-boundary.html", page3Url)
         coEvery { htmlFetcher.fetchDocument(page4Url) } returns emptyListing(page4Url)
+        coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } returns emptyListing(exhibitionsUrl)
         // Every detail page that is not stubbed explicitly falls back to the listing card's data.
         coEvery { htmlFetcher.fetchDocument(match { it.contains("/program/concerts/") }) } throws IllegalStateException("no fixture")
         coEvery { htmlFetcher.fetchDocument(TWIN_NOIR_URL) } returns fixture("urbanspree-detail-concert.html", TWIN_NOIR_URL)
@@ -200,6 +202,7 @@ class UrbanSpreeWebsiteImporterTest {
             val queryEntryUrl = "https://www.urbanspree.com/program/?lang=en"
             coEvery { htmlFetcher.fetchDocument(queryEntryUrl) } returns fixture("urbanspree-overview.html", queryEntryUrl)
             coEvery { htmlFetcher.fetchDocument("$queryEntryUrl&page=2") } returns emptyListing(queryEntryUrl)
+            coEvery { htmlFetcher.fetchDocument("https://www.urbanspree.com/program/exhibitions/?lang=en") } returns emptyListing(queryEntryUrl)
 
             importer.importEvents(queryEntryUrl)
 
@@ -336,7 +339,197 @@ class UrbanSpreeWebsiteImporterTest {
             .single()
     }
 
+    private fun importerOn(date: LocalDate) = UrbanSpreeWebsiteImporter(htmlFetcher, Clock.fixed(date.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC))
+
+    /** The entry URL serves the live page that held Wholetrain on 2026-11-06, between concerts of both sides of the opening. */
+    private fun serveRunningExhibitionListing() {
+        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("urbanspree-overview-running-exhibition.html", entryUrl)
+        coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture("urbanspree-detail-exhibition-vernissage.html", WHOLETRAIN_URL)
+    }
+
+    /** No card on the listing, and the live category page: nine shows, of which only Wholetrain closes after 2026-11-06. */
+    private fun serveExhibitionsPageOnly() {
+        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns emptyListing(entryUrl)
+        coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } returns fixture("urbanspree-exhibitions.html", exhibitionsUrl)
+        coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture("urbanspree-detail-exhibition-vernissage.html", WHOLETRAIN_URL)
+    }
+
+    @Test
+    fun `importEvents keeps a running exhibition the day after it opens`() =
+        runTest {
+            serveRunningExhibitionListing()
+
+            val result = importerOn(LocalDate.of(2026, 11, 7)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+            val event = result.events.single { it.sourceUrl == WHOLETRAIN_URL }
+
+            event.eventDate shouldBe LocalDate.of(2026, 11, 6)
+            event.endDate shouldBe LocalDate.of(2026, 11, 28)
+            event.startTime shouldBe LocalTime.of(18, 0)
+            event.eventType shouldBe EventType.EXHIBITION.name
+            result.complete shouldBe true
+        }
+
+    @Test
+    fun `importEvents still drops a concert dated yesterday, and spares its detail fetch`() =
+        runTest {
+            serveRunningExhibitionListing()
+            val yesterday = "https://www.urbanspree.com/program/concerts/tigercub-nets-to-catch-the-wind-berlin.html"
+
+            val result = importerOn(LocalDate.of(2026, 11, 7)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            // The page's four concerts from 2026-11-07 on, and the run; its four older concerts stay out.
+            result.events.none { it.sourceUrl == yesterday } shouldBe true
+            result.events shouldHaveSize 5
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(yesterday) }
+        }
+
+    @Test
+    fun `importEvents ends the walk at a running exhibition that opened before today`() =
+        runTest {
+            // The run is the only card that started before today, so it alone can end the walk.
+            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns
+                Jsoup.parse(
+                    """<html><head><base href="https://www.urbanspree.com/"></head><body><div id="pdopage">
+                    <a class="stealth swiper-slide card" href="program/concerts/no-cigar.html" data-dateStart="2026-11-07 19:00:00">
+                    <p class="card-text mb-0 cat">Concerts</p><p class="card-text mb-0 title">No Cigar</p></a>
+                    <a class="stealth swiper-slide card" href="program/exhibitions/wholetrain-20.html"
+                       data-datestart="2026-11-06" data-dateend="2026-11-28" data-getdate="2026-11-06">
+                    <p class="card-text mb-0 cat">Exhibitions</p><p class="card-text mb-0 title">Wholetrain 20</p></a>
+                    </div></body></html>""",
+                    entryUrl
+                )
+            coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture("urbanspree-detail-exhibition-vernissage.html", WHOLETRAIN_URL)
+
+            val result = importerOn(LocalDate.of(2026, 11, 7)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events shouldHaveSize 2
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(page2Url) }
+        }
+
+    @Test
+    fun `importEvents reads a run the walk never reaches from the exhibitions page`() =
+        runTest {
+            serveExhibitionsPageOnly()
+
+            val result = importerOn(LocalDate.of(2026, 11, 20)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+            val event = result.events.single()
+
+            event.sourceId shouldBe "urban_spree:exhibitions/wholetrain-20"
+            event.eventDate shouldBe LocalDate.of(2026, 11, 6)
+            event.endDate shouldBe LocalDate.of(2026, 11, 28)
+            event.eventType shouldBe EventType.EXHIBITION.name
+            event.detailUnavailable shouldBe false
+        }
+
+    @Test
+    fun `importEvents keeps a run on its closing day and drops it the day after`() =
+        runTest {
+            serveExhibitionsPageOnly()
+
+            val closingDay = importerOn(LocalDate.of(2026, 11, 28)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+            val dayAfter = importerOn(LocalDate.of(2026, 11, 29)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            closingDay.events shouldHaveSize 1
+            dayAfter.events shouldHaveSize 0
+        }
+
+    @Test
+    fun `importEvents skips a closed show on the exhibitions page and its detail fetch`() =
+        runTest {
+            serveExhibitionsPageOnly()
+
+            val result = importerOn(LocalDate.of(2026, 11, 7)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.map { it.sourceUrl } shouldBe listOf(WHOLETRAIN_URL)
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(RECONNECTIONS_URL) }
+        }
+
+    @Test
+    fun `importEvents yields one event for a card on both the listing and the exhibitions page`() =
+        runTest {
+            serveRunningExhibitionListing()
+            coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } returns fixture("urbanspree-exhibitions.html", exhibitionsUrl)
+
+            val result = importerOn(LocalDate.of(2026, 11, 7)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.count { it.sourceUrl == WHOLETRAIN_URL } shouldBe 1
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(WHOLETRAIN_URL) }
+        }
+
+    @Test
+    fun `importEvents keeps the listing's events and a complete run when the exhibitions page fails`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } throws RuntimeException("connection reset")
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events shouldHaveSize 26
+            result.complete shouldBe true
+        }
+
+    @Test
+    fun `importEvents does not mark a broken walk complete because the exhibitions page answered`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(page2Url) } throws RuntimeException("connection reset")
+            coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } returns fixture("urbanspree-exhibitions.html", exhibitionsUrl)
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.complete shouldBe false
+        }
+
+    @Test
+    fun `importEvents carries a cancelled run from the exhibitions page`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns emptyListing(entryUrl)
+            coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } returns
+                Jsoup.parse(
+                    """<html><head><base href="https://www.urbanspree.com/"></head><body><div id="pdopage">
+                    <a class="stealth swiper-slide card" href="program/exhibitions/wholetrain-20.html"
+                       data-datestart="2026-11-06" data-dateend="2026-11-28" data-getdate="2026-11-06">
+                    <p class="card-text mb-0 cat">Exhibitions</p><p class="card-text mb-0 title">CANCELLED - Wholetrain 20</p></a>
+                    </div></body></html>""",
+                    exhibitionsUrl
+                )
+            coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } throws IllegalStateException("no fixture")
+
+            val event =
+                importerOn(LocalDate.of(2026, 11, 7))
+                    .importEvents(entryUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events
+                    .single()
+
+            event.status shouldBe EventStatus.CANCELLED.name
+            event.endDate shouldBe LocalDate.of(2026, 11, 28)
+        }
+
+    @Test
+    fun `importEvents asks for the exhibitions page once, keeping an entry URL's query`() =
+        runTest {
+            val queryEntryUrl = "https://www.urbanspree.com/program/?lang=en"
+            val queryExhibitionsUrl = "https://www.urbanspree.com/program/exhibitions/?lang=en"
+            coEvery { htmlFetcher.fetchDocument(queryEntryUrl) } returns emptyListing(queryEntryUrl)
+            coEvery { htmlFetcher.fetchDocument(queryExhibitionsUrl) } returns emptyListing(queryExhibitionsUrl)
+
+            importer.importEvents(queryEntryUrl)
+
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(queryExhibitionsUrl) }
+        }
+
+    @Test
+    fun `importEvents finds the exhibitions page under an entry URL without a trailing slash`() =
+        runTest {
+            val bareEntryUrl = "https://www.urbanspree.com/program"
+            coEvery { htmlFetcher.fetchDocument(bareEntryUrl) } returns emptyListing(bareEntryUrl)
+
+            importer.importEvents(bareEntryUrl)
+
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(exhibitionsUrl) }
+        }
+
     private companion object {
+        private const val RECONNECTIONS_URL = "https://www.urbanspree.com/program/exhibitions/reconnections.html"
         private const val WHOLETRAIN_URL = "https://www.urbanspree.com/program/exhibitions/wholetrain-20.html"
         private const val OTHA_URL = "https://www.urbanspree.com/program/concerts/otha-berlin-urban-spree.html"
         private const val KLUBNACHT_URL = "https://www.urbanspree.com/program/concerts/urban-spree-klubnacht-005.html"
