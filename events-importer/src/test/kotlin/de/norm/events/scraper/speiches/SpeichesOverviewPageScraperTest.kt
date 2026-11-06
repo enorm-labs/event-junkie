@@ -159,6 +159,54 @@ class SpeichesOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads a row that names its line-up first as the band and its style`() {
+        // Event 12888, verbatim.
+        val row =
+            concertRow(
+                "Pad Schneider u. Wille Borchert = Brother Loui (Pad Schneider & Wille Borchert) " +
+                    "Rhythm&Blues, Rock´n´Roll, Beat, Rocksongs - immer Eintritt frei"
+            )
+
+        row.title shouldBe "Brother Loui"
+        row.subtitle shouldBe "Rhythm&Blues, Rock'n'Roll, Beat, Rocksongs"
+        row.artists.map { it.name } shouldContainExactly listOf("Brother Loui")
+        row.free shouldBe true
+        row.genre shouldBe "Blues, Rock'n'Roll"
+        row.eventType shouldBe EventType.CONCERT.name
+    }
+
+    @Test
+    fun `keeps the band of a row that names the band first`() {
+        val row = on("2026-10-16")
+
+        row.title shouldBe "The Shallaras = Angela Cory + Mauro Pandolfino"
+        row.subtitle shouldBe "50's-60's Rock'n'roll and Rhythm'n'Blues"
+        row.artists.map { it.name } shouldContainExactly listOf("The Shallaras")
+    }
+
+    @Test
+    fun `reads the line-up first with a dash before the style, with no style, and with a long line-up`() {
+        val dashed = concertRow("Ann Lee u. Bo Kay = Duo Nord (Ann Lee & Bo Kay) - Blues, Soul - Eintritt frei")
+        dashed.title shouldBe "Duo Nord"
+        dashed.subtitle shouldBe "Blues, Soul"
+        dashed.artists.map { it.name } shouldContainExactly listOf("Duo Nord")
+
+        val bare = concertRow("Ann Lee u. Bo Kay = Duo Nord (Ann Lee & Bo Kay)")
+        bare.title shouldBe "Duo Nord"
+        bare.subtitle shouldBe null
+
+        concertRow("Ann Lee, Bo Kay und Cy Dean = Trio Ost (Ann Lee & Bo Kay + Cy Dean) Folk").title shouldBe "Trio Ost"
+    }
+
+    @Test
+    fun `keeps the band first when the brackets do not repeat the names before the equals sign`() {
+        val row = concertRow("The Shallaras = Angela Cory + Mauro Pandolfino (USA) Blues - Eintritt frei")
+
+        row.title shouldBe "The Shallaras = Angela Cory + Mauro Pandolfino (USA) Blues"
+        row.artists.map { it.name } shouldContainExactly listOf("The Shallaras")
+    }
+
+    @Test
     fun `bills the name of a tribute band, not the act it plays`() {
         // Event 13039.
         val row = concertRow("Van Morrison Tribute Band  Madame George - Eintritt immer frei")
