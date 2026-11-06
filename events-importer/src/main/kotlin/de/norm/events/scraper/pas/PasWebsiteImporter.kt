@@ -1,26 +1,31 @@
 package de.norm.events.scraper.pas
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.AbstractTecImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.TEC_RUNNING_LOOKBACK
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
+import java.time.Clock
 
 /**
  * Website importer for PAS, the Petersburg Art Space in Moabit, over the venue's **The Events Calendar** REST API.
  *
  * The programme is a few events a month, so the walk is one page; [MAX_PAGES] bounds the plugin's `next_rest_url` cursor.
  * The API sends no validators, and the upserts are idempotent by `sourceId`.
+ * The API filters on the start, so [TEC_RUNNING_LOOKBACK] keeps a running exhibition in the response after its opening day.
  *
  * @see PasApiScraper for the field mapping and the events held elsewhere.
  * @see <a href="https://pas-berlin.org/programme/">PAS programme</a>
  */
 @Component
 class PasWebsiteImporter(
-    apiClient: ApiClient
-) : AbstractTecImporter(apiClient, "PAS", PasApiScraper()::scrapePage, MAX_PAGES) {
+    apiClient: ApiClient,
+    clock: Clock = Clock.system(BERLIN)
+) : AbstractTecImporter(apiClient, "PAS", PasApiScraper()::scrapePage, MAX_PAGES, TEC_RUNNING_LOOKBACK, clock) {
     override val eventSource: EventSource = EventSource.PAS
 
     private companion object {

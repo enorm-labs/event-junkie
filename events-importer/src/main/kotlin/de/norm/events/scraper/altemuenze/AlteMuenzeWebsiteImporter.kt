@@ -1,12 +1,15 @@
 package de.norm.events.scraper.altemuenze
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.AbstractTecImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.TEC_RUNNING_LOOKBACK
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
+import java.time.Clock
 
 /**
  * Website importer for the Alte Münze cultural quarter on the Molkenmarkt, over the venue's **The Events Calendar** REST API.
@@ -14,15 +17,16 @@ import org.springframework.stereotype.Component
  * The programme is a handful of events a month, so the walk is one page; [MAX_PAGES] bounds the plugin's `next_rest_url` cursor.
  * The API sends no validators, and the upserts are idempotent by `sourceId`. The club MUENZE in the same building publishes
  * its nights elsewhere; this calendar lists the quarter's own exhibitions, festivals and performances.
- * The API filters on the start, so a running exhibition leaves the response on its opening day; the row stored before it stays.
+ * The API filters on the start, so [TEC_RUNNING_LOOKBACK] keeps a running exhibition in the response after its opening day.
  *
  * @see AlteMuenzeApiScraper for the field mapping and the out-of-scope categories.
  * @see <a href="https://www.alte-muenze-berlin.de/programm/">Alte Münze programme</a>
  */
 @Component
 class AlteMuenzeWebsiteImporter(
-    apiClient: ApiClient
-) : AbstractTecImporter(apiClient, "Alte Münze", AlteMuenzeApiScraper()::scrapePage, MAX_PAGES) {
+    apiClient: ApiClient,
+    clock: Clock = Clock.system(BERLIN)
+) : AbstractTecImporter(apiClient, "Alte Münze", AlteMuenzeApiScraper()::scrapePage, MAX_PAGES, TEC_RUNNING_LOOKBACK, clock) {
     override val eventSource: EventSource = EventSource.ALTE_MUENZE
 
     private companion object {
