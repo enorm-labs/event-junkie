@@ -399,6 +399,19 @@ class PromoterNormalizerTest {
         }
     }
 
+    // #4516: Berghain prints "Eine Veranstaltung von Beyond Booking". "Booking" is a stripped descriptor, but here it
+    // is part of the name. The pin touches this name alone: "Booking" still comes off any other credit.
+    @Test
+    fun `keeps Beyond Booking whole and restores the row the strip had reduced`() {
+        assertSoftly {
+            canonicalPromoterName("Beyond Booking") shouldBe "Beyond Booking"
+            canonicalPromoterName("BEYOND BOOKING") shouldBe "Beyond Booking"
+            canonicalPromoterName("Beyond Booking GmbH") shouldBe "Beyond Booking"
+            canonicalPromoterName("Beyond") shouldBe "Beyond Booking"
+            canonicalPromoterName("Nachtklang Booking") shouldBe "Nachtklang"
+        }
+    }
+
     // #3577: the strip leaves one word that reads as a verb, so the name is pinned whole.
     @Test
     fun `keeps Join Live Events whole and restores the row the strip had reduced`() {
