@@ -1501,7 +1501,7 @@
         },
         {
           "name": "@types/estree",
-          "version": "1.0.9",
+          "version": "1.0.10",
           "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
           "ecosystem": "frontend"
         },
