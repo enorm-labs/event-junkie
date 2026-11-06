@@ -49,6 +49,8 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "stock & pankow",
         // The folk-blues duo Issy Ferris and Archie Sylvester, billed by Monarch as its whole title (#2952).
         "ferris & sylvester",
+        // A duo that releases and tours under the joint name, billed by Modus with its tour (event 13091).
+        "viko & penglord",
         // A German metal band Neue Zukunft bills as the support after a `+` (#2958).
         "prophet & flesh",
         // A band Mikropol bills as the second support after a `+` (#4507).

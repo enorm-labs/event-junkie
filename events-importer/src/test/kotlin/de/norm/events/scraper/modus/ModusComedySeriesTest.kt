@@ -52,6 +52,20 @@ class ModusComedySeriesTest {
     }
 
     @Test
+    fun `bills a duo with its tour as one act, as event 13091`() {
+        val title = "viko & penglord Aquarium on tour 2026"
+
+        modusLineup(title, modusEventType(title), description = null).map { it.name } shouldBe listOf("viko & penglord")
+    }
+
+    @Test
+    fun `splits two acts that are no known duo, tour or not`() {
+        val title = "viko & someone Aquarium on tour 2026"
+
+        modusLineup(title, modusEventType(title), description = null).map { it.name } shouldBe listOf("viko", "someone")
+    }
+
+    @Test
     fun `bills an act's own backing as the act alone`() {
         val title = "Lacrimosa mit Orchester"
 

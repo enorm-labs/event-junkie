@@ -7,6 +7,7 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.knownBillingActs
 import de.norm.events.scraper.textLines
 import org.jsoup.nodes.Element
 
@@ -38,12 +39,15 @@ internal fun modusLineup(
  * A concert title without its `<series> - ` prefix when the rest is a list of acts:
  * `With a Twist - Goldie333, JnnrHndrxx & ORANYA` bills the three acts (#3751). A rest with no list
  * separator is the act's tour or record (`Yorick Thiede - Polygon`), so that title stays whole.
+ * A known duo loses its tour before the split, which would otherwise cut it: `viko & penglord Aquarium on tour 2026`.
  */
 private fun withoutSeriesName(
     title: String,
     eventType: String
 ): String {
     if (eventType != EventType.CONCERT.name) return title
+    val withoutTour = title.replace(RECORD_ON_TOUR, "")
+    if (knownBillingActs(withoutTour) != null) return withoutTour
     val acts = title.substringAfter(SERIES_SEPARATOR, "")
     return if (ACT_LIST_SEPARATOR.containsMatchIn(acts)) acts else title
 }
@@ -70,6 +74,9 @@ internal fun comedySeriesLineup(description: Element?): List<ScrapedArtist> =
         .mapIndexed { index, name -> ScrapedArtist(name = name, role = if (index == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT) }
 
 private const val SERIES_SEPARATOR = " - "
+
+/** A one-word record before `on tour`. Only a known duo may lose it, because the word can also be part of an act's name. */
+private val RECORD_ON_TOUR = Regex("""\s+\S+\s+on\s+tour\b.*$""", RegexOption.IGNORE_CASE)
 
 private val ACT_LIST_SEPARATOR = Regex(""",\s|\s&\s""")
 

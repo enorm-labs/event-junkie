@@ -56,6 +56,23 @@ class HausDerStatistikMonthPageScraperTest {
     }
 
     @Test
+    fun `bills no act for a performance jam, as event 13080`() {
+        val html =
+            """
+            <div class="listing">
+              <div class="teaser event"><time datetime="2026-11-13T20:00:00+01:00">13.11.</time>
+                <a href="https://hausderstatistik.org/event/performancejam-with-live-music/" rel="bookmark"><div class="teaser__header"><p class="title is-4">PERFORMANCEJAM with LIVE MUSIC</p></div></a>
+                <div class="button-group"><a class="button">Live-act</a><a class="button">Performance</a></div></div>
+            </div>
+            """.trimIndent()
+
+        val jam = scraper.scrape(Jsoup.parse(html, monthUrl), monthUrl).single()
+
+        jam.eventType shouldBe EventType.CONCERT.name
+        jam.artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `drops workshops, meetings and cooking from the whole programme`() {
         val titles = scraper.scrape(fixture("hausderstatistik-entry.html"), monthUrl).map { it.title }
 

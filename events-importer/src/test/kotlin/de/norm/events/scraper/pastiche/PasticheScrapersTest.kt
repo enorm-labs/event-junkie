@@ -80,6 +80,47 @@ class PasticheScrapersTest {
     }
 
     @Test
+    fun `bills each act of a shared night by its title line, as event 13056`() {
+        val night = scrape(row("Thurs, 12th Nov", "Rikuto Fujimoto<br />\nJongho &#x26; Fe<br />\n", "Hybrid / Live")).single()
+
+        night.title shouldBe "Rikuto Fujimoto, Jongho & Fe"
+        night.subtitle shouldBe "Hybrid / Live"
+        night.artists.map { it.name } shouldContainExactly listOf("Rikuto Fujimoto", "Jongho", "Fe")
+    }
+
+    @Test
+    fun `keeps an ampersand in a one-line act`() {
+        scrape(row("Sat, 24th Oct", "Salt &amp; Pepper", "Live")).single().artists.map { it.name } shouldContainExactly listOf("Salt & Pepper")
+    }
+
+    @Test
+    fun `drops a row whose blurb names a workshop, as event 13057`() {
+        val html =
+            row("Tues, 17th Nov", "Taiwanese Bubble Tea &#x26; DIY Instrument Making", null, blurb = "Fun and open workshop for participants of all ages.")
+
+        scrape(html).shouldBeEmpty()
+    }
+
+    @Test
+    fun `keeps a row whose blurb names the record fair`() {
+        scrape(row("Sat, 24th Oct", "Someone", "Live", blurb = "Stay after our record fair.")).single().title shouldBe "Someone"
+    }
+
+    @Test
+    fun `bills a listening session's host when the blurb calls the host a DJ, as event 13059`() {
+        val html = row("Sun, 22nd Nov", "Lovie", "Listening Session", blurb = "The NYC based DJ hosts a themed listening session.")
+
+        scrape(html).single().artists shouldContainExactly listOf(ScrapedArtist("Lovie", ArtistRole.DJ))
+    }
+
+    @Test
+    fun `bills nobody for a listening session whose blurb names no DJ, as event 13060`() {
+        val html = row("Fri, 27th Nov", "Palestinian Sound Archive", "Listening Session", blurb = "We host the archival platform and label.")
+
+        scrape(html).single().artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `reads a free entry button`() {
         val html = row("Sat, 24th Oct", "Someone", "Live", button = """<a href="someone-i-24-10" rel="history"><b>FREE</b></a>""")
         val scraped = scrape(html).single()
@@ -112,12 +153,13 @@ class PasticheScrapersTest {
         date: String,
         title: String,
         format: String?,
-        button: String = ""
+        button: String = "",
+        blurb: String = "Text."
     ) = """
         <div class="pages"><div class="page"><bodycopy><column-set>
         <column-unit slot="0" span="3"><span>$date</span><br><br><span>20:00</span></column-unit>
         <column-unit slot="1" span="5"><span><b>$title</b><i><br><span>${format.orEmpty()}*</span></i></span></column-unit>
-        <column-unit slot="2" span="4"><span>Text.</span><br>$button</column-unit>
+        <column-unit slot="2" span="4"><span>$blurb</span><br>$button</column-unit>
         </column-set></bodycopy></div></div>
     """
 

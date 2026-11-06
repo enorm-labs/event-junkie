@@ -126,6 +126,18 @@ class Bogen47ApiScraperTest {
     }
 
     @Test
+    fun `scrapePage bills both sides of a versus night, not its name, as event 13084`() {
+        val event = liveEventTitled("HONKY DONK vs Mordorkore: 𝔅𝔞𝔱𝔱𝔩𝔢 𝔬𝔣 𝔱𝔥𝔢 𝔍𝔢𝔰𝔱𝔢𝔯𝔷")
+
+        event.artists.map { it.name } shouldContainExactly listOf("HONKY DONK", "Mordorkore")
+    }
+
+    @Test
+    fun `scrapePage keeps a band whose name holds vs when no night name follows`() {
+        liveEventTitled("Bear vs Shark").artists.map { it.name } shouldContainExactly listOf("Bear vs Shark")
+    }
+
+    @Test
     fun `scrapePage bills the acts of a DJ night, not its series, epithet or joiners`() {
         // 27 September 2026, as the API renders the title.
         val event = liveEventTitled("Hum w/ Kyle Hall b2b K15, Mamalia&#8217;The first lady of modern funk&#8217;ft.Mauricio Fleury, Bulma Brief")

@@ -147,7 +147,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Café Köpenick       | `programmeType` in `CafeKoepenickCalendarScraper.kt`     | A title with no band bill, open stage or format word, such as `Küfa` or `Beratung`                                           |
 | ZK/U                | `isZkuParticipationFormat` (`ZkuCalendarScraper.kt`)     | A market, `Workshop`, `OPENHAUS` open studios, a meeting, a reading group or a course                                        |
 | Passionskirche      | `isOutOfScope` (`PassionskircheOverviewPageScraper.kt`)  | A caption or teaser that names a `Pop-up-Chor`, a `Gottesdienst` or an `Andacht`                                             |
-| Pastiche            | `PasticheProgrammePageScraper.isOutOfScope`              | A title or format line that names a `Workshop`                                                                               |
+| Pastiche            | `PasticheProgrammePageScraper.isOutOfScope`              | A title, format line or programme blurb that names a `Workshop`                                                              |
 | Volksbühne          | `VolksbuehneSpielplanScraper.isOutOfScope`               | A `Workshop` format label, or a title that opens with `Theaterführung`                                                       |
 | Renaissance-Theater | `RenaissanceTheaterSpielplanPageScraper.isOutOfScope`    | A title that names a `Führung`: the tour of the house                                                                        |
 | Clärchens Ballhaus  | `ClaerchensBallhausCalendarScraper.isOutOfScope`         | The `Vortrag` tour of the house, a `Workshop`, the `Weinmahl` dinner, or the `YesChoir!` choir by its title or `werdet Teil` |

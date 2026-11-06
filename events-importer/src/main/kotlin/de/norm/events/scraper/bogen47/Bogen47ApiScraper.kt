@@ -239,7 +239,7 @@ internal class Bogen47ApiScraper(
      * because LARK writes `ft.` without a space. A party or other non-concert format names an event,
      * not a performer, so it yields none (mirroring `buildArtistsForEventType`).
      *
-     * A [bulletedLineup] in the description replaces the title's headliners; its support acts stay.
+     * A [bulletedLineup] in the description replaces the title's headliners; its support acts stay. A [VERSUS_NIGHT] title bills its two sides.
      */
     private fun artistsFrom(
         title: String,
@@ -259,9 +259,9 @@ internal class Bogen47ApiScraper(
                 .replace(QUOTED_EPITHET, " ")
                 .replace(WHITESPACE, " ")
                 .trim()
-        val lineup = bulletedLineup(description)
+        val named = bulletedLineup(description) ?: VERSUS_NIGHT.matchEntire(billing)?.let { listOf(it.groupValues[1], it.groupValues[2]) }
         val headliners =
-            lineup?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) } ?: headlinersFromTitle(billing, unpackWithFrame = true).flatMap { act ->
+            named?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) } ?: headlinersFromTitle(billing, unpackWithFrame = true).flatMap { act ->
                 act.name
                     .split(NAME_JOINER)
                     .map { it.trim() }
@@ -311,6 +311,9 @@ internal class Bogen47ApiScraper(
 
         /** An epithet in typographic or straight single quotes, eight characters or more. */
         val QUOTED_EPITHET = Regex("""\s*[’‘'][^’‘']{8,}[’‘']\s*""")
+
+        /** Two acts and the night's name: `HONKY DONK vs Mordorkore: Battle of the Jesterz`. Without the colon, `vs` can sit inside a band's name. */
+        val VERSUS_NIGHT = Regex("""(.+?)\s+vs\.?\s+([^:]+?)\s*:\s+\S.*""", RegexOption.IGNORE_CASE)
 
         /** What joins two acts inside one name: `Kyle Hall b2b K15`, `Mamalia ft.Mauricio Fleury`. */
         val NAME_JOINER = Regex("""\s+b2b\s+|\s*\bft\.\s*""", RegexOption.IGNORE_CASE)

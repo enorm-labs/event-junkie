@@ -355,6 +355,7 @@ says so.
 | `HAU3`                 | `PRICE_BOX_OFFICE` | one price per production, sold alike online and at the box office                                                                                | —     |
 | `HAU3`                 | `TICKET_URL`       | the ticket buttons load by script for each date and are not in the page                                                                          | —     |
 | `HAU3`                 | `PROMOTERS`        | the venue presents or co-produces every production itself                                                                                        | —     |
+| `HAUS_DER_STATISTIK`   | `ARTISTS`          | the monthly performance jam is an open stage, which names no act                                                                                 | —     |
 | `HAUS_DER_STATISTIK`   | `SUBTITLE`         | each row has a title and a teaser, no second title line                                                                                          | —     |
 | `HAUS_DER_STATISTIK`   | `TICKET_URL`       | the event pages link no ticket shop                                                                                                              | —     |
 | `HAUS_DER_STATISTIK`   | `GENRE`            | the site tags a format such as Musik, never a style                                                                                              | —     |
