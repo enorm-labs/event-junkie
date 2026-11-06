@@ -846,6 +846,9 @@ SUM=$(curl -fsSL https://services.gradle.org/distributions/gradle-9.7.1-bin.zip.
 
 Renovate bumps this wrapper by itself and maintains the checksum with it, so the command above is for a bump taken by hand.
 
+**To change `retries`, edit `build.gradle.kts` and run the task.** The `wrapper` task writes `retries` from its own configuration, not from the file. An edit
+in only `gradle-wrapper.properties` goes back to 0 at the next run. The value is 3, so the wrapper tries four times, and waits 3.5 seconds in total.
+
 ### Licences and open-source notices
 
 Every runtime dependency's licence is checked against a policy, and the full list is published on the site at
