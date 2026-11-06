@@ -462,6 +462,25 @@ class ActSplittingTest {
     }
 
     @Test
+    fun `the band Down and Out stays one act in every spelling, and only as the whole segment (#4507)`() {
+        assertSoftly {
+            listOf("down and out", "Down & Out", "DOWN AND OUT", "Down und Out").forEach { billing ->
+                withClue(billing) {
+                    splitSupportActs(billing) shouldContainExactly listOf(billing)
+                    splitHeadlinerTitle(billing) shouldContainExactly listOf(billing)
+                }
+            }
+            splitSupportActs("all to get her + down and out") shouldContainExactly listOf("all to get her", "down and out")
+            splitHeadlinerTitle("Comastatic + down and out") shouldContainExactly listOf("Comastatic", "down and out")
+            // A longer segment is no entry, so each of these splits as before.
+            splitSupportActs("Upside Down and Out Cold") shouldContainExactly listOf("Upside Down", "Out Cold")
+            splitSupportActs("Down and Outsiders") shouldContainExactly listOf("Down", "Outsiders")
+            // The tail markers keep this lower-case billing of the same venue whole, so the entry needs no lower-case rule.
+            splitSupportActs("endless mike and the beagle club") shouldContainExactly listOf("endless mike and the beagle club")
+        }
+    }
+
+    @Test
     fun `splitHeadlinerTitle keeps a slash inside a single act name when splitOnSlash is false`() {
         // Madame Claude uses "/" inside one act's name, so its co-bills split only on " + ".
         splitHeadlinerTitle("Morimoto / Wong duo", splitOnSlash = false) shouldContainExactly
