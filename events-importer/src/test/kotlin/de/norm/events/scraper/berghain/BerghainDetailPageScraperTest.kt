@@ -218,4 +218,32 @@ class BerghainDetailPageScraperTest {
         event.artists.map { it.stage }.distinct() shouldBe listOf("Säule")
         event.artists.first { it.name == "Jolly" }.setStart shouldBe Instant.parse("2026-09-24T21:30:00Z")
     }
+
+    // The four slots of event 81811, with the set times the venue adds nearer the night (#4506).
+    @Test
+    fun `a quoted programme item in the running order bills no act`() {
+        val slots =
+            listOf(
+                """Another Nguyen <span data-set-item-live class="uppercase">Live </span>""",
+                """Thérèse <span data-set-item-live class="uppercase">Live </span>""",
+                """"The sense of fashion" <span class="font-normal lowercase">fashion market</span>""",
+                """"Where are the asiandescent artists in the western music industry?" <span class="font-normal lowercase">talk</span>"""
+            ).joinToString("") {
+                """<li data-set-item data-set-item-start="2026-11-18T20:00:00+01:00" data-set-item-end="2026-11-18T21:00:00+01:00">
+                  <div class="running-order-set__info"><span class="font-bold">$it</span></div></li>"""
+            }
+        val html =
+            """
+            <html><body><main>
+              <p>Mittwoch <span class="font-bold">18.11.2026</span> tür 19:00 beginn 20:00</p>
+              <h2>Kantine am Berghain</h2>
+              <h1>Thérèse</h1>
+              <div data-set-floor="0"><ul>$slots</ul></div>
+            </main></body></html>
+            """.trimIndent()
+        val url = "https://www.berghain.berlin/de/event/81811/"
+        val event = scraper.scrape(Jsoup.parse(html, url), url)!!
+
+        event.artists.map { it.name } shouldBe listOf("Another Nguyen", "Thérèse")
+    }
 }

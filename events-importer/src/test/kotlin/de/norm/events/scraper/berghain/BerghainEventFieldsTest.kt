@@ -49,4 +49,20 @@ class BerghainEventFieldsTest {
         splitSlot("@ (US, 4AD)") shouldBe listOf("@")
         splitSlot("Foo (DE), Bar (UK)") shouldBe listOf("Foo", "Bar")
     }
+
+    @Test
+    fun `a slot wholly in double quotes is a programme item and names no act`() {
+        splitSlot("\"The sense of fashion\"") shouldBe emptyList()
+        splitSlot("\"Where are the asiandescent artists in the western music industry?\" ") shouldBe emptyList()
+        splitSlot("\"Fashion, food + talk\"") shouldBe emptyList()
+        splitSlot("\"" + "Very long title ".repeat(30).trim() + "\"") shouldBe emptyList()
+    }
+
+    @Test
+    fun `an act that only opens or carries a quote keeps its name`() {
+        splitSlot("\"Weird Al\" Yankovic") shouldBe listOf("\"Weird Al\" Yankovic")
+        splitSlot("Lee \"Scratch\" Perry") shouldBe listOf("Lee \"Scratch\" Perry")
+        splitSlot("Another Nguyen") shouldBe listOf("Another Nguyen")
+        splitSlot("Thérèse") shouldBe listOf("Thérèse")
+    }
 }

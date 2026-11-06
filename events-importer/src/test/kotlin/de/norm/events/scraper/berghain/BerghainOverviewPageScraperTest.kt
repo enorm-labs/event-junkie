@@ -196,6 +196,41 @@ class BerghainOverviewPageScraperTest {
         event.artists.map { stripArtistSuffix(it.name) } shouldContainExactly listOf("@")
     }
 
+    // The four slots of event 81811, verbatim: a fashion market and a talk were billed as headliners (#4506).
+    @Test
+    fun `a quoted programme item bills no act and leaves the live acts their role`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/81811/">
+                <p>Mittwoch <span class="font-bold">18.11.2026</span> tür 19:00 beginn 20:00</p>
+                <h2>Thérèse</h2>
+                <h3>Kantine am Berghain</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Another Nguyen</span>
+                    <span class="text-sm md:text-md  font-bold uppercase">Live</span>,
+                  </span>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Thérèse</span>
+                    <span class="text-sm md:text-md  font-bold uppercase">Live</span>,
+                  </span>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">"The sense of fashion"</span>,
+                  </span>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">"Where are the asiandescent artists in the western music industry?"</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, kantineUrl), kantineUrl).single()
+
+        event.artists.map { it.name } shouldContainExactly listOf("Another Nguyen", "Thérèse")
+        event.artists.map { it.role } shouldContainExactly listOf(ArtistRole.HEADLINER, ArtistRole.HEADLINER)
+    }
+
     // Production stored `Booty Carrell DJ (Vinyl) Warm-up + Party` as one act (#1843).
     @Test
     fun `drops Kantine's slot description after a name`() {
