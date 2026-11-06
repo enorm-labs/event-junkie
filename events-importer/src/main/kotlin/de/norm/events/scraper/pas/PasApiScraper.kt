@@ -37,6 +37,7 @@ import tools.jackson.databind.JsonNode
  * - **The title is the lineup**: sets split by `/`, players by commas and `&`. A series or label opens the title before a colon
  *   (`Music for Cosmos: RAFGAK`), and an ensemble opens a later set before its players (`RAFGAK: Bryan Eubanks & …`).
  *   A surname billed alone (`Tuerlinckx & Cusack`) takes the full name from a credit line (`Anaïs Tuerlinckx – piano`).
+ *   A colon that closes the title (`Iva Nova:`) leaves the stored title, and it still marks the title as a billing, not a series night.
  * - **A `Kick-off:` title names the occasion, not the acts** (`Kick-off: Jazzfest Community Week & Kiez-Session #1`), so it bills none.
  * - **The tags mix styles with formats**, so only the styles are the genre.
  */
@@ -63,7 +64,7 @@ class PasApiScraper {
             return null
         }
         val cleanedTitle = cleanEventTitle(rawTitle.replace(HOUSE_SUFFIX, ""))
-        val title = cleanedTitle.text
+        val title = cleanedTitle.text.removeSuffix(":").trimEnd()
         val eventType = typeOf(categories)
         val description = event.tecDescription()
         val doors = labelledClock(description, DOORS_LABELS)
@@ -94,7 +95,7 @@ class PasApiScraper {
             pricePresale = tecFromPrice(prices),
             priceNote = event.tecText("cost")?.takeIf { prices.size > 1 },
             soldOut = cleanedTitle.soldOut,
-            artists = if (eventType == EventType.CONCERT.name) billedActs(title, event.path("description").asString("")) else emptyList(),
+            artists = if (eventType == EventType.CONCERT.name) billedActs(cleanedTitle.text, event.path("description").asString("")) else emptyList(),
             // The association's own organizer entry is the venue, not a promoter.
             promoters = event.tecOrganizerNames().filterNot { HOUSE_NAME.containsMatchIn(it) }
         )

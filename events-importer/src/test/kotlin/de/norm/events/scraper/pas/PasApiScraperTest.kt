@@ -153,6 +153,14 @@ class PasApiScraperTest {
     }
 
     @Test
+    fun `drops a colon that closes the title and still bills the act`() {
+        val night = variant("Iva Nova:").shouldNotBeNull()
+
+        night.title shouldBe "Iva Nova"
+        night.artists.map { it.name } shouldContainExactly listOf("Iva Nova")
+    }
+
+    @Test
     fun `bills no act from a kick-off title`() {
         variant("Kick-off: Jazzfest Community Week & Kiez-Session #1").shouldNotBeNull().artists.shouldBeEmpty()
         variant("KICKOFF: Season Opening / Open Stage").shouldNotBeNull().artists.shouldBeEmpty()
