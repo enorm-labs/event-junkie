@@ -107,7 +107,7 @@ class UrbanSpreeWebsiteImporter(
      */
     private suspend fun enrichFromDetailPage(card: ScrapedEvent): ScrapedEvent =
         htmlFetcher.withEventPageOrFlagged(card, URBAN_SPREE_PAGE_OWNS) { document ->
-            detailPageScraper.scrape(document, card.sourceUrl)?.let { merge(detail = it, card = card) }
+            detailPageScraper.scrape(document, card.sourceUrl, card.eventType)?.let { merge(detail = it, card = card) }
         }
 
     /**

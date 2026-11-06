@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -279,24 +280,7 @@ class UrbanSpreeWebsiteImporterTest {
     @Test
     fun `importEvents keeps an untimed exhibition run untimed through the detail merge`() =
         runTest {
-            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns
-                Jsoup.parse(
-                    """<html><head><base href="https://www.urbanspree.com/"></head><body><div id="pdopage">
-                    <a class="stealth swiper-slide card" href="program/exhibitions/wholetrain-20.html"
-                       data-datestart="2026-11-06" data-dateend="2026-11-28" data-getdate="2026-10-23">
-                    <p class="card-text mb-0 cat">Exhibitions</p><p class="card-text mb-0 title">Wholetrain 20</p></a>
-                    </div></body></html>""",
-                    entryUrl
-                )
-            coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
-            coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture("urbanspree-detail-exhibition.html", WHOLETRAIN_URL)
-
-            val event =
-                importer
-                    .importEvents(entryUrl)
-                    .shouldBeInstanceOf<ImportResult.Success>()
-                    .events
-                    .single()
+            val event = importWholetrain(detailFixture = "urbanspree-detail-exhibition.html", cardStart = "2026-11-06")
 
             event.title shouldBe "WON ABC, NEON: Wholetrain 20"
             // The page's category slot names the artists, so the card's Exhibitions label types the run.
@@ -307,6 +291,50 @@ class UrbanSpreeWebsiteImporterTest {
             event.free shouldBe true
             event.detailUnavailable shouldBe false
         }
+
+    // #4517: an untimed card, and a captured page whose hero holds the closing date and whose category slot names the artists.
+    @Test
+    fun `importEvents takes an exhibition's start from the Vernissage row of its page`() =
+        runTest {
+            val event = importWholetrain(detailFixture = "urbanspree-detail-exhibition-vernissage.html", cardStart = "2026-11-06")
+
+            event.eventType shouldBe EventType.EXHIBITION.name
+            event.eventDate shouldBe LocalDate.of(2026, 11, 6)
+            event.startTime shouldBe LocalTime.of(18, 0)
+            event.endDate shouldBe LocalDate.of(2026, 11, 28)
+            event.endTime.shouldBeNull()
+        }
+
+    @Test
+    fun `importEvents keeps a timed exhibition card's time over the Vernissage row`() =
+        runTest {
+            val event = importWholetrain(detailFixture = "urbanspree-detail-exhibition-vernissage.html", cardStart = "2026-11-06 19:30:00")
+
+            event.startTime shouldBe LocalTime.of(19, 30)
+        }
+
+    private suspend fun importWholetrain(
+        detailFixture: String,
+        cardStart: String
+    ): ScrapedEvent {
+        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns
+            Jsoup.parse(
+                """<html><head><base href="https://www.urbanspree.com/"></head><body><div id="pdopage">
+                <a class="stealth swiper-slide card" href="program/exhibitions/wholetrain-20.html"
+                   data-datestart="$cardStart" data-dateend="2026-11-28" data-getdate="2026-10-23">
+                <p class="card-text mb-0 cat">Exhibitions</p><p class="card-text mb-0 title">Wholetrain 20</p></a>
+                </div></body></html>""",
+                entryUrl
+            )
+        coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
+        coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture(detailFixture, WHOLETRAIN_URL)
+
+        return importer
+            .importEvents(entryUrl)
+            .shouldBeInstanceOf<ImportResult.Success>()
+            .events
+            .single()
+    }
 
     private companion object {
         private const val WHOLETRAIN_URL = "https://www.urbanspree.com/program/exhibitions/wholetrain-20.html"
