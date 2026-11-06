@@ -8,7 +8,7 @@ first** and **keep**, and removes only what the operator confirms.
 
 - **Read-only until the operator answers.** Steps 1 to 3 change nothing. Step 4 removes only the items the operator confirmed, one command each.
 - **Other sessions work in the same repository at the same time.** A worktree that looks idle can be another session's work in progress. Anything with
-  uncommitted changes, unpushed commits, an open PR or a live lock is **keep** or **ask first**, never **safe**.
+  uncommitted changes, unpushed commits, an open PR, a live lock or a process running in it is **keep** or **ask first**, never **safe**.
 - **`git branch --merged` is useless here.** `main` allows only Rebase and merge, so a merged branch's tip is never an ancestor of `main`. Decide by the PR
   state, and by `git cherry` for a branch without a PR.
 - **Never delete a remote branch.** GitHub deletes a merged PR's branch itself. Deleting the head branch of an open PR closes the PR.
@@ -40,8 +40,13 @@ gh pr list --head "$branch" --state all --json number,state,mergedAt --limit 5
 # gitignored files a removal deletes, without what a build creates again
 git -C "$wt" ls-files --others --ignored --exclude-standard |
   grep -Ev '(^|/)(build|node_modules|\.gradle|\.kotlin|dist|dist-injector|playwright-report|test-results|__pycache__)(/|$)'
+# processes running in it
+lsof -d cwd 2>/dev/null | awk -v w="$wt" 'NR>1 && ($NF==w || index($NF, w "/")==1) {print $1, $2}' | sort -u
 ```
 
+- **Running processes**: any line of output makes the worktree **keep**, whatever its PR says, and the report names the command and PID. A finished session leaves
+  a clean worktree and a merged PR, so git and GitHub cannot show that one still runs there. Filter on `cwd`: `lsof +D` also matches Spotlight and a Gradle
+  daemon reading a file, and neither means that anything runs there.
 - **Ignored files**: `git status` shows none of them, and `temp/` is the likely place, because AGENTS.md sends plans there. Any line of output moves a worktree
   that would be **safe** to **ask first**, and the report names the files. The operator decides; do not copy them anywhere first.
 - **`locked`**: `claude agent … (pid N start …)` names the agent process. `ps -p N -o lstart=` shows whether it still runs. A live PID with the same start
@@ -89,16 +94,19 @@ ASK FIRST
 KEEP
   agent-a108f4514a53c0057   locked, pid 56025 alive
   venue-map-overlapping-pins  PR #2801 OPEN
+  the-cloud-live              PR #2790 MERGED, clean, claude 4977 running in it
 ```
 
 Then stop and wait. The operator answers with numbers, `safe`, or `all`. For each confirmed item, in this order:
 
 ```sh
+lsof -d cwd 2>/dev/null | awk -v w="$wt" 'NR>1 && ($NF==w || index($NF, w "/")==1) {print $1, $2}' | sort -u   # any line: keep
 git worktree unlock "$wt"            # only for a lock whose PID is dead
 git worktree remove "$wt"            # no --force; a refusal means it is dirty — report it
 git branch -D "$branch"              # -D because a rebase-merged branch fails -d
 git worktree prune
 ```
 
-A refusal is a finding, not an obstacle: report it and move on. Never retry with `--force`. End with the counts before and after: `git worktree list | wc -l`
+The listing is a snapshot, so run the `lsof` check again here. A hit moves the item back to **keep**, even though the operator confirmed it, and the report says
+so. A refusal is a finding, not an obstacle: report it and move on. Never retry with `--force`. End with the counts before and after: `git worktree list | wc -l`
 and `git branch | wc -l`.
