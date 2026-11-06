@@ -461,6 +461,12 @@ tasks.register("updateModuleDiagrams") {
     )
 }
 
+// A task run writes `gradle-wrapper.properties` from these values and from its arguments, whatever the
+// file said before, so a `retries=` edited only in the file is back at 0 after the next bump (#4518).
+tasks.wrapper {
+    retries = 3
+}
+
 // IntelliJ HTTP Client CLI – runs .http request files from the command line.
 // Requires `ijhttp` to be installed (e.g. `brew install ijhttp` on macOS).
 // Usage: `./gradlew httpTest` against a running importer (`scripts/dev-env.sh up importer`).
