@@ -16,6 +16,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
@@ -41,6 +43,11 @@ import java.util.Locale
  * under Concerts (#3382). Its title names the night, so its line-up comes from the page
  * ([urbanSpreeClubNightLineUp]).
  *
+ * An exhibition's second date cell is its closing date, so the hero has no time. Its `.ct-info`
+ * list has a `Vernissage` row with a date and a time, which is the start when the dates agree
+ * (#4517). The hero's category slot names the artists on such a page, or nothing, so only the
+ * listing card can type the page as an exhibition.
+ *
  * @see UrbanSpreeOverviewPageScraper for discovery and the authoritative date.
  * @see UrbanSpreeWebsiteImporter for the fetch orchestrator and the merge.
  */
@@ -52,10 +59,12 @@ class UrbanSpreeDetailPageScraper {
      * (a 404 body, a redesigned template); the importer then keeps the card's data.
      *
      * @param sourceUrl the URL the document was fetched from; also the `sourceId` source.
+     * @param listedType the listing card's type, which types the row when the page's category slot does not.
      */
     fun scrape(
         document: Document,
-        sourceUrl: String
+        sourceUrl: String,
+        listedType: String? = null
     ): ScrapedEvent? {
         val hero = document.selectFirst(HERO_SELECTOR)
         if (hero == null) {
@@ -88,7 +97,7 @@ class UrbanSpreeDetailPageScraper {
             when {
                 heroStart == URBAN_SPREE_LATE_PLACEHOLDER -> urbanSpreeHeaderStart(description, eventDate) ?: heroStart
                 doorsAndStart != null -> doorsAndStart.second
-                else -> heroStart
+                else -> heroStart ?: vernissageStart(document, eventDate, rowType = eventType ?: listedType)
             }
         // `DJ JONAS POPPE (OUM SHATT)`: a DJ billed with the band he sings in, which is an affiliation, not his name.
         // A show name after the act is no part of it either ([urbanSpreeActName]).
@@ -151,6 +160,27 @@ class UrbanSpreeDetailPageScraper {
     }
 
     /**
+     * An exhibition's start: the time of the `Vernissage` row ("Nov 06, 2026 18:00") when the row
+     * falls on [eventDate]. An opening on another day says nothing about the time of the run's first
+     * day.
+     */
+    private fun vernissageStart(
+        document: Document,
+        eventDate: LocalDate,
+        rowType: String?
+    ): LocalTime? {
+        if (rowType != EventType.EXHIBITION.name) return null
+        val text = infoValue(document, VERNISSAGE_LABEL) ?: return null
+        return try {
+            val vernissage = LocalDateTime.parse(text, VERNISSAGE_FORMATTER)
+            vernissage.toLocalTime().takeIf { vernissage.toLocalDate() == eventDate }
+        } catch (e: DateTimeParseException) {
+            logger.warn(e) { "Unparseable Urban Spree vernissage '$text'" }
+            null
+        }
+    }
+
+    /**
      * The [index]-th cell of the hero's date row, `0` the date ("Dec 12, 2026"), `1` the start time
      * ("20:00"), scoped to `.ct-dates` so the slider's identical `li.infos` cells cannot be read.
      */
@@ -179,6 +209,9 @@ class UrbanSpreeDetailPageScraper {
         /** Label of the `.ct-info` row naming the event's promoter. */
         private const val PROMOTER_LABEL = "Promoter"
 
+        /** Label of the `.ct-info` row with an exhibition's opening. */
+        private const val VERNISSAGE_LABEL = "Vernissage"
+
         /**
          * What the venue joins two promoters with ("Positive Transmitter & Crunch Tapes"). Only "&":
          * "Aufnahme + wiedergabe" carries its "+" in its own name (#328).
@@ -199,6 +232,10 @@ class UrbanSpreeDetailPageScraper {
         /** English hero date rendering, e.g. "Dec 12, 2026" / "Dec 05, 2026". */
         private val HERO_DATE_FORMATTER: DateTimeFormatter =
             DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH)
+
+        /** The `Vernissage` row's rendering, e.g. "Nov 06, 2026 18:00". */
+        private val VERNISSAGE_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm", Locale.ENGLISH)
     }
 }
 

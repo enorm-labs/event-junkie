@@ -333,6 +333,60 @@ class UrbanSpreeDetailPageScraperTest {
         event.startTime shouldBe LocalTime.of(19, 0)
     }
 
+    private val exhibitionUrl = "https://www.urbanspree.com/program/exhibitions/wholetrain-20.html"
+
+    private fun exhibitionPage(vernissage: String = "Nov 06, 2026 18:00"): Document =
+        fixture("urbanspree-detail-exhibition-vernissage.html", exhibitionUrl).also { document ->
+            document.select(".ct-info .info-data").first { it.text() == "Nov 06, 2026 18:00" }.text(vernissage)
+        }
+
+    private fun scrapeExhibition(
+        document: Document = exhibitionPage(),
+        listedType: String? = EventType.EXHIBITION.name
+    ) = scraper.scrape(document, exhibitionUrl, listedType).shouldNotBeNull()
+
+    @Test
+    fun `scrape reads a listed exhibition's start from the Vernissage row`() {
+        val event = scrapeExhibition()
+
+        // The category slot of this page names the artists, so the type comes from the card.
+        event.eventType.shouldBeNull()
+        event.eventDate shouldBe LocalDate.of(2026, 11, 6)
+        event.startTime shouldBe LocalTime.of(18, 0)
+        event.endTime.shouldBeNull()
+    }
+
+    @Test
+    fun `scrape reads the Vernissage row of a page whose own category says exhibition`() {
+        val document = exhibitionPage().also { it.selectFirst("#pseudo-card .parent-name")!!.text("Exhibitions") }
+
+        scrapeExhibition(document, listedType = null).startTime shouldBe LocalTime.of(18, 0)
+    }
+
+    @Test
+    fun `scrape leaves the start empty when the vernissage falls on another day`() {
+        scrapeExhibition(exhibitionPage(vernissage = "Nov 05, 2026 18:00")).startTime.shouldBeNull()
+        scrapeExhibition(exhibitionPage(vernissage = "Nov 06, 2025 18:00")).startTime.shouldBeNull()
+    }
+
+    @Test
+    fun `scrape leaves the start empty when the Vernissage row has no time`() {
+        scrapeExhibition(exhibitionPage(vernissage = "Nov 06, 2026")).startTime.shouldBeNull()
+    }
+
+    @Test
+    fun `scrape ignores a Vernissage row on anything but an exhibition`() {
+        scrapeExhibition(listedType = EventType.CONCERT.name).startTime.shouldBeNull()
+        scrapeExhibition(listedType = null).startTime.shouldBeNull()
+    }
+
+    @Test
+    fun `scrape keeps a time in the hero over the Vernissage row`() {
+        val document = exhibitionPage().also { it.select("#pseudo-card .ct-dates li.infos")[1].text("19:30") }
+
+        scrapeExhibition(document).startTime shouldBe LocalTime.of(19, 30)
+    }
+
     @Test
     fun `scrape drops the band a DJ is billed with`() {
         val doc = fixture("urbanspree-detail-concert.html", concertUrl)
