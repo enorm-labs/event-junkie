@@ -29,7 +29,7 @@ pluginManagement {
         id("dev.detekt") version "2.0.0-alpha.6"
         id("io.github.ben-manes.versions") version "0.66.0"
         id("org.owasp.dependencycheck") version "13.0.0"
-        id("com.github.jk1.dependency-license-report") version "3.1.4"
+        id("com.github.jk1.dependency-license-report") version "3.1.5"
     }
 }
 
