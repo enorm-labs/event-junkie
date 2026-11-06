@@ -123,6 +123,30 @@ class UfaFabrikMonthPageScraperTest {
     }
 
     @Test
+    fun `bills nobody from a series title, in any spelling and with its cancelled tail`() {
+        // Events 5247 and 5251: the page body names the acts of each edition.
+        billing("Samba Made in Berlin").shouldBeEmpty()
+        billing("Samba Made in Berlin - Fällt aus!").shouldBeEmpty()
+        billing("SAMBA MADE IN BERLIN").shouldBeEmpty()
+        billing("Samba Made in Berlin 2027").shouldBeEmpty()
+        billing("Samba Made in Berlin", EventType.SHOW).shouldBeEmpty()
+        ufaFabrikArtists("Samba Made in Berlin", "Edition 2026", EventType.CONCERT.name, "Konzert").shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills nobody on the series' two rows of the month page`() {
+        val nights = month("ufafabrik-program-202611.html").filter { it.title == "Samba Made in Berlin" }
+        nights.map { it.eventDate.dayOfMonth } shouldBe listOf(6, 7)
+        nights.flatMap { it.artists }.shouldBeEmpty()
+    }
+
+    @Test
+    fun `the series entry leaves an act that ends in Berlin or opens the same way`() {
+        billing("Isolation Berlin") shouldBe listOf("Isolation Berlin" to ArtistRole.HEADLINER)
+        billing("Samba Made in Heaven") shouldBe listOf("Samba Made in Heaven" to ArtistRole.HEADLINER)
+    }
+
+    @Test
     fun `bills nobody from the title of a show about someone`() {
         // Events 12457 and 12458: the title split into "Nina", "Zwischen Himmel" and "Punk *Premiere".
         ufaFabrikArtists(
