@@ -6,7 +6,7 @@
 #   infra/apply.sh <bootstrap|staging|production> [--allow-replace] [--yes-if-only-creates <regex>] [tofu plan flags…]
 #
 #   --allow-replace   permit a replace or destroy of an hcloud_server, hcloud_volume, hcloud_primary_ip
-#                     or hcloud_zone. With a server among them, check-capacity.sh --probe runs first
+#                     or hcloud_zone. When a server is replaced, check-capacity.sh --probe runs first
 #   --yes-if-only-creates <regex>
 #                     apply without the prompt when every change is a create of an address matching
 #                     <regex>. Any other plan exits 3 and applies nothing. order-next-pair.sh uses it
@@ -109,12 +109,16 @@ jq -r '[.resource_changes[]? | .change.actions] |
 removals="$(jq -r '.resource_changes[]? | select(.mode == "managed" and (.change.actions | index("delete")))
     | "\(if (.change.actions | length) > 1 then "replace" else "destroy" end)\t\(.type)\t\(.address)"' "$SHOW")"
 guarded=""
+server_replaced=0
 if [ -n "$removals" ]; then
     echo "apply: it would replace or destroy:"
     while IFS=$'\t' read -r action type address; do
         printf '  %-8s %s\n' "$action" "$address"
         if jq -e --arg t "$type" 'index($t)' <<<"$GUARDED" >/dev/null; then
             guarded="${guarded}${type} "
+        fi
+        if [ "$action" = replace ] && [ "$type" = hcloud_server ]; then
+            server_replaced=1
         fi
     done <<<"$removals"
 fi
@@ -126,10 +130,14 @@ if [ -n "$guarded" ]; then
     case " $guarded" in
         *" hcloud_server "*)
             [ "$STACK" != bootstrap ] || die "bootstrap has no servers, so a server here is unexpected; stop and read the plan"
-            echo "apply: a server is replaced, so first: can Hetzner place it now?"
-            direnv exec "$DIR" "$CAPACITY" --probe "$STACK" || die "check-capacity.sh says it cannot be placed now. Nothing was applied."
             ;;
     esac
+    # Only a replace needs room. A plain destroy places nothing, and the probe can refuse it for the
+    # very Primary IPs the destroy frees, as the production cutover's last apply showed.
+    if [ "$server_replaced" -eq 1 ]; then
+        echo "apply: a server is replaced, so first: can Hetzner place it now?"
+        direnv exec "$DIR" "$CAPACITY" --probe "$STACK" || die "check-capacity.sh says it cannot be placed now. Nothing was applied."
+    fi
 fi
 
 if [ -n "$CREATES_ONLY" ]; then

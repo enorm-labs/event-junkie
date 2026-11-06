@@ -76,7 +76,7 @@ It ordered a cx33, not the cx43 fallback, so #4197 needs no change.
 **If a step fails,** run `scripts/cutover.sh production cutover --from <step>` after the fix. Every step checks what is already done. **To go back,**
 run `scripts/cutover.sh production rollback`. Rollback works until `finish`. Then revert #4197 before you resume Flux on the old cluster.
 
-Rollback starts PostgreSQL on the old node, and adds the old cluster's deploy key back if `follow-up` deleted it. It does the key last, so GitHub cannot hold the
+Rollback gives the volume back to `postgres` on the old node and starts PostgreSQL there. It adds the old cluster's deploy key back if `follow-up` deleted it. It does the key last, so GitHub cannot hold the
 site down. `prepare` suspends only the `flux-system` Kustomization. The Kustomization `cluster-issuer` and the chart's OCIRepository on the old cluster do not stop.
 
 ## 4. Finish

@@ -58,8 +58,10 @@ case "$*" in
     "apply -f -"*) cat >/dev/null ;;
     "apply --server-side --field-manager=rebuild-node -f -")
         doc="$(cat)"
-        grep -q 'suspend: true' <<<"$doc" && record suspended-hr "$ctx" ;;
+        grep -q 'suspend: true' <<<"$doc" && record suspended-hr "$ctx"
+        grep -q 'values:' <<<"$doc" || record suspend-only-hr "$ctx" ;;
     "apply --server-side -k "*) record kustomization "$ctx" ;;
+    "get kustomization flux-system -n flux-system") [ -n "${FAKE_FLUX_RUNS:-}" ] ;;
     "get secret flux-system -n flux-system") [ -e "$FAKE/flux-secret" ] ;;
     "get secret flux-system -n flux-system -o jsonpath="*) printf 'ecdsa-sha2-nistp384 AAAANEW flux' | base64 ;;
     "get secret event-junkie-tls -n event-junkie") [ "$ctx" != event-junkie-production-next ] || [ -e "$FAKE/tls-applied" ] ;;
@@ -98,7 +100,12 @@ cat >"$BIN/sops" <<'EOF'
 #!/usr/bin/env bash
 printf 'data:\n  password: %s\n' "$(printf 'zq9x-events' | base64)"
 EOF
-for tool in curl wg-quick cluster-access alerts-apply dashboards-apply; do
+cat >"$BIN/alerts-apply" <<'EOF'
+#!/usr/bin/env bash
+record alerts-apply "$@"
+[ "$#" -gt 0 ] || exit "${FAKE_ALERTS_EXIT:-0}"
+EOF
+for tool in curl wg-quick cluster-access dashboards-apply; do
     printf '#!/usr/bin/env bash\nrecord %s "$@"\n' "$tool" >"$BIN/$tool"
 done
 cat >"$BIN/cluster-secrets" <<'EOF'
@@ -149,8 +156,10 @@ lacks next "walg"
 lacks next "alerts-apply"
 lacks next "dashboards-apply"
 lacks next "DELETE"
-[ -n "$(line_of suspended-hr)" ] && [ "$(line_of suspended-hr)" -lt "$(line_of kustomization)" ] ||
+[ -n "$(line_of suspended-hr)" ] && [ "$(line_of suspended-hr)" -lt "$(line_of 'kustomization event-junkie-production-next')" ] ||
     fail "next: the suspended HelmRelease is not applied before the Kustomization"
+[ -n "$(line_of suspend-only-hr)" ] && [ "$(line_of suspend-only-hr)" -gt "$(line_of 'wait --for=condition=Ready kustomization/flux-system')" ] ||
+    fail "next: rebuild-node keeps its values on the HelmRelease after Flux took over"
 [ "$(line_of 'wg-quick down')" -lt "$(line_of 'wg-quick up')" ] 2>/dev/null || fail "next: the running tunnel is not brought back last"
 grep -q "every step passed" <<<"$OUT" || fail "next: no final line"
 
@@ -201,6 +210,24 @@ grep -q "boot: failed: harden" <<<"$OUT" || fail "boot failed: $OUT"
 run "staging" 0 staging
 has staging "--resolve staging.event-junkie.de:443:10.10.1.1"
 lacks staging "-J ops@10.10.1.1"
+
+# 9. Flux already runs: its manifests stay with kustomize-controller, and the rest of the step still runs.
+FAKE_FLUX_RUNS=1 run "flux runs" 0 production --from flux
+lacks "flux runs" "kustomization event-junkie-production"
+has "flux runs" "wait --for=condition=Ready kustomization/flux-system"
+EJ_NEXT_PAIR_JSON="$NEXT_JSON" FAKE_FLUX_RUNS=1 run "flux runs on next" 0 production --next
+lacks "flux runs on next" "gotk-components"
+lacks "flux runs on next" "kustomization event-junkie-production-next"
+has "flux runs on next" "tls-applied event-junkie-production-next"
+
+# 10. Rules that wait for a stream do not stop the rebuild, and a failed apply does.
+FAKE_ALERTS_EXIT=3 run "rules skipped" 0 production --from alerts
+has "rules skipped" "dashboards-apply"
+grep -q "some rules wait for their streams" <<<"$OUT" || fail "rules skipped: does not say to apply again: $OUT"
+grep -q "every step passed" <<<"$OUT" || fail "rules skipped: no final line"
+FAKE_ALERTS_EXIT=1 run "alerts failed" 1 production --from alerts
+lacks "alerts failed" "dashboards-apply"
+grep -q "the alerts apply failed with exit 1" <<<"$OUT" || fail "alerts failed: $OUT"
 
 if [ "$FAILURES" -gt 0 ]; then
     echo "rebuild-node-test: $FAILURES failure(s)" >&2

@@ -55,7 +55,7 @@ resource "hcloud_server" "k3s_next" {
   }
 
   lifecycle {
-    ignore_changes = [ssh_keys, user_data]
+    ignore_changes = [ssh_keys, user_data, public_net]
 
     precondition {
       condition     = local.next_ips_distinct

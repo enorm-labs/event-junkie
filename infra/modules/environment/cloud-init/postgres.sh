@@ -116,6 +116,15 @@ if [[ "$(findmnt -no SOURCE "${DATA_ROOT}" || true)" != "${DATA_DEVICE}" ]]; the
     exit 1
 fi
 
+# A volume keeps numeric owners, and each node gives `postgres` whichever UID is free when the package
+# installs. On another UID, pg_ctlcluster refuses to start (#4128). lost+found stays root's.
+if [[ "$(stat -c %u "${DATA_ROOT}/${POSTGRES_VERSION}/main")" != "$(id -u postgres)" ]]; then
+    systemctl stop "${SERVICE}"
+    find "${DATA_ROOT}" -xdev -mindepth 1 -maxdepth 1 ! -name lost+found -exec chown -hR postgres:postgres {} +
+    chown postgres:postgres "${DATA_ROOT}"
+    echo "postgres: gave the volume to this node's postgres user"
+fi
+
 # The same check across a reboot, when this script does not run: RequiresMountsFor pulls in the
 # .mount unit systemd generates from the fstab line and refuses to start PostgreSQL if it fails.
 install -d -m 0755 "/etc/systemd/system/${SERVICE}.service.d"
