@@ -51,6 +51,8 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "ferris & sylvester",
         // A German metal band Neue Zukunft bills as the support after a `+` (#2958).
         "prophet & flesh",
+        // A band Mikropol bills as the second support after a `+` (#4507).
+        "down & out",
         // Duos billed as their whole title (#3159): Heimathafen, Festsaal Kreuzberg, Privatclub, Frannz Club, Columbia Theater.
         "dicht & ergreifend",
         "dennis & jesko band",

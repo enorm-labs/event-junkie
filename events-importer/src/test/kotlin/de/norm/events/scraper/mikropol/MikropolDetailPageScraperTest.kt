@@ -74,6 +74,24 @@ class MikropolDetailPageScraperTest {
     }
 
     @Test
+    fun `bills a support act whose name holds a conjunction as one act (#4507)`() {
+        val url = "https://mikropol-berlin.de/event/2027-02-09-comastatic/"
+        val html =
+            """<html><body><h1 class="entry-title">comastatic</h1>
+            <h2 class="support">support: all to get her + down and out</h2>
+            </body></html>"""
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.subtitle shouldBe "support: all to get her + down and out"
+        event.artists shouldBe
+            listOf(
+                ScrapedArtist("comastatic", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("all to get her", ArtistRole.SUPPORT),
+                ScrapedArtist("down and out", ArtistRole.SUPPORT)
+            )
+    }
+
+    @Test
     fun `keeps a title that is only the support act or holds it inside a word`() {
         withoutTrailingSupport("DJANE SHEENA", "support: djane sheena") shouldBe "DJANE SHEENA"
         withoutTrailingSupport("Superhans", "support: Hans") shouldBe "Superhans"
