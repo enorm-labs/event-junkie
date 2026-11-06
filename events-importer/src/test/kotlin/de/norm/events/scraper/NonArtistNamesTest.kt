@@ -565,4 +565,19 @@ class NonArtistNamesTest {
         isNonArtistName("AFTERHOURS") shouldBe false
         isNonArtistName("AfterShow mit Dr. Kimble") shouldBe false
     }
+
+    @Test
+    fun `a name cut off at its w slash is no act`() {
+        // Renate, event 978.
+        isNonArtistName("Whacking Activation w/") shouldBe true
+        isNonArtistName("WHACKING ACTIVATION W/ ") shouldBe true
+    }
+
+    @Test
+    fun `a slash inside a name, or a guest after w slash, is left alone`() {
+        isNonArtistName("B/Annimali") shouldBe false
+        isNonArtistName("O/H/R") shouldBe false
+        isNonArtistName("charli/e") shouldBe false
+        isNonArtistName("Whacking Activation w/ Someone") shouldBe false
+    }
 }

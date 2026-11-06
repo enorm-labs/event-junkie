@@ -263,6 +263,15 @@ class UrbanSpreeDetailPageScraperTest {
     }
 
     @Test
+    fun `scrape bills the act of a Releaseshow title, keeps its guests and leaves the title`() {
+        val title = "FRIBERTY “FRIBERTY I”-Releaseshow featuring Kiki Bohemia & Pola Lia Schulten"
+        val event = scraper.scrape(detailPage(title), concertUrl).shouldNotBeNull()
+
+        event.title shouldBe title
+        event.artists.map { it.name } shouldContainExactly listOf("FRIBERTY", "Kiki Bohemia", "Pola Lia Schulten")
+    }
+
+    @Test
     fun `scrape bills the DJ above each bio of a Klubnacht`() {
         val description =
             "◼︎ 23.10.26 ⏱ 00:00 — LATE One night of dub textures. ALBERT KRAFT — DJ SET Originally from Mexico and raised in " +

@@ -207,4 +207,26 @@ class MonarchOverviewPageScraperTest {
         events.single().sourceId shouldBe "monarch:2026-10-03-klubnacht"
         warnings shouldHaveSize 1
     }
+
+    @Test
+    fun `a numbered session is a concert that bills nobody`() {
+        val event = scraper.scrape(block("Freitag 13/11/2026-20:00", "LEAKED SESSION 04 (KONZERT)"), baseUrl).single()
+
+        event.title shouldBe "LEAKED SESSION 04"
+        event.eventType shouldBe "CONCERT"
+        event.artists shouldHaveSize 0
+    }
+
+    @Test
+    fun `an act with Session in its name stays billed`() {
+        fun billed(title: String) =
+            scraper
+                .scrape(block("Freitag 13/11/2026-20:00", "$title (KONZERT)"), baseUrl)
+                .single()
+                .artists
+                .map { it.name }
+
+        billed("Session Victim") shouldBe listOf("Session Victim")
+        billed("Berlin Session Strings") shouldBe listOf("Berlin Session Strings")
+    }
 }

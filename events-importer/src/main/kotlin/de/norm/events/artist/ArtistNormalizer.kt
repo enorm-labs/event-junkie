@@ -105,7 +105,10 @@ private val SOURCE_ARTIST_SLUG_OVERRIDES: Map<String, Map<String, String>> =
     mapOf(
         // Dieter "Maschine" Birr, the former Puhdys singer, at Admiralspalast. The resident DJ Maschine at Der Weiße
         // Hase keeps `maschine` (#3856).
-        "admiralspalast:" to mapOf("maschine" to "maschine-2")
+        "admiralspalast:" to mapOf("maschine" to "maschine-2"),
+        // The opera act `V.` in OHM's LA CASITA line-up (V229). The dark-wave act `V` at Schokoladen and Lido keeps `v`,
+        // and the dot folds away in the slug.
+        "ohm:" to mapOf("v." to "v-2")
     )
 
 /**
@@ -196,7 +199,10 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "muffcase" to "Muff Case",
         "lushlab" to "Lush Lab",
         "traumtrax" to "TraumTrax",
-        "rifraf" to "Rif Raf"
+        "rifraf" to "Rif Raf",
+        // The same, decided by the operator (V229). Wild at Heart prints both `DJ Louie Wray` and `DJs Peter + Louie Wray`.
+        "djlouiewray" to "Louie Wray",
+        "panamamama" to "Panama Mama"
     )
 
 /** Lowercased, punctuation- and space-free lookup key for a name. */
