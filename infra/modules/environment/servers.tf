@@ -57,7 +57,10 @@ resource "hcloud_server" "k3s" {
     # `ssh_keys` cannot be updated in place. Injected into root at creation and worthless once
     # harden.sh disables root login minutes later, so rebuilding production to add a laptop would be a
     # pure loss; day-to-day access is the `ops` user and the tunnel.
-    ignore_changes = [ssh_keys, user_data]
+    #
+    # `public_net`: the cutover moves the IPv4 by API and the provider never refreshes these ids. A
+    # diff here powers the node off, without a shutdown, to reassign the IPs it already holds.
+    ignore_changes = [ssh_keys, user_data, public_net]
   }
 }
 
@@ -124,15 +127,16 @@ resource "hcloud_server" "postgres" {
 
 # A warning, never a failure: a node that booted older cloud-init/ is drift to fix by hand or by
 # -replace (CLUSTER_BOOTSTRAP.md § Applying a `cloud-init` fix without rebuilding), not a reason
-# to block an unrelated apply.
+# to block an unrelated apply. An empty value means "unknown", not drift: an in-place update of the
+# server can empty it in state, which only a rebuild restores, so a warning would never clear.
 check "user_data_drift" {
   assert {
-    condition     = hcloud_server.k3s.user_data == local.user_data_hash.k3s
+    condition     = hcloud_server.k3s.user_data == "" || hcloud_server.k3s.user_data == local.user_data_hash.k3s
     error_message = "${hcloud_server.k3s.name} booted another user_data than cloud-init/ renders. Apply the fix by hand, or rebuild with -replace=module.environment.hcloud_server.k3s."
   }
 
   assert {
-    condition     = !local.dedicated_postgres || one(hcloud_server.postgres[*].user_data) == local.user_data_hash.postgres
+    condition     = !local.dedicated_postgres || one(hcloud_server.postgres[*].user_data) == "" || one(hcloud_server.postgres[*].user_data) == local.user_data_hash.postgres
     error_message = "${var.environment}-postgres booted another user_data than cloud-init/ renders. Apply the fix by hand, or rebuild with -replace='module.environment.hcloud_server.postgres[0]'."
   }
 }

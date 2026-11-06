@@ -16,6 +16,7 @@ import io
 import json
 import pathlib
 import sys
+import tempfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
@@ -109,6 +110,22 @@ check("a missing rule is created", [c[0] for c in writes(calls)] == ["POST"] and
 calls, out, skipped = run([], absent_streams=("up",))
 check("a rule with a missing stream is skipped", skipped == ["ej-one"] and "skipped" in out)
 check("the rule after it is still created", "%-30s created" % "ej-two" in out)
+
+# 6. A run that only skipped rules exits 3, which `rebuild-node.sh` tells from a failure's 1.
+apply_alerts.ensure_recipient = lambda: None
+apply_alerts.ensure = lambda *_: None
+apply_alerts.apply_rules = lambda _: ["ej-one"]
+with tempfile.NamedTemporaryFile("w", suffix=".json") as rules:
+    rules.write("[]")
+    rules.flush()
+    apply_alerts.path = rules.name
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            apply_alerts.main()
+        code = 0
+    except SystemExit as exit_:
+        code = exit_.code
+check("a run that only skipped rules exits 3", code == 3)
 
 print("\n%d checks, %d failed" % (checks, len(failures)))
 sys.exit(1 if failures else 0)

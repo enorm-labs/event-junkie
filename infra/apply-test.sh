@@ -120,18 +120,28 @@ FAKE_CAPACITY_RC=1 run "no capacity" 1 "yes" production --allow-replace
 expect_out "no capacity" "cannot be placed now"
 applied && fail "no capacity: applied"
 
-# 7. A replacement of an unguarded type is listed, and not refused.
+# 7. A destroyed server needs --allow-replace, and places nothing, so no probe runs.
+plan_of "$(change hcloud_server module.environment.hcloud_server.k3s_old '["delete"]')"
+run "destroy refused" 1 "yes" production
+expect_out "destroy refused" "destroy  module.environment.hcloud_server.k3s_old"
+expect_out "destroy refused" "refused: the plan replaces or destroys hcloud_server"
+applied && fail "destroy refused: applied"
+FAKE_CAPACITY_RC=1 run "destroy allowed" 0 "yes" production --allow-replace
+[ -f "$STATE/probed" ] && fail "destroy allowed: probed capacity"
+applied || fail "destroy allowed: not applied"
+
+# 8. A replacement of an unguarded type is listed, and not refused.
 plan_of "$ATTACH"
 run "unguarded" 0 "yes" staging
 expect_out "unguarded" "replace  module.environment.hcloud_volume_attachment.postgres"
 applied || fail "unguarded: not applied"
 [ -f "$STATE/probed" ] && fail "unguarded: probed capacity"
 
-# 8. The plan file is the script's own.
+# 9. The plan file is the script's own.
 run "out flag" 1 "yes" staging -out=mine.tfplan
 expect_out "out flag" "the plan file is this script's own"
 
-# 9. Creates that all match --yes-if-only-creates apply with no answer on stdin.
+# 10. Creates that all match --yes-if-only-creates apply with no answer on stdin.
 NEXT_RE='_next(_ipv[46])?\[0\]$'
 NEXT_SERVER="$(change hcloud_server 'module.environment.hcloud_server.k3s_next[0]' '["create"]')"
 NEXT_IP="$(change hcloud_primary_ip 'module.environment.hcloud_primary_ip.k3s_next_ipv4[0]' '["create"]')"
@@ -140,13 +150,13 @@ run "creates only" 0 "" production --yes-if-only-creates "$NEXT_RE"
 expect_out "creates only" "so no prompt"
 applied || fail "creates only: not applied"
 
-# 10. An update beside those creates needs a person: exit 3, nothing applied.
+# 11. An update beside those creates needs a person: exit 3, nothing applied.
 plan_of "$NEXT_SERVER" "$FIREWALL"
 run "creates and an update" 3 "yes" production --yes-if-only-creates "$NEXT_RE"
 expect_out "creates and an update" "module.environment.hcloud_firewall.k3s"
 applied && fail "creates and an update: applied"
 
-# 11. A create the regex does not match needs a person too.
+# 12. A create the regex does not match needs a person too.
 plan_of "$NEXT_SERVER" "$(change hcloud_server module.environment.hcloud_server.k3s '["create"]')"
 run "unmatched create" 3 "yes" production --yes-if-only-creates "$NEXT_RE"
 applied && fail "unmatched create: applied"

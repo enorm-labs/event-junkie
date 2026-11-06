@@ -62,7 +62,7 @@ a PGDATA volume, and a node replacement has been proven to bring the database ba
 `true`, and setting it to `false` takes the site dark — [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §12 first.
 
 **An edit under `cloud-init/` does not rebuild a node, and does not reach one either.** `servers.tf` ignores `user_data` (#4129), after a DNS apply replaced
-both production nodes because their `user_data` had drifted. The `user_data_drift` check warns on every plan, once per node that booted other scripts. A fix
+both production nodes because their `user_data` had drifted. The `user_data_drift` check warns on every plan, once per node that booted other scripts, while the state holds a hash for that node. A fix
 reaches a running node by hand, [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) § Applying a `cloud-init` fix without rebuilding. A rebuild is asked
 for by name: `-replace=module.environment.hcloud_server.k3s`, which boots the current `cloud-init/`.
 
@@ -98,6 +98,9 @@ network. Cross-references point at `docs/ops/PLATFORM_SETUP.md` sections and ADR
   shipped to a k3s node with a database next door — that conditional keeps production's k3s node smallest.
 - **"In-place" is a property of an attribute, never a prediction about an apply.** `server_type` updates in place within an architecture, and a plan once
   replaced the node anyway, because `user_data` had drifted before `servers.tf` ignored it. **Read the plan; do not reason from the schema.**
+- **A `public_net` diff on a running server is a power-off.** The provider powers the node off without a shutdown, unassigns the IPs, assigns the new set and
+  powers it on, even when the IPs do not move, and the plan calls that "update in-place". It never refreshes the ids, so an IP moved by API leaves the
+  diff behind. `servers.tf` ignores `public_net` on the k3s nodes for this reason, and a planned IP change there goes through `scripts/cutover.sh`.
 - **`server_type` cannot cross architectures, and `plan` will not warn you.** Between `cpx*`/`cx*` (x86) and `cax*` (ARM) Hetzner refuses at **apply**,
   partway through. An architecture change is a rebuild: CLUSTER_BOOTSTRAP.md § Rebuilding a node.
 - **Rebuilding a node keeps its database; destroying an environment does not.** PGDATA is an `hcloud_volume` declared standalone (`location`, never

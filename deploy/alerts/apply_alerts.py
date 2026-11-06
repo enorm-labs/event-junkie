@@ -29,8 +29,9 @@ can mail a firing again inside the silence it was in. The comparison is the one
 **A rule whose stream does not exist yet is skipped, not fatal.** OpenObserve refuses
 it with a 404 until the stream's first point arrives, which on a fresh cluster is
 after the first import cycle for a counter like `importer_translations_total`. The
-rest of the rules are still applied, the skipped ones are listed, and the run exits
-non-zero, so a mistyped stream stays visible. Any other refusal stops the run at once.
+rest of the rules are still applied, the skipped ones are listed, and the run exits 3,
+so a mistyped stream stays visible and `rebuild-node.sh` can tell this from a failure.
+Any other refusal stops the run at once, with exit 1.
 
 **The recipient has to be a member of the org**, or the destination is refused with
 `UserNotPermitted`. It is created once as a service account, which has no password.
@@ -196,7 +197,7 @@ def main():
     if skipped:
         print("\n%d rule(s) skipped, their stream does not exist yet: %s" % (len(skipped), ", ".join(skipped)))
         print("Run apply.sh again after the first import cycle. A stream that never appears is a wrong name.")
-        sys.exit(1)
+        sys.exit(3)
 
 
 if __name__ == "__main__":

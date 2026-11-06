@@ -479,7 +479,9 @@ step_access() {
 step_database() {
     # A failure between `stop-db` and `power-off` moves nothing, so no boot restarts PostgreSQL there.
     if [ "$PHASE" = rollback ]; then
-        on "$SOURCE" "$SOURCE_IP" 'sudo systemctl start postgresql' || die "cannot start PostgreSQL on $(name "$SOURCE")"
+        # The new node's postgres.sh gave the volume to its own UID, which can differ from this node's.
+        on "$SOURCE" "$SOURCE_IP" 'sudo chown postgres:postgres /var/lib/postgresql && sudo find /var/lib/postgresql -xdev -mindepth 1 -maxdepth 1 ! -name lost+found -exec chown -hR postgres:postgres {} + && sudo systemctl start postgresql' ||
+            die "cannot start PostgreSQL on $(name "$SOURCE")"
         db_answers "$SOURCE" "$SOURCE_IP"
         log "PostgreSQL runs on $(name "$SOURCE")"
         return 0

@@ -1060,9 +1060,10 @@ and that changes three things.
 (#460). A `tofu destroy` still loses it, because the provider lifts its own locks. Restore from the
 bucket is [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md). The drill passes on both clusters.
 
-**Which node drifts is in every plan.** The `user_data_drift` check warns once for each node that booted
-another `user_data`. Without a credential, compare the scripts each node keeps at `/opt/event-junkie/`
-against the repository:
+**Which node drifts is in most plans.** The `user_data_drift` check warns once for each node that booted
+another `user_data`. The check compares only while the state holds a hash. An in-place update of a server
+can empty that value, and then the check stays silent until a rebuild. To compare without a credential,
+or when the check is silent, compare the scripts each node keeps at `/opt/event-junkie/` against the repository:
 
 ```sh
 shasum -a 256 infra/modules/environment/cloud-init/*.sh
@@ -1175,7 +1176,7 @@ cd deploy/alerts     && ./apply.sh --diff
 **Both scripts default to staging's node, so a production rebuild needs `EJ_NODE=ops@10.10.0.1` in front of each of the four.** Without it every command
 succeeds, reports that the push landed, and writes to the cluster you were not rebuilding.
 
-**On a new OpenObserve, the alerts `apply.sh` skips some rules and exits non-zero.** A rule cannot be created before its stream has a first point. On
+**On a new OpenObserve, the alerts `apply.sh` skips some rules and exits 3.** `rebuild-node.sh` continues on that exit code. A rule cannot be created before its stream has a first point. On
 production that was `importer_translations_total`, which appears with the first translation. The script lists the skipped rules. Run it again after
 the first import cycle, then run `--diff`. A stream that never appears is a wrong name in `gen_alerts.py`.
 

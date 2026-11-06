@@ -276,7 +276,9 @@ step_backups() {
 }
 
 step_flux() {
-    local dir="$REPO/deploy/clusters/$ENV" title pub keys id
+    local dir="$REPO/deploy/clusters/$ENV" title pub keys id running=0
+    # Flux owns its own manifests once it runs, so a second server-side apply conflicts with kustomize-controller.
+    if k get kustomization flux-system -n flux-system >/dev/null 2>&1; then running=1; fi
     k create namespace flux-system --dry-run=client -o yaml | k apply -f - >/dev/null
     if ! k get secret flux-system -n flux-system >/dev/null 2>&1; then
         flux --context "$CTX" create secret git flux-system -n flux-system --url="ssh://git@github.com/$REPO_SLUG" >/dev/null
@@ -303,10 +305,12 @@ step_flux() {
     fi
 
     if [ "$NEXT" = 1 ]; then
-        k apply --server-side -f "$dir/flux-system/gotk-components.yaml" >/dev/null
-        k wait --for=condition=Established crd/helmreleases.helm.toolkit.fluxcd.io --timeout=120s >/dev/null
-        yq '.spec.suspend = true' "$dir/helm-release.yaml" | k apply --server-side --field-manager=rebuild-node -f - >/dev/null
-        log "HelmRelease $APP_HR created suspended, before Flux applies it"
+        if [ "$running" = 0 ]; then
+            k apply --server-side -f "$dir/flux-system/gotk-components.yaml" >/dev/null
+            k wait --for=condition=Established crd/helmreleases.helm.toolkit.fluxcd.io --timeout=120s >/dev/null
+            yq '.spec.suspend = true' "$dir/helm-release.yaml" | k apply --server-side --field-manager=rebuild-node -f - >/dev/null
+            log "HelmRelease $APP_HR created suspended, before Flux applies it"
+        fi
         if [ -s "$TLS_FILE" ]; then
             k create namespace event-junkie --dry-run=client -o yaml | k apply -f - >/dev/null
             k apply --server-side --field-manager=rebuild-node -f "$TLS_FILE" >/dev/null
@@ -315,10 +319,16 @@ step_flux() {
             die "no certificate to copy: run from step tls, in the same invocation"
         fi
     fi
-    k apply --server-side -k "$dir/flux-system" >/dev/null
+    [ "$running" = 1 ] || k apply --server-side -k "$dir/flux-system" >/dev/null
     k wait --for=condition=Ready kustomization/flux-system -n flux-system --timeout=10m >/dev/null ||
         die "the flux-system Kustomization is not ready: flux --context $CTX get kustomizations"
     log "Flux reconciles $dir"
+    # Flux cannot remove a value another field manager owns. The cluster can wait days for its cutover, and a
+    # value that Git dropped meanwhile would still reach the chart, so this manager keeps only `suspend`.
+    if [ "$NEXT" = 1 ]; then
+        yq '{"apiVersion": .apiVersion, "kind": .kind, "metadata": {"name": .metadata.name, "namespace": .metadata.namespace}, "spec": {"suspend": true}}' "$dir/helm-release.yaml" |
+            k apply --server-side --field-manager=rebuild-node -f - >/dev/null
+    fi
     if [ "$NEXT" = 1 ] && [ "$(k get helmrelease "$APP_HR" -n flux-system -o jsonpath='{.spec.suspend}')" != true ]; then
         flux --context "$CTX" suspend helmrelease "$APP_HR" -n flux-system >/dev/null || true
         die "Flux took over spec.suspend on $APP_HR. It is suspended again; check that no BFF or importer pod ran"
@@ -339,10 +349,14 @@ step_ready() {
 }
 
 step_alerts() {
-    EJ_NODE="ops@$TUNNEL_IP" "$ALERTS_APPLY"
+    local status=0
+    # Exit 3: every rule is applied but those whose stream has no first point yet, which is normal on a new OpenObserve.
+    EJ_NODE="ops@$TUNNEL_IP" "$ALERTS_APPLY" || status=$?
+    [ "$status" = 0 ] || [ "$status" = 3 ] || die "the alerts apply failed with exit $status"
     EJ_NODE="ops@$TUNNEL_IP" "$DASHBOARDS_APPLY"
     # Report only: a rule over a stream that has no data yet reads NO DATA on a fresh cluster (#4130).
     EJ_NODE="ops@$TUNNEL_IP" "$ALERTS_APPLY" --check || log "alerts --check reported rules that cannot fire yet"
+    [ "$status" = 0 ] || log "some rules wait for their streams: after the first import cycle, run deploy/alerts/apply.sh again"
 }
 
 step_verify() {

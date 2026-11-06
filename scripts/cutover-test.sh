@@ -302,7 +302,9 @@ run "rollback" 0 "" production rollback
 has "rollback" "cluster-access production --server-key OLDKEY="
 has "rollback" "kubectl --context event-junkie-production scale deployment -n event-junkie -l app.kubernetes.io/component=importer --replicas=1"
 grep -qF "revert the switch PR" <<<"$OUT" || fail "rollback: does not say to revert the switch PR"
-before "rollback" "ops@10.0.1.20 sudo systemctl start postgresql" "flux --context event-junkie-production resume helmrelease event-junkie"
+before "rollback" "ops@10.0.1.20 sudo chown postgres:postgres /var/lib/postgresql && sudo find /var/lib/postgresql" "flux --context event-junkie-production resume helmrelease event-junkie"
+grep -F "ops@10.0.1.20 " "$WORK/events.log" | grep -qE 'chown -hR postgres:postgres .* && sudo systemctl start postgresql$' ||
+    fail "rollback: PostgreSQL starts before the volume has its owner back"
 before "rollback" "site https://event-junkie.de/api/events?size=1" "gh repo deploy-key add"
 has "rollback" "--title flux-system-main-flux-system-./deploy/clusters/production -R enorm-labs/event-junkie"
 
@@ -376,7 +378,7 @@ setup production
 run "prepare for early rollback" 0 "" production prepare
 : >"$WORK/events.log"
 run "early rollback" 0 "" production rollback
-has "early rollback" "ops@10.0.1.20 sudo systemctl start postgresql"
+has "early rollback" "&& sudo systemctl start postgresql"
 ! grep -E '^api POST .*/(shutdown|poweroff|assign|unassign|attach|detach)' "$WORK/events.log" || fail "early rollback: changed the project"
 
 # 12. A rollback before `follow-up` finds the deploy key in place and adds none.
