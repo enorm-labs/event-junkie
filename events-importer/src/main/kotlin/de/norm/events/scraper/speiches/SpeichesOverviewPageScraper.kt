@@ -36,6 +36,9 @@ import kotlin.math.abs
  * subtitle, and the entry note sets [ScrapedEvent.free]. The house series (`Jazz am Sonntag`,
  * `Speiches Open Stage`) name no act in the title; `Jazz am Sonntag` names its band before `spielt`.
  * - **A style list glued with commas** (`Musicians Welcome! Folk,Blues,Soul`) feeds the genre and leaves the subtitle (event 13037).
+ * - **`=` joins a band and its line-up in either order.** `The Shallaras = Angela Cory + Mauro Pandolfino` opens on the band.
+ * `Pad Schneider u. Wille Borchert = Brother Loui (Pad Schneider & Wille Borchert) Rhythm&Blues` opens on the line-up, repeats it in brackets,
+ * and glues its style on with no dash (event 12888).
  * - **A `Lesung:` label** opens a reading the table files as `Konzert` (event 12519). It is a [EventType.READING],
  * and the names after the label are its authors.
  * - **`rockradio.de-live`** is the radio's own broadcast from the pub, a talk as often as a band. It is a
@@ -88,7 +91,7 @@ class SpeichesOverviewPageScraper(
                     ?.let { resolveUrl(baseUrl, it) },
             sourceUrl = resolveUrl(baseUrl, "veranstaltungen_info.php?auswahl_lfdnr=$id"),
             sourceId = "${EventSource.SPEICHES.sourceIdPrefix}$id",
-            genre = normalizeGenre(subtitle).filter(::isGenreLabel).joinToString(", ").ifBlank { null },
+            genre = normalizeGenre(subtitle?.replace(GLUED_RHYTHM_AND_BLUES, "Blues")).filter(::isGenreLabel).joinToString(", ").ifBlank { null },
             free = FREE_ENTRY.containsMatchIn(cells[TEXT_CELL].text()),
             artists = if (eventType == EventType.CONCERT || READING_LABEL.containsMatchIn(title)) actsOf(title, subtitle) else emptyList()
         )
@@ -110,6 +113,7 @@ class SpeichesOverviewPageScraper(
                 ?.map(::withoutNotes)
                 ?.filter { it.isNotBlank() }
                 ?.ifEmpty { null }
+                ?.let(::withBandFirst)
         val date = cells.getOrNull(DATE_CELL)?.text()?.let(::dateOf)
         if (id == null || segments == null || date == null) {
             logger.debug { "Skipping Speiche row ${id ?: "?"} at '$place' dated '${cells.firstOrNull()?.text()}'" }
@@ -117,6 +121,16 @@ class SpeichesOverviewPageScraper(
         }
         return Triple(id, segments, date)
     }
+
+    /** [segments] with a first segment that opens on the line-up cut into band and style. The repeated names tell it from `<band> = <line-up>`. */
+    private fun withBandFirst(segments: List<String>): List<String> {
+        val line = segments.first()
+        val (band, repeatedLineUp, style) = BAND_WITH_LINE_UP.matchEntire(line.substringAfter(" = "))?.destructured ?: return segments
+        if (namesOf(line.substringBefore(" = ")) != namesOf(repeatedLineUp)) return segments
+        return listOf(band, style).filter { it.isNotBlank() } + segments.drop(1)
+    }
+
+    private fun namesOf(lineUp: String): Set<String> = lineUp.split(LINE_UP_JOINER).toSet()
 
     /** [segment] without the entry note, the series reminder and a trailing ellipsis. */
     private fun withoutNotes(segment: String): String =
@@ -214,6 +228,13 @@ class SpeichesOverviewPageScraper(
 
         /** `Folk,Blues,Soul`: three or more words joined by bare commas at the end of the subtitle. A list of acts has spaces. */
         val GLUED_GENRE_LIST = Regex("""(?:^|\s+)\p{L}+(?:,\p{L}+){2,}\s*$""")
+
+        /** `Rhythm&Blues` hides its `Blues` from the genre lookup, which splits on a spaced `&` only. */
+        val GLUED_RHYTHM_AND_BLUES = Regex("""(?i)\brhythm&blues\b""")
+
+        /** The part after the `=` in `<line-up> = <band> (<line-up>) <style>`, with or without the style. */
+        val BAND_WITH_LINE_UP = Regex("""(.+?)\s*\(([^)]+)\)\s*(.*)""")
+        val LINE_UP_JOINER = Regex("""\s+(?:u\.|und|&|\+)\s+|\s*,\s*""")
 
         /** The tribute's subject in front of the band's name; the lookahead keeps a title that ends in `Tribute Band`. */
         val TRIBUTE_BAND_PREFIX = Regex("""(?i)^.+?\btribute\s+band\s+(?=\S)""")
