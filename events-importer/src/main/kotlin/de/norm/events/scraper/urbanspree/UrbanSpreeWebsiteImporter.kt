@@ -13,12 +13,14 @@ import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.pageNumber
 import de.norm.events.scraper.querySeparator
+import de.norm.events.scraper.readEach
 import de.norm.events.scraper.urbanspree.UrbanSpreeWebsiteImporter.Companion.MAX_PAGES
 import de.norm.events.scraper.walkListingPages
 import de.norm.events.scraper.withEventPageOrFlagged
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
+import org.springframework.web.util.UriComponentsBuilder
 import java.time.Clock
 import java.time.LocalDate
 
@@ -29,6 +31,11 @@ import java.time.LocalDate
  * across its whole archive (200+ pages of nine cards), so page 1 holds the farthest future
  * shows and the coming months sit on pages 2, 3, 4 … The importer walks forward and stops at
  * the first page that reaches the past, bounded by [MAX_PAGES] in case the ordering changes.
+ *
+ * The listing sorts by start date, so an exhibition that opened weeks ago sits on a page past the
+ * stop. The run reads it from page 1 of the `exhibitions/` category page, which holds the nine
+ * newest shows and reaches back over a year (#4534). A failed read costs only the running shows'
+ * updates: the stale cleanup never prunes a row dated today or earlier.
  *
  * Each card is enriched from its detail page, since the listing truncates titles and carries no
  * promoter, ticket link or description. A failed or unparseable detail page degrades to the card,
@@ -64,15 +71,16 @@ class UrbanSpreeWebsiteImporter(
             walkListingPages(eventSource, htmlFetcher.fetchDocument(url), url, MAX_PAGES, htmlFetcher::fetchDocument) { document, pageUrl ->
                 readListingPage(document, pageUrl, url, today)
             }
-        val events = listing.items.distinctBy { it.sourceId }.map { enrichFromDetailPage(it) }
-        logger.info { "Scraped ${events.size} Urban Spree event(s) across ${listing.pages} listing page(s)" }
+        val running = readRunningExhibitions(url, today)
+        val events = (listing.items + running).distinctBy { it.sourceId }.map { enrichFromDetailPage(it) }
+        logger.info { "Scraped ${events.size} Urban Spree event(s) across ${listing.pages} listing page(s) and the exhibitions page" }
         return ImportResult.Success(events = events, etag = null, lastModified = null, complete = listing.complete)
     }
 
     /**
-     * One `?page=N` listing page: its cards dated today or later, and the next page unless this one
-     * reaches the past. The listing is newest-first, so everything beyond a past-dated card is
-     * archive, and an empty page means it ran out. Past cards are dropped here, sparing a detail fetch.
+     * One `?page=N` listing page: its cards not yet over, and the next page unless one of them started
+     * before today. The listing is newest-first by start date, so everything beyond such a card is
+     * archive, and an empty page means it ran out. Finished cards are dropped here, sparing a detail fetch.
      */
     private fun readListingPage(
         document: Document,
@@ -81,12 +89,37 @@ class UrbanSpreeWebsiteImporter(
         today: LocalDate
     ): ListingPage<ScrapedEvent> {
         val cards = overviewPageScraper.scrape(document, pageUrl)
-        val (upcoming, past) = cards.partition { !it.eventDate.isBefore(today) }
+        val started = cards.count { it.eventDate.isBefore(today) }
         val page = pageUrl.pageNumber(PAGE_QUERY_PARAM)
-        val next = pageUrl(entryUrl, page + 1).takeIf { cards.isNotEmpty() && past.isEmpty() }
-        if (next == null) logger.info { "Ending Urban Spree pagination at page $page (${cards.size} card(s), ${past.size} already past)" }
-        return ListingPage(upcoming, next)
+        val next = pageUrl(entryUrl, page + 1).takeIf { cards.isNotEmpty() && started == 0 }
+        if (next == null) logger.info { "Ending Urban Spree pagination at page $page (${cards.size} card(s), $started started before today)" }
+        return ListingPage(cards.filter { it.isNotOver(today) }, next)
     }
+
+    /**
+     * The exhibitions on page 1 of the category page that are not over yet. A failure logs a `WARN` and
+     * the run continues: the walk's `complete` is what guards the stale cleanup, and this read leaves it alone.
+     */
+    private suspend fun readRunningExhibitions(
+        entryUrl: String,
+        today: LocalDate
+    ): List<ScrapedEvent> {
+        val categoryUrl =
+            UriComponentsBuilder
+                .fromUriString(entryUrl)
+                .pathSegment(EXHIBITIONS_CATEGORY)
+                .path("/")
+                .build()
+                .toUriString()
+        return readEach(
+            listOf(categoryUrl),
+            failure = { "Urban Spree exhibitions page failed ($it); importing the listing's cards" }
+        ) { pageUrl ->
+            overviewPageScraper.scrape(htmlFetcher.fetchDocument(pageUrl), pageUrl).filter { it.isNotOver(today) }
+        }.items
+    }
+
+    private fun ScrapedEvent.isNotOver(today: LocalDate): Boolean = !(endDate ?: eventDate).isBefore(today)
 
     /**
      * The listing URL for [page], page 1 left as the entry URL; the query separator adapts to an
@@ -149,6 +182,9 @@ class UrbanSpreeWebsiteImporter(
 
         /** pdoPage's page query parameter, as declared in the listing's `pdoPage.initialize({...pageVarKey…})` config. */
         private const val PAGE_QUERY_PARAM = "page"
+
+        /** The category page under the entry URL that still lists an exhibition after it opened. */
+        private const val EXHIBITIONS_CATEGORY = "exhibitions"
     }
 }
 

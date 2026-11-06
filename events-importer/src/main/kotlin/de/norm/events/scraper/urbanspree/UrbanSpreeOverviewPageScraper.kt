@@ -17,8 +17,9 @@ import java.time.LocalTime
 import java.time.format.DateTimeParseException
 
 /**
- * Pure HTML parser for one page of Urban Spree's `/program/` listing, server-rendered by MODX
- * (pdoTools' `pdoPage`) into a `#pdopage` grid of `a.card` anchors, nine per page:
+ * Pure HTML parser for one page of Urban Spree's `/program/` listing or of its `exhibitions/`
+ * category page, both server-rendered by MODX (pdoTools' `pdoPage`) into a `#pdopage` grid of
+ * `a.card` anchors, nine per page:
  *
  * | Field       | Source                                                          |
  * |-------------|-----------------------------------------------------------------|
