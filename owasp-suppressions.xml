@@ -61,7 +61,7 @@
             False positive — version out of range. CVE-2020-29582 is the Kotlin
             `createTempDir`/`createTempFile` information disclosure, which affects
             kotlin-stdlib <= 1.4.20 and was fixed in 1.4.21. Every JetBrains Kotlin artifact on
-            any classpath here is well past that: the application resolves Kotlin 2.4.10, and the
+            any classpath here is well past that: the application resolves Kotlin 2.4, and the
             oldest straggler on a tool classpath is kotlin-reflect 1.6.10 (detekt's).
             Dependency-Check matches the JetBrains Kotlin CPE against artifacts whose own version
             strings it cannot map to a Kotlin release — the stdlib-jdk7/jdk8 shims, kotlin-reflect,
