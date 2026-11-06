@@ -42,13 +42,14 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
     private lateinit var registry: MeterRegistry
 
     /**
-     * Three sources with different shapes, and one event nobody imported.
+     * Four sources with different shapes, and one event nobody imported.
      *
      * `busy`        — two future events and one past one, so a query that forgot the horizon reads 3.
      * `emptied-out` — one past event only: **the source this metric exists for.** Its scraper can
      *                 still be returning 200 and reporting success while the listing is gone.
      * `never-ran`   — no events at all, which is a different fact from having lost them and must
      *                 still produce a series.
+     * `switched-off` — a disabled source, which no gauge may name.
      * manual        — an event with no source, created by hand through the admin API. It belongs to
      *                 no scraper and must not appear as one.
      */
@@ -56,9 +57,10 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
     fun seed(): Unit =
         runBlocking {
             val venueId = insertVenue()
-            val busy = insertSource("busy", venueId)
-            val emptied = insertSource("emptied-out", venueId)
+            val busy = insertSource("busy", venueId, lastEventCount = 2)
+            val emptied = insertSource("emptied-out", venueId, lastEventCount = 0)
             insertSource("never-ran", venueId)
+            insertSource("switched-off", venueId, lastEventCount = 0, enabled = false)
 
             insertEvent(busy, venueId, "busy-future-one", daysFromToday = 30)
             insertEvent(busy, venueId, "busy-future-two", daysFromToday = 3)
@@ -104,6 +106,19 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
         daysSince("never-ran") shouldBe 0.0
     }
 
+    // The column maps by name too, and a NULL reaches this gauge as no series (#4540).
+    @Test
+    fun `each source with a count publishes it, zero included, and one without publishes nothing`() {
+        lastEventCount("busy")!!.value() shouldBe 2.0
+        lastEventCount("emptied-out")!!.value() shouldBe 0.0
+        lastEventCount("never-ran") shouldBe null
+    }
+
+    @Test
+    fun `a disabled source publishes no count, whatever its row holds`() {
+        lastEventCount("switched-off") shouldBe null
+    }
+
     /**
      * The name and label an alert rule actually selects on, read off the wire rather than off the
      * Kotlin constant. `gen_alerts.py` queries `importer_source_events_future`; this is what proves
@@ -125,7 +140,9 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
         listOf(
             """importer_source_events_future{source="busy"}""",
             """importer_source_events_future{source="emptied-out"}""",
-            """importer_source_days_since_future_event{known_quiet="false",source="emptied-out"}"""
+            """importer_source_days_since_future_event{known_quiet="false",source="emptied-out"}""",
+            """importer_source_last_event_count{source="busy"} 2""",
+            """importer_source_last_event_count{source="emptied-out"} 0"""
         ).forEach {
             assert(body.contains(it)) { "expected '$it' in the exposition; got:\n${body.take(3000)}" }
         }
@@ -145,6 +162,8 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
             .gauge()!!
             .value()
 
+    private fun lastEventCount(source: String) = registry.find("importer.source.last_event_count").tag("source", source).gauge()
+
     // --- seeding ---------------------------------------------------------------------------------
     //
     // Raw SQL rather than the repositories, for the reason DataQualityReportIntegrationTest gives:
@@ -163,12 +182,14 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
 
     private suspend fun insertSource(
         slug: String,
-        venueId: Long
+        venueId: Long,
+        lastEventCount: Int? = null,
+        enabled: Boolean = true
     ): Long =
         databaseClient
             .sql(
-                "INSERT INTO events.event_source (venue_id, name, slug, url, source_type) " +
-                    "VALUES ($venueId, '$slug', '$slug', 'https://$slug.example/events', 'CASSIOPEIA') RETURNING id"
+                "INSERT INTO events.event_source (venue_id, name, slug, url, source_type, last_event_count, enabled) " +
+                    "VALUES ($venueId, '$slug', '$slug', 'https://$slug.example/events', 'CASSIOPEIA', ${lastEventCount ?: "NULL"}, $enabled) RETURNING id"
             ).map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
 

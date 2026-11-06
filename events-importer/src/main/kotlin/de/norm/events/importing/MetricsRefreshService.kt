@@ -131,6 +131,8 @@ class MetricsRefreshService(
                 // future events has no row, and it is the one the alert exists for.
                 val row = source.id?.let { rowsBySourceId[it] }
                 metrics.publishFutureEvents(source.slug, row?.futureEvents ?: 0L)
+                // No count yet publishes nothing: a zero is a false reading for `ej-source-scrapes-nothing`.
+                source.lastEventCount?.let { metrics.publishLastEventCount(source.slug, it.toLong()) }
                 val quietSince = row?.newestEventDate ?: source.createdAt?.atZone(clock.zone)?.toLocalDate() ?: today
                 metrics.publishDaysSinceFutureEvent(
                     source.slug,

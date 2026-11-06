@@ -120,7 +120,8 @@ class MetricsRefreshServiceTest {
         lastImportAt: Instant? = null,
         lastSuccessAt: Instant? = null,
         id: Long = 1L,
-        createdAt: Instant? = null
+        createdAt: Instant? = null,
+        lastEventCount: Int? = null
     ) = EventSourceEntity(
         id = id,
         venueId = 1L,
@@ -131,7 +132,8 @@ class MetricsRefreshServiceTest {
         status = status.name,
         lastImportAt = lastImportAt,
         lastSuccessAt = lastSuccessAt,
-        createdAt = createdAt
+        createdAt = createdAt,
+        lastEventCount = lastEventCount
     )
 
     private fun daysSince(source: String): Double =
@@ -466,4 +468,66 @@ class MetricsRefreshServiceTest {
             daysSince("never-ran") shouldBe 9.0
             daysSince("just-added") shouldBe 0.0
         }
+
+    @Test
+    fun `a source publishes the event count of its last run`() =
+        runTest {
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(source("busy", ImportStatus.SUCCESS, lastEventCount = 41)).asFlow()
+
+            service.refreshGauges()
+
+            lastEventCount("busy") shouldBe 41.0
+        }
+
+    // `ej-source-scrapes-nothing` reads this zero, so it is a value and not an absence (#4540).
+    @Test
+    fun `a source whose last run read nothing publishes zero`() =
+        runTest {
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(source("scrapes-nothing", ImportStatus.SUCCESS, lastEventCount = 0)).asFlow()
+
+            service.refreshGauges()
+
+            lastEventCount("scrapes-nothing") shouldBe 0.0
+        }
+
+    @Test
+    fun `a count that falls to zero reads zero on the next tick`() =
+        runTest {
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(source("broke-today", ImportStatus.SUCCESS, lastEventCount = 41)).asFlow()
+            service.refreshGauges()
+            lastEventCount("broke-today") shouldBe 41.0
+
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(source("broke-today", ImportStatus.SUCCESS, lastEventCount = 0)).asFlow()
+            service.refreshGauges()
+
+            lastEventCount("broke-today") shouldBe 0.0
+        }
+
+    // No run has counted anything yet, so a zero here would be a false reading for the rule.
+    @Test
+    fun `a source with no count yet publishes no series, and its other gauges still publish`() =
+        runTest {
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(source("never-run", ImportStatus.IDLE, lastEventCount = null)).asFlow()
+
+            service.refreshGauges()
+
+            registry.find("importer.source.last_event_count").tag("source", "never-run").gauge() shouldBe null
+            registry
+                .find("importer.source.events_future")
+                .tag("source", "never-run")
+                .gauge()
+                .shouldNotBeNull()
+        }
+
+    private fun lastEventCount(source: String): Double =
+        registry
+            .find("importer.source.last_event_count")
+            .tag("source", source)
+            .gauge()!!
+            .value()
 }
