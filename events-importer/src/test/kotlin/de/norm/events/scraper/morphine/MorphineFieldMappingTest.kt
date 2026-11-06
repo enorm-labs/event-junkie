@@ -282,4 +282,31 @@ class MorphineFieldMappingTest {
         parseDoorPrice("  ") shouldBe null
         parseDoorPrice(null) shouldBe null
     }
+
+    // --- parseAdvanceAndDoor ---
+
+    @Test
+    fun `reads two labelled figures in either order, whatever the case or the decimal mark`() {
+        parseAdvanceAndDoor("20 € Advance | 25 € Door") shouldBe AdvanceAndDoor(BigDecimal("20"), BigDecimal("25"))
+        parseAdvanceAndDoor("25 € Door | 20 € Advance") shouldBe AdvanceAndDoor(BigDecimal("20"), BigDecimal("25"))
+        parseAdvanceAndDoor(" 12,50€ advance|15.50€ DOOR ") shouldBe AdvanceAndDoor(BigDecimal("12.50"), BigDecimal("15.50"))
+        parseAdvanceAndDoor("12.50 € Advance | 15,50 € Door") shouldBe AdvanceAndDoor(BigDecimal("12.50"), BigDecimal("15.50"))
+        parseAdvanceAndDoor("20 € Advance | 20 € Door") shouldBe AdvanceAndDoor(BigDecimal("20"), BigDecimal("20"))
+    }
+
+    @Test
+    fun `leaves every other shape to the note`() {
+        parseAdvanceAndDoor("20 € Advance") shouldBe null
+        parseAdvanceAndDoor("20 € Door | 25 € Door") shouldBe null
+        parseAdvanceAndDoor("20 € Advance | 25 € Advance") shouldBe null
+        parseAdvanceAndDoor("15-20 € Advance | 25 € Door") shouldBe null
+        parseAdvanceAndDoor("20 € Advance | 25 € Door | 15 € Students") shouldBe null
+        parseAdvanceAndDoor("20 € Advance | 25 € Door | 30 € Door") shouldBe null
+        parseAdvanceAndDoor("20 € Advance | 25 € Door Tickets") shouldBe null
+        parseAdvanceAndDoor("20 Euro Advance | 25 Euro Door") shouldBe null
+        parseAdvanceAndDoor("10 - 15 Euro donation") shouldBe null
+        parseAdvanceAndDoor("10 Euro At The Door") shouldBe null
+        parseAdvanceAndDoor("  ") shouldBe null
+        parseAdvanceAndDoor(null) shouldBe null
+    }
 }

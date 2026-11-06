@@ -641,7 +641,7 @@ says so.
 | `MORPHINE`             | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `MORPHINE`             | `SOLD_OUT`         | the venue flags nothing sold out                                                                                                                 | —     |
 | `MORPHINE`             | `CANCELLATION`     | a dropped night is removed from the listing rather than flagged                                                                                  | —     |
-| `MORPHINE`             | `TICKET_URL`       | the advance-sale button posts to PayPal rather than linking anywhere                                                                             | —     |
+| `MORPHINE`             | `TICKET_URL`       | most nights publish no ticket link, and the advance-sale button posts to PayPal rather than linking anywhere                                     | —     |
 | `MORPHINE`             | `PRICE`            | nearly every night is priced as a sliding scale or donation range, which the model has no field for, so the wording is kept verbatim as the note | —     |
 | `MS_HOPPETOSSE`        | `START_TIME`       | the listing prints one only where an act line carries a slot time; the homepage's NEXT box prints the rest, for the ten nights it shows          | —     |
 | `MS_HOPPETOSSE`        | `EVENT_TYPE`       | the venue publishes no category of its own; every listing is a club night                                                                        | —     |

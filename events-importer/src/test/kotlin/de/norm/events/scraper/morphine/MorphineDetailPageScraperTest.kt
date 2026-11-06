@@ -143,6 +143,80 @@ class MorphineDetailPageScraperTest {
     }
 
     @Test
+    fun `stores the labelled advance and door prices and the ticket link, and no note (#4515)`() {
+        val url = "http://www.morphinerecords.com/events/ahmed-maher-maktoub"
+        val event = parse("morphine-detail-album-release.html", url).shouldNotBeNull()
+
+        event.pricePresale shouldBe BigDecimal("20")
+        event.priceBoxOffice shouldBe BigDecimal("25")
+        event.priceNote shouldBe null
+        event.ticketUrl shouldBe "https://www.tickettailor.com/events/ahmedmaher/2428316"
+
+        val stored = event.toEventEntity(venueId = 1, venueSlug = "morphine-raum", eventSourceId = 1)
+        stored.pricePresale shouldBe BigDecimal("20.00")
+        stored.priceBoxOffice shouldBe BigDecimal("25.00")
+        stored.free shouldBe false
+    }
+
+    private fun pricingBox(paragraph: String): ScrapedEvent {
+        val url = "http://www.morphinerecords.com/events/pricing"
+        val html =
+            """<section class="content overlay"><div class="title">Pricing</div>
+            <div class="block day">Friday, 07.08.26, door 20:00</div>
+            <div class="block priceevent">$paragraph</div></section>"""
+        return scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+    }
+
+    @Test
+    fun `keeps the note without the link's label beside a range or a single figure, with the link`() {
+        val ticket = """<a href="https://www.tickettailor.com/events/x/1">Tickets</a>"""
+
+        val range = pricingBox("<p>10 - 15 Euro donation<br />$ticket</p>")
+        range.priceNote shouldBe "10 - 15 Euro donation"
+        range.priceBoxOffice shouldBe null
+        range.ticketUrl shouldBe "https://www.tickettailor.com/events/x/1"
+
+        val single = pricingBox("""<p>10 Euro At The Door <a href="https://www.tickettailor.com/events/x/2026">2026 Tickets</a></p>""")
+        single.priceNote shouldBe "10 Euro At The Door"
+        single.priceBoxOffice shouldBe BigDecimal("10")
+    }
+
+    @Test
+    fun `takes no ticket link from a house rule, a mail link or a relative path`() {
+        val rule = pricingBox("""<p>Concert starts at 20:00 sharp. <a href="https://example.de/map">Map</a></p>""")
+        rule.ticketUrl shouldBe null
+        rule.priceNote shouldBe null
+
+        pricingBox("""<p>10 Euro At The Door <a href="mailto:box@example.de">Reserve</a></p>""").ticketUrl shouldBe null
+        pricingBox("""<p>10 Euro At The Door <a href="/shop">Shop</a></p>""").ticketUrl shouldBe null
+        pricingBox("""<p>10 Euro At The Door <a name="prices">Prices</a></p>""").ticketUrl shouldBe null
+    }
+
+    @Test
+    fun `keeps a ticket link whose own label is the only price, and no note`() {
+        val event = pricingBox("""<p><a href="https://www.tickettailor.com/events/x/3">15 € Tickets</a></p>""")
+
+        event.ticketUrl shouldBe "https://www.tickettailor.com/events/x/3"
+        event.priceNote shouldBe null
+        event.priceBoxOffice shouldBe null
+    }
+
+    @Test
+    fun `lets the PayPal form set the presale price over a labelled advance figure`() {
+        val url = "http://www.morphinerecords.com/events/pricing"
+        val html =
+            """<section class="content overlay"><div class="title">Pricing</div>
+            <div class="block day">Friday, 07.08.26, door 20:00</div>
+            <div class="block paypal"><form><input name="currency_code" value="EUR"><input name="amount" value="18"></form></div>
+            <div class="block priceevent"><p>20 € Advance | 25 € Door</p></div></section>"""
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.pricePresale shouldBe BigDecimal("18")
+        event.priceBoxOffice shouldBe BigDecimal("25")
+        event.priceNote shouldBe null
+    }
+
+    @Test
     fun `bills a band named with an ampersand alone, without its backing line-up (#3565)`() {
         val url = "http://www.morphinerecords.com/events/mitch-mitch-con-il-loro-gruppo-etereofonico"
         val event = parse("morphine-detail-con-il-loro.html", url).shouldNotBeNull()

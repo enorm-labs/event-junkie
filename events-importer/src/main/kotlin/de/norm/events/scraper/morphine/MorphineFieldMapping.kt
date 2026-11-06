@@ -180,3 +180,27 @@ internal fun parseDoorPrice(note: String?): BigDecimal? {
             .toList()
     return amounts.singleOrNull()
 }
+
+/** The two figures of a [parseAdvanceAndDoor] line. */
+internal data class AdvanceAndDoor(
+    val advance: BigDecimal,
+    val door: BigDecimal
+)
+
+/** One figure and its label: `20 € Advance`. */
+private val LABELLED_FIGURE = Regex("""(\d+(?:[.,]\d{1,2})?)\s*€\s*(advance|door)""", RegexOption.IGNORE_CASE)
+
+/**
+ * Both prices from a [note] that is exactly `20 € Advance | 25 € Door`, in either order (#4515), or
+ * `null`. The whole line has to match, so the caller can drop the note without losing a word, and a
+ * range bound or a third figure stays the note [parseDoorPrice] already refuses to read.
+ */
+internal fun parseAdvanceAndDoor(note: String?): AdvanceAndDoor? {
+    val segments = note.orEmpty().split('|')
+    if (segments.size != 2) return null
+    val figures =
+        segments
+            .map { LABELLED_FIGURE.matchEntire(it.trim())?.destructured ?: return null }
+            .associate { (amount, label) -> label.lowercase() to amount.replace(',', '.').toBigDecimal() }
+    return AdvanceAndDoor(figures["advance"] ?: return null, figures["door"] ?: return null)
+}

@@ -44,7 +44,10 @@ val MORPHINE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue flags nothing sold out"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "a dropped night is removed from the listing rather than flagged"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the advance-sale button posts to PayPal rather than linking anywhere"),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "most nights publish no ticket link, and the advance-sale button posts to PayPal rather than linking anywhere"
+        ),
         AcceptedLimitation(
             LimitedAspect.PRICE,
             "nearly every night is priced as a sliding scale or donation range, which the model has no field for, so the wording is kept verbatim as the note"
