@@ -116,7 +116,7 @@ class SpeichesOverviewPageScraperTest {
         shallaras.subtitle shouldBe "50's-60's Rock'n'roll and Rhythm'n'Blues"
         shallaras.free shouldBe true
 
-        on("2026-10-12", "19:00").subtitle shouldBe "mit Martin Rose + Very Special Guest, Musicians Welcome! Folk,Blues,Soul,Jazz,Country,SingerSongwriter"
+        on("2026-10-12", "19:00").subtitle shouldBe "mit Martin Rose + Very Special Guest, Musicians Welcome!"
         shallaras.genre shouldBe "Rock'n'Roll"
     }
 
@@ -145,5 +145,26 @@ class SpeichesOverviewPageScraperTest {
     @Test
     fun `reads a year-end row into the next year by its weekday`() {
         on("2027-01-26", "19:00").title shouldBe "Speiches Open Stage"
+    }
+
+    @Test
+    fun `cuts a style list glued with commas out of the subtitle and keeps it for the genre`() {
+        // Event 13037.
+        val stage =
+            concertRow("Speiches Open Stage - mit Martin Rose + Very Special Guest, Musicians Welcome! Folk,Blues,Soul,Jazz,Country,SingerSongwriter...")
+
+        stage.subtitle shouldBe "mit Martin Rose + Very Special Guest, Musicians Welcome!"
+        stage.genre?.contains("Blues") shouldBe true
+        concertRow("Proud Fools - Americana, Country, Folk, Blues, Rock").subtitle shouldBe "Americana, Country, Folk, Blues, Rock"
+    }
+
+    @Test
+    fun `bills the name of a tribute band, not the act it plays`() {
+        // Event 13039.
+        val row = concertRow("Van Morrison Tribute Band  Madame George - Eintritt immer frei")
+
+        row.title shouldBe "Van Morrison Tribute Band Madame George"
+        row.artists.map { it.name } shouldContainExactly listOf("Madame George")
+        actsOfRow("Dirty Work - The Real Rolling Stones Tribute Band unplugged Show") shouldContainExactly listOf("Dirty Work")
     }
 }

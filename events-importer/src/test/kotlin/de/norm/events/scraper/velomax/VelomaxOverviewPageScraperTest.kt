@@ -164,4 +164,14 @@ class VelomaxOverviewPageScraperTest {
         events.single().eventDate shouldBe LocalDate.of(2026, 10, 3)
         warnings shouldHaveSize 1
     }
+
+    @Test
+    fun `files a military tattoo as a show with no act`() {
+        // Event 2388: the listing calls it a concert, and its title is the production.
+        val tattoo = scrape(VelomaxHall.MAX_SCHMELING_HALLE).filter { it.title == "Berlin Tattoo" }
+
+        tattoo.map { it.eventType }.toSet() shouldBe setOf("SHOW")
+        tattoo.flatMap { it.artists }.shouldBeEmpty()
+        isMilitaryTattoo("Tattoo Convention") shouldBe false
+    }
 }

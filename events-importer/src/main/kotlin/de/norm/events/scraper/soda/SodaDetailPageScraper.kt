@@ -4,10 +4,13 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HH_MM_LENGTH
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -19,6 +22,7 @@ import de.norm.events.scraper.schemaOffers
 import de.norm.events.scraper.schemaSoldOut
 import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.schemaTime
+import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
@@ -44,7 +48,8 @@ import java.math.BigDecimal
  * shows the "Abendkasse verfügbar" badge; the JSON-LD offer is the shop's fee-inclusive figure
  * and never a price column (see [parsePrices]);
  * - the JSON-LD `performer` is always `"Unbekannt"` and the `organizer` the venue itself, so
- * neither is read — every night is [PARTY][EventType.PARTY] with no artists or promoters.
+ * neither is read — a night is a [PARTY][EventType.PARTY] with no artists or promoters, unless its blurb
+ * bills a live show ([liveActs]).
  *
  * @see SodaOverviewPageScraper for overview parsing (discovery, year-less date fallback).
  * @see SodaWebsiteImporter for the HTTP fetch orchestrator.
@@ -73,12 +78,13 @@ class SodaDetailPageScraper {
 
         val offers = jsonLd?.schemaOffers().orEmpty()
         val prices = parsePrices(content, offers)
+        val acts = liveActs(content, title)
 
         return ScrapedEvent(
             title = title,
             description = parseDescription(content) ?: jsonLd?.stringOrNull("description"),
-            // Soda is a discotheque: every listing is a resident club night, never a billed act.
-            eventType = EventType.PARTY.name,
+            eventType = if (acts.isEmpty()) EventType.PARTY.name else EventType.CONCERT.name,
+            artists = acts,
             eventDate = jsonLd?.schemaDate("startDate") ?: UNRESOLVED_EVENT_DATE,
             // No doors time — the "Einlass" box states an age limit.
             startTime = jsonLd?.schemaTime("startDate") ?: parseTime(infoBoxValue(content, "Beginn")?.take(HH_MM_LENGTH)),
@@ -95,6 +101,21 @@ class SodaDetailPageScraper {
             free = prices.admission?.signum() == 0,
             status = jsonLd?.schemaStatus() ?: EventStatus.SCHEDULED.name
         )
+    }
+
+    /**
+     * The acts of a live show, which the blurb bills on the line above a capitalised `LIVE`: `Loki X Dr. H`, then `LIVE im
+     * KESSELHAUS` (event 13051). Without a line above, the title names them. Empty for a club night.
+     */
+    private fun liveActs(
+        content: Element,
+        title: String
+    ): List<ScrapedArtist> {
+        val lines = content.textLinesAt("p.event-details")
+        val live = lines.indexOfFirst { LIVE_LINE.containsMatchIn(it) }
+        if (live < 0) return emptyList()
+        val names = lines.getOrNull(live - 1)?.let(::splitCrossBilled) ?: headlinersFromTitle(title).map { it.name }
+        return names.filterNot(::isNonArtistName).map { ScrapedArtist(name = it) }
     }
 
     /**
@@ -167,6 +188,9 @@ class SodaDetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     private companion object {
+        /** A blurb line that opens with the capitalised word; a club night's `Live DJs` or `live` in prose does not count. */
+        val LIVE_LINE = Regex("""^LIVE\b""")
+
         /** Renders `15.43` as the German `15,43 €` the venue's pages print. */
         private fun formatEuro(amount: BigDecimal): String = "${amount.setScale(2).toPlainString().replace('.', ',')} €"
     }

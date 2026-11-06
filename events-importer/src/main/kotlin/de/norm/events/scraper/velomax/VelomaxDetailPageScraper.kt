@@ -1,5 +1,6 @@
 package de.norm.events.scraper.velomax
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -68,7 +69,8 @@ class VelomaxDetailPageScraper {
         val subtitleLines = event.textLinesAt("[itemprop=alternateName]")
         val subtitle = subtitleLines.firstOrNull()
         val startedAt = event.attrAtProp("startDate", "datetime")
-        val eventType = inferConcertVenueType(title)
+        val tattoo = isMilitaryTattoo(title)
+        val eventType = if (tattoo) EventType.SHOW.name else inferConcertVenueType(title)
 
         return ScrapedEvent(
             title = title,
@@ -90,7 +92,7 @@ class VelomaxDetailPageScraper {
             sourceId = "${hall.eventSource.sourceIdPrefix}$slug",
             ticketUrl = parseTicketUrl(document),
             status = parseSchemaEventStatus(event.attrAtProp("eventStatus", "content")),
-            artists = buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType),
+            artists = if (tattoo) emptyList() else buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType),
             promoters = listOfNotNull(event.textAt("[itemprop=organizer] [itemprop=name]"))
         )
     }

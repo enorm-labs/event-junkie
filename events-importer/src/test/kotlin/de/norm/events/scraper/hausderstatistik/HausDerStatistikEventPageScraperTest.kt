@@ -8,6 +8,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -69,5 +70,22 @@ class HausDerStatistikEventPageScraperTest {
         val listed = listed("weg", "2026-10-16")
 
         scraper.scrape(listed, Jsoup.parse("<main><p>Seite nicht gefunden</p></main>", listed.sourceUrl)).shouldBeNull()
+    }
+
+    @Test
+    fun `reads a price cell that is only a figure as the presale price`() {
+        // Event 12931.
+        val listed = listed("musotopia-fundraiser-for-the-burner-embassy-2", "2026-11-14")
+        val page =
+            Jsoup.parse(
+                """<article class="event"><div class="entry-content"><div class="column is-8"><p>Live concerts</p></div>
+                <div class="column is-4"><p><strong>Ticket/Kostenbeteiligung</strong><br>15</p></div></div></article>""",
+                listed.sourceUrl
+            )
+
+        val event = scraper.scrape(listed, page).shouldNotBeNull()
+
+        event.pricePresale?.compareTo(BigDecimal(15)) shouldBe 0
+        event.priceNote.shouldBeNull()
     }
 }

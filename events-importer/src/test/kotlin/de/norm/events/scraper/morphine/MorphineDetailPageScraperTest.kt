@@ -310,4 +310,26 @@ class MorphineDetailPageScraperTest {
         event.shouldNotBeNull().eventDate shouldBe LocalDate.of(2026, 10, 3)
         warnings shouldHaveSize 1
     }
+
+    private fun seriesNight(firstBlock: String): ScrapedEvent {
+        val url = "http://www.morphinerecords.com/events/disquiet-concert-4"
+        val html =
+            """<section class="content overlay"><div class="title">DISQUIET Concert #4</div>
+            <div class="block day">Saturday, 28.11.26, door 20:00<ul class="lineup"><li><span>20:30</span><span>DISQUIET Concert #4</span></li></ul></div>
+            <div class="block paragraph">$firstBlock</div>
+            <div class="block paragraph"><p>Khabat Abas is an experimental cellist.</p></div></section>"""
+        return scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+    }
+
+    @Test
+    fun `bills a numbered series night's acts from its first text block, each cut at the dash`() {
+        // #4508, event 12871.
+        seriesNight("<p>Khabat Abas</p><p>Palestinian Sound Archive – Mo’min Swaitat</p>").artists.map { it.name } shouldBe
+            listOf("Khabat Abas", "Palestinian Sound Archive")
+    }
+
+    @Test
+    fun `bills nobody on a numbered series night whose first text block is prose`() {
+        seriesNight("<p>A night of improvised music from many places, with guests from near and far.</p>").artists.shouldBeEmpty()
+    }
 }

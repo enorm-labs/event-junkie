@@ -421,4 +421,13 @@ class ATraneProgrammePageScraperTest {
             .name
             .lowercase() shouldBe "jc dook"
     }
+
+    @Test
+    fun `bills the act of a title that names its tour`() {
+        // Events 13048 and 13049.
+        val night = card(listOf("A-TRANE PRÄSENTIERT DAY1:", "DOMINIC MILLER ON TOUR 2027", "«Diana»", "FEAT: Thomas Stieger-Nicolas Viccaro-Santiago Arias"))
+
+        night.title shouldBe "DOMINIC MILLER ON TOUR 2027"
+        night.artists.map { it.name.lowercase() } shouldBe listOf("dominic miller")
+    }
 }

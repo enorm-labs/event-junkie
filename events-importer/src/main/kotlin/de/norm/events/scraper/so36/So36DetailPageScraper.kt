@@ -98,6 +98,7 @@ class So36DetailPageScraper {
             if (eventType == EventType.FESTIVAL.name) {
                 dayLineup(subtitle)
                     .ifEmpty { descriptionRoster(document, festivalDay(document, title, subtitle, eventDate)) }
+                    .ifEmpty { labelledBandList(document) }
                     .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
             } else {
                 parseArtists(document, showNamedAct(title, description) ?: title, subtitle, eventType)

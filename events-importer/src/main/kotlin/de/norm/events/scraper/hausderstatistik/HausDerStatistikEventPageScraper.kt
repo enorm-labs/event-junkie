@@ -6,13 +6,15 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.parsePriceValue
 import org.jsoup.nodes.Document
 
 /**
  * Parser for a Haus der Statistik event page (`/event/<slug>/`): the excerpt and the paragraphs
  * below it as the description, a `Doors: 19:00 | Show: 20:00` line as the two times, the
- * `Ticket/Kostenbeteiligung` cell as the price note and the full-size picture. The listing's time
- * span opens at the doors, so a stated show time replaces its start.
+ * `Ticket/Kostenbeteiligung` cell as the price and the full-size picture. A cell that is only a figure (`15`) is the
+ * presale price, and any other cell (`freier Eintritt`) is the price note. The listing's time span opens at the doors,
+ * so a stated show time replaces its start.
  */
 class HausDerStatistikEventPageScraper {
     fun scrape(
@@ -26,11 +28,14 @@ class HausDerStatistikEventPageScraper {
                 .mapNotNull { it.text().blankToNull() }
                 .distinct()
         val text = paragraphs.joinToString("\n\n").blankToNull()
+        val priceCell = document.sidebarCell("Ticket/Kostenbeteiligung")
+        val price = priceCell?.let { BARE_FIGURE.matchEntire(it) }?.let { parsePriceValue("${it.groupValues[1]} €") }
         return event.copy(
             description = text ?: event.description,
             doorsTime = labelledClock(text, DOORS_LABELS),
             startTime = labelledClock(text, START_LABELS) ?: event.startTime,
-            priceNote = document.sidebarCell("Ticket/Kostenbeteiligung"),
+            pricePresale = price ?: event.pricePresale,
+            priceNote = priceCell.takeIf { price == null },
             imageUrl = content.imgSrcAt("figure img") ?: event.imageUrl
         )
     }
@@ -40,4 +45,9 @@ class HausDerStatistikEventPageScraper {
         select("article.event .entry-content .column.is-4 > p")
             .firstOrNull { it.selectFirst("strong")?.text() == label }
             ?.let { paragraph -> paragraph.text().removePrefix(label).blankToNull() }
+
+    private companion object {
+        /** The whole cell is one amount, with or without its currency. */
+        val BARE_FIGURE = Regex("""(\d+(?:[.,]\d{1,2})?)\s*(?:€|euro|eur)?""", RegexOption.IGNORE_CASE)
+    }
 }

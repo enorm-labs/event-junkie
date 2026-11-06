@@ -1,5 +1,6 @@
 package de.norm.events.scraper.soda
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -231,5 +232,29 @@ class SodaDetailPageScraperTest {
     @Test
     fun `returns null for a page without an event title`() {
         parseHtml("<html><body></body></html>") shouldBe null
+    }
+
+    @Test
+    fun `reads a live show from the line above LIVE in the blurb`() {
+        // Event 13051.
+        val show =
+            parseHtml(
+                """<html><body><h1 class="title">LOKI &amp; DR H.</h1>
+                <p class="event-details">Loki X Dr. H<br>LIVE im KESSELHAUS<br><br>ZWISCHEN THERAPIE UND AUSNAHMEZUSTAND</p></body></html>"""
+            ).shouldNotBeNull()
+
+        show.eventType shouldBe EventType.CONCERT.name
+        show.artists.map { it.name } shouldBe listOf("Loki", "Dr. H")
+    }
+
+    @Test
+    fun `a blurb that only mentions live music stays a party without artists`() {
+        val night =
+            parseHtml(
+                """<html><body><h1 class="title">Famous Friday</h1><p class="event-details">Live DJs all night<br>Open end</p></body></html>"""
+            ).shouldNotBeNull()
+
+        night.eventType shouldBe EventType.PARTY.name
+        night.artists.shouldBeEmpty()
     }
 }

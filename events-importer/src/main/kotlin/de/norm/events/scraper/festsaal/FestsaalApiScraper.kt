@@ -141,13 +141,13 @@ class FestsaalApiScraper {
         val genreNode = node.genre?.title.blankToNull()
         val kindFromGenre = mapEventType(genreNode)?.takeIf { it != EventType.CONCERT.name }
         val kindWordInGenre = genreNode?.let(::eventKindWordIn)
+        val description = parseDescription(node.layouts)
         val eventType =
             kindFromGenre
-                ?: inferEventType(title, subtitle).takeUnless { it == EventType.CONCERT.name }
+                ?: inferEventType(title, subtitle, description).takeUnless { it == EventType.CONCERT.name }
                 ?: kindWordInGenre
                 ?: EventType.CONCERT.name
 
-        val description = parseDescription(node.layouts)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
@@ -168,7 +168,7 @@ class FestsaalApiScraper {
             soldOut = statusCode == STATUS_SOLD_OUT,
             // The row already sits on the new date, so the show happens on it.
             status = if (postponed && parseDate(node.changedDate.blankToNull()) != null) "SCHEDULED" else mapStatus(statusCode, sourceId),
-            artists = buildArtists(title, node.support.blankToNull(), eventType, description),
+            artists = buildArtists(title, subtitle, node.support.blankToNull(), eventType, description),
             description = description,
             statusNote = relocationNote(node.changedText, node.newLocation),
             promoters = promoters(node)
@@ -243,31 +243,40 @@ class FestsaalApiScraper {
      * whose title names a festival is a `FESTIVAL`. Flipping away from `CONCERT` also stops a
      * non-artist title being minted as a headliner ([buildArtists]). The event-name markers (a
      * show, a market, an open air) count only in the **title**: in the subtitle they are a format
-     * note on a real concert (an act billed "¡Wepa! Bunny" playing an open air).
+     * note on a real concert (an act billed "¡Wepa! Bunny" playing an open air). A text that calls
+     * the night a quiz or game show makes it a `QUIZ` (#4509).
      */
     private fun inferEventType(
         title: String,
-        subtitle: String?
-    ): String =
-        inferConcertVenueType(title, subtitle, FESTSAAL_KEYWORDS).let {
-            if (it == EventType.CONCERT.name && isFestivalTitle(title)) EventType.FESTIVAL.name else it
+        subtitle: String?,
+        description: String?
+    ): String {
+        val type = inferConcertVenueType(title, subtitle, FESTSAAL_KEYWORDS)
+        return when {
+            type != EventType.CONCERT.name -> type
+            isFestivalTitle(title) -> EventType.FESTIVAL.name
+            description != null && QUIZ_SHOW_TEXT.containsMatchIn(description) -> EventType.QUIZ.name
+            else -> type
         }
+    }
 
     /**
      * The lineup: for concerts the title carries the headliner(s) (co-bills via
      * [headlinersFromTitle]) followed by the acts on the structured `support` line — the API's
-     * dedicated field, the authoritative source, split via [splitSupportActs]; other types
-     * (parties, festivals, quizzes) name an event, not an artist, so none. Non-artist noise
+     * dedicated field, the authoritative source, split via [splitSupportActs]; a party bills the DJs
+     * its subtitle names ([djsOf]); other types (festivals, quizzes) name an event, not an artist, so none. Non-artist noise
      * (placeholders, role labels, festival labels) is filtered by the shared [isNonArtistName].
      * A show of another act's songs names that act in a [SONGS_OF_LINE], and its title is the show, not
      * a band: `ANNA` above "Die Lieder von Rosenstolz & Anna R. live" bills no headliner.
      */
     private fun buildArtists(
         title: String,
+        subtitle: String?,
         support: String?,
         eventType: String,
         description: String?
     ): List<ScrapedArtist> {
+        if (eventType == EventType.PARTY.name) return djsOf(subtitle)
         if (eventType != EventType.CONCERT.name) return emptyList()
         val supportActs =
             support
@@ -319,8 +328,7 @@ class FestsaalApiScraper {
          * Festsaal's own cues beside the shared ones: a DJ set, the Brazilian `festa` ("Festa
          * Junina") and a subtitle's `legt auf` / `legen auf` ("Arnim legt auf + illvibe", #3006)
          * are parties, an open-air series ("Berlin Indie Open Air") names the event, not an act,
-         * and is `OTHER`. The DJs a `legt auf` line names are not billed: no Festsaal party bills
-         * its DJs.
+         * and is `OTHER`.
          */
         val FESTSAAL_KEYWORDS =
             DJ_SET_PARTY_KEYWORDS +
@@ -414,6 +422,20 @@ private data class FestsaalGenre(
 private data class FestsaalImage(
     val downloadUrl: String? = null
 )
+
+/** The DJs a party's subtitle names: `Arnim legt auf + RAEDY` is event 7389's two. Any other party bills nobody. */
+private fun djsOf(subtitle: String?): List<ScrapedArtist> {
+    val (hosts, guests) = subtitle?.let { DJ_LINE.matchEntire(it.trim()) }?.destructured ?: return emptyList()
+    return (splitSupportActs(hosts) + guests.takeIf { it.isNotBlank() }?.let(::splitSupportActs).orEmpty())
+        .filterNot(::isNonArtistName)
+        .mapIndexed { index, name -> ScrapedArtist(name = name, role = if (index == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT) }
+}
+
+/** The subtitle of a night whose DJs it names: `Arnim legt auf + RAEDY`, `A & B legen auf`. */
+private val DJ_LINE = Regex("""(.+?)\s+(?:legt|legen)\s+auf\b(?:\s*\+\s*(.*))?""", RegexOption.IGNORE_CASE)
+
+/** The text of a quiz or game show that no title or genre names as one: `Eine Quiz- und Gameshow` (#4509). */
+private val QUIZ_SHOW_TEXT = Regex("""\b(?:gameshow|game-show|quizshow|quiz-\s+und)\b""", RegexOption.IGNORE_CASE)
 
 /** A description line that opens a show of another act's songs: "Die Lieder von Rosenstolz & Anna R. live". */
 private val SONGS_OF_LINE = Regex("""^\s*die\s+lieder\s+von\b""", RegexOption.IGNORE_CASE)
