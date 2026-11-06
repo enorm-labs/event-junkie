@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.endOn
+import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -18,6 +19,7 @@ import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.URI
@@ -38,6 +40,8 @@ import java.util.Locale
  * The page prints no year, so the year is the one nearest today on the printed weekday ([inferYearForWeekday]).
  * A workshop and the record fair are out of scope (EVENT_SCOPE.md §3.2, §3.3). A night whose format line names
  * no format is a concert: the venue asks guests to treat every listening event as one.
+ *
+ * A shared night puts each act on its own line of the `<b>`: `Rikuto Fujimoto<br>Jongho & Fe` is three acts.
  */
 class PasticheProgrammePageScraper(
     private val clock: Clock = Clock.system(BERLIN)
@@ -64,7 +68,7 @@ class PasticheProgrammePageScraper(
                 ?.text()
                 ?.collapseWhitespace()
                 ?.let { formatLine(it, title) }
-        if (isOutOfScope(title, format)) {
+        if (isOutOfScope(title, format, row.blurb())) {
             logger.debug { "Pastiche '$title' is a workshop or a record fair, skipping" }
             return null
         }
@@ -95,10 +99,12 @@ class PasticheProgrammePageScraper(
         val button = details?.selectFirst("a[href]:not([href^=#])")
         val pageUrl = button?.attr("href")?.blankToNull()?.let { resolveUrl(sourceUrl, it) }
         val type = eventTypeOf(title, format)
+        val lines = row.titleLines()
+        val blurb = row.blurb()
         return ScrapedEvent(
-            title = title,
+            title = lines.joinToString(", "),
             subtitle = format,
-            description = details?.clone()?.apply { select("a").remove() }?.paragraphText(),
+            description = blurb,
             eventType = type ?: EventType.CONCERT.name,
             typeIsFallback = type == null,
             eventDate = date,
@@ -109,7 +115,7 @@ class PasticheProgrammePageScraper(
             sourceId = EventSource.PASTICHE.sourceIdPrefix + (pageUrl?.let(::pageSlug) ?: "$date-${SlugGenerator.slugify(title)}"),
             ticketUrl = pageUrl?.takeIf { button.text().collapseWhitespace().equals(TICKETS, ignoreCase = true) },
             free = button?.text()?.collapseWhitespace().equals(FREE, ignoreCase = true),
-            artists = artistsOf(title, format)
+            artists = artistsOf(lines, format, blurb)
         )
     }
 
@@ -127,11 +133,15 @@ class PasticheProgrammePageScraper(
     }
 
     companion object {
-        /** Whether a row is a participation format or a market (EVENT_SCOPE.md §3.2, §3.3), on its title or format line. */
+        /**
+         * Whether a row is a participation format or a market (EVENT_SCOPE.md §3.2, §3.3), on its title or format line.
+         * Its blurb counts for a workshop only: a concert's blurb can name the record fair it shares a weekend with.
+         */
         fun isOutOfScope(
             title: String,
-            format: String?
-        ): Boolean = listOfNotNull(title, format).any { OUT_OF_SCOPE.containsMatchIn(it) }
+            format: String?,
+            blurb: String? = null
+        ): Boolean = listOfNotNull(title, format).any { OUT_OF_SCOPE.containsMatchIn(it) } || blurb?.let(WORKSHOP::containsMatchIn) == true
 
         /** The event type the format line names, else the title, or null for a night that names none. */
         fun eventTypeOf(
@@ -155,8 +165,11 @@ class PasticheProgrammePageScraper(
         private val TIME_RANGE = Regex("""(\d{1,2}[:.]\d{2})\s*(?:[-–]\s*(\d{1,2}[:.]\d{2}))?""")
         private val MONTHS = Month.entries.associateBy { it.getDisplayName(TextStyle.SHORT, Locale.ENGLISH).take(MONTH_PREFIX).lowercase() }
         private val OUT_OF_SCOPE = Regex("""\bworkshops?\b|\brecord fairs?\b|\bplattenb(?:ö|oe)rse\b""", RegexOption.IGNORE_CASE)
+        private val WORKSHOP = Regex("""\bworkshops?\b""", RegexOption.IGNORE_CASE)
         private val LIVE = Regex("""\blive\b""", RegexOption.IGNORE_CASE)
         private val DJ = Regex("""\bdj\b""", RegexOption.IGNORE_CASE)
+        private val LISTENING = Regex("""\blistening\b""", RegexOption.IGNORE_CASE)
+        private val TITLE_LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
         private val FORMATS =
             listOf(
                 Regex("""\bquiz""", RegexOption.IGNORE_CASE) to EventType.QUIZ.name,
@@ -165,20 +178,36 @@ class PasticheProgrammePageScraper(
                 Regex("""\blive\b|\bdj\b|\blistening\b|\bconcert\b|\balbum\b""", RegexOption.IGNORE_CASE) to EventType.CONCERT.name
             )
 
-        /** The act a `Live` or `DJ` format line bills under the title; any other night names nobody. */
+        /** The acts a `Live` or `DJ` format line bills under the title. A second title line means a shared night, so `&` splits only there. */
         private fun artistsOf(
-            title: String,
-            format: String?
+            titleLines: List<String>,
+            format: String?,
+            blurb: String?
         ): List<ScrapedArtist> {
-            if (format == null || isNonArtistName(title)) return emptyList()
-            val role =
-                when {
-                    DJ.containsMatchIn(format) -> ArtistRole.DJ
-                    LIVE.containsMatchIn(format) -> ArtistRole.HEADLINER
-                    else -> return emptyList()
+            val role = format?.let { billedRole(it, blurb) } ?: return emptyList()
+            val acts =
+                if (titleLines.size > 1) {
+                    titleLines.flatMap { line -> headlinersFromTitle(line).map { it.name } }
+                } else {
+                    titleLines.flatMap(::splitBackToBack)
                 }
-            return splitBackToBack(title).map { ScrapedArtist(name = it, role = role) }
+            return acts.filterNot(::isNonArtistName).map { ScrapedArtist(name = it, role = role) }
         }
+
+        /**
+         * The role of the act under the title, or null for a night that names nobody. A listening session names an act only
+         * when its blurb calls the host a DJ: the title can also be an archive or a label, such as `Palestinian Sound Archive`.
+         */
+        private fun billedRole(
+            format: String,
+            blurb: String?
+        ): ArtistRole? =
+            when {
+                DJ.containsMatchIn(format) -> ArtistRole.DJ
+                LIVE.containsMatchIn(format) -> ArtistRole.HEADLINER
+                LISTENING.containsMatchIn(format) && blurb != null && DJ.containsMatchIn(blurb) -> ArtistRole.DJ
+                else -> null
+            }
 
         /** The row's text after its title, without the asterisk the venue puts after a format. */
         private fun formatLine(
@@ -191,25 +220,42 @@ class PasticheProgrammePageScraper(
                 .trim()
                 .blankToNull()
 
-        private fun readClock(text: String): LocalTime? = parseClock(text.replace('.', ':'))
-
-        private fun pageSlug(url: String): String = URI(url).path.trim('/')
-
         private fun Element.unit(slot: Int): Element? = selectFirst("> column-unit[slot=$slot]")
 
         /** The first column's text: the date, then the time range. */
         private fun Element.schedule(): String = unit(DATE_SLOT)?.text()?.collapseWhitespace().orEmpty()
 
+        /** The third column's text without its button. */
+        private fun Element.blurb(): String? =
+            unit(DETAILS_SLOT)
+                ?.clone()
+                ?.apply { select("a").remove() }
+                ?.paragraphText()
+
         private fun Element.titleText(): String? =
             unit(TITLE_SLOT)
                 ?.select("b")
-                ?.firstNotNullOfOrNull {
-                    it
-                        .text()
-                        .collapseWhitespace()
-                        .trimEnd('*')
-                        .trim()
-                        .blankToNull()
-                }
+                ?.firstNotNullOfOrNull { cleanTitle(it.text()) }
+
+        /** The title's lines, one per `<br>` in its `<b>`. */
+        private fun Element.titleLines(): List<String> =
+            unit(TITLE_SLOT)
+                ?.select("b")
+                ?.firstOrNull { cleanTitle(it.text()) != null }
+                ?.html()
+                ?.split(TITLE_LINE_BREAK)
+                ?.mapNotNull { cleanTitle(Jsoup.parse(it).text()) }
+                .orEmpty()
     }
 }
+
+private fun readClock(text: String): LocalTime? = parseClock(text.replace('.', ':'))
+
+private fun pageSlug(url: String): String = URI(url).path.trim('/')
+
+private fun cleanTitle(text: String): String? =
+    text
+        .collapseWhitespace()
+        .trimEnd('*')
+        .trim()
+        .blankToNull()

@@ -65,7 +65,14 @@ class HausDerStatistikMonthPageScraper {
             imageUrl = row.imgSrcAt(".teaser__figure img"),
             sourceUrl = url,
             sourceId = "${EventSource.HAUS_DER_STATISTIK.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
-            artists = if (eventType == EventType.CONCERT.name) buildArtistsForEventType(title, null, eventType) else emptyList()
+            artists =
+                if (eventType == EventType.CONCERT.name &&
+                    !JAM_NIGHT.containsMatchIn(title)
+                ) {
+                    buildArtistsForEventType(title, null, eventType)
+                } else {
+                    emptyList()
+                }
         )
     }
 
@@ -84,6 +91,9 @@ class HausDerStatistikMonthPageScraper {
          * files its regular discussion rounds there; a talk also carries `Vortrag`.
          */
         private val PARTICIPATION_TAGS = setOf("workshop", "werkstatt", "treffen", "kochen", "diskussion")
+
+        /** An open stage names no act (EVENT_SCOPE.md §2): `PERFORMANCEJAM with LIVE MUSIC`. `Pearl Jam` is a band, so `Jam` alone is no signal. */
+        private val JAM_NIGHT = Regex("""\bperformance\s?jam\b|\bopen\s+jam\b|\bjam\s+session\b""", RegexOption.IGNORE_CASE)
 
         private val EXHIBITION_DAY_TITLE = Regex("""^Exhibition\s+(?:Opening\s*:|is open\s*!?)\s*(.+)$""", RegexOption.IGNORE_CASE)
 

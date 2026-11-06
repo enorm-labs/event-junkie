@@ -72,6 +72,7 @@ class HausDerStatistikWebsiteImporter(
 val HAUS_DER_STATISTIK_LIMITATIONS =
     VenueLimitations(
         EventSource.HAUS_DER_STATISTIK,
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the monthly performance jam is an open stage, which names no act"),
         AcceptedLimitation(LimitedAspect.SUBTITLE, "each row has a title and a teaser, no second title line"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the event pages link no ticket shop"),
         AcceptedLimitation(LimitedAspect.GENRE, "the site tags a format such as Musik, never a style"),
