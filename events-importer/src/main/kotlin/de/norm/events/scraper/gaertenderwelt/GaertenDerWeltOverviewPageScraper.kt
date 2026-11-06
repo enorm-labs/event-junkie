@@ -15,8 +15,8 @@ import org.jsoup.nodes.Element
 
 /**
  * Pure HTML parser for one page of the Gärten der Welt `/events/veranstaltungen/` listing. TYPO3
- * with the `events2` extension server-renders a `.tx-events2 .list` of `.eventWrapper` rows, five
- * to a page, ascending by date:
+ * server-renders a `.list` of `.eventWrapper` rows, five to a page, ascending by date. The selector
+ * names no plugin class, because a plugin change emptied the listing for this parser (event 11795):
  *
  * | Field       | Source                                                                     |
  * |-------------|----------------------------------------------------------------------------|
@@ -119,8 +119,8 @@ class GaertenDerWeltOverviewPageScraper {
     }
 
     private companion object {
-        /** The listing rows, scoped to the `events2` plugin so no other list on the page can match. */
-        private const val EVENT_ROW_SELECTOR = ".tx-events2 .list .eventWrapper"
+        /** The listing rows; `.eventWrapper` is the listing's own class, so no other list on the page can match. */
+        private const val EVENT_ROW_SELECTOR = ".list .eventWrapper"
 
         /** The row's heading link, which carries both the title and the detail URL. */
         private const val TITLE_LINK_SELECTOR = "h3.media-heading a"

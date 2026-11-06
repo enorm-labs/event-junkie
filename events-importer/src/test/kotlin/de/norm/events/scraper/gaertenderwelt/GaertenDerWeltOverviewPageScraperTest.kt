@@ -202,6 +202,26 @@ class GaertenDerWeltOverviewPageScraperTest {
         droneShow.sourceId shouldBe "gaerten_der_welt:2026-10-22_2000/drone-art-show-harry-potter"
     }
 
+    @Test
+    fun `reads the park-events markup, and a run stamped without a time has no start`() {
+        // Event 11795: the page after the plugin change has no tx-events2 wrapper.
+        val page =
+            Jsoup.parse(
+                """<html><body><div class="list scroll-container"><div class="eventWrapper "><div class="date">04.11.2026 - 17.01.2027</div>
+                <div class="category">Ausstellungen</div><h3 class="media-heading">
+                <a href="/events/veranstaltungen/detail/2026-11-04_0000/bestehendes-bewahren/">Bestehendes bewahren</a></h3>
+                </div></div></body></html>""",
+                LISTING_URL
+            )
+
+        val run = scraper.scrape(page, LISTING_URL).single()
+
+        run.eventDate shouldBe LocalDate.of(2026, 11, 4)
+        run.endDate shouldBe LocalDate.of(2027, 1, 17)
+        run.startTime.shouldBeNull()
+        run.sourceId shouldBe "gaerten_der_welt:bestehendes-bewahren"
+    }
+
     private companion object {
         private const val LISTING_URL = "https://www.gaertenderwelt.de/events/veranstaltungen"
     }

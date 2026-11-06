@@ -618,4 +618,23 @@ class So36DetailPageScraperTest {
 
         event.descriptionAlt.shouldBeNull()
     }
+
+    @Test
+    fun `bills a festival ticket's acts from the list under a Bands label`() {
+        // Event 2885: the two-day ticket's page, with no bold names and no day label.
+        val url = "https://www.so36.com/produkte/91592-tickets-grossstadtwahnsinn-2026-festivalticket-so36-berlin-am-06-11-2026"
+        val page =
+            Jsoup.parse(
+                """<html><body><small class="supertitle">Konzert</small><h1><span itemprop="name">GROSSSTADTWAHNSINN 2026 - FESTIVALTICKET</span></h1>
+                <small class="subtitle">+ Warm Up im Franken</small>
+                <div class="product_description"><p>Start SO36: 18:00 Uhr</p><p><br></p><p>Bands:</p>
+                <p>UNDERDOGZ</p><p>SOIFASS</p><p>NONCHALANT&nbsp;</p></div></body></html>""",
+                url
+            )
+
+        val event = scraper.scrape(page, url).shouldNotBeNull()
+
+        event.eventType shouldBe EventType.FESTIVAL.name
+        event.artists.map { it.name } shouldBe listOf("UNDERDOGZ", "SOIFASS", "NONCHALANT")
+    }
 }

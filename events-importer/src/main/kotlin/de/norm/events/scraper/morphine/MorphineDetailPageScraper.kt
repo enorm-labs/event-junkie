@@ -104,6 +104,7 @@ class MorphineDetailPageScraper {
             soldOut = cleanedTitle.soldOut,
             artists =
                 readPerformers(overlay).ifEmpty {
+                    if (isNumberedSeriesNight(title, lineup)) return@ifEmpty readSeriesActs(overlay)
                     val starts = setStarts(lineup, eventDate)
                     lineup
                         .withIndex()
@@ -185,6 +186,33 @@ class MorphineDetailPageScraper {
             .distinctBy { it.lowercase() }
             .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
 
+    /** Whether the night is a numbered series (`DISQUIET Concert #4`) whose one set line only repeats the title. */
+    private fun isNumberedSeriesNight(
+        title: String,
+        lineup: List<LineupEntry>
+    ): Boolean = SERIES_NUMBER.containsMatchIn(title) && lineup.singleOrNull()?.name.equals(title, ignoreCase = true)
+
+    /**
+     * The acts of a [isNumberedSeriesNight] night (#4508): the first `.block.paragraph` holds one name to a `<p>`, each cut
+     * at its dash (`Palestinian Sound Archive – Mo'min Swaitat`). A paragraph of prose means no such list, so nobody is billed.
+     */
+    private fun readSeriesActs(overlay: Element): List<ScrapedArtist> {
+        val names =
+            overlay
+                .selectFirst("div.block.paragraph")
+                ?.select("p")
+                ?.map {
+                    it
+                        .text()
+                        .substringBefore(" – ")
+                        .substringBefore(" - ")
+                        .trim()
+                }.orEmpty()
+                .filter { it.isNotBlank() }
+        if (names.any { it.split(' ').size > MAX_SERIES_ACT_WORDS }) return emptyList()
+        return names.filterNot { isNonArtistName(it) }.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+    }
+
     /**
      * The `ul.lineup` set entries, each an `<li>` of two spans: start time and billed name. An
      * entry missing either span, or blank in both, is skipped. One with a time and no name stays:
@@ -234,6 +262,12 @@ class MorphineDetailPageScraper {
     private companion object {
         /** `Sofia Borges (turntable, prepared vinyls)` — one performer's credit line, name then instruments. */
         private val PERFORMER_CREDIT = Regex("""^([^()|:]+?)\s*\(([^()]+)\)$""")
+
+        /** A title that ends in `Concert #4`. */
+        private val SERIES_NUMBER = Regex("""\bconcert\s+#\d+\s*$""", RegexOption.IGNORE_CASE)
+
+        /** The longest name a series night's list can hold; a longer line is a sentence. */
+        private const val MAX_SERIES_ACT_WORDS = 5
 
         /** An ensemble has at least this many credit lines; one line is a remark, not a lineup. */
         private const val MIN_PERFORMER_CREDITS = 2

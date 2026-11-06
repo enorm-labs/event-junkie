@@ -47,6 +47,23 @@ internal fun descriptionRoster(
 }
 
 /**
+ * The acts a festival ticket lists one to a paragraph under a `Bands:` paragraph, up to the first blank one
+ * (`GROSSSTADTWAHNSINN 2026 - FESTIVALTICKET`, event 2885). A single name after the label is a note, not a list.
+ */
+internal fun labelledBandList(document: Document): List<String> {
+    val lines = document.select(".product_description p").map { it.text().replace(NBSP, ' ').trim() }
+    val label = lines.indexOfFirst { BANDS_LABEL.matches(it) }
+    if (label < 0) return emptyList()
+    return lines
+        .drop(label + 1)
+        .takeWhile { it.isNotBlank() }
+        .distinct()
+        .filterNot(::isNonArtistName)
+        .takeIf { it.size >= MIN_ROSTER }
+        .orEmpty()
+}
+
+/**
  * The support act a concert's description bills in a bold `Support:` line, for a page whose subtitle names none
  * (#2865). The bold line after it spells an abbreviation out (`Support: MDK`, then `Mekanik Destrüktiw
  * Komandöh`), and that name is taken only when its initials are the abbreviation.
@@ -123,6 +140,9 @@ private const val MIN_ROSTER = 2
 private const val NBSP = Typography.nbsp
 private val BOLD_TAGS = setOf("strong", "b")
 private val BOLD_STYLE = Regex("""font-weight:\s*(?:bold|[6-9]00)""", RegexOption.IGNORE_CASE)
+
+/** `Bands:` as a paragraph of its own. */
+private val BANDS_LABEL = Regex("""bands?\s*:""", RegexOption.IGNORE_CASE)
 
 /** `Live - Day 1:`, `Tag 2:`. */
 private val DAY_LABEL = Regex("""\b(?:day|tag)\s*(\d)\s*:""", RegexOption.IGNORE_CASE)

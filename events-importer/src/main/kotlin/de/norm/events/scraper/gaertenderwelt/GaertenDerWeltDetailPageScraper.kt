@@ -187,8 +187,8 @@ class GaertenDerWeltDetailPageScraper {
             ?.blankToNull()
 
     private companion object {
-        /** The `events2` single-view block holding the whole event. */
-        private const val SINGLE_VIEW_SELECTOR = ".tx-events2-single"
+        /** The park-events plugin's single-view block holding the whole event. */
+        private const val SINGLE_VIEW_SELECTOR = ".tx-dreipc-parkevents-single"
 
         /** The prose paragraphs, which carry both the description and the labelled metadata. */
         private const val PROSE_SELECTOR = "p.textNormal"

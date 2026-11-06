@@ -35,6 +35,7 @@ import kotlin.math.abs
  * - **The text** is `<act> - <style> - Eintritt immer frei`: the first part is the title, the rest the
  * subtitle, and the entry note sets [ScrapedEvent.free]. The house series (`Jazz am Sonntag`,
  * `Speiches Open Stage`) name no act in the title; `Jazz am Sonntag` names its band before `spielt`.
+ * - **A style list glued with commas** (`Musicians Welcome! Folk,Blues,Soul`) feeds the genre and leaves the subtitle (event 13037).
  * - **A `Lesung:` label** opens a reading the table files as `Konzert` (event 12519). It is a [EventType.READING],
  * and the names after the label are its authors.
  * - **`rockradio.de-live`** is the radio's own broadcast from the pub, a talk as often as a band. It is a
@@ -75,7 +76,7 @@ class SpeichesOverviewPageScraper(
 
         return ScrapedEvent(
             title = title,
-            subtitle = subtitle,
+            subtitle = subtitle?.replace(GLUED_GENRE_LIST, "")?.trim()?.ifBlank { null },
             eventType = eventType.name,
             eventDate = date,
             startTime = parseTime(cells.getOrNull(TIME_CELL)?.text(), DOTTED_TIME),
@@ -149,6 +150,7 @@ class SpeichesOverviewPageScraper(
      * without a country tag, an instrument note (`Marcos Coll m-harp`), a band's line-up after `=`, a label before `:`,
      * or a genre list glued on with a dash (`Tom Blacksmith (ITA/D )- Blues, Soul`). A name written all lower case,
      * such as the duo `glass and stone` (event 12518), is one act: it has no instrument note, and its `and` joins no bill.
+     * `Van Morrison Tribute Band Madame George` bills the band's own name (event 13039).
      */
     private fun actsOf(
         title: String,
@@ -159,6 +161,7 @@ class SpeichesOverviewPageScraper(
         }
         val names =
             title
+                .replaceFirst(TRIBUTE_BAND_PREFIX, "")
                 .substringBefore(" = ")
                 .let(::withoutGenreTail)
                 .replace(COUNTRY_TAG, "")
@@ -208,6 +211,12 @@ class SpeichesOverviewPageScraper(
         val REPEAT_NOTE = Regex("""(?i)(?:jetzt\s+)?jeden\s+(?:Montag|Sonntag)\s*$""")
 
         val TRAILING_ELLIPSIS = Regex("""\s*\.{2,}\s*$""")
+
+        /** `Folk,Blues,Soul`: three or more words joined by bare commas at the end of the subtitle. A list of acts has spaces. */
+        val GLUED_GENRE_LIST = Regex("""(?:^|\s+)\p{L}+(?:,\p{L}+){2,}\s*$""")
+
+        /** The tribute's subject in front of the band's name; the lookahead keeps a title that ends in `Tribute Band`. */
+        val TRIBUTE_BAND_PREFIX = Regex("""(?i)^.+?\btribute\s+band\s+(?=\S)""")
 
         val HOUSE_SERIES = Regex("""(?i)^(?:jazz am sonntag|speiches open stage|beste handgemachte musik)""")
         val PLAYS = Regex("""^(.+?)\s+spielt\b""")

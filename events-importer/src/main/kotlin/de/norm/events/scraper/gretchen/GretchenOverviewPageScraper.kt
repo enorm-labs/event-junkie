@@ -375,10 +375,12 @@ class GretchenOverviewPageScraper {
      * Strips a lineup line to the name: a leading `+ ` (`+ Mittelmeer Monologe`, an act added
      * after the main billing), `*…*` markers and an unclosed `*live`, a trailing `(country)` /
      * `(label)`, a trailing `+<tag>` (`OKVSHO +experience` to `OKVSHO`), whitespace collapsed. The
-     * `+<tag>` strip is safe because every co-billed act has its own `<br>` line.
+     * `+<tag>` strip is safe because every co-billed act has its own `<br>` line. A set note after a dash goes first
+     * (`The Swag (DE) – perfoms The Shining LP`, event 12969), so the annotation before it is trailing.
      */
     private fun cleanArtistName(line: String): String =
         line
+            .replace(PERFORMS_NOTE, "")
             .replaceFirst(LEADING_PLUS, "")
             .replace(STAR_MARKER, " ")
             .replace(LONE_TRAILING_STAR, "")
@@ -469,6 +471,9 @@ class GretchenOverviewPageScraper {
 
         /** The two-letter weekday the `.date` cell opens with: "Fr. 10.07.2026 Doors: 19.30". */
         private val LEADING_WEEKDAY = Regex("""^\s*(\p{L}{2})\.""")
+
+        /** ` – performs The Donuts LP`, with the venue's typo `perfoms` too: what the act plays, not its name. */
+        private val PERFORMS_NOTE = Regex("""\s+[-–—]\s+perfo?r?ms?\b.*$""", RegexOption.IGNORE_CASE)
 
         /** A `*…*` decoration on a lineup line (e.g. `*live*`). */
         private val STAR_MARKER = Regex("""\*[^*]*\*""")

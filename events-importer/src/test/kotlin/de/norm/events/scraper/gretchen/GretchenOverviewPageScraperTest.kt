@@ -823,4 +823,22 @@ class GretchenOverviewPageScraperTest {
             )
         eventWithId("3492").artists.map { it.name } shouldContainExactly listOf("Àbáse", "Kacsó Hanga", "Otis Sandsjö")
     }
+
+    @Test
+    fun `cuts what an act performs off its name`() {
+        // Event 12969, with the venue's typo in the first line.
+        val gig =
+            """
+            <div class="gig"><div class="date">So. <strong>07.02.2027</strong> Doors: 17.00</div>
+            <div class="title"><h2><a href="detail.php?id=3637">15 YEARS ONE NIGHT FOR DILLA</a></h2></div>
+            <span class="lineup"><p>The Swag  (DE) – perfoms The Shining LP *live*<br />backtracked  (ele.Records/D) – performs The Donuts LP  *live*<br />Marian Tone  (Beatkollektiv/Wedding Soul/D)</p></span></div>
+            """.trimIndent()
+
+        scraper
+            .scrape(Jsoup.parse(gig, baseUrl), baseUrl)
+            .single()
+            .artists
+            .map { it.name } shouldContainExactly
+            listOf("The Swag", "backtracked", "Marian Tone")
+    }
 }

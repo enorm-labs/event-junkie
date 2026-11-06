@@ -255,11 +255,17 @@ class FestsaalApiScraperTest {
     }
 
     @Test
-    fun `types a night whose subtitle says legt auf as PARTY and bills nobody`() {
-        val night = scraper.scrape(apiWithSubtitle("Flugmodus", "Arnim legt auf + illvibe + Marian + Martin")).single()
+    fun `types a night whose subtitle says legt auf as PARTY and bills the DJs it names`() {
+        // Event 7389.
+        val night = scraper.scrape(apiWithSubtitle("Flugmodus", "Arnim legt auf + RAEDY")).single()
 
         night.eventType shouldBe EventType.PARTY.name
-        night.artists.shouldBeEmpty()
+        night.artists shouldContainExactly listOf(ScrapedArtist("Arnim", ArtistRole.HEADLINER), ScrapedArtist("RAEDY", ArtistRole.SUPPORT))
+        scraper
+            .scrape(apiWithSubtitle("Festa Junina", "NEUJAHRS PARTY"))
+            .single()
+            .artists
+            .shouldBeEmpty()
     }
 
     @Test
@@ -420,5 +426,21 @@ class FestsaalApiScraperTest {
             root.detachAppender(appender)
             appender.stop()
         }
+    }
+
+    @Test
+    fun `reads a quiz show from its text, and bills nobody`() {
+        // #4509, event 12954.
+        val json =
+            """
+            {"items": [{"id": 1, "meta": {"slug": "show"}, "title": "Die Mehr Oder Weniger Gute Gewinne Gewinn Show", "sub_title": "mit Ludwig Otto Henze",
+              "date": "2027-01-20", "status": null, "layouts": [{"value": {"items": [{"type": "item_text",
+              "value": {"text": "<p>Eine Quiz- und Gameshow bei der jede:r mitspielt.</p>"}}]}}]}]}
+            """.trimIndent()
+
+        val night = scraper.scrape(json).single()
+
+        night.eventType shouldBe EventType.QUIZ.name
+        night.artists.shouldBeEmpty()
     }
 }

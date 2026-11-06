@@ -82,7 +82,7 @@ class VelomaxOverviewPageScraper {
         baseUrl: String,
         hall: VelomaxHall
     ): ScrapedEvent? {
-        val eventType = mapEventType(entry.attr("data-type"), VENUE_EVENT_TYPES) ?: return null
+        val listedType = mapEventType(entry.attr("data-type"), VENUE_EVENT_TYPES) ?: return null
 
         val href = entry.attr("href").takeIf { it.isNotBlank() } ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)
@@ -91,6 +91,8 @@ class VelomaxOverviewPageScraper {
         val cleanedTitle = entry.textAt(".event-title .title")?.let(::cleanEventTitle) ?: return null
 
         val title = cleanedTitle.text
+        val tattoo = isMilitaryTattoo(title)
+        val eventType = if (tattoo) EventType.SHOW.name else listedType
         val subtitleLines = entry.textLinesAt(".eventSubtitle")
         val subtitle = subtitleLines.firstOrNull()
         val signal = entry.textAt(".ticketSignal").orEmpty()
@@ -111,7 +113,7 @@ class VelomaxOverviewPageScraper {
             // entry with no published time keeps the bare slug — nothing to disambiguate with.
             sourceId = "${hall.eventSource.sourceIdPrefix}$slug${sessionSuffix(startTime)}",
             soldOut = signal.contains(SOLD_OUT_SIGNAL, ignoreCase = true) || cleanedTitle.soldOut,
-            artists = buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType)
+            artists = if (tattoo) emptyList() else buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType)
         )
     }
 
@@ -161,3 +163,11 @@ class VelomaxOverviewPageScraper {
 
 /** Path prefix of a hall's event permalink, stripped to obtain the slug identity. */
 internal const val EVENT_PATH_PREFIX = "/events/event/"
+
+/**
+ * A military-music show (`Berlin Tattoo`, event 2388), which the listing files as a concert. It is staged, its title
+ * names the production, and the pages name no performer. A title that only opens with the word stays out: `Tattoo Convention`.
+ */
+internal fun isMilitaryTattoo(title: String): Boolean = MILITARY_TATTOO.containsMatchIn(title)
+
+private val MILITARY_TATTOO = Regex("""\btattoo\s*$""", RegexOption.IGNORE_CASE)

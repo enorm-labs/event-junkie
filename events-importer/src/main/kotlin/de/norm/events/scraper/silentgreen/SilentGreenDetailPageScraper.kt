@@ -266,12 +266,14 @@ data class SilentGreenEventDetails(
             priceNote = event.priceNote ?: priceNote
         )
 
-    /** A concert's [silentGreenPerformers] from the blurb, or the acts the calendar row read off the title. */
-    private fun performersOr(event: ScrapedEvent): List<ScrapedArtist> =
-        silentGreenPerformers(event.description ?: description)
-            .takeIf { event.eventType == EventType.CONCERT.name }
-            .orEmpty()
+    /** A concert's [silentGreenPerformers] from the blurb, its [silentGreenAlbumHost], or the acts the calendar row read off the title. */
+    private fun performersOr(event: ScrapedEvent): List<ScrapedArtist> {
+        if (event.eventType != EventType.CONCERT.name) return event.artists
+        val blurb = event.description ?: description
+        return silentGreenPerformers(blurb)
+            .ifEmpty { silentGreenAlbumHost(event.title, blurb, event.subtitle) }
             .ifEmpty { event.artists }
+    }
 
     /**
      * Whether the row is free, or the blurb's "Eintritt frei" covers the whole event: not when the

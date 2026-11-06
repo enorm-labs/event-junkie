@@ -142,9 +142,9 @@ class GaertenDerWeltWebsiteImporterTest {
                 teaser: String
             ): Document {
                 val page = fixture("gaertenderwelt-detail-concert.html", CONCERT_URL)
-                page.selectFirst(".tx-events2-single h1")!!.text(title)
-                page.selectFirst(".tx-events2-single p.lead")!!.text(teaser)
-                page.select(".tx-events2-single p.textNormal").filter { it.text().startsWith("Support") }.forEach { it.remove() }
+                page.selectFirst(".tx-dreipc-parkevents-single h1")!!.text(title)
+                page.selectFirst(".tx-dreipc-parkevents-single p.lead")!!.text(teaser)
+                page.select(".tx-dreipc-parkevents-single p.textNormal").filter { it.text().startsWith("Support") }.forEach { it.remove() }
                 return page
             }
             coEvery { htmlFetcher.fetchDocument(CONCERT_URL) } returns

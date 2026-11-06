@@ -1,5 +1,7 @@
 package de.norm.events.scraper.silentgreen
 
+import de.norm.events.common.deshout
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.ScrapedArtist
@@ -141,6 +143,35 @@ internal fun silentGreenPerformers(blurb: String?): List<ScrapedArtist> =
         ?.distinctBy { it.lowercase() }
         ?.map { ScrapedArtist(name = it) }
         .orEmpty()
+
+/**
+ * The acts of a `<head> presents <album>` concert: the blurb's `Album <tail>` shows the head is the act and the tail its
+ * record (`HAINBACH presents VIVE`, #4511). A `guests:` sub-line names its support. Empty for any other title.
+ */
+internal fun silentGreenAlbumHost(
+    title: String,
+    blurb: String?,
+    subtitle: String?
+): List<ScrapedArtist> {
+    val (head, album) = HEAD_PRESENTS_TAIL.matchEntire(title.trim())?.destructured ?: return emptyList()
+    val namesAlbum = Regex("""\balbum\s+${Regex.escape(album)}(?![\p{L}\d])""", RegexOption.IGNORE_CASE)
+    if (blurb == null || !namesAlbum.containsMatchIn(blurb)) return emptyList()
+    val guests =
+        subtitle
+            ?.let { GUESTS_LINE.matchEntire(it.trim()) }
+            ?.groupValues
+            ?.get(1)
+            ?.let(::splitSupportActs)
+            .orEmpty()
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
+    return listOf(ScrapedArtist(name = deshout(head), role = ArtistRole.HEADLINER)) + guests
+}
+
+private val HEAD_PRESENTS_TAIL = Regex("""(.{2,60}?)\s+(?:$PRESENTS_VERBS)\s+(.+)""", RegexOption.IGNORE_CASE)
+
+/** The sub-line under a title that names the guests: `guests: Aude Langlois & Felipe Vareschi`. */
+private val GUESTS_LINE = Regex("""guests?\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
 
 /** A blurb line that opens `Mit:`, capturing the names without the closing full stop. */
 private val PERFORMER_LINE = Regex("""^Mit:\s*(.+?)\.?$""")
