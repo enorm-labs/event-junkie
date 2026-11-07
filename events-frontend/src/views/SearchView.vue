@@ -13,7 +13,7 @@ import { fetchSearch, MIN_SEARCH_LENGTH } from '@/composables/useGlobalSearch'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useSearchDraft } from '@/composables/useSearchDraft'
 import { addDays, todayIso } from '@/lib/format'
-import { CARD_LIST_CLASS, PANEL_CLASS } from '@/lib/utils'
+import { CARD_LIST_CLASS, PANEL_CLASS, TEXT_LINK_CLASS } from '@/lib/utils'
 
 /** Enough to scan; a longer list belongs to the kind's own page, which pages and filters. */
 const LIMIT = 20
@@ -118,7 +118,7 @@ function linksOf(key: string): { to: string; name: string }[] {
           <RouterLink
             v-if="section.more && section.total > LIMIT"
             :to="localePath(section.more)"
-            class="text-body text-primary underline-offset-4 hover:underline"
+            :class="['text-body', TEXT_LINK_CLASS]"
           >
             {{ t('search.showAll', { count: section.shown }) }}
           </RouterLink>

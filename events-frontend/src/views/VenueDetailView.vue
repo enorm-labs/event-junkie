@@ -21,6 +21,7 @@ import { venueClosure } from '@/lib/venueClosure'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { withReferral } from '@/lib/referral'
 import type { Locale } from '@/i18n/locales'
+import { TEXT_LINK_CLASS } from '@/lib/utils'
 
 const { t, locale } = useI18n()
 
@@ -184,7 +185,7 @@ const programme = computed(() => {
         <p v-if="programmeSite" class="text-body">
           <a
             :href="programmeSite.href"
-            class="text-primary underline-offset-4 hover:underline"
+            :class="TEXT_LINK_CLASS"
             data-testid="venue-programme-link"
             rel="noopener noreferrer"
             target="_blank"
@@ -205,7 +206,7 @@ const programme = computed(() => {
         <RouterLink
           v-if="mapLink"
           :to="mapLink"
-          class="text-primary underline-offset-4 hover:underline"
+          :class="TEXT_LINK_CLASS"
           data-testid="venue-map-link"
         >
           {{ t('detail.venue.onMap') }}
