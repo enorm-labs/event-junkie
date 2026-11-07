@@ -14,7 +14,12 @@ import { useLocalePath } from '@/composables/useLocalePath'
 import { usePageMeta } from '@/composables/usePageMeta'
 import type { Locale } from '@/i18n/locales'
 import { currentIsoWeek, daysOf, formatIsoWeek, parseIsoWeek, shiftWeek } from '@/lib/isoWeek'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, PAGE_TITLE_CLASS } from '@/lib/utils'
+import {
+  CARD_GRID_CLASS,
+  CARD_LIST_CLASS,
+  PAGE_TITLE_CLASS,
+  SECTION_TITLE_CLASS,
+} from '@/lib/utils'
 import {
   dayHeading,
   isPastWeek,
@@ -65,8 +70,6 @@ const filterLink = computed(() => {
 function dayLink(date: string) {
   return { path: localePath('/events'), query: { from: date, to: date } }
 }
-
-const HEADING_CLASS = 'text-section font-bold tracking-tight'
 </script>
 
 <template>
@@ -118,7 +121,9 @@ const HEADING_CLASS = 'text-section font-bold tracking-tight'
         class="space-y-4 border-t border-border pt-6"
       >
         <div class="flex items-baseline gap-3">
-          <h2 :id="`day-${day.date}`" :class="HEADING_CLASS">{{ dayHeading(day.date, lang) }}</h2>
+          <h2 :id="`day-${day.date}`" :class="SECTION_TITLE_CLASS">
+            {{ dayHeading(day.date, lang) }}
+          </h2>
           <span v-if="day.total" class="text-body text-muted-foreground tabular-nums">
             {{ t('home.eventCount', { count: day.total }) }}
           </span>

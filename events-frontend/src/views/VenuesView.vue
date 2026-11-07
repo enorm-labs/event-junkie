@@ -39,7 +39,12 @@ import { coarseAccuracy } from '@/lib/nearOrigin'
 import { CONTROLLER } from '@/lib/legal'
 import { type MapPin, nearby, radiusFromQuery, radiusQuery, venuePin } from '@/lib/mapPins'
 import { useI18n } from 'vue-i18n'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
+import {
+  CARD_GRID_CLASS,
+  CARD_LIST_CLASS,
+  RESULTS_BAR_CLASS,
+  SECTION_TITLE_CLASS,
+} from '@/lib/utils'
 
 const PAGE_SIZE = 24
 
@@ -455,7 +460,7 @@ const localePath = useLocalePath()
       </p>
 
       <section v-if="near && !mapLoading && !mapError" aria-live="polite" class="space-y-2">
-        <h2 class="text-section font-bold tracking-tight">
+        <h2 :class="SECTION_TITLE_CLASS">
           {{ t('map.near.heading', { radius: distance(radiusKm) }) }}
         </h2>
         <p class="text-body text-muted-foreground">
