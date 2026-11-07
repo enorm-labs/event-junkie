@@ -9,6 +9,7 @@ import type { Locale } from '@/i18n/locales'
 import { feedbackMailto } from '@/lib/feedback'
 import { CONTROLLER } from '@/lib/legal'
 import { canonicalUrl } from '@/lib/seo'
+import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
 
 const props = defineProps<{
   /** The question before the address, e.g. "Something wrong with this venue? Report it by email:". */
@@ -33,6 +34,6 @@ const href = computed(() =>
   <!-- The address is the link text, so a visitor without a mail client can still copy it. -->
   <p class="text-body text-muted-foreground">
     {{ text }}
-    <a :href="href" class="text-foreground underline underline-offset-4">{{ CONTROLLER.email }}</a>
+    <a :href="href" :class="[UNDERLINED_LINK_CLASS, 'text-foreground']">{{ CONTROLLER.email }}</a>
   </p>
 </template>

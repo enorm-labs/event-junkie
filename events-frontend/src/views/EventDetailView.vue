@@ -305,13 +305,13 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
           <RouterLink
             v-if="event.venue?.slug"
             :to="localePath(`/venues/${event.venue.slug}`)"
-            class="text-foreground underline underline-offset-4"
+            :class="[UNDERLINED_LINK_CLASS, 'text-foreground']"
             >{{ t('events.detail.upcomingAtVenue', { venue: event.venue.name }) }}</RouterLink
           >
           <RouterLink
             v-else
             :to="localePath('/events')"
-            class="text-foreground underline underline-offset-4"
+            :class="[UNDERLINED_LINK_CLASS, 'text-foreground']"
             >{{ t('events.detail.browseUpcoming') }}</RouterLink
           >
         </p>

@@ -17,6 +17,7 @@ import { useLocalePath } from '@/composables/useLocalePath'
 import { setSession } from '@/composables/useSession'
 import { isLocale } from '@/i18n/locales'
 import { signInNext } from '@/lib/signInNext'
+import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
 import { autofillSupported, cancelled, passkeysSupported } from '@/lib/webauthn'
 
 const { t, locale } = useI18n()
@@ -129,7 +130,7 @@ function messageFor(e: unknown): string {
       </div>
       <p class="text-meta text-muted-foreground">
         {{ t('account.signIn.privacy') }}
-        <RouterLink :to="localePath('/legal/privacy#account')" class="underline underline-offset-4">
+        <RouterLink :to="localePath('/legal/privacy#account')" :class="UNDERLINED_LINK_CLASS">
           {{ t('account.signIn.privacyLink') }}
         </RouterLink>
       </p>
