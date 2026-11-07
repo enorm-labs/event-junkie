@@ -139,7 +139,8 @@ class KesselhausCalendarScraper(
         val notes = base.path("notes").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
         val topics = base.path("topics").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
         val category = card.textAt(".category")
-        val eventType = eventTypeOf(category, topics)
+        val ceilidh = CEILIDH.containsMatchIn(title)
+        val eventType = if (ceilidh) EventType.CONCERT.name else eventTypeOf(category, topics)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle ?: text.stringOrNull("pretitle"),
@@ -162,8 +163,12 @@ class KesselhausCalendarScraper(
             status = statusOf(notes),
             statusNote = subtitle?.takeIf { RELOCATED in notes },
             artists =
-                buildArtistsForEventType(stripFriendsTail(title), subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) } +
-                    plusSupport(subtitle, eventType)
+                if (ceilidh) {
+                    ceilidhBand(subtitle)
+                } else {
+                    buildArtistsForEventType(stripFriendsTail(title), subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) } +
+                        plusSupport(subtitle, eventType)
+                }
         ).forChildrenIf(category?.takeIf { it.equals(CHILDRENS_CATEGORY, ignoreCase = true) })
     }
 
@@ -346,6 +351,8 @@ class KesselhausCalendarScraper(
         /** An amount with cents in a ticket label that no currency follows; a whole number may be a date or a time. */
         private val BARE_AMOUNT = Regex("""(?<![\d.,])(\d+,\d{2})(?![\d.,]|\s*(?:€|eur))""", RegexOption.IGNORE_CASE)
 
+        private val CEILIDH = Regex("""(?<!\p{L})ceilidh(?!\p{L})""", RegexOption.IGNORE_CASE)
+
         private val SUBTITLE_BILL = Regex("""^mit\s+(.+)""", RegexOption.IGNORE_CASE)
 
         /** One act and its unnamed guests, `Jonathan Blues Band & Gäste`; unsplit, because the act's own name can hold an `&`. */
@@ -375,3 +382,19 @@ class KesselhausCalendarScraper(
             )
     }
 }
+
+/**
+ * The band of a ceilidh, which the subtitle names: `feat. Nightlark`. A ceilidh is a concert although the calendar files it
+ * under `Tanz`: a band plays and the audience dances to it, as the audience sings at a sing-along (EVENT_SCOPE.md §2).
+ * Its title names the night, so no act comes from it.
+ */
+private fun ceilidhBand(subtitle: String?): List<ScrapedArtist> =
+    subtitle
+        ?.trim()
+        ?.let { CEILIDH_BAND.find(it) }
+        ?.let { splitSupportActs(it.groupValues[1]) }
+        .orEmpty()
+        .filterNot(::isNonArtistName)
+        .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+
+private val CEILIDH_BAND = Regex("""^(?:feat\.?|featuring|mit)\s+(.+)""", RegexOption.IGNORE_CASE)

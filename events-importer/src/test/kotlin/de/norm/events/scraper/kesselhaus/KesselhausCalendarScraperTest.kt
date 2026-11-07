@@ -150,6 +150,18 @@ class KesselhausCalendarScraperTest {
     }
 
     @Test
+    fun `types a ceilidh a concert and bills the band its subtitle names`() {
+        // Event 13141 on production: the calendar files it under Tanz.
+        val ceilidhs = (kesselhaus.scrape(calendar, url) + maschinenhaus.scrape(calendar, url)).filter { it.title == "The Berlin Ceilidh" }
+
+        ceilidhs.shouldNotBeEmpty()
+        ceilidhs.forEach { ceilidh ->
+            ceilidh.eventType shouldBe EventType.CONCERT.name
+            ceilidh.artists.map { it.name to it.role } shouldBe listOf("Nightlark" to ArtistRole.HEADLINER)
+        }
+    }
+
+    @Test
     fun `leaves a festival's subtitle line-up and a named act's mit guest unbilled`() {
         // Both events are past at the fixture's capture, so the clock goes back to the window's first month.
         val august = Clock.fixed(Instant.parse("2026-08-01T08:00:00Z"), ZoneId.of("Europe/Berlin"))
