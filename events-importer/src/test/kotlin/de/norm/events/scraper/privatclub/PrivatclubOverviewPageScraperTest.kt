@@ -114,7 +114,8 @@ class PrivatclubOverviewPageScraperTest {
             party.sourceId shouldBe "privatclub:this-charming-man-2-3"
             party.soldOut shouldBe false
             party.status shouldBe "SCHEDULED"
-            // Complex pricing "4€ - ab 24h 6€" stored as note
+            // An entry-time door stores its lowest tier and names both in the note (#4582)
+            party.priceBoxOffice shouldBe BigDecimal("4")
             party.priceNote shouldBe "4€ - ab 24h 6€"
         }
 
@@ -282,6 +283,74 @@ class PrivatclubOverviewPageScraperTest {
             event.pricePresale shouldBe BigDecimal("10")
             event.priceNote shouldBe "AK: 11€ / 17€; Tickets: Emäßigtes Ticket 10€ / Standard Ticket 15,30€"
         }
+
+        @Test
+        fun `stores the lowest entry-time tier of a door as box office and keeps the note`() {
+            // karrera-klub-2-2 on 2026-11-07 (#4582).
+            val event = doorOnly("Eintritt: 4 € / ab 24h 6 €")
+
+            event.priceBoxOffice shouldBe BigDecimal("4")
+            event.pricePresale shouldBe null
+            event.priceNote shouldBe "4 € / ab 24h 6 €"
+        }
+
+        @Test
+        fun `reads an entry time given in Uhr`() {
+            doorOnly("Eintritt: 8€ / ab 1:00 Uhr 10€").priceBoxOffice shouldBe BigDecimal("8")
+        }
+
+        @Test
+        fun `keeps a single door price without a note`() {
+            val event = doorOnly("AK: 35€")
+
+            event.priceBoxOffice shouldBe BigDecimal("35")
+            event.priceNote shouldBe null
+        }
+
+        @Test
+        fun `stores no price for a free door`() {
+            val event = doorOnly("Eintritt frei | DJ Spende!")
+
+            event.priceBoxOffice shouldBe null
+            event.priceNote shouldBe "Eintritt frei | DJ Spende!"
+        }
+
+        @Test
+        fun `stores no box office for a door tiered by guest rather than by time`() {
+            // The lowest of a concession, standard and supporter door is the concession, not the price.
+            val event = doorOnly("AK: 11€ / 17€ / 22€")
+
+            event.priceBoxOffice shouldBe null
+            event.priceNote shouldBe "11€ / 17€ / 22€"
+        }
+
+        @Test
+        fun `stores no box office for one amount behind an entry time`() {
+            // What the door costs before 24h is not published.
+            val event = doorOnly("Eintritt: ab 24h 6€")
+
+            event.priceBoxOffice shouldBe null
+            event.priceNote shouldBe "ab 24h 6€"
+        }
+
+        private fun doorOnly(akText: String) =
+            scraper
+                .scrape(
+                    Jsoup.parse(
+                        """
+                        <div class="event_wrapper skewed">
+                            <a class="event_header" href="/event/door/">
+                                <span class="titel">Door</span>
+                                <span class="datum_part1">Sa. 16.</span>
+                                <span class="datum_part2">Mai</span>
+                            </a>
+                            <div class="event_detail"><div class="tickets_ak">$akText</div></div>
+                        </div>
+                        """.trimIndent(),
+                        baseUrl
+                    ),
+                    baseUrl
+                ).single()
 
         @Test
         fun `leaves a single presale price without a note`() {

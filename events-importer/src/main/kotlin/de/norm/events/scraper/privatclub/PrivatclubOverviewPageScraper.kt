@@ -287,7 +287,8 @@ class PrivatclubOverviewPageScraper(
      * - `"Tickets: 23 € zzgl. Gebühren"` → presale
      * - `"Tickets: Early Bird 25€ / Standard 30€ / Last Call 35€"` → the lowest tier as presale, every tier in priceNote (#2083)
      * - `"AK: 35€"` → box office
-     * - `"Eintritt: 4€ - ab 24h 6€"` → priceNote
+     * - `"Eintritt: 4 € / ab 24h 6 €"` → the lowest entry-time tier as box office, every tier in priceNote (#2083)
+     * - `"AK: 11€ / 17€ / 22€"`, a concession, standard and supporter door → priceNote only: the lowest is the concession
      *
      * Returns (presale, boxOffice, priceNote).
      */
@@ -306,7 +307,7 @@ class PrivatclubOverviewPageScraper(
                 // Single price ("AK: 35€") → box office
                 priceBoxOffice = allPrices.single()
             } else {
-                // Conditional pricing ("Eintritt: 4€ - ab 24h 6€") → note
+                if (allPrices.size > 1 && ENTRY_TIME_TIER.containsMatchIn(akText)) priceBoxOffice = allPrices.min()
                 priceNote = akText.replace(PRICE_LABEL, "").trim()
             }
         }
@@ -409,6 +410,9 @@ class PrivatclubOverviewPageScraper(
 
         /** The label before a price line's amounts: `AK: `, `Eintritt: `, `Tickets: `. */
         private val PRICE_LABEL = Regex("""^[^:]*:\s*""")
+
+        /** An entry-time tier of a door line, `ab 24h` or `ab 1 Uhr`: the amounts differ by arrival, not by guest (#4582). */
+        private val ENTRY_TIME_TIER = Regex("""(?<!\p{L})ab\s+\d{1,2}(?:[:.]\d{2})?\s*(?:h|uhr)(?!\p{L})""", RegexOption.IGNORE_CASE)
 
         /** Day number from "Sa. 16." */
         private val DAY_NUMBER_PATTERN = Regex("""\d+""")
