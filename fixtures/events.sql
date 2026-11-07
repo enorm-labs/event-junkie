@@ -382,6 +382,16 @@ SELECT e.id, a.id, 'HEADLINER', 0 FROM events.event e, events.artist a WHERE e.s
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'fixture-translated' AND g.slug = 'jazz';
 
+-- A description in a non-Latin script (#4665): marked undetermined, and translated into English for both locales.
+INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, genre,
+                          description, description_language, description_language_confidence,
+                          description_alt, description_alt_language, description_alt_origin, description_alt_engine, description_alt_source_hash)
+SELECT v.id, 'Møbius Trio — Tour', 'CONCERT', 'fixture-undetermined-' || to_char(timezone('Europe/Berlin', now())::date + 14, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 14, TIME '20:00',
+       v.website_url || '/events/tour', 'fixture-undetermined', 'Jazz',
+       'Трио представляет свой второй альбом. После концерта джем-сейшн с гостями.', 'und', 0.950,
+       'The trio presents its second album. A jam session with guests follows the concert.', 'en', 'MACHINE', 'anthropic', 'fixture'
+FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
+
 -- An operator's pick (#1262): it leads the first page of /events until the window passes, though its date puts it later.
 UPDATE events.event SET featured_until = now() + INTERVAL '14 days' WHERE source_id = 'fixture-translated';
 

@@ -8,8 +8,10 @@ import java.util.HexFormat
 /**
  * The language a description is written in, as far as a stop-word count can tell.
  *
- * German or English only, and an honest `null` for everything else: a line-up list, a two-line
- * note, a Spanish biography, or one field that carries both languages (ADR-026). The rule is
+ * [detect] answers German or English only, and an honest `null` for everything else: a line-up list,
+ * a two-line note, a Spanish biography, or one field that carries both languages (ADR-026). [classify]
+ * adds [UNDETERMINED] for a text written mostly in a non-Latin script, which is neither of our two
+ * for certain (#4665). The rule is
  * deliberately not a library. Lingua ships every language model in one jar for a question with two
  * answers, and a stop-word count is measured on the real corpus in [DescriptionLanguageTest].
  */
@@ -17,7 +19,10 @@ enum class DescriptionLanguage(
     val code: String
 ) {
     GERMAN("de"),
-    ENGLISH("en")
+    ENGLISH("en"),
+
+    /** BCP 47 `und`: neither German nor English, and no guess at which language. Cyrillic alone does not tell Russian from Ukrainian. */
+    UNDETERMINED("und")
     ;
 
     /** A detection, with the share of stop-word hits the winning language took. */
@@ -75,6 +80,22 @@ enum class DescriptionLanguage(
                         confidence = BigDecimal(it.share()).setScale(CONFIDENCE_SCALE, RoundingMode.HALF_UP)
                     )
                 }
+
+        /** Under this many letters a text is a note, not prose to translate. */
+        private const val MIN_SCRIPT_LETTERS = 40
+
+        /** The share of letters outside the Latin script above which a text is written in another script. */
+        private const val MIN_FOREIGN_SHARE = 0.5
+
+        /** [detect], else [UNDETERMINED] for a text written mostly in a non-Latin script. The language stored for an event. */
+        fun classify(text: String?): Detection? = detect(text) ?: text?.let(::undetermined)
+
+        private fun undetermined(text: String): Detection? {
+            val letters = text.filter { it.isLetter() }
+            if (letters.length < MIN_SCRIPT_LETTERS) return null
+            val share = letters.count { Character.UnicodeScript.of(it.code) != Character.UnicodeScript.LATIN }.toDouble() / letters.length
+            return Detection(UNDETERMINED, BigDecimal(share).setScale(CONFIDENCE_SCALE, RoundingMode.HALF_UP)).takeIf { share > MIN_FOREIGN_SHARE }
+        }
 
         /**
          * The language with more stop words in [text], however few: a weaker answer than [detect], for

@@ -100,6 +100,24 @@ class DescriptionTranslationServiceTest {
             saved.captured.descriptionAltSourceHash shouldBe DescriptionLanguage.hash(GERMAN_TEXT)
         }
 
+    @Test
+    @DisplayName("an undetermined original is translated into English")
+    fun `translates an undetermined original into English`(): Unit =
+        runBlocking {
+            givenOneCandidate(event(description = RUSSIAN_TEXT, language = "und"))
+            val request = slot<TranslationRequest>()
+            coEvery { engine.translate(capture(request)) } returns TranslationResult.Translated("The legendary band in your city.")
+            every { engine.id } returns "test:engine"
+
+            service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 1
+
+            request.captured.from shouldBe DescriptionLanguage.UNDETERMINED
+            request.captured.to shouldBe DescriptionLanguage.ENGLISH
+            val saved = slot<EventEntity>()
+            coVerify { eventRepository.save(capture(saved)) }
+            saved.captured.descriptionAltLanguage shouldBe "en"
+        }
+
     // The engine's own lines say why a description was refused. Without the id they say it about
     // one of fifty, and the engine is not told which event it is translating.
     @Test
@@ -430,5 +448,6 @@ class DescriptionTranslationServiceTest {
         const val VENUE_NAME = "Klunkerkranich"
         const val EVENT_SLUG = "2026-09-07-klunkerkranich-monday-roast"
         const val GERMAN_TEXT = "Ein Abend mit Aussicht über die Dächer von Neukölln."
+        const val RUSSIAN_TEXT = "Легендарная группа в твоём городе. Это невозможно пропустить!"
     }
 }

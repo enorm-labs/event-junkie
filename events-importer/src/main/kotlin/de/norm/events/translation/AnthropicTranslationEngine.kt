@@ -3,6 +3,7 @@ package de.norm.events.translation
 import de.norm.events.ai.AnthropicClient
 import de.norm.events.ai.AnthropicSettings
 import de.norm.events.common.runCatchingCancellable
+import de.norm.events.event.DescriptionLanguage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineDispatcher
@@ -90,7 +91,7 @@ class AnthropicTranslationEngine(
      */
     private fun systemPrompt(request: TranslationRequest): String =
         buildString {
-            append("Translate the user's event description from ${request.from.name.lowercase()} into ${request.to.name.lowercase()}. ")
+            append("Translate the user's event description from ${sourceLanguageOf(request)} into ${request.to.name.lowercase()}. ")
             append("Return only the translation. Do not summarise, shorten, explain or add anything. ")
             append("Keep the line breaks, the paragraph structure and every URL unchanged. ")
             append("Never translate a venue name, a club night, an artist name or a Berlin institution. ")
@@ -101,6 +102,10 @@ class AnthropicTranslationEngine(
                 append(". ")
             }
         }
+
+    /** The source language as the prompt names it. An undetermined one is the text's own, which the model reads. */
+    private fun sourceLanguageOf(request: TranslationRequest): String =
+        if (request.from == DescriptionLanguage.UNDETERMINED) "its original language" else request.from.name.lowercase()
 
     /**
      * Whether the output looks like a translation of the input rather than something else.

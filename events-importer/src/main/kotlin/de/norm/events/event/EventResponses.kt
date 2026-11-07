@@ -177,6 +177,8 @@ data class DescriptionLanguageBackfill(
     val german: Int,
     @Schema(description = "Descriptions classified as English", example = "520")
     val english: Int,
+    @Schema(description = "Descriptions written mostly in a non-Latin script, classified as undetermined", example = "4")
+    val undetermined: Int,
     @Schema(description = "Descriptions the classifier could not call, left unclassified", example = "275")
     val unknown: Int
 )
