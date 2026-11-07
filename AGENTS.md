@@ -275,6 +275,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/scaffold-importer` — a new venue importer end to end
 - `/security-report` — read-only: Dependency-Check findings, Dependabot alerts and `npm audit`, reconciled and triaged
 - `/security-triage` — work the Security tab to zero: fix, file or dismiss; the mutating counterpart to `/security-report`
+- `/set-times <file> [<event>] [<env>]` — a running order from a flyer screenshot or a text file, onto the event: acts matched or created, floors, the lineup and set times; a numbered proposal, written only on the operator's word
 - `/setup-machine` — a new Mac to a working checkout: `scripts/setup-mac.sh` and the `Brewfile`, contributor or operator tier; hands over every step that installs, prompts or needs `sudo`
 - `/squash-commit-message` — a squash commit message for the current branch
 - `/traffic [production|staging] [--hours N]` — sessions and page loads per day for the 14 days kept, less the crawlers that run the SPA; finds a new one by its night-time sessions; adds the account counts; `/daily-check` runs it
