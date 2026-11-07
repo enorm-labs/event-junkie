@@ -7,6 +7,7 @@ import BaseBadge from '@/components/BaseBadge.vue'
 import CachedImage from '@/components/CachedImage.vue'
 import DirectionsLink from '@/components/DirectionsLink.vue'
 import ErrorLine from '@/components/ErrorLine.vue'
+import NearbyStops from '@/components/NearbyStops.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventLineup from '@/components/EventLineup.vue'
 import EventMetaLine, { type MetaItem } from '@/components/EventMetaLine.vue'
@@ -428,6 +429,8 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
             ><span v-if="change.ago" class="text-muted-foreground"> · {{ change.ago }}</span>
           </p>
           <p v-if="hasDirections" class="text-body"><DirectionsLink :venue="place" /></p>
+          <!-- The stations are the listed venue's, so a relocated night shows none rather than the old address's. -->
+          <NearbyStops v-if="event.status !== 'RELOCATED'" :stops="event.nearbyStops" />
         </div>
 
         <div v-if="hasTickets" class="space-y-1">

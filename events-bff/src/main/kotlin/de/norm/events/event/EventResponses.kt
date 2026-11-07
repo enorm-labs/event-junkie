@@ -10,6 +10,8 @@ import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
 import de.norm.events.image.ImageSourceResponse
 import de.norm.events.image.ServedImage
 import de.norm.events.promoter.PromoterSummaryResponse
+import de.norm.events.venue.NEARBY_STOPS_DESCRIPTION
+import de.norm.events.venue.NearbyStopResponse
 import de.norm.events.venue.VenueSummaryResponse
 import de.norm.events.weather.WeatherForecastResponse
 import io.swagger.v3.oas.annotations.media.Schema
@@ -337,7 +339,9 @@ data class EventDetailResponse(
     @Schema(description = FEATURED_DESCRIPTION, example = "false")
     val featured: Boolean = false,
     @Schema(description = WEATHER_DESCRIPTION)
-    val weather: WeatherForecastResponse? = null
+    val weather: WeatherForecastResponse? = null,
+    @Schema(description = NEARBY_STOPS_DESCRIPTION)
+    val nearbyStops: List<NearbyStopResponse> = emptyList()
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -358,7 +362,8 @@ data class EventDetailResponse(
             movedTo: MovedToResponse? = null,
             derivedGenreTags: Map<String, GenreTagOrigin> = emptyMap(),
             festival: FestivalSummaryResponse? = null,
-            weather: WeatherForecastResponse? = null
+            weather: WeatherForecastResponse? = null,
+            nearbyStops: List<NearbyStopResponse> = emptyList()
         ): EventDetailResponse =
             EventDetailResponse(
                 id = entity.requiredId(),
@@ -412,7 +417,8 @@ data class EventDetailResponse(
                 movedTo = movedTo,
                 festival = festival,
                 featured = entity.isFeaturedAt(now),
-                weather = weather
+                weather = weather,
+                nearbyStops = nearbyStops
             )
     }
 }

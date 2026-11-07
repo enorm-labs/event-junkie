@@ -5,6 +5,7 @@ import BaseBadge from '@/components/BaseBadge.vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import DetailLinks, { type DetailLink } from '@/components/DetailLinks.vue'
 import DirectionsLink from '@/components/DirectionsLink.vue'
+import NearbyStops from '@/components/NearbyStops.vue'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useDetailPage } from '@/composables/useDetailPage'
@@ -213,6 +214,7 @@ const programme = computed(() => {
         </RouterLink>
         <template v-if="mapLink">{{ ' · ' }}<DirectionsLink :venue="venue" /></template>
       </p>
+      <NearbyStops :stops="venue?.nearbyStops" />
       <DetailLinks :links="links" />
     </template>
 
