@@ -2,6 +2,7 @@ package de.norm.events.scraper.punchline
 
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
@@ -9,9 +10,9 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.flightStringOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.jsonArrayAt
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.nextFlightPayload
-import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
@@ -61,7 +62,7 @@ class PunchlineTicketsPageScraper {
             description = date.flightStringOrNull("showDescription"),
             eventType = if (MUSIC.containsMatchIn("$show ${acts.orEmpty()}")) EventType.CONCERT.name else EventType.COMEDY.name,
             eventDate = start.toLocalDate(),
-            doorsTime = date.flightStringOrNull("description")?.let { DOORS.find(it) }?.let { parseTime(it.groupValues[1]) },
+            doorsTime = labelledClock(date.flightStringOrNull("description"), DOORS_LABELS),
             startTime = start.toLocalTime(),
             sourceUrl = URI(baseUrl).resolve("/de$path").toString(),
             sourceId = "${EventSource.PUNCHLINE.sourceIdPrefix}${path.substringAfterLast('/')}-${start.toLocalDate()}-${start.hour}",
@@ -95,6 +96,5 @@ class PunchlineTicketsPageScraper {
 
         /** The words that mark one of the concerts the club books between its comedy dates. */
         val MUSIC = Regex("""\b(?:unplugged|band|orchestra|orchester|konzert|concert)\b""", RegexOption.IGNORE_CASE)
-        val DOORS = Regex("""Einlass:?\s*(\d{1,2}:\d{2})""")
     }
 }

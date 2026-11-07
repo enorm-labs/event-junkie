@@ -1,10 +1,10 @@
 package de.norm.events.scraper.hau
 
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.htmlParagraphText
+import de.norm.events.scraper.ogImageUrl
 import de.norm.events.scraper.textLines
 import org.jsoup.nodes.Document
 import java.math.BigDecimal
@@ -45,7 +45,7 @@ class HauProductionPageScraper {
         val priceLine = lines.firstOrNull { EURO_FIGURE.containsMatchIn(it) }?.replace(PRICE_LABEL, "").blankToNull()
         return HauProduction(
             description = description(document),
-            imageUrl = document.attrAt("meta[property=og:image]", "content"),
+            imageUrl = document.ogImageUrl(),
             pricePresale = priceLine?.let(::lowestFullPrice),
             priceNote = priceLine?.takeIf { AMOUNT.findAll(it).count() != 1 } ?: lines.firstOrNull { hasFreeEntryPhrase(it) }.takeIf { priceLine == null }
         )

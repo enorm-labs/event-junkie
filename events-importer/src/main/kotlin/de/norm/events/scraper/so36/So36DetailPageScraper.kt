@@ -24,6 +24,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.ogImageUrl
 import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.performersBilledWith
 import de.norm.events.scraper.promoterFromCredit
@@ -153,11 +154,7 @@ class So36DetailPageScraper {
     }
 
     /** The poster image from the Open Graph `og:image` meta tag. */
-    private fun parseImageUrl(document: Document): String? =
-        document
-            .selectFirst("meta[property=og:image]")
-            ?.attr("content")
-            ?.takeIf { it.startsWith("http") }
+    private fun parseImageUrl(document: Document): String? = document.ogImageUrl()
 
     /** The paragraphs of `.product_description` joined into the event description. */
     private fun parseDescription(document: Document): String? =

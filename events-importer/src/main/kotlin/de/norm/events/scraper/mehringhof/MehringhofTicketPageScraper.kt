@@ -5,7 +5,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.schemaImageUrl
-import de.norm.events.scraper.schemaOffers
+import de.norm.events.scraper.schemaOfferPrices
 import de.norm.events.scraper.schemaSoldOut
 import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.schemaTime
@@ -34,7 +34,7 @@ class MehringhofTicketPageScraper {
             imageUrl = event.schemaImageUrl(),
             sourceUrl = sourceUrl,
             sourceId = "",
-            pricePresale = event.schemaOffers().mapNotNull { it.stringOrNull("price")?.toBigDecimalOrNull() }.minOrNull(),
+            pricePresale = event.schemaOfferPrices().minOrNull(),
             soldOut = event.schemaSoldOut(),
             status = event.schemaStatus()
         )

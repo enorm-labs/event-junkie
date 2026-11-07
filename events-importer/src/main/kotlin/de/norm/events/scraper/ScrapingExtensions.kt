@@ -207,3 +207,6 @@ fun extractEventSlug(
  * from the canonical URL rather than the venue's German rendering.
  */
 const val ISO_DATE_LENGTH = 10
+
+/** The page's `og:image`, trimmed, or null when it has none or names no absolute `http(s)` URL. */
+fun Element.ogImageUrl(): String? = attrAt("meta[property=og:image]", "content")?.trim()?.takeIf { it.startsWith("http") }

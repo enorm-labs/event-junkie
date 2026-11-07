@@ -374,4 +374,12 @@ class ScrapingExtensionsTest {
             cssUrlValue("--bg: url(/f.jpg)", "background-image") shouldBe null
         }
     }
+
+    @Test
+    fun `ogImageUrl reads an absolute og image, trimmed, and nothing else`() {
+        Jsoup.parse("""<meta property="og:image" content=" https://venue.example/p.jpg ">""").ogImageUrl() shouldBe "https://venue.example/p.jpg"
+        Jsoup.parse("""<meta property="og:image" content="/p.jpg">""").ogImageUrl() shouldBe null
+        Jsoup.parse("""<meta property="og:image" content="">""").ogImageUrl() shouldBe null
+        Jsoup.parse("<p>no meta</p>").ogImageUrl() shouldBe null
+    }
 }

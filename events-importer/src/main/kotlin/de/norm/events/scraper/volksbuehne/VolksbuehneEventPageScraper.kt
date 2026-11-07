@@ -4,9 +4,9 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.jsonLdEvents
+import de.norm.events.scraper.ogImageUrl
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
@@ -51,7 +51,7 @@ class VolksbuehneEventPageScraper {
         return VolksbuehneEventPage(
             writers = document.textAt("p.production__writer")?.let(VolksbuehneSpielplanScraper::splitNames).orEmpty(),
             description = description,
-            imageUrl = event?.schemaImageUrl() ?: document.attrAt("meta[property=og:image]", "content"),
+            imageUrl = event?.schemaImageUrl() ?: document.ogImageUrl(),
             eventType =
                 event?.stringOrNull("@type")?.let { SCHEMA_TYPES[it] }?.let {
                     if (it == EventType.OTHER) socialEventType(description, event.stringOrNull("name")) else it

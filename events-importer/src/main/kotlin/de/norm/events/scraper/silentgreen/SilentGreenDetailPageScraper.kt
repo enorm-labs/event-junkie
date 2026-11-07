@@ -5,12 +5,12 @@ import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.isBoxOfficeLabel
+import de.norm.events.scraper.ogImageUrl
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
@@ -55,7 +55,7 @@ class SilentGreenDetailPageScraper {
                 runEnd = parseBlockDate(document, ".event-detail-date-end"),
                 dailyHours = runStart?.let { dailyHours(document, it) }.orEmpty(),
                 description = description(document),
-                imageUrl = document.attrAt("meta[property=og:image]", "content")?.takeIf { it.startsWith("http") }
+                imageUrl = document.ogImageUrl()
             )
 
         if (details == SilentGreenEventDetails()) {
