@@ -127,8 +127,9 @@ private const val LONE_INITIALISM_MAX_LEN = 3
  * Whether [raw] is not a promoter but something a source dropped into the promoter slot, three
  * shapes seen on staging (#1318): a name consisting entirely of [STRIP_WORDS] or punctuation
  * ("Event.", "Konzerts GmbH"); a lone token of one or two letters ("Ar", "Qu"); a name on
- * [NON_PROMOTER_NAMES]. Runs before [canonicalPromoterName], which always keeps one word, and
- * reads the raw credit, so "MFP Concerts" is judged whole (#1361).
+ * [NON_PROMOTER_NAMES]. A credit that slugs to nothing, such as the Cyrillic signs "Ьъ", has no
+ * row to link to either (#4611). Runs before [canonicalPromoterName], which always keeps one word,
+ * and reads the raw credit, so "MFP Concerts" is judged whole (#1361).
  */
 fun isNonPromoterName(raw: String): Boolean {
     val tokens =
@@ -142,22 +143,23 @@ fun isNonPromoterName(raw: String): Boolean {
     return tokens.isEmpty() ||
         tokens.all { it.isStrippableTrailingWord() } ||
         tokens.singleOrNull()?.isTinyToken() == true ||
-        named.joinToString(" ").normalizedKey() in NON_PROMOTER_NAMES
+        named.joinToString(" ").normalizedKey() in NON_PROMOTER_NAMES ||
+        SlugGenerator.slugify(canonicalPromoterName(raw)).isBlank()
 }
 
 /** One or two letters and nothing else: a fragment, not a name ("Ar", "Qu"). */
 private fun String.isTinyToken(): Boolean = length <= 2 && all(Char::isLetter)
 
-/** Lowercased, punctuation-free lookup key for a name (matches [String.isStrippableTrailingWord]'s scheme). */
+/** Lowercased, punctuation-free lookup key for a name or a token. */
 private fun String.normalizedKey(): String = lowercase().replace(NON_WORD_REGEX, "")
 
 /** A token is strippable if, stripped of punctuation, it is empty (a connector like "&") or a known word. */
 private fun String.isStrippableTrailingWord(): Boolean {
-    val key = lowercase().replace(NON_WORD_REGEX, "")
+    val key = normalizedKey()
     return key.isEmpty() || key in STRIP_WORDS
 }
 
-private fun String.isLegalForm(): Boolean = lowercase().replace(NON_WORD_REGEX, "") in LEGAL_FORMS
+private fun String.isLegalForm(): Boolean = normalizedKey() in LEGAL_FORMS
 
 private val WHITESPACE_REGEX = Regex("""\s+""")
 
@@ -167,8 +169,11 @@ private val TRAILING_PAREN_REGEX = Regex("""\s*\([^)]*\)\s*$""")
 /** Straight and typographic double quotes, which a credit wraps a brand in and no promoter keeps in its name. */
 private val DOUBLE_QUOTE_REGEX = Regex("[\"„“”«»]")
 
-/** Everything except letters (incl. German umlauts) and digits — used to normalize a token for lookup. */
-private val NON_WORD_REGEX = Regex("""[^a-z0-9äöüß]""")
+/**
+ * Everything but a letter of any script, the accent on it and a digit. A key that dropped Cyrillic letters would read
+ * `Агентство` as an empty connector and strip it (#4611).
+ */
+private val NON_WORD_REGEX = Regex("""[^\p{L}\p{M}\p{N}]""")
 
 /**
  * Trailing words removed during canonicalization: German/English legal forms plus generic
