@@ -17,6 +17,7 @@ import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useSession } from '@/composables/useSession'
 import { savedQuery, singleFilter } from '@/lib/savedSearch'
+import { TEXT_LINK_CLASS } from '@/lib/utils'
 
 type FilterValue = string | number | boolean | readonly string[] | undefined
 
@@ -75,7 +76,7 @@ async function save(chosen: string) {
       v-if="!account"
       :title="t('account.search.signIn')"
       :to="{ path: localePath('/sign-in'), query: { next: localePath('/events') } }"
-      class="inline-flex items-center gap-1 text-primary hover:underline"
+      :class="['inline-flex items-center gap-1', TEXT_LINK_CLASS]"
     >
       <Bookmark aria-hidden="true" class="size-4" />
       {{ t('account.search.save') }}
@@ -83,7 +84,7 @@ async function save(chosen: string) {
     <button
       v-else-if="single"
       :disabled="status === 'busy'"
-      class="inline-flex items-center gap-1 text-primary hover:underline"
+      :class="['inline-flex items-center gap-1', TEXT_LINK_CLASS]"
       data-testid="save-search"
       type="button"
       @click="save(single)"
@@ -94,7 +95,7 @@ async function save(chosen: string) {
     <Popover v-else v-model:open="open">
       <PopoverTrigger as-child>
         <button
-          class="inline-flex items-center gap-1 text-primary hover:underline"
+          :class="['inline-flex items-center gap-1', TEXT_LINK_CLASS]"
           data-testid="save-search"
           type="button"
         >
@@ -130,7 +131,7 @@ async function save(chosen: string) {
         {{ t('account.search.saved') }}
         <RouterLink
           :to="{ path: localePath('/following'), query: { tab: 'follows' } }"
-          class="text-primary hover:underline"
+          :class="TEXT_LINK_CLASS"
         >
           {{ t('account.search.open') }}
         </RouterLink>

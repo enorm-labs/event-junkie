@@ -11,7 +11,7 @@ import { ArrowUpRight } from '@lucide/vue'
 import type { Festival } from '@/api/types'
 import { useCurrentFestivals } from '@/composables/useCurrentFestivals'
 import { useFormat } from '@/composables/useFormat'
-import { CARD_LIST_CLASS } from '@/lib/utils'
+import { CARD_LIST_CLASS, TEXT_LINK_CLASS } from '@/lib/utils'
 
 const { t, locale } = useI18n()
 const { formatDayRange } = useFormat()
@@ -48,7 +48,7 @@ function noticeOf(festival: Festival) {
       <p v-if="noticeOf(festival)" class="text-muted-foreground">{{ noticeOf(festival) }}</p>
       <a
         :href="festival.url"
-        class="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+        :class="['inline-flex items-center gap-1 font-medium', TEXT_LINK_CLASS]"
         rel="noopener"
         target="_blank"
       >
