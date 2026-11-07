@@ -1,12 +1,10 @@
 package de.norm.events.scraper.giri
 
 import de.norm.events.event.ArtistRole
-import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -20,12 +18,11 @@ import java.time.LocalTime
 /** Unit tests for [GiriProgrammePageScraper], against saved copies of two real month pages. */
 class GiriProgrammePageScraperTest {
     private val scraper = GiriProgrammePageScraper()
-    private val octoberUrl = "https://giri.berlin/programme/"
-    private val novemberUrl = "https://giri.berlin/programme/?month=2026-11"
+    private val programmeUrl = "https://giri.berlin/programme/"
 
     private fun scrape(
         fixture: String,
-        url: String
+        url: String = programmeUrl
     ): List<ScrapedEvent> {
         val html =
             javaClass.classLoader
@@ -35,90 +32,75 @@ class GiriProgrammePageScraperTest {
         return scraper.scrape(Jsoup.parse(html, url), url)
     }
 
-    private val october: List<ScrapedEvent> by lazy { scrape("giri-overview.html", octoberUrl) }
+    private fun scrapeHtml(html: String): List<ScrapedEvent> = scraper.scrape(Jsoup.parse(html, programmeUrl), programmeUrl)
 
-    private fun event(titlePrefix: String) = october.single { it.title.startsWith(titlePrefix) }
+    private val november: List<ScrapedEvent> by lazy { scrape("giri-overview.html") }
+
+    private fun event(titlePrefix: String) = november.single { it.title.startsWith(titlePrefix) }
+
+    /** One calendar link and its template, in the markup the site uses since 2026-11. */
+    private fun night(
+        facts: String,
+        lineup: String = "",
+        category: String = "music",
+        title: String = "Night"
+    ) = """
+        <a class="calendar-event" data-event="form-x" data-event-date="2026-11-18" data-event-category="$category"
+           href="https://giri.berlin/programme/2026-11-18-night--abc/"></a>
+        <template data-event-content="form-x"><article class="event-detail"><div>
+          <h2>$title</h2>
+          <dl class="event-facts">$facts</dl>
+          <div class="event-description"><div class="giri-event-description"><p>About the night.</p><h3>Lineup</h3>$lineup</div></div>
+        </div></article></template>
+        """.trimIndent()
 
     @Test
-    fun `scrape reads every listed night with its date from the calendar`() {
-        october shouldHaveSize 5
-        october.map { it.eventDate } shouldContainExactly listOf(21, 22, 23, 24, 28).map { LocalDate.of(2026, 10, it) }
-        october.map { it.sourceId }.distinct() shouldHaveSize 5
+    fun `scrape reads every calendar link with its date`() {
+        november.map { it.eventDate } shouldContainExactly listOf(18, 25).map { LocalDate.of(2026, 11, it) }
+        november.map { it.sourceId } shouldContainExactly
+            listOf("giri:form-224b5be43b7afed8f23fe62aafdcd051", "giri:form-5a288c226eaafbb0209bae81edc9977e")
     }
 
     @Test
-    fun `scrape reads the event key from the programme_event link the site uses since 2026-10`() {
-        val live = scrape("giri-overview-2026-10-17.html", octoberUrl)
-        live shouldHaveSize 5
-        live.map { it.eventDate } shouldContainExactly listOf(21, 22, 23, 24, 28).map { LocalDate.of(2026, 10, it) }
-        live.first().sourceId shouldBe "${EventSource.GIRI.sourceIdPrefix}f513b2e799a62e7115a31481"
-    }
+    fun `scrape reads a fully populated night from its template`() {
+        val night = event("GIRI x SYNESTRANSIA")
 
-    @Test
-    fun `scrape reads a fully populated night`() {
-        val night = event("GIRI x CURRENTS")
-
-        night.sourceId shouldBe "giri:f513b2e799a62e7115a31481"
-        night.sourceUrl shouldBe "https://giri.berlin/programme/?month=2026-10&view=list#event-form-c4364ff1b452ed792b3855ba322c5fca"
-        night.startTime shouldBe LocalTime.of(18, 0)
+        night.title shouldBe "GIRI x SYNESTRANSIA Experiment #5: The Freedom of Five"
+        night.sourceUrl shouldBe
+            "https://giri.berlin/programme/2026-11-18-giri-x-synestransia-experiment-5-the-freedom-of-five--eb4bc25c42b963c522f44ac7/"
+        night.doorsTime shouldBe LocalTime.of(18, 0)
+        night.startTime.shouldBeNull()
         night.endTime.shouldBeNull()
         night.endDate.shouldBeNull()
-        night.genre shouldBe "experimental, IDM, noise, video"
+        night.genre shouldBe "experimental, techno"
         night.subtitle.shouldBeNull()
-        night.priceNote shouldBe "Donation-based"
-        night.ticketUrl shouldBe "https://ra.co/events/2545224"
-        night.imageUrl shouldBe "https://giri.berlin/wp-content/themes/giri-2026/assets/images/events/a5706e7a915488c6-960.webp"
-        night.eventType shouldBe "CONCERT"
-        night.artists shouldContainExactly listOf("BAERK.", "Leng Seong", "Memeshift").map { ScrapedArtist(it, ArtistRole.HEADLINER) }
-    }
-
-    @Test
-    fun `the description keeps the paragraphs before the lineup and drops the sections after it`() {
-        val description = event("Kontralamakina").description!!
-
-        description shouldStartWith "Kontralamakina presents KNTRLMKN09"
-        description shouldContain "\n\nTen raw techno tracks"
-        description shouldNotContain "Lineup"
-        description shouldNotContain "Mastering"
-    }
-
-    @Test
-    fun `a night without live markers is a party of DJs`() {
-        val night = event("Kontralamakina")
-
+        night.priceNote shouldBe "Donation at the door"
+        night.ticketUrl shouldBe "https://ra.co/events/2555788"
+        night.imageUrl shouldBe "https://giri.berlin/wp-content/uploads/2026/10/synestransia-freedom-of-5-Miguel-Wilson-960x1200.jpg"
         night.eventType shouldBe "PARTY"
-        night.typeIsFallback shouldBe true
-        night.artists shouldContainExactly listOf("Nases Morur", "Thravsma", "Fuerza Kontraria").map { ScrapedArtist(it, ArtistRole.DJ) }
+        night.artists shouldContainExactly listOf("ANNARA", "DJ Trade Trainer", "MADAKYA", "TA 7O").map { ScrapedArtist(it, ArtistRole.DJ) }
     }
 
     @Test
-    fun `a lineup with one list per act skips the link items`() {
-        event("Giri x Rawa Club").artists.map { it.name } shouldContainExactly
-            listOf("hotel99*", "Merma Suelo", "Parallel Nico", "Dj Hidrataccioni")
-    }
-
-    @Test
-    fun `a lineup written as paragraphs skips the link paragraphs`() {
-        event("Satelliet Studio").artists.map { it.name } shouldContainExactly listOf("Aton", "Daraio", "Linda Shiro", "Otis")
-    }
-
-    @Test
-    fun `a live act on a DJ night is billed live and a guest placeholder is dropped`() {
-        event("GIRI X OCCULTISTS").artists shouldContainExactly
-            listOf(ScrapedArtist("James Demon", ArtistRole.DJ), ScrapedArtist("Nicky Miller", ArtistRole.LIVE))
-    }
-
-    @Test
-    fun `a later month page reads its nights, a hybrid live and DJ set counting as live`() {
-        val november = scrape("giri-month-2026-11.html", novemberUrl)
-
-        november shouldHaveSize 1
-        with(november.single()) {
-            eventDate shouldBe LocalDate.of(2026, 11, 5)
-            sourceUrl shouldStartWith "https://giri.berlin/programme/?month=2026-11&view=list#event-form-"
-            eventType shouldBe "CONCERT"
-            artists.map { it.name } shouldContainExactly listOf("Andrew K. Morrison", "Andreagene", "Marie Dior", "High Fall")
+    fun `each night of the month carries its own facts and four acts`() {
+        with(event("GIRI x Precision.wav")) {
+            eventDate shouldBe LocalDate.of(2026, 11, 25)
+            doorsTime shouldBe LocalTime.of(18, 0)
+            genre shouldBe "House & Electro minimal"
+            ticketUrl shouldBe "https://ra.co/events/2567991"
+            sourceUrl shouldBe "https://giri.berlin/programme/2026-11-25-giri-x-precision-wav--9a06b65f62f6483500e50466/"
+            artists.map { it.name } shouldContainExactly listOf("Gian", "Caldo", "Paganipagani", "Djinni")
         }
+    }
+
+    @Test
+    fun `the description keeps the paragraphs before the lineup and drops the link lines`() {
+        val description = event("GIRI x Precision.wav").description!!
+
+        description shouldStartWith "Giri x Precision.wav"
+        description shouldContain "\n\nSome friendships begin on a dancefloor"
+        description shouldNotContain "Lineup"
+        description shouldNotContain "Instagram"
     }
 
     @Test
@@ -127,31 +109,64 @@ class GiriProgrammePageScraperTest {
     }
 
     @Test
-    fun `an entry the calendar does not date is skipped`() {
-        val html =
-            """
-            <article class="programme-detail" id="event-form-x"><h2><a href="https://giri.berlin/programme/?giri_event=abc">Night</a></h2></article>
-            """.trimIndent()
-
-        scraper.scrape(Jsoup.parse(html, octoberUrl), octoberUrl).shouldBeEmpty()
+    fun `a calendar link without a template is skipped`() {
+        scrapeHtml(
+            """<a class="calendar-event" data-event="form-x" data-event-date="2026-11-18" href="https://giri.berlin/programme/x/"></a>"""
+        ).shouldBeEmpty()
     }
 
     @Test
-    fun `a printed end time is read with its date`() {
-        val html =
-            """
-            <div class="giri-calendar-day" data-calendar-date="2026-10-21"><a class="giri-calendar-event" data-event-id="form-x" href="#"></a></div>
-            <article class="programme-detail" id="event-form-x" data-event-category="food">
-              <h2><a href="https://giri.berlin/programme/?giri_event=abc">Jazz Dinner</a></h2>
-              <dl class="event-facts"><div><dt>Time</dt><dd>19:00–1:00</dd></div></dl>
-            </article>
-            """.trimIndent()
+    fun `a calendar link listed twice yields one event`() {
+        val html = night("") + """<a class="calendar-event" data-event="form-x" data-event-date="2026-11-18" href="#"></a>"""
 
-        with(scraper.scrape(Jsoup.parse(html, octoberUrl), octoberUrl).single()) {
+        scrapeHtml(html).map { it.sourceId } shouldContainExactly listOf("giri:form-x")
+    }
+
+    @Test
+    fun `a Time fact is the start, and its end rolls past midnight`() {
+        val html = night("<div><dt>Doors</dt><dd>18:30</dd></div><div><dt>Time</dt><dd>19:00–1:00</dd></div>", category = "food")
+
+        with(scrapeHtml(html).single()) {
+            doorsTime shouldBe LocalTime.of(18, 30)
             startTime shouldBe LocalTime.of(19, 0)
             endTime shouldBe LocalTime.of(1, 0)
-            endDate shouldBe LocalDate.of(2026, 10, 22)
+            endDate shouldBe LocalDate.of(2026, 11, 19)
+            eventType shouldBe "OTHER"
             artists.shouldBeEmpty()
         }
+    }
+
+    @Test
+    fun `an open-ended doors value stores the doors time and no end`() {
+        with(scrapeHtml(night("<div><dt>Doors</dt><dd>From 18:00-end</dd></div>")).single()) {
+            doorsTime shouldBe LocalTime.of(18, 0)
+            startTime.shouldBeNull()
+            endTime.shouldBeNull()
+        }
+    }
+
+    @Test
+    fun `a night whose every act plays live is a concert of headliners`() {
+        val lineup = "<p>Leng Seong (live)</p><p>Memeshift (Live Performance)</p><p><a href=\"#\">Instagram · @act</a></p>"
+
+        with(scrapeHtml(night("", lineup)).single()) {
+            eventType shouldBe "CONCERT"
+            artists shouldContainExactly listOf("Leng Seong", "Memeshift").map { ScrapedArtist(it, ArtistRole.HEADLINER) }
+        }
+    }
+
+    @Test
+    fun `a live act on a DJ night is billed live and a guest placeholder is dropped`() {
+        val lineup = "<ul><li>James Demon — <a href=\"#\">RA</a></li><li>Nicky Miller (live)</li><li>Special Guest</li></ul>"
+
+        scrapeHtml(night("", lineup)).single().artists shouldContainExactly
+            listOf(ScrapedArtist("James Demon", ArtistRole.DJ), ScrapedArtist("Nicky Miller", ArtistRole.LIVE))
+    }
+
+    @Test
+    fun `a long title is kept whole`() {
+        val title = "GIRI x " + "Very Long Collaboration Name ".repeat(8).trim()
+
+        scrapeHtml(night("", title = title)).single().title shouldBe title
     }
 }

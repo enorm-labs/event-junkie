@@ -24,8 +24,12 @@ class GiriWebsiteImporterTest {
     private lateinit var importer: GiriWebsiteImporter
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://giri.berlin/programme/"
-    private val novemberUrl = "https://giri.berlin/programme/?month=2026-11"
     private val decemberUrl = "https://giri.berlin/programme/?month=2026-12"
+    private val januaryUrl = "https://giri.berlin/programme/?month=2027-01"
+
+    /** A month page that lists no event but still links the next month. */
+    private fun emptyMonthLinking(next: String) =
+        Jsoup.parse("""<a class="circle-button" id="month-next" href="$next" aria-label="Next month">→</a>""", sourceUrl)
 
     private fun document(
         fixture: String,
@@ -48,47 +52,58 @@ class GiriWebsiteImporterTest {
                 etag = "\"giri-1\"",
                 lastModified = "Fri, 16 Oct 2026 18:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(novemberUrl) } returns document("giri-month-2026-11.html", novemberUrl)
         coEvery { htmlFetcher.fetchDocument(decemberUrl) } returns document("giri-month-2026-12.html", decemberUrl)
     }
 
     @Test
-    fun `importEvents walks the months until the first empty one`() =
+    fun `importEvents follows month-next to the first month without an event`() =
         runTest {
             val result = importer.importEvents(sourceUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 6
-            result.events.last().eventDate shouldBe LocalDate.of(2026, 11, 5)
+            result.events shouldHaveSize 2
+            result.events.last().eventDate shouldBe LocalDate.of(2026, 11, 25)
             result.complete shouldBe true
-            coVerify(exactly = 2) { htmlFetcher.fetchDocument(any()) }
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(decemberUrl) }
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(any()) }
+        }
+
+    @Test
+    fun `a later month with no event stops the walk even when it links the next`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(decemberUrl) } returns emptyMonthLinking(januaryUrl)
+
+            val result = importer.importEvents(sourceUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 2
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(januaryUrl) }
         }
 
     @Test
     fun `an empty entry month still walks on to the next`() =
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
-                FetchResult.Success(document = document("giri-month-2026-12.html", sourceUrl), etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument("https://giri.berlin/programme/?month=2027-01") } returns
-                Jsoup.parse("<html><body></body></html>", sourceUrl)
+                FetchResult.Success(document = emptyMonthLinking(januaryUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(januaryUrl) } returns document("giri-month-2026-12.html", januaryUrl)
 
             val result = importer.importEvents(sourceUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events.shouldBeEmpty()
             result.complete shouldBe true
-            coVerify(exactly = 1) { htmlFetcher.fetchDocument("https://giri.berlin/programme/?month=2027-01") }
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(januaryUrl) }
         }
 
     @Test
     fun `a failed later month keeps the months read and marks the run incomplete`() =
         runTest {
-            coEvery { htmlFetcher.fetchDocument(novemberUrl) } throws HttpFetchException(503, novemberUrl)
+            coEvery { htmlFetcher.fetchDocument(decemberUrl) } throws HttpFetchException(503, decemberUrl)
 
             val result = importer.importEvents(sourceUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 5
+            result.events shouldHaveSize 2
             result.complete shouldBe false
         }
 

@@ -19,13 +19,15 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.time.LocalTime
 
 /**
- * Pure parser for one month of Giri's programme. The page renders the month twice: a calendar,
- * whose day cells carry the ISO date and link each event by `data-event-id`, and a hidden list
- * of `article.programme-detail` with the full record. The date comes from the calendar, because
- * the list prints only `21` and `OCT WED`. Acts are the items under the `Lineup` heading, in
- * three markups: `Name — links`, one list per act, or a paragraph per name and per link.
+ * Pure parser for one month of Giri's programme. The page renders a calendar whose
+ * `a.calendar-event` links carry the event's id, ISO date, category and own page, and one
+ * `<template data-event-content>` per id holding the full `article.event-detail`. Jsoup parses a
+ * template's content as ordinary children, so `select` reaches it. Acts are the items under the
+ * `Lineup` heading, in three markups: `Name — links`, one list per act, or a paragraph per name
+ * and per link.
  */
 class GiriProgrammePageScraper {
     private val logger = KotlinLogging.logger {}
@@ -34,51 +36,51 @@ class GiriProgrammePageScraper {
         document: Document,
         pageUrl: String
     ): List<ScrapedEvent> {
-        val dates =
-            document
-                .select(".giri-calendar-day[data-calendar-date]")
-                .flatMap { day ->
-                    day.select("a.giri-calendar-event[data-event-id]").map { it.attr("data-event-id") to day.attr("data-calendar-date") }
-                }.toMap()
-        val articles = document.select(ARTICLE_SELECTOR)
-        logger.info { "Found ${articles.size} event(s) on the Giri programme page $pageUrl" }
-        return articles.mapSkippingFailures(logger, "Giri programme entry") { parseArticle(it, dates) }
+        val links = document.select(CALENDAR_LINK_SELECTOR).distinctBy { it.attr("data-event") }
+        logger.info { "Found ${links.size} event(s) on the Giri programme page $pageUrl" }
+        return links.mapSkippingFailures(logger, "Giri programme entry") { parseEvent(it, document) }
     }
 
-    private fun parseArticle(
-        article: Element,
-        dates: Map<String, String>
+    private fun parseEvent(
+        link: Element,
+        document: Document
     ): ScrapedEvent? {
-        val title = article.textAt("h2")
-        val eventKey = article.hrefAt("h2 a")?.let { EVENT_KEY.find(it)?.groupValues?.get(1) }
-        val date = parseRealDate(dates[article.id().removePrefix("event-")])
-        if (title == null || eventKey == null || date == null) {
-            logger.warn { "Giri entry ${article.id()} lacks a title, an event key or a calendar date, skipping" }
+        val id = link.attr("data-event")
+        val article = document.selectFirst("template[data-event-content=\"$id\"] article.event-detail")
+        val title = article?.textAt("h2")
+        val date = parseRealDate(link.attr("data-event-date"))
+        if (article == null || title == null || date == null) {
+            logger.warn { "Giri entry $id lacks an event record, a title or a calendar date, skipping" }
             return null
         }
-        val times = CLOCK.findAll(article.fact("Time").orEmpty()).mapNotNull { parseTime(it.value.padStart(HH_MM_LENGTH, '0')) }.toList()
-        val startTime = times.firstOrNull()
-        val endTime = times.getOrNull(1)
+        val startClocks = clocks(article.fact("Time") ?: article.fact("Start"))
+        val doorsClocks = clocks(article.fact("Doors"))
+        val startTime = startClocks.firstOrNull()
+        val doorsTime = doorsClocks.firstOrNull()
+        val endTime = startClocks.ifEmpty { doorsClocks }.getOrNull(1)
         val acts = lineup(article)
-        val eventType = eventType(title, article.attr("data-event-category"), acts)
+        val eventType = eventType(title, link.attr("data-event-category"), acts)
         return ScrapedEvent(
             title = title,
             description = description(article),
             eventType = eventType,
             typeIsFallback = eventType == EventType.PARTY.name && inferUnmarkedTitleType(title) == EventType.OTHER.name,
             eventDate = date,
+            doorsTime = doorsTime,
             startTime = startTime,
-            endDate = endTime?.let { endOn(date, startTime, it) },
+            endDate = endTime?.let { endOn(date, startTime ?: doorsTime, it) },
             endTime = endTime,
-            imageUrl = article.imgSrcAt("figure img"),
-            sourceUrl = "$PROGRAMME_URL?month=${date.toString().take(YEAR_MONTH_LENGTH)}&view=list#${article.id()}",
-            sourceId = "${EventSource.GIRI.sourceIdPrefix}$eventKey",
-            ticketUrl = article.hrefAt("a.programme-announcement"),
-            genre = article.textAt(".programme-detail-subtitle"),
+            imageUrl = article.imgSrcAt(".event-detail-art img"),
+            sourceUrl = link.absUrl("href").blankToNull() ?: PROGRAMME_URL,
+            sourceId = "${EventSource.GIRI.sourceIdPrefix}$id",
+            ticketUrl = article.hrefAt(".event-primary-action a"),
+            genre = article.textAt("p.event-subtitle"),
             priceNote = article.fact("Entry"),
             artists = acts.map { ScrapedArtist(name = it.name, role = roleOf(it, eventType)) }
         )
     }
+
+    private fun clocks(fact: String?): List<LocalTime> = CLOCK.findAll(fact.orEmpty()).mapNotNull { parseTime(it.value.padStart(HH_MM_LENGTH, '0')) }.toList()
 
     /** The `<dd>` beside the `<dt>` that reads [label] in the event's facts list. */
     private fun Element.fact(label: String): String? =
@@ -153,15 +155,11 @@ class GiriProgrammePageScraper {
     }
 
     private companion object {
-        const val ARTICLE_SELECTOR = "article.programme-detail"
+        const val CALENDAR_LINK_SELECTOR = "a.calendar-event[data-event][data-event-date]"
         const val MUSIC_CATEGORY = "music"
         const val PROGRAMME_URL = "https://giri.berlin/programme/"
-        const val YEAR_MONTH_LENGTH = 7
         const val HH_MM_LENGTH = 5
         val CLOCK = Regex("""\d{1,2}:\d{2}""")
-
-        /** The key in an event's link: `?giri_programme_event=<key>` since 2026-10, `?giri_event=<key>` before. */
-        val EVENT_KEY = Regex("""[?&]giri(?:_programme)?_event=([^&#]+)""")
 
         /** A trailing `(live)`, `(Live Performance)` or `(hybrid live+dj set)`; any other bracket stays in the name. */
         val ROLE_NOTE = Regex("""^(.+?)\s*\(([^()]*\b(?:live|dj|set|performance)\b[^()]*)\)$""", RegexOption.IGNORE_CASE)
