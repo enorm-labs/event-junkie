@@ -69,7 +69,13 @@ import { usePush } from '@/composables/usePush'
 import { useSavedSearches } from '@/composables/useSavedSearches'
 import { useSession } from '@/composables/useSession'
 import { tomorrowIso } from '@/lib/format'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn, RESULTS_BAR_CLASS } from '@/lib/utils'
+import {
+  CARD_GRID_CLASS,
+  CARD_LIST_CLASS,
+  cn,
+  RESULTS_BAR_CLASS,
+  UNDERLINED_LINK_CLASS,
+} from '@/lib/utils'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -339,7 +345,7 @@ onBeforeUnmount(() => {
     <template #header>
       <p class="text-body text-muted-foreground">
         {{ t('account.follow.page.intro') }}
-        <RouterLink class="underline underline-offset-2" :to="localePath('/account')">
+        <RouterLink :class="UNDERLINED_LINK_CLASS" :to="localePath('/account')">
           {{ t('account.follow.page.account') }}
         </RouterLink>
       </p>
@@ -511,7 +517,7 @@ onBeforeUnmount(() => {
         <!-- The bells only where the site sends push. Off in this browser, they still reach the others. -->
         <p v-if="bells && push.state.value !== 'on'" class="text-meta text-muted-foreground">
           {{ t('account.push.bellHint') }}
-          <RouterLink class="underline underline-offset-2" :to="localePath('/account')">
+          <RouterLink :class="UNDERLINED_LINK_CLASS" :to="localePath('/account')">
             {{ t('account.push.bellHintLink') }}
           </RouterLink>
         </p>
