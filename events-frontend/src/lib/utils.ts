@@ -28,6 +28,14 @@ export const FIELD_CLASS =
   'h-8 rounded-lg border border-border bg-background px-2 text-body outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
 
 /**
+ * A native checkbox: the notification toggles, the report form's problems and the filter options.
+ * Its own constant rather than {@link FIELD_CLASS}, because a box takes a size and no padding.
+ * A label that top-aligns its text adds `mt-1` at the call site, because the margin is layout.
+ */
+export const CHECKBOX_CLASS =
+  'size-4 shrink-0 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+
+/**
  * An interactive card: the event and venue tiles, which are links. No border, fill, shadow or
  * radius: the poster is the card, and space separates one from the next (#1246). The reveal
  * belongs to the poster box below.

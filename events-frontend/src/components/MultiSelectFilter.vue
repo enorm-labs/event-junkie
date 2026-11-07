@@ -17,7 +17,7 @@ import { useI18n } from 'vue-i18n'
 import BaseInput from '@/components/BaseInput.vue'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { cn, FIELD_CLASS } from '@/lib/utils'
+import { CHECKBOX_CLASS, cn, FIELD_CLASS } from '@/lib/utils'
 
 export interface FilterOption {
   value: string
@@ -144,7 +144,7 @@ function toggle(value: string, checked: boolean) {
           <input
             :checked="selected.includes(option.value)"
             :disabled="unavailable(option.value)"
-            class="size-4 shrink-0 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            :class="CHECKBOX_CLASS"
             type="checkbox"
             @change="toggle(option.value, ($event.target as HTMLInputElement).checked)"
           />

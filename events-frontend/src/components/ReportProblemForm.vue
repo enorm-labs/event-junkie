@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { REPORT_PROBLEMS, type OpenReport, type ReportProblem } from '@/api/account'
 import { ApiError } from '@/api/client'
 import { useReports } from '@/composables/useReports'
-import { cn, FIELD_CLASS } from '@/lib/utils'
+import { CHECKBOX_CLASS, cn, FIELD_CLASS } from '@/lib/utils'
 
 const props = defineProps<{ slug: string }>()
 const emit = defineEmits<{ done: [] }>()
@@ -63,8 +63,8 @@ const remove = () => run(() => withdraw(props.slug))
         <input
           v-model="problems"
           :data-testid="`report-${option}`"
+          :class="['mt-1', CHECKBOX_CLASS]"
           :value="option"
-          class="mt-1 size-4 shrink-0 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           type="checkbox"
         />
         <span>{{ t(`account.report.problems.${option}`) }}</span>
