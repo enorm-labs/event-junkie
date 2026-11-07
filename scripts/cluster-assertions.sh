@@ -59,6 +59,14 @@ pass() {
     printf '  ok    [%s] %s\n' "$current_case" "$1"
 }
 
+# Whether a yq query over a file yields this exact line. It reads all the output before it matches:
+# `grep -q` exits at the match, which can kill yq under pipefail, and a correct file then reads as wrong.
+yq_lists() {
+    local query="$1" file="$2" wanted="$3" output
+    output="$(yq -N "$query" "$file")" || return 1
+    grep -qxF -- "$wanted" <<<"$output"
+}
+
 assert_equals() {
     local description="$1" expected="$2" actual="$3"
     if [[ "$actual" == "$expected" ]]; then
@@ -200,8 +208,8 @@ check_cluster_issuers() {
                 "a wait makes an ACME outage fail this object, and it needs the path of its own cluster"
         fi
 
-        if yq -N '.resources[]' "$dir/kustomization.yaml" | grep -qx 'issuer-kustomization.yaml' &&
-            yq -N '.resources[]' "$dir/issuer/kustomization.yaml" | grep -qx 'cluster-issuer.yaml'; then
+        if yq_lists '.resources[]' "$dir/kustomization.yaml" 'issuer-kustomization.yaml' &&
+            yq_lists '.resources[]' "$dir/issuer/kustomization.yaml" 'cluster-issuer.yaml'; then
             pass "both kustomization.yaml files list the issuer's files"
         else
             fail "a kustomization.yaml does not list the issuer's files" \
@@ -237,7 +245,7 @@ check_kustomization_alerts() {
                 fail "the apply-failure Alert does not name $name" \
                     "the cluster sends no event when it fails, and nothing else reports a failed apply"
             fi
-            if yq -N '.on.repository_dispatch.types[]' "$workflow" | grep -qx "Kustomization/$name.flux-system"; then
+            if yq_lists '.on.repository_dispatch.types[]' "$workflow" "Kustomization/$name.flux-system"; then
                 pass "flux-source-failure.yml listens for $name"
             else
                 fail "flux-source-failure.yml does not list Kustomization/$name.flux-system" \
@@ -380,7 +388,9 @@ main() {
         echo "yq is not installed" >&2
         exit 127
     }
-    helm plugin list 2>/dev/null | grep -q '^unittest' || {
+    local plugins
+    plugins="$(helm plugin list 2>/dev/null || true)"
+    grep -q '^unittest' <<<"$plugins" || {
         echo "the helm-unittest plugin is not installed — see deploy/AGENTS.md" >&2
         exit 127
     }
