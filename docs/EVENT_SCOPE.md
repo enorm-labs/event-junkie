@@ -64,6 +64,9 @@ publishes no lineup. A party title names the night, not an act. The same applies
 158 of the 5,278 upcoming events on production (3.0%). Of the 86 `OTHER` events from 2026-10-09 to 2026-11-09, 9 were
 talks and 2 were dance or theatre. A type for 11 events in a month buys no useful filter (#332).
 
+**A ceilidh is a `CONCERT`.** A band plays, and the audience dances to it. Kesselhaus files The Berlin Ceilidh under
+`tanz`, so its scraper types the night by its title and bills the band from the subtitle.
+
 **An open stage, a jam session or a song slam is a `CONCERT` with no act.** Its venue declares the `ARTISTS`
 limitation, so the `concertsWithoutArtist` check does not count the night as a defect. A club night that has no
 category gets `PARTY` from the signal on its venue's own page. That signal is a late start, a `Dj:` line or a dancefloor
