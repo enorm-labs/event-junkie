@@ -1,6 +1,7 @@
 package de.norm.events.image
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
@@ -43,6 +44,8 @@ class ImageMetricsRefreshService(
         try {
             metrics.updateUrlStates(repository.countUrlStates())
             metrics.updateDerivativeBacklog(repository.countNeedingDerivatives(imgproxyProperties.expectedVariants))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(e) { "Could not refresh the image cache gauges; they keep their previous values" }
         }

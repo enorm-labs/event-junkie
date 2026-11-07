@@ -1,5 +1,6 @@
 package de.norm.events.scraper.admiralspalast
 
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
@@ -85,6 +86,7 @@ class AdmiralspalastWebsiteImporter(
                     genres.putIfAbsent(productionUrl, label)
                 }
             } catch (e: Exception) {
+                rethrowIfCancelled()
                 logger.warn(e) { "Failed to load the Admiralspalast category page $genreUrl, its productions stay untyped" }
             }
         }

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.heidegluehen
 
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
@@ -77,6 +78,7 @@ class HeidegluehenWebsiteImporter(
         try {
             weekPageScraper.scrape(htmlFetcher.fetchDocument(url))
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.warn(e) { "Failed to fetch Heideglühen week page $url, importing the month page alone" }
             null
         }
