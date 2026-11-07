@@ -1,5 +1,6 @@
 package de.norm.events.scraper.heimathafen
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
@@ -11,6 +12,7 @@ import de.norm.events.scraper.querySeparator
 import de.norm.events.scraper.walkWpRestPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
+import java.time.Clock
 
 /**
  * Website importer for Heimathafen Neukölln, sourced from its WordPress REST API.
@@ -38,13 +40,15 @@ import org.springframework.stereotype.Component
  */
 @Component
 class HeimathafenWebsiteImporter(
-    private val apiClient: ApiClient
+    private val apiClient: ApiClient,
+    /** Clock for the scraper's past-performance cut-off; override in tests. */
+    clock: Clock = Clock.system(BERLIN)
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.HEIMATHAFEN
 
-    private val apiScraper = HeimathafenApiScraper()
+    private val apiScraper = HeimathafenApiScraper(clock)
 
     override suspend fun importEvents(
         url: String,

@@ -14,6 +14,9 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * Unit tests for [HeimathafenWebsiteImporter].
@@ -22,10 +25,14 @@ import org.junit.jupiter.api.Test
  * point of this importer: upcoming performances are scattered across the whole archive, so it must
  * keep requesting pages until one comes back short — and must never request the page *after* the
  * last, which WordPress answers with a 400.
+ *
+ * The clock is pinned to the capture date: the fixtures' performances end on 2026-11-06, and a real
+ * clock filters every one of them out as past.
  */
 class HeimathafenWebsiteImporterTest {
     private val apiClient: ApiClient = mockk()
-    private val importer = HeimathafenWebsiteImporter(apiClient)
+    private val clock: Clock = Clock.fixed(Instant.parse("2026-08-01T09:00:00Z"), ZoneId.of("Europe/Berlin"))
+    private val importer = HeimathafenWebsiteImporter(apiClient, clock)
     private val baseUrl = "https://heimathafen-neukoelln.de/wp-json/wp/v2/events"
 
     private fun fixture(name: String): String =
