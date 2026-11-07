@@ -88,6 +88,11 @@ class ColosseumOverviewPageScraper {
             logger.warn { "Colosseum event '$slug' has no title, skipping" }
             return null
         }
+        // A market is out of scope (EVENT_SCOPE.md §3.2): the design Christmas market (#4585).
+        if (MARKET_TITLE.containsMatchIn(title)) {
+            logger.info { "Skipping Colosseum event '$slug': a market, out of scope" }
+            return null
+        }
         // No detail page is fetched, so an event without a resolvable startDate has no second chance
         // at a date — drop it rather than persist a sentinel.
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
@@ -149,6 +154,12 @@ class ColosseumOverviewPageScraper {
     private companion object {
         /** The title's own support billing, `Peter Broderick & The Winterage Men with special guest Marlais`. */
         private val SPECIAL_GUEST_MARKER = Regex("""\s+(?:with|mit)\s+special\s+guests?:?\s+""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A market in the title: a word ending in `markt` (`Indoor Design Weihnachtsmarkt`) or the
+         * word `market`. A word that only starts with `Markt` stays.
+         */
+        private val MARKET_TITLE = Regex("""markt(?!\p{L})|(?<!\p{L})market(?!\p{L})""", RegexOption.IGNORE_CASE)
 
         /** Path prefix of a Colosseum event's own page, e.g. `/details-registrierung/irvine-welsh-live`. */
         private const val DETAILS_PATH = "/details-registrierung/"
