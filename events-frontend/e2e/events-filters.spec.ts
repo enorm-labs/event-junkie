@@ -594,22 +594,23 @@ test('a page past the last one lands on the last page, not on an empty state', a
   await expect(page.getByText(/nothing matches/i)).toHaveCount(0)
 })
 
-test('paginates through results, preserving no filter', async ({ page }) => {
+test('shows more events under the list, keeping the scroll position', async ({ page }) => {
   const errors = collectPageErrors(page)
   await page.goto('/events')
 
-  // `name` is a substring match by default, which would also catch the "Next 7 days" preset.
-  const nextButton = page.getByRole('button', { name: 'Next', exact: true })
-
+  const showMore = page.getByRole('link', { name: 'Show more events' })
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Previous' })).toBeDisabled()
+  await expect(page.getByText(/^\d+ of 21 shown$/)).toBeVisible()
 
-  await nextButton.click()
+  await showMore.scrollIntoViewIfNeeded()
+  const scrolled = await page.evaluate(() => window.scrollY)
+  await showMore.click()
 
   await expect(page).toHaveURL(/[?&]page=1\b/)
   await expect(eventHeading(page, 'Second Page Event')).toBeVisible()
-  await expect(page.getByText('Page 2 of 2', { exact: true })).toBeVisible()
-  await expect(nextButton).toBeDisabled()
+  await expect(eventHeading(page, 'Default Event A')).toBeVisible()
+  await expect(showMore).toHaveCount(0)
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrolled)
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
 })
 

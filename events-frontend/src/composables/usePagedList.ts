@@ -1,11 +1,17 @@
 import { computed, onMounted, watch, type Ref } from 'vue'
-import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
+import { type LocationQuery, type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 
 /** The part of a paged BFF response this composable reads; every `*Page` type satisfies it. */
 interface PagedResponse {
-  content?: unknown[]
   page?: number
   totalPages?: number
+}
+
+/** `query` at page `target`, keeping every filter. Page 0 stays out of the URL. */
+export function pageQuery(query: LocationQuery, target: number): LocationQueryRaw {
+  const next: LocationQueryRaw = { ...query, page: String(target) }
+  if (target <= 0) delete next.page
+  return next
 }
 
 /**
@@ -34,19 +40,20 @@ export function usePagedList<T extends PagedResponse>(
    */
   watch(page, (loaded) => {
     const last = (loaded?.totalPages ?? 0) - 1
-    if (!loaded || loaded.content?.length || last < 0 || currentPage.value <= last) return
-    router.replace({ query: { ...route.query, page: last > 0 ? String(last) : undefined } })
+    if (!loaded || last < 0 || currentPage.value <= last) return
+    router.replace({ query: pageQuery(route.query, last) })
   })
 
-  /** Moves to `target`, keeping the current filters. Page 0 stays out of the URL. */
-  function goToPage(target: number) {
-    const next: LocationQueryRaw = { ...route.query, page: target > 0 ? String(target) : undefined }
-    if (next.page === undefined) delete next.page
-    router.push({ query: next })
+  /**
+   * The route of page `target` with the current filters. The pager renders links, not buttons, so a
+   * page opens in a new tab and a crawler can follow it.
+   */
+  function pageLink(target: number): { query: LocationQueryRaw } {
+    return { query: pageQuery(route.query, target) }
   }
 
   onMounted(run)
   watch(() => route.query, run, { deep: true })
 
-  return { currentPage, totalPages, goToPage }
+  return { currentPage, totalPages, pageLink }
 }

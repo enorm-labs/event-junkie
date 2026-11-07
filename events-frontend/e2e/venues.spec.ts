@@ -241,12 +241,16 @@ test('paginates when there is more than one page', async ({ page }) => {
   })
 
   await page.goto('/venues')
-  await expect(page.getByText('Page 1 of 2')).toBeVisible()
+  const pager = page.getByRole('navigation', { name: 'Pages' })
+  // A phone hides the numbers and reads "Page n of m"; the current page's link is in the DOM on both.
+  const current = pager.locator('a[aria-current="page"]')
+  await expect(current).toHaveText('1')
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click()
+  await pager.getByRole('link', { name: 'Next', exact: true }).click()
 
   await expect(page).toHaveURL(/\/venues\?page=1$/)
-  await expect(page.getByText('Page 2 of 2')).toBeVisible()
+  await expect(current).toHaveText('2')
+  await expect(pager.getByRole('button', { name: 'Next', exact: true })).toBeDisabled()
 })
 
 test('the venues map lists the venues near me, nearest first, and sends the position nowhere', async ({

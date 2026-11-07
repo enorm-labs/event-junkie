@@ -261,6 +261,8 @@ const router = createRouter({
   // anchor is waited for; scrolling to one that is not there yet does nothing (#2689).
   async scrollBehavior(to, _from, savedPosition) {
     if (savedPosition) return savedPosition
+    // "Show more events" grows the list under the visitor's eyes (ShowMoreEvents.vue).
+    if (history.state?.keepScroll) return false
     if (!to.hash) return { top: 0 }
     const clearance = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
     const target = await waitForElement(to.hash, ANCHOR_WAIT_MS)

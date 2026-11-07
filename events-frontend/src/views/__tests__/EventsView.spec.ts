@@ -122,7 +122,7 @@ describe('EventsView with On now', () => {
   it('shows one list without pagination', async () => {
     await mountAt('/en/events?now=1')
 
-    expect(wrapper!.text()).not.toMatch(/Page \d+ of/)
+    expect(wrapper!.text()).not.toContain('Show more events')
   })
 
   it('reads the paged search without On now', async () => {
@@ -131,7 +131,71 @@ describe('EventsView with On now', () => {
     expect(getMock).toHaveBeenCalledWith('/api/events', expect.anything())
     expect(getMock).not.toHaveBeenCalledWith('/api/events/calendar', expect.anything())
     expect(slugs()).toEqual(['later'])
-    expect(wrapper!.text()).toMatch(/Page 1 of 3/)
+    expect(wrapper!.text()).toContain('Show more events')
+  })
+})
+
+describe('EventsView growing by Show more events', () => {
+  const event = (n: number): EventSummary => ({ slug: `e${n}`, eventDate: TODAY })
+  const pageRequests = () =>
+    getMock.mock.calls
+      .filter(([path]) => path === '/api/events')
+      .map(([, init]) => (init.params.query as { page: number }).page)
+
+  beforeEach(() => {
+    getMock.mockReset()
+    getMock.mockImplementation((path, init) => {
+      if (path !== '/api/events') return Promise.resolve({})
+      const page = (init.params.query as { page: number }).page
+      return Promise.resolve({
+        content: page < 20 ? [event(2 * page), event(2 * page + 1)] : [],
+        page,
+        totalPages: 20,
+        totalElements: 40,
+      })
+    })
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
+  it('appends the next page, fetching only that page, and keeps the filters in the link', async () => {
+    await mountAt('/en/events?venue=lido')
+    expect(slugs()).toEqual(['e0', 'e1'])
+
+    const link = wrapper!.get('a[href*="page=1"]')
+    expect(link.attributes('href')).toContain('venue=lido')
+    await link.trigger('click', { button: 0 })
+    await flushPromises()
+
+    expect(router.currentRoute.value.query).toEqual({ venue: 'lido', page: '1' })
+    expect(slugs()).toEqual(['e0', 'e1', 'e2', 'e3'])
+    expect(pageRequests()).toEqual([0, 1])
+    expect(wrapper!.text()).toContain('4 of 40 shown')
+  })
+
+  it('reloads every page up to a linked one, so the list is as long as the visitor left it', async () => {
+    await mountAt('/en/events?page=2')
+
+    expect(pageRequests().sort()).toEqual([0, 1, 2])
+    expect(slugs()).toEqual(['e0', 'e1', 'e2', 'e3', 'e4', 'e5'])
+    expect(wrapper!.text()).not.toContain('Back to the first events')
+  })
+
+  it('starts a far page at that page, with a link back to the start', async () => {
+    await mountAt('/en/events?page=12')
+
+    expect(pageRequests()).toEqual([12])
+    expect(slugs()).toEqual(['e24', 'e25'])
+    expect(wrapper!.get('a[href="/en/events"]').text()).toBe('Back to the first events')
+  })
+
+  it('offers no more on the last page', async () => {
+    await mountAt('/en/events?page=19')
+
+    expect(wrapper!.text()).not.toContain('Show more events')
   })
 })
 
