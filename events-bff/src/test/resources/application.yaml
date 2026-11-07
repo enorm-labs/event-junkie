@@ -92,6 +92,11 @@ app:
     changes-initial-delay: PT10M
     reminders-delay: PT10M
     reminders-initial-delay: PT10M
+  # Repeated because this file shadows the main one. Scheduling is off, so nothing fetches it: WeatherForecastsTest serves a fixture.
+  weather:
+    url: http://localhost:9/mosmix.kmz
+    initial-delay: PT10M
+    refresh: PT6H
   api:
     max-page-size: 100
     cache:

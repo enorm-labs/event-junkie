@@ -325,6 +325,14 @@ below does not change. No caption and no image reaches the site. The
 event links the post. The notice names the source in a paragraph of its own, after the sisy.fan paragraph, and names
 the captions under Anthropic in §5.
 
+**The Deutscher Wetterdienst is a source of the same kind** (ADR-057, [#2726](https://github.com/enorm-labs/event-junkie/issues/2726)).
+Every six hours the BFF reads the MOSMIX forecast file of station 10384 from `opendata.dwd.de`. The request is a GET
+for a fixed URL. It carries no visitor data and no personal data, and the visitor's browser never contacts the DWD. What
+arrives is a weather forecast, which names nobody. The BFF holds it in memory and stores nothing. So this is not processing
+on our behalf, there is no Art. 28 contract to conclude, and the Hetzner AVV is untouched. The privacy notice does not
+change, because no personal data goes to the DWD or comes from it. The DWD asks for a credit, and `/legal/notices` gives it
+in both languages: "Datenbasis: Deutscher Wetterdienst".
+
 **The role mailboxes hold email, and the Hetzner AVV covers them.** `hello@`, `security@` and `alerts@` are mailboxes
 on Hetzner Webhosting S, under the same Hetzner account as the servers ([`ops/EMAIL.md`](ops/EMAIL.md)). The AVV is
 account-level, so the mailboxes add no processor. A mailbox holds the sender's address, the message and whatever the

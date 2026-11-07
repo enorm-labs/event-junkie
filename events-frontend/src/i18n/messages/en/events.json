@@ -140,7 +140,20 @@
       },
       "endNotAnnounced": "End not announced",
       "postponed": "Not on this date. The venue's page has the new date, if there is one.",
-      "postponedTo": "New date:"
+      "postponedTo": "New date:",
+      "weather": {
+        "line": "Forecast: {condition}, {temperature} °C",
+        "rain": "{percent}% chance of rain",
+        "condition": {
+          "CLEAR": "clear",
+          "PARTLY_CLOUDY": "partly cloudy",
+          "CLOUDY": "cloudy",
+          "FOG": "fog",
+          "RAIN": "rain",
+          "SNOW": "snow",
+          "THUNDERSTORM": "thunderstorms"
+        }
+      }
     },
     "promoters": "Promoters",
     "buyTickets": "Buy tickets",
