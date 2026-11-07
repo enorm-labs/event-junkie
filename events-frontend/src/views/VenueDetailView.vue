@@ -93,6 +93,11 @@ const closureLine = computed(() => {
   }
 })
 
+/** A venue with no photo asks for one, unless it has closed and a photo would help nobody (#4630). */
+const asksForPhoto = computed(() =>
+  Boolean(venue.value && !venue.value.imageUrl && !closureLine.value?.closed),
+)
+
 // Only the capacity: the types are the table's first row, and the capacity its last.
 const capacity = computed(() => formatVenueFacts({ capacity: venue.value?.capacity }))
 
@@ -216,6 +221,12 @@ const programme = computed(() => {
       </p>
       <NearbyStops :stops="venue?.nearbyStops" />
       <DetailLinks :links="links" />
+      <p v-if="asksForPhoto" class="text-meta text-muted-foreground" data-testid="venue-photo-call">
+        {{ t('detail.venue.noPhoto') }}
+        <RouterLink :to="{ path: localePath('/about'), hash: '#help' }" :class="TEXT_LINK_CLASS">
+          {{ t('detail.venue.noPhotoLink') }}
+        </RouterLink>
+      </p>
     </template>
 
     <!-- Every pill here opens a filtered list, which makes it a control (design.instructions.md §1). -->

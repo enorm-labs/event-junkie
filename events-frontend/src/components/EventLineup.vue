@@ -5,9 +5,10 @@ import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import ListenLinks from '@/components/ListenLinks.vue'
 import LiveDot from '@/components/LiveDot.vue'
+import ReportLine from '@/components/ReportLine.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { EventDetail } from '@/api/types'
-import { isOnNow } from '@/lib/format'
+import { isOnNow, isPastEvent } from '@/lib/format'
 import { runningOrder, setStates, type RunningOrderSet } from '@/lib/runningOrder'
 import { CARD_LIST_CLASS, cn, UNDERLINED_LINK_CLASS } from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
@@ -45,6 +46,22 @@ const setState = computed(() => {
   const e = props.event
   if (!floors.value || (e.status ?? 'SCHEDULED') !== 'SCHEDULED') return null
   return isOnNow(e) ? setStates(floors.value, now.value) : null
+})
+
+/**
+ * An upcoming club night of two acts or more with no running order asks for one (#4631). A concert's
+ * start time is its running order, so a request there would be noise.
+ */
+const asksForSetTimes = computed(() => {
+  const e = props.event
+  return (
+    e.eventType === 'PARTY' &&
+    lineup.value.length >= 2 &&
+    !floors.value &&
+    (e.status ?? 'SCHEDULED') === 'SCHEDULED' &&
+    !isPastEvent(e) &&
+    Boolean(e.slug)
+  )
 })
 
 // The lineup sits above the tickets and the venue, so a festival bill opens folded to keep them near.
@@ -197,6 +214,16 @@ function enumLabel(namespace: string, value: string): string {
   >
     {{ t('events.detail.lineupShowAll', { count: lineup.length }) }}
   </Button>
+
+  <ReportLine
+    v-if="asksForSetTimes"
+    :path="`/events/${event.slug}`"
+    :text="t('events.detail.setTimesAsk')"
+    :title="event.title ?? event.slug ?? ''"
+    body-key="detail.setTimesBody"
+    data-testid="set-times-call"
+    subject-key="detail.setTimesSubject"
+  />
 
   <p v-if="lineupCredit" class="text-meta text-muted-foreground">
     {{ t('events.detail.lineupFrom') }}

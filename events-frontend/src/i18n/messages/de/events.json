@@ -171,6 +171,7 @@
     "upcomingAtVenue": "Schau, was bei {venue} als Nächstes läuft.",
     "browseUpcoming": "Schau, was gerade läuft.",
     "reportWrong": "Stimmt bei diesem Event etwas nicht? Melde es per E-Mail:",
+    "setTimesAsk": "Kennst du die Spielzeiten? Schick sie per E-Mail, als Text oder Screenshot:",
     "related": "Ähnliche Events",
     "relatedAtVenue": "Weitere Events bei {venue}",
     "genreFromArtist": "Genre aus anderen Events der Acts",

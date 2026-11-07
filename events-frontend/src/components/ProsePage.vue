@@ -8,7 +8,7 @@
 
 <template>
   <main
-    class="mx-auto max-w-3xl space-y-6 p-4 text-prose sm:p-8 [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_h1]:text-page [&_h1]:font-bold [&_h1]:tracking-tight [&_h2]:text-section [&_h2]:font-bold [&_h2]:tracking-tight [&_p]:text-muted-foreground [&_section]:space-y-4 [&_section]:pt-4 [&_strong]:font-medium [&_strong]:text-foreground"
+    class="mx-auto max-w-3xl space-y-6 p-4 text-prose sm:p-8 [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_h1]:text-page [&_h1]:font-bold [&_h1]:tracking-tight [&_h2]:text-section [&_h2]:font-bold [&_h2]:tracking-tight [&_li]:text-muted-foreground [&_p]:text-muted-foreground [&_section]:space-y-4 [&_section]:pt-4 [&_strong]:font-medium [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6"
   >
     <slot />
   </main>

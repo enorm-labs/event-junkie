@@ -2,6 +2,8 @@
   "notFoundHeading": "{kind} not found",
   "reportSubject": "Wrong data: {title}",
   "reportBody": "Page: {url}\n\nWhat is wrong:\n",
+  "setTimesSubject": "Set times: {title}",
+  "setTimesBody": "Page: {url}\n\nSet times (paste them here, or attach a screenshot):\n",
   "venue": {
     "kind": "Venue",
     "notFound": "That venue isn't in our little black book.",
@@ -25,6 +27,8 @@
     "closed": "Closed for good in {month}",
     "closing": "Open until {date}, then closed for good",
     "closedNoEvents": "No more nights here: the venue has closed.",
+    "noPhoto": "No photo of this venue yet.",
+    "noPhotoLink": "Here's how to add one",
     "report": "Something wrong with this venue? Report it by email:"
   },
   "artist": {

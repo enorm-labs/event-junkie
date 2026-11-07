@@ -20,6 +20,16 @@ need a reason and you should not have to ask in public.
 Questions and product ideas belong in [Discussions](https://github.com/enorm-labs/event-junkie/discussions), not the issue tracker. A discussion that turns
 out to be actionable can be converted into an issue, so nothing is lost by starting there.
 
+## Without writing code: set times and venue photos
+
+Two things no importer can read, and you might have them:
+
+- **Set times.** Mail a club night's running order to [hello@event-junkie.de](mailto:hello@event-junkie.de?subject=Set%20times), as text or a
+  screenshot, with the link to the event.
+- **Venue photos.** Upload your own photo of a venue to Wikimedia Commons under a free licence, then mail the link.
+
+What a photo needs, and why it goes through Commons, is on the [About page](https://event-junkie.de/en/about#help).
+
 ## Before you write code
 
 **Open an issue first** for anything beyond a small fix. This project has strong opinions about how importers, modules and the data model fit together, and a

@@ -2,6 +2,8 @@
   "notFoundHeading": "{kind} nicht gefunden",
   "reportSubject": "Fehler in den Daten: {title}",
   "reportBody": "Seite: {url}\n\nWas stimmt nicht:\n",
+  "setTimesSubject": "Spielzeiten: {title}",
+  "setTimesBody": "Seite: {url}\n\nSpielzeiten (hier einfügen oder als Screenshot anhängen):\n",
   "venue": {
     "kind": "Location",
     "notFound": "Diese Location steht nicht in unserem kleinen schwarzen Buch.",
@@ -25,6 +27,8 @@
     "closed": "Im {month} für immer geschlossen",
     "closing": "Geöffnet bis {date}, danach für immer geschlossen",
     "closedNoEvents": "Hier gibt es keine Abende mehr: Der Ort hat geschlossen.",
+    "noPhoto": "Von dieser Location gibt es noch kein Foto.",
+    "noPhotoLink": "So kannst du eins beisteuern",
     "report": "Stimmt bei dieser Location etwas nicht? Melde es per E-Mail:"
   },
   "artist": {
