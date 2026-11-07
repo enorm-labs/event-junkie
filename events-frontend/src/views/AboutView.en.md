@@ -100,6 +100,26 @@ Event Junkie also runs as an app: its own icon on your home screen, its own wind
 
 </section>
 
+<!-- The venue page without a photo links here (#4630). The id is the same in both languages. -->
+<section id="help" class="scroll-mt-8">
+
+## Help out
+
+Two things no website hands me, and you might have them: the set times of a night, and a photo of a venue.
+
+**Set times.** Many clubs post the running order only on Instagram, on the day. If you see one, send it to <a :href="feedbackMailto('Set times')">{{ CONTROLLER.email }}</a>, as text or as a screenshot, with the link to the event here. I add it by hand. Venues and promoters: a timetable from you every week helps most.
+
+**Venue photos.** Upload your own photo of the venue to [Wikimedia Commons](https://commons.wikimedia.org/wiki/Special:UploadWizard) under CC BY-SA 4.0 or CC0, then send the link to <a :href="feedbackMailto('Venue photo')">{{ CONTROLLER.email }}</a>. The venue page credits you with the name you chose there. That way the photo stays free for Wikipedia and OpenStreetMap too, and I never receive a file.
+
+What a photo needs:
+
+- **The outside of the building, taken from the street.** Never the inside: many clubs do not allow photos, and a building may be shown freely only as it is seen from the street.
+- **No people you can recognise.**
+- **Your own photo.** Not a flyer, a screenshot or a picture from the venue's website.
+- **Landscape, at least 1600 pixels wide**, sharp, with no watermark and no text on it.
+
+</section>
+
 <!-- The header's beta badge links here. `scroll-mt` keeps the heading clear of the
      sticky-ish header when the anchor is followed. -->
 <section id="beta" class="scroll-mt-8">

@@ -100,6 +100,26 @@ Event Junkie läuft auch als App: mit eigenem Icon auf dem Homescreen, im eigene
 
 </section>
 
+<!-- Die Seite einer Location ohne Foto verlinkt hierher (#4630). Die id ist in beiden Sprachfassungen dieselbe. -->
+<section id="help" class="scroll-mt-8">
+
+## Mithelfen
+
+Zwei Dinge bekomme ich von keiner Website, und vielleicht hast du sie: die Spielzeiten eines Abends und ein Foto einer Location.
+
+**Spielzeiten.** Viele Clubs posten erst am Tag selbst auf Instagram, wer wann spielt. Wenn du so einen Post siehst, schick ihn an <a :href="feedbackMailto('Spielzeiten')">{{ CONTROLLER.email }}</a>, als Text oder als Screenshot, mit dem Link zum Event hier. Ich trage die Zeiten von Hand ein. Du betreibst einen Club oder veranstaltest Partys? Dann schick mir deine Spielzeiten am besten jede Woche. Das hilft am meisten.
+
+**Fotos von Locations.** Lade dein eigenes Foto der Location bei [Wikimedia Commons](https://commons.wikimedia.org/wiki/Special:UploadWizard?uselang=de) hoch, unter CC BY-SA 4.0 oder CC0, und schick den Link an <a :href="feedbackMailto('Foto einer Location')">{{ CONTROLLER.email }}</a>. Die Seite der Location nennt dich mit dem Namen, den du dort gewählt hast. So bleibt das Foto auch für Wikipedia und OpenStreetMap frei, und ich bekomme nie eine Datei.
+
+Was ein Foto braucht:
+
+- **Das Gebäude von außen, von der Straße aus fotografiert.** Nie von innen: Viele Clubs erlauben keine Fotos, und frei zeigen darf man ein Gebäude nur so, wie man es von der Straße aus sieht.
+- **Keine Menschen, die man erkennen kann.**
+- **Dein eigenes Foto.** Kein Flyer, kein Screenshot und kein Bild von der Website der Location.
+- **Querformat, mindestens 1600 Pixel breit**, scharf, ohne Wasserzeichen und ohne Text.
+
+</section>
+
 <!-- Das Beta-Abzeichen im Header verlinkt hierher. `scroll-mt` hält die Überschrift frei vom
      Header, wenn der Anker angesprungen wird. Die id muss `beta` bleiben: sie ist in beiden
      Sprachfassungen dasselbe Ziel. -->

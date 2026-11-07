@@ -606,3 +606,43 @@ describe('EventDetailView', () => {
     }
   })
 })
+
+describe('EventDetailView set-times call (#4631)', () => {
+  const act = (slug: string, setStart?: string) => ({
+    artist: { slug, name: slug },
+    role: 'DJ' as const,
+    ...(setStart ? { setStart } : {}),
+  })
+  const party: EventDetail = {
+    ...night,
+    eventType: 'PARTY',
+    lineup: [act('rafon'), act('gnmr')],
+  }
+  const call = (view: VueWrapper) => view.find('[data-testid="set-times-call"]')
+
+  it('asks an upcoming party of two untimed acts for its set times, by a mail naming the event', async () => {
+    const view = await mountEvent(party)
+
+    expect(call(view).text()).toContain('Know the set times?')
+    const href = call(view).get('a').attributes('href') ?? ''
+    expect(href.startsWith('mailto:hello@event-junkie.de?')).toBe(true)
+    const params = new URLSearchParams(href.split('?')[1])
+    expect(params.get('subject')).toBe('Set times: A Night')
+    expect(params.get('body')).toContain('/en/events/a-night')
+  })
+
+  it.each([
+    ['a concert', { ...party, eventType: 'CONCERT' as const }],
+    ['a party of one act', { ...party, lineup: [act('rafon')] }],
+    [
+      'a party with a timed act',
+      { ...party, lineup: [act('rafon', '2099-06-12T21:00:00Z'), act('gnmr')] },
+    ],
+    ['a past party', { ...party, eventDate: '2020-06-12' }],
+    ['a cancelled party', { ...party, status: 'CANCELLED' as const }],
+  ])('does not ask %s', async (_, event) => {
+    const view = await mountEvent(event)
+
+    expect(call(view).exists()).toBe(false)
+  })
+})

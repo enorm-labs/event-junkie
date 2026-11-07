@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 /**
- * The line that closes every detail page: a prefilled mail that names the page, so a visitor
- * reports wrong data without copying anything (#378).
+ * A prefilled mail that names the page, so a visitor writes without copying anything: the data
+ * report that closes every detail page (#378), and the call for a night's set times (#4631).
  */
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -17,14 +17,19 @@ const props = defineProps<{
   title: string
   /** The page's path without the locale, e.g. `/venues/gretchen`. */
   path: string
+  /** Message keys of the mail's subject (with `title`) and body (with `url`); a data report by default. */
+  subjectKey?: string
+  bodyKey?: string
 }>()
 
 const { t, locale } = useI18n()
 
 const href = computed(() =>
   feedbackMailto(
-    t('detail.reportSubject', { title: props.title }),
-    t('detail.reportBody', { url: canonicalUrl(locale.value as Locale, props.path) }),
+    t(props.subjectKey ?? 'detail.reportSubject', { title: props.title }),
+    t(props.bodyKey ?? 'detail.reportBody', {
+      url: canonicalUrl(locale.value as Locale, props.path),
+    }),
   ),
 )
 </script>

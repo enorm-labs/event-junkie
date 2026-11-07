@@ -240,3 +240,26 @@ describe('VenueDetailView', () => {
     })
   })
 })
+
+describe('VenueDetailView photo call (#4630)', () => {
+  const call = (view: VueWrapper) => view.find('[data-testid="venue-photo-call"]')
+
+  it('asks for a photo when the venue has none, linking to the About section in the locale', async () => {
+    const view = await mountVenue(kater, 'de')
+
+    expect(call(view).text()).toContain('Von dieser Location gibt es noch kein Foto.')
+    expect(call(view).get('a').attributes('href')).toBe('/de/about#help')
+  })
+
+  it('does not ask when the venue has a photo', async () => {
+    const view = await mountVenue({ ...kater, imageUrl: '/api/images/abc/192.jpg' })
+
+    expect(call(view).exists()).toBe(false)
+  })
+
+  it('does not ask on a closed venue', async () => {
+    const view = await mountVenue({ ...kater, closedOn: '2020-01-31' })
+
+    expect(call(view).exists()).toBe(false)
+  })
+})
