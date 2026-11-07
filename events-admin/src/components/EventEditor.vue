@@ -59,6 +59,22 @@ const lineup = ref<EventArtist[]>([])
 /** Each act's set as typed, Berlin `HH:mm` or '', and as the editor showed it. */
 const times = ref<Record<number, { start: string; end: string }>>({})
 const shownTimes = ref<Record<number, { start: string; end: string }>>({})
+/** Each act's stage as typed; '' is none. */
+const stages = ref<Record<number, string>>({})
+
+/** The stages already on the lineup, offered while typing so one floor keeps one spelling. */
+const knownStages = computed(() =>
+  [...new Set(Object.values(stages.value).map((stage) => stage.trim()))].filter(Boolean).sort(),
+)
+
+/** The lineup to save. An untouched stage goes back as stored, so it pins nothing; a typed one is trimmed, and blank is null. */
+function lineupToSave(): EventArtist[] {
+  return lineup.value.map((artist) => {
+    const typed = stages.value[artist.artistId] ?? ''
+    if (typed === (artist.stage ?? '')) return artist
+    return { ...artist, stage: typed.trim() === '' ? null : typed.trim() }
+  })
+}
 const promoterIds = ref<number[]>([])
 /** The festival the select holds, or null for none. */
 const festivalId = ref<number | null>(null)
@@ -216,6 +232,9 @@ function show(loaded: AdminEvent) {
     ]),
   )
   times.value = structuredClone(loadedTimes)
+  stages.value = Object.fromEntries(
+    loaded.artists.map((artist) => [artist.artistId, artist.stage ?? '']),
+  )
   shownTimes.value = loadedTimes
   promoterIds.value = [...loaded.promoterIds]
   festivalId.value = loaded.festivalId ?? null
@@ -241,6 +260,7 @@ function nameOf(kind: NameKind, id: number): string {
 function addArtist(row: NamedRow) {
   names.value.artists.set(row.id, row)
   times.value[row.id] ??= { start: '', end: '' }
+  stages.value[row.id] ??= ''
   const last = Math.max(-1, ...lineup.value.map((artist) => artist.billingOrder))
   lineup.value.push({
     artistId: row.id,
@@ -326,7 +346,7 @@ function save() {
         genre: genre.value,
         subtitle: subtitle.value,
         description: description.value,
-        artists: lineup.value,
+        artists: lineupToSave(),
         promoterIds: promoterIds.value,
         // Sent only when the festivals loaded, so a failed read cannot clear a link.
         ...(festivalsError.value === null ? { festivalId: festivalId.value } : {}),
@@ -558,7 +578,7 @@ function unpin(field: string) {
             <h3 id="lineup-heading" class="text-sm font-medium">Lineup</h3>
             <p id="lineup-times-hint" class="text-xs text-muted-foreground">
               Set times are Berlin time. A start before the doors or start of the event is the next
-              day, and an end before its start is the day after. A changed time pins
+              day, and an end before its start is the day after. A changed stage or time pins
               <code>lineup</code>.
             </p>
             <ol v-if="lineup.length" class="flex flex-col gap-1.5">
@@ -574,10 +594,16 @@ function unpin(field: string) {
                   :title="nameOf('artists', artist.artistId)"
                 >
                   {{ nameOf('artists', artist.artistId) }}
-                  <span v-if="artist.stage" class="text-xs text-muted-foreground">
-                    · {{ artist.stage }}
-                  </span>
                 </span>
+                <Input
+                  v-model="stages[artist.artistId]"
+                  :aria-label="`Stage of ${nameOf('artists', artist.artistId)}`"
+                  class="h-7 w-32 text-xs"
+                  aria-describedby="lineup-times-hint"
+                  data-testid="stage"
+                  list="lineup-stages"
+                  placeholder="Stage"
+                />
                 <select
                   v-model="artist.role"
                   :aria-label="`Role of ${nameOf('artists', artist.artistId)}`"
@@ -616,6 +642,9 @@ function unpin(field: string) {
               </li>
             </ol>
             <p v-else class="text-sm text-muted-foreground">No artists.</p>
+            <datalist id="lineup-stages">
+              <option v-for="stage in knownStages" :key="stage" :value="stage" />
+            </datalist>
             <NamePicker
               id="add-artist"
               :exclude="lineupIds"

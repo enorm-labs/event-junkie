@@ -210,6 +210,51 @@ async function type(input: HTMLInputElement, value: string) {
   await flushPromises()
 }
 
+function stageInput(row: number): HTMLInputElement {
+  return body().querySelectorAll<HTMLInputElement>('input[data-testid="stage"]')[row]!
+}
+
+function savedStages(): (string | null)[] {
+  const [, request] = api.updateEvent.mock.calls[0]!
+  return request.artists.map((artist) => artist.stage)
+}
+
+describe('EventEditor stage', () => {
+  it('sends a typed stage trimmed', async () => {
+    api.updateEvent.mockResolvedValue(night)
+    await mountEditor(night)
+
+    await type(stageInput(1), '  Lower Deck ')
+    await submit()
+
+    expect(savedStages()).toEqual(['Upper Deck', 'Lower Deck'])
+  })
+
+  it('sends a cleared stage as null', async () => {
+    api.updateEvent.mockResolvedValue(night)
+    await mountEditor(night)
+
+    await type(stageInput(0), '')
+    await submit()
+
+    expect(savedStages()).toEqual([null, 'Upper Deck'])
+  })
+
+  it('sends an untouched stage as stored, so the lineup is not pinned', async () => {
+    const spaced: AdminEvent = {
+      ...night,
+      artists: night.artists.map((artist) => ({ ...artist, stage: 'Upper Deck ' })),
+    }
+    api.updateEvent.mockResolvedValue(spaced)
+    await mountEditor(spaced)
+
+    expect(stageInput(0).value).toBe('Upper Deck ')
+    await submit()
+
+    expect(savedStages()).toEqual(['Upper Deck ', 'Upper Deck '])
+  })
+})
+
 describe('EventEditor timetable', () => {
   it('shows the stored set times as Berlin clock times', async () => {
     await mountEditor(night)
