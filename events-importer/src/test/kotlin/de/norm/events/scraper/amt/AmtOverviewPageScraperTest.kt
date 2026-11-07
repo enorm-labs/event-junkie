@@ -156,6 +156,42 @@ class AmtOverviewPageScraperTest {
         event.artists.forEach { it.role shouldBe ArtistRole.DJ }
     }
 
+    private fun titleOnlyNight(title: String) =
+        scraper
+            .scrape(
+                Jsoup.parse(
+                    """<div class="div-grid-dan" data-date="November 10, 2026">
+                      <a href="/event/night"><div class="events-txt name">$title</div></a>
+                      <a href="/event/night"><div class="events-txt light perf ev w-dyn-bind-empty"></div></a>
+                    </div>""",
+                    juneUrl
+                ),
+                juneUrl
+            ).single()
+
+    @Test
+    fun `bills the DJs a title lists after its host when the DJ line is empty`() {
+        // Events 13153, 13154 and 13155 on production.
+        titleOnlyNight("Rx presents: Molly Lollen / DSC7 / Clarisse").artists shouldContainExactly
+            listOf("Molly Lollen", "DSC7", "Clarisse").map { ScrapedArtist(name = it, role = ArtistRole.DJ, titleDerived = true) }
+        titleOnlyNight("Rx presents: Darren Black / CHEKA / PERT").artists.map { it.name } shouldContainExactly
+            listOf("Darren Black", "CHEKA", "PERT")
+        titleOnlyNight("Loone x Anja Schneider, Milena Adamis, Anna Amato &amp; Steven Shade").artists.map { it.name } shouldContainExactly
+            listOf("Anja Schneider", "Milena Adamis", "Anna Amato", "Steven Shade")
+    }
+
+    @Test
+    fun `bills no DJ from a title that names one night or crew after its host`() {
+        // Event 13152: Arcane XIII is a collective, and its DJs are named only in the prose.
+        listOf(
+            "Loone x Arcane XIII",
+            "Loone x FEIERAMT",
+            "Rx presents: Noise Daughters Showcase",
+            "PUDDINGS x SCREAM QUEENS",
+            "AMT x DJ Klosing x Opa August invites"
+        ).forEach { titleOnlyNight(it).artists.shouldBeEmpty() }
+    }
+
     @Test
     fun `returns no events for a page without event blocks`() {
         val emptyDoc = Jsoup.parse("<html><body><p>Baustelle</p></body></html>", juneUrl)
