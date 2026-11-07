@@ -124,7 +124,8 @@ class DescriptionTranslationService(
         val description = event.description
         val from = event.descriptionLanguage?.let { code -> DescriptionLanguage.entries.find { it.code == code } }
         if (!engine.enabled || description == null || from == null) return false
-        val to = if (from == DescriptionLanguage.GERMAN) DescriptionLanguage.ENGLISH else DescriptionLanguage.GERMAN
+        // A text in neither of our languages goes into English, which the frontend shows in both locales (#4665).
+        val to = if (from == DescriptionLanguage.ENGLISH) DescriptionLanguage.GERMAN else DescriptionLanguage.ENGLISH
 
         val request =
             TranslationRequest(

@@ -169,7 +169,7 @@ class EventService(
         // the connection the open cursor holds, and the two wait on each other until the request times
         // out with nothing in the log. The translation pass materialises first for the same reason.
         val unclassified = eventRepository.findWithUnclassifiedDescription().toList()
-        val detections = unclassified.map { it to DescriptionLanguage.detect(it.description) }
+        val detections = unclassified.map { it to DescriptionLanguage.classify(it.description) }
 
         detections.forEach { (event, detected) ->
             if (detected != null) {
@@ -181,9 +181,10 @@ class EventService(
 
         val german = detections.count { it.second?.language == DescriptionLanguage.GERMAN }
         val english = detections.count { it.second?.language == DescriptionLanguage.ENGLISH }
+        val undetermined = detections.count { it.second?.language == DescriptionLanguage.UNDETERMINED }
         val unknown = detections.count { it.second == null }
-        logger.info { "Classified stored descriptions: german=$german english=$english unknown=$unknown" }
-        return DescriptionLanguageBackfill(german = german, english = english, unknown = unknown)
+        logger.info { "Classified stored descriptions: german=$german english=$english undetermined=$undetermined unknown=$unknown" }
+        return DescriptionLanguageBackfill(german = german, english = english, undetermined = undetermined, unknown = unknown)
     }
 
     /**
@@ -443,7 +444,7 @@ private fun EventRequest.slugAt(venue: VenueEntity): String = SlugGenerator.slug
  * are normalized to scale 2 here.
  */
 private fun EventRequest.toEventEntity(slug: String): EventEntity {
-    val detected = DescriptionLanguage.detect(description)
+    val detected = DescriptionLanguage.classify(description)
     return EventEntity(
         venueId = venueId,
         title = title,

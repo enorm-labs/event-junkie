@@ -18,6 +18,56 @@ const event = (fields: Partial<EventDetail> = {}): EventDetail =>
   }) as EventDetail
 
 describe('descriptionFor', () => {
+  // Event 12923: a Russian original, translated into English, read under German chrome too.
+  it('shows the translation in both locales when the original is in neither language', () => {
+    const russian = event({
+      description: 'Легендарная группа в твоём городе',
+      descriptionLanguage: 'und',
+      descriptionAlt: 'The legendary band in your city',
+      descriptionAltLanguage: 'en',
+      descriptionAltOrigin: 'MACHINE',
+    })
+    const translation = {
+      text: 'The legendary band in your city',
+      lang: 'en',
+      machine: true,
+      side: 'alt',
+    }
+
+    expect(descriptionFor(russian, 'de')).toEqual(translation)
+    expect(descriptionFor(russian, 'en')).toEqual(translation)
+  })
+
+  it('keeps an undetermined original, undeclared, until it has a translation', () => {
+    const chosen = descriptionFor(
+      event({ description: 'Легендарная группа в твоём городе', descriptionLanguage: 'und' }),
+      'de',
+    )
+
+    expect(chosen).toEqual({
+      text: 'Легендарная группа в твоём городе',
+      lang: null,
+      machine: false,
+      side: 'original',
+    })
+  })
+
+  // An unclassified original (a line-up, a short note) keeps the old fallback: its own text, not the alt.
+  it('keeps an unclassified original over an alt in the other locale', () => {
+    const chosen = descriptionFor(
+      event({
+        description: 'Kurz',
+        descriptionLanguage: null,
+        descriptionAlt: 'Short',
+        descriptionAltLanguage: 'en',
+        descriptionAltOrigin: 'PUBLISHER',
+      }),
+      'de',
+    )
+
+    expect(chosen?.side).toBe('original')
+  })
+
   it('shows the original when it is already in the visitor’s language', () => {
     const chosen = descriptionFor(
       event({ description: 'Ein Abend mit Aussicht', descriptionLanguage: 'de' }),

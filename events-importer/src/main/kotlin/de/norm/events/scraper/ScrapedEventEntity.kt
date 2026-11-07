@@ -51,7 +51,7 @@ internal fun ScrapedEvent.buildEventEntity(
         }
     }
     val storedDescription = if (licences.withholdsDescription()) null else description
-    val detected = DescriptionLanguage.detect(storedDescription)
+    val detected = DescriptionLanguage.classify(storedDescription)
     // priceCurrency omitted: every scraped venue is in Berlin, and EventEntity defaults to "EUR".
     return EventEntity(
         // `sourceId` is the immutable identity key matching scraped events to persisted rows.

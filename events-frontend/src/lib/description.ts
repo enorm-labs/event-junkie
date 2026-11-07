@@ -35,9 +35,13 @@ export interface Described {
 const isLocale = (value: string | null | undefined): value is Locale =>
   value === 'de' || value === 'en'
 
+/** BCP 47 "undetermined": the importer's mark for an original in neither locale's language (#4665). */
+const UNDETERMINED = 'und'
+
 /**
- * The description for [locale], or null. The locale's own text wins; failing that the original in
- * its own language, which still says who is playing.
+ * The description for [locale], or null. The locale's own text wins. An original in neither locale's
+ * language gives way to its translation in both. Failing that the original in its own language,
+ * which still says who is playing.
  */
 export function descriptionFor(subject: Described, locale: Locale): ChosenDescription | null {
   const original = subject.description
@@ -51,6 +55,8 @@ export function descriptionFor(subject: Described, locale: Locale): ChosenDescri
     return { text: original, lang: locale, machine: false, side: 'original' }
   if (alt && altLang === locale)
     return { text: alt, lang: locale, machine: altIsMachine, side: 'alt' }
+  if (alt && altLang && subject.descriptionLanguage === UNDETERMINED)
+    return { text: alt, lang: altLang, machine: altIsMachine, side: 'alt' }
   if (original) return { text: original, lang: originalLang, machine: false, side: 'original' }
   return null
 }

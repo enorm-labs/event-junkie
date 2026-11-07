@@ -64,6 +64,30 @@ class DescriptionLanguageTest {
         DescriptionLanguage.detect(spanish).shouldBeNull()
     }
 
+    // Event 12923 (the-cloud) and two SO36 nights: the stop words find nothing, and the script says it is neither of ours.
+    @Test
+    @DisplayName("a text mostly in a non-Latin script is classified undetermined, and detect still declines it")
+    fun `classifies a non-Latin script as undetermined`() {
+        val russian = "Легендарная украинская группа в твоём городе! После многих лет отсутствия на сцене они возвращаются."
+        val greek = "Ένα βράδυ με ζωντανή μουσική από την Αθήνα, με τραγούδια από τον δεύτερο δίσκο της μπάντας."
+
+        DescriptionLanguage.detect(russian).shouldBeNull()
+        DescriptionLanguage.classify(russian)?.language shouldBe DescriptionLanguage.UNDETERMINED
+        DescriptionLanguage.classify(greek)?.language shouldBe DescriptionLanguage.UNDETERMINED
+    }
+
+    @Test
+    @DisplayName("German that names a Cyrillic band, a short Cyrillic note, and a Latin third language stay as they were")
+    fun `leaves German, a short note and a Latin third language as they were`() {
+        val german = "Die Band Кино spielt heute Abend im Club, und wir freuen uns auf einen langen Abend mit euch und der Musik."
+
+        DescriptionLanguage.classify(german)?.language shouldBe DescriptionLanguage.GERMAN
+        DescriptionLanguage.classify("Группа Кино").shouldBeNull()
+        DescriptionLanguage
+            .classify("Perotá Chingó es un dúo argentino que ha conquistado audiencias de todo el mundo con su propuesta de folk.")
+            .shouldBeNull()
+    }
+
     @Test
     @DisplayName("no description has no language")
     fun `declines null`() {

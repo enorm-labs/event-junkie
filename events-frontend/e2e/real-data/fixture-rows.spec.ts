@@ -25,7 +25,7 @@ test('the events list shows the seeded venues', async ({ page }) => {
   await expect(page.getByRole('checkbox', { name: 'Kesselhaus Nord' })).toBeAttached()
   await expect(page.getByRole('checkbox', { name: 'Jazzkeller $& Kreuzberg' })).toBeAttached()
   await page.keyboard.press('Escape')
-  // 43 upcoming rows, so the first page is full at the default size rather than nearly empty.
+  // 44 upcoming rows, so the first page is full at the default size rather than nearly empty.
   await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible()
 })
 
@@ -94,4 +94,12 @@ test('the machine-translated description is disclosed as one', async ({ page }) 
   // ADR-027: the English text is shown under /en, and the disclosure goes with it.
   await expect(page.getByText('The trio presents its second album.')).toBeVisible()
   await expect(page.getByText(/Machine-translated/)).toBeVisible()
+})
+
+test('an undetermined original reads in its English translation under German chrome too', async ({ page }) => {
+  await page.goto(`/de/events/${fixtureSlug('undetermined', 14)}`)
+
+  // #4665: the Russian original is in neither locale's language, so /de shows the English translation.
+  await expect(page.getByText('A jam session with guests follows the concert.', { exact: false })).toBeVisible()
+  await expect(page.getByText(/Трио представляет/)).toHaveCount(0)
 })
