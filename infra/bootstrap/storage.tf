@@ -57,6 +57,22 @@ resource "minio_s3_bucket_lifecycle" "o2" {
       days = 90
     }
   }
+
+  # Empties the first production instance's prefix, which no compactor will ever clean (#4302). The
+  # trailing slash keeps `production-2/` out. Remove it once `production/` lists empty, 15 days after
+  # the apply (OPENOBSERVE.md § Changing the prefix).
+  rule {
+    id     = "retire-production"
+    status = "Enabled"
+
+    filter {
+      prefix = "production/"
+    }
+
+    expiration {
+      days = 14
+    }
+  }
 }
 
 # --- the wal-g backup bucket, and the rule the privacy notice rests on ---------------------------
