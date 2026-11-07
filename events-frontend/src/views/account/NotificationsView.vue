@@ -7,6 +7,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import ErrorLine from '@/components/ErrorLine.vue'
 import ListPage from '@/components/ListPage.vue'
 import NotificationEntry from '@/components/NotificationEntry.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
@@ -176,7 +177,7 @@ onMounted(async () => {
       </div>
     </template>
 
-    <p v-if="problem" class="text-body text-destructive" role="alert">{{ problem }}</p>
+    <ErrorLine v-if="problem" role="alert">{{ problem }}</ErrorLine>
 
     <p v-if="entries === null && !problem" class="text-body text-muted-foreground">
       {{ t('common.states.loading') }}

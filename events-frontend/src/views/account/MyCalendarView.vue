@@ -8,6 +8,7 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { EventInput } from '@fullcalendar/vue3'
+import ErrorLine from '@/components/ErrorLine.vue'
 import EventCalendar from '@/components/EventCalendar.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
@@ -134,7 +135,7 @@ onMounted(async () => {
       </div>
     </template>
 
-    <p v-if="problem" class="text-body text-destructive" role="alert">{{ problem }}</p>
+    <ErrorLine v-if="problem" role="alert">{{ problem }}</ErrorLine>
 
     <EventCalendar
       v-if="showCalendar"

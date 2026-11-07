@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import AlsoRunning from '@/components/AlsoRunning.vue'
 import CalendarSubscribeMenu from '@/components/CalendarSubscribeMenu.vue'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
+import ErrorLine from '@/components/ErrorLine.vue'
 import SaveSearch from '@/components/SaveSearch.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
@@ -203,7 +204,7 @@ const mapLink = computed(() => ({
     <p v-if="loading" class="text-body text-muted-foreground">
       {{ retrying ? t('errors.retrying') : t('common.states.loading') }}
     </p>
-    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
+    <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
     <!--
       An empty result has to offer something to do. It used to be one sentence and no control at
       all, under a filter bar six rows tall on a phone — the visitor had to work out which of eight

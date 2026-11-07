@@ -6,6 +6,7 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseInput from '@/components/BaseInput.vue'
+import ErrorLine from '@/components/ErrorLine.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -123,7 +124,7 @@ onMounted(() => {
   <section v-if="supported" class="space-y-3">
     <SectionLabel as="h2">{{ t('account.passkeys.title') }}</SectionLabel>
     <p class="text-body text-muted-foreground">{{ t('account.passkeys.intro') }}</p>
-    <p v-if="problem" class="text-body text-destructive" role="alert">{{ problem }}</p>
+    <ErrorLine v-if="problem" role="alert">{{ problem }}</ErrorLine>
     <ul v-if="passkeys.length" class="divide-y divide-border border-y border-border">
       <li
         v-for="passkey in passkeys"

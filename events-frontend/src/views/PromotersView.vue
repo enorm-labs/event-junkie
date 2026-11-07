@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
+import ErrorLine from '@/components/ErrorLine.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
 import ListPage from '@/components/ListPage.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
@@ -38,7 +39,7 @@ const { t } = useI18n()
     <p v-if="loading" class="text-body text-muted-foreground">
       {{ retrying ? t('errors.retrying') : t('common.states.loadingPromoters') }}
     </p>
-    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
+    <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!page?.content?.length" class="space-y-3">
       <p class="text-body text-muted-foreground">{{ t('promoters.empty') }}</p>

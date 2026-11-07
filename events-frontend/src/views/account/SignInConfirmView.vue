@@ -7,6 +7,7 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import ErrorLine from '@/components/ErrorLine.vue'
 import ListPage from '@/components/ListPage.vue'
 import { Button } from '@/components/ui/button'
 import { prepareCsrf, signIn } from '@/api/account'
@@ -53,7 +54,7 @@ async function confirm() {
   <ListPage :title="t('pageTitle.confirmSignIn')">
     <div class="max-w-md space-y-4">
       <p v-if="!spent" class="text-body">{{ t('account.confirm.body') }}</p>
-      <p class="text-body text-destructive" role="alert">{{ problem }}</p>
+      <ErrorLine role="alert">{{ problem }}</ErrorLine>
       <Button v-if="!spent" :disabled="signingIn" @click="confirm">
         {{ signingIn ? t('account.confirm.signingIn') : t('account.confirm.submit') }}
       </Button>
