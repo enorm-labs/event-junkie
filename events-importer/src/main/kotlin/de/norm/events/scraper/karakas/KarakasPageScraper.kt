@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
@@ -84,7 +85,7 @@ class KarakasPageScraper(
         val section = description.closest("section") ?: return null
         val title = section.textAt(SECTION_TITLE)?.let(::cleanEventTitle)
         val day = WHEN_LINE.find(description.text())?.destructured
-        val monthDay = day?.let { (dayOfMonth, month) -> runCatching { MonthDay.parse("$month $dayOfMonth", MONTH_DAY) }.getOrNull() }
+        val monthDay = day?.let { (dayOfMonth, month) -> dateOrNull { MonthDay.parse("$month $dayOfMonth", MONTH_DAY) } }
         if (title == null || title.text.isBlank() || monthDay == null) {
             logger.warn { "Karakas announcement '${title?.text}' has no title or readable date, skipping" }
             return null

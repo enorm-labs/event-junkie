@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
@@ -17,7 +18,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for the Zosch start page, a Bootstrap accordion where each `div.event` is one night.
@@ -71,12 +71,7 @@ class ZoschOverviewPageScraper {
         )
     }
 
-    private fun parseBodyId(id: String): LocalDate? =
-        try {
-            LocalDate.parse(id.removePrefix("e"), BODY_ID_DATE)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseBodyId(id: String): LocalDate? = dateOrNull { LocalDate.parse(id.removePrefix("e"), BODY_ID_DATE) }
 
     private companion object {
         val BODY_ID_DATE: DateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE

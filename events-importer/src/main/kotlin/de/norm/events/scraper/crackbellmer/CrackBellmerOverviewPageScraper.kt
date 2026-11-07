@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferUnmarkedTitleType
@@ -27,7 +28,6 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -118,11 +118,7 @@ class CrackBellmerOverviewPageScraper(
     /** The item's `data-date` (`August 7, 2026`), the only rendering that carries the year. */
     private fun parseDate(item: Element): LocalDate? {
         val text = item.attr(DATE_ATTRIBUTE).takeIf { it.isNotBlank() } ?: return null
-        return try {
-            LocalDate.parse(text.trim(), DATE_FORMATTER)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { LocalDate.parse(text.trim(), DATE_FORMATTER) }
     }
 
     /**

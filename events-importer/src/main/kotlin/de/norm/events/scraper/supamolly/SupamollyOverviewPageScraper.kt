@@ -12,6 +12,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.commaListActs
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
@@ -28,7 +29,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeParseException
 
 /**
  * Pure HTML parser for Supamolly Berlin's retro hand-coded single-page programme.
@@ -228,20 +228,10 @@ class SupamollyOverviewPageScraper {
     }
 
     /** The `YYYYMMDD` date from a row's stamp id, or `null` when not a real calendar date. */
-    private fun parseStampDate(stamp: String): LocalDate? =
-        try {
-            LocalDate.parse(stamp.take(DATE_LENGTH), COMPACT_DATE)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseStampDate(stamp: String): LocalDate? = dateOrNull { LocalDate.parse(stamp.take(DATE_LENGTH), COMPACT_DATE) }
 
     /** The trailing `HHMM` time from a row's stamp id, or `null` when not a real time. */
-    private fun parseStampTime(stamp: String): LocalTime? =
-        try {
-            LocalTime.parse(stamp.drop(DATE_LENGTH), FOUR_DIGIT_CLOCK)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseStampTime(stamp: String): LocalTime? = dateOrNull { LocalTime.parse(stamp.drop(DATE_LENGTH), FOUR_DIGIT_CLOCK) }
 
     /**
      * True when an act name is a programme note: the café social's name ([CAFE_SOCIAL_PATTERN]), an

@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
@@ -19,7 +20,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Pure HTML parser for a single ÆDEN `/month/?month=YYYY-MM` page.
@@ -133,11 +133,7 @@ class AedenOverviewPageScraper {
     /** Parses the `"01/08/2026 Saturday"` date cell, ignoring the trailing weekday. Null when absent or unparseable. */
     private fun parseAedenDate(text: String?): LocalDate? {
         val datePart = text?.trim()?.substringBefore(' ')?.takeIf { it.isNotBlank() } ?: return null
-        return try {
-            LocalDate.parse(datePart, AEDEN_DATE_FORMATTER)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { LocalDate.parse(datePart, AEDEN_DATE_FORMATTER) }
     }
 
     companion object {

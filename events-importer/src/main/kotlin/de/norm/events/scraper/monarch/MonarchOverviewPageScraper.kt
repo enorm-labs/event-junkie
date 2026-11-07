@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateCheckedAgainstWeekday
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapEventType
@@ -17,7 +18,6 @@ import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -158,11 +158,7 @@ class MonarchOverviewPageScraper {
         val match = DATE_TIME_PATTERN.find(dateText) ?: return null
         val hour = match.groupValues[HOUR_GROUP].toIntOrNull() ?: return null
         val minute = match.groupValues[MINUTE_GROUP].toInt()
-        return try {
-            LocalTime.of(hour, minute)
-        } catch (_: DateTimeException) {
-            null
-        }
+        return dateOrNull { LocalTime.of(hour, minute) }
     }
 
     /** Strips the "(KONZERT)" type marker and "ABGESAGT" cancellation flag from the raw title cell text. */

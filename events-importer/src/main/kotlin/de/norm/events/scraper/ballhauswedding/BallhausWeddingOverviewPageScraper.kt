@@ -7,6 +7,7 @@ import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.slug.SlugGenerator
@@ -14,7 +15,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
-import java.time.DateTimeException
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -206,12 +206,7 @@ private fun safeDate(
     year: Int,
     month: Int,
     day: Int
-): LocalDate? =
-    try {
-        LocalDate.of(year, month, day)
-    } catch (_: DateTimeException) {
-        null
-    }
+): LocalDate? = dateOrNull { LocalDate.of(year, month, day) }
 
 private fun clock(
     hour: String,

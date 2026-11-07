@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -23,7 +24,6 @@ import tools.jackson.databind.JsonNode
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /** The calendar plugin's settings as the tickets page prints them: where to ask, the nonce, the city and every day with a show. */
 data class QuatschCalendar(
@@ -164,11 +164,7 @@ private fun doorsTime(line: String): LocalTime? =
 /** `event_time` is a string on most shows and a one-element array on some guest shows. */
 private fun startTime(node: JsonNode): LocalTime? =
     (if (node.isArray) node.firstOrNull() else node)?.asString("")?.let { time ->
-        try {
-            LocalTime.parse(time.trim())
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        dateOrNull { LocalTime.parse(time.trim()) }
     }
 
 /** The field's HTML as text lines, one per paragraph. */
@@ -186,9 +182,4 @@ private fun JsonNode.lines(field: String): List<String> =
 
 private fun JsonNode.text(field: String): String? = stringOrNull(field)?.let(::decodeHtmlEntities).blankToNull()
 
-private fun parseDate(value: String): LocalDate? =
-    try {
-        LocalDate.parse(value, CALENDAR_DATE)
-    } catch (_: DateTimeParseException) {
-        null
-    }
+private fun parseDate(value: String): LocalDate? = dateOrNull { LocalDate.parse(value, CALENDAR_DATE) }

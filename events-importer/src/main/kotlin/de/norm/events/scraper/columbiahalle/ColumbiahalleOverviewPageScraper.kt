@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
@@ -25,7 +26,6 @@ import org.jsoup.nodes.Element
 import java.math.BigDecimal
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -274,12 +274,7 @@ class ColumbiahalleOverviewPageScraper {
  * Parses a German month heading ("August 2026", "März 2027") into a [YearMonth], or `null` —
  * the only place the programme states a month and a year at all.
  */
-private fun parseGermanYearMonth(text: String): YearMonth? =
-    try {
-        YearMonth.parse(text.trim(), GERMAN_MONTH_HEADING_FORMATTER)
-    } catch (_: DateTimeParseException) {
-        null
-    }
+private fun parseGermanYearMonth(text: String): YearMonth? = dateOrNull { YearMonth.parse(text.trim(), GERMAN_MONTH_HEADING_FORMATTER) }
 
 private val GERMAN_MONTH_HEADING_FORMATTER: DateTimeFormatter =
     DateTimeFormatter.ofPattern("MMMM yyyy", Locale.GERMAN)

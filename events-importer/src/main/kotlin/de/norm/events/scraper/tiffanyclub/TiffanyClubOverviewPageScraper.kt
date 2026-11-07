@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferVenueFormatType
@@ -21,7 +22,6 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.MonthDay
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -103,11 +103,7 @@ class TiffanyClubOverviewPageScraper(
                 .filter { it.closest(".event-time-line") == null }
                 .map { it.text().trim() }
                 .takeIf { it.size >= DATE_PARTS } ?: return null
-        return try {
-            inferYearForWeekday(MonthDay.parse("$day $month", DAY_MONTH_FORMATTER), parseGermanWeekday(weekday), clock)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { inferYearForWeekday(MonthDay.parse("$day $month", DAY_MONTH_FORMATTER), parseGermanWeekday(weekday), clock) }
     }
 
     /** The `TICKETS` button; the guest-list and table buttons beside it open forms. */

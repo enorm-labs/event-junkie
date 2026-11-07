@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.flightStringOrNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonArrayAt
@@ -26,7 +27,6 @@ import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
 import java.time.Instant
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 private const val EVENTS_KEY = "events"
 
@@ -151,12 +151,7 @@ class MinimalBarOverviewPageScraper {
         field: String
     ): String? = node.flightStringOrNull(field)?.takeUnless { FLIGHT_REFERENCE.matches(it) }
 
-    private fun berlinDate(timestamp: String): LocalDate? =
-        try {
-            Instant.parse(timestamp).atZone(BERLIN).toLocalDate()
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun berlinDate(timestamp: String): LocalDate? = dateOrNull { Instant.parse(timestamp).atZone(BERLIN).toLocalDate() }
 
     private fun skip(
         slug: String,

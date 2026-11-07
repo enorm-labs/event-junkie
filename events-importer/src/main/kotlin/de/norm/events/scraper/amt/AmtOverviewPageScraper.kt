@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isBoxOfficeLabel
@@ -21,7 +22,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 /**
  * Pure HTML parser for a single AMT `/month/<name>` page (e.g. `/month/june`).
@@ -141,11 +141,7 @@ class AmtOverviewPageScraper {
     /** Parses the `MMMM d, yyyy` (`"June 19, 2026"`) `data-date`, null when absent or unparseable. */
     private fun parseAmtDate(text: String?): LocalDate? {
         if (text.isNullOrBlank()) return null
-        return try {
-            LocalDate.parse(text.trim(), ENGLISH_LONG_DATE)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { LocalDate.parse(text.trim(), ENGLISH_LONG_DATE) }
     }
 
     /**

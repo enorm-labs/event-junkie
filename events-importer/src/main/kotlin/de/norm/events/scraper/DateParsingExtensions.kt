@@ -4,6 +4,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
 import java.time.format.DateTimeParseException
 import java.util.Locale
 
@@ -20,6 +21,13 @@ import java.util.Locale
  * [AbstractTwoPageWebsiteImporter] drops any event still carrying it after the merge.
  */
 val UNRESOLVED_EVENT_DATE: LocalDate = LocalDate.MIN
+
+/** `17. Oktober`: a German day and month name without a year, as several programmes print it. */
+val GERMAN_DAY_MONTH: DateTimeFormatter =
+    DateTimeFormatterBuilder()
+        .parseCaseInsensitive()
+        .appendPattern("d. MMMM")
+        .toFormatter(Locale.GERMAN)
 
 /** `20261017`: a compact date in a row id, a data attribute or an iCalendar all-day `DATE` value. */
 val COMPACT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")

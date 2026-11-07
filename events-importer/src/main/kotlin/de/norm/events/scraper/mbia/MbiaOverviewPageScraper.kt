@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
@@ -23,7 +24,6 @@ import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
 import java.time.Instant
 import java.time.LocalTime
-import java.time.format.DateTimeParseException
 
 /**
  * Parser for M-BIA's `/veranstaltungen` page, read from the Wix Data collection `Events` in the
@@ -132,12 +132,7 @@ class MbiaOverviewPageScraper {
                 if (live != null) line.substring(0, live.range.first).trim() to ArtistRole.LIVE else line to ArtistRole.DJ
             }.filter { it.first.isNotBlank() }
 
-    private fun parseDate(text: String) =
-        try {
-            Instant.parse(text).atZone(BERLIN).toLocalDate()
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseDate(text: String) = dateOrNull { Instant.parse(text).atZone(BERLIN).toLocalDate() }
 
     private companion object {
         const val COLLECTION = "Events"

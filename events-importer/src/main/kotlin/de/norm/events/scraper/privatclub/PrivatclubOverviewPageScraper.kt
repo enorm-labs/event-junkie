@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GERMAN_DAY_MONTH
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -20,7 +21,6 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseTime
-import de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper.Companion.GERMAN_DATE_FORMATTER
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaImageUrl
@@ -38,10 +38,7 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatterBuilder
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 /**
  * Pure HTML parser for Privatclub Berlin's WordPress event overview page.
@@ -234,7 +231,7 @@ class PrivatclubOverviewPageScraper(
 
     /**
      * Fallback date from `.datum`: "Sa. 16." (part1) and "Mai" (part2). Day number by
-     * regex, month by [GERMAN_DATE_FORMATTER], year = current or next depending on
+     * regex, month by [GERMAN_DAY_MONTH], year = current or next depending on
      * whether the date has passed. Only used without JSON-LD.
      */
     private fun parseDateFromHtml(header: Element): LocalDate? {
@@ -244,7 +241,7 @@ class PrivatclubOverviewPageScraper(
         val day = DAY_NUMBER_PATTERN.find(datumPart1)?.value ?: return null
         val monthDay =
             try {
-                MonthDay.parse("$day. ${datumPart2.trim()}", GERMAN_DATE_FORMATTER)
+                MonthDay.parse("$day. ${datumPart2.trim()}", GERMAN_DAY_MONTH)
             } catch (_: DateTimeParseException) {
                 return null
             }
@@ -416,15 +413,6 @@ class PrivatclubOverviewPageScraper(
 
         /** Day number from "Sa. 16." */
         private val DAY_NUMBER_PATTERN = Regex("""\d+""")
-
-        /**
-         * German month names ("16. Mai" → May 16), [Locale.GERMAN], case-insensitive.
-         */
-        private val GERMAN_DATE_FORMATTER: DateTimeFormatter =
-            DateTimeFormatterBuilder()
-                .parseCaseInsensitive()
-                .appendPattern("d. MMMM")
-                .toFormatter(Locale.GERMAN)
     }
 }
 

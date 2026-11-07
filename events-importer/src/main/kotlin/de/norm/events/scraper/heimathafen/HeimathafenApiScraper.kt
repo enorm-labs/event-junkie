@@ -15,6 +15,7 @@ import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.flatMapSkippingFailures
 import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.labelledClock
@@ -28,7 +29,6 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -442,11 +442,7 @@ class HeimathafenApiScraper(
         /** Parses ACF's `MM/dd/yyyy h:mm a.m.` timestamp; the dotted meridiem is normalised first. */
         fun parsePerformanceDateTime(raw: String): LocalDateTime? {
             val normalized = raw.trim().replace("a.m.", "AM", ignoreCase = true).replace("p.m.", "PM", ignoreCase = true)
-            return try {
-                LocalDateTime.parse(normalized, PERFORMANCE_DATE_TIME)
-            } catch (_: DateTimeParseException) {
-                null
-            }
+            return dateOrNull { LocalDateTime.parse(normalized, PERFORMANCE_DATE_TIME) }
         }
     }
 }

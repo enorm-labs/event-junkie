@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.flightStringOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.jsonArrayAt
@@ -16,7 +17,6 @@ import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
 import java.net.URI
 import java.time.Instant
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for the PUNCH L!NE Club's ticket page (`/de/tickets`), a Next.js App Router page whose
@@ -51,11 +51,7 @@ class PunchlineTicketsPageScraper {
         val show = date.flightStringOrNull("showName") ?: return null
         val start =
             date.flightStringOrNull("isoDate")?.let {
-                try {
-                    Instant.parse(it).atZone(BERLIN)
-                } catch (_: DateTimeParseException) {
-                    null
-                }
+                dateOrNull { Instant.parse(it).atZone(BERLIN) }
             } ?: return null
         val path = showPath(date, dates) ?: return null
         val acts = date.flightStringOrNull("artistNames")

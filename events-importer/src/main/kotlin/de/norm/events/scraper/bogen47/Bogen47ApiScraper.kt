@@ -15,6 +15,7 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.headlinersFromTitle
@@ -34,7 +35,6 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.format.DateTimeParseException
 
 /**
  * One upcoming event plus the WordPress attachment id of its poster. The listing carries only a
@@ -282,11 +282,7 @@ internal class Bogen47ApiScraper(
     /** Parses WordPress's `yyyy-MM-dd'T'HH:mm:ss` local post date, null instead of throwing. */
     private fun parseDateTime(raw: String): LocalDateTime? {
         val cleaned = raw.blankToNull() ?: return null
-        return try {
-            LocalDateTime.parse(cleaned)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { LocalDateTime.parse(cleaned) }
     }
 
     private companion object {

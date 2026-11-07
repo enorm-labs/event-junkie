@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
@@ -21,7 +22,6 @@ import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -86,12 +86,7 @@ class EightMmProgramPageScraper(
         )
     }
 
-    private fun parseDate(text: String): LocalDate? =
-        try {
-            LocalDate.parse(text, DATE_FORMAT)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseDate(text: String): LocalDate? = dateOrNull { LocalDate.parse(text, DATE_FORMAT) }
 
     private fun eventTypeOf(title: String): String =
         when {
