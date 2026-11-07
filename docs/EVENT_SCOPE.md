@@ -229,6 +229,7 @@ marks a show for small children, and adults go to these concerts too.
 | ZIMMER 16                                                                 | `Zimmer16OverviewPageScraper`, on the homepage and `programm-fuer-kinder-mikado-e-v/` | A title that ends in `(Kinder)`                                                                                           |
 | Zebrano-Theater                                                           | `ZebranoTheaterKinderprogrammPageScraper`, on `kinderprogramm.html`                   | Every public performance on that page. The age is the phrase                                                              |
 | Pfefferberg Theater                                                       | `PfefferbergTheaterCalendarPageScraper`, `CHILDRENS_CATEGORY`                         | The `Kindertheater` category, `childrensShowPhrase` on title + subtitle, or a fairy tale's family or school audience line |
+| LabSaal                                                                   | `childrensShowPhrase`, on the title                                                   | `Theater für Kinder: …`                                                                                                   |
 
 `childrensShowPhrase` leaves a band named after children (`Muttis Kinder`) and a show for ten and up (`ab 12 Jahren`)
 unmarked. A new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it
