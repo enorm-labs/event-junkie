@@ -35,6 +35,7 @@ import type { Account } from '@/api/types'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { setSession } from '@/composables/useSession'
 import { berlinDateOf, formatLongDate } from '@/lib/format'
+import { SECTION_TITLE_CLASS } from '@/lib/utils'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -148,7 +149,7 @@ function since(createdAt?: string): string {
               <AlertDialogContent
                 class="fixed inset-x-4 top-1/2 z-50 mx-auto max-w-md -translate-y-1/2 space-y-4 border border-border bg-background p-6"
               >
-                <AlertDialogTitle class="text-section font-bold tracking-tight">
+                <AlertDialogTitle :class="SECTION_TITLE_CLASS">
                   {{ t('account.page.deleteConfirmTitle') }}
                 </AlertDialogTitle>
                 <AlertDialogDescription class="text-body text-muted-foreground">

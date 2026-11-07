@@ -88,3 +88,9 @@ export const RESULTS_BAR_CLASS = 'flex flex-wrap items-center justify-between ga
  * utilities as `[&_h1]:` variants, because it does not render the element itself.
  */
 export const PAGE_TITLE_CLASS = 'text-page font-bold tracking-tight'
+
+/**
+ * A section heading at the `text-section` step: the `h2`s of the home, week, map and venues pages,
+ * and the account deletion dialog's title. `ProsePage` repeats it as `[&_h2]:` variants.
+ */
+export const SECTION_TITLE_CLASS = 'text-section font-bold tracking-tight'

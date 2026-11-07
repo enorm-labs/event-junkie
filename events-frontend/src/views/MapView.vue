@@ -43,7 +43,7 @@ import {
   venuePin,
   venuePosition,
 } from '@/lib/mapPins'
-import { CARD_LIST_CLASS } from '@/lib/utils'
+import { CARD_LIST_CLASS, SECTION_TITLE_CLASS } from '@/lib/utils'
 
 // MapLibre is the heaviest dependency the site has; only this route and the venues map pay for it.
 const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
@@ -462,7 +462,7 @@ function distance(km: number): string {
     </p>
 
     <section v-if="near && !loading && !error" aria-live="polite" class="space-y-4">
-      <h2 class="text-section font-bold tracking-tight">
+      <h2 :class="SECTION_TITLE_CLASS">
         {{ t('map.near.heading', { radius: distance(radiusKm), origin: originLabel }) }}
       </h2>
       <p class="text-body text-muted-foreground">

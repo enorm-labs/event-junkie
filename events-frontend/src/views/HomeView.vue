@@ -14,7 +14,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import { ArrowRight, CalendarDays, Compass, Dices } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, SECTION_TITLE_CLASS } from '@/lib/utils'
 import ClubStamp from '@/components/ClubStamp'
 import EventRow from '@/components/EventRow.vue'
 import TodayEvents from '@/components/TodayEvents.vue'
@@ -51,9 +51,6 @@ useStructuredData(() => websiteJsonLd(locale.value as Locale))
 const { compact } = useCompactView()
 
 const todayTotal = computed(() => today.data.value?.length ?? 0)
-
-/** The section heading style, at the size of the map's and the venues' `h2`. */
-const HEADING_CLASS = 'text-section font-bold tracking-tight'
 
 // One random event today in a small room (#2722), from the day's cards: a long run folded into
 // "Also running" has been on for weeks and is not a night out. The pick happens here, on the device.
@@ -115,7 +112,7 @@ function surpriseMe() {
       <!-- One line at every width: below `sm` the button is icon-only, and a long count truncates
            before the heading would wrap. -->
       <div class="flex items-baseline gap-x-3">
-        <h2 :class="[HEADING_CLASS, 'shrink-0 whitespace-nowrap']">{{ t('home.today') }}</h2>
+        <h2 :class="[SECTION_TITLE_CLASS, 'shrink-0 whitespace-nowrap']">{{ t('home.today') }}</h2>
         <span
           v-if="todayTotal"
           class="min-w-0 truncate text-body text-muted-foreground tabular-nums"
@@ -149,7 +146,7 @@ function surpriseMe() {
     </section>
 
     <section class="space-y-4 border-t border-border pt-8">
-      <h2 :class="HEADING_CLASS">{{ t('home.upcoming') }}</h2>
+      <h2 :class="SECTION_TITLE_CLASS">{{ t('home.upcoming') }}</h2>
       <p v-if="upcoming.loading.value" class="text-body text-muted-foreground">
         {{ upcoming.retrying.value ? t('errors.retrying') : t('common.states.loading') }}
       </p>
