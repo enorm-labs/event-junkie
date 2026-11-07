@@ -154,9 +154,19 @@ internal fun actsOf(
 ): List<ScrapedArtist> =
     when {
         type in LISTED_LINEUP_TYPES && lineup.isNotEmpty() -> lineup.filterNot(::isNonArtistName).map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
-        ACT_FRAME.containsMatchIn(title) -> buildArtistsForEventType(title, subtitle = null, eventType = type, unpackWithFrame = true)
+        ACT_FRAME.containsMatchIn(title) -> buildArtistsForEventType(framedBill(title), subtitle = null, eventType = type, unpackWithFrame = true)
         else -> emptyList()
     }
+
+/**
+ * The title from its last dash before the act frame, so a series name that leads it is not billed:
+ * `¡VAMOS A BAILAR! – La Fiesta de la Salsa – CONEXIÓN feat. Mayelis` bills `CONEXIÓN` and `Mayelis`.
+ */
+internal fun framedBill(title: String): String {
+    val frame = ACT_FRAME.find(title) ?: return title
+    val dash = SERIES_DASH.findAll(title.substring(0, frame.range.first)).lastOrNull() ?: return title
+    return title.substring(dash.range.last + 1).trim()
+}
 
 /**
  * The act an item such as `<strong>Amptray</strong> – eine Band, die …` or `WR51: Schon fünf Jahre …` names, or null for
@@ -186,6 +196,7 @@ private val BLURBED_ITEM = Regex("""(\S.*?)(?:\s+[–-]|:)\s+(.+)""")
 private const val MAX_NAME_WORDS = 5
 private const val MIN_BLURB_WORDS = 4
 private val READING = Regex("""premiere|lesung|kontrovers|diskussion|podium|vortrag|gespräch""", RegexOption.IGNORE_CASE)
+private val SERIES_DASH = Regex("""\s[–—-]\s""")
 private val ACT_FRAME = Regex("""\s(?:mit|feat\.?|ft\.|w/)\s""", RegexOption.IGNORE_CASE)
 private val FREE = Regex("""freier eintritt|eintritt frei""", RegexOption.IGNORE_CASE)
 private val THUMBNAIL_SUFFIX = Regex("""-\d+x\d+(?=\.\w+$)""")

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.pfefferberghaus13
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.nulls.shouldBeNull
@@ -83,6 +84,15 @@ class PfefferbergHaus13DetailPageScraperTest {
     fun `bills a listed lineup for a festival, and none for a night that is neither a concert nor a festival`() {
         actsOf("Lunar Harvest", EventType.FESTIVAL.name, listOf("NOX")).map { it.name } shouldBe listOf("NOX")
         actsOf("Lesung am Berg", EventType.READING.name, listOf("Amptray")) shouldBe emptyList()
+    }
+
+    @Test
+    fun `bills the acts after a series name that leads a framed title`() {
+        // Event 13165 on production.
+        actsOf("¡VAMOS A BAILAR! – La Fiesta de la Salsa – CONEXIÓN feat. Mayelis", EventType.CONCERT.name, emptyList())
+            .map { it.name to it.role } shouldBe listOf("CONEXIÓN" to ArtistRole.HEADLINER, "Mayelis" to ArtistRole.SUPPORT)
+        framedBill("Soul Night mit Montigo Rim & Hiddit") shouldBe "Soul Night mit Montigo Rim & Hiddit"
+        framedBill("Berlin Buddies – Geburtstagskonzert") shouldBe "Berlin Buddies – Geburtstagskonzert"
     }
 
     @Test

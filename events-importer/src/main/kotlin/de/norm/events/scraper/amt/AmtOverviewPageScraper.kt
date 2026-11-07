@@ -40,7 +40,9 @@ import java.time.format.DateTimeParseException
  * - `a[href^="/event/"]` — the detail-page link, the stable per-event identity for `sourceId`.
  *
  * Every event is [EventType.PARTY]: a techno club whose nights are DJ dance parties, so the
- * title is a series name rather than a headliner and never an artist.
+ * title is a series name rather than a headliner. A night with an empty DJ line can still bill its
+ * DJs in the title, after a host: `Rx presents: Molly Lollen / DSC7 / Clarisse` or `Loone x Anja
+ * Schneider, Milena Adamis, Anna Amato & Steven Shade` (see [billedActsFromTitle]).
  *
  * @see AmtWebsiteImporter for the fetch orchestration (entry page → month pages).
  */
@@ -103,7 +105,10 @@ class AmtOverviewPageScraper {
             ticketUrl = item.hrefAt("a.div-strela"),
             pricePresale = presale,
             priceBoxOffice = boxOffice,
-            artists = parseDjs(lineup).ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
+            artists =
+                parseDjs(lineup)
+                    .ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
+                    .ifEmpty { billedActsFromTitle(title) }
         )
     }
 
@@ -119,6 +124,18 @@ class AmtOverviewPageScraper {
             .map { it.trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+    }
+
+    /**
+     * The DJs a `<host> presents: <bill>` or `<host> x <bill>` title lists. Only a list of two names or more
+     * counts: one name after the host is as often a night or a crew (`Rx presents: Noise Daughters Showcase`,
+     * `Loone x FEIERAMT`, `PUDDINGS x SCREAM QUEENS`) as a DJ.
+     */
+    private fun billedActsFromTitle(title: String): List<ScrapedArtist> {
+        val bill = HOSTED_BILL.find(title.trim())?.groupValues?.get(1) ?: return emptyList()
+        val names = bill.split(BILL_SEPARATOR).map { it.trim() }.filter { it.isNotBlank() && !isNonArtistName(it) }
+        if (names.size < 2) return emptyList()
+        return names.map { ScrapedArtist(name = it, role = ArtistRole.DJ, titleDerived = true) }
     }
 
     /** Parses the `MMMM d, yyyy` (`"June 19, 2026"`) `data-date`, null when absent or unparseable. */
@@ -147,6 +164,12 @@ class AmtOverviewPageScraper {
     companion object {
         /** The `//` delimiter AMT uses between DJs in the `.perf` line. */
         private const val DJ_SEPARATOR = "//"
+
+        /** The bill after a host's `presents:` or ` x `, as the venue's titles write it. */
+        private val HOSTED_BILL = Regex("""^.+?(?:\s+presents:|\s+[x×]\s+)\s*(.+)$""", RegexOption.IGNORE_CASE)
+
+        /** The separators a title bill puts between DJs. */
+        private val BILL_SEPARATOR = Regex("""\s*(?:/|,|&)\s*""")
 
         /** A single monetary value in a tiered price cell, German (`, `) or dot decimal separator. */
         private val PRICE_NUMBER = Regex("""\d+(?:[.,]\d{1,2})?""")
