@@ -22,6 +22,7 @@ import DisplaySettingsGroups from '@/components/DisplaySettingsGroups.vue'
 import GitHubMark from '@/components/GitHubMark.vue'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { REPOSITORY_URL } from '@/lib/links'
+import { DIALOG_OVERLAY_CLASS } from '@/lib/utils'
 
 // `displaySettings`: signed in, the bell takes the settings button's place below `sm` (#4078).
 defineProps<{ links: { to: string; label: string }[]; displaySettings?: boolean }>()
@@ -53,7 +54,7 @@ watch(
           {{ t('common.nav.menu') }}
         </Button>
       </DialogTrigger>
-      <DialogOverlay class="fixed inset-0 z-40 bg-background/80" />
+      <DialogOverlay :class="DIALOG_OVERLAY_CLASS" />
       <DialogContent
         :aria-describedby="undefined"
         class="fixed inset-y-0 right-0 z-50 flex w-3/4 max-w-xs flex-col gap-6 border-l border-border bg-background p-4 outline-hidden"

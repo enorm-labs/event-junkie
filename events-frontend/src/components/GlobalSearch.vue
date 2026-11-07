@@ -27,6 +27,7 @@ import { MIN_SEARCH_LENGTH, useGlobalSearch } from '@/composables/useGlobalSearc
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { districtLabel } from '@/lib/districts'
+import { DIALOG_OVERLAY_CLASS } from '@/lib/utils'
 
 const { t } = useI18n()
 const { formatShortDate } = useFormat()
@@ -166,7 +167,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <Search />
       </Button>
     </DialogTrigger>
-    <DialogOverlay class="fixed inset-0 z-40 bg-background/80" />
+    <DialogOverlay :class="DIALOG_OVERLAY_CLASS" />
     <DialogContent
       :aria-describedby="undefined"
       class="fixed inset-0 z-50 flex flex-col bg-background outline-hidden md:inset-x-4 md:top-16 md:bottom-auto md:mx-auto md:max-h-2/3 md:max-w-xl md:rounded-lg md:border md:border-border"
