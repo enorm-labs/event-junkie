@@ -101,7 +101,7 @@ class TempodromDetailPageScraperTest {
     @Test
     fun `types a fallback night COMEDY when the Beschreibung names a comedian`() {
         // "The iconic standup comedian Shaden premieres her … brand new special" (#3380).
-        val event = scraper.enrich(fallbackRow("SHADEN (أنا إمرأة تعبانة) Show", "// Berlin"), page("tempodrom-detail-shaden-comedy.html"))
+        val event = scraper.enrich(fallbackRow("SHADEN (أنا إمرأة تعبانة) Show", subtitle = null), page("tempodrom-detail-shaden-comedy.html"))
 
         event.eventType shouldBe "COMEDY"
         event.typeIsFallback shouldBe false

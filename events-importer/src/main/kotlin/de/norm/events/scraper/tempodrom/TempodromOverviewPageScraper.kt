@@ -135,12 +135,21 @@ class TempodromOverviewPageScraper {
     /**
      * The format line and the room the venue's `description` ends in: "Germany Tour | Kleine Arena"
      * is `Germany Tour` in `Kleine Arena`. A description that is only the room has no format line.
+     * A line that continues the title opens with its separator, and one that is only the tour city
+     * says nothing: "- Das Tribute-Konzert …" is `Das Tribute-Konzert …`, "// Berlin" is none (#4581).
      */
     private fun splitRoom(description: String?): Pair<String?, String?> {
         val text = description.blankToNull()
-        val room = text?.let(ROOM_SUFFIX::find) ?: return text to null
-        return text.substring(0, room.range.first).blankToNull() to room.groupValues[1]
+        val room = text?.let(ROOM_SUFFIX::find)
+        val formatLine = if (room == null) text else text.substring(0, room.range.first)
+        return formatLine?.let(::cleanFormatLine) to room?.groupValues?.get(1)
     }
+
+    private fun cleanFormatLine(line: String): String? =
+        line
+            .replace(LEADING_SEPARATOR, "")
+            .trim()
+            .takeUnless { it.isEmpty() || it.equals(VENUE_CITY, ignoreCase = true) }
 
     /**
      * The cheapest ticket price and, when the offer spans a range, a note recording it. `offers`
@@ -176,6 +185,12 @@ class TempodromOverviewPageScraper {
 
         /** One of the two rooms, as the whole description or after its last `|`: "… | Kleine Arena". */
         val ROOM_SUFFIX = Regex("""(?:^|\s*\|\s*)((?:Große|Grosse|Kleine)\s+Arena)\s*$""", RegexOption.IGNORE_CASE)
+
+        /** A separator the venue opens a format line with, when the line continues the title: "// Berlin", "- Das …". */
+        val LEADING_SEPARATOR = Regex("""^\s*(?:/{1,2}|[-–|])\s*""")
+
+        /** The venue's own city, which as a whole format line names no tour. */
+        const val VENUE_CITY = "Berlin"
 
         /** Currency assumed when an offer omits one; every Tempodrom offer states EUR. */
         const val DEFAULT_CURRENCY = "EUR"
