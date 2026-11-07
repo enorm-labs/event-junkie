@@ -39,6 +39,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
+import ErrorLine from '@/components/ErrorLine.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
@@ -345,7 +346,7 @@ onBeforeUnmount(() => {
       </p>
     </template>
 
-    <p v-if="problem" class="text-body text-destructive" role="alert">{{ problem }}</p>
+    <ErrorLine v-if="problem" role="alert">{{ problem }}</ErrorLine>
 
     <p v-else-if="follows === null" class="text-body text-muted-foreground">
       {{ t('common.states.loading') }}

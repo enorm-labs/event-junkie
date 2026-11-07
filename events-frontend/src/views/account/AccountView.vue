@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from 'reka-ui'
+import ErrorLine from '@/components/ErrorLine.vue'
 import ListPage from '@/components/ListPage.vue'
 import NotificationSettings from '@/components/NotificationSettings.vue'
 import PasskeySettings from '@/components/PasskeySettings.vue'
@@ -81,7 +82,7 @@ function since(createdAt?: string): string {
 <template>
   <ListPage :title="t('pageTitle.account')">
     <div class="max-w-xl space-y-8">
-      <p class="text-body text-destructive" role="alert">{{ problem }}</p>
+      <ErrorLine role="alert">{{ problem }}</ErrorLine>
 
       <div v-if="ended" class="space-y-4" role="status">
         <p class="text-body">{{ t(`account.page.${ended}`) }}</p>

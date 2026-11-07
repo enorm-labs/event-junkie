@@ -7,6 +7,7 @@ import { describeError } from '@/api/client'
 import { retryTransient } from '@/api/retry'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
+import ErrorLine from '@/components/ErrorLine.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
 import ListPage from '@/components/ListPage.vue'
 import MapPanel from '@/components/MapPanel.vue'
@@ -371,7 +372,7 @@ const localePath = useLocalePath()
       <p v-if="mapLoading" class="text-body text-muted-foreground">
         {{ mapRetrying ? t('errors.retrying') : t('common.states.loadingVenues') }}
       </p>
-      <p v-else-if="mapError" class="text-body text-destructive">{{ mapError }}</p>
+      <ErrorLine v-else-if="mapError">{{ mapError }}</ErrorLine>
       <div v-else-if="!pins.length" class="space-y-3">
         <VenueFeaturesEmpty
           v-if="features.length > 1"
@@ -485,7 +486,7 @@ const localePath = useLocalePath()
     <p v-else-if="loading" class="text-body text-muted-foreground">
       {{ retrying ? t('errors.retrying') : t('common.states.loadingVenues') }}
     </p>
-    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
+    <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!page?.content?.length" class="space-y-3">
       <VenueFeaturesEmpty v-if="features.length > 1" :features="features" @remove="removeFeature" />

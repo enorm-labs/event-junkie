@@ -13,6 +13,7 @@ import { computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { ArrowRight, CalendarDays, Compass, Dices } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import ErrorLine from '@/components/ErrorLine.vue'
 import EventCard from '@/components/EventCard.vue'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS, SECTION_TITLE_CLASS } from '@/lib/utils'
 import ClubStamp from '@/components/ClubStamp'
@@ -136,9 +137,9 @@ function surpriseMe() {
       <p v-if="today.loading.value" class="text-body text-muted-foreground">
         {{ today.retrying.value ? t('errors.retrying') : t('common.states.loading') }}
       </p>
-      <p v-else-if="today.error.value" class="text-body text-destructive">
+      <ErrorLine v-else-if="today.error.value">
         {{ today.error.value }}
-      </p>
+      </ErrorLine>
       <p v-else-if="!today.data.value?.length" class="text-body text-muted-foreground">
         {{ t('home.todayEmpty') }}
       </p>
@@ -150,9 +151,9 @@ function surpriseMe() {
       <p v-if="upcoming.loading.value" class="text-body text-muted-foreground">
         {{ upcoming.retrying.value ? t('errors.retrying') : t('common.states.loading') }}
       </p>
-      <p v-else-if="upcoming.error.value" class="text-body text-destructive">
+      <ErrorLine v-else-if="upcoming.error.value">
         {{ upcoming.error.value }}
-      </p>
+      </ErrorLine>
       <p v-else-if="!upcoming.data.value?.length" class="text-body text-muted-foreground">
         {{ t('home.upcomingEmpty') }}
       </p>

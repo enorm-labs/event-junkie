@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import BaseBadge from '@/components/BaseBadge.vue'
 import CachedImage from '@/components/CachedImage.vue'
 import DirectionsLink from '@/components/DirectionsLink.vue'
+import ErrorLine from '@/components/ErrorLine.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventMetaLine, { type MetaItem } from '@/components/EventMetaLine.vue'
 import EventRow from '@/components/EventRow.vue'
@@ -356,7 +357,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
       </Button>
     </div>
 
-    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
+    <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
 
     <article v-else-if="event" class="space-y-8">
       <!-- The poster belongs to the title, so it sits closer than the article's stride. `mb-5` wins
