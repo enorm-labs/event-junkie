@@ -397,4 +397,19 @@ class ArtistNormalizerTest {
             artistSlugFor("DJ Peter") shouldBe "dj-peter"
         }
     }
+
+    // The lookup key keeps every letter, so a billing in another script never collapses onto a correction (#4611).
+    @Test
+    fun `keys a correction on every letter of the billing`() {
+        assertSoftly {
+            canonicalArtistName("τέσemfνπ") shouldBe "τέσemfνπ"
+            canonicalArtistName("чwhatч") shouldBe "чwhatч"
+            canonicalArtistName("Wħat") shouldBe "Wħat"
+            // A combining accent is part of the letter it sits on.
+            canonicalArtistName("Wha\u0301t") shouldBe "Wha\u0301t"
+            // Punctuation and spacing still fold away.
+            canonicalArtistName("E.M.F.") shouldBe "EMF"
+            canonicalArtistName("Rø Ry") shouldBe "RØRY"
+        }
+    }
 }

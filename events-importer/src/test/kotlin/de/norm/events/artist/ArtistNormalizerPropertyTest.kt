@@ -4,6 +4,7 @@ import de.norm.events.common.NameArbs
 import de.norm.events.common.foldTypedApostrophes
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
+import io.kotest.property.arbitrary.filterNot
 import io.kotest.property.checkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -22,7 +23,8 @@ class ArtistNormalizerPropertyTest {
     @Test
     fun `normalizing changes only letter case and spacing`() =
         runTest {
-            checkAll(NameArbs.anyName) { raw ->
+            // A correction rewrites the letters on purpose; `e-mf` is `EMF`.
+            checkAll(NameArbs.anyName.filterNot(::hasArtistNameCorrection)) { raw ->
                 val expected =
                     raw
                         .trim()
