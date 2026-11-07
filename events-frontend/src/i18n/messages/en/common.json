@@ -66,7 +66,12 @@
     "label": "Language"
   },
   "pagination": {
-    "pageOf": "Page {current} of {total}"
+    "label": "Pages",
+    "page": "Page {page}",
+    "pageOf": "Page {current} of {total}",
+    "loadMore": "Show more events",
+    "fromStart": "Back to the first events",
+    "shownOf": "{shown} of {total} shown"
   },
   "imageCredit": {
     "photo": "Photo:",

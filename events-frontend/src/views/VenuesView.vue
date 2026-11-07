@@ -99,7 +99,7 @@ const params = computed<VenueSearchParams>(() => ({
 const { data: page, error, loading, retrying, run } = useVenueSearch(() => params.value)
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
-const { currentPage, totalPages, goToPage } = usePagedList(page, run)
+const { currentPage, totalPages, pageLink } = usePagedList(page, run)
 
 /** A filter beyond the name search, so an empty list can name the filters as its cause. */
 const FILTER_KEYS = ['district', 'type', 'character', 'family', 'eventType', 'listing']
@@ -513,7 +513,11 @@ const localePath = useLocalePath()
         <VenueCard v-for="venue in page.content" :key="venue.slug" :venue="venue" as="h2" />
       </div>
 
-      <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
+      <PaginationControls
+        :current-page="currentPage"
+        :page-link="pageLink"
+        :total-pages="totalPages"
+      />
     </template>
   </ListPage>
 </template>

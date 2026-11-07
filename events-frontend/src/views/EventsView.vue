@@ -16,12 +16,16 @@ import { todayIso } from '@/lib/format'
 import { splitDayList } from '@/lib/longRuns'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import ListPage from '@/components/ListPage.vue'
-import PaginationControls from '@/components/PaginationControls.vue'
+import ShowMoreEvents from '@/components/ShowMoreEvents.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
-import type { EventPage } from '@/api/types'
 import { useAsync } from '@/composables/useAsync'
 import { useCurrentFestivals } from '@/composables/useCurrentFestivals'
-import { type EventSearchParams, fetchOnNowPage, searchEvents } from '@/composables/useEvents'
+import {
+  type EventSearchParams,
+  fetchOnNowPage,
+  type GrownEventPage,
+  growEventSearch,
+} from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useFilterLabels } from '@/composables/useFilterLabels'
 import { provideFilterLists } from '@/composables/useFilterLists'
@@ -95,15 +99,21 @@ const params = computed<EventSearchParams>(() => ({
   size: PAGE_SIZE,
 }))
 
-/** On now is today's running events in one list, so it replaces the range, the sort and the paging. */
+/**
+ * On now is today's running events in one list, so it replaces the range, the sort and the paging.
+ * Otherwise `?page=` is how far the list has grown by "Show more events", not a page on its own.
+ */
 const {
   data: page,
   error,
   loading,
   retrying,
   run,
-} = useAsync<EventPage>(
-  () => (onNow.value ? fetchOnNowPage(filters.value) : searchEvents(params.value)),
+} = useAsync<GrownEventPage>(
+  async (): Promise<GrownEventPage> =>
+    onNow.value
+      ? { ...(await fetchOnNowPage(filters.value)), firstPage: 0, query: 'on-now' }
+      : growEventSearch(params.value, page.value),
   'errors.subject.events',
   () =>
     onNow.value
@@ -123,7 +133,16 @@ const listed = computed(() =>
 )
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
-const { currentPage, totalPages, goToPage } = usePagedList(page, run)
+const { currentPage, totalPages, pageLink } = usePagedList(page, run)
+
+/** The list keeps its cards while the next page loads under them; a new search starts over. */
+const growing = computed(
+  () =>
+    !onNow.value &&
+    page.value?.query === JSON.stringify({ ...params.value, page: undefined }) &&
+    page.value.page === (params.value.page ?? 0) - 1,
+)
+const hasMore = computed(() => !onNow.value && currentPage.value < totalPages.value - 1)
 
 const localePath = useLocalePath()
 
@@ -201,7 +220,7 @@ const mapLink = computed(() => ({
   <ListPage :subtitle="t('events.subtitle')" :title="t('events.title')">
     <EventFilterBar :festivals="runningFestivals" :result-count="page?.totalElements" show-on-now />
 
-    <p v-if="loading" class="text-body text-muted-foreground">
+    <p v-if="loading && !growing" class="text-body text-muted-foreground">
       {{ retrying ? t('errors.retrying') : t('common.states.loading') }}
     </p>
     <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
@@ -259,6 +278,12 @@ const mapLink = computed(() => ({
       <!-- No section heading sits between the page `h1` and the grid here (unlike the home and
            detail pages), so the cards are the second level of the outline. The compact view swaps
            the whole grid rather than hiding the posters: a hidden image is still downloaded. -->
+      <!-- A link that names a page past GROW_RELOAD_PAGES starts the list there. -->
+      <p v-if="page.firstPage > 0" class="text-body">
+        <RouterLink :aria-current="undefined" :class="TEXT_LINK_CLASS" :to="pageLink(0)">
+          {{ t('common.pagination.fromStart') }}
+        </RouterLink>
+      </p>
       <div v-if="compact" :class="CARD_LIST_CLASS">
         <EventRow
           v-for="event in listed.cards"
@@ -282,7 +307,13 @@ const mapLink = computed(() => ({
 
       <AlsoRunning :events="alsoRunning" as="h2" />
 
-      <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
+      <ShowMoreEvents
+        v-if="hasMore"
+        :loading="growing && loading"
+        :next="pageLink(currentPage + 1)"
+        :shown="page.content.length"
+        :total="page.totalElements ?? 0"
+      />
     </template>
   </ListPage>
 </template>

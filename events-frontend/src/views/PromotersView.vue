@@ -27,7 +27,7 @@ const params = computed<PromoterSearchParams>(() => ({
 const { data: page, error, loading, retrying, run } = usePromoterSearch(() => params.value)
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
-const { currentPage, totalPages, goToPage } = usePagedList(page, run)
+const { currentPage, totalPages, pageLink } = usePagedList(page, run)
 
 const { t } = useI18n()
 </script>
@@ -66,7 +66,11 @@ const { t } = useI18n()
         />
       </div>
 
-      <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
+      <PaginationControls
+        :current-page="currentPage"
+        :page-link="pageLink"
+        :total-pages="totalPages"
+      />
     </template>
   </ListPage>
 </template>

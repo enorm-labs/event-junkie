@@ -113,6 +113,48 @@ export function searchEvents(params: EventSearchParams): Promise<EventPage> {
 }
 
 /**
+ * The events list as it grows by "Show more events": pages `firstPage` to `page` of one search, in
+ * one page. `query` is the search without its page, so the next load can tell a longer list of the
+ * same search from a new one.
+ */
+export type GrownEventPage = EventPage & { firstPage: number; query: string }
+
+/**
+ * How many pages a link to a later page reloads before it. A shared `?page=5` or a back navigation
+ * shows the whole list the visitor had, so the scroll position is restored. A crawler's
+ * `?page=300` starts the list at that page instead of sending 300 requests.
+ */
+export const GROW_RELOAD_PAGES = 10
+
+/**
+ * The next state of a growing events list. When `previous` is the same search one page shorter,
+ * only the new page is fetched and appended; otherwise the pages up to `params.page` are fetched
+ * again. An event that moved across a page boundary between two fetches is listed once.
+ */
+export async function growEventSearch(
+  params: EventSearchParams,
+  previous: GrownEventPage | null,
+): Promise<GrownEventPage> {
+  const target = params.page ?? 0
+  const query = JSON.stringify({ ...params, page: undefined })
+  const appending = previous?.query === query && previous.page === target - 1
+  const firstPage = appending ? previous.firstPage : target < GROW_RELOAD_PAGES ? 0 : target
+  const start = appending ? target : firstPage
+  const fetched = await Promise.all(
+    Array.from({ length: target - start + 1 }, (_, i) =>
+      searchEvents({ ...params, page: start + i }),
+    ),
+  )
+  const latest = fetched[fetched.length - 1] as EventPage
+  const pages = appending ? [previous, ...fetched] : fetched
+  const seen = new Set<string | undefined>()
+  const content = pages
+    .flatMap((page) => page.content ?? [])
+    .filter((event) => !seen.has(event.slug) && seen.add(event.slug))
+  return { ...latest, lead: pages[0]?.lead, content, firstPage, query }
+}
+
+/**
  * The events running at this moment, as one page. It reads the whole of today unpaged, because
  * `isOnNow` over one page of 20 would miss most of the evening.
  */

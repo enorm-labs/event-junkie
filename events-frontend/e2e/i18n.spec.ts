@@ -379,7 +379,7 @@ test('the events list counts its results in German, singular and plural', async 
   )
   await page.reload()
   await expect(page.getByText('2 Events gefunden', { exact: true })).toBeVisible()
-  await expect(page.getByText('Seite 1 von 2', { exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Mehr Events zeigen' })).toBeVisible()
 })
 
 test('the venues list counts its results in German', async ({ page }) => {
