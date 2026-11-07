@@ -229,6 +229,19 @@ Content-Type: application/json
     "eventType": "CONCERT"
 }
 
+### Set the timetable
+# Berlin clock times. A start before the event's doors or start (06:00 when it has neither) is the next day,
+# and an end at or before its start is the day after. An act left out loses its times. A change pins `lineup`.
+PUT {{importer-host}}/api/admin/events/{{event_id}}/timetable
+Content-Type: application/json
+
+{
+    "slots": [
+        { "artistId": 1, "start": "23:00", "end": "02:00" },
+        { "artistId": 2, "start": "02:00" }
+    ]
+}
+
 ### Delete event
 DELETE {{importer-host}}/api/admin/events/{{event_id}}
 
