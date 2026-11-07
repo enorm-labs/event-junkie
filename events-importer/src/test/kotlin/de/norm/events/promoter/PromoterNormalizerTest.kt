@@ -1,5 +1,6 @@
 package de.norm.events.promoter
 
+import de.norm.events.slug.SlugGenerator
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -409,6 +410,17 @@ class PromoterNormalizerTest {
             canonicalPromoterName("Beyond Booking GmbH") shouldBe "Beyond Booking"
             canonicalPromoterName("Beyond") shouldBe "Beyond Booking"
             canonicalPromoterName("Nachtklang Booking") shouldBe "Nachtklang"
+        }
+    }
+
+    // #4587: "management" is not a stripped descriptor, so the company credit keyed a second promoter.
+    @Test
+    fun `folds the Tränenpalast management company onto Tränenpalast`() {
+        assertSoftly {
+            canonicalPromoterName("tRÄNENpALAST management GmbH") shouldBe "Tränenpalast"
+            canonicalPromoterName("tRÄNENpALAST management") shouldBe "Tränenpalast"
+            canonicalPromoterName("Tränenpalast") shouldBe "Tränenpalast"
+            SlugGenerator.slugify(canonicalPromoterName("tRÄNENpALAST management GmbH")) shouldBe "tranenpalast"
         }
     }
 

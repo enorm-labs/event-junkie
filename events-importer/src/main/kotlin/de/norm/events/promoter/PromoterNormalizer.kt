@@ -444,5 +444,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "concertconceptveranstaltungsberlin" to "Concert Concept",
         // Cosmic Comedy credits the agency with its initials after a dash.
         "entertaintheworldetw" to "Entertain the World",
-        "entertaintheworldetwmanagement" to "Entertain the World"
+        "entertaintheworldetwmanagement" to "Entertain the World",
+        // Admiralspalast credits "tRÄNENpALAST management GmbH", the company Tempodrom credits as "Tränenpalast" (#4587).
+        // The key keeps the umlaut: the lookup drops punctuation, not "ä".
+        "tränenpalastmanagement" to "Tränenpalast"
     )
