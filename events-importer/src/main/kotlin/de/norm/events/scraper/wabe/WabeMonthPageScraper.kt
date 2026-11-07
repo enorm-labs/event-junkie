@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dateCheckedAgainstWeekday
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
@@ -13,7 +14,6 @@ import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -74,7 +74,7 @@ class WabeMonthPageScraper {
                 event.copy(
                     eventDate = date,
                     startTime = time,
-                    sourceId = "${EventSource.WABE.sourceIdPrefix}$date-${SlugGenerator.slugify(billing.printedTitle)}"
+                    sourceId = EventSource.WABE.dateTitleId(date, billing.printedTitle)
                 )
             }.toList()
     }

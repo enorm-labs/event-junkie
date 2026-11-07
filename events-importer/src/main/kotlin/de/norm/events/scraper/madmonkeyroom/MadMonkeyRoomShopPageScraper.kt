@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.euroAmounts
+import de.norm.events.scraper.lastPathSegment
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
@@ -57,7 +58,7 @@ class MadMonkeyRoomShopPageScraper {
                     ?.blankToNull()
                     ?.replace(THUMBNAIL_SIZE, POSTER_SIZE),
             sourceUrl = url,
-            sourceId = "${EventSource.MAD_MONKEY_ROOM.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
+            sourceId = "${EventSource.MAD_MONKEY_ROOM.sourceIdPrefix}${lastPathSegment(url)}",
             ticketUrl = url,
             pricePresale = euroAmounts(item.selectFirst("a.ticket-buy-button")?.text()).minOrNull(),
             artists = listOfNotNull(act?.let { ScrapedArtist(name = it.groupValues[1].trim(), role = ArtistRole.HEADLINER) })

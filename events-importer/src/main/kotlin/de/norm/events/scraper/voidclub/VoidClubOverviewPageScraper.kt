@@ -10,13 +10,13 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -112,7 +112,7 @@ class VoidClubOverviewPageScraper(
             // No per-event page, so every night points at the programme and takes its identity from date
             // plus slugified title.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.VOID_CLUB.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.VOID_CLUB.dateTitleId(eventDate, title),
             ticketUrl = ticketUrl,
             genre =
                 card

@@ -7,6 +7,7 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapEventType
@@ -14,7 +15,6 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -111,7 +111,7 @@ class MonarchOverviewPageScraper {
             startTime = startTime,
             // No per-event URLs on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.MONARCH.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.MONARCH.dateTitleId(eventDate, title),
             ticketUrl = ticketUrl,
             status = status,
             // Only a concert's title names the headliner; parties/club nights extract none, and a numbered session names none either.

@@ -7,13 +7,13 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -162,7 +162,7 @@ class ArcanoaOverviewPageScraper(
             endTime = entry.end,
             // No per-event pages on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.ARCANOA.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.ARCANOA.dateTitleId(eventDate, title),
             artists = artists
         )
     }

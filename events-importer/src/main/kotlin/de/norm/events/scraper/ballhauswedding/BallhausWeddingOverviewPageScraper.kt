@@ -8,9 +8,9 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.resolveUrl
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -134,7 +134,7 @@ class BallhausWeddingOverviewPageScraper {
             endDate = entry.end?.let { endOn(entry.date, entry.start, it) },
             endTime = entry.end,
             sourceUrl = ticketUrl?.takeIf { EVENT_PAGE.containsMatchIn(it) } ?: baseUrl,
-            sourceId = "${EventSource.BALLHAUS_WEDDING.sourceIdPrefix}${entry.date}-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.BALLHAUS_WEDDING.dateTitleId(entry.date, title),
             ticketUrl = ticketUrl,
             pricePresale = amount(prices, PRESALE) ?: amount(prices, REGULAR) ?: amount(prices, PRESALE_LABEL_FIRST),
             priceBoxOffice = amount(prices, BOX_OFFICE) ?: amount(prices, BOX_OFFICE_LABEL_FIRST),

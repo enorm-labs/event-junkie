@@ -10,6 +10,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.lastPathSegment
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.parseEventStatus
@@ -83,7 +84,7 @@ class HauScheduleScraper(
         val doorsText = item.select(".info-wrap > p").firstNotNullOfOrNull { DOORS.find(it.text())?.groupValues?.get(1) }
         val (doors, startTime) = orderDoorsBeforeStart(parseTime(doorsText), start)
         val type = eventType(categories, title, subtitle)
-        val slug = page.trimEnd('/').substringAfterLast('/')
+        val slug = lastPathSegment(page)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,

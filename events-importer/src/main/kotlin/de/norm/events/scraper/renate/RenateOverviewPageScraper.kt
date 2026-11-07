@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
@@ -20,7 +21,6 @@ import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -114,7 +114,7 @@ class RenateOverviewPageScraper(
             // No per-event page, so every night points at the programme and takes its identity from date
             // plus slugified title.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.RENATE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.RENATE.dateTitleId(eventDate, title),
             ticketUrl = row.hrefAt(".ticket-link"),
             artists = artists
         )

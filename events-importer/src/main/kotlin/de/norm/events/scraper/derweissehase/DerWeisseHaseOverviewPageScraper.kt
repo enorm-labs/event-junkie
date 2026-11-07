@@ -9,6 +9,7 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateCheckedAgainstWeekday
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.LINEUP_SEPARATOR
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.LINE_UP_HEADING
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.RA_EVENT_URL
@@ -21,7 +22,6 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -125,7 +125,7 @@ class DerWeisseHaseOverviewPageScraper {
             // plus slugified title. Both are needed: a recurring night reuses its title across weeks, and
             // two nights can share one date (a daytime rave and its evening aftershow).
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.DER_WEISSE_HASE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.DER_WEISSE_HASE.dateTitleId(eventDate, title),
             ticketUrl = block.selectFirst("a.eventlistlink")?.absUrl("href")?.takeIf { RA_EVENT_URL.matches(it) },
             artists = parseLineup(rosterAfter(lineupHeading))
         )

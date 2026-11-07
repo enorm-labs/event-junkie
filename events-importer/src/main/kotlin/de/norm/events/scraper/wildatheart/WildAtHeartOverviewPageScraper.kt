@@ -7,6 +7,7 @@ import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
@@ -16,7 +17,6 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -125,7 +125,7 @@ class WildAtHeartOverviewPageScraper(
             imageUrl = row.selectFirst("img[src]")?.absUrl("src")?.takeIf { it.isNotBlank() },
             // No per-event URLs on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.WILD_AT_HEART.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.WILD_AT_HEART.dateTitleId(eventDate, title),
             ticketUrl = ticketUrl,
             genre = genre,
             free = free,

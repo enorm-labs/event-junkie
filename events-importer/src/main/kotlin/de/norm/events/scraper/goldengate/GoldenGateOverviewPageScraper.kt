@@ -9,13 +9,13 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.goldengate.GoldenGateOverviewPageScraper.Companion.DATE_LINE_PATTERN
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.textLines
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -132,7 +132,7 @@ class GoldenGateOverviewPageScraper {
             // No per-event page, so every night points at the homepage and takes its identity from date
             // plus slugified title.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.GOLDEN_GATE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.GOLDEN_GATE.dateTitleId(eventDate, title),
             artists = parseLineup(nonDateHeading(lineupHeading))
         )
     }

@@ -9,6 +9,7 @@ import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.lastPathSegment
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.resolveUrl
@@ -75,7 +76,7 @@ class Zimmer16OverviewPageScraper {
             imageUrl = card.selectFirst(".ytp-event-card-image[style]")?.attr("style")?.let { cssUrlValue(it, "background-image") },
             sourceUrl = url,
             ticketUrl = url,
-            sourceId = "${EventSource.ZIMMER_16.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
+            sourceId = "${EventSource.ZIMMER_16.sourceIdPrefix}${lastPathSegment(url)}",
             artists =
                 when {
                     OPEN_STAGE in title.lowercase() -> emptyList()

@@ -12,6 +12,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
@@ -25,7 +26,6 @@ import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textLines
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -176,7 +176,7 @@ class RoadrunnerOverviewPageScraper(
             imageUrl = imageUrl,
             // No per-event URLs on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.ROADRUNNER.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(keyLine)}",
+            sourceId = EventSource.ROADRUNNER.dateTitleId(eventDate, keyLine),
             ticketUrl = ticketUrl,
             priceNote = parseFreeEntryLine(block),
             artists = billing(title, description, billedActs),

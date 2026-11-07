@@ -7,12 +7,12 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -65,7 +65,7 @@ class ZoschOverviewPageScraper {
             startTime = night.select(".subHeader span").firstNotNullOfOrNull { parseTime(CLOCK.find(it.text())?.value) },
             imageUrl = night.imgSrcAt(".imageWrapper img"),
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.ZOSCH.sourceIdPrefix}$date-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.ZOSCH.dateTitleId(date, title),
             genre = night.textAt(".theme"),
             artists = buildArtistsForEventType(title, subtitle, eventType)
         )

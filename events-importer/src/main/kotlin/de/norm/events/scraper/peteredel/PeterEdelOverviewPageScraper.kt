@@ -14,6 +14,7 @@ import de.norm.events.scraper.buildArtistList
 import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dashedQuotedShowActs
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferUnmarkedTitleType
@@ -29,7 +30,6 @@ import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.D
 import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.VENUE_FORMAT_KEYWORDS
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -243,7 +243,7 @@ class PeterEdelOverviewPageScraper {
             // recurring format (Tanztee, AFTER WORK) reuses its title all season, and up to two events
             // share one date.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.PETER_EDEL.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.PETER_EDEL.dateTitleId(eventDate, title),
             ticketUrl = heading.selectFirst("a")?.absUrl("href")?.takeIf { it.isNotBlank() },
             pricePresale = parsePriceValue(ticketColumn?.textAt("h3")),
             priceBoxOffice = parseLabelledPrices(note).boxOffice,
