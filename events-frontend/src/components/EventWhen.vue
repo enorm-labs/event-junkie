@@ -8,6 +8,7 @@ import { formatTime } from '@/lib/format'
 import { useEventChanges } from '@/composables/useEventChanges'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { TEXT_LINK_CLASS } from '@/lib/utils'
 
 const props = defineProps<{ event: EventDetail }>()
 
@@ -58,11 +59,9 @@ const endNotAnnounced = computed(() => {
     <p v-else-if="dates" class="text-body font-medium">{{ dates }}</p>
     <p v-if="postponed && event.postponedTo" class="text-body font-medium">
       {{ t('events.detail.when.postponedTo') }}
-      <RouterLink
-        :to="localePath(`/events/${event.postponedTo.slug}`)"
-        class="text-primary underline-offset-4 hover:underline"
-        >{{ formatDate(event.postponedTo.eventDate) }}</RouterLink
-      >
+      <RouterLink :to="localePath(`/events/${event.postponedTo.slug}`)" :class="TEXT_LINK_CLASS">{{
+        formatDate(event.postponedTo.eventDate)
+      }}</RouterLink>
     </p>
     <p v-else-if="postponed && event.relocatedOn" class="text-body font-medium">
       {{ t('events.detail.when.postponedTo') }} {{ formatDate(event.relocatedOn) }}
