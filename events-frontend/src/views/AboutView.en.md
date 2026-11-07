@@ -26,7 +26,21 @@ Event Junkie is your guide to what's on across Berlin's venues: one feed of live
 
 Browse everything at a glance and open the calendar to plan your week, so you catch the nights worth showing up for.
 
-<section>
+<!-- The table of contents. Each link names the id of a <section> below; AboutToc.spec.ts keeps the two in step. -->
+<nav aria-label="On this page" data-testid="about-toc">
+  <p><strong>On this page</strong></p>
+  <ul>
+    <li><RouterLink :to="{ hash: '#what' }">What you'll find here</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#why' }">Why this exists</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#berlin' }">Why Berlin</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#ai' }">Built with AI agents</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#install' }">Install as app</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#help' }">Help out</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#beta' }">Why it says beta</RouterLink></li>
+  </ul>
+</nav>
+
+<section id="what" class="scroll-mt-8">
 
 ## What you'll find here
 
@@ -38,7 +52,7 @@ Where a venue says what kind of night it is, Event Junkie takes its word for it.
 
 </section>
 
-<section>
+<section id="why" class="scroll-mt-8">
 
 ## Why this exists
 
@@ -56,7 +70,7 @@ I tried several times, and as a hobby project alongside everything else it was s
 
 </section>
 
-<section>
+<section id="berlin" class="scroll-mt-8">
 
 ## Why Berlin
 
@@ -74,11 +88,11 @@ Does it really help? Does anyone need it? I don't know. But I want to try. Keepi
 
 </section>
 
-<section>
+<section id="ai" class="scroll-mt-8">
 
-## And to learn
+## Built with AI agents
 
-The other honest reason: I built this to learn, above all about **AI-assisted development**. Most of the code here was written by AI coding agents (primarily [Claude Code](https://claude.com/claude-code)). The vision, the product decisions, the architecture and the priorities are mine. The agents implement against them, and I review every change before it lands.
+I also built this to learn, above all about **AI-assisted development**. Most of the code here was written by AI coding agents (primarily [Claude Code](https://claude.com/claude-code)). The vision, the product decisions, the architecture and the priorities are mine. The agents implement against them, and I review every change before it lands.
 
 I say so because it is the interesting part. A real project, with real users and real constraints, is where you find out what this way of working is good at and where it still needs a human paying attention. The whole thing is [public on GitHub](https://github.com/enorm-labs/event-junkie), conventions and prompts included, if you want to see how it was done.
 

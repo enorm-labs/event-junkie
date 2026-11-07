@@ -26,7 +26,21 @@ Event Junkie ist dein Überblick über das, was in Berlins Locations läuft: ein
 
 Stöbere durch alles und plan im Kalender deine Woche. So findest du die Abende, für die es sich lohnt, rauszugehen.
 
-<section>
+<!-- Das Inhaltsverzeichnis. Jeder Link nennt die id einer <section> weiter unten; AboutToc.spec.ts hält beide gleich. -->
+<nav aria-label="Auf dieser Seite" data-testid="about-toc">
+  <p><strong>Auf dieser Seite</strong></p>
+  <ul>
+    <li><RouterLink :to="{ hash: '#what' }">Was du hier findest</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#why' }">Warum es das gibt</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#berlin' }">Warum Berlin</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#ai' }">Mit KI-Agenten gebaut</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#install' }">Als App installieren</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#help' }">Mithelfen</RouterLink></li>
+    <li><RouterLink :to="{ hash: '#beta' }">Warum da beta steht</RouterLink></li>
+  </ul>
+</nav>
+
+<section id="what" class="scroll-mt-8">
 
 ## Was du hier findest
 
@@ -38,7 +52,7 @@ Wenn eine Location selbst sagt, was für ein Abend das ist, übernimmt Event Jun
 
 </section>
 
-<section>
+<section id="why" class="scroll-mt-8">
 
 ## Warum es das gibt
 
@@ -56,7 +70,7 @@ Ich habe es mehrmals versucht, aber als Hobbyprojekt neben allem anderen war es 
 
 </section>
 
-<section>
+<section id="berlin" class="scroll-mt-8">
 
 ## Warum Berlin
 
@@ -74,11 +88,11 @@ Hilft das wirklich? Braucht das jemand? Ich weiß es nicht. Aber ich will es ver
 
 </section>
 
-<section>
+<section id="ai" class="scroll-mt-8">
 
-## Und zum Lernen
+## Mit KI-Agenten gebaut
 
-Der andere ehrliche Grund: Ich habe das gebaut, um zu lernen, vor allem über **KI-gestützte Entwicklung**. Der größte Teil des Codes hier stammt von KI-Agenten (hauptsächlich [Claude Code](https://claude.com/claude-code)). Die Vision, die Produktentscheidungen, die Architektur und die Prioritäten sind meine. Die Agenten setzen sie um, und ich prüfe jede Änderung, bevor sie übernommen wird.
+Ich habe das auch gebaut, um zu lernen, vor allem über **KI-gestützte Entwicklung**. Der größte Teil des Codes hier stammt von KI-Agenten (hauptsächlich [Claude Code](https://claude.com/claude-code)). Die Vision, die Produktentscheidungen, die Architektur und die Prioritäten sind meine. Die Agenten setzen sie um, und ich prüfe jede Änderung, bevor sie übernommen wird.
 
 Ich erzähle das, weil genau das der spannende Teil ist. Erst an einem echten Projekt mit Nutzer\*innen und echten Grenzen merkt man, was diese Arbeitsweise gut kann und wo weiter ein Mensch hinschauen muss. Das Ganze ist [öffentlich auf GitHub](https://github.com/enorm-labs/event-junkie), Konventionen und Prompts inklusive, falls du sehen willst, wie es gemacht wurde.
 
