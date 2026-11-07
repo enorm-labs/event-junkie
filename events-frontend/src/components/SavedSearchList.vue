@@ -57,7 +57,7 @@ async function remove(search: SavedSearch) {
 <template>
   <section v-if="searches.length" class="space-y-4">
     <SectionLabel as="h2">{{ t('account.search.list', { count: searches.length }) }}</SectionLabel>
-    <ErrorLine v-if="problem" role="alert">{{ problem }}</ErrorLine>
+    <ErrorLine v-if="problem">{{ problem }}</ErrorLine>
     <ul :class="CARD_LIST_CLASS">
       <li
         v-for="search in searches"

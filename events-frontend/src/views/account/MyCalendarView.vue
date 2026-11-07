@@ -135,7 +135,7 @@ onMounted(async () => {
       </div>
     </template>
 
-    <ErrorLine v-if="problem" role="alert">{{ problem }}</ErrorLine>
+    <ErrorLine v-if="problem">{{ problem }}</ErrorLine>
 
     <EventCalendar
       v-if="showCalendar"

@@ -82,7 +82,7 @@ function since(createdAt?: string): string {
 <template>
   <ListPage :title="t('pageTitle.account')">
     <div class="max-w-xl space-y-8">
-      <ErrorLine role="alert">{{ problem }}</ErrorLine>
+      <ErrorLine>{{ problem }}</ErrorLine>
 
       <div v-if="ended" class="space-y-4" role="status">
         <p class="text-body">{{ t(`account.page.${ended}`) }}</p>

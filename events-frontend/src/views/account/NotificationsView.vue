@@ -177,7 +177,7 @@ onMounted(async () => {
       </div>
     </template>
 
-    <ErrorLine v-if="problem" role="alert">{{ problem }}</ErrorLine>
+    <ErrorLine v-if="problem">{{ problem }}</ErrorLine>
 
     <p v-if="entries === null && !problem" class="text-body text-muted-foreground">
       {{ t('common.states.loading') }}

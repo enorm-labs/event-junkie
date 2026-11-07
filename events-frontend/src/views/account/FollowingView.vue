@@ -352,7 +352,7 @@ onBeforeUnmount(() => {
       </p>
     </template>
 
-    <ErrorLine v-if="problem" role="alert">{{ problem }}</ErrorLine>
+    <ErrorLine v-if="problem">{{ problem }}</ErrorLine>
 
     <p v-else-if="follows === null" class="text-body text-muted-foreground">
       {{ t('common.states.loading') }}
