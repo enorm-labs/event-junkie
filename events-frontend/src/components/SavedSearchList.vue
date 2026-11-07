@@ -14,6 +14,7 @@ import type { SavedSearch } from '@/api/account'
 import { useLocalePath } from '@/composables/useLocalePath'
 import type { SavedSearches } from '@/composables/useSavedSearches'
 import { listQuery } from '@/lib/savedSearch'
+import { CARD_LIST_CLASS } from '@/lib/utils'
 
 const props = defineProps<{ saved: SavedSearches }>()
 const { searches, counts } = props.saved
@@ -56,7 +57,7 @@ async function remove(search: SavedSearch) {
   <section v-if="searches.length" class="space-y-4">
     <SectionLabel as="h2">{{ t('account.search.list', { count: searches.length }) }}</SectionLabel>
     <p v-if="problem" class="text-body text-destructive" role="alert">{{ problem }}</p>
-    <ul class="divide-y divide-border border-y border-border">
+    <ul :class="CARD_LIST_CLASS">
       <li
         v-for="search in searches"
         :key="search.id"

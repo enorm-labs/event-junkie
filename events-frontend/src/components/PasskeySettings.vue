@@ -18,6 +18,7 @@ import {
 import { ApiError } from '@/api/client'
 import { berlinDateOf, formatLongDate } from '@/lib/format'
 import { cancelled, passkeysSupported } from '@/lib/webauthn'
+import { CARD_LIST_CLASS } from '@/lib/utils'
 
 const { t, locale } = useI18n()
 
@@ -124,7 +125,7 @@ onMounted(() => {
     <SectionLabel as="h2">{{ t('account.passkeys.title') }}</SectionLabel>
     <p class="text-body text-muted-foreground">{{ t('account.passkeys.intro') }}</p>
     <p v-if="problem" class="text-body text-destructive" role="alert">{{ problem }}</p>
-    <ul v-if="passkeys.length" class="divide-y divide-border border-y border-border">
+    <ul v-if="passkeys.length" :class="CARD_LIST_CLASS">
       <li
         v-for="passkey in passkeys"
         :key="passkey.id"
