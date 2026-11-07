@@ -7,6 +7,8 @@ import ForVenuesDe from '@/views/legal/ForVenuesView.de.md'
 import ForVenuesEn from '@/views/legal/ForVenuesView.en.md'
 import ImprintDe from '@/views/legal/ImprintView.de.vue'
 import ImprintEn from '@/views/legal/ImprintView.en.vue'
+import NoticesDe from '@/views/legal/NoticesView.de.vue'
+import NoticesEn from '@/views/legal/NoticesView.en.vue'
 import PrivacyDe from '@/views/legal/PrivacyView.de.vue'
 import PrivacyEn from '@/views/legal/PrivacyView.en.vue'
 import { CONTROLLER } from '@/lib/legal'
@@ -439,6 +441,11 @@ describe('across both language versions', () => {
     expect(textOf(IMPRINT.de, 'de')).toMatch(/deutsche Fassung maßgeblich/)
     expect(textOf(PRIVACY.de, 'de')).toMatch(/deutsche Fassung maßgeblich/)
     expect(textOf(FOR_VENUES.de, 'de')).toMatch(/deutsche Fassung maßgeblich/)
+  })
+
+  it('credits the Deutscher Wetterdienst for the forecast, as its terms ask (ADR-057)', () => {
+    expect(textOf(NoticesEn, 'en')).toMatch(/Data:\s+Deutscher Wetterdienst/)
+    expect(textOf(NoticesDe, 'de')).toMatch(/Datenbasis:\s+Deutscher Wetterdienst/)
   })
 
   it('carries one controller address across all four documents', () => {

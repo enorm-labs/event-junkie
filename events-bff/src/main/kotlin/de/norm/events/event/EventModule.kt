@@ -8,9 +8,10 @@ import org.springframework.modulith.ApplicationModule
  *
  * It also depends on `sourcelicence`, which decides whether a description or an image may be shown
  * at all (#283), and on `image`, which decides whether the image URL it hands out is the venue's or
- * ours (ADR-019). Both edges are one-way: this module asks and applies the answer itself.
+ * ours (ADR-019). Both edges are one-way: this module asks and applies the answer itself. It asks `weather` for the
+ * forecast of an open-air start hour (ADR-057).
  */
 @ApplicationModule(
-    allowedDependencies = ["common", "venue", "artist", "promoter", "genretag", "sourcelicence", "licence", "image", "festival"]
+    allowedDependencies = ["common", "venue", "artist", "promoter", "genretag", "sourcelicence", "licence", "image", "festival", "weather"]
 )
 class EventModule

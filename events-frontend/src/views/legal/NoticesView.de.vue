@@ -52,6 +52,24 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
     </section>
 
     <section>
+      <h2>Wetterdaten</h2>
+      <p>
+        Die Vorhersage bei Open-Air-Veranstaltungen stammt aus den offenen Daten des Deutschen
+        Wetterdienstes: der MOSMIX-Vorhersage für die Station Berlin-Tempelhof. Unser Server ruft
+        sie ab, dein Browser verbindet sich also nie mit dem DWD.
+      </p>
+      <p>
+        Datenbasis:
+        <a
+          href="https://www.dwd.de/DE/service/copyright/copyright_node.html"
+          rel="noopener"
+          target="_blank"
+          >Deutscher Wetterdienst</a
+        >
+      </p>
+    </section>
+
+    <section>
       <h2>Komponenten nach Lizenz</h2>
       <details
         v-for="group in groups"
