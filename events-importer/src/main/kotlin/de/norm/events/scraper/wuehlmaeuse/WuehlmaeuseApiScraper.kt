@@ -15,6 +15,7 @@ import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.lastPathSegment
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSupportActs
@@ -147,7 +148,7 @@ class WuehlmaeuseApiScraper {
 
     /** The show's slug, date and clock: one show plays many nights, and one night can hold two shows. */
     private fun sourceIdOf(ticket: WuehlmaeuseTicket): String {
-        val slug = ticket.eventUrl.trimEnd('/').substringAfterLast('/')
+        val slug = lastPathSegment(ticket.eventUrl)
         return "${EventSource.WUEHLMAEUSE.sourceIdPrefix}$slug-${ticket.date}-${ticket.start.format(FOUR_DIGIT_CLOCK)}"
     }
 

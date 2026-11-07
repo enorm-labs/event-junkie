@@ -5,13 +5,13 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_LONG_DATE
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -69,7 +69,7 @@ class FrachtkanteOverviewPageScraper {
             endDate = endDate,
             endTime = clockEnd?.takeIf { endDate != null },
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.FRACHTKANTE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.FRACHTKANTE.dateTitleId(eventDate, title),
             ticketUrl = body?.select("a[href]")?.map { it.absUrl("href") }?.firstOrNull { it.startsWith("http") }
         )
     }

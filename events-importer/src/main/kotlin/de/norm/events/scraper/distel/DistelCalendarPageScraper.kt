@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.classifyByGenreKeyword
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.lastPathSegment
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
@@ -67,7 +68,7 @@ class DistelCalendarPageScraper {
         val eventDate = parseDate(item, heading) ?: return null
         val startTime = parseTime(item.textAt(".time"))
         val sourceUrl = link.absUrl("href")
-        val slug = sourceUrl.trimEnd('/').substringAfterLast('/')
+        val slug = lastPathSegment(sourceUrl)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,

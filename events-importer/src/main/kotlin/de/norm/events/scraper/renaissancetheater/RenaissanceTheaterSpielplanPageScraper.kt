@@ -13,6 +13,7 @@ import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.lastPathSegment
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTitleStatus
@@ -71,7 +72,7 @@ class RenaissanceTheaterSpielplanPageScraper(
     ): ScrapedEvent? {
         val link = row.selectFirst(".rt-sp-teaser a[href]") ?: return null
         val url = productionUrl(row) ?: return null
-        val slug = url.trimEnd('/').substringAfterLast('/').blankToNull() ?: return null
+        val slug = lastPathSegment(url).blankToNull() ?: return null
         val heading = link.selectFirst("h4") ?: return null
         val title = heading.ownText().replace(WHITESPACE, " ").blankToNull() ?: return null
         val eventDate = dateOf(row) ?: return null

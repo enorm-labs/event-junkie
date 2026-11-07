@@ -8,6 +8,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.lastPathSegment
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
@@ -64,7 +65,7 @@ class HausDerStatistikMonthPageScraper {
             endTime = endTime,
             imageUrl = row.imgSrcAt(".teaser__figure img"),
             sourceUrl = url,
-            sourceId = "${EventSource.HAUS_DER_STATISTIK.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
+            sourceId = "${EventSource.HAUS_DER_STATISTIK.sourceIdPrefix}${lastPathSegment(url)}",
             artists =
                 if (eventType == EventType.CONCERT.name &&
                     !JAM_NIGHT.containsMatchIn(title)

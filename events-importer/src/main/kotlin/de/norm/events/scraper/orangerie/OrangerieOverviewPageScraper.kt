@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.commaListActs
 import de.norm.events.scraper.cssUrlValue
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.mapSkippingFailures
@@ -20,7 +21,6 @@ import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.stripFriendsTail
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -100,7 +100,7 @@ class OrangerieOverviewPageScraper {
                     ?.let { cssUrlValue(it, "background-image") }
                     ?.let { resolveUrl(baseUrl, it) },
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.ORANGERIE_NEUKOELLN.sourceIdPrefix}$date-${SlugGenerator.slugify(name)}",
+            sourceId = EventSource.ORANGERIE_NEUKOELLN.dateTitleId(date, name),
             ticketUrl = card?.selectFirst("a.og-act-link[title=Rausgegangen]")?.attr("abs:href")?.ifBlank { null },
             genre = tags.filterNot { it.equals(CONCERT_TAG, ignoreCase = true) }.joinToString(", ").ifBlank { null },
             priceBoxOffice = price?.takeIf { it.signum() > 0 },

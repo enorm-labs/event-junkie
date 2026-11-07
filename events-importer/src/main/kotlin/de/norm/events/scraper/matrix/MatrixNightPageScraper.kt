@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cssUrlValue
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanDate
@@ -14,7 +15,6 @@ import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import java.time.LocalTime
@@ -70,7 +70,7 @@ class MatrixNightPageScraper {
             startTime = parseStartTime(document),
             imageUrl = heroImage(document, url),
             sourceUrl = url,
-            sourceId = "${EventSource.MATRIX.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.MATRIX.dateTitleId(eventDate, title),
             genre = parseGenre(document),
             priceNote = priceNote(document),
             artists = parseLineup(document)

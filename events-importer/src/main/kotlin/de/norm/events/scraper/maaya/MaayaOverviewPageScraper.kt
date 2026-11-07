@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.hrefAt
@@ -14,7 +15,6 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -134,7 +134,7 @@ class MaayaOverviewPageScraper(
             imageUrl = card.imgSrcAt(POSTER),
             // No per-event pages, so the listing itself is the canonical URL.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.MAAYA.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.MAAYA.dateTitleId(eventDate, title),
             ticketUrl = card.hrefAt(BUTTON),
             // A bare "FREE ENTRY" is fully carried by the free flag, so storing it as a note would repeat
             // it; a qualified one is not, and is kept verbatim.

@@ -15,6 +15,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
@@ -24,7 +25,6 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseOffsetToBerlin
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
@@ -169,7 +169,7 @@ class InselApiScraper(
                     .blankToNull()
                     ?.takeIf { it.startsWith("http") },
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.INSEL.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.INSEL.dateTitleId(eventDate, title),
             ticketUrl = ticketUrl(node.description),
             free = lines.any(::hasFreeEntryPhrase),
             soldOut =

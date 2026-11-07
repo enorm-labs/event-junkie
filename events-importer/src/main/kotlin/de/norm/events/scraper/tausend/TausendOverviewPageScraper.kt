@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.mapSkippingFailures
@@ -16,7 +17,6 @@ import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
@@ -124,7 +124,7 @@ class TausendOverviewPageScraper {
     private fun sourceId(
         date: LocalDate,
         act: String
-    ): String = "${EventSource.TAUSEND.sourceIdPrefix}$date-${SlugGenerator.slugify(act)}"
+    ): String = EventSource.TAUSEND.dateTitleId(date, act)
 
     /**
      * The dated night and its start. The venue prints a midnight start as `24 H` on the night before,

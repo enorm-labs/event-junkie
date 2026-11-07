@@ -4,10 +4,10 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -77,7 +77,7 @@ class ZBarOverviewPageScraper {
                 startTime = start,
                 imageUrl = blocks.firstNotNullOfOrNull(::imageOf),
                 sourceUrl = sourceUrl,
-                sourceId = "${EventSource.Z_BAR.sourceIdPrefix}$date-${SlugGenerator.slugify(title)}",
+                sourceId = EventSource.Z_BAR.dateTitleId(date, title),
                 ticketUrl = ticketUrl,
                 free = detectFree(priceNote = description),
                 promoters = blocks.firstNotNullOfOrNull(::promotersIn).orEmpty()

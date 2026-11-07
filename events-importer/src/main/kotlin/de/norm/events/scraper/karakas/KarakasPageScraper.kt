@@ -8,10 +8,10 @@ import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -108,7 +108,7 @@ class KarakasPageScraper(
         eventType = eventType.name,
         eventDate = date,
         sourceUrl = pageUrl,
-        sourceId = "${EventSource.KARAKAS.sourceIdPrefix}$date-${SlugGenerator.slugify(title.text)}",
+        sourceId = EventSource.KARAKAS.dateTitleId(date, title.text),
         soldOut = title.soldOut
     )
 

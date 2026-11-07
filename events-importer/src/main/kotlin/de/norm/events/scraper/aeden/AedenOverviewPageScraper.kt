@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
@@ -14,7 +15,6 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -89,7 +89,7 @@ class AedenOverviewPageScraper {
             startTime = parseTime(item.textAt(".event-time")),
             imageUrl = item.imgSrcAt(".event-poster img"),
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.AEDEN.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.AEDEN.dateTitleId(eventDate, title),
             ticketUrl = item.hrefAt(".accordion-footer a"),
             genre = item.textAt(".event-genre"),
             artists = parseLineup(item)

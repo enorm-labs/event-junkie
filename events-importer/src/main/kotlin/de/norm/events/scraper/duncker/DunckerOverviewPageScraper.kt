@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -18,7 +19,6 @@ import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -115,7 +115,7 @@ class DunckerOverviewPageScraper(
             sourceId =
                 fbEventId
                     ?.let { "${EventSource.DUNCKER.sourceIdPrefix}$it" }
-                    ?: "${EventSource.DUNCKER.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+                    ?: EventSource.DUNCKER.dateTitleId(eventDate, title),
             ticketUrl = fbEventUrl,
             artists = parseDjs(cell),
             promoters = parsePromoters(cell)

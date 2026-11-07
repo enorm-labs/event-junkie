@@ -8,6 +8,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -17,7 +18,6 @@ import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -94,7 +94,7 @@ class OhmOverviewPageScraper(
             imageUrl = item.imgSrcAt(".event-poster img"),
             // No per-event pages, so the listing itself is the canonical URL.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.OHM.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            sourceId = EventSource.OHM.dateTitleId(eventDate, title),
             soldOut = cleanedTitle.soldOut,
             artists = parseLineup(item, title)
         )

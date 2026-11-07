@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
@@ -18,7 +19,6 @@ import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textLines
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -102,7 +102,7 @@ class StudioIiiiOverviewPageScraper(
             endTime = end,
             imageUrl = cover.closest(".t-cover")?.attrAt(".t-cover__carrier", "data-content-cover-bg"),
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.STUDIO_IIII.sourceIdPrefix}$date-${SlugGenerator.slugify(titleLines.first())}",
+            sourceId = EventSource.STUDIO_IIII.dateTitleId(date, titleLines.first()),
             artists = djs
         )
     }
