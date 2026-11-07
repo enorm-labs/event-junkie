@@ -2,6 +2,7 @@
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
+import ErrorLine from '@/components/ErrorLine.vue'
 import EventRow from '@/components/EventRow.vue'
 import ListPage from '@/components/ListPage.vue'
 import SearchInput from '@/components/SearchInput.vue'
@@ -100,7 +101,7 @@ function linksOf(key: string): { to: string; name: string }[] {
     <p v-else-if="loading" class="text-body text-muted-foreground">
       {{ retrying ? t('errors.retrying') : t('search.loading') }}
     </p>
-    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
+    <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="data && !sections.length" class="space-y-3">
       <p class="text-body text-muted-foreground">{{ t('search.empty', { q }) }}</p>

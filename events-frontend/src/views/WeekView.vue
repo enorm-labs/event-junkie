@@ -4,6 +4,7 @@ import { computed, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
+import ErrorLine from '@/components/ErrorLine.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import type { EventSummary } from '@/api/types'
@@ -112,7 +113,7 @@ function dayLink(date: string) {
     <p v-if="loading" class="text-body text-muted-foreground">
       {{ retrying ? t('errors.retrying') : t('common.states.loading') }}
     </p>
-    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
+    <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
     <template v-else>
       <section
         v-for="day in listed"

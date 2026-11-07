@@ -2,6 +2,7 @@
 import type { EventInput } from '@fullcalendar/vue3'
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ErrorLine from '@/components/ErrorLine.vue'
 import EventCalendar from '@/components/EventCalendar.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import ListPage from '@/components/ListPage.vue'
@@ -77,7 +78,7 @@ const { t } = useI18n()
     <!-- No date range here: FullCalendar's visible window already is the range. -->
     <EventFilterBar :show-date-range="false" />
     <p v-if="retrying" class="text-body text-muted-foreground">{{ t('errors.retrying') }}</p>
-    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
+    <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
     <EventCalendar :events="events" @dates-set="loadRange" @event-click="openEvent" />
   </ListPage>
 </template>

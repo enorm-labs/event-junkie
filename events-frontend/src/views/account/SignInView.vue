@@ -8,6 +8,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import BaseInput from '@/components/BaseInput.vue'
+import ErrorLine from '@/components/ErrorLine.vue'
 import ListPage from '@/components/ListPage.vue'
 import { Button } from '@/components/ui/button'
 import { fetchSessionState, prepareCsrf, requestLink, signInWithPasskey } from '@/api/account'
@@ -117,7 +118,7 @@ function messageFor(e: unknown): string {
         />
       </div>
       <!-- Announced when it appears, so a screen reader hears why nothing happened. -->
-      <p id="sign-in-problem" class="text-body text-destructive" role="alert">{{ problem }}</p>
+      <ErrorLine id="sign-in-problem" role="alert">{{ problem }}</ErrorLine>
       <div class="flex flex-wrap gap-3">
         <Button :disabled="sending" type="submit">
           {{ sending ? t('account.signIn.sending') : t('account.signIn.submit') }}

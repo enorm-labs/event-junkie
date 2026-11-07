@@ -7,6 +7,7 @@ import type { ImageSource } from '@/api/types'
 
 import CachedImage from '@/components/CachedImage.vue'
 import CreditLine from '@/components/CreditLine.vue'
+import ErrorLine from '@/components/ErrorLine.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import FollowButton from '@/components/FollowButton.vue'
@@ -102,7 +103,7 @@ const { compact } = useCompactView()
       </Button>
     </div>
 
-    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
+    <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
 
     <template v-else-if="ready">
       <div class="max-w-176 space-y-8" data-testid="detail-profile">
@@ -169,7 +170,7 @@ const { compact } = useCompactView()
           <p v-if="eventsLoading" class="text-body text-muted-foreground">
             {{ eventsRetrying ? t('errors.retrying') : t('common.states.loading') }}
           </p>
-          <p v-else-if="eventsError" class="text-body text-destructive">{{ eventsError }}</p>
+          <ErrorLine v-else-if="eventsError">{{ eventsError }}</ErrorLine>
           <p v-else-if="!events?.content?.length" class="text-body text-muted-foreground">
             {{ emptyText }}
           </p>
@@ -198,7 +199,7 @@ const { compact } = useCompactView()
           <EventCard v-for="event in pastEvents" :key="event.slug" :event="event" />
         </div>
         <!-- A failed page keeps what is shown and the button, so the visitor can try again. -->
-        <p v-if="past.error" class="pt-3 text-body text-destructive">{{ past.error }}</p>
+        <ErrorLine v-if="past.error" class="pt-3">{{ past.error }}</ErrorLine>
         <Button
           v-if="past.hasMore"
           :disabled="past.loadingMore"

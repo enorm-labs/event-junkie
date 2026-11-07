@@ -17,6 +17,7 @@ import { retryTransient } from '@/api/retry'
 import BaseSelect from '@/components/BaseSelect.vue'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
+import ErrorLine from '@/components/ErrorLine.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
 import ListPage from '@/components/ListPage.vue'
@@ -389,7 +390,7 @@ function distance(km: number): string {
     <p v-if="loading" class="text-body text-muted-foreground">
       {{ retrying ? t('errors.retrying') : t('common.states.loading') }}
     </p>
-    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
+    <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!eventPins.length" class="space-y-3">
       <p class="text-body text-muted-foreground">{{ t('map.empty') }}</p>
