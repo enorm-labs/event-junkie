@@ -22,7 +22,7 @@ import { venueClosure } from '@/lib/venueClosure'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { withReferral } from '@/lib/referral'
 import type { Locale } from '@/i18n/locales'
-import { TEXT_LINK_CLASS } from '@/lib/utils'
+import { TEXT_LINK_CLASS, UNDERLINED_LINK_CLASS } from '@/lib/utils'
 
 const { t, locale } = useI18n()
 
@@ -256,7 +256,7 @@ const programme = computed(() => {
             <template v-if="i">{{ ' · ' }}</template>
             <a
               :href="source.href"
-              class="underline underline-offset-4 hover:text-foreground"
+              :class="[UNDERLINED_LINK_CLASS, 'hover:text-foreground']"
               rel="noopener noreferrer"
               target="_blank"
             >

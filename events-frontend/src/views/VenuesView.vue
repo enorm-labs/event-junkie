@@ -46,6 +46,7 @@ import {
   RESULTS_BAR_CLASS,
   SECTION_TITLE_CLASS,
   TEXT_LINK_CLASS,
+  UNDERLINED_LINK_CLASS,
 } from '@/lib/utils'
 
 const PAGE_SIZE = 24
@@ -272,7 +273,7 @@ const localePath = useLocalePath()
         {{ t('venues.missing') }}
         <a
           :href="feedbackMailto(t('venues.missingSubject'), t('venues.missingBody'))"
-          class="text-foreground underline underline-offset-4"
+          :class="[UNDERLINED_LINK_CLASS, 'text-foreground']"
           >{{ CONTROLLER.email }}</a
         >
       </p>
