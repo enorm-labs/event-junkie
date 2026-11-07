@@ -18,6 +18,7 @@ import de.norm.events.scraper.schemaOffers
 import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.stripFriendsTail
 import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -111,7 +112,8 @@ class OrangerieOverviewPageScraper {
     /**
      * The acts after `w/` in `Naked Grapes w/ zodya`, one per comma (`Hang Jack w/ CRIES, Kallaloo, Vio PRG`), and a list's
      * last two split at their conjunction ([commaListActs]), and each at a ` x ` co-bill ([splitCrossBilled]:
-     * `Aloo from Rome x Skyline Sun`). A lone `juan and only` keeps its `and`. A night without `w/`
+     * `Aloo from Rome x Skyline Sun`). A lone `juan and only` keeps its `and`. An `& Friends` tail is the guests, not a band
+     * ([stripFriendsTail]): `Bijon, Saulo & Friends` bills `Saulo`. A night without `w/`
      * names its crew or its series (`Gardens of Disco by Duma, The Collective`, `Nice Tries & Friends Vol. 6`), so nobody.
      */
     private fun artists(
@@ -122,6 +124,7 @@ class OrangerieOverviewPageScraper {
         val acts = name.substringAfter(WITH, "")
         return (commaListActs(acts) ?: acts.split(','))
             .flatMap { splitCrossBilled(it.trim()) }
+            .map(::stripFriendsTail)
             .filter { it.isNotBlank() && !isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = role) }
     }
