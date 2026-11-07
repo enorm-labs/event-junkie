@@ -19,6 +19,7 @@ abstract class AbstractMonthPagesWebsiteImporter(
 ) : EventImporter {
     // javaClass.name, so the log names the concrete importer rather than this base.
     private val logger = KotlinLogging.logger(javaClass.name)
+    private val pipeline = HtmlImportPipeline(htmlFetcher, logger)
 
     final override val fetchesBeyondEntryPage: Boolean get() = true
 
@@ -50,17 +51,31 @@ abstract class AbstractMonthPagesWebsiteImporter(
         url: String,
         etag: String?,
         lastModified: String?
-    ): ImportResult {
-        val monthUrls = monthPageUrls(htmlFetcher.fetchDocument(url), url)
-        logger.info { "Found ${monthUrls.size} month page(s) linked from $venueName entry $url" }
+    ): ImportResult =
+        pipeline.run(
+            HtmlImport(
+                entry = HtmlImport.Entry.Unconditional,
+                readListing = ::readMonths,
+                eventPages = enrichFromEventPage?.let { HtmlImport.EventPages.Enrich(it, ::hasEventPage, eventPageOwns) },
+                sharedPages = sharedPages,
+                foldRuns = ::foldRuns,
+                doneLine = { count, months -> "Scraped $count $venueName event(s) across $months month page(s)" }
+            ),
+            url,
+            etag,
+            lastModified
+        )
 
+    private suspend fun readMonths(
+        entry: Document,
+        url: String
+    ): HtmlImport.Listing {
+        val monthUrls = monthPageUrls(entry, url)
+        logger.info { "Found ${monthUrls.size} month page(s) linked from $venueName entry $url" }
         val months =
             readEach(monthUrls, { "Failed to read the $venueName month page $it, importing the other months" }) { monthUrl ->
                 scrape(htmlFetcher.fetchDocument(monthUrl), monthUrl)
             }
-        val enriched = htmlFetcher.withEventPages(months.items.distinctBy { it.sourceId }, eventPageOwns, ::hasEventPage, enrichFromEventPage)
-        val events = foldRuns(htmlFetcher.withSharedPages(enriched, sharedPages))
-        logger.info { "Scraped ${events.size} $venueName event(s) across ${monthUrls.size} month page(s)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = months.complete)
+        return HtmlImport.Listing(months.items.distinctBy { it.sourceId }, months.complete, pages = monthUrls.size)
     }
 }
