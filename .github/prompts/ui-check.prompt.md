@@ -88,19 +88,19 @@ module under `$OUT/` and pipe it to `node --input-type=module -` from `events-fr
 The probes run on every combination. The eye goes where they point. Each probe is a `page.evaluate` or an axe call; keep the code in the run's module, not
 in the tree.
 
-| Check                       | How                                                                                                                                                                                                                                  |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Horizontal overflow         | `document.scrollingElement.scrollWidth > innerWidth`, then every element whose right edge passes the viewport. Name the element, not the page                                                                                        |
-| Clipped or broken text      | An element with `scrollWidth > clientWidth` and `overflow: hidden` but no `text-overflow: ellipsis`. A word broken mid-word at 320 px                                                                                                |
-| Contrast                    | `AxeBuilder` with the `wcag2aa` and `wcag21aa` tags, on both themes. design.instructions.md §2 asks 4.5:1 for text and 3:1 for a boundary                                                                                            |
-| Forbidden list              | Computed styles: any `box-shadow` that is not `none` outside a focused element, any `background-image` gradient, a `transform` under `:hover`, an emoji in a heading or a control                                                    |
-| Type scale                  | Every visible text's `font-size` / `line-height` against the seven steps in §3. Anything else outside `components/ui/` is a finding                                                                                                  |
-| Spacing gaps                | Between consecutive visible blocks in `main`, and between `main` and the footer: a gap above 96 px, or a section rhythm that §4 does not list                                                                                        |
-| Empty sections              | A heading with no visible content before the next heading. An empty state with no control in it (§5)                                                                                                                                 |
-| Duplicated or contradictory | Two mutually exclusive controls pressed at once (`aria-pressed`, `aria-current`, `aria-selected`). Two state words that cannot both be true: `Sold out` and `Free`, `Running since` on a future date, `Cancelled` with a ticket link |
-| Heading and link colour     | A link inside or beside a heading with the heading's computed colour and no underline. The reader cannot tell it is a link                                                                                                           |
-| Crowded rows                | Tap targets under 24 × 24 px, or two targets less than 8 px apart, at the phone widths. The share row and the filter bar first                                                                                                       |
-| Keyboard focus              | From the top, `Tab` through the page. Every stop shows a visible ring in `--ring`, the order follows the reading order, and nothing hidden takes focus                                                                               |
+| Check                       | How                                                                                                                                                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Horizontal overflow         | `document.scrollingElement.scrollWidth > innerWidth`, then every element whose right edge passes the viewport. Name the element, not the page                                                                                                                      |
+| Clipped or broken text      | An element with `scrollWidth > clientWidth` and `overflow: hidden` but no `text-overflow: ellipsis`. A word broken mid-word at 320 px                                                                                                                              |
+| Contrast                    | `AxeBuilder` with the `wcag2aa` and `wcag21aa` tags, on both themes. design.instructions.md §2 asks 4.5:1 for text and 3:1 for a boundary                                                                                                                          |
+| Forbidden list              | Computed styles: any `box-shadow` that is not `none` outside a focused element, any `background-image` gradient, a `transform` under `:hover`, an emoji in a heading or a control. `\p{Extended_Pictographic}` also matches `©` and `®`: leave those out           |
+| Type scale                  | Every visible text's `font-size` / `line-height` against the seven steps in §3. Anything else outside `components/ui/` is a finding. Not the wordmark in `BrandLogo.vue`: a logo, outside the scale on purpose, as its lint suppression says                       |
+| Spacing gaps                | Between consecutive visible blocks in `main`, and between `main` and the footer: a gap above 96 px, or a section rhythm that §4 does not list                                                                                                                      |
+| Empty sections              | A heading with no visible content before the next heading. An empty state with no control in it (§5)                                                                                                                                                               |
+| Duplicated or contradictory | Two mutually exclusive controls pressed at once (`aria-pressed`, `aria-current`, `aria-selected`). Two state words that cannot both be true: `Sold out` and `Free`, `Running since` on a future date, `Cancelled` with a ticket link                               |
+| Heading and link colour     | A link inside or beside a heading with the heading's computed colour and no underline. The reader cannot tell it is a link                                                                                                                                         |
+| Crowded rows                | Tap targets under 24 × 24 px, or two targets less than 8 px apart, at the phone widths. The share row and the filter bar first                                                                                                                                     |
+| Keyboard focus              | From the top, `Tab` through the page. Every stop shows a visible ring in `--ring`, the order follows the reading order, and nothing hidden takes focus. Wait about 300 ms after each `Tab`: the ring is a `box-shadow` transition, and a read at 150 ms finds none |
 
 Probe output is a lead, not a finding. A probe that fires on every page at once is probably the probe: fix it in the run's module and say so.
 
@@ -114,6 +114,8 @@ Read the screenshots. Not all 250: every page at **390 dark de** and **1280 ligh
 - a poster that does not bleed below `sm`, or a compact row that shows an image (§5)
 - a state that differs between the two locales, or between the two themes, on the same data
 - copy that is truncated, untranslated, or in the wrong language for the locale
+
+Posters below the first one and a half screens load lazily, so a full-page shot shows them as empty ground. That is the shot, not the page.
 
 ## Step 5 — Sort every finding
 
