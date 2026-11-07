@@ -18,7 +18,7 @@ abstract class AbstractSinglePageWebsiteImporter(
     private val scrape: (Document, String) -> List<ScrapedEvent>
 ) : EventImporter {
     // javaClass.name, so the log names the concrete importer rather than this base.
-    private val logger = KotlinLogging.logger(javaClass.name)
+    private val pipeline = HtmlImportPipeline(htmlFetcher, KotlinLogging.logger(javaClass.name))
 
     /**
      * Reads one event's own page into the event, or returns null when the page yields nothing.
@@ -66,35 +66,29 @@ abstract class AbstractSinglePageWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified, cookies)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val listing = readListing(fetchResult.document, url)
-                logger.info { "Scraped ${listing.events.size} event(s) from $venueName" }
-
-                val events =
-                    secondLanguage?.let { htmlFetcher.withSecondLanguageListing(listing.events, fetchResult.document, it) } ?: listing.events
-                val enriched = htmlFetcher.withEventPages(events, eventPageOwns, ::hasEventPage, enrichFromEventPage)
-                ImportResult.Success(
-                    events = htmlFetcher.withSharedPages(enriched, sharedPages),
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified,
-                    complete = listing.complete
-                )
-            }
-        }
+        pipeline.run(
+            HtmlImport(
+                entry = HtmlImport.Entry.Conditional(cookies),
+                readListing = ::readListing,
+                listedLine = { count -> "Scraped $count event(s) from $venueName" },
+                secondLanguageListing = secondLanguage,
+                eventPages = enrichFromEventPage?.let { HtmlImport.EventPages.Enrich(it, ::hasEventPage, eventPageOwns) },
+                sharedPages = sharedPages
+            ),
+            url,
+            etag,
+            lastModified
+        )
 
     private suspend fun readListing(
         document: Document,
         url: String
-    ): ListingPages =
+    ): HtmlImport.Listing =
         if (maxListingPages > 1) {
-            htmlFetcher.scrapeListingPages(eventSource, document, url, maxListingPages, ::nextListingPage, scrape)
+            val walked = htmlFetcher.scrapeListingPages(eventSource, document, url, maxListingPages, ::nextListingPage, scrape)
+            HtmlImport.Listing(walked.events, walked.complete)
         } else {
-            ListingPages(scrape(document, url), complete = true)
+            HtmlImport.Listing(scrape(document, url), complete = true)
         }
 }
 
