@@ -41,7 +41,10 @@ which helper lives where — is not repeated; `grep` answers that.
     - **A `slug` literal in a data migration is checked, because a wrong one fails open**: `UPDATE … WHERE slug = 'mispelt'` updates nothing and Flyway records
       it applied. `MigrationSlugTest` asserts every venue slug literal under `db/migration/` is one `SlugGenerator` derives from a seed venue file (`http/importer/seed/venues/`); a renamed or
       removed venue goes into `RETIRED_VENUE_SLUGS` with a reason, and a second assertion deletes the entry once stale. Never `@Disabled` (#987).
-    - **Promoter merges** name slugs no seed creates, so `MergeDuplicatePromotersMigrationTest` runs each against planted rows and asserts a survivor's slug is
+    - **A data fix ships with a migration test, which goes once production has run it** (#4671). The test migrates to just before its migration, plants
+      rows, runs it and asserts the result, so no later migration ever runs in it: after production applies the fix, it can only re-prove a one-shot.
+      `CreateAccountsSchemaMigrationTest` stays, because every new cluster migrates as an owner that cannot create roles.
+    - **Promoter merges** name slugs no seed creates, so each one's migration test runs it against planted rows and asserts a survivor's slug is
       `slugify(name)` (V025 repaired that). Step 1 picks the smallest loser **that exists** (V023 left `tip-berlin` behind on production, #1343); step 3
       inserts the survivor's links rather than updating the losers', or two losers on one event trip `UNIQUE (event_id, promoter_id)` (that failed `v0.13.1`).
       Copy V031's shape.
