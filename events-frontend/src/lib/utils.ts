@@ -64,7 +64,10 @@ export const CARD_LEAD_CLASS = 'sm:col-span-2'
 /** The lead card's poster box, the `--aspect-lead` token: 480 px tall at 1440 px, 179 px at 390 px (#1247). */
 export const CARD_LEAD_POSTER_ASPECT = 'aspect-lead'
 
-/** The compact view's list of `EventRow`/`VenueRow` text rows: one column, hairlines between. */
+/**
+ * A list of text rows with hairlines between and around them: the compact view's
+ * `EventRow`/`VenueRow` lists, the account page's lists and the festival notices.
+ */
 export const CARD_LIST_CLASS = 'divide-y divide-border border-y border-border'
 
 /** A panel over a map, such as a venue's events or a group marker's venues: the map stays in view. */

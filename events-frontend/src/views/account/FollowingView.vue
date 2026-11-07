@@ -398,7 +398,7 @@ onBeforeUnmount(() => {
           <SectionLabel v-if="suggestions.length" as="h2">{{
             t('account.follow.page.suggestions')
           }}</SectionLabel>
-          <ul class="divide-y divide-border border-y border-border">
+          <ul :class="CARD_LIST_CLASS">
             <li
               v-for="venue in suggestions"
               :key="venue.slug"

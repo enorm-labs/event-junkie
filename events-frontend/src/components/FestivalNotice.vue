@@ -11,6 +11,7 @@ import { ArrowUpRight } from '@lucide/vue'
 import type { Festival } from '@/api/types'
 import { useCurrentFestivals } from '@/composables/useCurrentFestivals'
 import { useFormat } from '@/composables/useFormat'
+import { CARD_LIST_CLASS } from '@/lib/utils'
 
 const { t, locale } = useI18n()
 const { formatDayRange } = useFormat()
@@ -30,7 +31,7 @@ function noticeOf(festival: Festival) {
 </script>
 
 <template>
-  <div v-if="shown.length" class="divide-y divide-border border-y border-border">
+  <div v-if="shown.length" :class="CARD_LIST_CLASS">
     <aside
       v-for="festival in shown"
       :key="festival.slug"

@@ -13,6 +13,7 @@ import FollowButton from '@/components/FollowButton.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { FollowKind, Notify } from '@/api/account'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { CARD_LIST_CLASS } from '@/lib/utils'
 
 /** One followed entity, with the fields the generated type leaves optional checked. */
 export interface Followed {
@@ -77,7 +78,7 @@ const groups = computed(() =>
 
     <section v-for="group in groups" :key="group.kind" class="space-y-4">
       <SectionLabel as="h2">{{ t(group.heading, { count: group.count }) }}</SectionLabel>
-      <ul class="divide-y divide-border border-y border-border">
+      <ul :class="CARD_LIST_CLASS">
         <li
           v-for="item in group.rows"
           :key="item.slug"
