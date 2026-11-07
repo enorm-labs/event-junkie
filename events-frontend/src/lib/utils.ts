@@ -94,3 +94,9 @@ export const PAGE_TITLE_CLASS = 'text-page font-bold tracking-tight'
  * and the account deletion dialog's title. `ProsePage` repeats it as `[&_h2]:` variants.
  */
 export const SECTION_TITLE_CLASS = 'text-section font-bold tracking-tight'
+
+/**
+ * The backdrop under a dialog: the header menu, the global search and the account deletion
+ * dialog. It sits at `z-40`, under the dialog's own `z-50`. The bottom sheet draws its own.
+ */
+export const DIALOG_OVERLAY_CLASS = 'fixed inset-0 z-40 bg-background/80'
