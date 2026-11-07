@@ -8,6 +8,7 @@ import type {
   fetchEvent,
   fetchEventFeatures,
   setEventFeatures,
+  setTimetable,
   unpinField,
   updateEvent,
 } from '@/api/events'
@@ -52,6 +53,7 @@ const api = vi.hoisted(() => ({
   unpinField: vi.fn<typeof unpinField>(),
   fetchEventFeatures: vi.fn<typeof fetchEventFeatures>(),
   setEventFeatures: vi.fn<typeof setEventFeatures>(),
+  setTimetable: vi.fn<typeof setTimetable>(),
 }))
 
 const noFeatures: EventFeatures = { eventId: 418, features: [], uncertain: [], pinned: false }
@@ -171,6 +173,94 @@ async function submit() {
 afterEach(() => {
   document.body.innerHTML = ''
   vi.clearAllMocks()
+})
+
+/** A night at 23:00 CET with one timed act and one untimed one. */
+const night: AdminEvent = {
+  ...stored,
+  eventDate: '2026-11-07',
+  startTime: '23:00:00',
+  artists: [
+    {
+      artistId: 3,
+      role: 'DJ',
+      billingOrder: 0,
+      stage: 'Upper Deck',
+      setStart: '2026-11-07T22:00:00Z',
+      setEnd: '2026-11-08T01:00:00Z',
+    },
+    {
+      artistId: 12,
+      role: 'DJ',
+      billingOrder: 1,
+      stage: 'Upper Deck',
+      setStart: null,
+      setEnd: null,
+    },
+  ],
+}
+
+function timeInput(testId: 'set-start' | 'set-end', row: number): HTMLInputElement {
+  return body().querySelectorAll<HTMLInputElement>(`input[data-testid="${testId}"]`)[row]!
+}
+
+async function type(input: HTMLInputElement, value: string) {
+  input.value = value
+  input.dispatchEvent(new Event('input'))
+  await flushPromises()
+}
+
+describe('EventEditor timetable', () => {
+  it('shows the stored set times as Berlin clock times', async () => {
+    await mountEditor(night)
+
+    expect(timeInput('set-start', 0).value).toBe('23:00')
+    expect(timeInput('set-end', 0).value).toBe('02:00')
+    expect(timeInput('set-start', 1).value).toBe('')
+  })
+
+  it('saves a changed time after the event, and shows the answer of the timetable PUT', async () => {
+    api.updateEvent.mockResolvedValue(night)
+    const timed = { ...night, pinnedFields: ['lineup'] }
+    api.setTimetable.mockResolvedValue(timed)
+    const wrapper = await mountEditor(night)
+
+    await type(timeInput('set-start', 1), '02:00')
+    await submit()
+
+    expect(api.updateEvent).toHaveBeenCalledOnce()
+    expect(api.setTimetable).toHaveBeenCalledWith(418, [
+      { artistId: 3, start: '23:00', end: '02:00' },
+      { artistId: 12, start: '02:00', end: null },
+    ])
+    expect(api.updateEvent.mock.invocationCallOrder[0]).toBeLessThan(
+      api.setTimetable.mock.invocationCallOrder[0]!,
+    )
+    expect(wrapper.emitted('saved')).toEqual([[timed]])
+  })
+
+  it('does not send an untouched timetable', async () => {
+    api.updateEvent.mockResolvedValue(night)
+    await mountEditor(night)
+
+    await submit()
+
+    expect(api.updateEvent).toHaveBeenCalledOnce()
+    expect(api.setTimetable).not.toHaveBeenCalled()
+  })
+
+  it('refuses an end without a start before writing anything', async () => {
+    await mountEditor(night)
+
+    await type(timeInput('set-end', 1), '04:00')
+    await submit()
+
+    expect(api.updateEvent).not.toHaveBeenCalled()
+    expect(api.setTimetable).not.toHaveBeenCalled()
+    expect(body().querySelector('[role="alert"]')!.textContent).toContain(
+      'The Adicts: a set with an end needs a start.',
+    )
+  })
 })
 
 describe('EventEditor', () => {

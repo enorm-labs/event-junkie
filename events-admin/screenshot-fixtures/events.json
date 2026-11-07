@@ -89,13 +89,17 @@
           "artistId": 8101,
           "role": "HEADLINER",
           "billingOrder": 0,
-          "stage": null
+          "stage": null,
+          "setStart": "2026-10-16T21:00:00Z",
+          "setEnd": "2026-10-17T00:00:00Z"
         },
         {
           "artistId": 2761,
           "role": "SUPPORT",
           "billingOrder": 1,
-          "stage": null
+          "stage": null,
+          "setStart": "2026-10-17T00:00:00Z",
+          "setEnd": null
         }
       ],
       "promoterIds": [],
