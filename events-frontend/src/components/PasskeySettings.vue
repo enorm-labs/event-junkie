@@ -125,7 +125,7 @@ onMounted(() => {
   <section v-if="supported" class="space-y-3">
     <SectionLabel as="h2">{{ t('account.passkeys.title') }}</SectionLabel>
     <p class="text-body text-muted-foreground">{{ t('account.passkeys.intro') }}</p>
-    <ErrorLine v-if="problem" role="alert">{{ problem }}</ErrorLine>
+    <ErrorLine v-if="problem">{{ problem }}</ErrorLine>
     <ul v-if="passkeys.length" :class="CARD_LIST_CLASS">
       <li
         v-for="passkey in passkeys"

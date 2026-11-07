@@ -118,7 +118,7 @@ function messageFor(e: unknown): string {
         />
       </div>
       <!-- Announced when it appears, so a screen reader hears why nothing happened. -->
-      <ErrorLine id="sign-in-problem" role="alert">{{ problem }}</ErrorLine>
+      <ErrorLine id="sign-in-problem">{{ problem }}</ErrorLine>
       <div class="flex flex-wrap gap-3">
         <Button :disabled="sending" type="submit">
           {{ sending ? t('account.signIn.sending') : t('account.signIn.submit') }}

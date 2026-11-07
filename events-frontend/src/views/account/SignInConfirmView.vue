@@ -54,7 +54,7 @@ async function confirm() {
   <ListPage :title="t('pageTitle.confirmSignIn')">
     <div class="max-w-md space-y-4">
       <p v-if="!spent" class="text-body">{{ t('account.confirm.body') }}</p>
-      <ErrorLine role="alert">{{ problem }}</ErrorLine>
+      <ErrorLine>{{ problem }}</ErrorLine>
       <Button v-if="!spent" :disabled="signingIn" @click="confirm">
         {{ signingIn ? t('account.confirm.signingIn') : t('account.confirm.submit') }}
       </Button>
