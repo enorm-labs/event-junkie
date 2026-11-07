@@ -684,6 +684,7 @@ says so.
 | `ORANIA`               | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ORWOHAUS`             | `PRICE`            | prices appear only in the prose, and a house night often names none                                                                              | —     |
 | `ORWOHAUS`             | `DOORS_TIME`       | a doors time appears only in the prose of a few nights                                                                                           | —     |
+| `ORWOHAUS`             | `TICKET_URL`       | a night names no shop of its own; the page's ticket links belong to other nights                                                                 | —     |
 | `ORWOHAUS`             | `ARTISTS`          | only a line-up list in the prose is read; other nights name acts in running text or run them together on one line, and a series title names none | —     |
 | `ORWOHAUS`             | `GENRE`            | the feed files most nights by room or series and names a style on few                                                                            | —     |
 | `ORWOHAUS`             | `PROMOTERS`        | an outside promoter is named only in the prose                                                                                                   | —     |
@@ -704,6 +705,7 @@ says so.
 | `PALOMA`               | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the programme                                                                     | —     |
 | `PANDA_PLATFORMA`      | `DOORS_TIME`       | the api carries one start time per event and no doors time                                                                                       | —     |
 | `PANDA_PLATFORMA`      | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
+| `PANDA_PLATFORMA`      | `PRICE`            | some events print no price, and their ticket block reads `No tickets available for this event`                                                   | —     |
 | `PANDA_PLATFORMA`      | `GENRE`            | the categories name house series, and only the jazz, experimental and global ones name a style                                                   | —     |
 | `PANKE`                | `ARTISTS`          | acts named only in free prose are not read; a Resident Advisor link, a `feat.` or tagged `+` title, or a presenter line bills them               | —     |
 | `PANKE`                | `PER_EVENT_PAGE`   | the venue expands each event's full text inline and publishes no page per event                                                                  | —     |
@@ -924,6 +926,7 @@ says so.
 | `TEMPODROM`            | `START_TIME`       | a run (Roncalli, Holiday on Ice) prints a date range with no clock, and some concerts print none either                                          | —     |
 | `TEMPODROM`            | `PRICE`            | a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line                                                       | —     |
 | `TEMPODROM`            | `GENRE`            | the JSON-LD and the event pages carry no genre field                                                                                             | —     |
+| `TEMPODROM`            | `TICKET_URL`       | a house-sold event's offer links its own event page, and a promoter's shop appears only as a link in the prose                                   | —     |
 | `TEMPODROM`            | `DESCRIPTION`      | the detail page's `Beschreibung` region is read only to classify a comedy night and name a tribute band, and is never stored                     | —     |
 | `THEATER_IM_DELPHI`    | `GENRE`            | the labels are formats; only Kammermusik and Elektronische Musik name a style                                                                    | —     |
 | `THEATER_IM_DELPHI`    | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |

@@ -42,6 +42,7 @@ val ORWOHAUS_LIMITATIONS =
         EventSource.ORWOHAUS,
         AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the prose, and a house night often names none"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "a doors time appears only in the prose of a few nights"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "a night names no shop of its own; the page's ticket links belong to other nights"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
             "only a line-up list in the prose is read; other nights name acts in running text or run them together on one line, and a series title names none"

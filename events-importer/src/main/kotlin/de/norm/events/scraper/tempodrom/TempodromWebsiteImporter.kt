@@ -42,6 +42,10 @@ val TEMPODROM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line"),
         AcceptedLimitation(LimitedAspect.GENRE, "the JSON-LD and the event pages carry no genre field"),
         AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "a house-sold event's offer links its own event page, and a promoter's shop appears only as a link in the prose"
+        ),
+        AcceptedLimitation(
             LimitedAspect.DESCRIPTION,
             "the detail page's `Beschreibung` region is read only to classify a comedy night and name a tribute band, and is never stored"
         )
