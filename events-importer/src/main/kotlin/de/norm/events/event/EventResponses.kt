@@ -147,7 +147,7 @@ data class EventArtistResponse(
     val billingOrder: Int,
     @Schema(description = "Room / stage the artist plays (multi-room venues), or null", example = "Panorama Bar")
     val stage: String? = null,
-    @Schema(description = "When the set starts, from the venue's running order, or null", example = "2026-09-26T21:59:00Z")
+    @Schema(description = "When the set starts, from the venue's running order or set by hand, or null", example = "2026-09-26T21:59:00Z")
     val setStart: Instant? = null,
     @Schema(description = "When the set ends, or null", example = "2026-09-27T02:30:00Z")
     val setEnd: Instant? = null

@@ -36,7 +36,8 @@ import java.time.LocalDate
 class EventController(
     private val eventService: EventService,
     private val eventPinService: EventPinService,
-    private val eventPatchService: EventPatchService
+    private val eventPatchService: EventPatchService,
+    private val eventTimetableService: EventTimetableService
 ) {
     /**
      * Lists events with pagination, optionally narrowed to a venue, a date, an artist, a title, a first date, a
@@ -135,6 +136,15 @@ class EventController(
         @PathVariable id: Long,
         @Valid @RequestBody request: EventRequest
     ): EventResponse = eventService.update(id, request)
+
+    /** Sets the lineup's set times from Berlin clock times, and pins `lineup` when one changes. */
+    @PutMapping("/{id}/timetable")
+    @Operation(summary = "Set the set times of an event's lineup, pinning the lineup when a time changes")
+    suspend fun replaceTimetable(
+        @Parameter(description = "Database ID of the event.", example = "1")
+        @PathVariable id: Long,
+        @Valid @RequestBody request: TimetableRequest
+    ): EventResponse = eventTimetableService.replace(id, request)
 
     /**
      * Replays language detection over stored descriptions that carry no language.

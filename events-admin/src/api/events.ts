@@ -41,6 +41,9 @@ export interface EventArtist {
   role: ArtistRole
   billingOrder: number
   stage: string | null
+  /** ISO instants of the set, read back only; a PUT of the event never sends them. */
+  setStart?: string | null
+  setEnd?: string | null
 }
 
 /** The fields of `EventResponse` an edit reads back. Prices arrive as JSON numbers. */
@@ -266,6 +269,32 @@ export async function unpinField(
   const path = `/api/admin/events/${id}/pins/${encodeURIComponent(field)}`
   const response = await fetchFn(path, { method: 'DELETE' })
   await failOnError(response, `DELETE ${path}`)
+}
+
+/** One act's set as Berlin clock times, `HH:mm`; a null end is an open end. */
+export interface TimetableSlot {
+  artistId: number
+  start: string
+  end: string | null
+}
+
+/**
+ * Replaces the set times of event [id]'s lineup with [slots]; an act left out loses its times.
+ * The importer rolls a time past midnight and pins `lineup` when a time changes.
+ */
+export async function setTimetable(
+  id: number,
+  slots: TimetableSlot[],
+  fetchFn: typeof fetch = fetch,
+): Promise<AdminEvent> {
+  const path = `/api/admin/events/${id}/timetable`
+  const response = await fetchFn(path, {
+    method: 'PUT',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slots }),
+  })
+  await failOnError(response, `PUT ${path}`)
+  return (await response.json()) as AdminEvent
 }
 
 /** `EventFeature` in the importer, in its order, with the label the editor shows. */

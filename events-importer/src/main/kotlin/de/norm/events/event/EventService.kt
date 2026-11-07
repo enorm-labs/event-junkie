@@ -190,9 +190,9 @@ class EventService(
      * Replaces all fields and associations of an existing event, delete-and-reinsert within one
      * transaction.
      *
-     * The lineup is replaced too, but `event_artist.title_derived`, `set_start` and `set_end` are
-     * importer-owned: [EventArtistRequest] does not carry them, so each row takes them from the
-     * stored row of the same artist (#3026). An artist new to the lineup gets the defaults.
+     * The lineup is replaced too, but [EventArtistRequest] does not carry `event_artist.title_derived`,
+     * `set_start` and `set_end`, so each row takes them from the stored row of the same artist (#3026).
+     * An artist new to the lineup gets the defaults; [EventTimetableService] writes the set times.
      *
      * @throws EventNotFoundException if no event with the given [id] exists.
      * @throws VenueNotFoundException if the referenced venue does not exist.
