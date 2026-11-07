@@ -3,7 +3,7 @@
 #
 #  This runs on `pull_request_target`, with the BASE repository's token and write permissions,
 #  against a pull request from anyone. That is safe for exactly one reason: nothing here fetches
-#  or runs the contributor's code — it reads the title from `context.payload` and calls the REST
+#  or runs the contributor's code — it reads the title and writes labels through the REST
 #  API. A checkout would turn it into an arbitrary-code-execution path holding `pull-requests:
 #  write` (#479, #443). A step that needs the PR's contents belongs in a `pull_request` workflow.
 #  Listing file paths through the REST API executes nothing.
@@ -50,11 +50,8 @@ permissions:
   pull-requests: write
   issues: write
 
-# A quick succession of title edits should converge on the final title, not race.
-concurrency:
-  group: label-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
+# No `concurrency`: a required check that cancels itself can block the merge beside a green run (#4570).
+# Runs may overlap, so each reads the live pull request and tolerates a label another run has changed.
 jobs:
   label:
     name: Apply Conventional Commits labels
@@ -97,7 +94,10 @@ jobs:
             // A versioned Flyway migration. A changed one is never this label's case: Flyway refuses a changed checksum.
             const MIGRATION = /^events-importer\/src\/main\/resources\/db\/migration\/V\d+__[^/]+\.sql$/;
 
-            const pr = context.payload.pull_request;
+            // The live pull request, not the payload: a run that started before a title edit can finish after it.
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner, repo: context.repo.repo, pull_number: context.payload.pull_request.number,
+            });
             const match = /^\s*([a-zA-Z]+)\s*(?:\(([^)]*)\))?\s*(!)?:/.exec(pr.title);
 
             if (!match) {
@@ -158,8 +158,13 @@ jobs:
             // Drop managed labels that no longer apply — an edited title, or one set by hand.
             for (const name of current) {
               if (name in MANAGED && !wanted.has(name)) {
-                await github.rest.issues.removeLabel({ ...issue, name });
-                core.info(`Removed label: ${name}`);
+                try {
+                  await github.rest.issues.removeLabel({ ...issue, name });
+                  core.info(`Removed label: ${name}`);
+                } catch (error) {
+                  // An overlapping run removed it first.
+                  if (error.status !== 404) throw error;
+                }
               }
             }
 
@@ -175,8 +180,13 @@ jobs:
                 await github.rest.issues.getLabel({ owner: issue.owner, repo: issue.repo, name });
               } catch (error) {
                 if (error.status !== 404) throw error;
-                await github.rest.issues.createLabel({ owner: issue.owner, repo: issue.repo, name, ...MANAGED[name] });
-                core.info(`Created label: ${name}`);
+                try {
+                  await github.rest.issues.createLabel({ owner: issue.owner, repo: issue.repo, name, ...MANAGED[name] });
+                  core.info(`Created label: ${name}`);
+                } catch (createError) {
+                  // An overlapping run created it first.
+                  if (createError.status !== 422) throw createError;
+                }
               }
             }
 

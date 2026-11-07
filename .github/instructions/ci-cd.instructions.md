@@ -62,7 +62,8 @@ is the map and the traps.
 - `label-pr.yml` — type labels from the Conventional Commits title (`fix(api)!:` → `fix` + `breaking-change`), `importer` from an added `*Importer.kt` under
   `scraper/`, `migration` from an added Flyway `V<n>__*.sql`, `after-deploy` while the body has an unticked `## After deploy` step (#2380), red when that section has no `- [ ]` step at all. **Required, and red on a `feat` outside a product scope** (`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`,
   `bff`, `images`, `branding`) — a `feat` earns a minor, and `feat(ci)` once did (v0.17.0); `scripts/scope-parity.sh` holds every copy of that list.
-  `pull_request_target`, no checkout, `github-script`. `milestone-dependabot.yml` — same shape; gives every bot PR (Dependabot, Renovate, the release App
+  `pull_request_target`, no checkout, `github-script`. **No `concurrency`** (#4570): one bot PR fires several events in a second, and a cancelled run of a
+  required check can block the merge. Runs may overlap, so each reads the live PR and tolerates a label another run changed. `milestone-dependabot.yml` — same shape; gives every bot PR (Dependabot, Renovate, the release App
   should it open one again) the **oldest open milestone**, never overwrites one, and its dispatch sweeps the backlog. Both match on the bot's login, so a new
   bot joins `BOTS` or arrives without a milestone.
 - `migration-versions.yml` (#2442) — the `Migration versions` commit status on each open PR's head: red when a migration it adds takes a version `main`
@@ -75,7 +76,7 @@ is the map and the traps.
 - `merge-gate.yml` (#1424) — required; fails while the PR carries the **`hold` label**, whoever opened it, and reruns on `labeled`/`unlabeled`. It also
   fails when the author is a Bot outside `dependabot[bot]`, `renovate[bot]`, `event-junkie-release[bot]` **unless a User has approved the current head**. A push after approval turns it red again; the `claude` App's approval does not count. Runs on `pull_request_target`
   and `pull_request_review` **on purpose**: the file executes as it stands on `main`, so an App with `workflows: write` cannot edit it green from the PR it
-  gates. It checks out nothing. **An approval does not clear an earlier red run**: the failed `synchronize` run stays on the same head beside the passing
+  gates. It checks out nothing, and has no `concurrency`, for the same reason as `label-pr.yml` (#4570). **An approval does not clear an earlier red run**: the failed `synchronize` run stays on the same head beside the passing
   review run, and the ruleset counts both. `gh run rerun <run id> --failed` replaces it.
 
 **Publishing and what follows it**
