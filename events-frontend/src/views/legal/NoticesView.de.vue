@@ -52,6 +52,22 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
     </section>
 
     <section>
+      <h2>Daten</h2>
+      <p data-testid="stop-data-attribution">
+        Haltestellendaten:
+        <a
+          href="https://unternehmen.vbb.de/digitale-services/datensaetze/"
+          rel="noopener"
+          target="_blank"
+          >VBB Verkehrsverbund Berlin-Brandenburg GmbH</a
+        >,
+        <a href="https://creativecommons.org/licenses/by/4.0/deed.de" rel="noopener" target="_blank"
+          >CC BY 4.0</a
+        >, Auszug. Daraus stammen die Haltestellen auf den Seiten der Locations und Veranstaltungen.
+      </p>
+    </section>
+
+    <section>
       <h2>Komponenten nach Lizenz</h2>
       <details
         v-for="group in groups"

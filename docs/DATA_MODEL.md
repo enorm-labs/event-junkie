@@ -350,6 +350,26 @@ Three failures in a row log a `WARN` and put the venue on
 `GET /api/admin/venues/needs-review`. A `reviewed_at` later than `failing_since` takes it off the list. The pass writes
 neither `closed_on` nor `reviewed_at`: a person sets both. `POST /api/admin/venues/site-check` runs one pass now.
 
+### transit_stop
+
+The U-Bahn, S-Bahn and tram stations from VBB's GTFS feed, under CC BY 4.0 (#2724). One row per station that such a
+line serves. No other table refers to it.
+
+| Field          | Type           | Nullable | Description                                                      | Example                |
+| -------------- | -------------- | -------- | ---------------------------------------------------------------- | ---------------------- |
+| `gtfs_stop_id` | `TEXT` PK      | No       | The station's `stop_id` in the feed: the parent of its platforms | `de:11000:900120004`   |
+| `name`         | `TEXT`         | No       | The name in the feed, less a trailing ` (Berlin)`                | `S+U Warschauer Str.`  |
+| `latitude`     | `NUMERIC(9,6)` | No       | The station's latitude                                           | `52.505289`            |
+| `longitude`    | `NUMERIC(9,6)` | No       | The station's longitude                                          | `13.449250`            |
+| `lines`        | `TEXT[]`       | No       | The lines that stop here: S-Bahn, then U-Bahn, then tram         | `{S3,S5,S7,S75,U1,U3}` |
+| `imported_at`  | `TIMESTAMPTZ`  | No       | When the import that wrote the row ran                           |                        |
+
+`TransitStopImportService` runs at 04:45 UTC on the 2nd of January, April, July and October. It downloads the feed to
+a temporary file and replaces every row in one transaction. A failed download, or a feed with fewer than 300 stations,
+keeps the stored rows and logs `ERROR`. `POST /api/admin/transit-stops/import` runs one import now. The BFF computes
+the nearest stations of a venue per request: up to three within 1,500 m on foot. The walk is the straight line times
+1.3.
+
 ### Event
 
 Core entity representing a single music event at a venue on a specific date.

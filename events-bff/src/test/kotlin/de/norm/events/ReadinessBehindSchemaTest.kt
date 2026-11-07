@@ -21,6 +21,7 @@ import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
+import java.io.File
 import java.time.Duration
 
 /**
@@ -121,7 +122,26 @@ class ReadinessBehindSchemaTest {
         @JvmStatic
         @DynamicPropertySource
         fun stopOneMigrationShort(registry: DynamicPropertyRegistry) {
-            registry.add("spring.flyway.target") { (SchemaVersionHealthIndicator.readExpectedVersion() - 1).toString() }
+            registry.add("spring.flyway.target") { previousMigration().toString() }
+        }
+
+        /**
+         * The newest migration before the expected one. Not `expected - 1`: two branches can claim neighbouring
+         * numbers, and the one that lands second has a gap below it until the other merges.
+         */
+        private fun previousMigration(): Int {
+            val expected = SchemaVersionHealthIndicator.readExpectedVersion()
+            return File(System.getProperty("spring.flyway.locations").removePrefix("filesystem:"))
+                .listFiles()
+                .orEmpty()
+                .mapNotNull {
+                    Regex("""^V(\d+)__""")
+                        .find(it.name)
+                        ?.groupValues
+                        ?.get(1)
+                        ?.toInt()
+                }.filter { it < expected }
+                .max()
         }
     }
 }

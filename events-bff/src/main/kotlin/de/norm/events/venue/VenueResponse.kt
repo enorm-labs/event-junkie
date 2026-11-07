@@ -259,14 +259,17 @@ data class VenueDetailResponse(
     )
     val programmeUrl: String?,
     @Schema(description = CLOSED_ON_DESCRIPTION, example = "2026-10-31")
-    val closedOn: LocalDate?
+    val closedOn: LocalDate?,
+    @Schema(description = NEARBY_STOPS_DESCRIPTION)
+    val nearbyStops: List<NearbyStopResponse> = emptyList()
 ) {
     companion object {
         fun fromEntity(
             entity: VenueEntity,
             image: ServedImage,
             characterTags: List<VenueCharacterTagResponse>,
-            imported: Boolean
+            imported: Boolean,
+            nearbyStops: List<NearbyStopResponse> = emptyList()
         ): VenueDetailResponse =
             VenueDetailResponse(
                 id = entity.requiredId(),
@@ -299,7 +302,8 @@ data class VenueDetailResponse(
                 characterTags = characterTags,
                 imported = imported,
                 programmeUrl = entity.programmeUrl,
-                closedOn = entity.closedOn
+                closedOn = entity.closedOn,
+                nearbyStops = nearbyStops
             )
     }
 }
@@ -312,6 +316,11 @@ data class VenueCharacterTagResponse(
     @Schema(description = "URL of the venue's own page that states the tag", example = "https://www.so36.com/about")
     val sourceUrl: String
 )
+
+/** Shared with the event detail, which carries its venue's stations beside the venue summary. */
+const val NEARBY_STOPS_DESCRIPTION =
+    "Up to three U-Bahn, S-Bahn or tram stations within about 1.5 km on foot, nearest first. Empty when the venue has no coordinates or no " +
+        "station is that near. Stop data: VBB Verkehrsverbund Berlin-Brandenburg GmbH, CC BY 4.0, extract."
 
 private const val IMPORTED_DESCRIPTION =
     "Whether we show this venue's events: an importer reads it, or it has an event from today on. False for a venue we know but do not import yet: " +

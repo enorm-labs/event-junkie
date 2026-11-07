@@ -61,6 +61,13 @@ JOIN (VALUES ('queer', 'https://kesselhaus-nord.example/about'), ('awareness-tea
     AS t(tag, source_url) ON true
 WHERE v.slug = 'kesselhaus-nord';
 
+-- Stations (#2724): three within walking distance of Kesselhaus Nord, and one beyond it that no page names.
+INSERT INTO events.transit_stop (gtfs_stop_id, name, latitude, longitude, lines, imported_at)
+VALUES ('fixture-metzer-str', 'Metzer Str.', 52.531700, 13.419000, '{M2}', '2026-10-02 04:45:00+00'),
+       ('fixture-senefelderplatz', 'U Senefelderplatz', 52.532200, 13.412600, '{U2}', '2026-10-02 04:45:00+00'),
+       ('fixture-danziger-str', 'Prenzlauer Allee/Danziger Str.', 52.539000, 13.423500, '{M2,M10}', '2026-10-02 04:45:00+00'),
+       ('fixture-schoenhauser-allee', 'S+U Schönhauser Allee', 52.549100, 13.413400, '{S8,S41,S42,U2,M1,12}', '2026-10-02 04:45:00+00');
+
 INSERT INTO events.promoter (name, slug, website_url)
 VALUES ('Nachtschicht Kollektiv', 'nachtschicht-kollektiv', 'https://nachtschicht.example');
 

@@ -802,6 +802,16 @@ The maps use three things that are not packages, so `notices.json` does not list
 The tiles are a Produced Work of OpenStreetMap. The ODbL asks for credit where the data is shown. It asks for nothing more while we do not publish the
 extract as a database. Two venues, AMT and Sonnenraum, hold coordinates from Google and not from OpenStreetMap. The map shows them as pins, not as map data.
 
+### 9.4 Stop data
+
+The stations on venue and event pages come from VBB's GTFS feed (#2724). The importer downloads it once a quarter. The browser never asks VBB.
+
+| What                     | Licence   | How the obligation is met                                                                    |
+| ------------------------ | --------- | -------------------------------------------------------------------------------------------- |
+| VBB GTFS stops and lines | CC BY 4.0 | `/legal/notices` names VBB, links the licence and says "extract" (Auszug), in both languages |
+
+The operator accepted the licence on 2026-10-15. A change to the source or to what is shown from it is a change to that line.
+
 ## 12. Accessibility (WCAG 2.1 Level AA)
 
 **Target: WCAG 2.1 Level AA** — the level German and EU law reference (BFSG / EN 301 549).
