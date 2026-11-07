@@ -112,6 +112,20 @@ class OrangerieOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops an and-Friends tail from the last act, and a night without w-slash still bills nobody`() {
+        val nights =
+            scrapeCards(
+                "Behind the Groove w/ Bijon, Saulo & Friends" to "",
+                "Behind the Groove w/ Saulo and friends" to "",
+                "Nice Tries & Friends Vol. 7" to ""
+            )
+
+        nights[0].artists shouldContainExactly listOf("Bijon", "Saulo").map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+        nights[1].artists.map { it.name } shouldContainExactly listOf("Saulo")
+        nights[2].artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `names nobody for a crew or series night`() {
         events.first { it.title.startsWith("Gardens of Disco") }.artists.shouldBeEmpty()
         events.first { it.title.startsWith("Nice Tries") }.artists.shouldBeEmpty()
