@@ -445,6 +445,22 @@ class TempodromOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops the separator a format line opens with and a line that is only the city`() {
+        val shaden = scrapeOne("SHADEN (أنا إمرأة تعبانة) Show", "// Berlin | Kleine Arena")
+        shaden.subtitle.shouldBeNull()
+        shaden.room shouldBe "Kleine Arena"
+
+        val popDivas = scrapeOne("Pop Divas - Der Soundtrack Deines Lebens", "- Das Tribute-Konzert Der Superstars")
+        popDivas.subtitle shouldBe "Das Tribute-Konzert Der Superstars"
+        popDivas.room.shouldBeNull()
+
+        scrapeOne("Some Act", "– Live 2027 | Große Arena").subtitle shouldBe "Live 2027"
+        scrapeOne("Some Act", "/ Berlin").subtitle.shouldBeNull()
+        scrapeOne("Some Act", "Berlin Calling Tour - Teil 2").subtitle shouldBe "Berlin Calling Tour - Teil 2"
+        scrapeOne("Some Act", "Live in Berlin").subtitle shouldBe "Live in Berlin"
+    }
+
+    @Test
     fun `keeps a description without a room whole and leaves the room empty`() {
         val event = scrapeOne("Some Act", "Tour 2026 | Ersatztermin vom 07.05.2026")
 
