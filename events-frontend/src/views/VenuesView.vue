@@ -45,6 +45,7 @@ import {
   CARD_LIST_CLASS,
   RESULTS_BAR_CLASS,
   SECTION_TITLE_CLASS,
+  TEXT_LINK_CLASS,
 } from '@/lib/utils'
 
 const PAGE_SIZE = 24
@@ -386,7 +387,7 @@ const localePath = useLocalePath()
         {{ t('venues.resultCount', { count: pins.length }) }}
         <template v-if="unpinnedCount">
           ·
-          <button class="text-primary hover:underline" type="button" @click="setView('list')">
+          <button :class="TEXT_LINK_CLASS" type="button" @click="setView('list')">
             {{ t('venues.unpinned', { count: unpinnedCount }) }}
           </button>
         </template>
@@ -446,7 +447,7 @@ const localePath = useLocalePath()
           <RouterLink
             v-else
             :to="{ path: localePath('/map'), query: { venue: selectedVenue.slug } }"
-            class="inline-block text-body text-primary hover:underline"
+            :class="['inline-block text-body', TEXT_LINK_CLASS]"
           >
             {{ t('venues.whatsOn') }}
           </RouterLink>

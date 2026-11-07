@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { calendarSubscription } from '@/lib/calendarSubscription'
 import { copyLink } from '@/lib/share'
+import { TEXT_LINK_CLASS } from '@/lib/utils'
 
 const props = defineProps<{
   /** The site-relative calendar path, from `calendarPath`. */
@@ -44,7 +45,7 @@ async function copy(): Promise<void> {
       <DropdownMenuTrigger as-child>
         <button
           :title="description"
-          class="inline-flex items-center gap-1 text-primary hover:underline"
+          :class="['inline-flex items-center gap-1', TEXT_LINK_CLASS]"
           data-testid="calendar-subscribe"
           type="button"
         >

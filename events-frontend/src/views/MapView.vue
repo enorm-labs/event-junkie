@@ -44,7 +44,7 @@ import {
   venuePin,
   venuePosition,
 } from '@/lib/mapPins'
-import { CARD_LIST_CLASS, SECTION_TITLE_CLASS } from '@/lib/utils'
+import { CARD_LIST_CLASS, SECTION_TITLE_CLASS, TEXT_LINK_CLASS } from '@/lib/utils'
 
 // MapLibre is the heaviest dependency the site has; only this route and the venues map pay for it.
 const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
@@ -400,7 +400,7 @@ function distance(km: number): string {
       {{ t('map.resultCount', counts(pinnedEventCount, eventPins.length)) }}
       <template v-if="unpinnedEventCount">
         ·
-        <RouterLink :to="listLink" class="text-primary hover:underline">
+        <RouterLink :to="listLink" :class="TEXT_LINK_CLASS">
           {{ t('map.unpinned', { count: unpinnedEventCount }) }}
         </RouterLink>
       </template>
@@ -440,7 +440,7 @@ function distance(km: number): string {
           <p class="text-body text-muted-foreground">{{ t('map.nothingInRange') }}</p>
           <RouterLink
             :to="localePath(`/venues/${selectedVenue.slug}`)"
-            class="inline-block text-body text-primary hover:underline"
+            :class="['inline-block text-body', TEXT_LINK_CLASS]"
           >
             {{ t('map.venuePage') }}
           </RouterLink>
@@ -448,7 +448,7 @@ function distance(km: number): string {
         <RouterLink
           v-if="selectedGroup && selectedGroup.events.length > preview.length"
           :to="venueListLink"
-          class="inline-block text-body text-primary hover:underline"
+          :class="['inline-block text-body', TEXT_LINK_CLASS]"
         >
           {{ t('map.allEvents', { count: selectedGroup.events.length }) }}
         </RouterLink>

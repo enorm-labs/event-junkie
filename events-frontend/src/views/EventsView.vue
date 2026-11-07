@@ -11,7 +11,7 @@ import SaveSearch from '@/components/SaveSearch.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, RESULTS_BAR_CLASS, TEXT_LINK_CLASS } from '@/lib/utils'
 import { todayIso } from '@/lib/format'
 import { splitDayList } from '@/lib/longRuns'
 import EventFilterBar from '@/components/EventFilterBar.vue'
@@ -228,7 +228,7 @@ const mapLink = computed(() => ({
         <div
           class="order-last flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-body sm:order-none sm:w-auto"
         >
-          <RouterLink :to="mapLink" class="text-primary hover:underline">
+          <RouterLink :to="mapLink" :class="TEXT_LINK_CLASS">
             {{ t('events.nearMe') }}
           </RouterLink>
           <CalendarSubscribeMenu
@@ -242,7 +242,7 @@ const mapLink = computed(() => ({
             :href="feedHref"
             :title="feedLabel"
             :type="FEED_TYPE"
-            class="inline-flex items-center gap-1 self-center text-primary hover:underline"
+            :class="['inline-flex items-center gap-1 self-center', TEXT_LINK_CLASS]"
           >
             <Rss aria-hidden="true" class="size-4" />
             {{ t('events.feed') }}
