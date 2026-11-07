@@ -14,7 +14,7 @@ import { useLocalePath } from '@/composables/useLocalePath'
 import { usePageMeta } from '@/composables/usePageMeta'
 import type { Locale } from '@/i18n/locales'
 import { currentIsoWeek, daysOf, formatIsoWeek, parseIsoWeek, shiftWeek } from '@/lib/isoWeek'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, PAGE_TITLE_CLASS } from '@/lib/utils'
 import {
   dayHeading,
   isPastWeek,
@@ -73,7 +73,7 @@ const HEADING_CLASS = 'text-section font-bold tracking-tight'
   <main class="mx-auto max-w-5xl space-y-8 p-4 sm:p-8">
     <header class="space-y-1">
       <p v-if="isCurrent" class="text-body font-medium text-primary">{{ t('week.thisWeek') }}</p>
-      <h1 class="text-page font-bold tracking-tight">{{ weekTitle(week, lang) }}</h1>
+      <h1 :class="PAGE_TITLE_CLASS">{{ weekTitle(week, lang) }}</h1>
       <p class="text-body text-muted-foreground">{{ weekRange(week, lang) }}</p>
       <p v-if="past" class="text-body text-muted-foreground" data-testid="past-week">
         {{ t('week.past') }}

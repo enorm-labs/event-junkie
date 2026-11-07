@@ -33,7 +33,7 @@ import type { Locale } from '@/i18n/locales'
 import { formatPrice, isOnNow, isPastEvent, isRunningEvent } from '@/lib/format'
 import { runningOrder, setStates, type RunningOrderSet } from '@/lib/runningOrder'
 import { eventPlace, venuePosition } from '@/lib/mapPins'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn, PAGE_TITLE_CLASS } from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -341,7 +341,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
     </p>
 
     <div v-else-if="notFound" class="space-y-3">
-      <h1 class="text-page font-bold tracking-tight">{{ t('events.detail.notFound') }}</h1>
+      <h1 :class="PAGE_TITLE_CLASS">{{ t('events.detail.notFound') }}</h1>
       <p class="text-body text-muted-foreground">
         {{ t('events.detail.notFoundBody') }}
       </p>
@@ -356,7 +356,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
       <!-- The poster belongs to the title, so it sits closer than the article's stride. `mb-5` wins
            over `space-y-8` because the latter is a zero-specificity `:where()` rule. -->
       <header class="mb-5 space-y-3">
-        <h1 class="text-page font-bold tracking-tight">{{ event.title }}</h1>
+        <h1 :class="PAGE_TITLE_CLASS">{{ event.title }}</h1>
         <p v-if="event.subtitle" class="text-lede text-muted-foreground">{{ event.subtitle }}</p>
         <!-- With no poster to sit on, the pick's pill opens the header's pills instead (#3065). -->
         <p v-if="event.featured && !event.imageUrl"><PickBadge /></p>

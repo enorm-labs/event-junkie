@@ -74,3 +74,9 @@ export const PANEL_CLASS = 'flex flex-wrap items-end gap-3 border-b border-borde
  * right. Sort sits here, not in the bar, because it orders the list and narrows nothing (#360).
  */
 export const RESULTS_BAR_CLASS = 'flex flex-wrap items-center justify-between gap-x-3 gap-y-2'
+
+/**
+ * A page's `h1`, at the `text-page` step. `ProsePage` styles its slotted `h1` with the same three
+ * utilities as `[&_h1]:` variants, because it does not render the element itself.
+ */
+export const PAGE_TITLE_CLASS = 'text-page font-bold tracking-tight'
