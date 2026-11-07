@@ -14,6 +14,7 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -51,6 +52,27 @@ class PfefferbergHaus13WebsiteImporterTest {
             punk.startTime.shouldBeNull()
             punk.artists.map { it.name } shouldBe listOf("Limbo Boys", "Hartholz", "Unglaublicher Vorfall", "AOP")
             result.events.first { it.title.startsWith("Resonanzen") }.startTime shouldBe LocalTime.of(19, 30)
+        }
+
+    @Test
+    fun `keeps the listing's end date of a multi-day event through the merge`() =
+        runTest {
+            val liveImporter =
+                PfefferbergHaus13WebsiteImporter(htmlFetcher, Clock.fixed(Instant.parse("2026-11-07T10:00:00Z"), ZoneId.of("Europe/Berlin")))
+            val salsaUrl = "${event}vamos-a-bailar-la-fiesta-de-la-salsa-conexion-feat-mayelis-17/"
+            coEvery { htmlFetcher.fetch(listingUrl, any(), any(), any()) } returns
+                FetchResult.Success(doc("pfefferberghaus13-overview-multi-day.html", listingUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(salsaUrl) } returns doc("pfefferberghaus13-event-vamos-a-bailar.html", salsaUrl)
+            coEvery { htmlFetcher.fetchDocument(match { it != salsaUrl }) } returns Jsoup.parse("<html><body></body></html>", listingUrl)
+
+            val result = liveImporter.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val salsa = result.events.single { it.sourceUrl == salsaUrl }
+            salsa.eventDate shouldBe LocalDate.of(2026, 11, 21)
+            salsa.endDate shouldBe LocalDate.of(2026, 11, 22)
+            salsa.doorsTime shouldBe LocalTime.of(19, 30)
+            salsa.startTime shouldBe LocalTime.of(20, 0)
         }
 
     @Test

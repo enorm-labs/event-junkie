@@ -51,6 +51,41 @@ class PfefferbergHaus13OverviewPageScraperTest {
     }
 
     @Test
+    fun `dates a multi-day row by its first day and ends it on its last`() {
+        val liveClock = Clock.fixed(Instant.parse("2026-11-07T10:00:00Z"), ZoneId.of("Europe/Berlin"))
+        val live = PfefferbergHaus13OverviewPageScraper(liveClock)
+        val rows = live.scrape(Jsoup.parse(fixture("pfefferberghaus13-overview-multi-day.html"), listingUrl), listingUrl)
+
+        rows.size shouldBe 5
+        val salsa = rows.first { it.title.startsWith("¡VAMOS A BAILAR!") }
+        salsa.eventDate shouldBe LocalDate.of(2026, 11, 21)
+        salsa.endDate shouldBe LocalDate.of(2026, 11, 22)
+        salsa.startTime shouldBe LocalTime.of(20, 0)
+        rows.filter { it !== salsa }.map { it.endDate }.distinct() shouldBe listOf(null)
+    }
+
+    @Test
+    fun `ends a row over New Year in the next year`() {
+        val december = Clock.fixed(Instant.parse("2026-12-20T10:00:00Z"), ZoneId.of("Europe/Berlin"))
+        val html =
+            """
+            <div class="event-archive">
+              <div class="event-arc-data">
+                <div class="event-arc-day-finish">31</div><div class="event-arc-month-finish">Dez</div>
+                <div class="event-arc-sep"></div>
+                <div class="event-arc-day-finish">1</div><div class="event-arc-month-finish">Jan</div>
+              </div>
+              <h2 class="event-arc-title"><a href="/event/silvester/">Silvester</a></h2>
+            </div>
+            """.trimIndent()
+
+        val row = PfefferbergHaus13OverviewPageScraper(december).scrape(Jsoup.parse(html, listingUrl), listingUrl).single()
+
+        row.eventDate shouldBe LocalDate.of(2026, 12, 31)
+        row.endDate shouldBe LocalDate.of(2027, 1, 1)
+    }
+
+    @Test
     fun `yields nothing for a page without rows`() {
         scraper.scrape(Jsoup.parse("<html><body></body></html>", listingUrl), listingUrl).shouldBeEmpty()
     }
