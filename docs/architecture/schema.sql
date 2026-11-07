@@ -977,6 +977,23 @@ ALTER TABLE events.promoter ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
+-- Name: transit_stop; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.transit_stop (
+    gtfs_stop_id text NOT NULL,
+    name text NOT NULL,
+    latitude numeric(9,6) NOT NULL,
+    longitude numeric(9,6) NOT NULL,
+    lines text[] NOT NULL,
+    imported_at timestamp with time zone NOT NULL,
+    CONSTRAINT transit_stop_latitude_check CHECK (((latitude >= ('-90'::integer)::numeric) AND (latitude <= (90)::numeric))),
+    CONSTRAINT transit_stop_lines_check CHECK ((cardinality(lines) > 0)),
+    CONSTRAINT transit_stop_longitude_check CHECK (((longitude >= ('-180'::integer)::numeric) AND (longitude <= (180)::numeric))),
+    CONSTRAINT transit_stop_name_check CHECK ((length(name) > 0))
+);
+
+--
 -- Name: venue; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -1459,6 +1476,13 @@ ALTER TABLE ONLY events.promoter
 
 ALTER TABLE ONLY events.promoter
     ADD CONSTRAINT promoter_slug_key UNIQUE (slug);
+
+--
+-- Name: transit_stop transit_stop_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.transit_stop
+    ADD CONSTRAINT transit_stop_pkey PRIMARY KEY (gtfs_stop_id);
 
 --
 -- Name: venue_character_tag venue_character_tag_pkey; Type: CONSTRAINT; Schema: events; Owner: -

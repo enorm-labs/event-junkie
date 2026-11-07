@@ -1305,6 +1305,30 @@ export interface components {
              */
             closedOn?: string | null;
         };
+        /** @description A U-Bahn, S-Bahn or tram station near the venue, from VBB's GTFS data (CC BY 4.0) */
+        NearbyStopResponse: {
+            /**
+             * @description The station's name as VBB publishes it, less a trailing "(Berlin)"
+             * @example S+U Warschauer Str.
+             */
+            name?: string;
+            /**
+             * @description The S-Bahn, U-Bahn and tram lines that stop here, in that order
+             * @example [
+             *       "S3",
+             *       "S5",
+             *       "U1",
+             *       "M10"
+             *     ]
+             */
+            lines?: string[];
+            /**
+             * Format: int32
+             * @description About how far it is to walk, in metres: the straight line times 1.3, rounded to 10. Not a route.
+             * @example 350
+             */
+            walkingMetres?: number;
+        };
         /** @description A character tag and the venue's own page that states it */
         VenueCharacterTagResponse: {
             /**
@@ -1474,6 +1498,8 @@ export interface components {
              * @example 2026-10-31
              */
             closedOn?: string | null;
+            /** @description Up to three U-Bahn, S-Bahn or tram stations within about 1.5 km on foot, nearest first. Empty when the venue has no coordinates or no station is that near. Stop data: VBB Verkehrsverbund Berlin-Brandenburg GmbH, CC BY 4.0, extract. */
+            nearbyStops?: components["schemas"]["NearbyStopResponse"][];
         };
         /** @description Compact artist summary */
         ArtistSummaryResponse: {
@@ -2542,6 +2568,8 @@ export interface components {
              * @example false
              */
             featured?: boolean;
+            /** @description Up to three U-Bahn, S-Bahn or tram stations within about 1.5 km on foot, nearest first. Empty when the venue has no coordinates or no station is that near. Stop data: VBB Verkehrsverbund Berlin-Brandenburg GmbH, CC BY 4.0, extract. */
+            nearbyStops?: components["schemas"]["NearbyStopResponse"][];
         };
         /** @description An artist's participation in an event lineup */
         LineupEntryResponse: {

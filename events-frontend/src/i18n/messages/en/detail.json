@@ -10,6 +10,8 @@
     "onMap": "On the map",
     "directions": "Directions",
     "directionsLeaves": "(opens a maps app or site outside Event Junkie)",
+    "nearbyStops": "Nearby stations",
+    "walk": "{metres} m on foot",
     "plays": "Mostly plays",
     "hosts": "Hosts",
     "capacity": "Capacity",

@@ -17,6 +17,7 @@ import de.norm.events.licence.SourceLicences
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.promoter.PromoterSummaryResponse
 import de.norm.events.sourcelicence.SourceLicenceGate
+import de.norm.events.venue.NearbyStopRepository
 import de.norm.events.venue.VenueRepository
 import de.norm.events.venue.VenueSummaryResponse
 import kotlinx.coroutines.flow.toList
@@ -45,6 +46,7 @@ class EventService(
     private val eventPromoterRepository: EventPromoterRepository,
     private val eventGenreTagRepository: EventGenreTagRepository,
     private val venueRepository: VenueRepository,
+    private val nearbyStopRepository: NearbyStopRepository,
     private val artistRepository: ArtistRepository,
     private val promoterRepository: PromoterRepository,
     private val genreTagRepository: GenreTagRepository,
@@ -198,7 +200,8 @@ class EventService(
             postponedTo = postponementRepository.newDate(event),
             movedTo = relocationRepository.newPlace(event),
             derivedGenreTags = genreTags.derived,
-            festival = event.festivalId?.let { festivalRepository.findById(it) }?.let(FestivalSummaryResponse::fromEntity)
+            festival = event.festivalId?.let { festivalRepository.findById(it) }?.let(FestivalSummaryResponse::fromEntity),
+            nearbyStops = nearbyStopRepository.nearest(venue.latitude, venue.longitude)
         )
     }
 

@@ -201,6 +201,26 @@ class FixtureTest : BaseControllerTest() {
         }
 
     @Test
+    fun `the venue and its event carry the three nearest stations with their lines, and a venue far from any carries none`(): Unit =
+        runBlocking {
+            loadFixture()
+
+            get("/venues/kesselhaus-nord")
+                .jsonPath("$.nearbyStops[*].name")
+                .isEqualTo(listOf("Metzer Str.", "U Senefelderplatz", "Prenzlauer Allee/Danziger Str."))
+                .jsonPath("$.nearbyStops[*].walkingMetres")
+                .isEqualTo(listOf(200, 760, 1180))
+                .jsonPath("$.nearbyStops[2].lines")
+                .isEqualTo(listOf("M2", "M10"))
+            get("/events/${slug("room-garden", 15)}")
+                .jsonPath("$.nearbyStops[*].name")
+                .isEqualTo(listOf("Metzer Str.", "U Senefelderplatz", "Prenzlauer Allee/Danziger Str."))
+            get("/venues/hinterhof-bar")
+                .jsonPath("$.nearbyStops")
+                .isEmpty
+        }
+
+    @Test
     fun `two rooms of one venue on one night are two rows under that venue and that day`(): Unit =
         runBlocking {
             loadFixture()

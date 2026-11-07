@@ -6,6 +6,8 @@ import AboutEn from '@/views/AboutView.en.md'
 import ForVenuesDe from '@/views/legal/ForVenuesView.de.md'
 import ForVenuesEn from '@/views/legal/ForVenuesView.en.md'
 import ImprintDe from '@/views/legal/ImprintView.de.vue'
+import NoticesDe from '@/views/legal/NoticesView.de.vue'
+import NoticesEn from '@/views/legal/NoticesView.en.vue'
 import ImprintEn from '@/views/legal/ImprintView.en.vue'
 import PrivacyDe from '@/views/legal/PrivacyView.de.vue'
 import PrivacyEn from '@/views/legal/PrivacyView.en.vue'
@@ -485,5 +487,29 @@ describe('across both language versions', () => {
     ] as const) {
       expect(textOf(component, locale)).not.toMatch(/placeholder|Platzhalter/i)
     }
+  })
+})
+
+// CC BY 4.0 asks for the creator, the licence and whether the data was changed (#2724).
+describe('the open-source notices', () => {
+  it.each([
+    [
+      NoticesEn,
+      'en',
+      'Stop data: VBB Verkehrsverbund Berlin-Brandenburg GmbH, CC BY 4.0, extract.',
+    ],
+    [
+      NoticesDe,
+      'de',
+      'Haltestellendaten: VBB Verkehrsverbund Berlin-Brandenburg GmbH, CC BY 4.0, Auszug.',
+    ],
+  ] as const)('credit VBB for the stop data under CC BY 4.0 (%#)', (component, locale, credit) => {
+    expect(textOf(component, locale)).toContain(credit)
+    const links = mount(component as never, { global: { stubs } })
+      .get('[data-testid="stop-data-attribution"]')
+      .findAll('a')
+      .map((link) => link.attributes('href'))
+    expect(links[0]).toBe('https://unternehmen.vbb.de/digitale-services/datensaetze/')
+    expect(links[1]).toMatch(/^https:\/\/creativecommons\.org\/licenses\/by\/4\.0\//)
   })
 })

@@ -26,6 +26,7 @@ flowchart TD
     promoter["promoter"]
     scraper["scraper"]
     slug["slug"]
+    transit["transit"]
     translation["translation"]
     venue["venue"]
     venuecheck["venuecheck"]
@@ -80,6 +81,7 @@ flowchart TD
     scraper --> genretag
     scraper --> licence
     scraper --> slug
+    transit --> common
     translation --> ai
     translation --> event
     venue --> common
