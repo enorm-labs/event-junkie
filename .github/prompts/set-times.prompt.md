@@ -110,6 +110,11 @@ The day rule is the API's: a start before the event's doors or start time (06:00
 start is the day after. Compute it the same way, so the proposal shows what the API will store. A set earlier than the doors on the same evening cannot
 be expressed: say so, and leave that slot out.
 
+**Check the stored start before you trust the rule.** The importer's `startTime` and `doorsTime` can both be empty while the site shows a start: that is
+the BFF's `assumedStartTime`, which the API never reads. With neither stored, the day break is 06:00, and a 07:00 closing set lands on the morning
+before the night. Then make the first write a start time: `PATCH` `{"startTime": "<the earliest set's start>"}`, which pins `startTime`. That happened
+on the first run (event 7660, Slow Life Showcase, 2026-11-07).
+
 Skip a write that changes nothing: no item 2 when the acts, roles, order and floors already match. Then stop and wait.
 
 ## Step 5 — Apply the numbers the operator names
@@ -117,11 +122,13 @@ Skip a write that changes nothing: no item 2 when the acts, roles, order and flo
 Re-read the event right before writing (`GET /api/admin/events/<id>`): if the lineup changed since Step 2, show the difference and ask again. Then, in
 this order, one call each:
 
-1. **New artists**: `POST localhost:28081/api/admin/artists` with `{"name": "…"}`. Keep each returned `id`.
-2. **Lineup**: `PATCH localhost:28081/api/admin/events/<id>` with `{"artists": [{"artistId", "role", "billingOrder", "stage"}, …]}`. It replaces the
+1. **Start time**, only when Step 4 proposed it: `PATCH localhost:28081/api/admin/events/<id>` with `{"startTime": "HH:mm"}`. It goes first,
+   because the timetable call reads it.
+2. **New artists**: `POST localhost:28081/api/admin/artists` with `{"name": "…"}`. Keep each returned `id`.
+3. **Lineup**: `PATCH localhost:28081/api/admin/events/<id>` with `{"artists": [{"artistId", "role", "billingOrder", "stage"}, …]}`. It replaces the
    whole lineup, so the body carries every act that stays, the untimed ones too. `billingOrder` follows the running order, floor by floor, from 0.
    A stage left `null` stays `null`. The stored set times survive this call (#3026).
-3. **Timetable**: `PUT localhost:28081/api/admin/events/<id>/timetable` with `{"slots": [{"artistId", "start": "HH:mm", "end": "HH:mm" | null}, …]}`.
+4. **Timetable**: `PUT localhost:28081/api/admin/events/<id>/timetable` with `{"slots": [{"artistId", "start": "HH:mm", "end": "HH:mm" | null}, …]}`.
    It replaces every act's times, so a slot left out clears that act's times.
 
 A 400 names what it refused: read it, fix the body, and send that call again. A 404 on the timetable route means it is not deployed (see Arguments).
