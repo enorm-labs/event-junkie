@@ -110,6 +110,17 @@ describe('VenueDetailView', () => {
     )
   })
 
+  it('lists the nearest stations under the address line, before the links', async () => {
+    const view = await mountVenue({
+      ...kater,
+      nearbyStops: [{ name: 'S Jannowitzbrücke', lines: ['S3', 'S5', 'U8'], walkingMetres: 460 }],
+    })
+
+    expect(view.get('[data-testid="nearby-stops"]').text()).toBe(
+      'S Jannowitzbrücke · S3, S5, U8 · 460 m on foot',
+    )
+  })
+
   it('drops the district from the address line when the venue has none', async () => {
     const view = await mountVenue({ ...kater, district: null })
 

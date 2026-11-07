@@ -20,6 +20,7 @@ class VenueService(
     private val venueRepository: VenueRepository,
     private val venueSearchRepository: VenueSearchRepository,
     private val characterTagRepository: VenueCharacterTagRepository,
+    private val nearbyStopRepository: NearbyStopRepository,
     private val cachedImageGate: CachedImageGate,
     private val clock: Clock
 ) {
@@ -69,7 +70,8 @@ class VenueService(
         val image = cachedImageGate.forUrl(entity.imageUrl, DETAIL_WIDTH)
         val tags = entity.id?.let { characterTagRepository.findByVenueIds(listOf(it))[it] }.orEmpty()
         val imported = entity.id?.let { venueRepository.isImported(it, LocalDate.now(clock)) } ?: true
-        return VenueDetailResponse.fromEntity(entity, image, tags.map { VenueCharacterTagResponse(it.tag, it.sourceUrl) }, imported)
+        val stops = nearbyStopRepository.nearest(entity.latitude, entity.longitude)
+        return VenueDetailResponse.fromEntity(entity, image, tags.map { VenueCharacterTagResponse(it.tag, it.sourceUrl) }, imported, stops)
     }
 
     /** The display name of the venue at [slug], or null when there is none, for naming a filter (#2765). */

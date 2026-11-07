@@ -67,6 +67,22 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
     </section>
 
     <section>
+      <h2>Data</h2>
+      <p data-testid="stop-data-attribution">
+        Stop data:
+        <a
+          href="https://unternehmen.vbb.de/digitale-services/datensaetze/"
+          rel="noopener"
+          target="_blank"
+          >VBB Verkehrsverbund Berlin-Brandenburg GmbH</a
+        >,
+        <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" target="_blank"
+          >CC BY 4.0</a
+        >, extract. The stations on venue and event pages come from it.
+      </p>
+    </section>
+
+    <section>
       <h2>Components by licence</h2>
       <details
         v-for="group in groups"

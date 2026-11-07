@@ -494,3 +494,27 @@ describe('across both language versions', () => {
     }
   })
 })
+
+// CC BY 4.0 asks for the creator, the licence and whether the data was changed (#2724).
+describe('the open-source notices', () => {
+  it.each([
+    [
+      NoticesEn,
+      'en',
+      'Stop data: VBB Verkehrsverbund Berlin-Brandenburg GmbH, CC BY 4.0, extract.',
+    ],
+    [
+      NoticesDe,
+      'de',
+      'Haltestellendaten: VBB Verkehrsverbund Berlin-Brandenburg GmbH, CC BY 4.0, Auszug.',
+    ],
+  ] as const)('credit VBB for the stop data under CC BY 4.0 (%#)', (component, locale, credit) => {
+    expect(textOf(component, locale)).toContain(credit)
+    const links = mount(component as never, { global: { stubs } })
+      .get('[data-testid="stop-data-attribution"]')
+      .findAll('a')
+      .map((link) => link.attributes('href'))
+    expect(links[0]).toBe('https://unternehmen.vbb.de/digitale-services/datensaetze/')
+    expect(links[1]).toMatch(/^https:\/\/creativecommons\.org\/licenses\/by\/4\.0\//)
+  })
+})

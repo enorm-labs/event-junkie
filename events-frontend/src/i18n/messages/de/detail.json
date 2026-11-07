@@ -10,6 +10,8 @@
     "onMap": "Auf der Karte",
     "directions": "Route",
     "directionsLeaves": "(öffnet eine Karten-App oder -Seite außerhalb von Event Junkie)",
+    "nearbyStops": "Haltestellen in der Nähe",
+    "walk": "{metres} m zu Fuß",
     "plays": "Vor allem",
     "hosts": "Formate",
     "capacity": "Kapazität",

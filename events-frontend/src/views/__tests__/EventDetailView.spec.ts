@@ -223,6 +223,26 @@ describe('EventDetailView', () => {
     )
   })
 
+  const stops = [{ name: 'U Rathaus Neukölln', lines: ['U7'], walkingMetres: 300 }]
+
+  it("lists the venue's nearest stations beside the route link", async () => {
+    const view = await mountEvent({
+      ...night,
+      venue: { slug: 'huxleys', name: 'Huxleys Neue Welt' },
+      nearbyStops: stops,
+    })
+
+    expect(view.get('[data-testid="nearby-stops"]').text()).toBe(
+      'U Rathaus Neukölln · U7 · 300 m on foot',
+    )
+  })
+
+  it("lists no stations for a relocated night, because they are the old address's", async () => {
+    const view = await mountEvent({ ...relocated, movedTo: huxleys, nearbyStops: stops })
+
+    expect(view.find('[data-testid="nearby-stops"]').exists()).toBe(false)
+  })
+
   it('says it in German too', async () => {
     const view = await mountEvent({ ...relocated, movedTo: huxleys }, 'de')
 
