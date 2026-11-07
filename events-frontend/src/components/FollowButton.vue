@@ -23,6 +23,7 @@ import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { usePush } from '@/composables/usePush'
 import { useSession } from '@/composables/useSession'
+import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
 
 // `initiallyFollowing` defaults to undefined, not to Vue's false for an absent boolean: undefined means "ask".
 const props = withDefaults(
@@ -159,13 +160,13 @@ async function toggle() {
     />
     <p v-if="problem" class="text-meta text-destructive" role="alert">{{ problem }}</p>
     <p v-else-if="!noHint && justFollowed" class="text-meta text-muted-foreground" role="status">
-      <RouterLink class="underline underline-offset-2" :to="localePath('/following')">
+      <RouterLink :class="UNDERLINED_LINK_CLASS" :to="localePath('/following')">
         {{ t('account.follow.shown') }}
       </RouterLink>
     </p>
     <p v-if="bell && pushHint" class="basis-full text-meta text-muted-foreground" role="status">
       {{ t('account.push.bellHint') }}
-      <RouterLink class="underline underline-offset-2" :to="localePath('/account')">
+      <RouterLink :class="UNDERLINED_LINK_CLASS" :to="localePath('/account')">
         {{ t('account.push.bellHintLink') }}
       </RouterLink>
     </p>

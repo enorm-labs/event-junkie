@@ -33,7 +33,13 @@ import type { Locale } from '@/i18n/locales'
 import { formatPrice, isOnNow, isPastEvent, isRunningEvent } from '@/lib/format'
 import { runningOrder, setStates, type RunningOrderSet } from '@/lib/runningOrder'
 import { eventPlace, venuePosition } from '@/lib/mapPins'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn, PAGE_TITLE_CLASS } from '@/lib/utils'
+import {
+  CARD_GRID_CLASS,
+  CARD_LIST_CLASS,
+  cn,
+  PAGE_TITLE_CLASS,
+  UNDERLINED_LINK_CLASS,
+} from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -441,7 +447,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         <a
           v-if="event.sourceUrl"
           :href="withReferral(event.sourceUrl)"
-          class="underline underline-offset-2"
+          :class="UNDERLINED_LINK_CLASS"
           rel="noopener noreferrer"
           target="_blank"
           >{{ t('events.detail.originalText') }}</a
@@ -552,13 +558,9 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
 
       <p v-if="lineupCredit" class="text-meta text-muted-foreground">
         {{ t('events.detail.lineupFrom') }}
-        <a
-          class="underline underline-offset-2"
-          :href="lineupCredit.url"
-          rel="noopener"
-          target="_blank"
-          >{{ lineupCredit.host }}</a
-        >
+        <a :class="UNDERLINED_LINK_CLASS" :href="lineupCredit.url" rel="noopener" target="_blank">{{
+          lineupCredit.host
+        }}</a>
       </p>
 
       <section :class="cn('grid grid-cols-1 gap-6', factColumns)">
@@ -703,13 +705,9 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         {{ t('events.detail.detailsFrom') }}
         <template v-for="(credit, index) in enrichmentCredits" :key="credit.url"
           ><template v-if="index">, </template
-          ><a
-            class="underline underline-offset-2"
-            :href="credit.url"
-            rel="noopener"
-            target="_blank"
-            >{{ credit.host }}</a
-          ></template
+          ><a :class="UNDERLINED_LINK_CLASS" :href="credit.url" rel="noopener" target="_blank">{{
+            credit.host
+          }}</a></template
         >
       </p>
 

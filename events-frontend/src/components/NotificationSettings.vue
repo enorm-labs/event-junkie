@@ -22,7 +22,7 @@ import {
 import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { usePush } from '@/composables/usePush'
-import { CHECKBOX_CLASS } from '@/lib/utils'
+import { CHECKBOX_CLASS, UNDERLINED_LINK_CLASS } from '@/lib/utils'
 
 const props = defineProps<{ changePush: boolean; reminderPush: boolean }>()
 
@@ -94,7 +94,7 @@ onMounted(() => run(load))
     <p class="text-body text-muted-foreground">
       {{ t('account.push.intro') }}
       <RouterLink
-        class="underline underline-offset-2"
+        :class="UNDERLINED_LINK_CLASS"
         :to="{ path: localePath('/following'), query: { tab: 'follows' } }"
       >
         {{ t('account.push.following') }}
