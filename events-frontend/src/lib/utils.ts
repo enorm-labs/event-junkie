@@ -93,6 +93,12 @@ export const PANEL_CLASS = 'flex flex-wrap items-end gap-3 border-b border-borde
 export const RESULTS_BAR_CLASS = 'flex flex-wrap items-center justify-between gap-x-3 gap-y-2'
 
 /**
+ * A link inside a muted line, such as an image credit or a notice. It keeps the line's colour, so the
+ * underline is what marks it. A link that stands out takes {@link TEXT_LINK_CLASS} instead.
+ */
+export const UNDERLINED_LINK_CLASS = 'underline underline-offset-2'
+
+/**
  * A page's `h1`, at the `text-page` step. `ProsePage` styles its slotted `h1` with the same three
  * utilities as `[&_h1]:` variants, because it does not render the element itself.
  */

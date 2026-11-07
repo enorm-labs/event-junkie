@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { ImageCredit } from '@/lib/imageCredit'
+import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
 
 /**
  * The credit for a licensed picture (#1275) or a licensed description (#1837).
@@ -33,17 +34,12 @@ const { t } = useI18n()
     "
   >
     {{ kind === 'photo' ? t('common.imageCredit.photo') : t('common.textCredit.text') }}
-    <a :href="credit.sourceUrl" class="underline underline-offset-2" rel="noopener" target="_blank">
+    <a :href="credit.sourceUrl" :class="UNDERLINED_LINK_CLASS" rel="noopener" target="_blank">
       {{ credit.attribution }}
     </a>
     <template v-if="credit.licenceUrl">
       ·
-      <a
-        :href="credit.licenceUrl"
-        class="underline underline-offset-2"
-        rel="noopener"
-        target="_blank"
-      >
+      <a :href="credit.licenceUrl" :class="UNDERLINED_LINK_CLASS" rel="noopener" target="_blank">
         {{ credit.licenceLabel }}
       </a>
     </template>

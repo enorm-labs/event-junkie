@@ -8,6 +8,7 @@ import { useArtist } from '@/composables/useArtist'
 import { useDetailPage } from '@/composables/useDetailPage'
 import { owesDiscogsCredit, textCredit } from '@/lib/imageCredit'
 import { artistPageMeta } from '@/lib/pageMeta'
+import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -60,7 +61,7 @@ const descriptionCredit = computed(() =>
       <DetailLinks :links="links" />
       <p v-if="discogsCredit" class="mt-2 text-meta text-muted-foreground">
         <a
-          class="underline underline-offset-2"
+          :class="UNDERLINED_LINK_CLASS"
           href="https://www.discogs.com"
           lang="en"
           rel="noopener"
