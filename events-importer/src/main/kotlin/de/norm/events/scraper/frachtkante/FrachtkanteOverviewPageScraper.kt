@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_LONG_DATE
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.mapSkippingFailures
@@ -15,7 +16,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 /**
  * Pure HTML parser for the `Veranstaltungen` section of the Frachtkante homepage, one `article` per event.
@@ -85,12 +85,7 @@ class FrachtkanteOverviewPageScraper {
 
     private fun classify(title: String): String = inferVenueFormatType(title, null, VENUE_FORMATS)
 
-    private fun parseLongDate(text: String): LocalDate? =
-        try {
-            LocalDate.parse(text.trim(), GERMAN_LONG_DATE)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseLongDate(text: String): LocalDate? = dateOrNull { LocalDate.parse(text.trim(), GERMAN_LONG_DATE) }
 
     private companion object {
         /** `12:00 - 23:00 Uhr`. */

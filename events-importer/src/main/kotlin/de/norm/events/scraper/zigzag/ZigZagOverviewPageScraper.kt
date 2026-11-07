@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
@@ -15,7 +16,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for Zig Zag's `/programmneu` page: Squarespace summary blocks, one per month plus a
@@ -88,12 +88,7 @@ class ZigZagOverviewPageScraper(
      */
     private fun actOf(title: String): String = title.split(PROGRAMME_SEPARATOR, limit = 2).first().trim()
 
-    private fun parseDate(text: String?): LocalDate? =
-        try {
-            text?.let { LocalDate.parse(it.trim(), ENGLISH_LONG_DATE) }
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseDate(text: String?): LocalDate? = dateOrNull { text?.let { LocalDate.parse(it.trim(), ENGLISH_LONG_DATE) } }
 
     private companion object {
         const val EVENT_PATH = "/program-mai/"

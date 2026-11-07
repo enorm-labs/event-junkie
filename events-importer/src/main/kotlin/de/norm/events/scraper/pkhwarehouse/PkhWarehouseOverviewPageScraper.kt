@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
@@ -20,7 +21,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.Month
 import java.time.MonthDay
@@ -128,11 +128,7 @@ class PkhWarehouseOverviewPageScraper(
         weekday: String?
     ): LocalDate? {
         val dayOfMonth = day.trim().toIntOrNull() ?: return null
-        return try {
-            inferYearForWeekday(MonthDay.of(month, dayOfMonth), parseGermanWeekdayAbbreviation(weekday), clock)
-        } catch (_: DateTimeException) {
-            null
-        }
+        return dateOrNull { inferYearForWeekday(MonthDay.of(month, dayOfMonth), parseGermanWeekdayAbbreviation(weekday), clock) }
     }
 
     private companion object {

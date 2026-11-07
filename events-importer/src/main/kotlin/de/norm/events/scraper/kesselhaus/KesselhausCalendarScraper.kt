@@ -11,6 +11,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cssUrlValue
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.isClosedToPublic
@@ -38,7 +39,6 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for the Kesselhaus calendar, an Angular app that server-renders five months per page.
@@ -245,12 +245,7 @@ class KesselhausCalendarScraper(
             else -> EventStatus.SCHEDULED.name
         }
 
-    private fun berlinTime(utc: String) =
-        try {
-            Instant.parse(utc).atZone(BERLIN).toLocalDateTime()
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun berlinTime(utc: String) = dateOrNull { Instant.parse(utc).atZone(BERLIN).toLocalDateTime() }
 
     /**
      * The calendar's prices. Each ticket entry has an amount `A` and a label `alt`, and the label is read when the amount is

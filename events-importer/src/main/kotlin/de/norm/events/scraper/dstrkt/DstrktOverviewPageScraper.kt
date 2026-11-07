@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
@@ -14,7 +15,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
 import java.time.Instant
-import java.time.format.DateTimeParseException
 
 /**
  * Parser for the home page's "UPCOMING EVENTS" repeater, read from the Wix Data collection
@@ -88,12 +88,7 @@ class DstrktOverviewPageScraper {
         )
     }
 
-    private fun parseInstant(text: String) =
-        try {
-            Instant.parse(text).atZone(BERLIN)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseInstant(text: String) = dateOrNull { Instant.parse(text).atZone(BERLIN) }
 
     private companion object {
         const val COLLECTION = "UPCOMINGEVENTS"

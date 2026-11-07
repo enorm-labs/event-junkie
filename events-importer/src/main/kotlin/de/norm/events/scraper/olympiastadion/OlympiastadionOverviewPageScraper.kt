@@ -5,6 +5,7 @@ import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.mapSkippingFailures
@@ -13,7 +14,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for `/termine-und-tickets/`: a WordPress theme whose cards link the `events` post type.
@@ -60,12 +60,7 @@ class OlympiastadionOverviewPageScraper {
         )
     }
 
-    private fun parseDate(text: String): LocalDate? =
-        try {
-            LocalDate.parse(text, PADDED_GERMAN_DATE)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseDate(text: String): LocalDate? = dateOrNull { LocalDate.parse(text, PADDED_GERMAN_DATE) }
 
     private companion object {
         const val EVENT_PATH = "/events/"

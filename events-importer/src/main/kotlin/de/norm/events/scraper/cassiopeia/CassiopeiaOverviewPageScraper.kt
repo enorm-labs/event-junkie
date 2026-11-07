@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cssUrlValue
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.headlinersFromTitle
@@ -15,7 +16,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -166,11 +166,7 @@ class CassiopeiaOverviewPageScraper(
         val month = numericParts[1].toIntOrNull() ?: return null
         val year = numericParts[2].toIntOrNull() ?: return null
 
-        return try {
-            LocalDate.of(year, month, day)
-        } catch (_: DateTimeException) {
-            null
-        }
+        return dateOrNull { LocalDate.of(year, month, day) }
     }
 
     /**

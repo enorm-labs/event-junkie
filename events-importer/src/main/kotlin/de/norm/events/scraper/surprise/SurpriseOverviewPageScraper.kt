@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
@@ -18,7 +19,6 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -74,11 +74,7 @@ class SurpriseOverviewPageScraper {
         val day = row.textAt(".events-displayed-show-day h3")
         val month = row.textAt(".events-displayed-month-yrs h6")
         val year = row.textAt(".events-displayed-month-yrs p")
-        return try {
-            LocalDate.parse("$day $month $year", DATE_FORMAT)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { LocalDate.parse("$day $month $year", DATE_FORMAT) }
     }
 
     /** `Gate for Ladies` → `10,- € (incl. 1 Drink)`, each heading paired with the paragraph after it. */

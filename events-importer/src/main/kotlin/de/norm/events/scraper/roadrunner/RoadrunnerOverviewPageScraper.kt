@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
+import de.norm.events.scraper.GERMAN_DAY_MONTH
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.ScrapedArtist
@@ -32,9 +33,6 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatterBuilder
-import java.util.Locale
 
 /**
  * Pure HTML parser for Roadrunner's Paradise' retro `programm.html` event page.
@@ -382,7 +380,7 @@ class RoadrunnerOverviewPageScraper(
     private fun parseGermanMonthDay(
         day: String,
         month: String
-    ): MonthDay? = runCatching { MonthDay.parse("${day.toInt()}. $month", GERMAN_DAY_MONTH_FORMATTER) }.getOrNull()
+    ): MonthDay? = runCatching { MonthDay.parse("${day.toInt()}. $month", GERMAN_DAY_MONTH) }.getOrNull()
 
     // -- Line classification ----------------------------------------------
 
@@ -457,12 +455,5 @@ class RoadrunnerOverviewPageScraper(
 
         /** The "Einlass: HH:mm Uhr" line, dropped from the description. */
         private val DOORS_LINE = labelledClockPattern(DOORS_LABELS)
-
-        /** Parses "29. Mai" using full German month names, case-insensitively. */
-        private val GERMAN_DAY_MONTH_FORMATTER: DateTimeFormatter =
-            DateTimeFormatterBuilder()
-                .parseCaseInsensitive()
-                .appendPattern("d. MMMM")
-                .toFormatter(Locale.GERMAN)
     }
 }

@@ -6,6 +6,7 @@ import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hasFreeEntryPhrase
@@ -103,7 +104,7 @@ class SilentGreenDetailPageScraper {
         cssQuery: String
     ): LocalDate? =
         BLOCK_DATE.find(document.textAt(cssQuery).orEmpty())?.value?.let {
-            runCatching { LocalDate.parse(it, PADDED_GERMAN_DATE) }.getOrNull()
+            dateOrNull { LocalDate.parse(it, PADDED_GERMAN_DATE) }
         }
 
     /**

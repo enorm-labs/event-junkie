@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.parseEventStatus
@@ -21,7 +22,6 @@ import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -171,11 +171,7 @@ class HauScheduleScraper(
 
     private fun parseYearMonth(text: String?): YearMonth? =
         text?.replace(' ', ' ')?.blankToNull()?.let {
-            try {
-                YearMonth.parse(it, MONTH_HEADING)
-            } catch (_: DateTimeParseException) {
-                null
-            }
+            dateOrNull { YearMonth.parse(it, MONTH_HEADING) }
         }
 
     private fun YearMonth.atDayOrNull(day: Int): LocalDate? = if (isValidDay(day)) atDay(day) else null

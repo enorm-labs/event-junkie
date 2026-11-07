@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
@@ -19,7 +20,6 @@ import org.jsoup.nodes.Element
 import java.net.URI
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -105,11 +105,7 @@ class AuslandOverviewPageScraper {
 
         fun parseListingDate(line: String?): LocalDate? =
             line?.substringBefore(" - ")?.trim()?.let {
-                try {
-                    LocalDate.parse(it, LISTING_DATE)
-                } catch (_: DateTimeParseException) {
-                    null
-                }
+                dateOrNull { LocalDate.parse(it, LISTING_DATE) }
             }
     }
 }

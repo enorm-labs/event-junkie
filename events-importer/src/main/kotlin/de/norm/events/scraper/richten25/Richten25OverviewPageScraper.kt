@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.isNonArtistName
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -13,7 +14,6 @@ import org.jsoup.nodes.Document
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for the Richten25 events page, a Hostinger site builder page. The programme is a hand-written HTML
@@ -84,12 +84,7 @@ class Richten25OverviewPageScraper {
         )
     }
 
-    private fun dateOf(text: String): LocalDate? =
-        try {
-            LocalDate.parse(text, ENGLISH_LONG_DATE)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun dateOf(text: String): LocalDate? = dateOrNull { LocalDate.parse(text, ENGLISH_LONG_DATE) }
 
     private fun artistsOf(lineup: String): List<ScrapedArtist> =
         lineup

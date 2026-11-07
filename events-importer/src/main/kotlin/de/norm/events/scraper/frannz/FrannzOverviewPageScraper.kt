@@ -3,6 +3,7 @@ package de.norm.events.scraper.frannz
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GERMAN_DAY_MONTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
@@ -26,10 +27,7 @@ import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
 import java.time.MonthDay
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatterBuilder
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 /**
  * Pure HTML parser for Frannz Club Berlin's WordPress homepage event listing.
@@ -178,7 +176,7 @@ class FrannzOverviewPageScraper(
 
         val monthDay =
             try {
-                MonthDay.parse("$day. $month", GERMAN_DATE_FORMATTER)
+                MonthDay.parse("$day. $month", GERMAN_DAY_MONTH)
             } catch (_: DateTimeParseException) {
                 return null
             }
@@ -432,15 +430,6 @@ class FrannzOverviewPageScraper(
                 "ballroomparty" to EventType.PARTY.name,
                 "kinotv" to EventType.OTHER.name
             )
-
-        /**
-         * "day. FullGermanMonth" ("11. Juli" → July 11), case-insensitive [Locale.GERMAN] month names.
-         */
-        private val GERMAN_DATE_FORMATTER: DateTimeFormatter =
-            DateTimeFormatterBuilder()
-                .parseCaseInsensitive()
-                .appendPattern("d. MMMM")
-                .toFormatter(Locale.GERMAN)
 
         /** Captures the promoter names preceding a "präsentiert:" / "präsentieren:" marker. */
         private val PRESENTER_PATTERN =

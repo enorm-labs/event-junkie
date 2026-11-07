@@ -9,6 +9,7 @@ import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isFestivalTitle
@@ -29,7 +30,6 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 /** Admin host serving the Wagtail API and CMS-rendered pages; rewritten to the public host for user-facing URLs. */
 private const val FESTSAAL_ADMIN_HOST = "admin.festsaal-kreuzberg.de"
@@ -297,11 +297,7 @@ class FestsaalApiScraper {
     /** Parses an ISO `yyyy-MM-dd` date, null instead of throwing. */
     private fun parseDate(raw: String?): LocalDate? {
         if (raw.isNullOrBlank()) return null
-        return try {
-            LocalDate.parse(raw.trim())
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { LocalDate.parse(raw.trim()) }
     }
 
     /**

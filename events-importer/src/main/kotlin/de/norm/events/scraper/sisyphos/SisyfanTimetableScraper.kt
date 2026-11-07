@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.mapSkippingFailures
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -13,7 +14,6 @@ import org.jsoup.nodes.Element
 import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for the fan-run Sisyphos timetable at sisy.fan (ADR-036).
@@ -98,11 +98,7 @@ class SisyfanTimetableScraper {
         slot: String
     ): Instant? {
         val text = pattern.find(slot)?.groupValues?.get(1) ?: return null
-        return try {
-            OffsetDateTime.parse(text).toInstant()
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { OffsetDateTime.parse(text).toInstant() }
     }
 
     /**

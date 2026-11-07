@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -16,7 +17,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.format.DateTimeParseException
 
 /** Base URL for Bi Nuu's PocketBase file store; event `image.url` values are stored relative to it. */
 private const val BINUU_IMAGE_BASE_URL = "https://pb.binuu.de/api/files/"
@@ -170,11 +170,7 @@ internal fun parseBinuuTime(raw: String?): LocalTime? = parseBinuuInstant(raw)?.
 private fun parseBinuuInstant(raw: String?): LocalDateTime? {
     val trimmed = raw?.trim()
     if (trimmed.isNullOrBlank() || trimmed.length < DATE_LENGTH) return null
-    return try {
-        Instant.parse(trimmed.replaceFirst(' ', 'T')).atZone(BERLIN).toLocalDateTime()
-    } catch (_: DateTimeParseException) {
-        null
-    }
+    return dateOrNull { Instant.parse(trimmed.replaceFirst(' ', 'T')).atZone(BERLIN).toLocalDateTime() }
 }
 
 /**

@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
@@ -17,7 +18,6 @@ import org.jsoup.nodes.Element
 import java.net.URI
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -96,11 +96,7 @@ class OraniaOverviewPageScraper {
     /** The day (`02`) and the month with its year (`Oct 2026`), printed in two elements. */
     private fun parseDate(item: Element): LocalDate? {
         val text = listOfNotNull(item.textAt(".event-date"), item.textAt(".event-month")).joinToString(" ")
-        return try {
-            LocalDate.parse(text, DATE_FORMATTER)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { LocalDate.parse(text, DATE_FORMATTER) }
     }
 
     private companion object {

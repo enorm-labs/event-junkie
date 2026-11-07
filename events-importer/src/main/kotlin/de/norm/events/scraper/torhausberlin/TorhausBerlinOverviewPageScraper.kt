@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
@@ -21,7 +22,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /** A card's React key: the Teamup event id and the start as epoch milliseconds. */
 private val CARD_KEY = Regex(""""TU(\d+):(\d+)"""")
@@ -108,11 +108,7 @@ class TorhausBerlinOverviewPageScraper {
 
     private fun endDateOf(times: String): LocalDate? =
         END_DATE.find(times)?.groupValues?.get(1)?.let {
-            try {
-                LocalDate.parse(it, SHORT_DATE)
-            } catch (_: DateTimeParseException) {
-                null
-            }
+            dateOrNull { LocalDate.parse(it, SHORT_DATE) }
         }
 
     private fun skip(

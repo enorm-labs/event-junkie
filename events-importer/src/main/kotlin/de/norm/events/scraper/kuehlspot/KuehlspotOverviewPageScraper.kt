@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
@@ -19,7 +20,6 @@ import org.jsoup.nodes.TextNode
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
@@ -114,12 +114,7 @@ class KuehlspotOverviewPageScraper {
         return lines.map { it.toString().replace(WHITESPACE, " ").trim() }.filter { it.isNotEmpty() }
     }
 
-    private fun parseDate(text: String): LocalDate? =
-        try {
-            LocalDate.parse(text, DATE_FORMATTER)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseDate(text: String): LocalDate? = dateOrNull { LocalDate.parse(text, DATE_FORMATTER) }
 
     private data class HouseRules(
         val doors: LocalTime?,

@@ -9,6 +9,7 @@ import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isNonArtistName
@@ -28,7 +29,6 @@ import org.jsoup.nodes.Element
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for A-Trane's `/programm/` page, an EventON calendar with one month block per month.
@@ -208,11 +208,7 @@ class ATraneProgrammePageScraper {
     /** The wall-clock start of an unpadded `startDate`; the offset is ignored. */
     private fun parseStart(value: String?): LocalDateTime? =
         START.find(value.orEmpty())?.let {
-            try {
-                LocalDateTime.parse(it.value, START_FORMAT)
-            } catch (_: DateTimeParseException) {
-                null
-            }
+            dateOrNull { LocalDateTime.parse(it.value, START_FORMAT) }
         }
 
     /** The admission time the card prints, unless it is not before [start] or the notice names another start. */

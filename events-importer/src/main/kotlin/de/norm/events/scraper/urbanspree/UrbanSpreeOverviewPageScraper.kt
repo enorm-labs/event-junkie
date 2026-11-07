@@ -2,6 +2,7 @@ package de.norm.events.scraper.urbanspree
 
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
@@ -131,11 +132,7 @@ class UrbanSpreeOverviewPageScraper {
     private fun parseCardEndDate(raw: String): LocalDate? {
         val stamp = raw.trim()
         if (!DATE_ONLY.matches(stamp)) return null
-        return try {
-            LocalDate.parse(stamp)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        return dateOrNull { LocalDate.parse(stamp) }
     }
 
     private companion object {

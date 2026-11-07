@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cssUrlValue
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.mapSkippingFailures
@@ -15,7 +16,6 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.time.DateTimeException
 import java.time.LocalDate
 
 /**
@@ -100,11 +100,7 @@ class Zimmer16OverviewPageScraper {
         val day = card.textAt(".ytp-event-card-day")?.toIntOrNull()
         val year = card.textAt(".ytp-event-card-year")?.toIntOrNull()
         if (month == null || day == null || year == null) return null
-        return try {
-            LocalDate.of(year, month, day)
-        } catch (_: DateTimeException) {
-            null
-        }
+        return dateOrNull { LocalDate.of(year, month, day) }
     }
 
     private companion object {

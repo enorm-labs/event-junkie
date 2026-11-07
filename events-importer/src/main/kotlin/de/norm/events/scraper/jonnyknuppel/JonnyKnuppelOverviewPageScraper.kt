@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
@@ -21,7 +22,6 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.MonthDay
-import java.time.format.DateTimeParseException
 
 /**
  * Pure HTML parser for the Jonny Knüppel calendar, one `li.event-item` per night in the homepage menu.
@@ -77,12 +77,7 @@ class JonnyKnuppelOverviewPageScraper {
         )
     }
 
-    private fun parseEnd(text: String): LocalDateTime? =
-        try {
-            LocalDateTime.parse(text)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+    private fun parseEnd(text: String): LocalDateTime? = dateOrNull { LocalDateTime.parse(text) }
 
     /** The first `DDMM` of [printed] in the year that puts it on or before [endDate]. */
     private fun startDate(

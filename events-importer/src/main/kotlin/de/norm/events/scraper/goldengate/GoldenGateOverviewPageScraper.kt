@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateCheckedAgainstWeekday
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.goldengate.GoldenGateOverviewPageScraper.Companion.DATE_LINE_PATTERN
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
@@ -20,7 +21,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
 
@@ -192,12 +192,7 @@ class GoldenGateOverviewPageScraper {
         private const val BLOCK_SPAN_DAYS = 6L
 
         /** Parses the German day/month/year part of a date heading, or `null` when it is not one. */
-        private fun parseLongGermanDate(text: String): LocalDate? =
-            try {
-                LocalDate.parse(text.trim(), GERMAN_LONG_DATE)
-            } catch (_: DateTimeParseException) {
-                null
-            }
+        private fun parseLongGermanDate(text: String): LocalDate? = dateOrNull { LocalDate.parse(text.trim(), GERMAN_LONG_DATE) }
     }
 }
 

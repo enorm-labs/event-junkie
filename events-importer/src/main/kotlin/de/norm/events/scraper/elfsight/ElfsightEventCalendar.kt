@@ -1,12 +1,12 @@
 package de.norm.events.scraper.elfsight
 
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.dateOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 import java.time.temporal.TemporalAdjusters
 
 // Shared reader for the Elfsight "Event Calendar" widget, embedded by Humboldthain and Neue
@@ -53,11 +53,7 @@ internal fun parseElfsightEventNodes(
 /** Parses an ISO `yyyy-MM-dd` date from the payload, `null` instead of throwing. */
 internal fun parseElfsightDate(raw: String?): LocalDate? {
     val cleaned = raw.blankToNull() ?: return null
-    return try {
-        LocalDate.parse(cleaned)
-    } catch (_: DateTimeParseException) {
-        null
-    }
+    return dateOrNull { LocalDate.parse(cleaned) }
 }
 
 /**
