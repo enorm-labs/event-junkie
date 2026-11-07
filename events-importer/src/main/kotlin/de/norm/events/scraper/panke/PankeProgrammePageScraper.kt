@@ -140,7 +140,9 @@ class PankeProgrammePageScraper {
      * keyword wins first — a rave is a club night. Where the title says nothing,
      * **an event that bills DJs on Resident Advisor is a club night**: the venue links a profile
      * only for the acts on its floor, a far better signal than the name, a series title rather
-     * than a format. Then a live show is a concert: a title that names one (`… MIT LIVE BANDS`,
+     * than a format. A body that calls the night `our … festival` is a festival ([FESTIVAL_BODY],
+     * #4600); one that names another, as in `played at Fusion Festival`, is not. Then a live show
+     * is a concert: a title that names one (`… MIT LIVE BANDS`,
      * `… Tour`, `… Live at Panke`, #2398) or a body that bills `live bands`. Last, a `Disko` or
      * `Fiesta` title, or a body that names a dancefloor, is a club night (#2992). An act a promoter
      * presents by the title's name ([presentedAct]) is a concert. Last, a night that starts at
@@ -159,6 +161,7 @@ class PankeProgrammePageScraper {
         return when {
             fromTitle != EventType.OTHER.name -> fromTitle
             lineup.isNotEmpty() -> EventType.PARTY.name
+            FESTIVAL_BODY.containsMatchIn(body) -> EventType.FESTIVAL.name
             LIVE_SHOW_TITLE.containsMatchIn(title) || LIVE_BANDS.containsMatchIn(body) -> EventType.CONCERT.name
             PARTY_TITLE.containsMatchIn(title) || CLUB_NIGHT_BODY.containsMatchIn(body) -> EventType.PARTY.name
             presented -> EventType.CONCERT.name
@@ -423,6 +426,13 @@ private val PARTY_TITLE = Regex("""\b(?:disko|disco|fiesta)\b""", RegexOption.IG
 
 /** The body bills live bands, as the FLIGHTMODE series does. */
 private val LIVE_BANDS = Regex("""\blive\s+bands?\b""", RegexOption.IGNORE_CASE)
+
+/**
+ * The body calls the night its own festival: `our once-a-year Japanese Music Festival`. A preposition
+ * between the two words makes the festival someone else's: `our guest played at Fusion Festival`.
+ */
+private val FESTIVAL_BODY =
+    Regex("""\bour\b(?:(?!\b(?:at|in|on|from|to|of)\b)[^.!?\n]){0,40}\bfestival\b""", RegexOption.IGNORE_CASE)
 
 /** The body names a dancefloor or a night-long set: a club night. A bare DJ is none, since an open mic has one too. */
 private val CLUB_NIGHT_BODY = Regex("""\bdance\s?floor\b|\ball\s+night\s+long\b""", RegexOption.IGNORE_CASE)

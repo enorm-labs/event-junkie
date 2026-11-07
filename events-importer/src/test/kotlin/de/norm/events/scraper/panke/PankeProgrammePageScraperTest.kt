@@ -135,6 +135,23 @@ class PankeProgrammePageScraperTest {
     }
 
     @Test
+    fun `types a night the body calls our festival as a festival`() {
+        // Event 13132, Re:Bon, at 18:00 with no Resident Advisor lineup.
+        articleTitled(
+            "Re:Bon",
+            "Here comes the Berlin edition of our once-a-year Japanese Music Festival! Come dance, meet new people!",
+            start = "18:00"
+        ).eventType shouldBe EventType.FESTIVAL.name
+        listOf(
+            "Our resident played at Fusion Festival last summer.",
+            "Our DJs are back from Fusion festival.",
+            "She played at Fusion Festival."
+        ).forEach { body ->
+            withClue(body) { articleTitled("Outside the BigMac vol.6", body, start = "19:00").eventType shouldBe EventType.OTHER.name }
+        }
+    }
+
+    @Test
     fun `bills a plus bill whose every act carries a live or style tag`() {
         assertSoftly {
             // Event 12333.
