@@ -235,6 +235,8 @@ test('shows an error state when the calendar feed fails', async ({ page }) => {
 
 test("marks today's day number in the month grid", async ({ page }) => {
   await page.goto('/calendar')
+  // Below md the calendar opens on the week list (#4657); the month is the same tab at every width.
+  await page.getByRole('tab', { name: 'Month view' }).click()
 
   // The class comes from FullCalendar's own `isToday` (EventCalendar.vue), so the number carrying it
   // is Berlin's day.
@@ -300,4 +302,14 @@ test('opens the week as a day list below md', async ({ page }) => {
   await expect(gigs.filter({ hasText: 'Gig 9' })).toBeVisible()
   await expect(gigs).toHaveCount(12)
   await expect(page.getByRole('button', { name: /^\+\d+( more)?$/ })).toHaveCount(0)
+})
+
+test('opens on the week list below md', async ({ page }) => {
+  // eslint-disable-next-line playwright/no-skipped-test -- the mobile projects are where it runs
+  test.skip(!isNarrow(page), 'from md up the calendar opens on the month')
+  await page.goto('/calendar')
+
+  // Seven month columns cut every title to a few letters on a phone (#4657).
+  await expect(page.getByRole('tab', { name: 'Week view' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('tab', { name: 'Month view' })).toBeVisible()
 })
