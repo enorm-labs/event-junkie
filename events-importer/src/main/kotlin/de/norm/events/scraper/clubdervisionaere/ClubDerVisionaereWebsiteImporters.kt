@@ -1,6 +1,7 @@
 package de.norm.events.scraper.clubdervisionaere
 
 import de.norm.events.common.BERLIN
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
@@ -86,6 +87,7 @@ abstract class AbstractClubDerVisionaereRoomImporter(
             try {
                 homePageScraper.scrape(htmlFetcher.fetchDocument(homeUrl))
             } catch (e: Exception) {
+                rethrowIfCancelled()
                 logger.warn(e) { "Failed to fetch the Club der Visionäre homepage $homeUrl, storing the nights without a start time" }
                 return events
             }

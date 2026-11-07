@@ -140,3 +140,8 @@ event-junkie:
     # everyone to ignore the rule.
     excludes: ['**/test/**', '**/androidTest/**']
 
+  CatchAllSwallowsCancellation:
+    active: true
+    # The try/catch half of coroutines>SuspendFunSwallowedCancellation, which sees runCatching only (#4638).
+    excludes: ['**/test/**']
+

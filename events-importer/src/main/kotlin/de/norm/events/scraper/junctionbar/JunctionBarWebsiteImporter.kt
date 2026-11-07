@@ -1,6 +1,7 @@
 package de.norm.events.scraper.junctionbar
 
 import de.norm.events.common.BERLIN
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
@@ -117,6 +118,7 @@ class JunctionBarWebsiteImporter(
         try {
             shopPageScraper.scrape(htmlFetcher.fetchDocument(shopUrl))
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.at(Level.WARN) {
                 message = "Failed to fetch shop page for '${night.title}', keeping it without price or sold-out state"
                 cause = e
