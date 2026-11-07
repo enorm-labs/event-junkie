@@ -129,6 +129,23 @@ class JunctionBarWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents keeps the other month and the DJ nights when one month page fails, and reports the run incomplete`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(match { it.contains("06_2026") }) } throws HttpFetchException(503, "06_2026")
+
+            val result = importer.importEvents(homepageUrl) as ImportResult.Success
+
+            result.events shouldHaveSize 16
+            result.complete shouldBe false
+        }
+
+    @Test
+    fun `importEvents reports a run that read every month as complete`() =
+        runTest {
+            (importer.importEvents(homepageUrl) as ImportResult.Success).complete shouldBe true
+        }
+
+    @Test
     fun `importEvents fetches no shop page for a night already past`() =
         runTest {
             val afterJuly = Clock.fixed(Instant.parse("2026-08-01T10:00:00Z"), ZoneOffset.UTC)
