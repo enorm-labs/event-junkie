@@ -62,7 +62,9 @@ jobs:
           NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          if gh api "repos/${REPO}/issues/${NUMBER}/labels" --jq '.[].name' | grep -qx hold; then
+          # Read first: `grep -q` exits at the match, and a killed `gh` under pipefail would read as no hold.
+          labels="$(gh api "repos/${REPO}/issues/${NUMBER}/labels" --jq '.[].name')"
+          if grep -qx hold <<<"$labels"; then
             echo "::error::This pull request carries the hold label: it must not merge yet. Remove the label at the planned moment; the gate runs again."
             exit 1
           fi
