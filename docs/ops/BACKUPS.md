@@ -306,23 +306,23 @@ numbers exist somewhere durable before anyone has to remember to update a docume
 
 ### Recorded runs
 
-**2026-10-31 — staging — passed, both halves.** Run for [#4152](https://github.com/enorm-labs/event-junkie/issues/4152), after
-[`486346e`](https://github.com/enorm-labs/event-junkie/commit/486346e05578) changed the infrastructure scripts. It was also a gate before the production cutover (#4128).
+**2026-11-07 — staging — passed, both halves.** Run for [#4574](https://github.com/enorm-labs/event-junkie/issues/4574), after
+[`1675dd6`](https://github.com/enorm-labs/event-junkie/commit/1675dd601075) changed `backups.sh` and `postgres.sh`.
 
-A base backup was restored from the bucket alone into a scratch cluster and replayed forward. 11,720 events, 10,333 artists and 274 venues came back exactly.
-**The restored copy included a marker row written 18 seconds after the base backup started.** That marker proves WAL archiving, not only a file copy.
+A base backup was restored from the bucket alone into a scratch cluster and replayed forward. 12,463 events, 11,049 artists and 278 venues came back exactly.
+**The restored copy included a marker row written 15 seconds after the base backup started.** That marker proves WAL archiving, not only a file copy.
 Then the drill dropped `public.restore_drill` on the live database. PITR recovered the table to a timestamp before the drop. The log said `recovery stopping
-before commit of transaction 1007604`. The live database stayed without the table. The live counts were the same before and after the run.
+before commit of transaction 1071405`. The live database stayed without the table. The live counts were the same before and after the run.
 
-**The archiver shows 4 failures, and none of them is recent.** The last failed segment is `000000010000001900000053`. The archiver counts 8,689 archived
-segments, up to `0000000100000021000000D1`, which the drill itself forced.
+**The archiver shows 4 failures, and none of them is recent.** The last failed segment is still `000000010000001900000053`. The archiver counts 10,409
+archived segments, up to `000000010000002800000080`, which the drill itself forced.
 
 | Step                               | Time                           |
 | ---------------------------------- | ------------------------------ |
-| Base backup                        | 18 s                           |
+| Base backup                        | 15 s                           |
 | `backup-fetch`                     | 12 s                           |
 | Replay and promote                 | 1 s                            |
-| **Restore to serving, end to end** | **≈ 13 s** on a 146 MB cluster |
+| **Restore to serving, end to end** | **≈ 13 s** on a 160 MB cluster |
 
 **The run found no error in the runbook.**
 
