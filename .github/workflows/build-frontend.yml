@@ -213,11 +213,18 @@ jobs:
   # In Playwright's own image (#2309): it carries the system packages and all five browsers. Installing
   # the packages ran on every build, cache hit or not, so a slow Ubuntu mirror (126 kB/s, 17 minutes)
   # could time out the job.
+  # One job per browser project (#4668): the five ran in one job for 16.5 minutes. Each shard repeats
+  # `npm ci` and the build, about 30 s, which costs nothing on a public repository.
   e2e:
-    name: Frontend e2e
+    name: Frontend e2e (${{ matrix.project }})
     needs: [ detect-changes, playwright-image ]
     if: needs.detect-changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      # Every shard reports, so one red browser does not hide another.
+      fail-fast: false
+      matrix:
+        project: [ chromium, firefox, webkit, Mobile Chrome, Mobile Safari ]
     container:
       # An exact version, not a digest: pinning the digest needs a second bot, and a Playwright bump
       # would then arrive as two pull requests that pass only together.
@@ -250,7 +257,9 @@ jobs:
         run: npm run build
 
       - name: Run e2e tests
-        run: npm run test:e2e
+        env:
+          PROJECT: ${{ matrix.project }}
+        run: npm run test:e2e -- --project="$PROJECT"
 
       # An axe violation is a rule id plus a CSS selector; the HTML report carries the DOM snapshot and the
       # trace that make it actionable. Failure only: a green run's report is noise, and these are not small.
@@ -258,7 +267,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: |
             events-frontend/playwright-report/
             events-frontend/test-results/
