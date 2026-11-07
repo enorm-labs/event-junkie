@@ -11,13 +11,16 @@ locals {
   dedicated_postgres = var.postgres_server_type != null
 
   # The second pair a cutover moves to (#4128). Each node exists once its type is set, so one
-  # can be ordered while the other is not for sale.
+  # can be ordered while the other is not for sale. Its addresses alternate between hosts .10/.20
+  # and .11/.21, because the pair a cutover leaves running holds the other ones.
   next_pair                = var.next_pair != null
   next_k3s                 = local.next_pair && try(var.next_pair.k3s_server_type, null) != null
   next_postgres            = local.next_pair && try(var.next_pair.postgres_server_type, null) != null
   next_colocated           = local.next_pair && coalesce(try(var.next_pair.colocated, null), !local.dedicated_postgres)
-  next_k3s_private_ip      = local.next_pair ? coalesce(var.next_pair.k3s_private_ip, cidrhost(var.subnet_ip_range, 11)) : null
-  next_postgres_private_ip = local.next_pair ? coalesce(var.next_pair.postgres_private_ip, cidrhost(var.subnet_ip_range, 21)) : null
+  next_k3s_default_ip      = var.k3s_private_ip == cidrhost(var.subnet_ip_range, 11) ? cidrhost(var.subnet_ip_range, 10) : cidrhost(var.subnet_ip_range, 11)
+  next_postgres_default_ip = var.postgres_private_ip == cidrhost(var.subnet_ip_range, 21) ? cidrhost(var.subnet_ip_range, 20) : cidrhost(var.subnet_ip_range, 21)
+  next_k3s_private_ip      = local.next_pair ? coalesce(var.next_pair.k3s_private_ip, local.next_k3s_default_ip) : null
+  next_postgres_private_ip = local.next_pair ? coalesce(var.next_pair.postgres_private_ip, local.next_postgres_default_ip) : null
 
   next_ips_distinct = length(setintersection(
     [local.next_k3s_private_ip, local.next_postgres_private_ip],

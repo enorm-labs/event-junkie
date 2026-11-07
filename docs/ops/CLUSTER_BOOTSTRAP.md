@@ -766,7 +766,8 @@ infra/apply.sh staging -var 'next_pair={k3s_server_type="cx33"}'                
 - **What it creates:** `<env>-k3s-next` when `k3s_server_type` is set, and `<env>-postgres-next` when `postgres_server_type` is set. Each one has temporary
   Primary IPs. It changes nothing that exists.
 - **`colocated = true`** puts PostgreSQL on the new k3s node at the cutover, with no new database node. Unset, the new pair keeps the running pair's layout.
-- **The private addresses** are host `.11` and `.21` of the subnet unless `next_pair` names others. The running pair keeps `.10` and `.20`.
+- **The private addresses** alternate. Beside a pair on hosts `.10` and `.20`, the new pair takes `.11` and `.21`. Beside a pair on `.11` and `.21`, it
+  takes `.10` and `.20`. `next_pair` can name others. Production runs on `.11` and `.21`.
 - **cloud-init** is the running pair's, with the new private addresses. The hostname is the running node's, because it becomes the Kubernetes node name.
   `PUBLIC_IPV4` is the real Primary IP, which the node holds after the cutover.
 - **PostgreSQL does not start at boot** on the new pair. The volume reaches the new database node, or the new k3s node when `colocated`, only at the database
@@ -801,8 +802,8 @@ scripts/cutover.sh production finish      # after the switch PR's infra part: mo
 infra/apply.sh production --allow-replace # no -var next_pair; compare the count that finish prints
 ```
 
-1. **The switch PR** names the new private addresses: `.21` for the database and `.11` for the k3s node. It changes `deploy/clusters/<env>`, the
-   scripts and the docs. It carries the `hold` label, so the merge gate stops it. Remove the label and merge it while `prepare` waits. `prepare` stops when the new cluster reads the new address and its app is still suspended.
+1. **The switch PR** names the new pair's private addresses, as `tofu output next_pair` prints them. It changes `main.tf`, the database address in
+   `deploy/clusters/<env>`, `DB_IP` in `rebuild-node.sh`, `DB_NODE` in `cluster-access.sh` and the docs. It carries the `hold` label, so the merge gate stops it. Remove the label and merge it while `prepare` waits. `prepare` stops when the new cluster reads the new address and its app is still suspended.
    The switch PR also gives OpenObserve the next bucket prefix. `prepare` then wipes the new instance's PVC, so that its file list starts empty
    (OPENOBSERVE.md § Changing the prefix).
 2. **`cutover` stops the importer and PostgreSQL on the old pair.** Then it shuts down the old pair and the new k3s node. It moves the k3s IPv4 and the
@@ -822,6 +823,48 @@ key and resumes the app there. It works until `finish`. Flux on the old cluster 
 `flux resume kustomization flux-system`.
 
 Every step checks what is already done. After a failure, run the same phase again, or start at a step with `--from <step>`.
+
+#### The cutover checklist
+
+Production ran this once, on 2026-11-06 and 2026-11-07 (#4128). Staging did not rehearse it. Copy the list into the cutover issue and tick it there.
+
+**Before the window:**
+
+- [ ] Check the new cluster with the context `event-junkie-<env>-next`. `get endpoints kubernetes` shows only the new k3s address. Every pod is
+      `Running` or `Completed`. The ClusterIssuer is ready. The Secrets `event-junkie-tls` and `event-junkie-tls-redirect` keep their
+      `cert-manager.io/issuer-name` and `cert-manager.io/alt-names` annotations.
+- [ ] Read the `renewalTime` of the old cluster's Certificates. Cut over before that date. After it, the new cluster needs Let's Encrypt directly after
+      `resume`.
+- [ ] Plan no release cut between `prepare` and `finish`. The first install on the new cluster and a rollback both take the newest chart.
+- [ ] Choose a quiet hour, and keep about an hour free.
+
+**In the window:**
+
+- [ ] Turn off the corporate TLS proxy. If it stays on, step `site` can fail its certificate check while the site works.
+- [ ] Load the SSH key with `ssh-add`. The script's SSH cannot ask for a passphrase.
+- [ ] Take a fresh base backup on the running database node: `sudo systemctl start walg-basebackup && sudo -u postgres walg check`.
+- [ ] Copy the database to this Mac with `scripts/db-dump.sh <env>`. Keep the `.counts` file it prints.
+- [ ] Run `prepare`, merge the switch PR while it waits, `git pull`, then run `cutover`.
+- [ ] Put the new database address in the `Host` line of `~/.ssh/config`. Your own SSH commands then use the right key.
+- [ ] Check the site, healthchecks.io and `scripts/cluster-state.sh <env>`. Then compare the rows: `scripts/db-dump.sh <env> --check <the .counts file>`.
+      The importer and the image sweep write after `resume`, so small differences in their tables are expected.
+
+**Before `finish`:**
+
+- [ ] Run `deploy/alerts/apply.sh` again after the first import cycle. A rule whose stream has no first point yet is skipped on the first run.
+- [ ] Wait for the first nightly base backup on the new database node, and check it with `walg check`. `finish` ends the rollback.
+
+**After `finish`:**
+
+- [ ] Read the plan before you type yes. A line that destroys or replaces `hcloud_volume.postgres` gets no. A line that adds or replaces a server gets no.
+- [ ] Add a `retire-*` rule for the old OpenObserve prefix and apply bootstrap (OPENOBSERVE.md § Changing the prefix). After 15 days, check that the
+      prefix is empty, then remove the rule.
+- [ ] Re-derive [COSTS.md](COSTS.md) with its API script.
+- [ ] Put the new WireGuard server key in KeePass #18 ([CREDENTIALS.md](../CREDENTIALS.md) §3).
+- [ ] Delete the dump in `~/.event-junkie/dumps/` and the state copies in `~/.event-junkie/cutover-<env>/`. A production dump holds personal data.
+
+The database stays safe through all of this. It stays on the `pgdata` volume, and nothing formats it. `cutover` stops PostgreSQL cleanly and shuts the
+node down before it detaches the volume. Hetzner's server backups do not include the volume, so they are no copy of the database.
 
 ### Applying a `cloud-init` fix without rebuilding
 

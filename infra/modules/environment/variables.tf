@@ -110,8 +110,9 @@ variable "next_pair" {
     A second pair of nodes, built beside the running pair, so a change of server type is a cutover
     of minutes instead of a rebuild in place (#4128). `null` builds nothing.
 
-    The new pair gets temporary Primary IPs and its own private addresses, host .11 and .21 of
-    `subnet_ip_range` unless given. It uses the volume and the real Primary IPs only after the
+    The new pair gets temporary Primary IPs and its own private addresses unless given: host .11
+    and .21 of `subnet_ip_range` beside a pair on .10 and .20, and .10 and .20 beside one on .11
+    and .21. It uses the volume and the real Primary IPs only after the
     cutover moves them. Set it with `-var`, never in tfvars.
 
     Each node is created once its type is set, so either one can be ordered first.
