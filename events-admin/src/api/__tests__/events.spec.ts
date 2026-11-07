@@ -13,6 +13,7 @@ import {
   parsePrice,
   searchEvents,
   setEventFeatures,
+  setTimetable,
   slugify,
   toCreateRequest,
   toEventRequest,
@@ -251,6 +252,21 @@ describe('unpinField', () => {
     )
 
     await expect(unpinField(418, 'x', fetchFn)).rejects.toThrow("Unknown pinned field 'x'")
+  })
+})
+
+describe('setTimetable', () => {
+  it('PUTs the slots to the timetable of the event and answers the saved event', async () => {
+    const saved = adminEvent({ pinnedFields: ['lineup'] })
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(JSON.stringify(saved)))
+    const slots = [{ artistId: 3, start: '23:00', end: null }]
+
+    await expect(setTimetable(418, slots, fetchFn)).resolves.toEqual(saved)
+
+    const [url, init] = fetchFn.mock.calls[0]!
+    expect(url).toBe('/api/admin/events/418/timetable')
+    expect(init?.method).toBe('PUT')
+    expect(JSON.parse(String(init?.body))).toEqual({ slots })
   })
 })
 

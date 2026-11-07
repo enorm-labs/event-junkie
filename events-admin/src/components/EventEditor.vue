@@ -20,6 +20,8 @@ import {
   EVENT_FEATURES,
   MOVED_STATUSES,
   setEventFeatures,
+  setTimetable,
+  type TimetableSlot,
   toEventRequest,
   unpinField,
   updateEvent,
@@ -54,6 +56,9 @@ const genre = ref('')
 const subtitle = ref('')
 const description = ref('')
 const lineup = ref<EventArtist[]>([])
+/** Each act's set as typed, Berlin `HH:mm` or '', and as the editor showed it. */
+const times = ref<Record<number, { start: string; end: string }>>({})
+const shownTimes = ref<Record<number, { start: string; end: string }>>({})
 const promoterIds = ref<number[]>([])
 /** The festival the select holds, or null for none. */
 const festivalId = ref<number | null>(null)
@@ -84,6 +89,30 @@ const checkRun = ref<ClassificationRun | null>(null)
 const checkError = ref<string | null>(null)
 
 const lineupIds = computed(() => lineup.value.map((artist) => artist.artistId))
+
+const timetableChanged = computed(() =>
+  lineupIds.value.some((id) => {
+    const typed = times.value[id] ?? { start: '', end: '' }
+    const shown = shownTimes.value[id] ?? { start: '', end: '' }
+    return typed.start !== shown.start || typed.end !== shown.end
+  }),
+)
+
+/** The slots to send, or an error naming the first act with an end but no start. */
+function timetableSlots(): TimetableSlot[] {
+  return lineupIds.value.flatMap((artistId) => {
+    const { start, end } = times.value[artistId] ?? { start: '', end: '' }
+    if (start === '' && end !== '') {
+      throw new Error(`${nameOf('artists', artistId)}: a set with an end needs a start.`)
+    }
+    return start === '' ? [] : [{ artistId, start, end: end === '' ? null : end }]
+  })
+}
+
+/** An instant as Berlin `HH:mm`, or '' for none. */
+function clockOf(instant: string | null | undefined): string {
+  return toBerlinLocal(instant).slice(11)
+}
 
 /**
  * The festivals whose days hold the event's date, and the stored one even when they do not, so
@@ -180,6 +209,14 @@ function show(loaded: AdminEvent) {
   lineup.value = [...loaded.artists]
     .sort((a, b) => a.billingOrder - b.billingOrder)
     .map(({ artistId, role, billingOrder, stage }) => ({ artistId, role, billingOrder, stage }))
+  const loadedTimes = Object.fromEntries(
+    loaded.artists.map((artist) => [
+      artist.artistId,
+      { start: clockOf(artist.setStart), end: clockOf(artist.setEnd) },
+    ]),
+  )
+  times.value = structuredClone(loadedTimes)
+  shownTimes.value = loadedTimes
   promoterIds.value = [...loaded.promoterIds]
   festivalId.value = loaded.festivalId ?? null
   pickUntil.value = toBerlinLocal(loaded.featuredUntil)
@@ -203,6 +240,7 @@ function nameOf(kind: NameKind, id: number): string {
 /** A new act goes to the bottom of the bill: the headliner when the lineup is empty, else support. */
 function addArtist(row: NamedRow) {
   names.value.artists.set(row.id, row)
+  times.value[row.id] ??= { start: '', end: '' }
   const last = Math.max(-1, ...lineup.value.map((artist) => artist.billingOrder))
   lineup.value.push({
     artistId: row.id,
@@ -277,7 +315,9 @@ function save() {
       const slugs = [...features.value].sort((a, b) => order.indexOf(a) - order.indexOf(b))
       showFeatures(await setEventFeatures(current.id, slugs))
     }
-    const saved = await updateEvent(
+    // Checked before any write, so a refused timetable leaves the event as it was.
+    const slots = timetableChanged.value ? timetableSlots() : null
+    let saved = await updateEvent(
       current.id,
       toEventRequest(current, {
         eventType: eventType.value,
@@ -293,6 +333,8 @@ function save() {
         ...pickEdit(),
       }),
     )
+    // After the event PUT, so an act added in this edit is on the lineup the timetable names.
+    if (slots) saved = await setTimetable(current.id, slots)
     show(saved)
     emit('saved', saved)
   })
@@ -514,6 +556,11 @@ function unpin(field: string) {
 
           <section class="flex flex-col gap-2" aria-labelledby="lineup-heading">
             <h3 id="lineup-heading" class="text-sm font-medium">Lineup</h3>
+            <p id="lineup-times-hint" class="text-xs text-muted-foreground">
+              Set times are Berlin time. A start before the doors or start of the event is the next
+              day, and an end before its start is the day after. A changed time pins
+              <code>lineup</code>.
+            </p>
             <ol v-if="lineup.length" class="flex flex-col gap-1.5">
               <li
                 v-for="artist in lineup"
@@ -538,6 +585,25 @@ function unpin(field: string) {
                 >
                   <option v-for="role in ARTIST_ROLES" :key="role" :value="role">{{ role }}</option>
                 </select>
+                <span class="flex items-center gap-1">
+                  <Input
+                    v-model="times[artist.artistId]!.start"
+                    :aria-label="`Set start of ${nameOf('artists', artist.artistId)}`"
+                    aria-describedby="lineup-times-hint"
+                    class="h-7 w-24 text-xs"
+                    data-testid="set-start"
+                    type="time"
+                  />
+                  <span aria-hidden="true" class="text-xs text-muted-foreground">–</span>
+                  <Input
+                    v-model="times[artist.artistId]!.end"
+                    :aria-label="`Set end of ${nameOf('artists', artist.artistId)}`"
+                    aria-describedby="lineup-times-hint"
+                    class="h-7 w-24 text-xs"
+                    data-testid="set-end"
+                    type="time"
+                  />
+                </span>
                 <Button
                   :aria-label="`Remove ${nameOf('artists', artist.artistId)}`"
                   size="xs"

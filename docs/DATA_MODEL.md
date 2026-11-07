@@ -521,7 +521,7 @@ Links events to artists with role and billing order to model the lineup. Each ap
 | `billing_order` | `INT`         | No       | Position in lineup (0 = top-billed)                                                | `0`                   |
 | `stage`         | `TEXT`        | Yes      | The room or floor of the set, on a lineup split across rooms; else `event.room`    | `Panorama Bar`        |
 | `title_derived` | `BOOLEAN`     | No       | The importer read the name from the event title, not from a lineup element (#1145) | `false`               |
-| `set_start`     | `TIMESTAMPTZ` | Yes      | Start of the set, from the venue's running order (#2002)                           | `2026-09-26 23:59+02` |
+| `set_start`     | `TIMESTAMPTZ` | Yes      | Start of the set, from the venue's running order (#2002) or the timetable PUT      | `2026-09-26 23:59+02` |
 | `set_end`       | `TIMESTAMPTZ` | Yes      | End of the set. Null when the running order gives only the start                   | `2026-09-27 04:30+02` |
 
 Unique constraint on `(event_id, artist_id)` prevents duplicate artist-event associations. Thus one row holds one set, and an
@@ -529,6 +529,10 @@ artist with two sets at one event keeps the first.
 
 The set times are instants, not local times. A club night crosses midnight, so the event date does not tell the day of a
 04:30 set. Most venues publish no running order, and these rows keep both columns null.
+
+An operator sets the times by hand with `PUT /api/admin/events/{id}/timetable`, or in the admin app's event editor. The
+request gives Berlin clock times. A start before the event's doors or start is on the next day. The call pins `lineup`,
+because the next import would clear the times otherwise. The event PUT and PATCH keep the stored times (#3026).
 
 ### EventPromoter (Join Table)
 
