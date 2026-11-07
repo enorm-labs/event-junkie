@@ -91,7 +91,7 @@ private fun migrationSlugLiterals(): List<SlugLiteral> =
 
 /**
  * Only a statement on `venue` is read. A promoter migration (V023, V025, V026) names slugs no
- * seed file creates; `MergeDuplicatePromotersMigrationTest` runs those against planted rows instead.
+ * seed file creates, so its migration test runs it against planted rows instead.
  */
 private fun slugLiteralsIn(
     file: String,

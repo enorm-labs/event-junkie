@@ -72,8 +72,9 @@ Group the `DROP`, `RENAME` and `SPLIT` rows by source. For each source:
    [testing.instructions.md](../instructions/testing.instructions.md) asks. Read them through the admin API, which `collect` already pages. On V150 the diff
    caught `Tresor invites Surgeon` billing the venue as an act, which no unit case had.
 5. **Write one migration for the batch**, with the shapes from the table, the next free number from `origin/main`, and the comment the other data fixes
-   carry. A migration that does more than drop ships with a migration test, as `RepairArtistCleanupBatch2MigrationTest` does for V150: planted rows, and
-   every slug in the file checked against `artistSlugFor`, because a wrong slug matches nothing and Flyway records the migration applied.
+   carry. A migration that does more than drop ships with a migration test, as V150 did: planted rows, and every slug in the file checked against
+   `artistSlugFor`, because a wrong slug matches nothing and Flyway records the migration applied. The test goes once production has run it;
+   `git log --all -- '**/RepairArtistCleanupBatch2MigrationTest.kt'` finds V150's.
 
 A row that needs a product decision, or a fix larger than its source's other fixes, becomes a 🔍 Importer / data defect draft instead. Never file it unasked.
 
