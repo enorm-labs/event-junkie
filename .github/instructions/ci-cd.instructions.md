@@ -19,7 +19,7 @@ is the map and the traps.
 
 **Gates on pull requests**
 
-- `build-backend.yml` — `ktlintCheck`, the three detekt analyses (nine SARIF reports in **one** upload, kept apart by `runAutomationDetails.id`, #1394), build,
+- `build-backend.yml` — a `lint` job with `ktlintCheck` and the three detekt analyses (nine SARIF reports in **one** upload, kept apart by `runAutomationDetails.id`, #1394), beside a `build` job (#4670): build,
   test, Kover to the summary and a sticky PR comment, an informational OWASP scan, and `scripts/api-schema-parity.sh check`: the frontend's committed
   `schema.d.ts` against the document `OpenApiDocumentTest` writes (#370), so an API change without the regeneration fails on its own PR, not after merge. Sets `ORG_GRADLE_PROJECT_warningsAsErrors=true`, so a Kotlin warning fails
   here and nowhere else. Also builds both container images for `linux/amd64` and `linux/arm64` with `type=cacheonly` and **never pushes** — it runs on fork PRs.

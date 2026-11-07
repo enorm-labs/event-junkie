@@ -86,8 +86,6 @@ jobs:
       contents: read
       # The sticky Kover coverage comment on pull requests.
       pull-requests: write
-      # Uploading the three detekt SARIF reports to Code Scanning.
-      security-events: write
 
     # Kotlin warnings fail the build here, and only here (`warningsAsErrors` in the root build.gradle.kts).
     # An environment variable rather than `-P` per step: every invocation gets it, and a project property
@@ -123,38 +121,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
-      # One invocation with `--parallel` (per step, because the licence-report plugin cannot run under it).
-      # All three detekt tasks, because they are different analyses (#407): `detekt` reads the syntax tree,
-      # `detektMain` and `detektTest` resolve types first and run `UnsafeCallOnNullableType`, `UseOrEmpty`,
-      # `UnusedPrivateProperty` and the rest — rules that are **not run** when only the first task runs. The
-      # build below reuses their compiled output.
-      - name: Lint with ktlint and analyse with detekt
-        run: ./gradlew ktlintCheck detekt detektMain detektTest --parallel
-
-      - name: Post detekt report to Job Summary
-        if: success() || failure()
-        run: |
-          echo "## 🔍 Detekt Static Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          for report in */build/reports/detekt/detekt.md */build/reports/detekt/main.md */build/reports/detekt/test.md; do
-            [ -f "$report" ] || continue
-            module=$(echo "$report" | cut -d'/' -f1)
-            # `main.md` and `test.md` are the type-resolution runs; say which analysis a section came from.
-            case "$(basename "$report")" in
-              main.md) variant="main, with type resolution" ;;
-              test.md) variant="test, with type resolution" ;;
-              *) variant="syntax only" ;;
-            esac
-            # Replace the generic "# detekt" heading with a module-specific one
-            sed "s/^# detekt$/# detekt — ${module} (${variant})/" "$report" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "---" >> $GITHUB_STEP_SUMMARY
-          done
-
       # `-x koverVerify` alongside `-x test`: without execution data every module reports 0% and the floor
-      # fails for the wrong reason. The coverage step below verifies for real, after `test`.
+      # fails for the wrong reason. The coverage step below verifies for real, after `test`. ktlint and
+      # detekt run in `lint`, beside this job.
       - name: Build all modules
-        run: ./gradlew build -x test -x koverVerify --parallel
+        run: ./gradlew build -x test -x koverVerify -x ktlintCheck -x detekt --parallel
 
       # The runtime-dependency licence policy (docs/LEGAL.md §9.2). A separate step because the plugin is
       # not configuration-cache compatible; `--no-configuration-cache` keeps that cost here.
@@ -269,7 +240,7 @@ jobs:
           {
             echo "## Coverage comment failed"
             echo
-            echo "**The build itself passed.** ktlint, detekt, compilation, tests, the licence check,"
+            echo "**The build itself passed.** Compilation, tests, the licence check,"
             echo "the Kover floors and both container images all ran and succeeded before this step —"
             echo "that is why it is last."
             echo
@@ -283,6 +254,65 @@ jobs:
             echo "\`min-coverage-overall: 60\` is not the cause: \`koverVerify\` enforces 90 aggregate"
             echo "plus per-module floors and runs earlier, so it would have failed first."
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # ktlint and the three detekt analyses, beside `build` rather than before its tests (#4670): they took
+  # five minutes of the critical path. Both jobs compile the importer, because type resolution needs it.
+  lint:
+    name: Backend lint
+    needs: detect-changes
+    if: needs.detect-changes.outputs.relevant == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # Uploading the nine detekt SARIF reports to Code Scanning.
+      security-events: write
+
+    # As in `build`: the compile that type resolution runs fails on a Kotlin warning here too.
+    env:
+      ORG_GRADLE_PROJECT_warningsAsErrors: 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 25 (Temurin)
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      # One invocation with `--parallel` (per step, because the licence-report plugin cannot run under it).
+      # All three detekt tasks, because they are different analyses (#407): `detekt` reads the syntax tree,
+      # `detektMain` and `detektTest` resolve types first and run `UnsafeCallOnNullableType`, `UseOrEmpty`,
+      # `UnusedPrivateProperty` and the rest — rules that are **not run** when only the first task runs.
+      - name: Lint with ktlint and analyse with detekt
+        run: ./gradlew ktlintCheck detekt detektMain detektTest --parallel
+
+      - name: Post detekt report to Job Summary
+        if: success() || failure()
+        run: |
+          echo "## 🔍 Detekt Static Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for report in */build/reports/detekt/detekt.md */build/reports/detekt/main.md */build/reports/detekt/test.md; do
+            [ -f "$report" ] || continue
+            module=$(echo "$report" | cut -d'/' -f1)
+            # `main.md` and `test.md` are the type-resolution runs; say which analysis a section came from.
+            case "$(basename "$report")" in
+              main.md) variant="main, with type resolution" ;;
+              test.md) variant="test, with type resolution" ;;
+              *) variant="syntax only" ;;
+            esac
+            # Replace the generic "# detekt" heading with a module-specific one
+            sed "s/^# detekt$/# detekt — ${module} (${variant})/" "$report" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
+          done
 
       # One upload for all nine detekt reports (three modules × three analyses), kept apart by
       # `runAutomationDetails.id` — what `upload-sarif`'s `category` sets internally. Without the ids, nine
@@ -420,7 +450,7 @@ jobs:
   # `NVD_API_KEY` is empty on a fork.
   gate:
     name: Build & Test (backend)
-    needs: [ detect-changes, build ]
+    needs: [ detect-changes, build, lint ]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -431,16 +461,18 @@ jobs:
         env:
           CHANGES_RESULT: ${{ needs.detect-changes.result }}
           BUILD_RESULT: ${{ needs.build.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
         run: |
           set -euo pipefail
-          echo "detect-changes: $CHANGES_RESULT · build: $BUILD_RESULT"
+          echo "detect-changes: $CHANGES_RESULT · build: $BUILD_RESULT · lint: $LINT_RESULT"
           # A failed detection must not be reported as a pass — it would silently gate nothing.
           if [ "$CHANGES_RESULT" != 'success' ]; then
             echo "::error::change detection did not succeed ($CHANGES_RESULT); refusing to report a pass"
             exit 1
           fi
-          case "$BUILD_RESULT" in
-            success) echo 'The backend build ran and passed.' ;;
-            skipped) echo 'No backend files changed; there was nothing to build.' ;;
-            *)       echo "::error::backend build result: $BUILD_RESULT"; exit 1 ;;
+          # Both ran and passed, or neither ran. Any mix means something was cancelled or failed.
+          case "$BUILD_RESULT $LINT_RESULT" in
+            'success success') echo 'The backend build and lint ran and passed.' ;;
+            'skipped skipped') echo 'No backend files changed; there was nothing to build.' ;;
+            *) echo "::error::backend results: build $BUILD_RESULT, lint $LINT_RESULT"; exit 1 ;;
           esac
