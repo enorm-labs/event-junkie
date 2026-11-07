@@ -258,7 +258,8 @@ class GretchenOverviewPageScraper {
      * €*`, a tiered presale range and one box-office price (or "tba."). The lowest presale tier and
      * the box-office value become structured prices; the cleaned string is kept as the note so the
      * tiers are not lost. A free night prints only `*freier Eintritt // Anmeldung erforderlich*`, which
-     * is kept as the note. `.lineup` blocks with neither marker are ignored.
+     * is kept as the note. `.lineup` blocks with neither marker are ignored. A presale figure without
+     * the `€` sign (`Vorverkauf 29,30 inkl. Gebühren`) is read by [BARE_PRESALE] (#4580).
      */
     private fun parsePrices(gig: Element): Triple<BigDecimal?, BigDecimal?, String?> {
         val priceText =
@@ -269,9 +270,19 @@ class GretchenOverviewPageScraper {
                 ?: return Triple(null, null, null)
 
         val prices = parseLabelledPrices(priceText)
+        val presale = prices.presale ?: bareFeePresale(priceText)
         val priceNote = priceText.trim('*', ' ').blankToNull()
-        return Triple(prices.presale, prices.boxOffice, priceNote)
+        return Triple(presale, prices.boxOffice, priceNote)
     }
+
+    /** The figure of a `Vorverkauf 24 zzgl. Gebühren` note, which prints no `€` sign; `null` without the fee words. */
+    private fun bareFeePresale(priceText: String): BigDecimal? =
+        BARE_PRESALE
+            .find(priceText)
+            ?.groupValues
+            ?.get(1)
+            ?.replace(',', '.')
+            ?.toBigDecimalOrNull()
 
     /**
      * The performer list from the `.lineup` blocks, the authoritative artist source (the headline is
@@ -459,6 +470,13 @@ class GretchenOverviewPageScraper {
 
         /** A presale note, not an act: `VVK ab 30.10.`, `Der VVK startet Ende Oktober.`, `Vorverkaufsstart …`. */
         private val PRESALE_NOTE = Regex("""\b(?:vvk|vorverkauf)""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A presale figure without the `€` sign, anchored on the fee words that follow it: `Vorverkauf 29,30 inkl.
+         * Gebühren`. A bare figure elsewhere is a date (`VVK ab 30.10.`), so the shared parser does not read one.
+         */
+        private val BARE_PRESALE =
+            Regex("""\bVorverkauf\s+(\d+(?:,\d{1,2})?)\s+(?:inkl|zzgl)\.?\s+Geb""", RegexOption.IGNORE_CASE)
 
         /** The earliest doors of a club night; the latest concert doors are 20:00. */
         private val CLUB_NIGHT_DOORS = LocalTime.of(22, 0)

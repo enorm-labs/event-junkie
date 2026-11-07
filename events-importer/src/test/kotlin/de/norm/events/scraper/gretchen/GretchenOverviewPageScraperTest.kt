@@ -147,6 +147,49 @@ class GretchenOverviewPageScraperTest {
             event.priceBoxOffice shouldBe BigDecimal("15")
             event.priceNote shouldBe "Abendkasse 18 € (bis 23 Uhr 15 €)"
         }
+
+        @Test
+        fun `reads a presale figure that prints no euro sign before the fee words`() {
+            val event = gigWithPriceLine("*Vorverkauf 29,30 inkl. Gebühren * Abendkasse tba.*")
+
+            event.pricePresale shouldBe BigDecimal("29.30")
+            event.priceBoxOffice.shouldBeNull()
+            event.priceNote shouldBe "Vorverkauf 29,30 inkl. Gebühren * Abendkasse tba."
+        }
+
+        @Test
+        fun `reads a whole presale figure without a euro sign`() {
+            gigWithPriceLine("*Vorverkauf 24 zzgl. Gebühren * Abendkasse tba.*").pricePresale shouldBe BigDecimal("24")
+        }
+
+        @Test
+        fun `keeps the euro-signed presale when the note also has the fee words`() {
+            gigWithPriceLine("*Vorverkauf 29,45 € inkl. Gebühren * Abendkasse 35 €*").pricePresale shouldBe BigDecimal("29.45")
+        }
+
+        @Test
+        fun `reads no price from a presale start date`() {
+            val event = gigWithPriceLine("VVK ab 30.10.")
+
+            event.pricePresale.shouldBeNull()
+            event.priceBoxOffice.shouldBeNull()
+        }
+
+        private fun gigWithPriceLine(priceLine: String): ScrapedEvent {
+            val html =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Sa. <strong>07.11.2026</strong><br> Doors: 19.00 <br/>Show: 20.00</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Rock<h2><a href="detail.php?id=9101">Some Band</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>Some Band<br/><em>$priceLine</em></p></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+            return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        }
     }
 
     @Nested
