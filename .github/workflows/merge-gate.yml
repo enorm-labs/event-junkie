@@ -43,10 +43,8 @@ on:
 permissions:
   pull-requests: read
 
-concurrency:
-  group: merge-gate-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
+# No `concurrency`: a required check that cancels itself can block the merge beside a green run (#4570).
+# Runs may overlap safely, because each reads the labels and reviews live and writes nothing.
 jobs:
   gate:
     # The check context the `main` ruleset requires, by this exact name.
