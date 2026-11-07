@@ -184,6 +184,12 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+// Two test JVMs: this suite is the backend's critical path, and each Testcontainers test owns its database.
+// The CI runner has four vCPUs; `updateSchemaDump` runs one class, so a second fork there starts nothing.
+tasks.test {
+    maxParallelForks = 2
+}
+
 // The one command that rewrites docs/architecture/schema.sql. It is the same test, told to write
 // instead of fail, so the output cannot disagree with what the build then asserts.
 tasks.register<Test>("updateSchemaDump") {
