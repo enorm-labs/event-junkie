@@ -9,9 +9,11 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.LogFields
+import de.norm.events.scraper.ReadEach
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.readEach
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
@@ -69,19 +71,19 @@ class JunctionBarWebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val homepage = htmlFetcher.fetchDocument(url)
-        val musicEvents = importLiveMusic(homepage, url)
+        val music = importLiveMusic(homepage, url)
         val djEvents = importDjProgram(homepage, url)
 
-        val events = dedupeBySourceId(musicEvents + djEvents)
-        logger.info { "Scraped ${events.size} Junction Bar event(s) (${musicEvents.size} live music, ${djEvents.size} DJ)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
+        val events = dedupeBySourceId(music.items + djEvents)
+        logger.info { "Scraped ${events.size} Junction Bar event(s) (${music.items.size} live music, ${djEvents.size} DJ)" }
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = music.complete)
     }
 
-    /** Follows the live-music listing to its monthly program pages and parses each. */
+    /** Follows the live-music listing to its monthly program pages and parses each; a failed month leaves the others. */
     private suspend fun importLiveMusic(
         homepage: Document,
         entryUrl: String
-    ): List<ScrapedEvent> {
+    ): ReadEach<ScrapedEvent> {
         val listingUrl = resolveProgramUrl(homepage, entryUrl, MUSIC_LINK_MARKER, MUSIC_LISTING_FALLBACK)
         val listing = htmlFetcher.fetchDocument(listingUrl)
         val monthUrls =
@@ -93,11 +95,11 @@ class JunctionBarWebsiteImporter(
                 .distinct()
         logger.info { "Found ${monthUrls.size} monthly program page(s) linked from Junction Bar listing $listingUrl" }
 
-        val nights =
-            monthUrls.flatMap { monthUrl ->
+        val months =
+            readEach(monthUrls, { "Failed to read the Junction Bar month page $it, importing the other months" }) { monthUrl ->
                 musicOverviewPageScraper.scrape(htmlFetcher.fetchDocument(monthUrl), monthUrl)
             }
-        return enrichFromShopPages(nights)
+        return months.copy(items = enrichFromShopPages(months.items))
     }
 
     /** Applies each upcoming night's shop page; a night without a ticket link stays as it is. */
