@@ -15,12 +15,14 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
+import java.time.LocalDate
 import java.time.MonthDay
 
 /**
  * Pure parser for the Pfefferberg Haus 13 listing, an Event Organiser archive (`div.event-archive`) of five events a page.
  *
- * A row prints the day and the month but no year, which is the occurrence nearest today. Its one time is the start, or
+ * A row prints the day and the month but no year, which is the occurrence nearest today. A multi-day row prints its first
+ * and last day in `-finish` classes instead, and the last is the end date. Its one time is the start, or
  * the doors when the event page names no start. Below the teaser sits a ticket link, `Abendkasse` or `Freier Eintritt`.
  */
 class PfefferbergHaus13OverviewPageScraper(
@@ -45,13 +47,16 @@ class PfefferbergHaus13OverviewPageScraper(
         val url = resolveUrl(baseUrl, link.attr("href"))
         val cleanedTitle = cleanEventTitle(link.text())
         val title = cleanedTitle.text
-        val month = requireNotNull(parseGermanMonthAbbreviation(row.textAt(".event-arc-month"))) { "'$title' has no readable month" }
-        val day = requireNotNull(row.textAt(".event-arc-day")?.toIntOrNull()) { "'$title' has no readable day" }
+        val multiDay = row.selectFirst(".event-arc-month") == null
+        val days = row.select(if (multiDay) ".event-arc-day-finish" else ".event-arc-day")
+        val months = row.select(if (multiDay) ".event-arc-month-finish" else ".event-arc-month")
+        val start = inferYearForWeekday(monthDayOf(days.firstOrNull(), months.firstOrNull(), title), weekday = null, clock = clock)
         val type = eventTypeOf(title)
         return ScrapedEvent(
             title = title,
             eventType = type,
-            eventDate = inferYearForWeekday(MonthDay.of(month, day), weekday = null, clock = clock),
+            eventDate = start,
+            endDate = if (multiDay) endOf(monthDayOf(days.lastOrNull(), months.lastOrNull(), title), start) else null,
             startTime = parseTime(row.textAt(".event-arc-time")),
             imageUrl = row.selectFirst(".event-arc-cover img")?.absUrl("src")?.let(::fullSizeImage),
             sourceUrl = url,
@@ -61,6 +66,25 @@ class PfefferbergHaus13OverviewPageScraper(
             soldOut = cleanedTitle.soldOut,
             artists = actsOf(title, type, lineup = emptyList())
         )
+    }
+
+    private fun monthDayOf(
+        day: Element?,
+        month: Element?,
+        title: String
+    ): MonthDay {
+        val monthValue = requireNotNull(parseGermanMonthAbbreviation(month?.text())) { "'$title' has no readable month" }
+        val dayValue = requireNotNull(day?.text()?.toIntOrNull()) { "'$title' has no readable day" }
+        return MonthDay.of(monthValue, dayValue)
+    }
+
+    /** The last day in the year of [start], or the next one for a run over New Year; none when it is the start itself. */
+    private fun endOf(
+        last: MonthDay,
+        start: LocalDate
+    ): LocalDate? {
+        val end = last.atYear(start.year).let { if (it < start) last.atYear(start.year + 1) else it }
+        return end.takeIf { it > start }
     }
 }
 
