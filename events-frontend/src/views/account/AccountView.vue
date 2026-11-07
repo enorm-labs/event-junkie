@@ -35,7 +35,7 @@ import type { Account } from '@/api/types'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { setSession } from '@/composables/useSession'
 import { berlinDateOf, formatLongDate } from '@/lib/format'
-import { SECTION_TITLE_CLASS } from '@/lib/utils'
+import { DIALOG_OVERLAY_CLASS, SECTION_TITLE_CLASS } from '@/lib/utils'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -145,7 +145,7 @@ function since(createdAt?: string): string {
               <Button :disabled="busy" variant="destructive">{{ t('account.page.delete') }}</Button>
             </AlertDialogTrigger>
             <AlertDialogPortal>
-              <AlertDialogOverlay class="fixed inset-0 z-40 bg-background/80" />
+              <AlertDialogOverlay :class="DIALOG_OVERLAY_CLASS" />
               <AlertDialogContent
                 class="fixed inset-x-4 top-1/2 z-50 mx-auto max-w-md -translate-y-1/2 space-y-4 border border-border bg-background p-6"
               >
