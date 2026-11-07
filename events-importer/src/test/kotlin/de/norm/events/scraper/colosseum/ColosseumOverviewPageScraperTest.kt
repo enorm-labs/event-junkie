@@ -52,15 +52,17 @@ class ColosseumOverviewPageScraperTest {
     ): String? = scrapeOne(mapOf("title" to title, "description" to subtitle)).eventType
 
     /** The one event a payload of [fields], over a slug and a start date, yields. */
-    private fun scrapeOne(fields: Map<String, Any>): ScrapedEvent {
-        val event =
-            mapOf(
-                "slug" to "probe",
-                "scheduling" to mapOf("config" to mapOf("startDate" to "2026-10-05T17:00:00.000Z", "timeZoneId" to "Europe/Berlin"))
-            ) + fields
-        val payload = mapOf("appsWarmupData" to mapOf(WIX_EVENTS_APP to mapOf("widget" to mapOf("events" to mapOf("events" to listOf(event))))))
+    private fun scrapeOne(fields: Map<String, Any>): ScrapedEvent = scrapeAll(mapOf("slug" to "probe") + fields).single()
+
+    /** The events a payload of [events] yields, each over a start date. */
+    private fun scrapeAll(vararg events: Map<String, Any>): List<ScrapedEvent> {
+        val dated =
+            events.map {
+                mapOf("scheduling" to mapOf("config" to mapOf("startDate" to "2026-10-05T17:00:00.000Z", "timeZoneId" to "Europe/Berlin"))) + it
+            }
+        val payload = mapOf("appsWarmupData" to mapOf(WIX_EVENTS_APP to mapOf("widget" to mapOf("events" to mapOf("events" to dated)))))
         val html = "<script id=\"wix-warmup-data\" type=\"application/json\">${JsonMapper.builder().build().writeValueAsString(payload)}</script>"
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
     }
 
     @Test
@@ -72,6 +74,41 @@ class ColosseumOverviewPageScraperTest {
         event.sourceId shouldBe "colosseum:probe"
         event.soldOut shouldBe true
         scrapeOne(mapOf("title" to "Podcast-Tour 2026", "registration" to external)).soldOut shouldBe false
+    }
+
+    @Test
+    fun `drops the design Christmas market and keeps the other events of the payload`() {
+        // The live title of event 13095 (#4585), over two nights of the regular programme.
+        val kept =
+            scrapeAll(
+                mapOf("slug" to "cornelia-funke", "title" to "Cornelia Funke", "description" to "Buchpremiere"),
+                mapOf(
+                    "slug" to "weihnachtsrodeo-indoor-design-weihnachtsmarkt-2",
+                    "title" to "Weihnachtsrodeo - Indoor Design Weihnachtsmarkt",
+                    "description" to "Weihnachtsrodeo der angesagte Indoor-Designmarkt für originelle und unkonventionelle Geschenkideen in Berlin."
+                ),
+                mapOf("slug" to "investment", "title" to "Investment", "description" to "Kinoevents 2026")
+            )
+        kept.map { it.sourceId } shouldBe listOf("colosseum:cornelia-funke", "colosseum:investment")
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "Weihnachtsrodeo - Indoor Design Weihnachtsmarkt | false",
+            "WINTERMARKT | false",
+            "Vintage Market im Colosseum | false",
+            "Marktwirtschaft und Moral – ein Abend mit einem sehr langen Titel über Geld, Gier und die Frage, was bleibt | true",
+            "Supermarket Sweep Live | true",
+            "Annika Sala - Interaktive Lesung | true"
+        ]
+    )
+    fun `drops a title that names a market, not one that only contains the letters`(
+        title: String,
+        kept: Boolean
+    ) {
+        scrapeAll(mapOf("slug" to "probe", "title" to title)).isNotEmpty() shouldBe kept
     }
 
     @Test
