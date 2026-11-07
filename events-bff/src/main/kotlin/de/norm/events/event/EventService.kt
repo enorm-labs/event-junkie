@@ -19,6 +19,7 @@ import de.norm.events.promoter.PromoterSummaryResponse
 import de.norm.events.sourcelicence.SourceLicenceGate
 import de.norm.events.venue.VenueRepository
 import de.norm.events.venue.VenueSummaryResponse
+import de.norm.events.weather.WeatherForecasts
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
@@ -56,7 +57,8 @@ class EventService(
     private val eventEnrichmentRepository: EventEnrichmentRepository,
     private val postponementRepository: PostponementRepository,
     private val relocationRepository: RelocationRepository,
-    private val festivalRepository: FestivalRepository
+    private val festivalRepository: FestivalRepository,
+    private val weatherForecasts: WeatherForecasts
 ) {
     /**
      * Searches events with optional filters and pagination, returning summaries with
@@ -198,7 +200,8 @@ class EventService(
             postponedTo = postponementRepository.newDate(event),
             movedTo = relocationRepository.newPlace(event),
             derivedGenreTags = genreTags.derived,
-            festival = event.festivalId?.let { festivalRepository.findById(it) }?.let(FestivalSummaryResponse::fromEntity)
+            festival = event.festivalId?.let { festivalRepository.findById(it) }?.let(FestivalSummaryResponse::fromEntity),
+            weather = event.weatherAt(venue.venueTypes)
         )
     }
 
@@ -319,10 +322,13 @@ class EventService(
                 now = now,
                 festival = event.festivalId?.let { festivalsById[it] }?.let(FestivalSummaryResponse::fromEntity),
                 // A query per relocated event only: two dozen at most across the whole programme.
-                movedTo = relocationRepository.newPlace(event)
+                movedTo = relocationRepository.newPlace(event),
+                weather = event.weatherAt(venue.venueTypes)
             )
         }
     }
+
+    private fun EventEntity.weatherAt(venueTypes: List<String>) = weatherForecasts.forStart(venueTypes, eventDate, startTime, doorsTime)
 
     private suspend fun fetchArtists(artistIds: List<Long>): Map<Long?, ArtistEntity> {
         val distinct = artistIds.distinct()

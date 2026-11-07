@@ -25,6 +25,7 @@ flowchart TD
     sitemap["sitemap"]
     sourcelicence["sourcelicence"]
     venue["venue"]
+    weather["weather"]
 
     account --> common
     account --> event
@@ -41,6 +42,7 @@ flowchart TD
     event --> promoter
     event --> sourcelicence
     event --> venue
+    event --> weather
     feed --> common
     feed --> event
     feed --> venue
@@ -57,6 +59,7 @@ flowchart TD
     sourcelicence --> licence
     venue --> common
     venue --> image
+    weather --> common
 ```
 
 <!-- /generated: module diagram -->

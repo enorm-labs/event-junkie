@@ -1694,6 +1694,8 @@ export interface components {
              * @example false
              */
             featured?: boolean;
+            /** @description The weather forecast for the start hour (ADR-057). Only at an open-air venue, from 1 May to 30 September, for a start in the next seven days, and only while a current DWD forecast is held. Null otherwise. */
+            weather?: components["schemas"]["WeatherForecastResponse"] | null;
         };
         /** @description The festival an event belongs to */
         FestivalSummaryResponse: {
@@ -1938,6 +1940,27 @@ export interface components {
              * @example 250
              */
             capacity?: number | null;
+        };
+        /** @description The DWD MOSMIX forecast for the hour the event starts, at station 10384 (Berlin-Tempelhof) */
+        WeatherForecastResponse: {
+            /**
+             * @description The weather in the start hour, reduced to the icon the page shows
+             * @example PARTLY_CLOUDY
+             * @enum {string}
+             */
+            condition?: "CLEAR" | "PARTLY_CLOUDY" | "CLOUDY" | "FOG" | "RAIN" | "SNOW" | "THUNDERSTORM";
+            /**
+             * Format: int32
+             * @description The temperature at the start, in whole degrees Celsius
+             * @example 22
+             */
+            temperatureCelsius?: number;
+            /**
+             * Format: int32
+             * @description The probability of more than 0.1 mm of rain in the start hour, in percent. Null when the forecast leaves it out
+             * @example 10
+             */
+            rainProbabilityPercent?: number | null;
         };
         /** @description A page of results with pagination metadata */
         PageResponsePromoterListItemResponse: {
@@ -2542,6 +2565,8 @@ export interface components {
              * @example false
              */
             featured?: boolean;
+            /** @description The weather forecast for the start hour (ADR-057). Only at an open-air venue, from 1 May to 30 September, for a start in the next seven days, and only while a current DWD forecast is held. Null otherwise. */
+            weather?: components["schemas"]["WeatherForecastResponse"] | null;
         };
         /** @description An artist's participation in an event lineup */
         LineupEntryResponse: {

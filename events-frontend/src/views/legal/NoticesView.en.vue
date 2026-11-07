@@ -49,6 +49,24 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
     </section>
 
     <section>
+      <h2>Weather data</h2>
+      <p>
+        The forecast on an open-air event comes from the open data of the Deutscher Wetterdienst:
+        the MOSMIX forecast for the Berlin-Tempelhof station. Our server fetches it, so your browser
+        never contacts the DWD.
+      </p>
+      <p>
+        Data:
+        <a
+          href="https://www.dwd.de/EN/service/copyright/copyright_node.html"
+          rel="noopener"
+          target="_blank"
+          >Deutscher Wetterdienst</a
+        >
+      </p>
+    </section>
+
+    <section>
       <h2>Components by licence</h2>
       <details
         v-for="group in groups"

@@ -309,4 +309,69 @@ describe('EventWhen', () => {
       ).toEqual([])
     })
   })
+
+  describe('the weather forecast (ADR-057)', () => {
+    const forecast = {
+      condition: 'PARTLY_CLOUDY' as const,
+      temperatureCelsius: 22,
+      rainProbabilityPercent: 10,
+    }
+
+    function weatherLine(event: EventDetail) {
+      return mount(EventWhen, { props: { event } }).find('[data-testid="weather"]')
+    }
+
+    it('shows the condition, the temperature and the rain probability in English', () => {
+      const line = weatherLine({ ...base, startTime: '20:00:00', weather: forecast })
+
+      expect(line.text()).toBe('Forecast: partly cloudy, 22 °C · 10% chance of rain')
+      expect(line.find('svg').attributes('aria-hidden')).toBe('true')
+    })
+
+    it('shows the same line in German', () => {
+      i18n.global.locale.value = 'de'
+
+      expect(weatherLine({ ...base, startTime: '20:00:00', weather: forecast }).text()).toBe(
+        'Vorhersage: teils bewölkt, 22 °C · Regenrisiko 10 %',
+      )
+    })
+
+    it('leaves out a rain probability the forecast does not give', () => {
+      const line = weatherLine({
+        ...base,
+        startTime: '20:00:00',
+        weather: { ...forecast, rainProbabilityPercent: null },
+      })
+
+      expect(line.text()).toBe('Forecast: partly cloudy, 22 °C')
+    })
+
+    it('draws a night icon for a clear sky after nine', () => {
+      const day = weatherLine({
+        ...base,
+        startTime: '15:00:00',
+        weather: { ...forecast, condition: 'CLEAR' },
+      })
+      const night = weatherLine({
+        ...base,
+        startTime: '22:00:00',
+        weather: { ...forecast, condition: 'CLEAR' },
+      })
+
+      expect(day.find('svg').classes()).toContain('lucide-sun')
+      expect(night.find('svg').classes()).toContain('lucide-moon')
+    })
+
+    it('shows nothing without a forecast, or on a date the show does not happen', () => {
+      expect(weatherLine({ ...base, startTime: '20:00:00' }).exists()).toBe(false)
+      expect(
+        weatherLine({
+          ...base,
+          startTime: '20:00:00',
+          status: 'CANCELLED',
+          weather: forecast,
+        }).exists(),
+      ).toBe(false)
+    })
+  })
 })

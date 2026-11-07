@@ -11,6 +11,7 @@ import de.norm.events.image.ImageSourceResponse
 import de.norm.events.image.ServedImage
 import de.norm.events.promoter.PromoterSummaryResponse
 import de.norm.events.venue.VenueSummaryResponse
+import de.norm.events.weather.WeatherForecastResponse
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 import java.time.Instant
@@ -91,7 +92,9 @@ data class EventSummaryResponse(
     @Schema(description = FESTIVAL_DESCRIPTION)
     val festival: FestivalSummaryResponse? = null,
     @Schema(description = FEATURED_DESCRIPTION, example = "false")
-    val featured: Boolean = false
+    val featured: Boolean = false,
+    @Schema(description = WEATHER_DESCRIPTION)
+    val weather: WeatherForecastResponse? = null
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -104,7 +107,8 @@ data class EventSummaryResponse(
             imageWithheld: Boolean,
             now: Instant,
             festival: FestivalSummaryResponse? = null,
-            movedTo: MovedToResponse? = null
+            movedTo: MovedToResponse? = null,
+            weather: WeatherForecastResponse? = null
         ): EventSummaryResponse =
             EventSummaryResponse(
                 id = entity.requiredId(),
@@ -139,7 +143,8 @@ data class EventSummaryResponse(
                 genreTags = genreTags,
                 movedTo = movedTo,
                 festival = festival,
-                featured = entity.isFeaturedAt(now)
+                featured = entity.isFeaturedAt(now),
+                weather = weather
             )
     }
 }
@@ -330,7 +335,9 @@ data class EventDetailResponse(
     @Schema(description = FESTIVAL_DESCRIPTION)
     val festival: FestivalSummaryResponse? = null,
     @Schema(description = FEATURED_DESCRIPTION, example = "false")
-    val featured: Boolean = false
+    val featured: Boolean = false,
+    @Schema(description = WEATHER_DESCRIPTION)
+    val weather: WeatherForecastResponse? = null
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -350,7 +357,8 @@ data class EventDetailResponse(
             postponedTo: PostponedToResponse? = null,
             movedTo: MovedToResponse? = null,
             derivedGenreTags: Map<String, GenreTagOrigin> = emptyMap(),
-            festival: FestivalSummaryResponse? = null
+            festival: FestivalSummaryResponse? = null,
+            weather: WeatherForecastResponse? = null
         ): EventDetailResponse =
             EventDetailResponse(
                 id = entity.requiredId(),
@@ -403,7 +411,8 @@ data class EventDetailResponse(
                 postponedTo = postponedTo,
                 movedTo = movedTo,
                 festival = festival,
-                featured = entity.isFeaturedAt(now)
+                featured = entity.isFeaturedAt(now),
+                weather = weather
             )
     }
 }
@@ -496,6 +505,10 @@ private fun EventEntity.isFeaturedAt(now: Instant): Boolean = featuredUntil?.isA
 
 // The descriptions the summary and the detail response both carry, each stating a rule a client
 // acts on. Written once, so a correction cannot reach one response and miss the other.
+private const val WEATHER_DESCRIPTION =
+    "The weather forecast for the start hour (ADR-057). Only at an open-air venue, from 1 May to 30 September, for a start in the next " +
+        "seven days, and only while a current DWD forecast is held. Null otherwise."
+
 private const val FEATURED_DESCRIPTION =
     "True while an operator features the event as a pick. The page marks it as one. The value is cached like the rest of the response."
 private const val FESTIVAL_DESCRIPTION =
