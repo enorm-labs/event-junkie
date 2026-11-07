@@ -1,6 +1,8 @@
 package de.norm.events.scraper.labsaal
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.forChildrenPhrase
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -124,6 +126,23 @@ class LabsaalCalendarScraperTest {
                 "wöchentlichen Leseshows kommentiert haben.\r\nCATEGORIES:Alle Veranstaltungen\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 
         scraper.scrape(calendar).single().eventType shouldBe "READING"
+    }
+
+    @Test
+    fun `scrape marks a Theater für Kinder show for-children and leaves the market and the concerts unmarked`() {
+        val calendar =
+            "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nDTSTART;TZID=Europe/Berlin:20261114T140000\r\n" +
+                "SUMMARY:Theater für Kinder: Die Zeitdiebe\r\nURL:https://labsaal.de/events/theater-fuer-kinder-die-zeitdiebe/\r\n" +
+                "DESCRIPTION:Veranstaltung des Kindermusiktheater Berlin e.V. in Zusammenarbeit mit dem LabSaal.\\nSa\\, 14.11. 14:00 " +
+                "(45 Minuten)\\n4-9 Jahre\r\nCATEGORIES:Alle Veranstaltungen\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+
+        val show = scraper.scrape(calendar).single()
+
+        show.eventType shouldBe "SHOW"
+        show.forChildrenPhrase shouldBe "für Kinder"
+        event("luebarser-weihnachtsmarkt-2025").isForChildren shouldBe false
+        event("112").isForChildren shouldBe false
+        events.none { it.isForChildren } shouldBe true
     }
 
     @Test

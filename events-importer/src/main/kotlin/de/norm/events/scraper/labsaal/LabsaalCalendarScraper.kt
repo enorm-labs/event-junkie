@@ -7,9 +7,11 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.calendarEvents
+import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.inferUnmarkedTitleType
@@ -25,6 +27,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
  * the society's weekly groups and courses; only the `Alle Veranstaltungen` category is the
  * programme ([isProgramme]). The site names no format, so the type comes from the title, then from
  * a format the description names, then from a music cue; a night with none is typed other.
+ * A title such as `Theater für Kinder: …` marks the night for-children ([childrensShowPhrase],
+ * EVENT_SCOPE.md §3.5). Only the title is read: it marks every children's show, and the
+ * description adds none.
  */
 class LabsaalCalendarScraper {
     private val logger = KotlinLogging.logger {}
@@ -78,7 +83,7 @@ class LabsaalCalendarScraper {
             pricePresale = prices.presale,
             priceBoxOffice = prices.boxOffice,
             free = !hasPrice && hasFreeEntryPhrase(description)
-        )
+        ).forChildrenIf(childrensShowPhrase(title, null))
     }
 
     private fun eventType(
