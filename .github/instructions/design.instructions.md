@@ -26,7 +26,7 @@ suppression carries its reason, as the one in `MultiSelectFilter.vue` does.
 | A lift, scale or translate on hover                             | A colour change the content already justifies, like the poster's grayscale reveal       | [#1241](https://github.com/enorm-labs/event-junkie/issues/1241) |
 | An eyebrow label above a page title                             | The `h1` alone. `SectionLabel` is for a section that has no other heading               | [#1239](https://github.com/enorm-labs/event-junkie/issues/1239) |
 | A row of pills carrying facts                                   | A meta line, `·` separated, with one coloured word for state                            | [#1248](https://github.com/enorm-labs/event-junkie/issues/1248) |
-| Gradients                                                       | A flat token                                                                            | [#1250](https://github.com/enorm-labs/event-junkie/issues/1250) |
+| Gradients                                                       | A flat token. The one exception is the photo credit's scrim (§2)                        | [#1250](https://github.com/enorm-labs/event-junkie/issues/1250) |
 | Emoji as an icon                                                | `@lucide/vue`, or an inline SVG with `aria-hidden`. The poster's disco ball is Phosphor | [#1250](https://github.com/enorm-labs/event-junkie/issues/1250) |
 | A centred column of text as a page's opening                    | Left-aligned, unless the thing centred is symmetrical artwork                           | [#1243](https://github.com/enorm-labs/event-junkie/issues/1243) |
 | An arbitrary Tailwind value outside `components/ui/**`          | A built-in utility, then a `@theme` token. See the ladder in [vue](vue.instructions.md) | —                                                               |
@@ -63,6 +63,10 @@ neither flips with the theme.
 **One accent, and it is violet.** Chroma lives on `primary`, `accent` and `ring`; everything else is neutral, so the accent reads as a spotlight
 (BRANDING §5.1). **The one exception is the `--poster-*` set**: the ground of a title poster, one quiet tint per kind of night (`EventPoster.vue`). It
 never colours text or a control, and it stays at chroma 0.04 to 0.05 so the accent still reads as the only colour.
+
+**The photo credit's scrim is the one gradient, and the one raw colour** (`CreditLine.vue`, `overlay`). A licensed photo's credit sits on a black-to-transparent
+gradient in `black` and `white`, because the photographs run from a black club interior to a white sky: plain text over them is unreadable on a third of the
+venues, and a theme token would flip to dark text on a dark photo. It lies over a photograph only, never over the page (#4658).
 
 **Colour is never the only carrier of meaning.** `Sold out` is the word `Sold out`; the colour is emphasis on top of it. New pairs clear 4.5:1 for text and
 3:1 for a boundary, measured against the ground they sit on rather than against the value they were picked for.

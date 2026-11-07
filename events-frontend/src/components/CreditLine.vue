@@ -16,7 +16,7 @@ import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
  * `overlay` lays it over the foot of the picture instead of under it. The scrim is not decoration:
  * these photographs run from a near-black club interior to a white-sky facade, so plain text over
  * them is unreadable on a third of the venues. It is never revealed on hover, because a touch
- * device has none.
+ * device has none. design.instructions.md §2 names it as the one gradient and the one raw colour.
  */
 withDefaults(defineProps<{ credit: ImageCredit; kind: 'photo' | 'text'; overlay?: boolean }>(), {
   overlay: false,
