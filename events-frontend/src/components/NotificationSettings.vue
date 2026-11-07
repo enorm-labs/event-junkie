@@ -22,6 +22,7 @@ import {
 import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { usePush } from '@/composables/usePush'
+import { CHECKBOX_CLASS } from '@/lib/utils'
 
 const props = defineProps<{ changePush: boolean; reminderPush: boolean }>()
 
@@ -134,7 +135,7 @@ onMounted(() => run(load))
     <label class="flex items-start gap-2 text-body">
       <input
         :checked="changes"
-        class="mt-1 size-4 shrink-0 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        :class="['mt-1', CHECKBOX_CLASS]"
         data-testid="change-push"
         type="checkbox"
         @change="run(() => toggleChanges(($event.target as HTMLInputElement).checked))"
@@ -149,7 +150,7 @@ onMounted(() => run(load))
     <label class="flex items-start gap-2 text-body">
       <input
         :checked="reminders"
-        class="mt-1 size-4 shrink-0 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        :class="['mt-1', CHECKBOX_CLASS]"
         data-testid="reminder-push"
         type="checkbox"
         @change="run(() => toggleReminders(($event.target as HTMLInputElement).checked))"
