@@ -1,10 +1,11 @@
 package de.norm.events.scraper.downstairs
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.jsonLdEvents
-import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.schemaImageUrl
-import de.norm.events.scraper.schemaOffers
+import de.norm.events.scraper.schemaOfferPrices
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import org.jsoup.nodes.Document
@@ -44,9 +45,9 @@ class DownstairsTicketPageScraper {
         return DownstairsShow(
             description = htmlParagraphText(event.stringOrNull("description")),
             imageUrl = event.schemaImageUrl(),
-            price = event.schemaOffers().mapNotNull { it.stringOrNull("price")?.toBigDecimalOrNull() }.minOrNull(),
+            price = event.schemaOfferPrices().minOrNull(),
             priceNote = tierNote(document),
-            doorsTime = document.select(INFO_BADGE).firstNotNullOfOrNull { DOORS.find(it.text()) }?.let { parseTime(it.groupValues[1]) }
+            doorsTime = document.select(INFO_BADGE).firstNotNullOfOrNull { labelledClock(it.text(), DOORS_LABELS) }
         )
     }
 
@@ -65,7 +66,6 @@ class DownstairsTicketPageScraper {
 
     private companion object {
         const val INFO_BADGE = ".ds-info-badge"
-        val DOORS = Regex("""Einlass:\s*(\d{1,2}:\d{2})""")
         val SPACES = Regex("""[\s\u00A0\u202F]+""")
     }
 }

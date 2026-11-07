@@ -15,7 +15,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaName
-import de.norm.events.scraper.schemaOffers
+import de.norm.events.scraper.schemaOfferPrices
 import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stringOrNull
@@ -86,7 +86,7 @@ class OrangerieOverviewPageScraper {
                 tags.isEmpty() && foodTags.isNotEmpty() -> EventType.OTHER
                 else -> EventType.PARTY
             }
-        val price = node.schemaOffers().firstNotNullOfOrNull { it.stringOrNull("price")?.toBigDecimalOrNull() }
+        val price = node.schemaOfferPrices().firstOrNull()
         return ScrapedEvent(
             title = name,
             description = node.stringOrNull("description"),

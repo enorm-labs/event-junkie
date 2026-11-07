@@ -118,4 +118,17 @@ class JsonLdEventsTest {
         event("""{"@type": "Event", "offers": [{"availability": "SoldOut"}, {"availability": "InStock"}]}""").schemaSoldOut() shouldBe false
         event("""{"@type": "Event"}""").schemaSoldOut() shouldBe false
     }
+
+    @Test
+    fun `schemaOfferPrices keeps every price that reads as a number, in offer order`() {
+        val node = event("""{"@type": "Event", "name": "A", "offers": [{"price": "18.50"}, {"price": "frei"}, {"url": "x"}, {"price": "12"}]}""")
+
+        node.schemaOfferPrices() shouldContainExactly listOf(java.math.BigDecimal("18.50"), java.math.BigDecimal("12"))
+    }
+
+    @Test
+    fun `schemaOfferPrices reads a single offer object, and none without offers`() {
+        event("""{"@type": "Event", "name": "A", "offers": {"price": "9"}}""").schemaOfferPrices() shouldContainExactly listOf(java.math.BigDecimal("9"))
+        event("""{"@type": "Event", "name": "A"}""").schemaOfferPrices().shouldBeEmpty()
+    }
 }

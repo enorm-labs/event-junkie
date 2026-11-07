@@ -15,6 +15,7 @@ import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.ogImageUrl
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
@@ -92,7 +93,7 @@ class MikropolDetailPageScraper {
             startTime = labelledClock(details, START_LABELS),
             imageUrl =
                 content.hrefAt("a.event-image")
-                    ?: document.selectFirst("meta[property=og:image]")?.attr("content")?.takeIf { it.startsWith("http") },
+                    ?: document.ogImageUrl(),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.MIKROPOL.sourceIdPrefix}$slug",
             ticketUrl = content.hrefAt("div.ticket-links a.ticket"),

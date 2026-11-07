@@ -17,10 +17,9 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaName
-import de.norm.events.scraper.schemaOffers
+import de.norm.events.scraper.schemaOfferPrices
 import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
-import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -104,7 +103,7 @@ class BkaTheaterSpielplanPageScraper {
             .mapNotNull { node ->
                 val name = node.schemaName() ?: return@mapNotNull null
                 val date = node.schemaDate("startDate") ?: return@mapNotNull null
-                val price = node.schemaOffers().firstNotNullOfOrNull { it.stringOrNull("price")?.toBigDecimalOrNull() }
+                val price = node.schemaOfferPrices().firstOrNull()
                 price?.let { priceKey(date, node.schemaTime("startDate"), name) to it }
             }.toMap()
 

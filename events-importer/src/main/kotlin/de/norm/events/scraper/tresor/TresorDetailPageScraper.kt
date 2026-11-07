@@ -11,6 +11,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.ogImageUrl
 import de.norm.events.scraper.parseBasicIsoDatePrefix
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
@@ -128,7 +129,7 @@ class TresorDetailPageScraper {
     private fun parsePoster(document: Document): String? {
         val hero = document.selectFirst(HERO)
         return listOfNotNull(
-            document.selectFirst("meta[property=og:image]")?.attr("content"),
+            document.ogImageUrl(),
             hero?.selectFirst("img[data-src]")?.attr("data-src"),
             hero?.selectFirst("img[src]")?.attr("src")
         ).map { it.trim() }.firstOrNull { it.startsWith("http") }

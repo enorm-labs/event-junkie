@@ -4,7 +4,7 @@ import de.norm.events.scraper.PAY_WHAT_YOU_WANT
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.jsonLdEvents
-import de.norm.events.scraper.schemaOffers
+import de.norm.events.scraper.schemaOfferPrices
 import de.norm.events.scraper.schemaSoldOut
 import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.schemaTime
@@ -27,7 +27,7 @@ class Zimmer16EventPageScraper {
         val node = document.jsonLdEvents().firstOrNull() ?: return null
         val start = node.schemaTime("startDate")
         val end = node.schemaTime("endDate")
-        val price = node.schemaOffers().firstNotNullOfOrNull { it.stringOrNull("price")?.toBigDecimalOrNull() }
+        val price = node.schemaOfferPrices().firstOrNull()
         val text =
             document
                 .selectFirst("div.spacer--C")
