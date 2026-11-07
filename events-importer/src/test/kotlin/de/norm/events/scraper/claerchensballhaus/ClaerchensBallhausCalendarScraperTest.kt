@@ -116,6 +116,21 @@ class ClaerchensBallhausCalendarScraperTest {
     }
 
     @Test
+    fun `drops the reading meet-up and keeps a reading`() {
+        val page =
+            """<script>var c = { eventSources: [[""" +
+                """{"title":"Meet &amp; Read – Lesetreffen","start":"2026-11-15T15:00:00","details":"<p>Gemeinsames Lesen</p>",""" +
+                """"permalink":"https://claerchensball.haus/meet-read-lesetreffen/"},""" +
+                """{"title":"Lesung im Spiegelsaal","start":"2026-11-16T20:00:00","details":"","permalink":"https://claerchensball.haus/lesung/"}""" +
+                """]] };</script>"""
+
+        val reading = ClaerchensBallhausCalendarScraper().scrape(Jsoup.parse(page, BASE_URL), BASE_URL).single()
+
+        reading.title shouldBe "Lesung im Spiegelsaal"
+        reading.eventType shouldBe EventType.READING.name
+    }
+
+    @Test
     fun `keeps a concert the audience sings along to`() {
         val page =
             """<script>var c = { eventSources: [[{"title":"SingAlong – Das große Mitsing-Konzert","start":"2026-11-20T20:00:00","details":"<p>Ein Sing-along mit Band</p>","permalink":"https://claerchensball.haus/singalong/"}]] };</script>"""
