@@ -150,7 +150,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Pastiche            | `PasticheProgrammePageScraper.isOutOfScope`              | A title, format line or programme blurb that names a `Workshop`                                                              |
 | Volksbühne          | `VolksbuehneSpielplanScraper.isOutOfScope`               | A `Workshop` format label, or a title that opens with `Theaterführung`                                                       |
 | Renaissance-Theater | `RenaissanceTheaterSpielplanPageScraper.isOutOfScope`    | A title that names a `Führung`: the tour of the house                                                                        |
-| Clärchens Ballhaus  | `ClaerchensBallhausCalendarScraper.isOutOfScope`         | The `Vortrag` tour of the house, a `Workshop`, the `Weinmahl` dinner, or the `YesChoir!` choir by its title or `werdet Teil` |
+| Clärchens Ballhaus  | `ClaerchensBallhausCalendarScraper.isOutOfScope`         | The `Vortrag` house tour, a `Workshop`, the `Weinmahl` dinner, a `Lesetreffen`, or the `YesChoir!` by title or `werdet Teil` |
 | Kulturhaus Spandau  | `KulturhausSpandauApiScraper.isOutOfScope`               | The `Führung`, `Workshop` and `Ausstellung` categories, or an `Auktion` in the title or subtitle, whatever its category      |
 | 800A Bar & Cabaret  | `EightHundredAHomePageScraper.toEvent`                   | The `workshop` category: the paid improv and songwriting courses                                                             |
 | Interkosmos         | `InterkosmosApiScraper.event`                            | The `Yoga` event type, or a title that names a `Workshop` or `basteln`                                                       |
