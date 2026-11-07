@@ -77,6 +77,9 @@ fun artistSlugFor(
 /** The `sourceId` prefixes that [SOURCE_ARTIST_SLUG_OVERRIDES] scopes an entry to, for the test that pins each to a source. */
 internal val sourceScopedArtistSlugPrefixes: Set<String> get() = SOURCE_ARTIST_SLUG_OVERRIDES.keys
 
+/** Whether [name] keys onto a [NAME_CORRECTIONS] entry, which changes its letters by design; the property test skips it. */
+internal fun hasArtistNameCorrection(name: String): Boolean = name.normalizedKey() in NAME_CORRECTIONS
+
 /**
  * A second act whose name folds to a slug another act holds, mapped to a slug of its own (#2942).
  *
@@ -208,7 +211,10 @@ private val NAME_CORRECTIONS: Map<String, String> =
 /** Lowercased, punctuation- and space-free lookup key for a name. */
 private fun String.normalizedKey(): String = lowercase().replace(NON_WORD_REGEX, "")
 
-/** Everything except letters (incl. German umlauts) and digits — used to normalize a name for lookup. */
-private val NON_WORD_REGEX = Regex("""[^a-z0-9äöüßø]""")
+/**
+ * Everything but a letter of any script, the accent on it and a digit. A key that dropped `τέσ` from `τέσemfνπ` would
+ * match the `emf` correction (#4611).
+ */
+private val NON_WORD_REGEX = Regex("""[^\p{L}\p{M}\p{N}]""")
 
 private val WHITESPACE_REGEX = Regex("""\s+""")

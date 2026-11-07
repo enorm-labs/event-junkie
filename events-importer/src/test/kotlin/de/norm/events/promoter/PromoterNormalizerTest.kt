@@ -587,4 +587,23 @@ class PromoterNormalizerTest {
             split("Crunch Tapes") shouldBe listOf("Crunch Tapes")
         }
     }
+
+    // A word in another script is a name, not a connector the strip may take (#4611).
+    @Test
+    fun `keeps a credit in Cyrillic or Greek whole`() {
+        assertSoftly {
+            canonicalPromoterName("Промо Агентство") shouldBe "Промо Агентство"
+            canonicalPromoterName("Μουσική Σκηνή") shouldBe "Μουσική Σκηνή"
+            canonicalPromoterName("Промо Агентство GmbH") shouldBe "Промо Агентство"
+            isNonPromoterName("Промо Агентство") shouldBe false
+            isNonPromoterName("Концерт") shouldBe false
+            isNonPromoterName("Μουσική Σκηνή") shouldBe false
+            // Soft and hard signs transliterate to nothing, so the credit has no slug.
+            isNonPromoterName("!Ьь") shouldBe true
+            // An accented name keeps its letters, and its descriptor still comes off.
+            canonicalPromoterName("Bohème Concerts") shouldBe "Bohème"
+            // A connector is still a connector.
+            canonicalPromoterName("Loft & GmbH") shouldBe "Loft Concerts"
+        }
+    }
 }
