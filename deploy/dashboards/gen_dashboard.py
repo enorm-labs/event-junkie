@@ -418,8 +418,9 @@ panels = [
     panel(
         "p_node_mem",
         "Node memory available",
-        "The node is a cpx22 — 2 vCPU / 4 GB running k3s, two JVMs, PostgreSQL and this observability stack. "
-        "It global-OOMed on 2026-08-20 with load at 99. This panel is the one that would have seen it coming.",
+        "Both k3s nodes are cx33s, 4 vCPU / 8 GB, running k3s, two JVMs and this observability stack. Staging's also "
+        "runs PostgreSQL; production's database has its own cx23. A cpx22 with all of it global-OOMed on 2026-08-20 "
+        "with load at 99. This panel is the one that would have seen it coming.",
         "metric",
         "min(k8s_node_memory_available)",
         x=96,
