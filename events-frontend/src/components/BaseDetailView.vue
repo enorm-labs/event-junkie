@@ -17,7 +17,7 @@ import SectionLabel from '@/components/SectionLabel.vue'
 import type { ChosenDescription } from '@/lib/description'
 import type { ImageCredit } from '@/lib/imageCredit'
 import type { PastEvents } from '@/composables/usePastEvents'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, PAGE_TITLE_CLASS } from '@/lib/utils'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
 
@@ -93,7 +93,7 @@ const { compact } = useCompactView()
     <div v-else-if="notFound" class="space-y-3">
       <!-- Interpolated rather than concatenated: German puts the negation last ("Location nicht
            gefunden"), so the two halves cannot be separate strings. -->
-      <h1 class="text-page font-bold tracking-tight">
+      <h1 :class="PAGE_TITLE_CLASS">
         {{ t('detail.notFoundHeading', { kind }) }}
       </h1>
       <p class="text-body text-muted-foreground">{{ notFoundText }}</p>
@@ -132,7 +132,7 @@ const { compact } = useCompactView()
         <!-- No picture, no placeholder: here the name is the content, and a full-width 3:2 void
            would push it off the screen (#811 draws one on a card). -->
         <header class="space-y-2">
-          <h1 class="text-page font-bold tracking-tight">{{ name }}</h1>
+          <h1 :class="PAGE_TITLE_CLASS">{{ name }}</h1>
           <FollowButton
             v-if="followKind && followSlug"
             :kind="followKind"

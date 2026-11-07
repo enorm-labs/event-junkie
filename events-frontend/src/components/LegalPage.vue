@@ -6,6 +6,7 @@
  * these are four pages of body copy, not a CMS.
  */
 import { LAST_REVIEWED } from '@/lib/legal'
+import { PAGE_TITLE_CLASS } from '@/lib/utils'
 import { useI18n } from 'vue-i18n'
 
 defineProps<{
@@ -31,7 +32,7 @@ const { t } = useI18n()
 <template>
   <main class="mx-auto max-w-3xl space-y-6 p-4 text-prose sm:p-8">
     <header class="space-y-2">
-      <h1 class="text-page font-bold tracking-tight">{{ title }}</h1>
+      <h1 :class="PAGE_TITLE_CLASS">{{ title }}</h1>
       <p v-if="intro" class="text-muted-foreground">{{ intro }}</p>
       <p v-if="showReviewDate" class="text-body text-muted-foreground">
         {{ t('legal.lastReviewed') }} <time :datetime="LAST_REVIEWED">{{ LAST_REVIEWED }}</time>
