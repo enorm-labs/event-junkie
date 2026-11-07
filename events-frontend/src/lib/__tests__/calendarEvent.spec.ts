@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { EventSummary } from '@/api/types'
-import { toCalendarInput } from '@/lib/calendarEvent'
+import { spansDays, toCalendarInput } from '@/lib/calendarEvent'
 
 function summary(overrides: Partial<EventSummary>): EventSummary {
   return {
@@ -27,7 +27,7 @@ describe('toCalendarInput', () => {
     expect(input.start).toBe('2026-09-18T20:00:00')
     expect(input).not.toHaveProperty('end')
     expect(input.url).toBe('/de/events/astra-night')
-    expect(input.extendedProps).toEqual({ slug: 'astra-night', venue: 'Astra' })
+    expect(input.extendedProps).toEqual({ slug: 'astra-night', venue: 'Astra', multiDay: 0 })
   })
 
   it('starts at the doors time when the venue publishes no start, but not at the assumed slot', () => {
@@ -96,5 +96,25 @@ describe('toCalendarInput', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-25T12:00:00Z'))
     expect(toInput(summary({ endDate: '2026-10-31' })).className).toBeUndefined()
+  })
+})
+
+/** A bar is ordered after the day's own events, so what counts as a bar must match the drawing (#4655). */
+describe('spansDays', () => {
+  const day = { eventDate: '2026-11-07' }
+
+  it('is false for a single day', () => {
+    expect(spansDays({ ...day, endDate: null, endTime: null })).toBe(false)
+    expect(spansDays({ ...day, endDate: '2026-11-07', endTime: '23:00:00' })).toBe(false)
+  })
+
+  it('is false for a night that ends before 09:00 the next morning', () => {
+    expect(spansDays({ ...day, endDate: '2026-11-08', endTime: '06:00:00' })).toBe(false)
+  })
+
+  it('is true for a weekender, an exhibition and an all-day run', () => {
+    expect(spansDays({ ...day, endDate: '2026-11-08', endTime: '14:00:00' })).toBe(true)
+    expect(spansDays({ ...day, endDate: '2026-12-06', endTime: '18:00:00' })).toBe(true)
+    expect(spansDays({ ...day, endDate: '2026-11-08', endTime: null })).toBe(true)
   })
 })

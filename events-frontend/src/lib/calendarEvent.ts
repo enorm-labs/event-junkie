@@ -11,6 +11,19 @@ import { isLiveNow } from '@/lib/longRuns'
  * and live are the same classes EventCard uses, off the same Berlin clock. `localePath` is
  * `useLocalePath()`'s: the link is a real `href` a crawler follows, and an unprefixed path is a 404.
  */
+/**
+ * Whether the calendar draws the event across more than one day: a run with a later end date,
+ * unless it is a night ending before EventCalendar's `nextDayThreshold` (09:00) the next morning.
+ */
+export function spansDays(event: Pick<EventSummary, 'eventDate' | 'endDate' | 'endTime'>): boolean {
+  if (!event.eventDate || !event.endDate || event.endDate <= event.eventDate) return false
+  return !(
+    event.endDate === addDays(event.eventDate, 1) &&
+    !!event.endTime &&
+    event.endTime < '09:00'
+  )
+}
+
 export function toCalendarInput(
   event: EventSummary,
   localePath: (path: string) => string,
@@ -36,6 +49,11 @@ export function toCalendarInput(
         ? 'fc-event-live'
         : undefined,
     // `venue` backs the calendar's hover tooltip, where the clipped title is spelled out.
-    extendedProps: { slug: event.slug, venue: event.venue?.name },
+    // `multiDay` orders a bar after the day's own events (`eventOrder` in EventCalendar, #4655).
+    extendedProps: {
+      slug: event.slug,
+      venue: event.venue?.name,
+      multiDay: spansDays(event) ? 1 : 0,
+    },
   }
 }

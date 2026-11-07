@@ -103,6 +103,14 @@ describe('EventCalendar week view', () => {
     vi.unstubAllGlobals()
   })
 
+  it("places a day's own events before the runs that span it (#4655)", async () => {
+    const wrapper = await render('en')
+
+    expect(wrapper.findComponent(FullCalendar).props('options')!.eventOrder).toBe(
+      'multiDay,start,title',
+    )
+  })
+
   it('never folds a day of the week grid into "+N more"', async () => {
     const wrapper = await render('en')
 
@@ -131,6 +139,21 @@ describe('EventCalendar week view', () => {
       'Week',
       'List',
     ])
+  })
+
+  it('opens on the month from md up', async () => {
+    stubNarrow(false)
+    const wrapper = await render('en')
+
+    expect(viewType(wrapper)).toBe('dayGridMonth')
+  })
+
+  it('opens on the week list below md, with the month a tab away (#4657)', async () => {
+    stubNarrow(true)
+    const wrapper = await render('en')
+
+    expect(viewType(wrapper)).toBe('listWeekNarrow')
+    expect(wrapper.findAll('[role="tab"]').map((tab) => tab.text())).toContain('Month')
   })
 
   it('swaps an open week between grid and list when the width crosses md', async () => {

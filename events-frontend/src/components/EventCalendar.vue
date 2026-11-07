@@ -98,9 +98,19 @@ const onNarrowChange = (event: MediaQueryListEvent) => (narrow.value = event.mat
 narrowQuery?.addEventListener('change', onNarrowChange)
 onBeforeUnmount(() => narrowQuery?.removeEventListener('change', onNarrowChange))
 
+const GRID_MONTH = 'dayGridMonth'
 const GRID_WEEK = 'dayGridWeek'
 const LIST_WEEK_NARROW = 'listWeekNarrow'
 const weekView = (isNarrow: boolean) => (isNarrow ? LIST_WEEK_NARROW : GRID_WEEK)
+
+/**
+ * Below `md` the calendar opens on the week list, not the month: seven 44 px columns cut every
+ * title to a few letters (#4657). The Month button stays; only the first view changes.
+ */
+function firstView(view: string, isNarrow: boolean): string {
+  if (view === GRID_WEEK || (view === GRID_MONTH && isNarrow)) return weekView(isNarrow)
+  return view
+}
 
 const calendar = useTemplateRef<InstanceType<typeof FullCalendar>>('calendar')
 
@@ -115,13 +125,13 @@ watch(narrow, (isNarrow) => {
 // 19:00 and 23:00, so a time axis stacks a night into slivers (#1412).
 const options = computed<CalendarOptions>(() => ({
   plugins: [classicThemePlugin, dayGridPlugin, listPlugin],
-  initialView: props.initialView === GRID_WEEK ? weekView(narrow.value) : props.initialView,
+  initialView: firstView(props.initialView, narrow.value),
   locale: isLocale(locale.value) ? CALENDAR_LOCALES[locale.value] : enGbLocale,
   eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
   headerToolbar: {
     start: 'prev,next today',
     center: 'title',
-    end: `dayGridMonth,${weekView(narrow.value)},listWeek`,
+    end: `${GRID_MONTH},${weekView(narrow.value)},listWeek`,
   },
   // v7 has no `buttonText` option and no built-in English labels. A view button with no resolvable
   // text is silently not rendered, so without this block the calendar loses its view switcher.
@@ -129,7 +139,7 @@ const options = computed<CalendarOptions>(() => ({
   // "Monatsansicht" for Monat (WCAG 2.5.3, #3823). English keeps "Month view", which the e2e tabs select by.
   buttons: {
     today: { text: t('calendar.today'), hint: t('calendar.today') },
-    dayGridMonth: viewButton(t('calendar.view.month')),
+    [GRID_MONTH]: viewButton(t('calendar.view.month')),
     [GRID_WEEK]: viewButton(t('calendar.view.week')),
     [LIST_WEEK_NARROW]: viewButton(t('calendar.view.week')),
     listWeek: viewButton(t('calendar.view.list')),
@@ -143,11 +153,18 @@ const options = computed<CalendarOptions>(() => ({
   // A full month cell folds into a "+N more" popover after six events. The week has the height to
   // show every event, so a visitor sees the week without a click (#2693).
   views: {
-    dayGridMonth: { dayMaxEvents: 6 },
+    [GRID_MONTH]: { dayMaxEvents: 6 },
     [GRID_WEEK]: { dayMaxEvents: false },
     [LIST_WEEK_NARROW]: { type: 'listWeek' },
   },
   moreLinkText: t('calendar.more'), // rendered as `+N <more>`
+  // A day's own events take the cell's rows before a run that spans it, so five month-long
+  // exhibitions cannot push a night into "+N more" (#4655). The runs fold there instead.
+  eventOrder: 'multiDay,start,title',
+  // Hooks for the type-scale overrides below; v7 hashes its own class names.
+  eventClass: 'ej-event',
+  moreLinkClass: 'ej-event',
+  toolbarTitleClass: 'ej-title',
   // A club night ending 06:00 is one day's entry, not a two-day bar; a run still on at 09:00 spans.
   nextDayThreshold: '09:00',
   events: props.events,
@@ -220,6 +237,21 @@ const options = computed<CalendarOptions>(() => ({
   --fc-classic-strong-border: color-mix(in oklch, var(--border) 70%, var(--foreground));
 
   color: var(--foreground);
+}
+
+/*
+ * The type scale (design.instructions.md §3), over the classic theme's 11 px chips and 24 / 32 title
+ * (#4655). The hooks are our own classes from the options above; v7 hashes its own.
+ */
+.event-calendar :deep(.ej-event),
+.event-calendar :deep(.ej-event *) {
+  font-size: var(--text-meta);
+  line-height: var(--text-meta--line-height);
+}
+
+.event-calendar :deep(.ej-title) {
+  font-size: var(--text-section);
+  line-height: var(--text-section--line-height);
 }
 
 /*
