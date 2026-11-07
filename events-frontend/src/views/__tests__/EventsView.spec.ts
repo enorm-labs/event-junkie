@@ -266,6 +266,53 @@ describe('EventsView with a date range', () => {
     expect(query().running).toBeUndefined()
   })
 
+  it('folds a run of weeks that opened before today out of the list with no range (#4656)', async () => {
+    const exhibition: EventSummary = {
+      slug: 'exhibition',
+      title: 'Exhibition',
+      eventDate: '2026-04-30',
+      endDate: '2026-12-06',
+    }
+    const closing: EventSummary = {
+      slug: 'closing',
+      title: 'Closing',
+      eventDate: '2026-09-01',
+      endDate: '2026-10-08',
+    }
+    const opening: EventSummary = {
+      slug: 'opening',
+      title: 'Opening',
+      eventDate: TODAY,
+      endDate: '2026-11-30',
+    }
+    getMock.mockResolvedValue({
+      content: [exhibition, closing, opening, started],
+      page: 0,
+      totalPages: 1,
+      totalElements: 4,
+    })
+
+    await mountAt('/en/events')
+
+    const folded = wrapper!.get('details').findAll('article')
+    expect(folded.map((card) => card.attributes('data-slug'))).toEqual(['exhibition'])
+    expect(slugs()).toEqual(['closing', 'opening', 'started', 'exhibition'])
+  })
+
+  it('does not fold a list that reads back through the years', async () => {
+    const exhibition: EventSummary = {
+      slug: 'exhibition',
+      eventDate: '2026-04-30',
+      endDate: '2026-12-06',
+    }
+    getMock.mockResolvedValue({ content: [exhibition], page: 0, totalPages: 1, totalElements: 1 })
+
+    await mountAt('/en/events?to=2026-10-10')
+
+    expect(wrapper!.find('details').exists()).toBe(false)
+    expect(slugs()).toEqual(['exhibition'])
+  })
+
   it('folds a run of weeks that opened before the range into Also running', async () => {
     const exhibition: EventSummary = {
       slug: 'exhibition',

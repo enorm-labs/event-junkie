@@ -124,8 +124,14 @@ const {
 /**
  * A run of weeks folds into "Also running" between its opening and its last days (#2594). On now
  * folds on today, and a range folds on its first day, which a run that opened earlier reaches.
+ * With no range the list is everything not yet ended, so it folds on today too: otherwise an
+ * exhibition open since April is its first tile (#4656). `to` alone reads back through the years.
  */
-const foldDay = computed(() => (onNow.value ? todayIso() : dateRange.value.from))
+const foldDay = computed(() => {
+  if (onNow.value) return todayIso()
+  const { from, to } = dateRange.value
+  return from || (to ? undefined : todayIso())
+})
 const listed = computed(() =>
   foldDay.value
     ? splitDayList(page.value?.content ?? [], foldDay.value)
