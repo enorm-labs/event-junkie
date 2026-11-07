@@ -50,6 +50,27 @@ class AbstractSinglePageWebsiteImporterTest {
         ): String? = document.nextPageUrl("a.next")
     }
 
+    /** Rows whose id starts with `dateless` carry no date; each row's page sets the description from its `<p>`. */
+    private val scrapeWithDateless: (Document, String) -> List<ScrapedEvent> = { document, _ ->
+        document.select("li").map {
+            ScrapedEvent(
+                title = it.id(),
+                eventDate = if (it.id().startsWith("dateless")) UNRESOLVED_EVENT_DATE else LocalDate.of(2026, 10, 1),
+                sourceUrl = "https://venue.example/e/${it.id()}",
+                sourceId = it.id(),
+                description = "teaser"
+            )
+        }
+    }
+
+    private inner class WithEventPages : AbstractSinglePageWebsiteImporter(htmlFetcher, "With Event Pages", scrapeWithDateless) {
+        override val eventSource: EventSource = EventSource.ROSA
+        override val enrichFromEventPage: ((ScrapedEvent, Document) -> ScrapedEvent?) = { event, page ->
+            page.selectFirst("p")?.let { event.copy(description = it.text(), eventDate = LocalDate.of(2026, 10, 3)) }
+        }
+        override val eventPageSecondLanguage = SecondLanguagePage("en") { it.selectFirst("p")?.text() }
+    }
+
     private fun stubEntry(document: Document) {
         coEvery { htmlFetcher.fetch(entryUrl, any(), any(), any()) } returns FetchResult.Success(document, "\"v1\"", null)
     }
@@ -92,5 +113,41 @@ class AbstractSinglePageWebsiteImporterTest {
             }
 
             Paged().importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>().complete shouldBe false
+        }
+
+    @Test
+    fun `retries a dateless row's event page once, then drops the row and counts it`() =
+        runTest {
+            stubEntry(page(entryUrl, "a", "dateless"))
+            coEvery { htmlFetcher.fetchDocument("https://venue.example/e/a") } returns Jsoup.parse("<p>Text</p>")
+            coEvery { htmlFetcher.fetchDocument("https://venue.example/e/dateless") } throws
+                HttpFetchException(503, "https://venue.example/e/dateless")
+
+            val result = WithEventPages().importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.map { it.sourceId } shouldContainExactly listOf("a")
+            result.droppedUnresolvedDate shouldBe 1
+            coVerify(exactly = 2) { htmlFetcher.fetchDocument("https://venue.example/e/dateless") }
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument("https://venue.example/e/a") }
+        }
+
+    @Test
+    fun `reads the second language from an event page that changed the text, and not from one that kept the teaser`() =
+        runTest {
+            stubEntry(page(entryUrl, "a", "same"))
+            coEvery { htmlFetcher.fetchDocument("https://venue.example/e/a") } returns
+                Jsoup.parse("<head><link rel='alternate' hreflang='en' href='https://venue.example/en/a'></head><p>Deutsch</p>", "https://venue.example/e/a")
+            coEvery { htmlFetcher.fetchDocument("https://venue.example/e/same") } returns
+                Jsoup.parse(
+                    "<head><link rel='alternate' hreflang='en' href='https://venue.example/en/same'></head><p>teaser</p>",
+                    "https://venue.example/e/same"
+                )
+            coEvery { htmlFetcher.fetchDocument("https://venue.example/en/a") } returns Jsoup.parse("<p>English</p>")
+
+            val events = WithEventPages().importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>().events
+
+            events.single { it.sourceId == "a" }.descriptionAlt shouldBe "English"
+            events.single { it.sourceId == "same" }.descriptionAlt shouldBe null
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument("https://venue.example/en/same") }
         }
 }

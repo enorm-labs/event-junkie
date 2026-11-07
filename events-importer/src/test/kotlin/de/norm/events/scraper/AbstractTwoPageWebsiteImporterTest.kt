@@ -86,6 +86,18 @@ class AbstractTwoPageWebsiteImporterTest {
         override val secondLanguage = SecondLanguagePage("en") { it.selectFirst("p")?.text() }
     }
 
+    private inner class Configured : TwoPage() {
+        override val cookies: Map<String, String> = mapOf("gate" to "1")
+        override val maxOverviewPages: Int = 2
+        override val sharedPages =
+            SharedPages(parse = { it.selectFirst("h1")?.text() }, apply = { heading: String, event -> event.copy(subtitle = heading) })
+
+        override fun nextOverviewPage(
+            document: Document,
+            url: String
+        ): String? = document.nextPageUrl("a.next")
+    }
+
     private fun stubEntry(document: Document) {
         coEvery { htmlFetcher.fetch(entryUrl, any(), any(), any()) } returns FetchResult.Success(document, "\"v1\"", "Sat, 07 Nov 2026 10:00:00 GMT")
     }
@@ -213,5 +225,21 @@ class AbstractTwoPageWebsiteImporterTest {
             events.single { it.sourceId == "a" }.descriptionAlt shouldBe "English"
             events.single { it.sourceId == "bare" }.descriptionAlt.shouldBeNull()
             coVerify(exactly = 0) { htmlFetcher.fetchDocument("https://venue.example/en/e/bare") }
+        }
+
+    @Test
+    fun `sends its cookies, honours its own page cap, and reads the pages its rows share`() =
+        runTest {
+            stubEntry(overview(entryUrl, "a", next = "?page=2"))
+            coEvery { htmlFetcher.fetchDocument("$entryUrl?page=2") } returns overview("$entryUrl?page=2", "b", next = "?page=3")
+            listOf("a", "b").forEach { stubDetail(it) }
+
+            val result = Configured().importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.map { it.sourceId } shouldContainExactly listOf("a", "b")
+            result.events.all { it.subtitle == "detail" } shouldBe true
+            result.complete shouldBe false
+            coVerify { htmlFetcher.fetch(entryUrl, null, null, mapOf("gate" to "1")) }
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument("$entryUrl?page=3") }
         }
 }

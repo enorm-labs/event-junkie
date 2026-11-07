@@ -55,10 +55,19 @@ abstract class AbstractTwoPageWebsiteImporter(
      */
     protected open val secondLanguage: SecondLanguagePage? = null
 
+    /** A runaway guard on [nextOverviewPage]; Cassiopeia's listing runs to seven pages. */
+    protected open val maxOverviewPages: Int = DEFAULT_MAX_OVERVIEW_PAGES
+
+    /** Cookies sent with the overview fetch, as on [AbstractSinglePageWebsiteImporter.cookies]. */
+    protected open val cookies: Map<String, String> = emptyMap()
+
+    /** The page that several rows share, read once per page after the detail pages, as on [AbstractSinglePageWebsiteImporter.sharedPages]. */
+    protected open val sharedPages: SharedPages<*>? = null
+
     /**
      * The absolute URL of the listing page after [document], or null when it is the last. Null by
      * default: most listings are one page. A subclass that returns one has its later pages fetched
-     * and scraped too, up to [MAX_OVERVIEW_PAGES] (ADR-007 §"Pagination — First Page Only").
+     * and scraped too, up to [maxOverviewPages] (ADR-007 §"Pagination — First Page Only").
      */
     protected open fun nextOverviewPage(
         document: Document,
@@ -72,14 +81,14 @@ abstract class AbstractTwoPageWebsiteImporter(
     ): ImportResult =
         pipeline.run(
             HtmlImport(
-                entry = HtmlImport.Entry.Conditional(),
+                entry = HtmlImport.Entry.Conditional(cookies),
                 readListing = { document, entryUrl ->
-                    val overview = htmlFetcher.scrapeListingPages(eventSource, document, entryUrl, MAX_OVERVIEW_PAGES, ::nextOverviewPage, scrapeOverview)
+                    val overview = htmlFetcher.scrapeListingPages(eventSource, document, entryUrl, maxOverviewPages, ::nextOverviewPage, scrapeOverview)
                     HtmlImport.Listing(overview.events, overview.complete)
                 },
                 listedLine = { count -> "Scraped $count event(s) from ${eventSource.name} overview" },
                 eventPages = HtmlImport.EventPages.Detail(scrapeDetail, ::fillGapsFromOverview, detailPageOwns, secondLanguage),
-                dropUnresolvedDates = true
+                sharedPages = sharedPages
             ),
             url,
             etag,
@@ -87,7 +96,6 @@ abstract class AbstractTwoPageWebsiteImporter(
         )
 
     private companion object {
-        /** A runaway guard on [nextOverviewPage]; Cassiopeia's listing runs to seven pages. */
-        const val MAX_OVERVIEW_PAGES = 12
+        const val DEFAULT_MAX_OVERVIEW_PAGES = 12
     }
 }
