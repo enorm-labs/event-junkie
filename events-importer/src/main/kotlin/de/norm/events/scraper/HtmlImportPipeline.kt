@@ -12,7 +12,8 @@ import kotlin.time.Duration.Companion.seconds
  * The one fetch orchestration behind [AbstractSinglePageWebsiteImporter], [AbstractTwoPageWebsiteImporter]
  * and [AbstractMonthPagesWebsiteImporter] (#4643). Each base describes its run as an [HtmlImport]; this
  * runs the steps in one order: entry page, listing, second-language listing, event pages, shared pages,
- * fold, undated drop. A step a base leaves out is skipped.
+ * fold, undated drop. A step a base leaves out is skipped. Every base gets the dateless-row retry and
+ * the undated drop.
  *
  * [logger] is the base's own, so every line still names the concrete importer.
  */
@@ -46,7 +47,7 @@ internal class HtmlImportPipeline(
             import.secondLanguageListing?.let { htmlFetcher.withSecondLanguageListing(listing.events, entry.document, it) } ?: listing.events
         val enriched = import.eventPages?.let { readEventPages(translated, it) } ?: translated
         val folded = import.foldRuns(htmlFetcher.withSharedPages(enriched, import.sharedPages))
-        val events = if (import.dropUnresolvedDates) dropUnresolvedDates(folded) else folded
+        val events = dropUnresolvedDates(folded)
         import.doneLine?.let { line -> logger.info { line(events.size, listing.pages) } }
 
         return ImportResult.Success(
@@ -63,9 +64,53 @@ internal class HtmlImportPipeline(
         pages: HtmlImport.EventPages
     ): List<ScrapedEvent> =
         when (pages) {
-            is HtmlImport.EventPages.Enrich -> htmlFetcher.withEventPages(events, pages.owns, pages.hasEventPage, pages.enrich)
+            is HtmlImport.EventPages.Enrich -> events.map { if (pages.hasEventPage(it)) enrichOrFlagged(it, pages) else it }
             is HtmlImport.EventPages.Detail -> events.map { parseDetailOrFallback(it, pages) }
         }
+
+    /**
+     * [event] enriched from its own page, or flagged as [withEventPageOrFlagged] flags it. A row with
+     * no date without its page gets a second read after [RETRY_PAUSE], as a detail page does. With
+     * [HtmlImport.EventPages.Enrich.secondLanguage], the page's version in that language supplies the
+     * second language, only where the page changed the event text: a listing teaser has no
+     * counterpart there.
+     */
+    private suspend fun enrichOrFlagged(
+        event: ScrapedEvent,
+        pages: HtmlImport.EventPages.Enrich
+    ): ScrapedEvent {
+        val attempts = if (event.eventDate == UNRESOLVED_EVENT_DATE) DATELESS_ATTEMPTS else 1
+        repeat(attempts) { attempt ->
+            val read =
+                htmlFetcher.readEventPage(event) { document ->
+                    pages.enrich(event, document)?.let {
+                        EnrichedPage(
+                            it,
+                            pages.secondLanguage?.let { language ->
+                                document.alternateLanguageUrl(language.hreflang)
+                            }
+                        )
+                    }
+                }
+            if (read != null) return read.withSecondLanguage(event, pages.secondLanguage)
+            if (attempt < attempts - 1) delay(RETRY_PAUSE)
+        }
+        return event.degraded(pages.owns)
+    }
+
+    private suspend fun EnrichedPage.withSecondLanguage(
+        listed: ScrapedEvent,
+        language: SecondLanguagePage?
+    ): ScrapedEvent {
+        if (language == null || alternateUrl == null || event.description == listed.description) return event
+        return event.withDescriptionAlt(htmlFetcher.readSecondLanguagePage(alternateUrl, language.description))
+    }
+
+    /** One event as its page enriched it, and the URL of that page's version in the second language. */
+    private class EnrichedPage(
+        val event: ScrapedEvent,
+        val alternateUrl: String?
+    )
 
     /**
      * Drops events whose date is still the [UNRESOLVED_EVENT_DATE] sentinel after the merge: neither
@@ -168,7 +213,6 @@ internal class HtmlImport(
     val eventPages: EventPages? = null,
     val sharedPages: SharedPages<*>? = null,
     val foldRuns: (List<ScrapedEvent>) -> List<ScrapedEvent> = { it },
-    val dropUnresolvedDates: Boolean = false,
     /** Logged at the end with the event count and the number of listing pages read. */
     val doneLine: ((Int, Int) -> String)? = null
 ) {
@@ -190,11 +234,12 @@ internal class HtmlImport(
 
     /** How each event's own page is read. */
     sealed interface EventPages {
-        /** The listing row enriched by [enrich] through [withEventPageOrFlagged], for the rows [hasEventPage] accepts. */
+        /** The listing row enriched by [enrich], for the rows [hasEventPage] accepts, flagged as [withEventPageOrFlagged] flags it. */
         class Enrich(
             val enrich: (ScrapedEvent, Document) -> ScrapedEvent?,
             val hasEventPage: (ScrapedEvent) -> Boolean,
-            val owns: Set<ScrapedField>
+            val owns: Set<ScrapedField>,
+            val secondLanguage: SecondLanguagePage? = null
         ) : EventPages
 
         /**

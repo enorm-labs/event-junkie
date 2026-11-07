@@ -123,4 +123,22 @@ class AbstractMonthPagesWebsiteImporterTest {
                 .events
                 .map { it.sourceId } shouldContainExactly listOf("a")
         }
+
+    @Test
+    fun `drops a row that has no date and counts it`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns entry("2026-10")
+            val url = "https://venue.example/archiv/2026-10"
+            coEvery { htmlFetcher.fetchDocument(url) } returns month(url, "a")
+            val undated =
+                object : Months() {
+                    override fun foldRuns(events: List<ScrapedEvent>): List<ScrapedEvent> =
+                        events + events.first().copy(sourceId = "undated", eventDate = UNRESOLVED_EVENT_DATE)
+                }
+
+            val result = undated.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.map { it.sourceId } shouldContainExactly listOf("a")
+            result.droppedUnresolvedDate shouldBe 1
+        }
 }

@@ -35,6 +35,9 @@ abstract class AbstractMonthPagesWebsiteImporter(
     /** The fields a good run takes from the event page over the month page's, see [withEventPageOrFlagged]. */
     protected open val eventPageOwns: Set<ScrapedField> = emptySet()
 
+    /** The event page in the venue's other language, as on [AbstractSinglePageWebsiteImporter.eventPageSecondLanguage]. */
+    protected open val eventPageSecondLanguage: SecondLanguagePage? = null
+
     /** The month pages [entry] names; a venue whose months are form values rather than links builds them here. */
     protected open fun monthPageUrls(
         entry: Document,
@@ -56,7 +59,7 @@ abstract class AbstractMonthPagesWebsiteImporter(
             HtmlImport(
                 entry = HtmlImport.Entry.Unconditional,
                 readListing = ::readMonths,
-                eventPages = enrichFromEventPage?.let { HtmlImport.EventPages.Enrich(it, ::hasEventPage, eventPageOwns) },
+                eventPages = enrichFromEventPage?.let { HtmlImport.EventPages.Enrich(it, ::hasEventPage, eventPageOwns, eventPageSecondLanguage) },
                 sharedPages = sharedPages,
                 foldRuns = ::foldRuns,
                 doneLine = { count, months -> "Scraped $count $venueName event(s) across $months month page(s)" }

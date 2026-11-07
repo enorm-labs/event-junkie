@@ -33,6 +33,12 @@ abstract class AbstractSinglePageWebsiteImporter(
     /** The fields a good run takes from the event page over the listing's, see [withEventPageOrFlagged]. */
     protected open val eventPageOwns: Set<ScrapedField> = emptySet()
 
+    /**
+     * The event page in the venue's other language, for a venue that translates the event text there
+     * rather than on the listing. One more request per event page that changed the text (ADR-026 rule 2).
+     */
+    protected open val eventPageSecondLanguage: SecondLanguagePage? = null
+
     /** Cookies sent with the listing fetch, for a venue that serves its programme only to a request carrying one. */
     protected open val cookies: Map<String, String> = emptyMap()
 
@@ -72,7 +78,7 @@ abstract class AbstractSinglePageWebsiteImporter(
                 readListing = ::readListing,
                 listedLine = { count -> "Scraped $count event(s) from $venueName" },
                 secondLanguageListing = secondLanguage,
-                eventPages = enrichFromEventPage?.let { HtmlImport.EventPages.Enrich(it, ::hasEventPage, eventPageOwns) },
+                eventPages = enrichFromEventPage?.let { HtmlImport.EventPages.Enrich(it, ::hasEventPage, eventPageOwns, eventPageSecondLanguage) },
                 sharedPages = sharedPages
             ),
             url,
