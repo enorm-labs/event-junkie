@@ -7,7 +7,7 @@ import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import type { Locale } from '@/i18n/locales'
 import { descriptionFor } from '@/lib/description'
-import { CARD_CLASS } from '@/lib/utils'
+import { CARD_CLASS, TEXT_LINK_CLASS } from '@/lib/utils'
 
 const props = withDefaults(
   defineProps<{
@@ -68,7 +68,7 @@ const websiteHost = computed(() => {
       <a
         v-if="websiteHost"
         :href="promoter.websiteUrl ?? undefined"
-        class="block truncate text-body text-primary underline-offset-4 hover:underline"
+        :class="['block truncate text-body', TEXT_LINK_CLASS]"
         rel="noopener noreferrer"
         target="_blank"
       >

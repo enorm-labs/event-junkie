@@ -36,6 +36,12 @@ export const CHECKBOX_CLASS =
   'size-4 shrink-0 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
 
 /**
+ * A link inside a line of text, in the accent colour. It matches the `link` variant of `Button`,
+ * which also adds the button's box, so a plain anchor takes this instead.
+ */
+export const TEXT_LINK_CLASS = 'text-primary underline-offset-4 hover:underline'
+
+/**
  * An interactive card: the event and venue tiles, which are links. No border, fill, shadow or
  * radius: the poster is the card, and space separates one from the next (#1246). The reveal
  * belongs to the poster box below.

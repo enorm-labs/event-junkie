@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import type { VenueSummary } from '@/api/types'
 import { clientMapsPlatform, directionsUrl, type MapsPlatform } from '@/lib/directions'
 import { venuePosition } from '@/lib/mapPins'
+import { TEXT_LINK_CLASS } from '@/lib/utils'
 
 const props = defineProps<{ venue: VenueSummary | null | undefined }>()
 
@@ -30,7 +31,7 @@ const newTab = computed(() => href.value?.startsWith('https:') ?? false)
     :href="href"
     :rel="newTab ? 'noopener noreferrer' : undefined"
     :target="newTab ? '_blank' : undefined"
-    class="text-primary underline-offset-4 hover:underline"
+    :class="TEXT_LINK_CLASS"
     data-testid="venue-directions-link"
     >{{ t('detail.venue.directions')
     }}<span class="sr-only">{{ ` ${t('detail.venue.directionsLeaves')}` }}</span></a

@@ -33,7 +33,13 @@ import type { Locale } from '@/i18n/locales'
 import { formatPrice, isOnNow, isPastEvent, isRunningEvent } from '@/lib/format'
 import { runningOrder, setStates, type RunningOrderSet } from '@/lib/runningOrder'
 import { eventPlace, venuePosition } from '@/lib/mapPins'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn, PAGE_TITLE_CLASS } from '@/lib/utils'
+import {
+  CARD_GRID_CLASS,
+  CARD_LIST_CLASS,
+  cn,
+  PAGE_TITLE_CLASS,
+  TEXT_LINK_CLASS,
+} from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -569,11 +575,9 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
           <template v-if="movedToLink">
             <p class="text-body font-medium" data-testid="moved-to">
               {{ t('events.detail.movedTo') }}
-              <RouterLink
-                :to="movedToLink.to"
-                class="text-primary underline-offset-4 hover:underline"
-                >{{ movedToLink.name }}</RouterLink
-              >
+              <RouterLink :to="movedToLink.to" :class="TEXT_LINK_CLASS">{{
+                movedToLink.name
+              }}</RouterLink>
             </p>
             <p v-if="movedToLink.address" class="text-body text-muted-foreground">
               {{ movedToLink.address }}
@@ -592,7 +596,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
             <RouterLink
               v-if="event.venue.slug"
               :to="localePath(`/venues/${event.venue.slug}`)"
-              class="text-body font-medium text-primary underline-offset-4 hover:underline"
+              :class="['text-body font-medium', TEXT_LINK_CLASS]"
             >
               {{ event.venue.name }}
             </RouterLink>
@@ -723,7 +727,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
             <RouterLink
               v-if="promoter.slug"
               :to="localePath(`/promoters/${promoter.slug}`)"
-              class="text-primary underline-offset-4 hover:underline"
+              :class="TEXT_LINK_CLASS"
             >
               {{ promoter.name }}</RouterLink
             >
