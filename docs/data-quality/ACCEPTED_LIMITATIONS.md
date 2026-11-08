@@ -169,7 +169,6 @@ says so.
 | `COLOSSEUM`            | `DOORS_TIME`       | an event whose own page states no Einlass line keeps the listing's single time as the start, and gets no doors                                   | —     |
 | `COLOSSEUM`            | `GENRE`            | the house names no musical style anywhere                                                                                                        | —     |
 | `COLOSSEUM`            | `ARTISTS`          | no support-act convention exists in the subtitles, and a title is as often an event name as a performer's                                        | —     |
-| `COLOSSEUM`            | `DESCRIPTION`      | each event is cloned from an old one and its about text is never rewritten, so it is another act's biography, not the event's                    | —     |
 | `COLOSSEUM`            | `PRICE`            | an event sold through Eventim, Dice or its promoter prints no figure                                                                             | —     |
 | `COLOSSEUM`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `COLUMBIA_THEATER`     | `PRICE`            | the venue prints no figure; tickets are sold through an Eventim link                                                                             | —     |

@@ -4,6 +4,9 @@ import de.norm.events.event.EventType
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -92,6 +95,16 @@ class ColosseumDetailPageScraperTest {
         scrape("colosseum-detail-sandberg.html").shouldNotBeNull().eventType shouldBe EventType.CONCERT.name
         // A talk with a DJ names neither.
         scrape("colosseum-detail-gysi.html").shouldNotBeNull().eventType.shouldBeNull()
+    }
+
+    @Test
+    fun `stores the event's own text as the description, not the cloned about block`() {
+        val description = scrape("colosseum-detail-kramer.html").shouldNotBeNull().description.shouldNotBeNull()
+
+        description shouldStartWith "Einlass: 18:30 Uhr\n\nBeginn: 19:30 Uhr\n\n"
+        description shouldContain "»Wolkenberührpunkt« ist ein Roman"
+        // The `about` block every event inherits is a Dustin O'Halloran biography (#4686).
+        description shouldNotContain "Halloran"
     }
 
     @Test

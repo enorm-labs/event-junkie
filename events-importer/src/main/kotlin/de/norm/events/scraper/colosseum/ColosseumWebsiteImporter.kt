@@ -19,12 +19,12 @@ import org.springframework.stereotype.Component
  * [HtmlFetcher] fetches `/event` conditionally (Wix serves a weak `ETag`),
  * [ColosseumOverviewPageScraper] parses the embedded JSON.
  *
- * **The `/details-registrierung/<slug>` pages are fetched for their times and their price** (#1684). The
+ * **The `/details-registrierung/<slug>` pages are fetched for their times, their price and their text** (#1684, #4686). The
  * listing carries one `startDate` per event, and that time is the doors more often than the start
  * — 10 of 18 live events against 8 — so a row built from the listing alone puts a door time in
  * `startTime` more often than not. [ColosseumDetailPageScraper] reads the event's own `Einlass`
- * and `Beginn` lines, and its ticket price (#1954); the listing's record is kept for everything
- * else. One field stays refused:
+ * and `Beginn` lines, its ticket price (#1954) and its own text as the description; the listing's
+ * record is kept for everything else. One field stays refused:
  * - Their `about` is *not* per-event text. Each event is created by cloning an old one and that
  * section is never rewritten, so the same 3,440-character block — a Dustin O'Halloran biography
  * opening "Einlass: 19 Uhr / Beginn: 20 Uhr" — is served for a Cornelia Funke reading, an Irvine
@@ -82,10 +82,6 @@ val COLOSSEUM_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "the house names no musical style anywhere"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "no support-act convention exists in the subtitles, and a title is as often an event name as a performer's"),
-        AcceptedLimitation(
-            LimitedAspect.DESCRIPTION,
-            "each event is cloned from an old one and its about text is never rewritten, so it is another act's biography, not the event's"
-        ),
         AcceptedLimitation(LimitedAspect.PRICE, "an event sold through Eventim, Dice or its promoter prints no figure"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )
