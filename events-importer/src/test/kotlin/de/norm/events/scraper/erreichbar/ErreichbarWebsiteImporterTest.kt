@@ -3,6 +3,7 @@ package de.norm.events.scraper.erreichbar
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -21,11 +22,7 @@ class ErreichbarWebsiteImporterTest {
     @Test
     fun `imports the Punkrocktresen nights and leaves out the brunches and the Kufa`() =
         runTest {
-            coEvery { apiClient.fetchJson(any()) } returns
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/radar/radar-group-erreichbar.json")!!
-                    .bufferedReader()
-                    .readText()
+            coEvery { apiClient.fetchJson(any()) } returns fixtureText("radar/radar-group-erreichbar.json")
 
             val result = importer.importEvents("https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=6653&limit=500")
 

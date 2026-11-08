@@ -1,5 +1,6 @@
 package de.norm.events.scraper.distel
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -15,12 +16,7 @@ class DistelShowPageScraperTest {
 
     @Test
     fun `reads the show text with its running time and the header photo`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/distel/distel-show.html")!!
-                .bufferedReader()
-                .readText()
-        val show = scraper.scrape(Jsoup.parse(html, url))
+        val show = scraper.scrape(fixtureDocument("distel/distel-show.html", url))
 
         show.description.shouldNotBeNull() shouldStartWith "Die kleinste GroKo aller Zeiten"
         show.description.shouldNotBeNull() shouldEndWith "inklusive 1 Pause"
@@ -29,25 +25,17 @@ class DistelShowPageScraperTest {
 
     @Test
     fun `bills the cast a guest show names under LINE UP`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/distel/distel-show-line-up.html")!!
-                .bufferedReader()
-                .readText()
-        val show = scraper.scrape(Jsoup.parse(html, "https://distel-berlin.de/spielplan/event/schnack-stand-up-schnack-allstars-07-2026/"))
+        val show =
+            scraper.scrape(
+                fixtureDocument("distel/distel-show-line-up.html", "https://distel-berlin.de/spielplan/event/schnack-stand-up-schnack-allstars-07-2026/")
+            )
 
         show.lineup shouldBe listOf("Alex Stoldt", "Roger G", "Karo Bender", "Falk Pyrczek", "Yannick de la Peche")
     }
 
     @Test
     fun `bills nobody from an ensemble show's prose`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/distel/distel-show.html")!!
-                .bufferedReader()
-                .readText()
-
-        scraper.scrape(Jsoup.parse(html, url)).lineup.shouldBeEmpty()
+        scraper.scrape(fixtureDocument("distel/distel-show.html", url)).lineup.shouldBeEmpty()
     }
 
     @Test

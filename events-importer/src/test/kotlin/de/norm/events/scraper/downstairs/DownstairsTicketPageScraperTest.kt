@@ -1,5 +1,6 @@
 package de.norm.events.scraper.downstairs
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -10,19 +11,11 @@ import java.time.LocalTime
 
 class DownstairsTicketPageScraperTest {
     private val scraper = DownstairsTicketPageScraper()
-
-    private fun document(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/downstairs/$name")!!
-                .bufferedReader()
-                .readText(),
-            "https://www.downstairscomedy.shop/catalog/tickets/x"
-        )
+    private val url = "https://www.downstairscomedy.shop/catalog/tickets/x"
 
     @Test
     fun `reads the doors, the lowest tier and a note naming every tier`() {
-        val show = scraper.scrape(document("downstairs-ticket-tiers.html")).shouldNotBeNull()
+        val show = scraper.scrape(fixtureDocument("downstairs/downstairs-ticket-tiers.html", url)).shouldNotBeNull()
 
         show.doorsTime shouldBe LocalTime.of(19, 40)
         show.price shouldBe BigDecimal("15.5")
@@ -31,7 +24,7 @@ class DownstairsTicketPageScraperTest {
 
     @Test
     fun `reads the doors of a sold-out page, which lists no tier labels`() {
-        val show = scraper.scrape(document("downstairs-ticket.html")).shouldNotBeNull()
+        val show = scraper.scrape(fixtureDocument("downstairs/downstairs-ticket.html", url)).shouldNotBeNull()
 
         show.doorsTime shouldBe LocalTime.of(17, 40)
         show.price shouldBe BigDecimal("25.5")
@@ -84,6 +77,6 @@ class DownstairsTicketPageScraperTest {
 
     @Test
     fun `marks the shop's own page as not sold elsewhere`() {
-        scraper.scrape(document("downstairs-ticket.html")).shouldNotBeNull().soldElsewhere shouldBe false
+        scraper.scrape(fixtureDocument("downstairs/downstairs-ticket.html", url)).shouldNotBeNull().soldElsewhere shouldBe false
     }
 }

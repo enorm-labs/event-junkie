@@ -2,6 +2,7 @@ package de.norm.events.scraper.frachtkante
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -15,14 +16,7 @@ import java.time.LocalTime
 class FrachtkanteOverviewPageScraperTest {
     private val baseUrl = "https://frachtkante.de/de/"
 
-    private val events by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/frachtkante/frachtkante-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scrape(html)
-    }
+    private val events by lazy { scrape(fixtureText("frachtkante/frachtkante-overview.html")) }
 
     private fun scrape(html: String): List<ScrapedEvent> = FrachtkanteOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl)
 

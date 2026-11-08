@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -29,26 +31,17 @@ class EightMmWebsiteImporterTest {
     private val sourceUrl = "https://www.8mmbar.de/program"
     private val base = "https://www.8mmbar.de/program/2026/10"
 
-    private fun fixture(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/eightmm/$name")!!
-                .bufferedReader()
-                .readText(),
-            sourceUrl
-        )
-
     @BeforeEach
     fun setUp() {
         importer = EightMmWebsiteImporter(htmlFetcher, Clock.fixed(Instant.parse("2026-10-17T10:00:00Z"), ZoneId.of("Europe/Berlin")))
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = fixture("eightmm-program.html"),
+                document = fixtureDocument("eightmm/eightmm-program.html", sourceUrl),
                 etag = "\"8mm\"",
                 lastModified = "Sat, 17 Oct 2026 08:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument("$base/17/rmfc-live-in-8mm") } returns fixture("eightmm-event-rmfc.html")
-        coEvery { htmlFetcher.fetchDocument(match { it.contains("jeff-clark") }) } returns fixture("eightmm-event-residency.html")
+        stubFetcher("$base/17/rmfc-live-in-8mm" to "eightmm/eightmm-event-rmfc.html", fetcher = htmlFetcher)
+        coEvery { htmlFetcher.fetchDocument(match { it.contains("jeff-clark") }) } returns fixtureDocument("eightmm/eightmm-event-residency.html", sourceUrl)
     }
 
     @Test

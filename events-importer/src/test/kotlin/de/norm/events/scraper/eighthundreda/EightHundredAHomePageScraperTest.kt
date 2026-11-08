@@ -2,6 +2,7 @@ package de.norm.events.scraper.eighthundreda
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -19,7 +20,7 @@ class EightHundredAHomePageScraperTest {
     private val baseUrl = "https://www.800aberlin.com/"
     private val events =
         EightHundredAHomePageScraper().scrape(
-            Jsoup.parse(javaClass.classLoader.getResourceAsStream("scraper/eighthundreda/800a-home.html")!!, null, baseUrl),
+            fixtureDocument("eighthundreda/800a-home.html", baseUrl),
             baseUrl
         )
 

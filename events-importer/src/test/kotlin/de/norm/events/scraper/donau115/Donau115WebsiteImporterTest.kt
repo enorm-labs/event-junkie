@@ -3,6 +3,7 @@ package de.norm.events.scraper.donau115
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -26,15 +27,9 @@ class Donau115WebsiteImporterTest {
     private val homepage = "https://www.donau115.de/"
     private val requestUrl = slot<String>()
 
-    private val fixture: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/donau115/donau115-events.json")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
-        coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixture
+        coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText("donau115/donau115-events.json")
     }
 
     @Test

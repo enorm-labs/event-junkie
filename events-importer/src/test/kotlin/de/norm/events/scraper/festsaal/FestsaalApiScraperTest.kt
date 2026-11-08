@@ -8,6 +8,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -32,12 +33,7 @@ class FestsaalApiScraperTest {
     private val scraper = FestsaalApiScraper()
 
     private val events: List<ScrapedEvent> by lazy {
-        val json =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/festsaal/festsaal-api.json")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(json)
+        scraper.scrape(fixtureText("festsaal/festsaal-api.json"))
     }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
@@ -45,11 +41,7 @@ class FestsaalApiScraperTest {
     @Test
     fun `reads the presenters as promoters and the text blocks as the description`() {
         // Three events from the API on 2026-09-30, with `presenters` and `layouts` requested.
-        val json =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/festsaal/festsaal-api-presenters.json")!!
-                .bufferedReader()
-                .readText()
+        val json = fixtureText("festsaal/festsaal-api-presenters.json")
         val byTitle = scraper.scrape(json).associateBy { it.title }
 
         byTitle.getValue("Kontrollverlust").promoters shouldBe listOf("All Rooms Concerts")
@@ -62,11 +54,7 @@ class FestsaalApiScraperTest {
     @Test
     fun `reads the promoters a präsentiert von text block credits and drops the block from the description`() {
         // Five events from the API on 2026-10-11, whose credits are text blocks (#3098).
-        val json =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/festsaal/festsaal-api-text-credits.json")!!
-                .bufferedReader()
-                .readText()
+        val json = fixtureText("festsaal/festsaal-api-text-credits.json")
         val byTitle = scraper.scrape(json).associateBy { it.title }
 
         byTitle.getValue("Mal Élevé").promoters shouldBe listOf("Wallcitymusic")
@@ -197,11 +185,7 @@ class FestsaalApiScraperTest {
     @Test
     fun `reads a transferred show's destination from its change note`() {
         // Five events from the API on 2026-09-30, with `changed_text` and `new_location` requested.
-        val json =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/festsaal/festsaal-api-relocations.json")!!
-                .bufferedReader()
-                .readText()
+        val json = fixtureText("festsaal/festsaal-api-relocations.json")
         val stored =
             scraper.scrape(json).associate {
                 it.title to it.toEventEntity(venueId = 1L, venueSlug = "festsaal-kreuzberg", eventSourceId = 1L)

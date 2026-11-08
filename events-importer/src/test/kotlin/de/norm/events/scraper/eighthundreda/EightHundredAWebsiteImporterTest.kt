@@ -4,13 +4,13 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 
 class EightHundredAWebsiteImporterTest {
@@ -21,9 +21,7 @@ class EightHundredAWebsiteImporterTest {
     @Test
     fun `imports the home page calendar`() =
         runTest {
-            val html = javaClass.classLoader.getResourceAsStream("scraper/eighthundreda/800a-home.html")!!
-            coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns
-                FetchResult.Success(document = Jsoup.parse(html, null, url), etag = null, lastModified = null)
+            stubFetcher(url to "eighthundreda/800a-home.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(url)
 

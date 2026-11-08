@@ -3,6 +3,7 @@ package de.norm.events.scraper.festsaal
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -28,16 +29,10 @@ class FestsaalWebsiteImporterTest {
     private val apiClient: ApiClient = mockk()
     private val apiBaseUrl = "https://admin.festsaal-kreuzberg.de/api/v2/pages/"
 
-    private val fixtureJson: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/festsaal/festsaal-api.json")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = FestsaalWebsiteImporter(apiClient)
-        coEvery { apiClient.fetchJson(any()) } returns fixtureJson
+        coEvery { apiClient.fetchJson(any()) } returns fixtureText("festsaal/festsaal-api.json")
     }
 
     @Test
@@ -52,7 +47,7 @@ class FestsaalWebsiteImporterTest {
     fun `importEvents builds the Wagtail EventPage query from the configured base URL`() =
         runTest {
             val requestUrl = slot<String>()
-            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureJson
+            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText("festsaal/festsaal-api.json")
 
             importer.importEvents(apiBaseUrl)
 

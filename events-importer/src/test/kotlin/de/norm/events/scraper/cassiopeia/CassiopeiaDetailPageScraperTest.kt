@@ -2,6 +2,7 @@ package de.norm.events.scraper.cassiopeia
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -202,12 +203,7 @@ class CassiopeiaDetailPageScraperTest {
     fun `reads a presented-by genre slot as the promoter and leaves the genre empty`() {
         // Thrash Talk Vol 5: the genre slot says "presented by ATOK Berlin" (#1951).
         val url = "https://cassiopeia-berlin.de/event/thrash-talk-vol-5-111591357"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/cassiopeia/cassiopeia-detail-presented-by.html")!!
-                .bufferedReader()
-                .readText()
-        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("cassiopeia/cassiopeia-detail-presented-by.html", url), url).shouldNotBeNull()
 
         event.promoters shouldBe listOf("ATOK Berlin")
         event.genre.shouldBeNull()
@@ -229,7 +225,7 @@ class CassiopeiaDetailPageScraperTest {
     fun `reads a credit list in the description as the promoters`() {
         // BSK, 2027: the last paragraph credits three presenters (#3166).
         val url = "https://cassiopeia-berlin.de/event/bsk-111651972"
-        val event = scraper.scrape(Jsoup.parse(fixture("cassiopeia-detail-body-credit.html"), url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("cassiopeia/cassiopeia-detail-body-credit.html", url), url).shouldNotBeNull()
 
         event.promoters shouldContainExactly listOf("Kidnap Music", "Audiolith Booking", "ROSA e.V.")
     }
@@ -252,7 +248,7 @@ class CassiopeiaDetailPageScraperTest {
         expected: String
     ) {
         val url = "https://cassiopeia-berlin.de/event/$slug"
-        val event = scraper.scrape(Jsoup.parse(fixture(fixtureName), url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("cassiopeia/$fixtureName", url), url).shouldNotBeNull()
 
         event.promoters shouldContainExactly listOf(expected)
     }
@@ -343,7 +339,7 @@ class CassiopeiaDetailPageScraperTest {
     fun `reads a festival's line-up list as headliners and drops its name from the genre`() {
         // Crunch Tapes Fest, 11 October 2026: five bold heads after "Line-up:", three of them in one paragraph (#3102).
         val url = "https://cassiopeia-berlin.de/event/crunch-tapes-fest-111635212"
-        val event = scraper.scrape(Jsoup.parse(fixture("cassiopeia-detail-lineup-list.html"), url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("cassiopeia/cassiopeia-detail-lineup-list.html", url), url).shouldNotBeNull()
 
         event.eventType shouldBe "CONCERT"
         event.artists shouldContainExactly
@@ -355,7 +351,7 @@ class CassiopeiaDetailPageScraperTest {
     @Test
     fun `keeps a headliner concert's genre and acts`() {
         val url = "https://cassiopeia-berlin.de/event/pharmakon-123"
-        val event = scraper.scrape(Jsoup.parse(fixture("cassiopeia-detail-concert.html"), url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("cassiopeia/cassiopeia-detail-concert.html", url), url).shouldNotBeNull()
 
         event.genre shouldBe "Noise"
         event.artists shouldContainExactly
@@ -434,10 +430,4 @@ class CassiopeiaDetailPageScraperTest {
     fun `drops a genre slot that names no style`(slot: String) {
         cassiopeiaGenre(slot).shouldBeNull()
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/cassiopeia/$name")!!
-            .bufferedReader()
-            .readText()
 }
