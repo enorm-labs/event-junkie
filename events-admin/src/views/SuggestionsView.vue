@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import {
   applySuggestion,
+  applyToShowDates,
   cannotApply,
   dismissSuggestion,
   fetchSuggestions,
@@ -75,12 +76,14 @@ watch(result, () => (decided.value = 0))
 const open = computed(() => Math.max(0, (result.value?.totalElements ?? 0) - decided.value))
 const hasNext = computed(() => page.value + 1 < (result.value?.totalPages ?? 0))
 
-async function decide(suggestion: Suggestion, action: () => Promise<unknown>, done: string) {
+/** Runs [action], which returns the notice to show when it is done. */
+async function decide(suggestion: Suggestion, action: () => Promise<string>) {
   busy.value = suggestion.id
   notice.value = null
   delete failures.value[suggestion.id]
+  let done: string
   try {
-    await action()
+    done = await action()
   } catch (e) {
     failures.value[suggestion.id] = e instanceof Error ? e.message : String(e)
     return
@@ -92,20 +95,26 @@ async function decide(suggestion: Suggestion, action: () => Promise<unknown>, do
   notice.value = done
 }
 
+function dates(count: number) {
+  return count === 1 ? '1 more date' : `${count} more dates`
+}
+
 function accept(suggestion: Suggestion) {
-  return decide(
-    suggestion,
-    () => applySuggestion(suggestion),
-    `Accepted: ${suggestion.field} of "${suggestion.eventTitle}" is saved and pinned.`,
-  )
+  return decide(suggestion, async () => {
+    await applySuggestion(suggestion)
+    const done = `Accepted: ${suggestion.field} of "${suggestion.eventTitle}" is saved and pinned`
+    if (suggestion.showEventIds.length === 0) return `${done}.`
+    const { saved, skipped } = await applyToShowDates(suggestion)
+    const skippedNote = skipped > 0 ? `, ${skipped} skipped: they hold another value or failed` : ''
+    return `${done} on ${dates(saved)} of the show too${skippedNote}.`
+  })
 }
 
 function reject(suggestion: Suggestion) {
-  return decide(
-    suggestion,
-    () => dismissSuggestion(suggestion.id),
-    `Rejected: ${suggestion.field} of "${suggestion.eventTitle}" stays as it is.`,
-  )
+  return decide(suggestion, async () => {
+    await dismissSuggestion(suggestion.id)
+    return `Rejected: ${suggestion.field} of "${suggestion.eventTitle}" stays as it is.`
+  })
 }
 
 function percent(confidence: number) {
@@ -177,7 +186,11 @@ function percent(confidence: number) {
             </button>
           </h2>
           <p class="text-sm text-muted-foreground">
-            <span class="tabular-nums">{{ suggestion.eventDate }}</span> ·
+            <span class="tabular-nums">{{ suggestion.eventDate }}</span>
+            <span v-if="suggestion.showEventIds.length > 0" data-testid="show-dates">
+              and {{ dates(suggestion.showEventIds.length) }} of this show</span
+            >
+            ·
             {{ suggestion.venueName }} ·
             <a
               :href="`${origin}/en/events/${encodeURIComponent(suggestion.eventSlug)}`"

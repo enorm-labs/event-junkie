@@ -24,6 +24,7 @@ function suggestion(overrides: Partial<Suggestion>): Suggestion {
     model: 'claude-haiku-4-5',
     status: 'OPEN',
     createdAt: '2026-10-14T08:00:00Z',
+    showEventIds: [],
     ...overrides,
   }
 }
@@ -71,9 +72,12 @@ beforeEach(() => {
     if (method === 'GET' && url.startsWith('/api/admin/data-quality/suggestions?')) {
       return json({ content: listed, totalElements: listed.length, totalPages: 1 })
     }
-    if (method === 'GET' && url === '/api/admin/events/7') return json(event)
-    if (method === 'PUT' && url === '/api/admin/events/7') {
-      return json({ ...event, ...JSON.parse(String(init?.body)), pinnedFields: ['startTime'] })
+    // Event 8 is another date of the show, and 9 one that holds another start time.
+    const id = /^\/api\/admin\/events\/([789])$/.exec(url)?.[1]
+    const dated = { ...event, id: Number(id), startTime: id === '9' ? '19:00:00' : null }
+    if (method === 'GET' && id) return json(dated)
+    if (method === 'PUT' && id) {
+      return json({ ...dated, ...JSON.parse(String(init?.body)), pinnedFields: ['startTime'] })
     }
     const decided = /^\/api\/admin\/data-quality\/suggestions\/(\d+)\/(accept|dismiss)$/.exec(url)
     if (method === 'POST' && decided) {
@@ -197,6 +201,24 @@ describe('SuggestionsView', () => {
     expect(wrapper.findAll('[data-testid="suggestion"]')).toHaveLength(0)
     expect(wrapper.find('[role="status"]').text()).toContain('saved and pinned')
     expect(wrapper.find('[data-testid="open-count"]').text()).toBe('0 open')
+  })
+
+  it('says how many dates of the show a suggestion covers, and Accept saves the ones that match', async () => {
+    listed = [suggestion({ showEventIds: [8, 9] })]
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="show-dates"]').text()).toBe('and 2 more dates of this show')
+    await button(wrapper, 'Accept startTime for Ash Rivers').trigger('click')
+    await flushPromises()
+
+    expect(methods().filter((m) => m.startsWith('PUT'))).toEqual([
+      'PUT /api/admin/events/7',
+      'PUT /api/admin/events/8',
+    ])
+    expect(wrapper.find('[role="status"]').text()).toBe(
+      'Accepted: startTime of "Ash Rivers" is saved and pinned on 1 more date of the show too, ' +
+        '1 skipped: they hold another value or failed.',
+    )
   })
 
   it('shows a refused accept in its card and keeps the card', async () => {

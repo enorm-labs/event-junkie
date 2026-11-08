@@ -199,6 +199,55 @@ class EventSuggestionControllerTest : BaseControllerTest() {
         }
 
     @Test
+    fun `a suggestion lists the other upcoming dates of its show, not past dates or another venue's`(): Unit =
+        runBlocking {
+            val event = insertEvent("Kokosnuss")
+            val later = insertShowDate(event, daysAhead = 3)
+            val sooner = insertShowDate(event, daysAhead = 1)
+            insertShowDate(event, daysAhead = -2)
+            val elsewhere = insertShowDate(event, daysAhead = 2)
+            moveToVenueOf(elsewhere, insertEvent("other"))
+            val id = insertSuggestion(event)
+
+            webTestClient
+                .get()
+                .uri("/api/admin/data-quality/suggestions?eventId=$event")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[0].id")
+                .isEqualTo(id)
+                .jsonPath("$.content[0].showEventIds")
+                .isEqualTo(listOf(sooner.toInt(), later.toInt()))
+        }
+
+    @Test
+    fun `dismiss also dismisses the same open proposal on the other dates of the show, and nothing else`(): Unit =
+        runBlocking {
+            val event = insertEvent("Kokosnuss")
+            val id = insertSuggestion(event)
+            val twin = insertSuggestion(insertShowDate(event, daysAhead = 1))
+            val otherStored = insertSuggestion(insertShowDate(event, daysAhead = 2), storedValue = "19:00")
+            val accepted = insertSuggestion(insertShowDate(event, daysAhead = 3), status = "ACCEPTED")
+            val elsewhereEvent = insertShowDate(event, daysAhead = 4)
+            moveToVenueOf(elsewhereEvent, insertEvent("other"))
+            val elsewhere = insertSuggestion(elsewhereEvent)
+
+            webTestClient
+                .post()
+                .uri("/api/admin/data-quality/suggestions/$id/dismiss")
+                .exchange()
+                .expectStatus()
+                .isOk
+
+            check(statusOf(twin) == "DISMISSED") { "the twin on another date is dismissed with it" }
+            check(statusOf(otherStored) == "OPEN") { "a date that holds another value keeps its suggestion" }
+            check(statusOf(accepted) == "ACCEPTED") { "an accepted twin stays accepted" }
+            check(statusOf(elsewhere) == "OPEN") { "the same title at another venue is another show" }
+        }
+
+    @Test
     fun `dismissing an unknown suggestion is a 404 Problem Detail`() {
         webTestClient
             .post()
@@ -300,8 +349,39 @@ class EventSuggestionControllerTest : BaseControllerTest() {
             .awaitSingle()
     }
 
+    /** Another date of [eventId]'s show: same venue and title, [daysAhead] days from today. */
+    private suspend fun insertShowDate(
+        eventId: Long,
+        daysAhead: Int
+    ): Long =
+        databaseClient
+            .sql(
+                "INSERT INTO events.event (venue_id, title, slug, event_date, source_id) " +
+                    "SELECT venue_id, title, slug || '-$daysAhead', CURRENT_DATE + $daysAhead, slug || '-$daysAhead' " +
+                    "FROM events.event WHERE id = $eventId RETURNING id"
+            ).map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
+            .one()
+            .awaitSingle()
+
+    private suspend fun moveToVenueOf(
+        eventId: Long,
+        otherEventId: Long
+    ) {
+        databaseClient
+            .sql("UPDATE events.event SET venue_id = (SELECT venue_id FROM events.event WHERE id = $otherEventId) WHERE id = $eventId")
+            .await()
+    }
+
+    private suspend fun statusOf(suggestionId: Long): String =
+        databaseClient
+            .sql("SELECT status FROM events.event_suggestion WHERE id = $suggestionId")
+            .map { row, _ -> row.get("status", String::class.java)!! }
+            .one()
+            .awaitSingle()
+
     private suspend fun insertSuggestion(
         eventId: Long,
+        storedValue: String? = null,
         field: String = "startTime",
         status: String = "OPEN",
         checkName: String = "description-start-time",
@@ -313,11 +393,12 @@ class EventSuggestionControllerTest : BaseControllerTest() {
                 """
                 INSERT INTO events.event_suggestion
                     (event_id, field, stored_value, proposed_value, evidence, confidence, check_name, model, status, created_at)
-                VALUES (:eventId, :field, NULL, '20:00', :evidence, 0.92, :checkName, 'claude-haiku-4-5',
+                VALUES (:eventId, :field, CAST(:storedValue AS text), '20:00', :evidence, 0.92, :checkName, 'claude-haiku-4-5',
                         :status, CAST(:createdAt AS timestamptz))
                 RETURNING id
                 """.trimIndent()
             ).bind("eventId", eventId)
+            .let { if (storedValue == null) it.bindNull("storedValue", String::class.java) else it.bind("storedValue", storedValue) }
             .bind("field", field)
             .bind("evidence", evidence)
             .bind("status", status)

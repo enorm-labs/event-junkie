@@ -136,7 +136,7 @@ class EventClassificationCheckTest : BaseControllerTest() {
             suggestions(show).shouldBeEmpty()
             suggestions(reading).map { Triple(it.field, it.stored, it.proposed) } shouldContainExactly listOf(Triple("eventType", "COMEDY", "READING"))
             lines.single { it.formattedMessage.contains("finished") }.formattedMessage shouldEndWith
-                "suggested {eventType=1}; skipped 2 COMEDY/SHOW type(s) and 0 dismissed on another date"
+                "suggested {eventType=1}; skipped 2 COMEDY/SHOW type(s), 0 dismissed on another date and 0 open on another date"
         }
 
     @Test
@@ -162,7 +162,42 @@ class EventClassificationCheckTest : BaseControllerTest() {
             suggestions(elsewhere).map { it.proposed } shouldContainExactly listOf("READING")
             suggestions(otherValue).map { it.proposed } shouldContainExactly listOf("CONCERT")
             lines.single { it.formattedMessage.contains("finished") }.formattedMessage shouldEndWith
-                "suggested {eventType=2}; skipped 0 COMEDY/SHOW type(s) and 1 dismissed on another date"
+                "suggested {eventType=2}; skipped 0 COMEDY/SHOW type(s), 1 dismissed on another date and 0 open on another date"
+        }
+
+    @Test
+    fun `a first run over a show stores one open suggestion, and a date that holds another value gets its own`(): Unit =
+        runBlocking {
+            val text = "Einlass 19 Uhr, Beginn 20 Uhr."
+            val first = insertEvent("Kokosnuss", description = text, startTime = null, presale = null, daysAhead = 7)
+            val second = insertEvent("Kokosnuss", description = text, startTime = null, presale = null, daysAhead = 8)
+            val otherValue = insertEvent("Kokosnuss", description = text, startTime = "19:00", presale = null, daysAhead = 9)
+            repeat(3) { server.enqueue(answer("startTime" to finding("20:00", "Beginn 20 Uhr"))) }
+
+            val lines = captureLogs { check().checkSource(SOURCE) }
+
+            suggestions(first).map { Triple(it.field, it.stored, it.proposed) } shouldContainExactly listOf(Triple("startTime", null, "20:00"))
+            withClue("the second date is decided with the first") { suggestions(second).shouldBeEmpty() }
+            suggestions(otherValue).map { Triple(it.field, it.stored, it.proposed) } shouldContainExactly listOf(Triple("startTime", "19:00", "20:00"))
+            lines.single { it.formattedMessage.contains("finished") }.formattedMessage shouldEndWith
+                "suggested {startTime=2}; skipped 0 COMEDY/SHOW type(s), 0 dismissed on another date and 1 open on another date"
+        }
+
+    @Test
+    fun `an open suggestion on a past date of a show does not hold back its upcoming dates`(): Unit =
+        runBlocking {
+            val past = insertEvent("Kokosnuss", type = "OTHER", daysAhead = -1)
+            databaseClient
+                .sql(
+                    "INSERT INTO events.event_suggestion (event_id, field, stored_value, proposed_value, evidence, confidence, check_name) " +
+                        "VALUES ($past, 'eventType', 'OTHER', 'SHOW', 'Kokosnuss', 0.9, 'event-classification')"
+                ).await()
+            val upcoming = insertEvent("Kokosnuss", type = "OTHER", daysAhead = 7)
+            server.enqueue(answer("eventType" to finding("SHOW", "Kokosnuss")))
+
+            check().checkEvent(upcoming)
+
+            suggestions(upcoming).map { it.proposed } shouldContainExactly listOf("SHOW")
         }
 
     @Test
@@ -408,7 +443,8 @@ class EventClassificationCheckTest : BaseControllerTest() {
                 listOf(
                     "Event classification of source '$SOURCE' started: 1 candidate(s), at most 50 model call(s), 0 of 3000000 tokens used this month",
                     "Event classification of source '$SOURCE' finished: 1 checked, 0 unchanged, 0 failed, 0 over the cap, " +
-                        "0 over the token budget; suggested {eventType=1}; skipped 0 COMEDY/SHOW type(s) and 0 dismissed on another date"
+                        "0 over the token budget; suggested {eventType=1}; " +
+                        "skipped 0 COMEDY/SHOW type(s), 0 dismissed on another date and 0 open on another date"
                 )
             withClue("each line names the source as a field, so the log can be filtered by it") {
                 info.forEach { line -> line.keyValuePairs.associate { it.key to it.value } shouldBe mapOf("sourceSlug" to SOURCE) }

@@ -121,7 +121,8 @@ class EventClassificationCheck(
             message =
                 "Event classification of $scope finished: ${result.checked} checked, ${result.unchanged} unchanged, ${result.failed} failed, " +
                 "${result.overCap} over the cap, ${result.overBudget} over the token budget; suggested ${result.suggested}; " +
-                "skipped ${tally.comedyShowSkipped} COMEDY/SHOW type(s) and ${tally.dismissedForShow} dismissed on another date"
+                "skipped ${tally.comedyShowSkipped} COMEDY/SHOW type(s), ${tally.dismissedForShow} dismissed on another date " +
+                "and ${tally.openForShow} open on another date"
             payload = sourcePayload
         }
         return result
@@ -165,6 +166,7 @@ class EventClassificationCheck(
         val suggested = mutableMapOf<String, Int>()
         var comedyShowSkipped = 0
         var dismissedForShow = 0
+        var openForShow = 0
     }
 
     private suspend fun classify(
@@ -216,6 +218,10 @@ class EventClassificationCheck(
 
                 SuggestionInsert.DISMISSED_FOR_SHOW -> {
                     tally.dismissedForShow++
+                }
+
+                SuggestionInsert.OPEN_FOR_SHOW -> {
+                    tally.openForShow++
                 }
 
                 SuggestionInsert.OPEN -> {}

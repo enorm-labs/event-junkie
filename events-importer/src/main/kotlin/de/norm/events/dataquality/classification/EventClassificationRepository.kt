@@ -60,7 +60,10 @@ enum class SuggestionInsert {
     OPEN,
 
     /** The same suggestion was dismissed on another date of the show. */
-    DISMISSED_FOR_SHOW
+    DISMISSED_FOR_SHOW,
+
+    /** The same suggestion, from the same stored value, is open on another upcoming date of the show (#4736). */
+    OPEN_FOR_SHOW
 }
 
 /**
@@ -166,6 +169,8 @@ class EventClassificationRepository(
     /**
      * Inserts [suggestion] unless an OPEN one has the same event, field and value, or a DISMISSED one has the same
      * field and value on an event of the same venue and title: a dismissal holds for every date of a show (#3658).
+     * An OPEN one with the same field, value and stored value on another upcoming date of the show also skips it,
+     * so the operator decides a show once (#4736). A date that holds another value gets its own suggestion.
      */
     suspend fun insertUnlessOpen(suggestion: NewSuggestion): SuggestionInsert =
         template.databaseClient
@@ -184,14 +189,24 @@ class EventClassificationRepository(
                         SELECT 1 FROM $EVENTS_SCHEMA.event_suggestion
                         WHERE event_id = :eventId AND field = :field AND proposed_value = :proposedValue AND status = 'OPEN'
                     ) AS hit
+                ), open_for_show AS (
+                    SELECT EXISTS (
+                        SELECT 1 FROM $EVENTS_SCHEMA.event_suggestion o
+                        JOIN $EVENTS_SCHEMA.event oe ON oe.id = o.event_id
+                        JOIN $EVENTS_SCHEMA.event te ON te.id = :eventId
+                        WHERE o.status = 'OPEN' AND o.field = :field AND o.proposed_value = :proposedValue
+                          AND o.stored_value IS NOT DISTINCT FROM CAST(:storedValue AS text)
+                          AND oe.id <> te.id AND oe.venue_id = te.venue_id AND oe.title = te.title AND oe.event_date >= CURRENT_DATE
+                    ) AS hit
                 ), inserted AS (
                     INSERT INTO $EVENTS_SCHEMA.event_suggestion
                         (event_id, field, stored_value, proposed_value, evidence, confidence, check_name, model)
                     SELECT :eventId, :field, :storedValue, :proposedValue, :evidence, :confidence, :checkName, :model
-                    WHERE NOT (SELECT hit FROM dismissed) AND NOT (SELECT hit FROM already_open)
+                    WHERE NOT (SELECT hit FROM dismissed) AND NOT (SELECT hit FROM already_open) AND NOT (SELECT hit FROM open_for_show)
                     RETURNING id
                 )
-                SELECT EXISTS (SELECT 1 FROM inserted) AS inserted, (SELECT hit FROM dismissed) AS dismissed
+                SELECT EXISTS (SELECT 1 FROM inserted) AS inserted, (SELECT hit FROM dismissed) AS dismissed,
+                       (SELECT hit FROM already_open) AS already_open
                 """.trimIndent()
             ).bind("eventId", suggestion.eventId)
             .bind("field", suggestion.field)
@@ -205,7 +220,8 @@ class EventClassificationRepository(
                 when {
                     row.get("inserted", Boolean::class.javaObjectType) == true -> SuggestionInsert.INSERTED
                     row.get("dismissed", Boolean::class.javaObjectType) == true -> SuggestionInsert.DISMISSED_FOR_SHOW
-                    else -> SuggestionInsert.OPEN
+                    row.get("already_open", Boolean::class.javaObjectType) == true -> SuggestionInsert.OPEN
+                    else -> SuggestionInsert.OPEN_FOR_SHOW
                 }
             }.one()
             .awaitSingle()

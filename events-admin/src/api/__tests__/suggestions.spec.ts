@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AdminEvent } from '../events'
 import {
   applySuggestion,
+  applyToShowDates,
   cannotApply,
   fetchSuggestions,
   listItems,
@@ -59,6 +60,7 @@ function suggestion(overrides: Partial<Suggestion> = {}): Suggestion {
     model: 'claude-haiku-4-5',
     status: 'OPEN',
     createdAt: '2026-10-14T08:00:00Z',
+    showEventIds: [],
     ...overrides,
   }
 }
@@ -204,6 +206,57 @@ describe('applySuggestion', () => {
       'is no time',
     )
     expect(calls(fetchFn).some((c) => c.startsWith('PUT'))).toBe(false)
+  })
+})
+
+describe('applyToShowDates', () => {
+  /** Event 8 holds the stored value, 9 another one, 10 cannot be read, and 12 bills Ash Rivers. */
+  function showImporter() {
+    const events: Record<string, AdminEvent> = {
+      '8': { ...stored, id: 8 },
+      '9': { ...stored, id: 9, startTime: '19:00:00' },
+      '12': { ...stored, id: 12 },
+    }
+    return vi.fn<typeof fetch>(async (input, init) => {
+      const url = String(input)
+      const method = init?.method ?? 'GET'
+      const id = url.match(/^\/api\/admin\/events\/(\d+)$/)?.[1]
+      const event = id ? events[id] : undefined
+      if (method === 'GET' && event) return json(event)
+      if (method === 'GET' && url === '/api/admin/artists/11') {
+        return json({ id: 11, name: 'Ash Rivers', slug: 'ash-rivers' })
+      }
+      if (method === 'PUT' && event) {
+        const body = JSON.parse(String(init?.body))
+        return json({ ...event, ...body, pinnedFields: ['startTime', 'lineup'] })
+      }
+      return json({ detail: `unexpected ${method} ${url}` }, 404)
+    })
+  }
+
+  it('saves the dates that hold the stored value, skips the rest, and accepts nothing', async () => {
+    const fetchFn = showImporter()
+
+    const result = await applyToShowDates(suggestion({ showEventIds: [8, 9, 10] }), fetchFn)
+
+    expect(result).toEqual({ saved: 1, skipped: 2 })
+    const writes = calls(fetchFn).filter((c) => !c.startsWith('GET'))
+    expect(writes).toEqual(['PUT /api/admin/events/8'])
+  })
+
+  it('compares a lineup by the names of its acts', async () => {
+    const fetchFn = showImporter()
+    const artists = suggestion({
+      field: 'artists',
+      storedValue: 'Ash Rivers',
+      proposedValue: 'Ash Rivers',
+      showEventIds: [12],
+    })
+
+    expect(await applyToShowDates(artists, fetchFn)).toEqual({ saved: 1, skipped: 0 })
+    expect(
+      await applyToShowDates({ ...artists, storedValue: 'Nova Lane' }, showImporter()),
+    ).toEqual({ saved: 0, skipped: 1 })
   })
 })
 
