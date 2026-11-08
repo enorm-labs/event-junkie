@@ -1,5 +1,6 @@
 package de.norm.events.scraper.loge
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -21,16 +22,7 @@ class LogeDetailPageScraperTest {
     private fun scrape(
         fixture: String,
         sourceUrl: String
-    ) = scraper.scrape(
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/loge/$fixture")!!
-                .bufferedReader()
-                .readText(),
-            sourceUrl
-        ),
-        sourceUrl
-    )
+    ) = scraper.scrape(fixtureDocument("loge/$fixture", sourceUrl), sourceUrl)
 
     @Test
     fun `parses the price, date, and status from the JSON-LD`() {

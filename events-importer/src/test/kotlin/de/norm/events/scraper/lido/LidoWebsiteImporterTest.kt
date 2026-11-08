@@ -7,6 +7,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -35,25 +37,18 @@ class LidoWebsiteImporterTest {
     private val sourceUrl = "https://www.lido-berlin.de/"
     private val sorryUrl = "https://www.lido-berlin.de/events/2026-06-15-sorry"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/lido/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = LidoWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("lido-overview.html"), sourceUrl),
+                document = fixtureDocument("lido/lido-overview.html", sourceUrl),
                 etag = "\"lido-etag\"",
                 lastModified = "Wed, 17 Jun 2026 10:00:00 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(sorryUrl) } returns
-            Jsoup.parse(fixture("lido-detail-sorry.html"), sorryUrl)
+        stubFetcher(sorryUrl to "lido/lido-detail-sorry.html", fetcher = htmlFetcher)
 
         // Every other event's detail page is unavailable, so the importer degrades
         // to overview data (which already carries a real date, so nothing is dropped).

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.kuehlspot
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,14 +19,7 @@ class KuehlspotOverviewPageScraperTest {
     private val scraper = KuehlspotOverviewPageScraper()
     private val baseUrl = "https://kuehlspot.com/"
 
-    private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/kuehlspot/kuehlspot-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("kuehlspot/kuehlspot-overview.html", baseUrl), baseUrl) }
 
     private fun night(date: String) = events.single { it.eventDate == LocalDate.parse(date) }
 

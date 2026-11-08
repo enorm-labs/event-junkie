@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -19,16 +20,12 @@ class MadMonkeyRoomWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val importer = MadMonkeyRoomWebsiteImporter(htmlFetcher)
     private val url = "https://t.rausgegangen.de/tickets/shop/mad-monkey-2"
+    private val shopHtml = "madmonkeyroom/madmonkeyroom-shop.html"
 
     @Test
     fun `imports the shop list with its validators and reads no other page`() =
         runTest {
-            val html =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/madmonkeyroom/madmonkeyroom-shop.html")!!
-                    .bufferedReader()
-                    .readText()
-            coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns FetchResult.Success(Jsoup.parse(html, url), "\"mm\"", "Fri, 16 Oct 2026")
+            coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns FetchResult.Success(fixtureDocument(shopHtml, url), "\"mm\"", "Fri, 16 Oct 2026")
 
             val result = importer.importEvents(url).shouldBeInstanceOf<ImportResult.Success>()
 

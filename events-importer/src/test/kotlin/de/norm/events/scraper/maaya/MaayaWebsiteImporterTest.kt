@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -27,18 +28,12 @@ class MaayaWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://maaya.de/"
 
-    private fun readFixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/maaya/maaya-overview.html")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = MaayaWebsiteImporter(htmlFetcher)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture(), sourceUrl),
+                document = fixtureDocument("maaya/maaya-overview.html", sourceUrl),
                 etag = "\"maaya-etag\"",
                 lastModified = "Tue, 04 Aug 2026 17:24:56 GMT"
             )

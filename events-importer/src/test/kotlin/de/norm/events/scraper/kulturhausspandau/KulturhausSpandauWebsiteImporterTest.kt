@@ -3,6 +3,7 @@ package de.norm.events.scraper.kulturhausspandau
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -20,7 +21,7 @@ class KulturhausSpandauWebsiteImporterTest {
     @Test
     fun `imports the house's events from the API response`() =
         runTest {
-            coEvery { apiClient.fetchJson(sourceUrl) } returns kulturhausSpandauEvents()
+            coEvery { apiClient.fetchJson(sourceUrl) } returns fixtureText("kulturhausspandau/kulturhausspandau-events.json")
 
             val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
 

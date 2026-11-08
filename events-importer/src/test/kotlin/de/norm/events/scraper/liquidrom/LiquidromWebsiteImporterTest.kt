@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -24,16 +25,12 @@ class LiquidromWebsiteImporterTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-26T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val importer = LiquidromWebsiteImporter(htmlFetcher, clock)
     private val sourceUrl = "https://www.liquidrom-berlin.de/de/events.php"
+    private val overviewHtml = "liquidrom/liquidrom-overview.html"
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/liquidrom/liquidrom-overview.html")!!
-                .bufferedReader()
-                .readText()
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(document = Jsoup.parse(html, sourceUrl), etag = "\"abc123\"", lastModified = "Mon, 26 Oct 2026 09:00:00 GMT")
+            FetchResult.Success(document = fixtureDocument(overviewHtml, sourceUrl), etag = "\"abc123\"", lastModified = "Mon, 26 Oct 2026 09:00:00 GMT")
     }
 
     @Test

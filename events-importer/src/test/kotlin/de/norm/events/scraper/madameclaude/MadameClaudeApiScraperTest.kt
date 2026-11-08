@@ -3,6 +3,7 @@ package de.norm.events.scraper.madameclaude
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -24,14 +25,7 @@ import java.time.LocalTime
 class MadameClaudeApiScraperTest {
     private val scraper = MadameClaudeApiScraper()
 
-    private val events: List<ScrapedEvent> by lazy {
-        val json =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/madameclaude/madameclaude-events.json")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(json)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureText("madameclaude/madameclaude-events.json")) }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 

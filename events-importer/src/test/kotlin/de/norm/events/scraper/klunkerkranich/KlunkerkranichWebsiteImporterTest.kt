@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -38,23 +39,17 @@ class KlunkerkranichWebsiteImporterTest {
     private val importer = KlunkerkranichWebsiteImporter(htmlFetcher, clock)
     private val listingUrl = "https://klunkerkranich.org/events/"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/klunkerkranich/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun stubListing() {
         coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("klunkerkranich-overview.html"), listingUrl),
+                document = fixtureDocument("klunkerkranich/klunkerkranich-overview.html", listingUrl),
                 etag = "\"klunkerkranich-etag\"",
                 lastModified = "Tue, 04 Aug 2026 08:53:43 GMT"
             )
     }
 
     private fun stubEventPages(name: String = "klunkerkranich-detail-price-range.html") {
-        coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture(name), firstArg<String>()) }
+        coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("klunkerkranich/$name", firstArg<String>()) }
     }
 
     @Test

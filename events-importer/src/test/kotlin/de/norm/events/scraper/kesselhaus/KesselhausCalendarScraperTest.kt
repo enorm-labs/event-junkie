@@ -3,6 +3,8 @@ package de.norm.events.scraper.kesselhaus
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.isForChildren
 import de.norm.events.scraper.stripFriendsTail
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -27,7 +29,8 @@ import java.time.ZoneId
 class KesselhausCalendarScraperTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-08T08:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val url = "https://www.kesselhaus.net/de/calendar"
-    private val calendar = Jsoup.parse(fixture("kesselhaus-calendar.html"), url)
+    private val dotaHtml = "kesselhaus/kesselhaus-event-dota.html"
+    private val calendar = fixtureDocument("kesselhaus/kesselhaus-calendar.html", url)
     private val kesselhaus = KesselhausCalendarScraper(KesselhausRoom.KESSELHAUS, clock)
     private val maschinenhaus = KesselhausCalendarScraper(KesselhausRoom.MASCHINENHAUS, clock)
 
@@ -231,7 +234,7 @@ class KesselhausCalendarScraperTest {
     @Test
     fun `steps to the window after the last month shown and stops after an empty one`() {
         kesselhaus.nextPage(calendar, url) shouldBe "https://www.kesselhaus.net/de/calendar?part=2027-03"
-        val last = Jsoup.parse(fixture("kesselhaus-calendar-2027-10.html"), "$url?part=2027-10")
+        val last = fixtureDocument("kesselhaus/kesselhaus-calendar-2027-10.html", "$url?part=2027-10")
         kesselhaus.nextPage(last, "$url?part=2027-10") shouldBe "https://www.kesselhaus.net/de/calendar?part=2027-12"
         kesselhaus.scrape(last, "$url?part=2027-10").single().title shouldBe "Manolito Simonet y su Trabuco"
         kesselhaus.nextPage(Jsoup.parse("<html><body></body></html>", url), url).shouldBeNull()
@@ -240,7 +243,7 @@ class KesselhausCalendarScraperTest {
     @Test
     fun `adds the text and the full-size image from the event's own page`() {
         val event = kesselhaus.scrape(calendar, url).first()
-        val page = Jsoup.parse(fixture("kesselhaus-event-dota.html"), event.sourceUrl)
+        val page = fixtureDocument("kesselhaus/kesselhaus-event-dota.html", event.sourceUrl)
         val dota = event.copy(sourceUrl = "https://www.kesselhaus.net/de/calendar/-Ors0wnvA9pHewc90PM4")
 
         val enriched = kesselhaus.enrich(dota, page).shouldNotBeNull()
@@ -252,7 +255,7 @@ class KesselhausCalendarScraperTest {
     @Test
     fun `types an untyped night a party when its own text names one`() {
         val event = kesselhaus.scrape(calendar, url).first()
-        val html = fixture("kesselhaus-event-dota.html").replace("Dota ist wieder da, mit neuen Songs", "Die erste Daytime Workout Party in Berlin")
+        val html = fixtureText(dotaHtml).replace("Dota ist wieder da, mit neuen Songs", "Die erste Daytime Workout Party in Berlin")
         val page = Jsoup.parse(html, event.sourceUrl)
         val night = event.copy(sourceUrl = "https://www.kesselhaus.net/de/calendar/-Ors0wnvA9pHewc90PM4")
 
@@ -263,7 +266,7 @@ class KesselhausCalendarScraperTest {
     @Test
     fun `strips the CMS markup and the sponsor heading, and reads the doors time the text states`() {
         val event = kesselhaus.scrape(calendar, url).first { it.title == "Seksendört - Live 2026" }
-        val page = Jsoup.parse(fixture("kesselhaus-event-seksendort.html"), event.sourceUrl)
+        val page = fixtureDocument("kesselhaus/kesselhaus-event-seksendort.html", event.sourceUrl)
 
         val enriched = kesselhaus.enrich(event, page).shouldNotBeNull()
 
@@ -347,12 +350,6 @@ class KesselhausCalendarScraperTest {
             |<script id="serverApp-state" type="application/json">$escaped</script>
             """.trimMargin()
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/kesselhaus/$name")!!
-            .bufferedReader()
-            .readText()
 
     @Test
     fun `marks the Kinder category for children and keeps it a show`() {

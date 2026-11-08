@@ -8,6 +8,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -41,28 +43,20 @@ class KreuzwerkWebsiteImporterTest {
             "141126-tracey" to "tracey"
         )
 
-    private fun readFixture(name: String): String =
-        requireNotNull(javaClass.classLoader.getResourceAsStream("scraper/kreuzwerk/$name")) { "missing fixture $name" }
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = KreuzwerkWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("kreuzwerk-overview.html"), sourceUrl),
+                document = fixtureDocument("kreuzwerk/kreuzwerk-overview.html", sourceUrl),
                 etag = "\"kw-etag\"",
                 lastModified = "Fri, 16 Oct 2026 08:00:00 GMT"
             )
 
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
-        detailFixtures.forEach { (slug, fixture) ->
-            val detailUrl = "https://kreuzwerk.club/event/$slug"
-            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
-                Jsoup.parse(readFixture("kreuzwerk-detail-$fixture.html"), detailUrl)
-        }
+        val detailPages = detailFixtures.map { (slug, fixture) -> "https://kreuzwerk.club/event/$slug" to "kreuzwerk/kreuzwerk-detail-$fixture.html" }
+        stubFetcher(*detailPages.toTypedArray(), fetcher = htmlFetcher)
     }
 
     private suspend fun events(): List<ScrapedEvent> {

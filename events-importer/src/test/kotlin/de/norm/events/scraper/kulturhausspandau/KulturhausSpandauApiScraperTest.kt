@@ -1,6 +1,7 @@
 package de.norm.events.scraper.kulturhausspandau
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
@@ -15,14 +16,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /** The `/wp-json/eventmanager/v1/events` response saved on 2026-10-23: 250 events, past ones included. */
-fun kulturhausSpandauEvents(): String =
-    KulturhausSpandauApiScraperTest::class.java.classLoader
-        .getResourceAsStream("scraper/kulturhausspandau/kulturhausspandau-events.json")!!
-        .bufferedReader()
-        .readText()
-
 class KulturhausSpandauApiScraperTest {
-    private val events = KulturhausSpandauApiScraper().scrape(kulturhausSpandauEvents(), SOURCE_URL)
+    private val events = KulturhausSpandauApiScraper().scrape(fixtureText("kulturhausspandau/kulturhausspandau-events.json"), SOURCE_URL)
     private val upcoming = events.filterNot { it.eventDate.isBefore(LocalDate.of(2026, 10, 23)) }
 
     private fun event(id: Long) = events.single { it.sourceId == "kulturhaus_spandau:$id" }

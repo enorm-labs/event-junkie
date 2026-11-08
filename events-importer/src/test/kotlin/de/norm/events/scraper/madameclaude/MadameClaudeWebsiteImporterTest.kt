@@ -3,6 +3,7 @@ package de.norm.events.scraper.madameclaude
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -28,16 +29,12 @@ class MadameClaudeWebsiteImporterTest {
     private val apiClient: ApiClient = mockk()
     private val apiBaseUrl = "https://madameclaude.de/wp-json/wp/v2/event"
 
-    private val fixtureJson: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/madameclaude/madameclaude-events.json")!!
-            .bufferedReader()
-            .readText()
+    private val eventsJson = "madameclaude/madameclaude-events.json"
 
     @BeforeEach
     fun setUp() {
         importer = MadameClaudeWebsiteImporter(apiClient)
-        coEvery { apiClient.fetchJson(any()) } returns fixtureJson
+        coEvery { apiClient.fetchJson(any()) } returns fixtureText(eventsJson)
     }
 
     @Test
@@ -52,7 +49,7 @@ class MadameClaudeWebsiteImporterTest {
     fun `importEvents builds an upcoming-only, image-embedded query from the configured base URL`() =
         runTest {
             val requestUrl = slot<String>()
-            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureJson
+            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText(eventsJson)
 
             importer.importEvents(apiBaseUrl)
 
@@ -94,7 +91,7 @@ class MadameClaudeWebsiteImporterTest {
         runTest {
             val fullPage = (1..100).joinToString(",", "[", "]") { "{}" }
             coEvery { apiClient.fetchJson(match { it.endsWith("&page=1") }) } returns fullPage
-            coEvery { apiClient.fetchJson(match { it.endsWith("&page=2") }) } returns fixtureJson
+            coEvery { apiClient.fetchJson(match { it.endsWith("&page=2") }) } returns fixtureText(eventsJson)
 
             val result = importer.importEvents(apiBaseUrl).shouldBeInstanceOf<ImportResult.Success>()
 

@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -24,18 +25,12 @@ class LuxWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://www.lux-berlin.net/"
 
-    private fun fixture() =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/lux/lux-overview.html")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = LuxWebsiteImporter(htmlFetcher, Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), BERLIN))
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture(), sourceUrl),
+                document = fixtureDocument("lux/lux-overview.html", sourceUrl),
                 etag = "\"6acf86a7-1c3f\"",
                 lastModified = "Wed, 14 Oct 2026 13:41:59 GMT"
             )
