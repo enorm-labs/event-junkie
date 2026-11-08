@@ -7,6 +7,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -37,29 +39,23 @@ class Hole44WebsiteImporterTest {
     private val lukeUrl = "https://hole-berlin.de/event/2026-11-20-luke-combs-uk-tribute/"
     private val kangUrl = "https://hole-berlin.de/event/2026-07-27-kang-yuchan/"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/hole44/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = Hole44WebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("hole44-overview.html"), overviewUrl),
+                document = fixtureDocument("hole44/hole44-overview.html", overviewUrl),
                 etag = "\"hole44-etag\"",
                 lastModified = "Sun, 12 Jul 2026 03:00:00 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(municipalUrl) } returns
-            Jsoup.parse(fixture("hole44-detail-standard.html"), municipalUrl)
-        coEvery { htmlFetcher.fetchDocument(lukeUrl) } returns
-            Jsoup.parse(fixture("hole44-detail-relocated.html"), lukeUrl)
-        coEvery { htmlFetcher.fetchDocument(kangUrl) } returns
-            Jsoup.parse(fixture("hole44-detail-simple.html"), kangUrl)
+        stubFetcher(
+            municipalUrl to "hole44/hole44-detail-standard.html",
+            lukeUrl to "hole44/hole44-detail-relocated.html",
+            kangUrl to "hole44/hole44-detail-simple.html",
+            fetcher = htmlFetcher
+        )
 
         // Every other event's detail page is unavailable, so the importer degrades to
         // overview data (which already carries a real date, so nothing is dropped).

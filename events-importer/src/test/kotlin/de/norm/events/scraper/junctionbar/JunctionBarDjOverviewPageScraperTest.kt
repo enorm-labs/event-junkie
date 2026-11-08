@@ -3,6 +3,7 @@ package de.norm.events.scraper.junctionbar
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -29,16 +30,7 @@ class JunctionBarDjOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-06-01T10:00:00Z"), ZoneOffset.UTC)
     private val scraper = JunctionBarDjOverviewPageScraper(clock)
 
-    private fun program() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/junctionbar/junctionbar-dj.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
-    private val events by lazy { scraper.scrape(program(), baseUrl) }
+    private val events by lazy { scraper.scrape(fixtureDocument("junctionbar/junctionbar-dj.html", baseUrl), baseUrl) }
 
     @Test
     fun `parses every dated night and skips the PRIVAT PARTY nights`() {

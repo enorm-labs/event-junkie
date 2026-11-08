@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -29,13 +30,7 @@ class HumboldthainApiScraperTest {
     private val clock: Clock = Clock.fixed(LocalDate.of(2026, 8, 1).atStartOfDay(BERLIN).toInstant(), BERLIN)
     private val scraper = HumboldthainApiScraper(clock)
 
-    private val fixtureJson: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/humboldthain/humboldthain-api.json")!!
-            .bufferedReader()
-            .readText()
-
-    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureJson) }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureText("humboldthain/humboldthain-api.json")) }
 
     private fun eventTitled(title: String): ScrapedEvent = events.first { it.title == title }
 

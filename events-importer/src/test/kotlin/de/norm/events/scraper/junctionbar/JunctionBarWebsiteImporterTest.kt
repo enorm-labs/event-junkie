@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -14,7 +16,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -40,32 +41,22 @@ class JunctionBarWebsiteImporterTest {
     private val djUrl = "https://www.junction-bar.de/DJ_html/DJ.html"
     private val funkverbandShopUrl = "https://junction-bar-shop.de/funkverband.html"
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/junctionbar/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     @BeforeEach
     fun setUp() {
         importer = JunctionBarWebsiteImporter(htmlFetcher, clock)
-        coEvery { htmlFetcher.fetchDocument(homepageUrl) } returns fixture("junctionbar-homepage.html", homepageUrl)
-        coEvery { htmlFetcher.fetchDocument(musicListingUrl) } returns
-            fixture("junctionbar-music-listing.html", musicListingUrl)
+        stubFetcher(
+            homepageUrl to "junctionbar/junctionbar-homepage.html",
+            musicListingUrl to "junctionbar/junctionbar-music-listing.html",
+            djUrl to "junctionbar/junctionbar-dj.html",
+            fetcher = htmlFetcher
+        )
         coEvery { htmlFetcher.fetchDocument(match { it.contains("07_2026") }) } returns
-            fixture("junctionbar-music-07_2026.html", "https://www.junction-bar.de/program/07_2026/07_26.html")
+            fixtureDocument("junctionbar/junctionbar-music-07_2026.html", "https://www.junction-bar.de/program/07_2026/07_26.html")
         // The listing also links June; treat it as an empty month so the count stays deterministic.
         coEvery { htmlFetcher.fetchDocument(match { it.contains("06_2026") }) } returns
             Jsoup.parse("<html><body><div class='gridContainer'></div></body></html>", homepageUrl)
-        coEvery { htmlFetcher.fetchDocument(djUrl) } returns fixture("junctionbar-dj.html", djUrl)
-        coEvery { htmlFetcher.fetchDocument(match { it.startsWith(SHOP) }) } returns fixture("junctionbar-shop-priced.html", SHOP)
-        coEvery { htmlFetcher.fetchDocument(funkverbandShopUrl) } returns fixture("junctionbar-shop-sold-out.html", SHOP)
+        coEvery { htmlFetcher.fetchDocument(match { it.startsWith(SHOP) }) } returns fixtureDocument("junctionbar/junctionbar-shop-priced.html", SHOP)
+        coEvery { htmlFetcher.fetchDocument(funkverbandShopUrl) } returns fixtureDocument("junctionbar/junctionbar-shop-sold-out.html", SHOP)
     }
 
     @Test

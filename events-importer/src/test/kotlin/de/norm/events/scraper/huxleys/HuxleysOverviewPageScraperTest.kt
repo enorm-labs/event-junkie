@@ -3,10 +3,10 @@ package de.norm.events.scraper.huxleys
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -27,12 +27,7 @@ class HuxleysOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/huxleys/huxleys-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("huxleys/huxleys-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(slug: String): ScrapedEvent = events.first { it.sourceId == "huxleys:$slug" }

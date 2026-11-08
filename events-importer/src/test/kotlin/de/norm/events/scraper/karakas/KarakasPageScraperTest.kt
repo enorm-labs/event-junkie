@@ -1,6 +1,7 @@
 package de.norm.events.scraper.karakas
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -20,19 +21,8 @@ class KarakasPageScraperTest {
     private val comedyUrl = "https://karakasbar.com/comedy-shows"
     private val quizUrl = "https://karakasbar.com/pub-quiz-1"
 
-    private fun document(
-        fixture: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/karakas/$fixture")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
-    private val comedy = document("karakas-comedy-shows.html", comedyUrl)
-    private val quiz = document("karakas-pub-quiz.html", quizUrl)
+    private val comedy = fixtureDocument("karakas/karakas-comedy-shows.html", comedyUrl)
+    private val quiz = fixtureDocument("karakas/karakas-pub-quiz.html", quizUrl)
 
     @Test
     fun `scrape reads the tour cards on the comedy page`() {

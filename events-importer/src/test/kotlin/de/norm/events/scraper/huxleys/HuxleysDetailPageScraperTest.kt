@@ -3,6 +3,7 @@ package de.norm.events.scraper.huxleys
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -31,12 +32,7 @@ class HuxleysDetailPageScraperTest {
         slug: String
     ): ScrapedEvent? {
         val url = "https://huxleysneuewelt.de/event/$slug"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/huxleys/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
+        return scraper.scrape(fixtureDocument("huxleys/$fixture", url), url)
     }
 
     @Test

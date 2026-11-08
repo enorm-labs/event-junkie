@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -39,15 +40,9 @@ class InselApiScraperTest {
     private val sourceUrl = "https://www.inselberlin.de/"
     private lateinit var events: List<ScrapedEvent>
 
-    private fun fixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/insel/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
-        events = scraper.scrape(fixture("insel-events.json"), sourceUrl)!!
+        events = scraper.scrape(fixtureText("insel/insel-events.json"), sourceUrl)!!
     }
 
     @Test
@@ -135,7 +130,7 @@ class InselApiScraperTest {
 
     @Test
     fun `strips the German sold-out prefix from the title and the artist`() {
-        val german = fixture("insel-events.json").replace("!!SOLD OUT!! Dead Phoenix", "!!AUSVERKAUFT!! Dead Phoenix")
+        val german = fixtureText("insel/insel-events.json").replace("!!SOLD OUT!! Dead Phoenix", "!!AUSVERKAUFT!! Dead Phoenix")
         val deadPhoenix = scraper.scrape(german, sourceUrl)!!.single { it.eventDate == LocalDate.of(2026, 12, 5) }
         deadPhoenix.title shouldBe "Dead Phoenix - BERLIN"
         deadPhoenix.soldOut shouldBe true
@@ -313,7 +308,7 @@ class InselApiScraperTest {
     @Test
     fun `returns null for a static query that is not the programme`() {
         // A sibling query publishes the same collection projected down to bare dates and categories.
-        scraper.scrape(fixture("insel-dates-only.json"), sourceUrl).shouldBeNull()
+        scraper.scrape(fixtureText("insel/insel-dates-only.json"), sourceUrl).shouldBeNull()
         scraper.scrape("""{"data":{"datoCmsFooter":{"address":"…"}}}""", sourceUrl).shouldBeNull()
         scraper.scrape("not json at all", sourceUrl).shouldBeNull()
     }

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.karakas
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -16,13 +17,9 @@ class KarakasCalendarScraperTest {
     private val scraper = KarakasCalendarScraper()
     private val pageUrl = "https://karakasbar.com/comedy-shows"
 
-    private val script =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/karakas/karakas-calendar-script.js")!!
-            .bufferedReader()
-            .readText()
+    private val scriptJs = "karakas/karakas-calendar-script.js"
 
-    private fun scrape() = scraper.scrape(script, pageUrl, EventType.COMEDY)!!
+    private fun scrape() = scraper.scrape(fixtureText(scriptJs), pageUrl, EventType.COMEDY)!!
 
     @Test
     fun `scrape reads every calendar entry`() {
@@ -65,7 +62,7 @@ class KarakasCalendarScraperTest {
 
     @Test
     fun `scrape skips a night at another address`() {
-        val elsewhere = script.replaceFirst("Karakas, Kurf\\u00FCrstenstra\\u00DFe 9, 10785", "Comedy Club, Grünberger Str. 84")
+        val elsewhere = fixtureText(scriptJs).replaceFirst("Karakas, Kurf\\u00FCrstenstra\\u00DFe 9, 10785", "Comedy Club, Grünberger Str. 84")
 
         scraper.scrape(elsewhere, pageUrl, EventType.COMEDY)!! shouldHaveSize 15
     }
