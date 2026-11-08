@@ -10,7 +10,7 @@ person decides what becomes an issue. The sibling of [`/data-quality-audit`](dat
   Step 3 flagged.
 - **Step 4 scrapes venue websites.** ADR-007's politeness rules apply: the importer's User-Agent
   `Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)`, one request per event, one second between requests to a host,
-  no retries, a sample cap. Fetch only a `sourceUrl` the site publishes; never crawl from it.
+  no retries, a sample cap, and the host's `robots.txt` read before its first page (#4695). Fetch only a `sourceUrl` the site publishes; never crawl from it.
 - **A finding that matches [`ACCEPTED_LIMITATIONS.md`](../../docs/data-quality/ACCEPTED_LIMITATIONS.md) is KNOWN, not NEW.** The table is keyed by source slug
   and aspect (`LimitedAspect` in `AcceptedLimitation.kt`, the same names Step 3 uses); the API shows the venue, so match by venue name and say so when a venue
   has more than one source. Open importer defects are the second register: `gh issue list --label importer --search '<venue>'`.
@@ -108,6 +108,30 @@ data-quality report, per source, with the rows behind them on `/api/admin/data-q
 **Choose the sample deliberately, and say how**: every Step 3 hit with a `sourceUrl` first, then round-robin across venues up to `--sample`. A programme-page
 `sourceUrl` is one fetch per venue, reused.
 
+**Read the host's `robots.txt` before its first page, and obey it the way `RobotsTxtFilter` does** ([SCRAPING_POSITION.md](../../docs/SCRAPING_POSITION.md)
+§3.3). Once per host, on the page's scheme and port, with the same User-Agent and the same client as the page (`jdk-fetch.sh` for a host listed below), then
+`sleep 1`. The read costs nothing against `--sample`. The rules are the ones `RobotsRulesCache` applies:
+
+```sh
+curl -sS --max-time 20 -o "temp/robots-<host>.txt" -w '%{http_code}' \
+     -A 'Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)' "https://<host>/robots.txt"
+```
+
+- **`2xx`** — parse it. The group is `User-agent: eventjunkie` if one exists, otherwise `*`. The longest matching rule wins, `Allow` over `Disallow` on a
+  tie; `*` matches any run of characters and `$` anchors the end, so `Disallow: *` forbids every path. A `Crawl-delay` replaces the one second when it is
+  longer, and one above 300 seconds forbids the host.
+- **`4xx`** — no rules; every path is allowed. A `403` or `429` still ends fetching from that host, by the rule below.
+- **`5xx`** — a complete disallow (RFC 9309 §2.3.1.4, #887). The venue has forbidden nothing; its server could not answer.
+- **No answer at all** (timeout, DNS, TLS) — allowed, as the importer treats it. Say so in the row.
+
+**A disallowed page is not fetched**, not even once to look. It is a row in _Source comparison_ with the verdict `NOT COMPARABLE — robots.txt`, the rule or
+the status as evidence, and it costs nothing against `--sample`, so the sample moves on to the next page. Every later page on that host is skipped the same
+way without a second read.
+
+**A row outside the `EventSource` register that carries a venue programme URL is usually hand-entered**: the manual venues (#3719), which are often the
+venues whose `robots.txt` blocks the importer. Its provenance is no finding, and the public API cannot show it. Report such a row as OUTSIDE-REGISTER, never
+as NEW.
+
 ```sh
 curl -sS --max-time 20 -o "temp/source-<slug>.html" -w '%{http_code}' \
      -A 'Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)' "$SOURCE_URL"
@@ -134,6 +158,7 @@ _verschoben_ / _postponed_, a `€` amount, the date, and the acts (heading bill
 - **MATCH** — the page says what the row says.
 - **DIFFERS** — quote the page and the row side by side, and name the aspect.
 - **NOT COMPARABLE** — the page is rendered by JavaScript, answered with a consent wall, or the field is simply absent from the text. Say which.
+  `NOT COMPARABLE — robots.txt` is the page that was never fetched.
 - **SOURCE GONE** — `404` or a redirect to the programme.
 
 **A tiered price is a MATCH when the row stores the lowest tier and the note names every tier** (#2083). A door priced by group or
@@ -207,7 +232,8 @@ store, the likely code path, whether the fix needs a --full re-seed. Only for NE
 a defect to fix, say so instead: the AcceptedLimitation for that source — aspect and one-sentence reason — the way /data-quality-audit does.>>
 
 ## What this run could not check
-<Hosts that answered 403/429, JS-rendered pages, venues with more than one source, anything the window did not cover.>
+<Hosts skipped for robots.txt, with the rule or the status; hosts that answered 403/429, JS-rendered pages, venues with more than one source, anything the
+window did not cover.>
 ```
 
 ## Notes
