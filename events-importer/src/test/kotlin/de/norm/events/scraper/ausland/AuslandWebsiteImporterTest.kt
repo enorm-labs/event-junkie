@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -29,10 +31,13 @@ class AuslandWebsiteImporterTest {
     fun `merges each event page into its listing row and flags the ones that fail`() =
         runTest {
             coEvery { htmlFetcher.fetch(url, any(), any()) } returns
-                FetchResult.Success(document = document("ausland-overview.html", url), etag = "\"a1\"", lastModified = null)
+                FetchResult.Success(document = fixtureDocument("ausland/ausland-overview.html", url), etag = "\"a1\"", lastModified = null)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://ausland.berlin/")
-            coEvery { htmlFetcher.fetchDocument(frictiveUrl) } returns document("ausland-event-frictive-frequencies.html", frictiveUrl)
-            coEvery { htmlFetcher.fetchDocument(frictiveDeUrl) } returns document("ausland-event-frictive-frequencies-de.html", frictiveDeUrl)
+            stubFetcher(
+                frictiveUrl to "ausland/ausland-event-frictive-frequencies.html",
+                frictiveDeUrl to "ausland/ausland-event-frictive-frequencies-de.html",
+                fetcher = htmlFetcher
+            )
 
             val result = importer.importEvents(url)
 
@@ -54,7 +59,7 @@ class AuslandWebsiteImporterTest {
             val pageUrl = "https://ausland.berlin/event/alexandra-macia-zustand-d-winona-lin-frictive-frequencies"
             val page = """<article class="event"><div class="col50 right"><h2>Alexandra Maciá</h2><p>Doors open 19h</p></div></article>"""
             coEvery { htmlFetcher.fetch(url, any(), any()) } returns
-                FetchResult.Success(document = document("ausland-overview.html", url), etag = null, lastModified = null)
+                FetchResult.Success(document = fixtureDocument("ausland/ausland-overview.html", url), etag = null, lastModified = null)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://ausland.berlin/")
             coEvery { htmlFetcher.fetchDocument(pageUrl) } returns Jsoup.parse(page, pageUrl)
 
@@ -87,15 +92,4 @@ class AuslandWebsiteImporterTest {
         importer.listsWholeProgramme shouldBe true
         importer.fetchesBeyondEntryPage shouldBe true
     }
-
-    private fun document(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/ausland/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
 }

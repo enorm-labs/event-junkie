@@ -3,6 +3,7 @@ package de.norm.events.scraper.barjedervernunft
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.alternateLanguageUrl
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -41,8 +42,8 @@ class BarJederVernunftShowPageScraperTest {
 
     @Test
     fun `reads the blurb of the German page and of its English version`() {
-        val german = document("barjedervernunft-show-kopfkino-de.html")
-        val english = document("barjedervernunft-show-kopfkino-en.html")
+        val german = fixtureDocument("barjedervernunft/barjedervernunft-show-kopfkino-de.html", SHOW_URL)
+        val english = fixtureDocument("barjedervernunft/barjedervernunft-show-kopfkino-en.html", SHOW_URL)
 
         german.alternateLanguageUrl("en") shouldBe "https://www.bar-jeder-vernunft.de/en/whats-on/programme-overview/sven-ratzke-kopfkino.html"
         scraper.description(german).shouldNotBeNull() shouldStartWith "Nach seinen grandiosen Shows"
@@ -189,23 +190,7 @@ class BarJederVernunftShowPageScraperTest {
         enriched.description shouldBe "Ein Chansonabend..."
     }
 
-    private fun document(fixture: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/barjedervernunft/$fixture")!!
-                .bufferedReader()
-                .readText(),
-            SHOW_URL
-        )
-
-    private fun scrapeFixture(fixture: String): BarJederVernunftShow? {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/barjedervernunft/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, SHOW_URL))
-    }
+    private fun scrapeFixture(fixture: String): BarJederVernunftShow? = scraper.scrape(fixtureDocument("barjedervernunft/$fixture", SHOW_URL))
 
     /** A calendar occurrence as the overview scraper produces it, before show-page enrichment. */
     private fun occurrence(

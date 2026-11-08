@@ -1,6 +1,8 @@
 package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -26,17 +28,11 @@ class BerghainDetailPageScraperTest {
 
     private val scraper = BerghainDetailPageScraper()
 
-    private fun loadFixture(path: String): String =
-        javaClass.classLoader
-            .getResourceAsStream(path)!!
-            .bufferedReader()
-            .readText()
-
     @Test
     fun `reads the organiser line of a hired night as its promoter`() {
         // Aircraft at Kantine am Berghain, fetched 2026-09-30: "Eine Veranstaltung von Dynamite Konzerte".
         val url = "https://www.berghain.berlin/de/event/82605/"
-        val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-organiser.html"), url), url)!!
+        val event = scraper.scrape(fixtureDocument("berghain/berghain-detail-organiser.html", url), url)!!
 
         event.promoters shouldBe listOf("Dynamite Konzerte")
     }
@@ -45,7 +41,7 @@ class BerghainDetailPageScraperTest {
     fun `splits co-promoters in the organiser line and reads none on a club night`() {
         fun promotersOf(line: String): List<String> {
             val html =
-                loadFixture("scraper/berghain/berghain-detail-organiser.html")
+                fixtureText("berghain/berghain-detail-organiser.html")
                     .replace("Eine Veranstaltung von <a href=\"https://dynamitekonzerte.com\">Dynamite Konzerte</a>", line)
             return scraper.scrape(Jsoup.parse(html, "https://www.berghain.berlin/de/event/1/"), "https://www.berghain.berlin/de/event/1/")!!.promoters
         }
@@ -55,7 +51,7 @@ class BerghainDetailPageScraperTest {
         // A capitalised "And" belongs to the name.
         promotersOf("Eine Veranstaltung von Now And Ever Music") shouldBe listOf("Now And Ever Music")
         val url = "https://www.berghain.berlin/de/event/80835/"
-        scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-full.html"), url), url)!!.promoters.shouldBeEmpty()
+        scraper.scrape(fixtureDocument("berghain/berghain-detail-full.html", url), url)!!.promoters.shouldBeEmpty()
     }
 
     @Test
@@ -67,7 +63,7 @@ class BerghainDetailPageScraperTest {
             title: String = "Aircraft"
         ): List<String> {
             val html =
-                loadFixture("scraper/berghain/berghain-detail-organiser.html")
+                fixtureText("berghain/berghain-detail-organiser.html")
                     .replace("Eine Veranstaltung von <a href=\"https://dynamitekonzerte.com\">Dynamite Konzerte</a>", line)
                     .replace("  Aircraft\n</h1>", "  $title\n</h1>")
             val url = "https://www.berghain.berlin/de/event/1/"
@@ -90,7 +86,7 @@ class BerghainDetailPageScraperTest {
     @Test
     fun `parses a fully-populated detail page`() {
         val url = "https://www.berghain.berlin/de/event/80835/"
-        val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-full.html"), url), url)!!
+        val event = scraper.scrape(fixtureDocument("berghain/berghain-detail-full.html", url), url)!!
 
         event.title shouldBe "BUTOH Batorū"
         event.eventDate shouldBe LocalDate.of(2026, 7, 16)
@@ -113,7 +109,7 @@ class BerghainDetailPageScraperTest {
     fun `treats a presale-sold-out night with an open box office as not sold out`() {
         val url = "https://www.berghain.berlin/de/event/80784/"
         val event =
-            scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-presale-soldout.html"), url), url)!!
+            scraper.scrape(fixtureDocument("berghain/berghain-detail-presale-soldout.html", url), url)!!
 
         event.title shouldBe "Sound Metaphors"
         event.eventDate shouldBe LocalDate.of(2026, 7, 17)
@@ -133,7 +129,7 @@ class BerghainDetailPageScraperTest {
     @Test
     fun `stores a heading that ends in Abgesagt as a cancelled event under the bare name`() {
         val url = "https://www.berghain.berlin/de/event/82554/"
-        val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-cancelled.html"), url), url)!!
+        val event = scraper.scrape(fixtureDocument("berghain/berghain-detail-cancelled.html", url), url)!!
 
         event.title shouldBe "Olga Myko - Abgesagt"
         event.eventDate shouldBe LocalDate.of(2026, 9, 16)
@@ -146,7 +142,7 @@ class BerghainDetailPageScraperTest {
     @Test
     fun `keys a Kantine night with the Kantine source's prefix`() {
         val url = "https://www.berghain.berlin/de/event/82554/"
-        val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-cancelled.html"), url), url)!!
+        val event = scraper.scrape(fixtureDocument("berghain/berghain-detail-cancelled.html", url), url)!!
 
         event.sourceId shouldBe "kantine_am_berghain:82554"
     }
@@ -190,7 +186,7 @@ class BerghainDetailPageScraperTest {
     @Test
     fun `reads the running order's set times per floor, once the venue has published them`() {
         val url = "https://www.berghain.berlin/de/event/80744/"
-        val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-running-order.html"), url), url)!!
+        val event = scraper.scrape(fixtureDocument("berghain/berghain-detail-running-order.html", url), url)!!
 
         // 15 slots on three floors; one of them a back-to-back of two DJs.
         event.artists shouldHaveSize 16
@@ -212,7 +208,7 @@ class BerghainDetailPageScraperTest {
     @Test
     fun `splits an upper-case B2B slot and keeps each act's own set`() {
         val url = "https://www.berghain.berlin/de/event/80845/"
-        val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-running-order-b2b.html"), url), url)!!
+        val event = scraper.scrape(fixtureDocument("berghain/berghain-detail-running-order-b2b.html", url), url)!!
 
         event.artists.map { it.name } shouldBe listOf("KĀ", "Egregore", "Jolly", "Ninon", "Agata", "Cunt Remember")
         event.artists.map { it.stage }.distinct() shouldBe listOf("Säule")

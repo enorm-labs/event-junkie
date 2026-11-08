@@ -3,6 +3,7 @@ package de.norm.events.scraper.berghain
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.stripArtistSuffix
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -31,21 +32,15 @@ class BerghainOverviewPageScraperTest {
     private val berghainUrl = "https://www.berghain.berlin/de/program/"
     private val kantineUrl = "https://www.berghain.berlin/de/program/kantine-am-berghain/"
 
-    private fun loadFixture(path: String): String =
-        javaClass.classLoader
-            .getResourceAsStream(path)!!
-            .bufferedReader()
-            .readText()
-
     @Test
     fun `parses every event block on the main program page`() {
-        val events = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-overview.html"), berghainUrl), berghainUrl)
+        val events = scraper.scrape(fixtureDocument("berghain/berghain-overview.html", berghainUrl), berghainUrl)
         events shouldHaveSize 21
     }
 
     @Test
     fun `parses a fully-populated club-floor event as a DJ party`() {
-        val events = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-overview.html"), berghainUrl), berghainUrl)
+        val events = scraper.scrape(fixtureDocument("berghain/berghain-overview.html", berghainUrl), berghainUrl)
         val event = events.first { it.title == "BUTOH Batorū" }
 
         event.eventDate shouldBe LocalDate.of(2026, 7, 16)
@@ -67,7 +62,7 @@ class BerghainOverviewPageScraperTest {
 
     @Test
     fun `parses every event block on the Kantine page as concerts with doors and start times`() {
-        val events = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/kantine-overview.html"), kantineUrl), kantineUrl)
+        val events = scraper.scrape(fixtureDocument("berghain/kantine-overview.html", kantineUrl), kantineUrl)
         events shouldHaveSize 46
 
         val event = events.first { it.sourceId == "kantine_am_berghain:82242" }
@@ -484,7 +479,7 @@ class BerghainOverviewPageScraperTest {
         val lateClock = Clock.fixed(Instant.parse("2027-01-01T00:00:00Z"), ZoneOffset.UTC)
         val events =
             BerghainOverviewPageScraper(lateClock)
-                .scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-overview.html"), berghainUrl), berghainUrl)
+                .scrape(fixtureDocument("berghain/berghain-overview.html", berghainUrl), berghainUrl)
         events.shouldBeEmpty()
     }
 

@@ -7,6 +7,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -39,7 +41,10 @@ class BarJederVernunftWebsiteImporterTest {
 
     /** Where the saved calendar says its later batches load from. */
     private val batchUrl by lazy {
-        Jsoup.parse(loadFixture("barjedervernunft-overview.html"), sourceUrl).selectFirst("[data-render-partial-url]")!!.absUrl("data-render-partial-url")
+        fixtureDocument(
+            "barjedervernunft/barjedervernunft-overview.html",
+            sourceUrl
+        ).selectFirst("[data-render-partial-url]")!!.absUrl("data-render-partial-url")
     }
 
     @BeforeEach
@@ -48,24 +53,19 @@ class BarJederVernunftWebsiteImporterTest {
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(loadFixture("barjedervernunft-overview.html"), sourceUrl),
+                document = fixtureDocument("barjedervernunft/barjedervernunft-overview.html", sourceUrl),
                 etag = "\"cal-1\"",
                 lastModified = "Fri, 31 Jul 2026 10:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(RESIDENCY_URL) } returns
-            Jsoup.parse(loadFixture("barjedervernunft-show-oh-what-a-night.html"), RESIDENCY_URL)
-        coEvery { htmlFetcher.fetchDocument(GUEST_URL) } returns
-            Jsoup.parse(loadFixture("barjedervernunft-show-happy-disharmonists.html"), GUEST_URL)
+        stubFetcher(
+            RESIDENCY_URL to "barjedervernunft/barjedervernunft-show-oh-what-a-night.html",
+            GUEST_URL to "barjedervernunft/barjedervernunft-show-happy-disharmonists.html",
+            fetcher = htmlFetcher
+        )
         // The saved calendar names its later batches; by default the first of them is empty.
         coEvery { htmlFetcher.fetchDocument(match { it.startsWith(batchUrl) }) } returns
-            Jsoup.parse(loadFixture("barjedervernunft-calendar-batch-empty.html"), batchUrl)
+            fixtureDocument("barjedervernunft/barjedervernunft-calendar-batch-empty.html", batchUrl)
     }
-
-    private fun loadFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/barjedervernunft/$name")!!
-            .bufferedReader()
-            .readText()
 
     @Test
     fun `importEvents extracts every performance date from the calendar`() =
@@ -182,8 +182,7 @@ class BarJederVernunftWebsiteImporterTest {
     @Test
     fun `importEvents reads the later calendar batches until an empty one`() =
         runTest {
-            coEvery { htmlFetcher.fetchDocument("$batchUrl&currentPage=2") } returns
-                Jsoup.parse(loadFixture("barjedervernunft-calendar-batch-3.html"), "$batchUrl&currentPage=2")
+            stubFetcher("$batchUrl&currentPage=2" to "barjedervernunft/barjedervernunft-calendar-batch-3.html", fetcher = htmlFetcher)
             coEvery { htmlFetcher.fetchDocument(match { "programmuebersicht" in it && it != RESIDENCY_URL && it != GUEST_URL }) } returns
                 Jsoup.parse("<html><body></body></html>", sourceUrl)
 

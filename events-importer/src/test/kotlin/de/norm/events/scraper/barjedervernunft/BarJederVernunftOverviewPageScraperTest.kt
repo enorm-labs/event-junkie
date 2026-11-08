@@ -1,5 +1,6 @@
 package de.norm.events.scraper.barjedervernunft
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -19,14 +20,7 @@ class BarJederVernunftOverviewPageScraperTest {
     private val scraper = BarJederVernunftOverviewPageScraper()
     private val sourceUrl = "https://www.bar-jeder-vernunft.de/de/programm/kalender.html"
 
-    private val events by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/barjedervernunft/barjedervernunft-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, sourceUrl))
-    }
+    private val events by lazy { scraper.scrape(fixtureDocument("barjedervernunft/barjedervernunft-overview.html", sourceUrl)) }
 
     @Test
     fun `scrape extracts one event per performance date`() {

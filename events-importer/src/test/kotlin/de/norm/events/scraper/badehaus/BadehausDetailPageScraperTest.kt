@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -29,17 +30,6 @@ import java.time.LocalTime
 class BadehausDetailPageScraperTest {
     private val scraper = BadehausDetailPageScraper()
 
-    private fun fixture(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/badehaus/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     private fun <T> withScraperWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
         val logger = LoggerFactory.getLogger(BadehausDetailPageScraper::class.java) as Logger
         val appender = ListAppender<ILoggingEvent>().apply { start() }
@@ -55,7 +45,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `parses description, start time and promoter from a detail page`() {
         val url = "https://badehaus-berlin.com/events/dominic-donner/"
-        val event = scraper.scrape(fixture("badehaus-detail-promoter.html", url), url)
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-promoter.html", url), url)
         event.shouldNotBeNull()
 
         event.title shouldBe "DOMINIC DONNER"
@@ -72,7 +62,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `parses a detail page without a start time or promoter`() {
         val url = "https://badehaus-berlin.com/events/drunken-swallows/"
-        val event = scraper.scrape(fixture("badehaus-detail-concert.html", url), url)
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-concert.html", url), url)
         event.shouldNotBeNull()
 
         event.title shouldBe "DRUNKEN SWALLOWS"
@@ -89,7 +79,7 @@ class BadehausDetailPageScraperTest {
     fun `reads doors and start from the English Doors and Start labels`() {
         // Kemo The Blaxican: "Doors: 19:00h | Start 20:00h" — the page labels in English with an `h` suffix (#1497).
         val url = "https://badehaus-berlin.com/events/kemo-the-blaxican/"
-        val event = scraper.scrape(fixture("badehaus-detail-english-labels.html", url), url)
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-english-labels.html", url), url)
         event.shouldNotBeNull()
 
         event.doorsTime shouldBe LocalTime.of(19, 0)
@@ -102,7 +92,7 @@ class BadehausDetailPageScraperTest {
         // "Doors 19:30 / Quiz starts 20:00": the venue's phrasing for its recurring quiz, where the
         // verb carries the label and a second clock follows it (#1681).
         val url = "https://badehaus-berlin.com/events/pubquiz-with-simply-quiz-184/"
-        val event = scraper.scrape(fixture("badehaus-detail-donation-quiz.html", url), url)
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-donation-quiz.html", url), url)
         event.shouldNotBeNull()
 
         event.doorsTime shouldBe LocalTime.of(19, 30)
@@ -118,7 +108,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `reads a postponement from the opening notice`() {
         val url = "https://badehaus-berlin.com/events/max-grimm-2/"
-        val event = scraper.scrape(fixture("badehaus-detail-postponed.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-postponed.html", url), url).shouldNotBeNull()
 
         event.title shouldBe "Max Grimm"
         event.status shouldBe EventStatus.POSTPONED.name
@@ -131,7 +121,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `reads a move from the opening notice, and the boundary finds the destination in it`() {
         val url = "https://badehaus-berlin.com/events/forager/"
-        val event = scraper.scrape(fixture("badehaus-detail-relocated.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-relocated.html", url), url).shouldNotBeNull()
 
         event.status shouldBe EventStatus.RELOCATED.name
         event.statusNote.shouldNotBeNull() shouldContain "vom Badehaus ins Mikropol verlegt"
@@ -143,7 +133,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `reads a dot-separated doors and start time and keeps them out of the description`() {
         val url = "https://badehaus-berlin.com/events/forager/"
-        val event = scraper.scrape(fixture("badehaus-detail-relocated.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-relocated.html", url), url).shouldNotBeNull()
 
         event.doorsTime shouldBe LocalTime.of(19, 0)
         event.startTime shouldBe LocalTime.of(20, 0)
@@ -153,7 +143,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `keeps a show scheduled when the notice moved it to this very date`() {
         val url = "https://badehaus-berlin.com/events/futurebae/"
-        val event = scraper.scrape(fixture("badehaus-detail-moved-here.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-moved-here.html", url), url).shouldNotBeNull()
 
         event.eventDate shouldBe LocalDate.of(2026, 9, 22)
         // "vom 25.02.26 auf den 22.09.26 verschoben" is the story of this date, not a change to it.
@@ -164,7 +154,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `leaves a page whose blurb carries no notice scheduled`() {
         val url = "https://badehaus-berlin.com/events/dominic-donner/"
-        val event = scraper.scrape(fixture("badehaus-detail-promoter.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-promoter.html", url), url).shouldNotBeNull()
 
         event.status shouldBe EventStatus.SCHEDULED.name
         event.statusNote.shouldBeNull()
@@ -174,7 +164,7 @@ class BadehausDetailPageScraperTest {
     fun `keeps the meridiem of an English 12-hour start, and reads the category as the type`() {
         // Call Me Maybe: "Start: 11:30 pm • Minimum Age: 18", "Categorised Party" (#1949, #1950).
         val url = "https://badehaus-berlin.com/events/call-me-maybe-2000s-2010s-pop-party-9/"
-        val event = scraper.scrape(fixture("badehaus-detail-party-twelve-hour.html", url), url)
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-party-twelve-hour.html", url), url)
         event.shouldNotBeNull()
 
         event.startTime shouldBe LocalTime.of(23, 30)
@@ -185,7 +175,7 @@ class BadehausDetailPageScraperTest {
     fun `reads a 12-hour doors and start time written without a space`() {
         // The Swag Jam: "Door open: 8:00pm / Show starts: 8:30pm".
         val url = "https://badehaus-berlin.com/events/the-swag-jam-132/"
-        val event = scraper.scrape(fixture("badehaus-detail-twelve-hour-no-space.html", url), url)
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-twelve-hour-no-space.html", url), url)
         event.shouldNotBeNull()
 
         event.doorsTime shouldBe LocalTime.of(20, 0)
@@ -195,7 +185,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `reads a Concert category as a concert`() {
         val url = "https://badehaus-berlin.com/events/gauchito-club/"
-        val event = scraper.scrape(fixture("badehaus-detail-concert-category.html", url), url)
+        val event = scraper.scrape(fixtureDocument("badehaus/badehaus-detail-concert-category.html", url), url)
         event.shouldNotBeNull()
 
         event.eventType shouldBe EventType.CONCERT.name
@@ -204,7 +194,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `reads the venue's Interactive category as other`() {
         val url = "https://badehaus-berlin.com/events/cafe-com-samba-berlin-2/"
-        val (event, warnings) = withScraperWarnings { scraper.scrape(fixture("badehaus-detail-interactive.html", url), url) }
+        val (event, warnings) = withScraperWarnings { scraper.scrape(fixtureDocument("badehaus/badehaus-detail-interactive.html", url), url) }
 
         event.shouldNotBeNull().eventType shouldBe EventType.OTHER.name
         warnings shouldHaveSize 0
@@ -213,7 +203,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `logs an unknown category once and leaves the type to the overview`() {
         val url = "https://badehaus-berlin.com/events/cafe-com-samba-berlin-2/"
-        val document = fixture("badehaus-detail-interactive.html", url)
+        val document = fixtureDocument("badehaus/badehaus-detail-interactive.html", url)
         document.selectFirst(".post-meta a[rel~=category]").shouldNotBeNull().text("Lecture")
 
         val (event, warnings) = withScraperWarnings { scraper.scrape(document, url) }
@@ -225,7 +215,7 @@ class BadehausDetailPageScraperTest {
     @Test
     fun `leaves the type to the overview when the page has no category`() {
         val url = "https://badehaus-berlin.com/events/dominic-donner/"
-        scraper.scrape(fixture("badehaus-detail-promoter.html", url), url).shouldNotBeNull().eventType shouldBe null
+        scraper.scrape(fixtureDocument("badehaus/badehaus-detail-promoter.html", url), url).shouldNotBeNull().eventType shouldBe null
     }
 
     @Test

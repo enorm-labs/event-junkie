@@ -6,6 +6,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -33,27 +35,22 @@ class BinuuWebsiteImporterTest {
     private val archEnemyUrl = "https://binuu.de/de/events/inzpqdgvi1eab2q"
     private val twdyUrl = "https://binuu.de/de/events/aufm93tii76xvp5"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/binuu/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = BinuuWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("binuu-overview.html"), sourceUrl),
+                document = fixtureDocument("binuu/binuu-overview.html", sourceUrl),
                 etag = "\"binuu-etag\"",
                 lastModified = "Tue, 07 Jul 2026 10:00:00 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(archEnemyUrl) } returns
-            Jsoup.parse(fixture("binuu-detail-arch-enemy.html"), archEnemyUrl)
-        coEvery { htmlFetcher.fetchDocument(twdyUrl) } returns
-            Jsoup.parse(fixture("binuu-detail-this-will-destroy-you.html"), twdyUrl)
+        stubFetcher(
+            archEnemyUrl to "binuu/binuu-detail-arch-enemy.html",
+            twdyUrl to "binuu/binuu-detail-this-will-destroy-you.html",
+            fetcher = htmlFetcher
+        )
 
         // Every other detail page: return a payload-less document so the importer
         // degrades to overview data for that event.

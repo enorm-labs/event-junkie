@@ -3,6 +3,8 @@ package de.norm.events.scraper.binuu
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -25,14 +27,7 @@ class BinuuDetailPageScraperTest {
     private fun parseFixture(
         fixture: String,
         sourceUrl: String
-    ): ScrapedEvent {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/binuu/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
-    }
+    ): ScrapedEvent = scraper.scrape(fixtureDocument("binuu/$fixture", sourceUrl), sourceUrl)!!
 
     private val archEnemy: ScrapedEvent by lazy {
         parseFixture("binuu-detail-arch-enemy.html", "https://binuu.de/de/events/inzpqdgvi1eab2q")
@@ -119,11 +114,7 @@ class BinuuDetailPageScraperTest {
     @Test
     fun `stores a show moved to its own date as scheduled, and one without a new date as postponed`() {
         val url = "https://binuu.de/de/events/inzpqdgvi1eab2q"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/binuu/binuu-detail-arch-enemy.html")!!
-                .bufferedReader()
-                .readText()
+        val html = fixtureText("binuu/binuu-detail-arch-enemy.html")
 
         fun withStatus(startOld: String): ScrapedEvent {
             val moved =
@@ -142,11 +133,7 @@ class BinuuDetailPageScraperTest {
     @Test
     fun `reads a cancelled show and a move with its destination`() {
         val url = "https://binuu.de/de/events/inzpqdgvi1eab2q"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/binuu/binuu-detail-arch-enemy.html")!!
-                .bufferedReader()
-                .readText()
+        val html = fixtureText("binuu/binuu-detail-arch-enemy.html")
 
         fun withStatus(
             code: String,

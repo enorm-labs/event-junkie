@@ -1,24 +1,19 @@
 package de.norm.events.scraper.ballhausberlin
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
 /** `/de/termine/` saved on 2026-10-23, cut to the dates from September 2026 on: 94 of its 510. */
-fun ballhausBerlinTermine() =
-    Jsoup.parse(
-        BallhausBerlinTerminePageScraperTest::class.java.classLoader.getResourceAsStream("scraper/ballhausberlin/ballhausberlin-termine.html")!!,
-        null,
-        BALLHAUS_BERLIN_URL
-    )
+fun ballhausBerlinTermine() = fixtureDocument("ballhausberlin/ballhausberlin-termine.html", BALLHAUS_BERLIN_URL)
 
 const val BALLHAUS_BERLIN_URL = "https://ballhaus-berlin.de/de/termine/"
 

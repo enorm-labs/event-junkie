@@ -3,13 +3,13 @@ package de.norm.events.scraper.ballhauswedding
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.LocalDate
@@ -24,9 +24,12 @@ class BallhausWeddingWebsiteImporterTest {
     @Test
     fun `reads the programme, then only the entries' own Wix Events pages`() =
         runTest {
-            coEvery { htmlFetcher.fetchDocument(url) } returns fixture("ballhauswedding-veranstaltungen.html", url)
             coEvery { htmlFetcher.fetchDocument(match { it.contains("/details-registrierung/") }) } throws IllegalStateException("no fixture")
-            coEvery { htmlFetcher.fetchDocument(STREISAND) } returns fixture("ballhauswedding-event-barbra-streisand.html", STREISAND)
+            stubFetcher(
+                url to "ballhauswedding/ballhauswedding-veranstaltungen.html",
+                STREISAND to "ballhauswedding/ballhauswedding-event-barbra-streisand.html",
+                fetcher = htmlFetcher
+            )
 
             val result = importer.importEvents(url, null, null).shouldBeInstanceOf<ImportResult.Success>()
 
@@ -38,17 +41,6 @@ class BallhausWeddingWebsiteImporterTest {
             result.events.first { it.title.startsWith("Tango") }.detailUnavailable shouldBe false
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(url) }
         }
-
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/ballhauswedding/$name")!!
-            .bufferedReader()
-            .readText(),
-        baseUrl
-    )
 
     private companion object {
         const val STREISAND = "https://www.ballhauswedding.de/details-registrierung/legenden-barbara-streisand"

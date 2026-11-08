@@ -1,6 +1,7 @@
 package de.norm.events.scraper.brotfabrik
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
@@ -17,12 +18,7 @@ import java.time.LocalTime
 class BrotfabrikApiScraperTest {
     private val scraper = BrotfabrikApiScraper()
 
-    private val fixture by lazy {
-        javaClass.classLoader
-            .getResourceAsStream("scraper/brotfabrik/brotfabrik-events.json")!!
-            .bufferedReader()
-            .readText()
-    }
+    private val fixture = fixtureText("brotfabrik/brotfabrik-events.json")
 
     private val page by lazy { scraper.scrapePage(fixture) }
 

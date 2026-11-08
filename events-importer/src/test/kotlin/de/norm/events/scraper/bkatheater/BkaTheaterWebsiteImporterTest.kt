@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -26,23 +27,12 @@ class BkaTheaterWebsiteImporterTest {
     private val importer = BkaTheaterWebsiteImporter(htmlFetcher)
     private val sourceUrl = "https://www.bka-theater.de/spielplan/"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/bkatheater/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
-            FetchResult.Success(document = loadDocument("bkatheater-spielplan.html", sourceUrl), etag = "\"bka\"", lastModified = null)
+            FetchResult.Success(document = fixtureDocument("bkatheater/bkatheater-spielplan.html", sourceUrl), etag = "\"bka\"", lastModified = null)
         coEvery { htmlFetcher.fetchDocument(match { it.startsWith("https://www.bka-theater.de/prg/") }) } answers
-            { loadDocument("bkatheater-production.html", firstArg()) }
+            { fixtureDocument("bkatheater/bkatheater-production.html", firstArg()) }
     }
 
     @Test

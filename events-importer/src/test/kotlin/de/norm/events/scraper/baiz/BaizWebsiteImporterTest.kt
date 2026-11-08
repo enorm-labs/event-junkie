@@ -4,6 +4,7 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -24,11 +25,7 @@ class BaizWebsiteImporterTest {
     private val url = "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=1609&limit=500"
 
     private suspend fun importFixture(): List<ScrapedEvent> {
-        coEvery { apiClient.fetchJson(any()) } returns
-            javaClass.classLoader
-                .getResourceAsStream("scraper/radar/radar-group-baiz.json")!!
-                .bufferedReader()
-                .readText()
+        coEvery { apiClient.fetchJson(any()) } returns fixtureText("radar/radar-group-baiz.json")
         val result = importer.importEvents(url)
         result.shouldBeInstanceOf<ImportResult.Success>()
         result.complete shouldBe true

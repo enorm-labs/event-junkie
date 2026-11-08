@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -32,17 +33,11 @@ class Bogen47WebsiteImportersTest {
     private val clock: Clock = Clock.fixed(LocalDate.of(2026, 8, 1).atStartOfDay(BERLIN).toInstant(), BERLIN)
     private val baseUrl = "https://larkberlin.com/wp-json/wp/v2/event"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/bogen47/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = LarkWebsiteImporter(apiClient, clock)
-        coEvery { apiClient.fetchJson(match { "/media?" in it }) } returns fixture("lark-media.json")
-        coEvery { apiClient.fetchJson(match { "/media?" !in it }) } returns fixture("lark-events.json")
+        coEvery { apiClient.fetchJson(match { "/media?" in it }) } returns fixtureText("bogen47/lark-media.json")
+        coEvery { apiClient.fetchJson(match { "/media?" !in it }) } returns fixtureText("bogen47/lark-events.json")
     }
 
     @Test
@@ -65,7 +60,7 @@ class Bogen47WebsiteImportersTest {
         runTest {
             val urls = mutableListOf<String>()
             coEvery { apiClient.fetchJson(capture(urls)) } answers {
-                if ("/media?" in firstArg<String>()) fixture("lark-media.json") else fixture("lark-events.json")
+                if ("/media?" in firstArg<String>()) fixtureText("bogen47/lark-media.json") else fixtureText("bogen47/lark-events.json")
             }
 
             importer.importEvents(baseUrl)
@@ -78,7 +73,7 @@ class Bogen47WebsiteImportersTest {
         runTest {
             val urls = mutableListOf<String>()
             coEvery { apiClient.fetchJson(capture(urls)) } answers {
-                if ("/media?" in firstArg<String>()) fixture("lark-media.json") else fixture("lark-events.json")
+                if ("/media?" in firstArg<String>()) fixtureText("bogen47/lark-media.json") else fixtureText("bogen47/lark-events.json")
             }
 
             importer.importEvents(baseUrl)
@@ -96,10 +91,10 @@ class Bogen47WebsiteImportersTest {
             var listingCalls = 0
             coEvery { apiClient.fetchJson(any()) } answers {
                 if ("/media?" in firstArg<String>()) {
-                    fixture("lark-media.json")
+                    fixtureText("bogen47/lark-media.json")
                 } else {
                     listingCalls++
-                    fixture("lark-events.json")
+                    fixtureText("bogen47/lark-events.json")
                 }
             }
 
@@ -176,7 +171,7 @@ class Bogen47WebsiteImportersTest {
             val fitzroy = FitzroyWebsiteImporter(apiClient, Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay(BERLIN).toInstant(), BERLIN))
             val urls = mutableListOf<String>()
             coEvery { apiClient.fetchJson(capture(urls)) } answers {
-                if ("/media?" in firstArg<String>()) fixture("fitzroy-media.json") else fixture("fitzroy-events.json")
+                if ("/media?" in firstArg<String>()) fixtureText("bogen47/fitzroy-media.json") else fixtureText("bogen47/fitzroy-events.json")
             }
 
             val result = fitzroy.importEvents(fitzroyUrl).shouldBeInstanceOf<ImportResult.Success>()

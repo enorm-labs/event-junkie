@@ -2,6 +2,7 @@ package de.norm.events.scraper.ballhauswedding
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldBeNull
@@ -18,7 +19,7 @@ import java.time.LocalTime
 class BallhausWeddingScrapersTest {
     private val baseUrl = "https://www.ballhauswedding.de/veranstaltungen"
     private val today = LocalDate.of(2026, 10, 8)
-    private val document = Jsoup.parse(fixture("ballhauswedding-veranstaltungen.html"), baseUrl)
+    private val document = fixtureDocument("ballhauswedding/ballhauswedding-veranstaltungen.html", baseUrl)
     private val events = BallhausWeddingOverviewPageScraper().scrape(document, baseUrl, today)
 
     @Test
@@ -108,7 +109,7 @@ class BallhausWeddingScrapersTest {
     @Test
     fun `adds the end, the poster and the full text from the Wix Events page`() {
         val listing = BallhausWeddingOverviewPageScraper().scrape(document, baseUrl, LocalDate.of(2026, 10, 1)).first()
-        val page = Jsoup.parse(fixture("ballhauswedding-event-barbra-streisand.html"), listing.sourceUrl)
+        val page = fixtureDocument("ballhauswedding/ballhauswedding-event-barbra-streisand.html", listing.sourceUrl)
 
         val enriched = BallhausWeddingEventPageScraper().enrich(listing, page).shouldNotBeNull()
 
@@ -127,10 +128,4 @@ class BallhausWeddingScrapersTest {
         BallhausWeddingOverviewPageScraper().scrape(empty, baseUrl, today).shouldBeEmpty()
         BallhausWeddingEventPageScraper().enrich(events.first(), empty).shouldBeNull()
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/ballhauswedding/$name")!!
-            .bufferedReader()
-            .readText()
 }
