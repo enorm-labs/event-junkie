@@ -49,7 +49,7 @@ internal class HtmlImportPipeline(
         val enriched = import.eventPages?.let { readEventPages(translated, it) } ?: translated
         val folded = import.foldRuns(withSharedPages(htmlFetcher::fetchDocument, enriched, import.sharedPages))
         val events = dropUnresolvedDates(folded)
-        import.doneLine?.let { line -> logger.info { line(events.size, listing.pages) } }
+        import.doneLine?.let { line -> logger.info { line(events, listing) } }
 
         return ImportResult.Success(
             events = events,
@@ -65,13 +65,14 @@ internal class HtmlImportPipeline(
         pages: HtmlImport.EventPages
     ): List<ScrapedEvent> =
         when (pages) {
-            is HtmlImport.EventPages.Enrich -> events.map { if (pages.hasEventPage(it)) enrichOrFlagged(it, pages) else it }
+            is HtmlImport.EventPages.Enrich -> events.mapNotNull { if (pages.hasEventPage(it)) enrichOrFlagged(it, pages) else it }
             is HtmlImport.EventPages.Detail -> events.map { parseDetailOrFallback(it, pages) }
         }
 
     /**
-     * [event] enriched from its own page, or flagged as [withEventPageOrFlagged] flags it. A row with
-     * no date without its page gets a second read after [RETRY_PAUSE], as a detail page does. With
+     * [event] enriched from its own page, flagged as [withEventPageOrFlagged] flags it, or null when
+     * the page drops it ([EventPageReader]). A row with no date without its page gets a second read
+     * after [RETRY_PAUSE], as a detail page does. With
      * [HtmlImport.EventPages.Enrich.secondLanguage], the page's version in that language supplies the
      * second language, only where the page changed the event text: a listing teaser has no
      * counterpart there.
@@ -79,13 +80,13 @@ internal class HtmlImportPipeline(
     private suspend fun enrichOrFlagged(
         event: ScrapedEvent,
         pages: HtmlImport.EventPages.Enrich
-    ): ScrapedEvent {
+    ): ScrapedEvent? {
         val attempts = if (event.eventDate == UNRESOLVED_EVENT_DATE) DATELESS_ATTEMPTS else 1
         repeat(attempts) { attempt ->
             val read =
                 readEventPage(htmlFetcher::fetchDocument, event) { document ->
-                    pages.enrich(event, document)?.let {
-                        EnrichedPage(
+                    pages.reader.read(event, document)?.let {
+                        ReadPage(
                             it,
                             pages.secondLanguage?.let { language ->
                                 document.alternateLanguageUrl(language.hreflang)
@@ -93,13 +94,15 @@ internal class HtmlImportPipeline(
                         )
                     }
                 }
-            if (read != null) return read.withSecondLanguage(event, pages.secondLanguage)
+            // Resolved after the read, outside the page's log context, so a venue's own line about the row carries no page URL.
+            if (read != null) return read.page.resolve()?.let { read.withSecondLanguage(it, event, pages.secondLanguage) }
             if (attempt < attempts - 1) delay(RETRY_PAUSE)
         }
         return event.degraded(pages.owns)
     }
 
-    private suspend fun EnrichedPage.withSecondLanguage(
+    private suspend fun ReadPage.withSecondLanguage(
+        event: ScrapedEvent,
         listed: ScrapedEvent,
         language: SecondLanguagePage?
     ): ScrapedEvent {
@@ -107,9 +110,9 @@ internal class HtmlImportPipeline(
         return event.withDescriptionAlt(readSecondLanguagePage(htmlFetcher::fetchDocument, alternateUrl, language.description))
     }
 
-    /** One event as its page enriched it, and the URL of that page's version in the second language. */
-    private class EnrichedPage(
-        val event: ScrapedEvent,
+    /** One event's page as read, and the URL of that page's version in the second language. */
+    private class ReadPage(
+        val page: ReadEventPage,
         val alternateUrl: String?
     )
 
@@ -216,8 +219,8 @@ internal class HtmlImport(
     val eventPages: EventPages? = null,
     val sharedPages: SharedPages<*>? = null,
     val foldRuns: (List<ScrapedEvent>) -> List<ScrapedEvent> = { it },
-    /** Logged at the end with the event count and the number of listing pages read. */
-    val doneLine: ((Int, Int) -> String)? = null
+    /** Logged at the end with the events kept and the listing as read. */
+    val doneLine: ((List<ScrapedEvent>, Listing) -> String)? = null
 ) {
     /** How the entry page is fetched: with the source's validators and cookies, or unconditionally. */
     sealed interface Entry {
@@ -237,9 +240,12 @@ internal class HtmlImport(
 
     /** How each event's own page is read. */
     sealed interface EventPages {
-        /** The listing row enriched by [enrich], for the rows [hasEventPage] accepts, flagged as [withEventPageOrFlagged] flags it. */
+        /**
+         * The listing row read through [reader], for the rows [hasEventPage] accepts: enriched, flagged as
+         * [withEventPageOrFlagged] flags it, or dropped.
+         */
         class Enrich(
-            val enrich: (ScrapedEvent, Document) -> ScrapedEvent?,
+            val reader: EventPageReader<*>,
             val hasEventPage: (ScrapedEvent) -> Boolean,
             val owns: Set<ScrapedField>,
             val secondLanguage: SecondLanguagePage? = null

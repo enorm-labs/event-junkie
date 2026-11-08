@@ -1,18 +1,14 @@
 package de.norm.events.scraper.olympiastadion
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
+import de.norm.events.scraper.EventPageReader
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ListingPages
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SecondLanguagePage
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.importEntryPage
-import de.norm.events.scraper.readEventPage
-import de.norm.events.scraper.readSecondLanguagePage
-import de.norm.events.scraper.withDescriptionAlt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -34,45 +30,41 @@ import org.springframework.stereotype.Component
  */
 @Component
 class OlympiastadionWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
+    htmlFetcher: HtmlFetcher
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Olympiastadion", OlympiastadionOverviewPageScraper()::scrape) {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.OLYMPIASTADION
 
-    override val fetchesBeyondEntryPage: Boolean = true
-
-    private val overviewPageScraper = OlympiastadionOverviewPageScraper()
     private val detailPageScraper = OlympiastadionDetailPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        htmlFetcher.importEntryPage(url, etag, lastModified) { document ->
-            val cards = overviewPageScraper.scrape(document, url)
-            val events = cards.mapNotNull { withDetail(it) }
-            logger.info { "Scraped ${events.size} Olympiastadion event(s), skipping ${cards.size - events.size} sport event(s)" }
-            ListingPages(events, complete = true)
-        }
+    override val listedLine: ((Int) -> String)? = null
 
-    /** The card with its page's fields, flagged when the page fails, or null when the page is a sport event's. */
-    private suspend fun withDetail(card: ScrapedEvent): ScrapedEvent? {
-        val detail = readEventPage(htmlFetcher::fetchDocument, card) { detailPageScraper.scrape(it) } ?: return card.copy(detailUnavailable = true)
+    override val doneLine: (Int, Int) -> String = { kept, cards -> "Scraped $kept Olympiastadion event(s), skipping ${cards - kept} sport event(s)" }
+
+    override val eventPageReader = EventPageReader({ _, document -> detailPageScraper.scrape(document) }, ::withDetail)
+
+    override val eventPageSecondLanguage = SecondLanguagePage(ENGLISH, detailPageScraper::description)
+
+    /** The card with its page's fields, or null when the page is a sport event's. */
+    private fun withDetail(
+        card: ScrapedEvent,
+        detail: OlympiastadionDetail
+    ): ScrapedEvent? {
         if (detail.sport) {
             logger.info { "Dropping '${card.title}': its page files it as sport" }
             return null
         }
-        val event =
-            card.copy(
-                description = detail.description,
-                startTime = detail.startTime,
-                doorsTime = detail.doorsTime,
-                ticketUrl = detail.ticketUrl
-            )
-        val english = detail.englishUrl?.takeIf { detail.description != null }
-        return event.withDescriptionAlt(english?.let { readSecondLanguagePage(htmlFetcher::fetchDocument, it, detailPageScraper::description) })
+        return card.copy(
+            description = detail.description,
+            startTime = detail.startTime,
+            doorsTime = detail.doorsTime,
+            ticketUrl = detail.ticketUrl
+        )
+    }
+
+    private companion object {
+        const val ENGLISH = "en"
     }
 }
 

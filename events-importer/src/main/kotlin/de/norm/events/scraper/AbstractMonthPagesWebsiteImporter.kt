@@ -59,10 +59,18 @@ abstract class AbstractMonthPagesWebsiteImporter(
             HtmlImport(
                 entry = HtmlImport.Entry.Unconditional,
                 readListing = ::readMonths,
-                eventPages = enrichFromEventPage?.let { HtmlImport.EventPages.Enrich(it, ::hasEventPage, eventPageOwns, eventPageSecondLanguage) },
+                eventPages =
+                    enrichFromEventPage?.let {
+                        HtmlImport.EventPages.Enrich(
+                            EventPageReader.enriching(it),
+                            ::hasEventPage,
+                            eventPageOwns,
+                            eventPageSecondLanguage
+                        )
+                    },
                 sharedPages = sharedPages,
                 foldRuns = ::foldRuns,
-                doneLine = { count, months -> "Scraped $count $venueName event(s) across $months month page(s)" }
+                doneLine = { events, months -> "Scraped ${events.size} $venueName event(s) across ${months.pages} month page(s)" }
             ),
             url,
             etag,

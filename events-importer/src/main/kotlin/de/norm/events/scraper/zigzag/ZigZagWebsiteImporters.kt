@@ -1,18 +1,16 @@
 package de.norm.events.scraper.zigzag
 
 import de.norm.events.common.BERLIN
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
+import de.norm.events.scraper.EventPageReader
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ListingPages
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.importEntryPage
-import de.norm.events.scraper.readEventPage
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
 
@@ -30,50 +28,51 @@ import java.time.Clock
  * @see <a href="https://www.zigzag-jazzclub.berlin/programmneu">Zig Zag programme</a>
  */
 abstract class AbstractZigZagWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher,
+    htmlFetcher: HtmlFetcher,
     final override val eventSource: EventSource,
     clock: Clock
-) : EventImporter {
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, eventSource.name, ZigZagOverviewPageScraper(eventSource, clock)::scrape) {
+    // This base's own logger, not the pipeline's: the lines keep the name they always had.
     private val logger = KotlinLogging.logger {}
 
-    override val fetchesBeyondEntryPage: Boolean = true
-
-    private val overviewPageScraper = ZigZagOverviewPageScraper(eventSource, clock)
     private val detailPageScraper = ZigZagDetailPageScraper()
 
     /** Whether a night whose page names a location other than the club's is still this venue's. */
     protected abstract val keepsElsewhere: Boolean
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        htmlFetcher.importEntryPage(url, etag, lastModified) { document ->
-            val events = overviewPageScraper.scrape(document, url)
-            logger.info { "Scraped ${events.size} event(s) for $eventSource from the Zig Zag programme" }
-            ListingPages(events.mapNotNull { withDetail(it) }, complete = true)
-        }
+    override val listedLine: ((Int) -> String)? = null
 
-    /** The event with its page's fields, flagged when the page yields nothing, or null when the page moves it elsewhere. */
-    private suspend fun withDetail(event: ScrapedEvent): ScrapedEvent? {
-        val detail =
-            readEventPage(htmlFetcher::fetchDocument, event) { detailPageScraper.scrape(it).takeUnless(ZigZagDetail::isEmpty) }
-                ?: return event.copy(detailUnavailable = true)
-        val dropped = detail.elsewhere && !keepsElsewhere
-        if (dropped) logger.info { "Dropping '${event.title}': its page names another location" }
-        return detail.takeUnless { dropped }?.let {
-            event.copy(
-                description = it.description,
-                descriptionAlt = it.descriptionAlt,
-                startTime = it.startTime,
-                doorsTime = it.doorsTime,
-                pricePresale = it.price?.takeIf { _ -> it.ticketUrl != null },
-                priceBoxOffice = it.price,
-                ticketUrl = it.ticketUrl,
-                artists = event.artists.ifEmpty { it.artists }
-            )
+    override suspend fun afterListing(
+        events: List<ScrapedEvent>,
+        document: Document,
+        url: String
+    ): List<ScrapedEvent> {
+        logger.info { "Scraped ${events.size} event(s) for $eventSource from the Zig Zag programme" }
+        return events
+    }
+
+    override val eventPageReader =
+        EventPageReader({ _, document -> detailPageScraper.scrape(document).takeUnless(ZigZagDetail::isEmpty) }, ::withDetail)
+
+    /** The event with its page's fields, or null when the page moves it elsewhere. */
+    private fun withDetail(
+        event: ScrapedEvent,
+        detail: ZigZagDetail
+    ): ScrapedEvent? {
+        if (detail.elsewhere && !keepsElsewhere) {
+            logger.info { "Dropping '${event.title}': its page names another location" }
+            return null
         }
+        return event.copy(
+            description = detail.description,
+            descriptionAlt = detail.descriptionAlt,
+            startTime = detail.startTime,
+            doorsTime = detail.doorsTime,
+            pricePresale = detail.price?.takeIf { detail.ticketUrl != null },
+            priceBoxOffice = detail.price,
+            ticketUrl = detail.ticketUrl,
+            artists = event.artists.ifEmpty { detail.artists }
+        )
     }
 }
 
