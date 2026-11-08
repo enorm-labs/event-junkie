@@ -10,6 +10,7 @@ import de.norm.events.common.IMAGE_LICENCE_ID_EXAMPLE
 import de.norm.events.common.IMAGE_LICENCE_ID_MAX_LENGTH
 import de.norm.events.common.IMAGE_SOURCE_URL_DESCRIPTION
 import de.norm.events.common.IMAGE_SOURCE_URL_EXAMPLE
+import de.norm.events.common.INSTAGRAM_URL
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -34,6 +35,14 @@ data class PromoterRequest(
     @field:Size(max = 2048, message = "Website URL must not exceed 2048 characters")
     @Schema(description = "URL of the promoter's website or social page", example = "https://www.facebook.com/36Concerts/")
     val websiteUrl: String? = null,
+    // Pinned to the host, so a website in the Instagram field is a 400 rather than a link labelled wrong (#356).
+    @field:Size(max = 2048, message = "Instagram URL must not exceed 2048 characters")
+    @field:Pattern(regexp = INSTAGRAM_URL, message = "Instagram URL must be an https://www.instagram.com/ address")
+    @Schema(
+        description = "URL of the promoter's Instagram profile, shown as a plain link beside the website. Entered by a person, never fetched.",
+        example = "https://www.instagram.com/36concerts/"
+    )
+    val instagramUrl: String? = null,
     @field:Size(max = 2048, message = "Image URL must not exceed 2048 characters")
     @Schema(description = "URL of the promoter's logo image", example = "https://example.com/36-concerts-logo.jpg")
     override val imageUrl: String? = null,
@@ -84,6 +93,7 @@ data class PromoterRequest(
             name = name,
             slug = slug,
             websiteUrl = websiteUrl,
+            instagramUrl = instagramUrl,
             imageUrl = imageUrl,
             imageAttribution = imageAttribution,
             imageLicenceId = imageLicenceId,

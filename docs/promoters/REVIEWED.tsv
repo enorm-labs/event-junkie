@@ -1,310 +1,325 @@
-stored_name	slug	kind	website	name	description_de	description_en	events	note
-11freunde	11freunde	media	https://www.11freunde.de/	11FREUNDE			2	football magazine; pub quiz
-36 Concerts	36-concerts	promoter	https://www.36-tickets.de/	36 Concerts	36 Concerts ist die Hausagentur von Lido, Astra Kulturhaus und Bi Nuu in Kreuzberg, bis 2020 unter dem Namen Direct Concerts. Sie bucht vor allem Indie, Rock und Alternative für die eigenen Clubs und daneben für Festsaal Kreuzberg und Urban Spree.	36 Concerts is the in-house agency of Lido, Astra Kulturhaus and Bi Nuu in Kreuzberg, known as Direct Concerts until 2020. It books mostly indie, rock and alternative for its own clubs, and also for Festsaal Kreuzberg and Urban Spree.	27	in-house agency of Lido, Astra, Bi Nuu
-7synths Party	7synths-party	party		7synths Party			1	Badehaus party series
-Act	act-agency	promoter	https://theactagency.com/	ACT Agency			1	Gretchen credits "ACT agency" with a link to the booking agency; the strip left "Act" and V026 dropped it (#1361); V032 renames it
-AEG Presents	aeg-presents	promoter	https://www.aegpresents.com/	AEG Presents			1	
-Afro Haus	afro-haus	promoter	https://www.afrohaus.de/	Afro Haus			5	site writes AFRO HAUS
-Agave	agave	unverified		Agave			1	Metropol, one event
-Alebrije	alebrije	unverified		Alebrije			1	Heimathafen, one event
-All Artists	all-artists	promoter		All Artists			2	All Artists Agency; site not found
-All Rooms	all-rooms	promoter	https://allrooms-agency.com/	All Rooms	All Rooms ist eine Berliner Booking- und Konzertagentur, seit 2015 für Künstler:innen aus Pop, Indie und Punkrock. Für die eigenen Berliner Shows gibt es seit 2023 All Rooms Concerts, meist im Kulturhaus Insel und im Frannz Club.	All Rooms is a Berlin booking and concert agency, working since 2015 with acts from pop and indie to punk rock. Its own Berlin shows have run under All Rooms Concerts since 2023, mostly at Kulturhaus Insel and Frannz Club.	34	site writes ALL ROOMS
-amSTARt	amstart	unverified		amSTARt			1	Urban Spree
-Antenne Brandenburg	antenne-brandenburg	media	https://www.antennebrandenburg.de/	Antenne Brandenburg			1	rbb radio
-Antonio Garcia	antonio-garcia	promoter		Antonio Garcia			1	person; salsa
-Aok. Die Gesundheitskasse	aok	sponsor	https://www.aok.de/	AOK			2	health insurer; prevention theatre
-Ar	ar	junk		Ar			1	two letters, Huxleys; deleted by V026
-Archiv B	archiv-b	unverified		Archiv B			1	Columbia Theater
-Asiarec SpA	asiarec-spa	unverified		Asiarec SpA			1	Privatclub
-Atoc Soundlab	atoc-soundlab	promoter	https://atocsoundlab.com/	ATOC Soundlab	ATOC Soundlab ist eine 2023 gegründete Berliner Booking- und Produktionsfirma mit Studio im Funkhaus. Sie bringt lateinamerikanische Acts nach Berlin, etwa Aterciopelados und Perotá Chingó ins Lido.	ATOC Soundlab is a Berlin booking and production company founded in 2023, with a studio at the Funkhaus. It brings Latin American acts to Berlin, such as Aterciopelados and Perotá Chingó at Lido.	2	Lido credits "Atoc Live", stored as `atoc` on production; V030 folds it in
-ATOK Berlin	atok-berlin	promoter	https://www.atokberlin.com/	ATOK Berlin	ATOK Berlin macht seit 2016 DIY-Booking für Newcomer- und Underground-Bands in Berlin und Deutschland, vor allem Metal, Hardcore und Punk. Die Shows laufen unter anderem im Kulturhaus Insel, Badehaus und Urban Spree.	ATOK Berlin has done DIY booking for newcomer and underground bands in Berlin and across Germany since 2016, mostly metal, hardcore and punk. Its shows run at Kulturhaus Insel, Badehaus and Urban Spree, among others.	6	site title: ATOK Booking & Events
-Atr Party Berlin	atr-party-berlin	party		Atr Party Berlin			1	Lido
-Audiolith	audiolith	promoter	https://audiolith.net/	Audiolith			3	label and booking
-Auf Die Gute Tour	auf-die-gute-tour	promoter	http://www.aufdiegutetour.de/	Auf die gute Tour			1	site lowercase; HTTPS serves a self-signed certificate, so http only (curl 2026-10-09, #2601)
-Aufnahme + wiedergabe	aufnahme-wiedergabe	promoter	http://www.aufnahmeundwiedergabe.de/	aufnahme + wiedergabe	aufnahme + wiedergabe ist ein Berliner Label für Dark Wave, Post-Punk und Minimal Electro, gegründet 2011. Die Label-Konzerte laufen im Urban Spree.	aufnahme + wiedergabe is a Berlin label for dark wave, post-punk and minimal electro, founded in 2011. Its label shows run at Urban Spree.	7	label, one name; HTTPS certificate does not name the domain, so http only (curl 2026-10-09, #2601)
-B-Come	b-come	unverified		B-Come			3	Frannz, Lido
-Bad Ideas	bad-ideas	unverified		Bad Ideas			1	Astra
-Badehaus	badehaus	venue	https://badehaus-berlin.com/	Badehaus			3	
-beav boloney	beav-boloney	promoter		beav boloney			2	Schokoladen collective
-Bedroomdisco	bedroomdisco	media		Bedroomdisco			4	bedroomdisco.de served casino spam above the magazine on 2026-09-11; site dropped until it is clean
-Behind The Green Door	behind-the-green-door	promoter	https://www.behindthegreendoor.de/	Behind The Green Door			1	2026-11-08 scan: title 'Behind the Green Door | Konzerte in München'
-Bergson	bergson	unverified		Bergson			1	Heimathafen
-Berlin En Salsa	berlin-en-salsa	party		Berlin En Salsa			1	
-Berlin Folk Festival	berlin-folk-festival	promoter		Berlin Folk Festival			1	festival
-Berlin Pop Nights	berlin-pop-nights	party		Berlin Pop Nights			4	same organiser as Dancing With Myself (Eventbrite)
-Boese	boese-live	promoter	https://boese.live/	Boese Live			2	
-Bohème Sauvage	boheme-sauvage	promoter	https://www.boheme-sauvage.com/	Bohème Sauvage			1	2026-11-08 scan: official 1920s party series site
-Boldt Berlin	boldt-berlin	promoter	none	Boldt Berlin			1	no site: boldtberlin.de and ibb-booking.com redirect to kante.live, Kante Booking (curl 2026-10-09, #2601)
-Book of Raw	book-of-raw	unverified	none	Book of Raw			1	Astra; 2026-11-08 scan: the stored link is a Facebook page
-Bossa FM	bossa-fm	promoter	https://www.bossafm.com/	Bossa FM	Bossa FM ist eine Berliner Agentur für brasilianische Musik und Kultur in Europa, seit 2016 mit über 150 Veranstaltungen von Konzerten bis zu Festivals wie Psicotrópicos und LAPA. In Berlin laufen die Abende unter anderem im Badehaus, Gretchen und Lido.	Bossa FM is a Berlin agency for Brazilian music and culture in Europe, with more than 150 events since 2016, from concerts to festivals such as Psicotrópicos and LAPA. In Berlin its nights run at Badehaus, Gretchen and Lido, among others.	6	
-bricks	bricks	promoter	none	BRICKS			2	no site: bricks-berlin.de is a housing project at the Schlachtensee, not this promoter (curl 2026-10-09, #2601)
-Brighter	brighter	promoter	https://brighter-agency.eu/	Brighter			1	Brighter Agency, Schokoladen co-billing; 2026-11-08 scan: brighter agency, Berlin booking agency + promoter; Urban Spree listing names it
-Buback	buback	promoter	https://www.buback.de/	Buback			1	2026-11-08 scan: Buback Tontraeger GmbH site with Konzerte section (label, booking, concerts, Hamburg)
-Bum	bum	junk		Bum			1	Badehaus; deleted by V026
-ByteFM	bytefm	media	https://www.byte.fm/	ByteFM	"ByteFM ist ein Internetradio aus Hamburg „für gute Musik"", werbefrei und getragen von seinen Hörer:innen. Der Sender präsentiert Konzerte, in Berlin vor allem im Columbia Theater."	"ByteFM is an internet radio station from Hamburg ""for good music"", ad-free and funded by its listeners. It presents concerts, in Berlin mostly at Columbia Theater."	6	
-Casius	casius	unverified		Casius			1	Privatclub
-Channel	channel-music	promoter	https://channelmusic.de/	Channel Music	Channel Music betreibt die Gastronomie in Huxleys Neue Welt, Metropol, Quasimodo und Hole 44 und veranstaltet dort gelegentlich selbst.	Channel Music runs the catering at Huxleys Neue Welt, Metropol, Quasimodo and Hole 44, and occasionally promotes shows there itself.	1	Hole 44 credits "Channel Music presents"; the strip left "Channel" and V026 dropped it (#1361); V032 renames it
-Chicha	chicha	party		Chicha			2	
-Chimperator	chimperator	promoter	https://chimperator.de/	Chimperator	Chimperator ist ein Label, eine Talentschmiede und ein Live-Veranstalter aus Stuttgart, Heimat von Die Orsons, Maeckes, Tua, Teesy und OG Keemo. In Berlin laufen die Shows unter anderem im Bi Nuu.	Chimperator is a label, talent house and live promoter from Stuttgart, home to Die Orsons, Maeckes, Tua, Teesy and OG Keemo. Its Berlin shows run at Bi Nuu, among others.	1	
-Chnsw!	chnsw	party		CHNSW!			4	source writes CHNSW!
-Cocomico Theater	cocomico-theater	promoter	https://www.cocomico-theater.de/	Cocomico Theater			1	2026-11-08 scan: own site; family business producing the Conni musical tour
-Coming Home	coming-home	unverified		Coming Home			1	
-Como Esta Wally Producciones Y Management Sl	como-esta-wally-producciones-y-management-sl	promoter		Como Esta Wally Producciones Y Management Sl			3	Spanish company, Cosmic Comedy
-Concert Concept	concert-concept	promoter	https://www.concert-concept.de/	Concert Concept	Concert Concept ist die Berliner Tochter der DEAG und örtlicher Veranstalter in Berlin, Potsdam, Leipzig und Dresden. Das Programm reicht von Rock und Pop über Familien-Entertainment bis zu Klassik und Jazz, vom Privatclub bis zur Max-Schmeling-Halle.	Concert Concept is DEAG's Berlin subsidiary and the local promoter in Berlin, Potsdam, Leipzig and Dresden. Its programme runs from rock and pop to family entertainment, classical and jazz, from Privatclub to the Max-Schmeling-Halle.	15	DEAG
-Concertbüro Zahlmann	concertburo-zahlmann	promoter	https://www.cbz.events/	Concertbüro Zahlmann			2	
-Contigo	contigo	unverified		Contigo			1	Cosmic Comedy
-Contra	contra	unverified		Contra			2	Columbia Theater
-Cornershop	cornershop	unverified		Cornershop			2	Cosmic Comedy
-Cosmic Comedy Berlin	cosmic-comedy-berlin	venue	https://comedyclubberlin.com/	Cosmic Comedy Berlin	Cosmic Comedy Berlin ist ein Comedy-Club für Stand-up auf Englisch. An mehreren Abenden pro Woche laufen Open Mics und Showcases, mit Pizza und Shots für das Publikum.	Cosmic Comedy Berlin is a comedy club for stand-up in English. Open mics and showcases run several nights a week, with pizza and shots for the crowd.	25	club own shows; cosmiccomedyclub.com is parked; comedyclubberlin.com titles itself Cosmic Comedy Berlin (curl 2026-10-09, #2601)
-Cosmic Romance	cosmic-romance	promoter	none	Cosmic Romance			1	RA: https://ra.co/promoters/110970; no site: cosmic-romance.com redirects to www.cosmic-romance.com, which does not resolve (curl 2026-10-09, #2601)
-Crunch Tapes	crunch-tapes	promoter	https://www.crunchtapes.com/	Crunch Tapes			1	site writes CRUNCH TAPES
-CTM Festival	ctm-festival	promoter	https://www.ctm-festival.de/	CTM Festival			1	2026-11-08 scan: title 'CTM Festival for Adventurous Music & Art, Berlin'
-Cyberfunk + Urban Spree	cyberfunk-urban-spree	party		Cyberfunk + Urban Spree			1	co-billing not split (+)
-d2mberlin	d2mberlin	promoter	https://d2mberlin.de/	d2mberlin			1	
-Dancing With Myself	dancing-with-myself	party		Dancing With Myself			1	see Berlin Pop Nights
-Das forgotten female* composers	das-forgotten-female-composers	junk		Das forgotten female* composers			1	title fragment; deleted by V026, minted again from Insel's "e.V." credit, deleted by V079 (#2331)
-Decibel Touring	decibel-touring	promoter		Decibel Touring			1	site not found
-Deep Medi	deep-medi	promoter		Deep Medi			1	label
-Deputamadre Berlin	deputamadre-berlin	unverified		Deputamadre Berlin			1	
-Destiny Tourbooking	destiny-tourbooking	promoter	https://www.destiny-tourbooking.com/	Destiny Tourbooking			1	
-Deutsches Polen-Institut	deutsches-polen-institut	sponsor	https://www.deutsches-polen-institut.de/	Deutsches Polen-Institut			1	
-die lesebühne	die-lesebuhne	promoter	https://www.dielesebuehne.de/	die lesebühne			3	
-Diffus	diffus	media	https://diffus.de/	DIFFUS	DIFFUS ist ein Musik- und Kulturmagazin für Deutschland, Österreich und die Schweiz, seit 2014 in Berlin-Kreuzberg, mit Videos, Podcasts und zwei Printausgaben im Jahr. Es präsentiert Konzerte in Berlin, unter anderem in der Zitadelle, im Frannz Club und im Columbia Theater.	DIFFUS is a music and culture magazine for Germany, Austria and Switzerland, based in Berlin-Kreuzberg since 2014, with videos, podcasts and two print issues a year. It presents concerts in Berlin, at the Zitadelle, Frannz Club and Columbia Theater among others.	4	site writes DIFFUS
-Dirk Becker	dirk-becker	promoter	https://dirkbecker-entertainment.de/	Dirk Becker			2	2026-11-08 scan: stored dbe.ag 301-redirects here; (c) Dirk Becker Entertainment
-Dirty Dancing Party	dirty-dancing-party	party		Dirty Dancing Party			2	
-DJ Rebel	dj-rebel	party		DJ Rebel			5	
-Dlf	deutschlandfunk	media	https://www.deutschlandfunk.de/	Deutschlandfunk			1	stored as Dlf
-Doomstar	doomstar-bookings	promoter	https://doomstarbookings.com/	Doomstar Bookings			1	
-Dynablaster	dynablaster	party		Dynablaster			1	
-dynamis	dynamis	sponsor	https://www.dynamis-berlin.de/	dynamis			0	non-profit (Reisen für Menschen mit Beeinträchtigung), credited at Lido
-Echo	echo	unverified		Echo			7	Bi Nuu, 7 events; JSON has a URL, not read yet
-Echo Vision Artist Management	echo-vision-artist-management	promoter		Echo Vision Artist Management			1	
-Echoes of Pandora	echoes-of-pandora	unverified		Echoes of Pandora			1	
-Effetto Notte	effetto-notte	unverified		Effetto Notte			1	
-Einen Hab Ich Noch	einen-hab-ich-noch	unverified		Einen Hab Ich Noch			1	Columbia Theater
-Emergenza	emergenza	promoter	https://emergenza.live/	Emergenza			1	festival; 2026-11-08 scan: stored emergenza.net is the old site (news archive); emergenza.live is current
-Entre Trópicos	entre-tropicos	promoter	https://www.entretropicos.com/	Entre Trópicos			1	2026-11-08 scan: own site, title "Entre Trópicos"; Berlin Latin American collective since 2022
-Eskapaden	eskapaden	unverified		Eskapaden			2	Bi Nuu
-Estetica Torta	estetica-torta	unverified		Estetica Torta			1	
-Europe Deadheads	europe-deadheads	promoter	https://europedeadheads.com/	Europe Deadheads			3	fan community
-F-Cat	f-cat	unverified		F-Cat			1	
-Fandom Night	fandom-night	party		Fandom Night			3	Badehaus; no site
-Fania Brava	fania-brava	party	https://instagram.com/faniabravaparty/	Fania Brava			1	RA: Instagram is the only site
-Feinster HipHop	feinster-hiphop	party		Feinster HipHop			1	
-Festsaal Kreuzberg	festsaal-kreuzberg	venue	https://festsaal-kreuzberg.de/	Festsaal Kreuzberg	Der Festsaal Kreuzberg ist ein Konzert- und Veranstaltungshaus mit Festsaal, Kaminzimmer, Ostflügel und Biergarten. Als Veranstalter bucht das Haus auch Shows im Bi Nuu.	Festsaal Kreuzberg is a concert and event house with a main hall, a fireside room, an east wing and a beer garden. As a promoter it also books shows at Bi Nuu.	8	Festsaal Kreuzberg Booking
-Fever & Nova Sky Stories	fever-nova-sky-stories	promoter		Fever & Nova Sky Stories			1	drone show co-billing
-FKP Scorpio	fkp-scorpio	promoter	https://fkpscorpio.com/	FKP Scorpio	FKP Scorpio ist einer der größten Konzertveranstalter Europas, mit Sitz in Hamburg – vom Clubkonzert über Arena-Tourneen bis zu Festivals wie Hurricane und Southside. In Berlin veranstaltet FKP unter anderem im Quasimodo, Hole 44 und Velodrom.	FKP Scorpio is one of Europe's largest concert promoters, based in Hamburg, from club shows and arena tours to festivals such as Hurricane and Southside. In Berlin it promotes at Quasimodo, Hole 44 and the Velodrom, among others.	6	
-FluxFM	fluxfm	media	https://www.fluxfm.de/	FluxFM	"FluxFM ist ein Berliner Radiosender – „Radio so bunt wie Berlin"" – mit handverlesener Musik jenseits des Mainstreams und Popkultur, im Radio, im Livestream und in der eigenen App. Der Sender präsentiert Konzerte in der Stadt, unter anderem in der Zitadelle und im Frannz Club."	"FluxFM is a Berlin radio station – ""radio as colourful as Berlin"" – with hand-picked music beyond the mainstream and pop culture, on air, on its livestream and in its own app. It presents concerts across the city, at the Zitadelle and Frannz Club among others."	5	logo: press page offers a logo download (fluxfm.de/presse), no usage terms stated
-Frack & Spitzenhöschen	frack-spitzenhoschen	artist		Frack & Spitzenhöschen			1	show name
-Frank Martini	frank-martini	party		Frank Martini			1	
-Fratelli Bvba	fratelli-bvba	promoter	none	Fratelli Bvba			1	2026-11-08 scan: the stored scalachoir.com is the artist's site, not Fratelli BVBA's
-Friendly Reminder	friendly-reminder	promoter	https://www.friendlyreminder.live/	Friendly Reminder	Friendly Reminder ist eine internationale Booking-Agentur für ausgewählte Acts, veranstaltet Tourneen in Deutschland und ist in Berlin lokaler Veranstalter für nationale und internationale Partner.	Friendly Reminder is an international booking agency for selected acts, promotes tours in Germany and is a local promoter in Berlin for national and international partners.	4	
-Fritz	fritz	media	https://www.fritz.de/	Fritz			1	rbb radio
-Frontstage Magazine	frontstage-magazine	media	https://frontstage-magazine.de/	Frontstage Magazine			2	
-Full Contact Safari	full-contact-safari	unverified		Full Contact Safari			1	
-Fumie	fumie	unverified	none	Fumie			1	no site: fumie.de is a parked page that redirects to /lander (curl 2026-10-09, #2601)
-Furiosa	furiosa	party		Furiosa			2	Lido
-Geisburg	geisburg	promoter		Geisburg			1	Geisburg Records, Schokoladen
-geisburg recs	geisburg-recs	promoter	https://geisburgrecords.com/	geisburg recs			1	2026-11-08 scan: linked from the label's Bandcamp; Berlin label and studio
-Girls Town Party	girls-town-party	party		Girls Town Party			1	
-Go Mad Concerti	go-mad-concerti	promoter	https://gomadconcerti.com/	Go Mad Concerti			1	2026-11-08 scan: own site; lists Marco Castello European Tour 2026
-Gondwana Records	gondwana-records	promoter	https://gondwanarecords.com/	Gondwana Records			1	2026-11-08 scan: title 'Gondwana Records'
-GoToBeat	gotobeat	promoter	https://gotobeat.com/	Gotobeat			3	stored GoToBeat; site Gotobeat
-Greyzone Concerts	greyzone-concerts	promoter	https://www.greyzone-concerts.de/	Greyzone Concerts	Greyzone Concerts ist ein Berliner Konzertveranstalter für Indie, Alternative, Post-Punk und Psychedelic. Die Shows laufen in Clubs wie Cassiopeia, Neue Zukunft, Urban Spree und Lido.	Greyzone Concerts is a Berlin promoter for indie, alternative, post-punk and psychedelic acts. Its shows run in clubs such as Cassiopeia, Neue Zukunft, Urban Spree and Lido.	34	
-Handshake	handshake	promoter	https://www.handshake-booking.com/de/	Handshake			1	2026-11-08 scan: 'handshake booking - Künstleragentur Berlin'; roster lists daoud
-Hasenscheisse	hasenscheisse	artist		Hasenscheisse			1	show name
-HB Music	hb-music	promoter	https://hb-music.de/	HB Music			1	
-Headline	headline-concerts	promoter	https://headlinemusic.de/	Headline Concerts	Headline (headline music) ist ein Veranstalter aus Bonn für Mittelalter-Rock, Folk, Dark und Electro, mit Künstlern wie In Extremo, Schandmaul, dArtagnan, Unheilig und Heldmaschine. In Berlin laufen die Shows unter anderem im Hole 44 und in Huxleys Neue Welt.	Headline (headline music) is a Bonn-based promoter for medieval rock, folk, dark and electro acts such as In Extremo, Schandmaul, dArtagnan, Unheilig and Heldmaschine. In Berlin its shows run at Hole 44 and Huxleys Neue Welt, among others.	7	redirects to headlinemusic.de; 2026-11-08 scan: stored headlineconcerts.de redirects to headlinemusic.de
-Heesen	heesen-konzerte	promoter	https://www.heesen-konzerte.de/	Heesen Konzerte			1	site title: HEESEN KONZERTE; Admiralspalast also credits the sister company Heesen Media GmbH (#2653)
-Helping Hands Allstars	helping-hands-allstars	artist		Helping Hands Allstars			1	
-Highlight-Concerts	highlight-concerts	promoter	https://www.highlight-concerts.de/de/	Highlight-Concerts			1	2026-11-08 scan: stored .com redirects here, title "Highlight Concerts"
-Hockeypark Betriebs	hockeypark-betriebs	promoter		Hockeypark Betriebs			1	Hockeypark Betriebs GmbH, Mönchengladbach
-Hollywood Tramp	hollywood-tramp	party	https://www.hollywoodtramp.de/	Hollywood Tramp			1	
-Ibb	ibb-booking	promoter	none	IBB Booking			2	no site: ibb-booking.com redirects to kante.live, Kante Booking (curl 2026-10-09, #2601)
-Ilija Gabrilenko	ilija-gabrilenko	promoter		Ilija Gabrilenko			1	person, Urban Spree
-Impericon	impericon	promoter	https://www.impericon.com/	Impericon			1	
-Itd	itd-events	promoter		ITD Events			1	Hole 44 credits "ITD Events presents" (drag); no site found; the strip left "Itd" and V026 dropped it (#1361); V032 renames it
-Jaw Family	jaw-family	promoter	https://www.jawfamily.com/	Jaw Family			1	2026-11-08 scan: stored (events subpage); own site of the collective
-Jazzexzess	jazzexzess	promoter	https://jazzexzess.de/	Jazzexzess			1	2026-11-08 scan: own site: Berlin concert series, lists this Kantine am Berghain show
-Jb Freie	jb-freie-musik	promoter	none	JB Freie Musik			1	Joel Brandenstein's company (Ratingen); Huxleys credit read as Jb Freie until #307; no site: jb-store.de does not resolve (curl 2026-10-09, #2601)
-Jm Audio	jm-audio-entertainment	promoter		JM Audio Entertainment			1	Huxleys credit read as Jm Audio until #307
-Join	join-live-events	promoter	https://joinliveevents.com/	Join Live Events			2	Max-Schmeling-Halle credits "Join Live Events"; the strip left "Join" (#3577); V176 renames it; 2026-11-08 scan: Join Live Events GmbH, Hof; lists Blok3 at Max-Schmeling-Halle
-Jungle World	jungle-world	media	https://jungle.world/	Jungle World			1	weekly
-Karsten Jahnke Konzertdirektion	karsten-jahnke-konzertdirektion	promoter	https://kj.de/	Karsten Jahnke Konzertdirektion			1	"logo: press page offers ""KJ Logo-Set"" (kj.de/presse.html), no usage terms stated"
-Katharsis	katharsis	unverified		Katharsis			1	
-Kiezpoeten	kiezpoeten	promoter	https://kiezpoeten.com/	Kiezpoeten			3	
-Kinderphilharmonie	kinderphilharmonie	promoter	https://kinderphilharmonie.de/	Kinderphilharmonie			6	2026-11-08 scan: own site 'kinderphilharmonie - Klassik für Kleine', matches event titles
-King David Soundsystem	king-david-soundsystem	artist		King David Soundsystem			1	
-King Kong Kicks	king-kong-kicks	party	https://kingkongkicks.com/	King Kong Kicks	"King Kong Kicks ist eine Indie-Pop-Party – „Tanzen, Trinken, Knutschen"" – die seit Jahren in Berlin und einem Dutzend weiterer Städte läuft, mit Giant Rooks, Two Door Cinema Club und Kraftklub auf den Playlists. Die Schwesterpartys heißen Wilde Herzen und Team 80s."	"King Kong Kicks is an indie-pop party – ""dance, drink, kiss"" – that has run for years in Berlin and a dozen other cities, with Giant Rooks, Two Door Cinema Club and Kraftklub on the playlists. Its sister parties are Wilde Herzen and Team 80s."	14	site writes KING KONG KICKS
-Kingstar	kingstar-music	promoter	https://www.kingstar-music.com/	Kingstar Music			2	Kingstar GmbH, Hamburg
-Kinky Hub	kinkyhub-berlin	party	https://www.kinkyhub.de/	KinkyHub Berlin			1	
-kj der käpt'n	kj-der-kapt-n	artist		kj der käpt'n			1	karaoke host
-KKT	kkt	promoter	https://kkt.berlin/	KKT	KKT – Kikis Kleiner Tourneeservice – ist eine Berliner Tourneeagentur aus Kreuzberg. Auf der Liste stehen Die Ärzte, Die Toten Hosen, Tocotronic, Feine Sahne Fischfilet, Danger Dan und die Einstürzenden Neubauten.	KKT – Kikis Kleiner Tourneeservice – is a Berlin touring agency based in Kreuzberg. Its roster includes Die Ärzte, Die Toten Hosen, Tocotronic, Feine Sahne Fischfilet, Danger Dan and Einstürzende Neubauten.	4	
-klassix	klassix	unverified		klassix			1	
-Kneipenabend	kneipenabend	junk		Kneipenabend			3	Schokoladen bar night; deleted by V026
-Kommune	kommune	unverified		Kommune			1	
-Kontramarka	kontramarka	promoter	https://www.kontramarka.de/	Kontramarka			1	Russian-language ticket agency
-Konzertbüro Augsburg	konzertburo-augsburg	promoter	https://www.konzertbuero-augsburg.de/	Konzertbüro Augsburg			15	2026-11-08 scan: own domain, title 'Konzertbüro Augsburg'
-Konzertbüro Schoneberg	konzertburo-schoneberg	promoter	https://www.schoneberg.de/	Konzertbüro Schoneberg	Das Konzertbüro Schoneberg veranstaltet Rock und Pop, Klassik, Kabarett und Comedy, mit Büros in Berlin, Hamburg, Köln, Frankfurt, München und Münster. In Berlin laufen die Shows unter anderem im Lido, Privatclub und Huxleys Neue Welt.	Konzertbüro Schoneberg promotes rock and pop, classical, cabaret and comedy, with offices in Berlin, Hamburg, Cologne, Frankfurt, Munich and Münster. In Berlin its shows run at Lido, Privatclub and Huxleys Neue Welt, among others.	18	
-Kulturalarm	kulturalarm	venue	https://www.inselberlin.de/	kulturALARM	kulturALARM e.V. wurde 2008 gegründet, um Kunst, Nachwuchs und Musikkultur zu fördern, und betreibt seit 2010 das Kulturhaus Insel Berlin auf der Insel der Jugend in Treptow. Dort veranstaltet der Verein Konzerte und Festivals, darunter das Monkey Island Festival.	kulturALARM e.V. was founded in 2008 to support art, new talent and music culture, and has run Kulturhaus Insel Berlin on the Insel der Jugend in Treptow since 2010. It promotes concerts and festivals there, among them the Monkey Island Festival.	6	e.V. behind Kulturhaus Insel; kulturalarm.com fails TLS and over http redirects to inselberlin.de, the Kulturhaus Insel the association runs (curl 2026-10-09, #2601)
-Kulturnews	kulturnews	media	https://kulturnews.de/	kulturnews	kulturnews ist ein Kulturmagazin aus Hamburg mit täglichen Tipps zu Kino, Serien, Musik, Literatur, Kunst und Bühne. Es präsentiert Konzerte in Berlin, unter anderem in der Zitadelle, im Columbia Theater und im Frannz Club.	kulturnews is a culture magazine from Hamburg with daily tips on film, series, music, books, art and stage. It presents concerts in Berlin, at the Zitadelle, Columbia Theater and Frannz Club among others.	7	site lowercase
-Kunst&Krawall	kunst-krawall	promoter		Kunst&Krawall			1	Insel slam series
-Kuratorin Anika Meier	kuratorin-anika-meier	junk		Kuratorin Anika Meier			1	role + person; deleted by V026
-Känguruh Production	kanguruh-production	promoter	https://www.kaenguruh.de/	Känguruh Production			2	Halle
-L'Oreille en friche	l-oreille-en-friche	promoter		L'Oreille en friche			1	
-Landstreicher	landstreicher-konzerte	promoter	https://landstreicher-konzerte.de/	Landstreicher Konzerte	Landstreicher Konzerte veranstaltet seit 2014 in Berlin und im Osten Deutschlands: Rap und R'n'B, Indie, Alternative, Rock, Pop, Electronic, dazu Podcasts, Lesungen und Stand-up. Das Sublabel Vertikal Concerts (seit 2019) bucht Punk, Hardcore und Metal.	Landstreicher Konzerte has promoted shows in Berlin and eastern Germany since 2014: rap and R&B, indie, alternative, rock, pop and electronic, plus podcasts, readings and stand-up. Its sub-label Vertikal Concerts (since 2019) books punk, hardcore and metal.	99	
-Lars Berndt	lars-berndt-events	promoter	https://www.lb-events.de/	Lars Berndt Events			3	Bochum
-LassMaMachen	lassmamachen	unverified		LassMaMachen			1	
-Lauscherlounge Veranstaltungen	lauscherlounge-veranstaltungen	promoter	https://www.lauscherlounge.de/	Lauscherlounge Veranstaltungen			2	2026-11-08 scan: own domain, title 'Lauscherlounge' (producer of Die drei ??? live audio plays)
-le petit signal	le-petit-signal	promoter		le petit signal			1	Schokoladen collective
-Leasing&rent	leasing-rent-ou	unverified		LEASING&RENT OÜ			1	Privatclub names the Estonian company as local promoter of a Rita Dakota date; a legal name with no site; V032 renames it (#1361)
-Levanto	levanto	unverified		Levanto			1	Cosmic Comedy
-Lido Berlin	lido-berlin	venue	https://www.lido-berlin.de/	Lido Berlin			1	
-Light The Blind	light-the-blind	artist	https://www.lighttheblind.de/	Light The Blind			1	band
-Listen	listen	promoter	https://www.listencollective.com/	Listen			1	Listen Collective; venues credit it as Listen Agency (#3643)
-little league shows	little-league-shows	promoter	https://littleleagueshows.tumblr.com/	little league shows	Little League Shows veranstaltet seit Mitte der 2000er als DIY-Kollektiv Konzerte in Berlin: Indie, Punk, Post-Punk und Wave, meist im Schokoladen.	Little League Shows has put on shows in Berlin as a DIY collective since the mid-2000s: indie, punk, post-punk and wave, mostly at Schokoladen.	4	minted on production 2026-09-13 from Schokoladen's "little league shows prsnt:" credit; the site and the credit write the name in lower case, and so does the row
-Live Embassy	live-embassy	unverified		Live Embassy			1	
-Live Nation	live-nation	promoter	https://www.livenation.de/	Live Nation	Live Nation Germany ist die deutsche Tochter von Live Nation Entertainment, dem größten Live-Entertainment-Unternehmen der Welt, und veranstaltet Tourneen und Shows von der Clubgröße bis zur Arena. In Berlin laufen die Konzerte unter anderem im Velodrom, UFO im Velodrom und Frannz Club.	Live Nation Germany is the German arm of Live Nation Entertainment, the world's largest live-entertainment company, and promotes tours and shows from club size to arena. In Berlin its concerts run at the Velodrom, UFO im Velodrom and Frannz Club, among others.	4	
-Local Advisor	local-advisor	unverified		Local Advisor			1	
-Loft Concerts	loft-concerts	promoter	https://loft.de/	Loft Concerts	Loft Concerts geht auf den Club „Loft“ zurück, den Monika Döring 1982 über dem Metropol am Nollendorfplatz gründete. Heute ist Loft eine Berliner Konzertagentur für Indie, Pop und Singer-Songwriter, mit Shows von der Kantine am Berghain bis zur Columbiahalle.	"Loft Concerts goes back to the ""Loft"", the club Monika Döring opened above the Metropol on Nollendorfplatz in 1982. Today Loft is a Berlin concert agency for indie, pop and singer-songwriters, with shows from Kantine am Berghain to the Columbiahalle."	68	
-Luv`n Musiq	luv-n-musiq	unverified		Luv`n Musiq			1	
-M-Art	m-art	promoter	none	M-Art			1	no site: m-art.de is a frame around a hosting parking page (curl 2026-10-09, #2601)
-Maelføy	maelfoy	artist		Maelføy			1	act
-Mailive	mailive	promoter		Mailive			1	Vanessa Mai
-malespace	malespace	party		malespace			1	
-Manfred Hertlein Veranstaltungs	manfred-hertlein	promoter		Manfred Hertlein			1	Würzburg; strip Veranstaltungs
-Mansions and Millions	mansions-and-millions	promoter		Mansions and Millions			1	label
-Marlene Von Steenvag	marlene-von-steenvag	promoter		Marlene Von Steenvag			2	burlesque festival
-Mawi	mawi-concert	promoter	https://www.mawi-concert.de/	MAWI Concert			3	
-MB-Konzerte	mb-konzerte	promoter		MB Konzerte			1	
-Mct	mct-agentur	promoter	https://www.mct-agentur.com/	MCT Agentur			5	
-Medibüro Berlin	mediburo-berlin	sponsor	https://medibuero.de/	Medibüro Berlin			1	
-Messed!Up Magazine	messed-up-magazine	media	https://www.messedmag.com/	Messed!Up Magazine			2	
-Metal Hammer	metal-hammer	media	https://www.metal-hammer.de/	Metal Hammer			1	
-Mfp	mfp-concerts	promoter	https://mfpconcerts.com/	MFP Concerts	MFP Concerts ist eine Konzert- und Bookingagentur aus Reichertshofen, seit über 20 Jahren auf Tourneen nationaler und internationaler Acts in Deutschland und Europa, von Rock bis Jazz.	MFP Concerts is a concert and booking agency from Reichertshofen, touring national and international acts across Germany and Europe for over 20 years, from rock to jazz.	1	Lido credits "MFP Concerts" with a link; the strip left "Mfp" and V026 dropped it (#1361); V032 renames it
-Michael Koch	michael-koch	artist		Michael Koch			1	
-Milchmädchen Musikkultur	milchmadchen-musikkultur	promoter		Milchmädchen Musikkultur			1	
-Milchsalon	milchsalon	promoter	https://milchsalon.de/	Milchsalon			1	
-Miller-Zillmer Foundation	miller-zillmer-foundation	sponsor		Miller-Zillmer Foundation			3	site not found
-Mind Enterprises	mind-enterprises	promoter		Mind Enterprises			1	wrestling
-Morabeza	morabeza	party		Morabeza			1	
-More Zvukov	more-zvukov	promoter	none	More Zvukov			1	RA lists it as More Zvukov Agency; no site: morezvukov.nl fails TLS and answers 500 Database Error over http (curl 2026-10-09, #2601)
-Mup	mup	junk		Mup			1	deleted by V026
-MusikBlog	musikblog	media	https://www.musikblog.de/	MusikBlog	MusikBlog ist ein Online-Magazin für neue Musik, Konzerttermine und Newcomer, mit Alben, Videos, Interviews und Ticketverlosungen. Es präsentiert Konzerte in Berlin, unter anderem im Columbia Theater, Bi Nuu und Frannz Club.	MusikBlog is an online magazine for new music, concert dates and newcomers, with albums, videos, interviews and ticket giveaways. It presents concerts in Berlin, at Columbia Theater, Bi Nuu and Frannz Club among others.	6	
-Musikexpress	musikexpress	media	https://www.musikexpress.de/	Musikexpress			1	
-Musikparade	musikparade	promoter		Musikparade			3	site 500
-Musikschule Béla Bartók	musikschule-bela-bartok	sponsor		Musikschule Béla Bartók			1	
-MusiX	musix	media		MusiX			1	magazine
-Muziqme	muziqme	promoter	https://www.muziqme.de/	Muziqme			1	
-MyMusic	mymusic	unverified		MyMusic			1	
-Mystiek	mystiek	unverified		Mystiek			1	
-Neuland	neuland	unverified		Neuland			1	
-neuwerk Music Management	neuwerk-music-management	promoter	https://neuwerk-music.com/	neuwerk Music Management			3	
-New Berlin	new-berlin-konzerte	promoter	https://berlinkonzerte.de/	New Berlin Konzerte	New Berlin Konzerte veranstaltet seit 2000 im Großraum Berlin: Rock und Pop, Jazz und Folk, Lesungen, Comedy und Kindermusicals. Zusammen mit der Karsten Jahnke Konzertdirektion richtet die Agentur die JazzNights aus.	New Berlin Konzerte has promoted events across Berlin since 2000: rock and pop, jazz and folk, readings, comedy and children's musicals. Together with Karsten Jahnke Konzertdirektion it runs the JazzNights series.	30	New Berlin Konzerte & Events GmbH; absorbs Berlinkonzerte
-Niemals	niemals	junk		Niemals			1	title; deleted by V026
-Nina Queer	nina-queer	artist		Nina Queer			1	
-Nova	nova	junk		Nova			1	deleted by V026
-Now And Ever	now-and-ever	promoter	https://nowandever.de/	Now And Ever			4	site NOW AND EVER Music
-Ntr Team	ntr-team	unverified		Ntr Team			1	
-Oakheart	oakheart	unverified		Oakheart			1	
-offbeatclub	offbeatclub	promoter		offbeatclub			2	
-old and fast	old-and-fast	promoter		old and fast			2	Schokoladen DJ collective
-Out Of Line	out-of-line	promoter	https://www.outofline.de/	Out Of Line			3	label
-Out4fame	out4fame	promoter	none	Out4fame			2	2026-11-08 scan: the stored link is a ticket.io shop; out4fame.de redirects to it
-Ox-Fancine	ox-fanzine	media	https://www.ox-fanzine.de/	Ox-Fanzine			1	stored as Ox-Fancine
-Papke Luhr	papke-luhr	unverified		Papke Luhr			1	
-Paranoid	paranoid	party		Paranoid			2	Lido
-Patchanka	patchanka	promoter	https://patchanka-booking.com	Patchanka			2	RA lists it as Patchanka Booking Agency; patchanka.de is a parked default page
-Peter Edel & www.stummfilmkonzerte.de	peter-edel-www-stummfilmkonzerte-de	junk		Peter Edel & www.stummfilmkonzerte.de			1	venue + URL; deleted by V026
-Picky Magazine	picky-magazine	media	https://pickymagazine.de/	Picky Magazine			1	
-Pluswelt	pluswelt	promoter	https://www.pluswelt.com/	Pluswelt	Pluswelt Promotion ist eine Hamburger Agentur für Management, Promotion und Booking, von einzelnen Shows bis zu Tourneen und Festivals in Europa, mit Schwerpunkt auf Synthpop, Dark Wave und Electro. In Berlin laufen die Shows im Privatclub und Frannz Club.	Pluswelt Promotion is a Hamburg agency for management, promotion and booking, from single shows to European tours and festivals, focused on synth-pop, dark wave and electro. Its Berlin shows run at Privatclub and Frannz Club.	4	PLUSWELT PROMOTION, Hamburg
-polenta	polenta	artist		polenta			1	
-Popmonitor	popmonitor	media	http://www.popmonitor.de/	Popmonitor			4	
-Positive Transmitter	positive-transmitter	promoter	none	Positive Transmitter			1	RA: Facebook page is the only site; 2026-11-08 scan: the stored link is a Facebook page
-Potalonu	potalonu	unverified		Potalonu			1	
-Powerline	powerline-agency	promoter	https://powerline-agency.com/	Powerline Agency	Powerline Agency ist eine Berliner Booking-Agentur und Veranstalter für Indie, Garage und Psychedelic. Die Berliner Shows laufen im Urban Spree, Schokoladen und in der Columbiahalle.	Powerline Agency is a Berlin booking agency and promoter for indie, garage and psychedelic acts. Its Berlin shows run at Urban Spree, Schokoladen and the Columbiahalle.	10	
-PRK DreamHaus	prk-dreamhaus	promoter	https://www.prk-dreamhaus.com/	PRK DreamHaus	PRK DreamHaus entstand 2024 aus der Fusion der Kölner PRK Peter Rieger Konzertagentur (seit 1983) mit dem Berliner DreamHaus (seit 2020), beide Teil der CTS Eventim. Die Agentur veranstaltet Arena- und Hallentourneen, in Berlin etwa im Velodrom und Astra Kulturhaus.	PRK DreamHaus was formed in 2024 by merging Cologne's PRK Peter Rieger Konzertagentur (founded 1983) with Berlin's DreamHaus (founded 2020), both part of CTS Eventim. It promotes arena and hall tours, in Berlin at the Velodrom and Astra Kulturhaus among others.	10	
-psychberg affairs	psychberg-affairs	promoter	https://www.instagram.com/psychberg_affairs	psychberg affairs			1	Schokoladen collective; RA: Instagram is the only site
-punkfilmfest berlin	punkfilmfest-berlin	promoter		punkfilmfest berlin			7	
-Pura Vida Theater Und Musical	pura-vida-theater-und-musical	promoter	none	Pura Vida Theater Und Musical			1	2026-11-08 scan: the stored link is a tribute show's site that credits Pura Vida only for the concept
-Pure Obsessions & Red Nights	pure-obsessions-red-nights	party		Pure Obsessions & Red Nights			1	
-Puschen	puschen	promoter	https://puschen.net/	Puschen	Puschen ist eine Booking- und Promotion-Agentur aus Neukölln, gegründet von Andreas Oberschelp, mit einem Roster aus Indie, Folk und Alternative. Die Berliner Shows laufen unter anderem in Huxleys Neue Welt, silent green und Schokoladen.	Puschen is a booking and promotion agency in Neukölln, founded by Andreas Oberschelp, with a roster of indie, folk and alternative acts. Its Berlin shows run at Huxleys Neue Welt, silent green and Schokoladen, among others.	16	
-Qu	qu	junk		Qu			1	deleted by V026
-QU Entertainment	qu-entertainment	promoter	https://www.qu-entertainment.com/	QU Entertainment	QU Entertainment ist ein europäischer Veranstalter für K-Pop-Konzerte, Tourneen und Fan-Events, von Clubshows bis zur Halle.	QU Entertainment is a European promoter of K-pop concerts, tours and fan events, from club shows to halls.	1	minted on production 2026-09-13 from Hole 44's "QU Entertainment UG (haftungsbeschränkt) presents"; the brand writes "Q:U Entertainment", the legal name is kept so the slug stands
-Quasimodo	quasimodo	venue	https://quasimodo.de/	Quasimodo			2	
-Quiero Stand Up!	quiero-stand-up	promoter		Quiero Stand Up!			1	
-Radio Bob	radio-bob	media	https://www.radiobob.de/	RADIO BOB!			1	site writes RADIO BOB!
-Radio France International	radio-france-internationale	media	https://www.rfi.fr/	Radio France Internationale			1	
-radioeins	radioeins	media	https://www.radioeins.de/	radioeins	radioeins ist das Erwachsenenprogramm des rbb, auf 95,8 MHz in Berlin und Potsdam. Der Sender präsentiert Konzerte in der Stadt, vom Frannz Club bis zur Zitadelle.	radioeins is rbb's grown-up station, on 95.8 MHz in Berlin and Potsdam. It presents concerts across the city, from Frannz Club to the Zitadelle.	8	
-Rausgegangen	rausgegangen	media	https://rausgegangen.de/	Rausgegangen	Rausgegangen ist eine Plattform für Veranstaltungstipps, in Berlin und anderen deutschen Städten, mit Programm, Tickets und eigenen Empfehlungen. Sie präsentiert Konzerte in der Stadt, unter anderem in der Zitadelle und im Urban Spree.	Rausgegangen is an event-discovery platform, in Berlin and other German cities, with listings, tickets and its own picks. It presents concerts across the city, at the Zitadelle and Urban Spree among others.	5	event platform
-rbb 88.8	rbb-88-8	media	https://www.rbb888.de/	rbb 88.8			1	
-Reset Production	reset-production	promoter	https://www.resetproduction.de/	Reset Production			1	2026-11-08 scan: 'Spektakuläre Tribute Shows – auf Tour in ganz Deutschland'
-reverberation	reverberation	promoter		reverberation			1	Schokoladen collective
-Rockitsessions,	rockitsessions	promoter		Rockitsessions			1	stored with trailing comma
-Rolling Stone	rolling-stone	media	https://www.rollingstone.de/	Rolling Stone			3	
-Root Pgr	root-pgr	unverified		Root Pgr			1	
-Rough Trade Europe	rough-trade-europe	promoter		Rough Trade Europe			1	now Believe
-Rudelsingen - Das Original aus Münster	rudelsingen	promoter	https://rudelsingen.de/	Rudelsingen			3	
-Schubert	schubert	unverified		Schubert			1	
-Selective Artists	selective-artists	promoter	https://selectiveartists.com/	Selective Artists	Selective Artists ist eine Konzertagentur und Tourneeveranstalter. In Berlin laufen die Shows unter anderem im Heimathafen Neukölln.	Selective Artists is a concert agency and touring promoter. Its Berlin shows run at Heimathafen Neukölln, among others.	1	
-Semmel	semmel-concerts	promoter	https://semmel.de/	Semmel Concerts	Semmel Concerts ist einer der größten Konzertveranstalter Europas, mit Sitz in Bayreuth und einem Büro in Berlin, Teil des Netzwerks EVENTIM LIVE. Über 1.500 Veranstaltungen im Jahr, von Tourneen bis zu eigenen Shows.	Semmel Concerts is one of Europe's largest concert promoters, based in Bayreuth with an office in Berlin and part of the EVENTIM LIVE network. It stages more than 1,500 events a year, from tours to its own productions.	11	
-Semtainment	semtainment	unverified		Semtainment			1	
-silent green	silent-green	venue	https://www.silent-green.net/	silent green	silent green ist ein Kulturquartier im ehemaligen Krematorium Wedding, seit 2013 in privater Trägerschaft. Das eigene Programm reicht von Konzerten und Klanginstallationen bis zu Ausstellungen und Diskursformaten, quer durch die Disziplinen.	silent green is a cultural quarter in the former Wedding crematorium, privately run since 2013. Its own programme runs from concerts and sound installations to exhibitions and talks, across disciplines.	50	
-Simply Quiz	simply-quiz	promoter		Simply Quiz	Simply Quiz veranstaltet Pubquiz-Abende im Badehaus, mehrmals im Monat und auf Spendenbasis: mehr als 40 Fragen, Reservierung per Nachricht, Einlass ab 19:30.	Simply Quiz runs pub-quiz nights at Badehaus, several times a month and donation-based: more than 40 questions, reservation by message, doors at 19:30.	13	FB/IG only
-Skyline Green	skyline-green	artist	https://www.skylinegreen.de/	Skyline Green			1	band
-Slam	slam	junk		Slam			1	deleted by V026
-Sonic Boom	sonic-boom	promoter		Sonic Boom			1	Schokoladen
-Sonic Seducer	sonic-seducer	media	https://sonic-seducer.de/	Sonic Seducer			1	
-Soulgigs	soulgigs	promoter		Soulgigs			1	site not found
-Sound Of Liberation	sound-of-liberation	promoter	https://www.soundofliberation.com/	Sound Of Liberation			1	2026-11-08 scan: title 'Sound of Liberation | Home'
-Soundcraft	soundcraft	unverified	none	Soundcraft			1	2026-11-08 scan: the stored big-life.org does not resolve
-Sozialo	sozialo	party		Sozialo			2	sozialo.de for sale
-Spanisch in Berlin - Eventos	spanisch-in-berlin-eventos	promoter		Spanisch in Berlin - Eventos			1	
-Spirit	spirit-events	promoter	https://spirittickets.de/	Spirit Events	Spirit Events aus Magdeburg veranstaltet Punk-, Oi!- und Ska-Konzerte, in Berlin etwa OXO 86 in Huxleys Neue Welt.	Spirit Events from Magdeburg promotes punk, Oi! and ska shows, in Berlin for instance OXO 86 at Huxleys Neue Welt.	1	Huxleys credits "Spirit Events presents"; the strip left "Spirit" and V026 dropped it (#1361); V032 renames it
-Spokes	spokes	unverified		Spokes			1	Cosmic Comedy
-Stand in Front	stand-in-front	promoter	https://standinfront.de/	Stand in Front	Stand in Front ist eine Berliner Management- und Tourneeagentur für deutschen Rap, mit Künstlern wie Prinz Pi, Genetikk und Omar76. Die Berliner Shows laufen in der Columbiahalle und im Hole 44.	Stand in Front is a Berlin management and touring company for German rap, with acts such as Prinz Pi, Genetikk and Omar76. Its Berlin shows run at the Columbiahalle and Hole 44.	6	
-Starving Artist	starving-artist	unverified		Starving Artist			1	
-Stiftung WissensArt	stiftung-wissensart	sponsor	https://stiftung-wissensart.de/	Stiftung Wissensart			1	stored WissensArt
-Streetlife International	streetlife-international	promoter	https://street.life/	Streetlife International	Streetlife International ist ein Berliner Tourneeveranstalter und eine Künstleragentur, seit 2009 in Schöneberg. In Berlin laufen die Shows unter anderem im Hole 44, Gretchen und Metropol.	Streetlife International is a Berlin touring promoter and artist agency, based in Schöneberg since 2009. Its Berlin shows run at Hole 44, Gretchen and Metropol, among others.	4	
-Subacuatica	subacuatica	unverified		Subacuatica			1	
-Subway Event Berlin	subway-event-berlin	promoter	https://www.subwayevent-berlin.com/	Subway Event Berlin			2	
-Sunday-Matinee	sunday-matinee	junk		Sunday-Matinee			1	series label; deleted by V026
-Swamp	swamp	promoter		Swamp			2	Swamp Booking
-Synthpop Eventmanagement	synthpop-eventmanagement	promoter	https://synthpop-eventmanagement.de	Synthpop Eventmanagement			1	2026-11-08 scan: own site lists AnNa at Festsaal Kreuzberg 28.01.2027
-süper!nice!	super-nice	promoter		süper!nice!			1	
-T.g.c. The Glow Collective	t-g-c-the-glow-collective	promoter		T.g.c. The Glow Collective			1	
-Tag Der Klubkultur	tag-der-klubkultur	junk		Tag Der Klubkultur			1	event name; deleted by V026
-Team Feel Free Energy	team-feel-free-energy	junk		Team Feel Free Energy			1	deleted by V026
-Teenage Couleur	teenage-couleur	party		Teenage Couleur			1	
-the Comedy Nomad	the-comedy-nomad	promoter		the Comedy Nomad			2	
-The Hilarious Deep Amazing Comedy	the-hilarious-deep-amazing-comedy	junk		The Hilarious Deep Amazing Comedy			1	show title; deleted by V026
-The Swag	the-swag	party		The Swag			2	jam session
-Theater Liberi	theater-liberi	promoter	https://www.theater-liberi.de/	Theater Liberi			8	2026-11-08 scan: own site, Theater Liberi, Bochum
-thirsty & miserable	thirsty-miserable	promoter		thirsty & miserable			1	Schokoladen
-Tilos Rádió	tilos-radio	media	https://tilos.hu/	Tilos Rádió			1	
-tipBerlin	tipberlin	media	https://www.tip-berlin.de/	tipBerlin			5	
-Tiq	tiq	promoter	none	Tiq			3	RA lists it as TIQ Berlin; Facebook is the only site; 2026-11-08 scan: the stored link is a Facebook page
-Tirnanog	tirnanog	artist		Tirnanog			1	
-TOP90s Berlin	top90s-berlin	party		TOP90s Berlin			1	
-Topline Berlin	topline-berlin	unverified		Topline Berlin			1	
-Total Black	total-black	unverified		Total Black			1	
-TouringTunes Sp. z o. o.	touringtunes	promoter		TouringTunes			1	Polish agency
-Trinity Music	trinity-music	promoter	https://trinitymusic.de/	Trinity Music	Trinity Music veranstaltet seit 1998 Konzerte in Berlin, rund 1.000 im Jahr, vor allem Rock und Pop – vom Club bis zu den großen Hallen der Stadt. Seit 2005 bespielt die Agentur auch die Zitadelle Spandau als Open-Air-Bühne.	Trinity Music has promoted concerts in Berlin since 1998, around 1,000 a year, mostly rock and pop, from club shows to the city's largest halls. Since 2005 it has also run the Zitadelle Spandau as an open-air stage.	340	
-Trippleslashdot	trippleslashdot	unverified		Trippleslashdot			1	
-TV Noir	tv-noir	promoter	https://tvnoir.de/	TV Noir			1	
-Twisted Talent	twisted-talent	promoter		Twisted Talent			1	
-Undercover	undercover	promoter	https://undercover.de/	Undercover	Undercover ist ein Tourneeveranstalter aus Braunschweig, der Künstler:innen in Deutschland, Österreich und der Schweiz auf Tour bringt und rund 200 örtliche Shows im Jahr veranstaltet. In Berlin laufen die Konzerte unter anderem im Badehaus, Frannz Club und in der Columbiahalle.	Undercover is a touring promoter from Braunschweig that takes acts on tour across Germany, Austria and Switzerland and stages around 200 local shows a year. In Berlin its concerts run at Badehaus, Frannz Club and the Columbiahalle, among others.	8	
-Unreleased	unreleased-berlin	party	https://unreleased.berlin/	Unreleased Berlin			2	
-untoldency	untoldency	unverified		untoldency			1	
-Urban Spree	urban-spree	venue	https://www.urbanspree.com/	Urban Spree			2	
-Verlag Klaus Wagenbach	verlag-klaus-wagenbach	sponsor	https://www.wagenbach.de/	Verlag Klaus Wagenbach			1	
-Vertikal	vertikal	unverified		Vertikal			1	
-Vk Beats_	vk-beats_	unverified		Vk Beats_			1	trailing underscore
-Volkssolidarität Berlin	volkssolidaritat-berlin	sponsor	https://www.volkssolidaritaet.de/	Volkssolidarität Berlin			1	
-WallCityMusic	wallcitymusic	promoter		WallCityMusic			1	
-We Artists	we-artists	promoter	https://www.weartists.de/	We Artists			1	We Artists GmbH, Booking & Management; the venue writes it so
-Welterforscher Film und so weiter	welterforscher-film-und-so-weiter	promoter		Welterforscher Film und so weiter			1	
-Whiskeyrap	whiskeyrap	party	https://whiskeyrap.de/	Whiskeyrap			1	www.whiskeyrap.de fails TLS; whiskeyrap.de serves the Whiskeyrap shop and tour page (curl 2026-10-09, #2601)
-Wisborg	wisborg	artist		Wisborg			1	band
-You've Got The Love	you-ve-got-the-love	party		You've Got The Love			1	
-Zart	z-art-agency	promoter	https://zart-agency.com/	Z|ART Agency			2	
+stored_name	slug	kind	website	instagram	name	description_de	description_en	events	note
+11freunde	11freunde	media	https://www.11freunde.de/		11FREUNDE			2	football magazine; pub quiz
+36 Concerts	36-concerts	promoter	https://www.36-tickets.de/		36 Concerts	36 Concerts ist die Hausagentur von Lido, Astra Kulturhaus und Bi Nuu in Kreuzberg, bis 2020 unter dem Namen Direct Concerts. Sie bucht vor allem Indie, Rock und Alternative für die eigenen Clubs und daneben für Festsaal Kreuzberg und Urban Spree.	36 Concerts is the in-house agency of Lido, Astra Kulturhaus and Bi Nuu in Kreuzberg, known as Direct Concerts until 2020. It books mostly indie, rock and alternative for its own clubs, and also for Festsaal Kreuzberg and Urban Spree.	27	in-house agency of Lido, Astra, Bi Nuu
+7synths Party	7synths-party	party			7synths Party			1	Badehaus party series
+Act	act-agency	promoter	https://theactagency.com/		ACT Agency			1	Gretchen credits "ACT agency" with a link to the booking agency; the strip left "Act" and V026 dropped it (#1361); V032 renames it
+AEG Presents	aeg-presents	promoter	https://www.aegpresents.com/	https://www.instagram.com/aegpresents/	AEG Presents			1	2026-11-08 scan: Instagram linked from aegpresents.com
+Afro Haus	afro-haus	promoter	https://www.afrohaus.de/		Afro Haus			5	site writes AFRO HAUS
+Agave	agave	unverified			Agave			1	Metropol, one event
+AL.Berlin	al-berlin	promoter		https://www.instagram.com/alberlinmusic/	AL.Berlin			1	2026-11-08 scan: Instagram linked from alberlin.com
+Alebrije	alebrije	unverified			Alebrije			1	Heimathafen, one event
+All Artists	all-artists	promoter			All Artists			2	All Artists Agency; site not found
+All Rooms	all-rooms	promoter	https://allrooms-agency.com/		All Rooms	All Rooms ist eine Berliner Booking- und Konzertagentur, seit 2015 für Künstler:innen aus Pop, Indie und Punkrock. Für die eigenen Berliner Shows gibt es seit 2023 All Rooms Concerts, meist im Kulturhaus Insel und im Frannz Club.	All Rooms is a Berlin booking and concert agency, working since 2015 with acts from pop and indie to punk rock. Its own Berlin shows have run under All Rooms Concerts since 2023, mostly at Kulturhaus Insel and Frannz Club.	34	site writes ALL ROOMS
+amSTARt	amstart	unverified			amSTARt			1	Urban Spree
+Antenne Brandenburg	antenne-brandenburg	media	https://www.antennebrandenburg.de/		Antenne Brandenburg			1	rbb radio
+Antonio Garcia	antonio-garcia	promoter			Antonio Garcia			1	person; salsa
+Aok. Die Gesundheitskasse	aok	sponsor	https://www.aok.de/		AOK			2	health insurer; prevention theatre
+Ar	ar	junk			Ar			1	two letters, Huxleys; deleted by V026
+Archiv B	archiv-b	unverified			Archiv B			1	Columbia Theater
+Asiarec SpA	asiarec-spa	unverified			Asiarec SpA			1	Privatclub
+Atoc Soundlab	atoc-soundlab	promoter	https://atocsoundlab.com/		ATOC Soundlab	ATOC Soundlab ist eine 2023 gegründete Berliner Booking- und Produktionsfirma mit Studio im Funkhaus. Sie bringt lateinamerikanische Acts nach Berlin, etwa Aterciopelados und Perotá Chingó ins Lido.	ATOC Soundlab is a Berlin booking and production company founded in 2023, with a studio at the Funkhaus. It brings Latin American acts to Berlin, such as Aterciopelados and Perotá Chingó at Lido.	2	Lido credits "Atoc Live", stored as `atoc` on production; V030 folds it in
+ATOK Berlin	atok-berlin	promoter	https://www.atokberlin.com/	https://www.instagram.com/atok_be/	ATOK Berlin	ATOK Berlin macht seit 2016 DIY-Booking für Newcomer- und Underground-Bands in Berlin und Deutschland, vor allem Metal, Hardcore und Punk. Die Shows laufen unter anderem im Kulturhaus Insel, Badehaus und Urban Spree.	ATOK Berlin has done DIY booking for newcomer and underground bands in Berlin and across Germany since 2016, mostly metal, hardcore and punk. Its shows run at Kulturhaus Insel, Badehaus and Urban Spree, among others.	6	site title: ATOK Booking & Events; 2026-11-08 scan: Instagram linked from atokberlin.com
+Atr Party Berlin	atr-party-berlin	party			Atr Party Berlin			1	Lido
+Audiolith	audiolith	promoter	https://audiolith.net/	https://www.instagram.com/audiolithrecords/	Audiolith			3	label and booking; 2026-11-08 scan: Instagram linked from audiolith.net
+Auf Die Gute Tour	auf-die-gute-tour	promoter	http://www.aufdiegutetour.de/		Auf die gute Tour			1	site lowercase; HTTPS serves a self-signed certificate, so http only (curl 2026-10-09, #2601)
+Aufnahme + wiedergabe	aufnahme-wiedergabe	promoter	http://www.aufnahmeundwiedergabe.de/		aufnahme + wiedergabe	aufnahme + wiedergabe ist ein Berliner Label für Dark Wave, Post-Punk und Minimal Electro, gegründet 2011. Die Label-Konzerte laufen im Urban Spree.	aufnahme + wiedergabe is a Berlin label for dark wave, post-punk and minimal electro, founded in 2011. Its label shows run at Urban Spree.	7	label, one name; HTTPS certificate does not name the domain, so http only (curl 2026-10-09, #2601)
+awkword Sarl	awkword-sarl	promoter	none	https://www.instagram.com/awkwordcomedy/	awkword Sarl			1	2026-11-08 scan: the stored website is the Instagram profile
+B-Come	b-come	unverified			B-Come			3	Frannz, Lido
+Bad Ideas	bad-ideas	unverified			Bad Ideas			1	Astra
+Badehaus	badehaus	venue	https://badehaus-berlin.com/		Badehaus			3	
+beav boloney	beav-boloney	promoter			beav boloney			2	Schokoladen collective
+Bedroomdisco	bedroomdisco	media			Bedroomdisco			4	bedroomdisco.de served casino spam above the magazine on 2026-09-11; site dropped until it is clean
+Behind The Green Door	behind-the-green-door	promoter	https://www.behindthegreendoor.de/	https://www.instagram.com/behindthegreendoor.events/	Behind The Green Door			1	2026-11-08 scan: title 'Behind the Green Door | Konzerte in München'; 2026-11-08 scan: Instagram linked from behindthegreendoor.de
+Bergson	bergson	unverified			Bergson			1	Heimathafen
+Berlin En Salsa	berlin-en-salsa	party			Berlin En Salsa			1	
+Berlin Folk Festival	berlin-folk-festival	promoter			Berlin Folk Festival			1	festival
+Berlin Pop Nights	berlin-pop-nights	party			Berlin Pop Nights			4	same organiser as Dancing With Myself (Eventbrite)
+Bingo Loco	bingo-loco	promoter		https://www.instagram.com/bingo.loco/	Bingo Loco			1	2026-11-08 scan: Instagram linked from bingoloco.com
+Boese	boese-live	promoter	https://boese.live/		Boese Live			2	
+Bohème Sauvage	boheme-sauvage	promoter	https://www.boheme-sauvage.com/	https://www.instagram.com/bohemesauvageofficial/	Bohème Sauvage			1	2026-11-08 scan: official 1920s party series site; 2026-11-08 scan: Instagram linked from boheme-sauvage.com
+Boldt Berlin	boldt-berlin	promoter	none		Boldt Berlin			1	no site: boldtberlin.de and ibb-booking.com redirect to kante.live, Kante Booking (curl 2026-10-09, #2601)
+Book of Raw	book-of-raw	unverified	none		Book of Raw			1	Astra; 2026-11-08 scan: the stored link is a Facebook page
+Bossa FM	bossa-fm	promoter	https://www.bossafm.com/	https://www.instagram.com/bossafmeuropa/	Bossa FM	Bossa FM ist eine Berliner Agentur für brasilianische Musik und Kultur in Europa, seit 2016 mit über 150 Veranstaltungen von Konzerten bis zu Festivals wie Psicotrópicos und LAPA. In Berlin laufen die Abende unter anderem im Badehaus, Gretchen und Lido.	Bossa FM is a Berlin agency for Brazilian music and culture in Europe, with more than 150 events since 2016, from concerts to festivals such as Psicotrópicos and LAPA. In Berlin its nights run at Badehaus, Gretchen and Lido, among others.	6	2026-11-08 scan: Instagram linked from bossafm.com
+bricks	bricks	promoter	none		BRICKS			2	no site: bricks-berlin.de is a housing project at the Schlachtensee, not this promoter (curl 2026-10-09, #2601)
+Brighter	brighter	promoter	https://brighter-agency.eu/	https://www.instagram.com/brighter.agency/	Brighter			1	Brighter Agency, Schokoladen co-billing; 2026-11-08 scan: brighter agency, Berlin booking agency + promoter; Urban Spree listing names it; 2026-11-08 scan: Instagram linked from brighter-agency.eu
+Buback	buback	promoter	https://www.buback.de/	https://www.instagram.com/buback_official/	Buback			1	2026-11-08 scan: Buback Tontraeger GmbH site with Konzerte section (label, booking, concerts, Hamburg); 2026-11-08 scan: Instagram linked from buback.de
+Bum	bum	junk			Bum			1	Badehaus; deleted by V026
+ByteFM	bytefm	media	https://www.byte.fm/		ByteFM	"ByteFM ist ein Internetradio aus Hamburg „für gute Musik"", werbefrei und getragen von seinen Hörer:innen. Der Sender präsentiert Konzerte, in Berlin vor allem im Columbia Theater."	"ByteFM is an internet radio station from Hamburg ""for good music"", ad-free and funded by its listeners. It presents concerts, in Berlin mostly at Columbia Theater."	6	
+Bühnenkunst Ulhaas	buhnenkunst-ulhaas	promoter		https://www.instagram.com/buehnenkunstgmbh/	Bühnenkunst Ulhaas			1	2026-11-08 scan: Instagram linked from buehnenkunst.com
+Casius	casius	unverified			Casius			1	Privatclub
+Channel	channel-music	promoter	https://channelmusic.de/		Channel Music	Channel Music betreibt die Gastronomie in Huxleys Neue Welt, Metropol, Quasimodo und Hole 44 und veranstaltet dort gelegentlich selbst.	Channel Music runs the catering at Huxleys Neue Welt, Metropol, Quasimodo and Hole 44, and occasionally promotes shows there itself.	1	Hole 44 credits "Channel Music presents"; the strip left "Channel" and V026 dropped it (#1361); V032 renames it
+Chicha	chicha	party			Chicha			2	
+Chimperator	chimperator	promoter	https://chimperator.de/		Chimperator	Chimperator ist ein Label, eine Talentschmiede und ein Live-Veranstalter aus Stuttgart, Heimat von Die Orsons, Maeckes, Tua, Teesy und OG Keemo. In Berlin laufen die Shows unter anderem im Bi Nuu.	Chimperator is a label, talent house and live promoter from Stuttgart, home to Die Orsons, Maeckes, Tua, Teesy and OG Keemo. Its Berlin shows run at Bi Nuu, among others.	1	
+Chnsw!	chnsw	party			CHNSW!			4	source writes CHNSW!
+Cocomico Theater	cocomico-theater	promoter	https://www.cocomico-theater.de/		Cocomico Theater			1	2026-11-08 scan: own site; family business producing the Conni musical tour
+Comed.east	comed-east	promoter	none	https://www.instagram.com/comed.east/	Comed.east			1	2026-11-08 scan: the stored website is the Instagram profile
+Coming Home	coming-home	unverified			Coming Home			1	
+Como Esta Wally Producciones Y Management Sl	como-esta-wally-producciones-y-management-sl	promoter			Como Esta Wally Producciones Y Management Sl			3	Spanish company, Cosmic Comedy
+Concert Concept	concert-concept	promoter	https://www.concert-concept.de/	https://www.instagram.com/concert_concept/	Concert Concept	Concert Concept ist die Berliner Tochter der DEAG und örtlicher Veranstalter in Berlin, Potsdam, Leipzig und Dresden. Das Programm reicht von Rock und Pop über Familien-Entertainment bis zu Klassik und Jazz, vom Privatclub bis zur Max-Schmeling-Halle.	Concert Concept is DEAG's Berlin subsidiary and the local promoter in Berlin, Potsdam, Leipzig and Dresden. Its programme runs from rock and pop to family entertainment, classical and jazz, from Privatclub to the Max-Schmeling-Halle.	15	DEAG; 2026-11-08 scan: Instagram linked from concert-concept.de
+Concertbüro Zahlmann	concertburo-zahlmann	promoter	https://www.cbz.events/	https://www.instagram.com/concertbuerozahlmann/	Concertbüro Zahlmann			2	2026-11-08 scan: Instagram linked from cbz.events
+Contigo	contigo	unverified			Contigo			1	Cosmic Comedy
+Contra	contra	unverified			Contra			2	Columbia Theater
+Cornershop	cornershop	unverified			Cornershop			2	Cosmic Comedy
+Cosmic Comedy Berlin	cosmic-comedy-berlin	venue	https://comedyclubberlin.com/	https://www.instagram.com/cosmiccomedyberlin/	Cosmic Comedy Berlin	Cosmic Comedy Berlin ist ein Comedy-Club für Stand-up auf Englisch. An mehreren Abenden pro Woche laufen Open Mics und Showcases, mit Pizza und Shots für das Publikum.	Cosmic Comedy Berlin is a comedy club for stand-up in English. Open mics and showcases run several nights a week, with pizza and shots for the crowd.	25	club own shows; cosmiccomedyclub.com is parked; comedyclubberlin.com titles itself Cosmic Comedy Berlin (curl 2026-10-09, #2601); 2026-11-08 scan: Instagram linked from comedyclubberlin.com
+Cosmic Romance	cosmic-romance	promoter	none		Cosmic Romance			1	RA: https://ra.co/promoters/110970; no site: cosmic-romance.com redirects to www.cosmic-romance.com, which does not resolve (curl 2026-10-09, #2601)
+Crunch Tapes	crunch-tapes	promoter	https://www.crunchtapes.com/	https://www.instagram.com/crunchtapesberlin/	Crunch Tapes			1	site writes CRUNCH TAPES; 2026-11-08 scan: Instagram linked in the site's top navigation; footer also links instagram.com/crunchtapes (main account)
+CTM Festival	ctm-festival	promoter	https://www.ctm-festival.de/	https://www.instagram.com/ctmfestival/	CTM Festival			1	2026-11-08 scan: title 'CTM Festival for Adventurous Music & Art, Berlin'; 2026-11-08 scan: Instagram linked from ctm-festival.de
+Cyberfunk + Urban Spree	cyberfunk-urban-spree	party			Cyberfunk + Urban Spree			1	co-billing not split (+)
+d2m berlin	d2m-berlin	promoter		https://www.instagram.com/d2mberlin/	d2m berlin			52	2026-11-08 scan: Instagram linked from d2mberlin.de
+d2mberlin	d2mberlin	promoter	https://d2mberlin.de/		d2mberlin			1	
+Dancing With Myself	dancing-with-myself	party	none	https://www.instagram.com/dancing80s_party/	Dancing With Myself			1	see Berlin Pop Nights; 2026-11-08 scan: Instagram stored link; event listings name instagram.com/dancing80s_party as organiser
+Das forgotten female* composers	das-forgotten-female-composers	junk			Das forgotten female* composers			1	title fragment; deleted by V026, minted again from Insel's "e.V." credit, deleted by V079 (#2331)
+Decibel Touring	decibel-touring	promoter			Decibel Touring			1	site not found
+Deep Medi	deep-medi	promoter			Deep Medi			1	label
+Deputamadre Berlin	deputamadre-berlin	unverified			Deputamadre Berlin			1	
+Destiny Tourbooking	destiny-tourbooking	promoter	https://www.destiny-tourbooking.com/	https://www.instagram.com/destinytourbooking/	Destiny Tourbooking			1	2026-11-08 scan: Instagram linked from destiny-tourbooking.com
+Deutsches Polen-Institut	deutsches-polen-institut	sponsor	https://www.deutsches-polen-institut.de/		Deutsches Polen-Institut			1	
+die lesebühne	die-lesebuhne	promoter	https://www.dielesebuehne.de/		die lesebühne			3	
+Diffus	diffus	media	https://diffus.de/	https://www.instagram.com/diffusmagazin/	DIFFUS	DIFFUS ist ein Musik- und Kulturmagazin für Deutschland, Österreich und die Schweiz, seit 2014 in Berlin-Kreuzberg, mit Videos, Podcasts und zwei Printausgaben im Jahr. Es präsentiert Konzerte in Berlin, unter anderem in der Zitadelle, im Frannz Club und im Columbia Theater.	DIFFUS is a music and culture magazine for Germany, Austria and Switzerland, based in Berlin-Kreuzberg since 2014, with videos, podcasts and two print issues a year. It presents concerts in Berlin, at the Zitadelle, Frannz Club and Columbia Theater among others.	4	site writes DIFFUS; 2026-11-08 scan: Instagram linked from diffus.de
+Dirk Becker	dirk-becker	promoter	https://dirkbecker-entertainment.de/		Dirk Becker			2	2026-11-08 scan: stored dbe.ag 301-redirects here; (c) Dirk Becker Entertainment
+Dirty Dancing Party	dirty-dancing-party	party			Dirty Dancing Party			2	
+DJ Rebel	dj-rebel	party			DJ Rebel			5	
+Dlf	deutschlandfunk	media	https://www.deutschlandfunk.de/		Deutschlandfunk			1	stored as Dlf
+Doomstar	doomstar-bookings	promoter	https://doomstarbookings.com/	https://www.instagram.com/doomstarbookings/	Doomstar Bookings			1	2026-11-08 scan: Instagram linked from doomstarbookings.com
+Dynablaster	dynablaster	party			Dynablaster			1	
+dynamis	dynamis	sponsor	https://www.dynamis-berlin.de/		dynamis			0	non-profit (Reisen für Menschen mit Beeinträchtigung), credited at Lido
+dynamite	dynamite	promoter		https://www.instagram.com/dynamite_konzerte/	dynamite			4	2026-11-08 scan: Instagram linked from dynamitekonzerte.com
+Echo	echo	unverified			Echo			7	Bi Nuu, 7 events; JSON has a URL, not read yet
+Echo Vision Artist Management	echo-vision-artist-management	promoter			Echo Vision Artist Management			1	
+Echoes of Pandora	echoes-of-pandora	unverified			Echoes of Pandora			1	
+Effetto Notte	effetto-notte	unverified			Effetto Notte			1	
+Einen Hab Ich Noch	einen-hab-ich-noch	unverified			Einen Hab Ich Noch			1	Columbia Theater
+Emergenza	emergenza	promoter	https://emergenza.live/		Emergenza			1	festival; 2026-11-08 scan: stored emergenza.net is the old site (news archive); emergenza.live is current
+Entre Trópicos	entre-tropicos	promoter	https://www.entretropicos.com/	https://www.instagram.com/entretropicosberlin/	Entre Trópicos			1	2026-11-08 scan: own site, title "Entre Trópicos"; Berlin Latin American collective since 2022; 2026-11-08 scan: Instagram linked from entretropicos.com
+Eskapaden	eskapaden	unverified		https://www.instagram.com/eskapaden.booking/	Eskapaden			2	Bi Nuu; 2026-11-08 scan: Instagram linked from eskapaden.net
+Estetica Torta	estetica-torta	unverified			Estetica Torta			1	
+Europe Deadheads	europe-deadheads	promoter	https://europedeadheads.com/	https://www.instagram.com/europe_deadheads/	Europe Deadheads			3	fan community; 2026-11-08 scan: Instagram linked from europedeadheads.com
+F-Cat	f-cat	unverified			F-Cat			1	
+Fandom Night	fandom-night	party			Fandom Night			3	Badehaus; no site
+Fania Brava	fania-brava	party	none	https://www.instagram.com/faniabravaparty/	Fania Brava			1	RA: Instagram is the only site; 2026-11-08 scan: Instagram stored link; a search summary also names @faniabravaparty
+Feinster HipHop	feinster-hiphop	party			Feinster HipHop			1	
+Festsaal Kreuzberg	festsaal-kreuzberg	venue	https://festsaal-kreuzberg.de/		Festsaal Kreuzberg	Der Festsaal Kreuzberg ist ein Konzert- und Veranstaltungshaus mit Festsaal, Kaminzimmer, Ostflügel und Biergarten. Als Veranstalter bucht das Haus auch Shows im Bi Nuu.	Festsaal Kreuzberg is a concert and event house with a main hall, a fireside room, an east wing and a beer garden. As a promoter it also books shows at Bi Nuu.	8	Festsaal Kreuzberg Booking
+Fever & Nova Sky Stories	fever-nova-sky-stories	promoter			Fever & Nova Sky Stories			1	drone show co-billing
+FKP Scorpio	fkp-scorpio	promoter	https://fkpscorpio.com/		FKP Scorpio	FKP Scorpio ist einer der größten Konzertveranstalter Europas, mit Sitz in Hamburg – vom Clubkonzert über Arena-Tourneen bis zu Festivals wie Hurricane und Southside. In Berlin veranstaltet FKP unter anderem im Quasimodo, Hole 44 und Velodrom.	FKP Scorpio is one of Europe's largest concert promoters, based in Hamburg, from club shows and arena tours to festivals such as Hurricane and Southside. In Berlin it promotes at Quasimodo, Hole 44 and the Velodrom, among others.	6	
+Florida Touring	florida-touring	promoter		https://www.instagram.com/floridatouringcompany/	Florida Touring			2	2026-11-08 scan: Instagram linked from florida-touring.de
+FluxFM	fluxfm	media	https://www.fluxfm.de/		FluxFM	"FluxFM ist ein Berliner Radiosender – „Radio so bunt wie Berlin"" – mit handverlesener Musik jenseits des Mainstreams und Popkultur, im Radio, im Livestream und in der eigenen App. Der Sender präsentiert Konzerte in der Stadt, unter anderem in der Zitadelle und im Frannz Club."	"FluxFM is a Berlin radio station – ""radio as colourful as Berlin"" – with hand-picked music beyond the mainstream and pop culture, on air, on its livestream and in its own app. It presents concerts across the city, at the Zitadelle and Frannz Club among others."	5	logo: press page offers a logo download (fluxfm.de/presse), no usage terms stated
+Frack & Spitzenhöschen	frack-spitzenhoschen	artist			Frack & Spitzenhöschen			1	show name
+Frank Martini	frank-martini	party			Frank Martini			1	
+Fratelli Bvba	fratelli-bvba	promoter	none		Fratelli Bvba			1	2026-11-08 scan: the stored scalachoir.com is the artist's site, not Fratelli BVBA's
+Friendly Reminder	friendly-reminder	promoter	https://www.friendlyreminder.live/	https://www.instagram.com/friendlyreminderlive/	Friendly Reminder	Friendly Reminder ist eine internationale Booking-Agentur für ausgewählte Acts, veranstaltet Tourneen in Deutschland und ist in Berlin lokaler Veranstalter für nationale und internationale Partner.	Friendly Reminder is an international booking agency for selected acts, promotes tours in Germany and is a local promoter in Berlin for national and international partners.	4	2026-11-08 scan: Instagram linked from friendlyreminder.live
+Fritz	fritz	media	https://www.fritz.de/		Fritz			1	rbb radio
+Frontstage Magazine	frontstage-magazine	media	https://frontstage-magazine.de/		Frontstage Magazine			2	
+Full Contact Safari	full-contact-safari	unverified			Full Contact Safari			1	
+Fumie	fumie	unverified	none		Fumie			1	no site: fumie.de is a parked page that redirects to /lander (curl 2026-10-09, #2601)
+Furiosa	furiosa	party			Furiosa			2	Lido
+Geisburg	geisburg	promoter			Geisburg			1	Geisburg Records, Schokoladen
+geisburg recs	geisburg-recs	promoter	https://geisburgrecords.com/	https://www.instagram.com/geisburgrecords/	geisburg recs			1	2026-11-08 scan: linked from the label's Bandcamp; Berlin label and studio; 2026-11-08 scan: Instagram linked from geisburgrecords.com/about.html
+Girls Town Party	girls-town-party	party			Girls Town Party			1	
+Go Mad Concerti	go-mad-concerti	promoter	https://gomadconcerti.com/	https://www.instagram.com/gomad_concerti/	Go Mad Concerti			1	2026-11-08 scan: own site; lists Marco Castello European Tour 2026; 2026-11-08 scan: Instagram linked from gomadconcerti.com
+Gondwana Records	gondwana-records	promoter	https://gondwanarecords.com/	https://www.instagram.com/gondwanarecords/	Gondwana Records			1	2026-11-08 scan: title 'Gondwana Records'; 2026-11-08 scan: Instagram linked from gondwanarecords.com
+GoToBeat	gotobeat	promoter	https://gotobeat.com/	https://www.instagram.com/gotobeatmusic/	Gotobeat			3	stored GoToBeat; site Gotobeat; 2026-11-08 scan: Instagram linked from gotobeat.com
+Greyzone Concerts	greyzone-concerts	promoter	https://www.greyzone-concerts.de/	https://www.instagram.com/greyzoneconcerts/	Greyzone Concerts	Greyzone Concerts ist ein Berliner Konzertveranstalter für Indie, Alternative, Post-Punk und Psychedelic. Die Shows laufen in Clubs wie Cassiopeia, Neue Zukunft, Urban Spree und Lido.	Greyzone Concerts is a Berlin promoter for indie, alternative, post-punk and psychedelic acts. Its shows run in clubs such as Cassiopeia, Neue Zukunft, Urban Spree and Lido.	34	2026-11-08 scan: Instagram linked from greyzone-concerts.de
+Handshake	handshake	promoter	https://www.handshake-booking.com/de/	https://www.instagram.com/handshake_booking/	Handshake			1	2026-11-08 scan: 'handshake booking - Künstleragentur Berlin'; roster lists daoud; 2026-11-08 scan: Instagram linked from handshake-booking.com
+Hasenscheisse	hasenscheisse	artist			Hasenscheisse			1	show name
+HB Music	hb-music	promoter	https://hb-music.de/		HB Music			1	
+Headline	headline-concerts	promoter	https://headlinemusic.de/	https://www.instagram.com/headlineconcertslive/	Headline Concerts	Headline (headline music) ist ein Veranstalter aus Bonn für Mittelalter-Rock, Folk, Dark und Electro, mit Künstlern wie In Extremo, Schandmaul, dArtagnan, Unheilig und Heldmaschine. In Berlin laufen die Shows unter anderem im Hole 44 und in Huxleys Neue Welt.	Headline (headline music) is a Bonn-based promoter for medieval rock, folk, dark and electro acts such as In Extremo, Schandmaul, dArtagnan, Unheilig and Heldmaschine. In Berlin its shows run at Hole 44 and Huxleys Neue Welt, among others.	7	redirects to headlinemusic.de; 2026-11-08 scan: stored headlineconcerts.de redirects to headlinemusic.de; 2026-11-08 scan: Instagram linked from headlinemusic.de
+Heesen	heesen-konzerte	promoter	https://www.heesen-konzerte.de/	https://www.instagram.com/heesen.live/	Heesen Konzerte			1	site title: HEESEN KONZERTE; Admiralspalast also credits the sister company Heesen Media GmbH (#2653); 2026-11-08 scan: Instagram linked from heesen-konzerte.de
+Helping Hands Allstars	helping-hands-allstars	artist			Helping Hands Allstars			1	
+Highlight-Concerts	highlight-concerts	promoter	https://www.highlight-concerts.de/de/	https://www.instagram.com/highlightconcerts/	Highlight-Concerts			1	2026-11-08 scan: stored .com redirects here, title "Highlight Concerts"; 2026-11-08 scan: Instagram linked from highlight-concerts.de
+Hockeypark Betriebs	hockeypark-betriebs	promoter			Hockeypark Betriebs			1	Hockeypark Betriebs GmbH, Mönchengladbach
+Hoi Productions Germany	hoi-productions-germany	promoter		https://www.instagram.com/holidayoniceshows/	Hoi Productions Germany			1	2026-11-08 scan: Instagram linked from holidayonice.com/de/
+Hollywood Tramp	hollywood-tramp	party	https://www.hollywoodtramp.de/		Hollywood Tramp			1	
+Ibb	ibb-booking	promoter	none		IBB Booking			2	no site: ibb-booking.com redirects to kante.live, Kante Booking (curl 2026-10-09, #2601)
+Iconic Pop Nights	iconic-pop-nights	promoter	none	https://www.instagram.com/iconicpopnights/	Iconic Pop Nights			1	2026-11-08 scan: the stored website is the Instagram profile
+Ilija Gabrilenko	ilija-gabrilenko	promoter			Ilija Gabrilenko			1	person, Urban Spree
+Impericon	impericon	promoter	https://www.impericon.com/		Impericon			1	
+Itd	itd-events	promoter			ITD Events			1	Hole 44 credits "ITD Events presents" (drag); no site found; the strip left "Itd" and V026 dropped it (#1361); V032 renames it
+Jaw Family	jaw-family	promoter	https://www.jawfamily.com/	https://www.instagram.com/jawfamily/	Jaw Family			1	2026-11-08 scan: stored (events subpage); own site of the collective; 2026-11-08 scan: Instagram linked from jawfamily.com
+Jazzexzess	jazzexzess	promoter	https://jazzexzess.de/	https://www.instagram.com/jazzexzess_berlin/	Jazzexzess			1	2026-11-08 scan: own site: Berlin concert series, lists this Kantine am Berghain show; 2026-11-08 scan: Instagram linked from jazzexzess.de
+Jb Freie	jb-freie-musik	promoter	none		JB Freie Musik			1	Joel Brandenstein's company (Ratingen); Huxleys credit read as Jb Freie until #307; no site: jb-store.de does not resolve (curl 2026-10-09, #2601)
+Jm Audio	jm-audio-entertainment	promoter			JM Audio Entertainment			1	Huxleys credit read as Jm Audio until #307
+Join	join-live-events	promoter	https://joinliveevents.com/	https://www.instagram.com/joinliveevents/	Join Live Events			2	Max-Schmeling-Halle credits "Join Live Events"; the strip left "Join" (#3577); V176 renames it; 2026-11-08 scan: Join Live Events GmbH, Hof; lists Blok3 at Max-Schmeling-Halle; 2026-11-08 scan: Instagram linked from joinliveevents.com
+Jungle World	jungle-world	media	https://jungle.world/		Jungle World			1	weekly
+Karsten Jahnke Konzertdirektion	karsten-jahnke-konzertdirektion	promoter	https://kj.de/	https://www.instagram.com/karstenjahnke/	Karsten Jahnke Konzertdirektion			1	"logo: press page offers ""KJ Logo-Set"" (kj.de/presse.html), no usage terms stated"; 2026-11-08 scan: Instagram linked from kj.de
+Katharsis	katharsis	unverified			Katharsis			1	
+Kiezpoeten	kiezpoeten	promoter	https://kiezpoeten.com/	https://www.instagram.com/kiezpoeten/	Kiezpoeten			3	2026-11-08 scan: Instagram linked from kiezpoeten.com
+Kinderphilharmonie	kinderphilharmonie	promoter	https://kinderphilharmonie.de/	https://www.instagram.com/kinderphilharmonie/	Kinderphilharmonie			6	2026-11-08 scan: own site 'kinderphilharmonie - Klassik für Kleine', matches event titles; 2026-11-08 scan: Instagram linked from kinderphilharmonie.de
+King David Soundsystem	king-david-soundsystem	artist			King David Soundsystem			1	
+King Kong Kicks	king-kong-kicks	party	https://kingkongkicks.com/	https://www.instagram.com/kingkongkicks/	King Kong Kicks	"King Kong Kicks ist eine Indie-Pop-Party – „Tanzen, Trinken, Knutschen"" – die seit Jahren in Berlin und einem Dutzend weiterer Städte läuft, mit Giant Rooks, Two Door Cinema Club und Kraftklub auf den Playlists. Die Schwesterpartys heißen Wilde Herzen und Team 80s."	"King Kong Kicks is an indie-pop party – ""dance, drink, kiss"" – that has run for years in Berlin and a dozen other cities, with Giant Rooks, Two Door Cinema Club and Kraftklub on the playlists. Its sister parties are Wilde Herzen and Team 80s."	14	site writes KING KONG KICKS; 2026-11-08 scan: Instagram linked from kingkongkicks.com
+Kingstar	kingstar-music	promoter	https://www.kingstar-music.com/	https://www.instagram.com/kingstar_music/	Kingstar Music			2	Kingstar GmbH, Hamburg; 2026-11-08 scan: Instagram linked from kingstar-music.com
+Kinky Hub	kinkyhub-berlin	party	https://www.kinkyhub.de/		KinkyHub Berlin			1	
+kj der käpt'n	kj-der-kapt-n	artist			kj der käpt'n			1	karaoke host
+KKT	kkt	promoter	https://kkt.berlin/	https://www.instagram.com/kkt_berlin/	KKT	KKT – Kikis Kleiner Tourneeservice – ist eine Berliner Tourneeagentur aus Kreuzberg. Auf der Liste stehen Die Ärzte, Die Toten Hosen, Tocotronic, Feine Sahne Fischfilet, Danger Dan und die Einstürzenden Neubauten.	KKT – Kikis Kleiner Tourneeservice – is a Berlin touring agency based in Kreuzberg. Its roster includes Die Ärzte, Die Toten Hosen, Tocotronic, Feine Sahne Fischfilet, Danger Dan and Einstürzende Neubauten.	4	2026-11-08 scan: Instagram linked from kkt.berlin
+klassix	klassix	unverified			klassix			1	
+Kneipenabend	kneipenabend	junk			Kneipenabend			3	Schokoladen bar night; deleted by V026
+Kommune	kommune	unverified			Kommune			1	
+Kontramarka	kontramarka	promoter	https://www.kontramarka.de/		Kontramarka			1	Russian-language ticket agency
+Konzertbüro Augsburg	konzertburo-augsburg	promoter	https://www.konzertbuero-augsburg.de/	https://www.instagram.com/konzertbuero_augsburg/	Konzertbüro Augsburg			15	2026-11-08 scan: own domain, title 'Konzertbüro Augsburg'; 2026-11-08 scan: Instagram linked from konzertbuero-augsburg.de
+Konzertbüro Schoneberg	konzertburo-schoneberg	promoter	https://www.schoneberg.de/		Konzertbüro Schoneberg	Das Konzertbüro Schoneberg veranstaltet Rock und Pop, Klassik, Kabarett und Comedy, mit Büros in Berlin, Hamburg, Köln, Frankfurt, München und Münster. In Berlin laufen die Shows unter anderem im Lido, Privatclub und Huxleys Neue Welt.	Konzertbüro Schoneberg promotes rock and pop, classical, cabaret and comedy, with offices in Berlin, Hamburg, Cologne, Frankfurt, Munich and Münster. In Berlin its shows run at Lido, Privatclub and Huxleys Neue Welt, among others.	18	
+Kulturalarm	kulturalarm	venue	https://www.inselberlin.de/		kulturALARM	kulturALARM e.V. wurde 2008 gegründet, um Kunst, Nachwuchs und Musikkultur zu fördern, und betreibt seit 2010 das Kulturhaus Insel Berlin auf der Insel der Jugend in Treptow. Dort veranstaltet der Verein Konzerte und Festivals, darunter das Monkey Island Festival.	kulturALARM e.V. was founded in 2008 to support art, new talent and music culture, and has run Kulturhaus Insel Berlin on the Insel der Jugend in Treptow since 2010. It promotes concerts and festivals there, among them the Monkey Island Festival.	6	e.V. behind Kulturhaus Insel; kulturalarm.com fails TLS and over http redirects to inselberlin.de, the Kulturhaus Insel the association runs (curl 2026-10-09, #2601)
+Kulturnews	kulturnews	media	https://kulturnews.de/		kulturnews	kulturnews ist ein Kulturmagazin aus Hamburg mit täglichen Tipps zu Kino, Serien, Musik, Literatur, Kunst und Bühne. Es präsentiert Konzerte in Berlin, unter anderem in der Zitadelle, im Columbia Theater und im Frannz Club.	kulturnews is a culture magazine from Hamburg with daily tips on film, series, music, books, art and stage. It presents concerts in Berlin, at the Zitadelle, Columbia Theater and Frannz Club among others.	7	site lowercase
+Kunst&Krawall	kunst-krawall	promoter			Kunst&Krawall			1	Insel slam series
+Kuratorin Anika Meier	kuratorin-anika-meier	junk			Kuratorin Anika Meier			1	role + person; deleted by V026
+Känguruh Production	kanguruh-production	promoter	https://www.kaenguruh.de/	https://www.instagram.com/kaenguruh_production/	Känguruh Production			2	Halle; 2026-11-08 scan: Instagram linked from kaenguruh.de
+L'Oreille en friche	l-oreille-en-friche	promoter			L'Oreille en friche			1	
+La Fée Sauvage	la-fee-sauvage	promoter		https://www.instagram.com/thewildfaery/	La Fée Sauvage			2	2026-11-08 scan: Instagram linked from wildfaery.com
+Landstreicher	landstreicher-konzerte	promoter	https://landstreicher-konzerte.de/	https://www.instagram.com/landstreicherkonzerte/	Landstreicher Konzerte	Landstreicher Konzerte veranstaltet seit 2014 in Berlin und im Osten Deutschlands: Rap und R'n'B, Indie, Alternative, Rock, Pop, Electronic, dazu Podcasts, Lesungen und Stand-up. Das Sublabel Vertikal Concerts (seit 2019) bucht Punk, Hardcore und Metal.	Landstreicher Konzerte has promoted shows in Berlin and eastern Germany since 2014: rap and R&B, indie, alternative, rock, pop and electronic, plus podcasts, readings and stand-up. Its sub-label Vertikal Concerts (since 2019) books punk, hardcore and metal.	99	2026-11-08 scan: Instagram linked from landstreicher-konzerte.de
+Lars Berndt	lars-berndt-events	promoter	https://www.lb-events.de/		Lars Berndt Events			3	Bochum
+LassMaMachen	lassmamachen	unverified			LassMaMachen			1	
+Lauscherlounge Veranstaltungen	lauscherlounge-veranstaltungen	promoter	https://www.lauscherlounge.de/	https://www.instagram.com/lauscherlounge/	Lauscherlounge Veranstaltungen			2	2026-11-08 scan: own domain, title 'Lauscherlounge' (producer of Die drei ??? live audio plays); 2026-11-08 scan: Instagram linked from lauscherlounge.de
+le petit signal	le-petit-signal	promoter			le petit signal			1	Schokoladen collective
+Leasing&rent	leasing-rent-ou	unverified			LEASING&RENT OÜ			1	Privatclub names the Estonian company as local promoter of a Rita Dakota date; a legal name with no site; V032 renames it (#1361)
+Levanto	levanto	promoter	none	https://www.instagram.com/levanto_entertainment/	Levanto			1	Cosmic Comedy; 2026-11-08 scan: the stored website is the Instagram profile
+Lido Berlin	lido-berlin	venue	https://www.lido-berlin.de/		Lido Berlin			1	
+Light The Blind	light-the-blind	artist	https://www.lighttheblind.de/		Light The Blind			1	band
+Limelight	limelight	promoter		https://www.instagram.com/limelight.live/	Limelight			36	2026-11-08 scan: Instagram linked from limelight-live.de
+Listen	listen	promoter	https://www.listencollective.com/		Listen			1	Listen Collective; venues credit it as Listen Agency (#3643)
+little league shows	little-league-shows	promoter	https://littleleagueshows.tumblr.com/		little league shows	Little League Shows veranstaltet seit Mitte der 2000er als DIY-Kollektiv Konzerte in Berlin: Indie, Punk, Post-Punk und Wave, meist im Schokoladen.	Little League Shows has put on shows in Berlin as a DIY collective since the mid-2000s: indie, punk, post-punk and wave, mostly at Schokoladen.	4	minted on production 2026-09-13 from Schokoladen's "little league shows prsnt:" credit; the site and the credit write the name in lower case, and so does the row
+Live Embassy	live-embassy	unverified			Live Embassy			1	
+Live Nation	live-nation	promoter	https://www.livenation.de/		Live Nation	Live Nation Germany ist die deutsche Tochter von Live Nation Entertainment, dem größten Live-Entertainment-Unternehmen der Welt, und veranstaltet Tourneen und Shows von der Clubgröße bis zur Arena. In Berlin laufen die Konzerte unter anderem im Velodrom, UFO im Velodrom und Frannz Club.	Live Nation Germany is the German arm of Live Nation Entertainment, the world's largest live-entertainment company, and promotes tours and shows from club size to arena. In Berlin its concerts run at the Velodrom, UFO im Velodrom and Frannz Club, among others.	4	
+Local Advisor	local-advisor	unverified			Local Advisor			1	
+Loft Concerts	loft-concerts	promoter	https://loft.de/	https://www.instagram.com/loftconcerts/	Loft Concerts	Loft Concerts geht auf den Club „Loft“ zurück, den Monika Döring 1982 über dem Metropol am Nollendorfplatz gründete. Heute ist Loft eine Berliner Konzertagentur für Indie, Pop und Singer-Songwriter, mit Shows von der Kantine am Berghain bis zur Columbiahalle.	"Loft Concerts goes back to the ""Loft"", the club Monika Döring opened above the Metropol on Nollendorfplatz in 1982. Today Loft is a Berlin concert agency for indie, pop and singer-songwriters, with shows from Kantine am Berghain to the Columbiahalle."	68	2026-11-08 scan: Instagram linked from loft.de/impressum/
+Luv`n Musiq	luv-n-musiq	unverified			Luv`n Musiq			1	
+M-Art	m-art	promoter	none		M-Art			1	no site: m-art.de is a frame around a hosting parking page (curl 2026-10-09, #2601)
+Maelføy	maelfoy	artist			Maelføy			1	act
+Mailive	mailive	promoter			Mailive			1	Vanessa Mai
+malespace	malespace	party			malespace			1	
+Manfred Hertlein Veranstaltungs	manfred-hertlein	promoter			Manfred Hertlein			1	Würzburg; strip Veranstaltungs
+Mansions and Millions	mansions-and-millions	promoter			Mansions and Millions			1	label
+Marlene Von Steenvag	marlene-von-steenvag	promoter			Marlene Von Steenvag			2	burlesque festival
+Mawi	mawi-concert	promoter	https://www.mawi-concert.de/	https://www.instagram.com/mawi_concert/	MAWI Concert			3	2026-11-08 scan: Instagram linked from mawi-concert.de
+Mayence Music Management	mayence-music-management	promoter		https://www.instagram.com/mayencemusic/	Mayence Music Management			2	2026-11-08 scan: Instagram linked from mamuma.de
+MB-Konzerte	mb-konzerte	promoter			MB Konzerte			1	
+Mct	mct-agentur	promoter	https://www.mct-agentur.com/		MCT Agentur			5	
+Medibüro Berlin	mediburo-berlin	sponsor	https://medibuero.de/		Medibüro Berlin			1	
+Messed!Up Magazine	messed-up-magazine	media	https://www.messedmag.com/	https://www.instagram.com/messedupmagazine/	Messed!Up Magazine			2	2026-11-08 scan: Instagram linked from messedmag.com
+Metal Hammer	metal-hammer	media	https://www.metal-hammer.de/		Metal Hammer			1	
+Mfp	mfp-concerts	promoter	https://mfpconcerts.com/	https://www.instagram.com/mfpconcerts/	MFP Concerts	MFP Concerts ist eine Konzert- und Bookingagentur aus Reichertshofen, seit über 20 Jahren auf Tourneen nationaler und internationaler Acts in Deutschland und Europa, von Rock bis Jazz.	MFP Concerts is a concert and booking agency from Reichertshofen, touring national and international acts across Germany and Europe for over 20 years, from rock to jazz.	1	Lido credits "MFP Concerts" with a link; the strip left "Mfp" and V026 dropped it (#1361); V032 renames it; 2026-11-08 scan: Instagram linked from mfpconcerts.com
+Michael Koch	michael-koch	artist			Michael Koch			1	
+Milchmädchen Musikkultur	milchmadchen-musikkultur	promoter			Milchmädchen Musikkultur			1	
+Milchsalon	milchsalon	promoter	https://milchsalon.de/	https://www.instagram.com/milchsalon/	Milchsalon			1	2026-11-08 scan: Instagram linked from milchsalon.de
+Miller-Zillmer Foundation	miller-zillmer-foundation	sponsor			Miller-Zillmer Foundation			3	site not found
+Mind Enterprises	mind-enterprises	promoter			Mind Enterprises			1	wrestling
+Morabeza	morabeza	party			Morabeza			1	
+More Zvukov	more-zvukov	promoter	none		More Zvukov			1	RA lists it as More Zvukov Agency; no site: morezvukov.nl fails TLS and answers 500 Database Error over http (curl 2026-10-09, #2601)
+Mup	mup	junk			Mup			1	deleted by V026
+MusikBlog	musikblog	media	https://www.musikblog.de/		MusikBlog	MusikBlog ist ein Online-Magazin für neue Musik, Konzerttermine und Newcomer, mit Alben, Videos, Interviews und Ticketverlosungen. Es präsentiert Konzerte in Berlin, unter anderem im Columbia Theater, Bi Nuu und Frannz Club.	MusikBlog is an online magazine for new music, concert dates and newcomers, with albums, videos, interviews and ticket giveaways. It presents concerts in Berlin, at Columbia Theater, Bi Nuu and Frannz Club among others.	6	
+Musikexpress	musikexpress	media	https://www.musikexpress.de/		Musikexpress			1	
+Musikparade	musikparade	promoter			Musikparade			3	site 500
+Musikschule Béla Bartók	musikschule-bela-bartok	sponsor			Musikschule Béla Bartók			1	
+MusiX	musix	media			MusiX			1	magazine
+Muziqme	muziqme	promoter	https://www.muziqme.de/		Muziqme			1	
+MyMusic	mymusic	unverified			MyMusic			1	
+Mystiek	mystiek	unverified			Mystiek			1	
+Neuland	neuland	unverified			Neuland			1	
+neuwerk Music Management	neuwerk-music-management	promoter	https://neuwerk-music.com/	https://www.instagram.com/neuwerk_music/	neuwerk Music Management			3	2026-11-08 scan: Instagram linked from neuwerk-music.com
+New Berlin	new-berlin-konzerte	promoter	https://berlinkonzerte.de/	https://www.instagram.com/new_berlin_konzerte/	New Berlin Konzerte	New Berlin Konzerte veranstaltet seit 2000 im Großraum Berlin: Rock und Pop, Jazz und Folk, Lesungen, Comedy und Kindermusicals. Zusammen mit der Karsten Jahnke Konzertdirektion richtet die Agentur die JazzNights aus.	New Berlin Konzerte has promoted events across Berlin since 2000: rock and pop, jazz and folk, readings, comedy and children's musicals. Together with Karsten Jahnke Konzertdirektion it runs the JazzNights series.	30	New Berlin Konzerte & Events GmbH; absorbs Berlinkonzerte; 2026-11-08 scan: Instagram linked from berlinkonzerte.de
+Niemals	niemals	junk			Niemals			1	title; deleted by V026
+Nina Queer	nina-queer	artist			Nina Queer			1	
+Nova	nova	junk			Nova			1	deleted by V026
+Now And Ever	now-and-ever	promoter	https://nowandever.de/	https://www.instagram.com/nowandever.music/	Now And Ever			4	site NOW AND EVER Music; 2026-11-08 scan: Instagram linked from nowandever.de
+Ntr Team	ntr-team	unverified			Ntr Team			1	
+Oakheart	oakheart	unverified			Oakheart			1	
+offbeatclub	offbeatclub	promoter			offbeatclub			2	
+old and fast	old-and-fast	promoter			old and fast			2	Schokoladen DJ collective
+Out Of Line	out-of-line	promoter	https://www.outofline.de/	https://www.instagram.com/outoflinemusic1995/	Out Of Line			3	label; 2026-11-08 scan: Instagram linked from outofline.de
+Out4fame	out4fame	promoter	none		Out4fame			2	2026-11-08 scan: the stored link is a ticket.io shop; out4fame.de redirects to it
+Ox-Fancine	ox-fanzine	media	https://www.ox-fanzine.de/		Ox-Fanzine			1	stored as Ox-Fancine
+Papke Luhr	papke-luhr	unverified			Papke Luhr			1	
+Paranoid	paranoid	party			Paranoid			2	Lido
+Patchanka	patchanka	promoter	https://patchanka-booking.com		Patchanka			2	RA lists it as Patchanka Booking Agency; patchanka.de is a parked default page
+Peter Edel & www.stummfilmkonzerte.de	peter-edel-www-stummfilmkonzerte-de	junk			Peter Edel & www.stummfilmkonzerte.de			1	venue + URL; deleted by V026
+Picky Magazine	picky-magazine	media	https://pickymagazine.de/		Picky Magazine			1	
+Pluswelt	pluswelt	promoter	https://www.pluswelt.com/	https://www.instagram.com/plusweltpromotion/	Pluswelt	Pluswelt Promotion ist eine Hamburger Agentur für Management, Promotion und Booking, von einzelnen Shows bis zu Tourneen und Festivals in Europa, mit Schwerpunkt auf Synthpop, Dark Wave und Electro. In Berlin laufen die Shows im Privatclub und Frannz Club.	Pluswelt Promotion is a Hamburg agency for management, promotion and booking, from single shows to European tours and festivals, focused on synth-pop, dark wave and electro. Its Berlin shows run at Privatclub and Frannz Club.	4	PLUSWELT PROMOTION, Hamburg; 2026-11-08 scan: Instagram linked from pluswelt.com
+polenta	polenta	artist			polenta			1	
+Popmonitor	popmonitor	media	http://www.popmonitor.de/		Popmonitor			4	
+Positive Transmitter	positive-transmitter	promoter	none		Positive Transmitter			1	RA: Facebook page is the only site; 2026-11-08 scan: the stored link is a Facebook page
+Potalonu	potalonu	unverified			Potalonu			1	
+Powerline	powerline-agency	promoter	https://powerline-agency.com/	https://www.instagram.com/powerlineagency/	Powerline Agency	Powerline Agency ist eine Berliner Booking-Agentur und Veranstalter für Indie, Garage und Psychedelic. Die Berliner Shows laufen im Urban Spree, Schokoladen und in der Columbiahalle.	Powerline Agency is a Berlin booking agency and promoter for indie, garage and psychedelic acts. Its Berlin shows run at Urban Spree, Schokoladen and the Columbiahalle.	10	2026-11-08 scan: Instagram linked from powerline-agency.com
+PRK DreamHaus	prk-dreamhaus	promoter	https://www.prk-dreamhaus.com/	https://www.instagram.com/prk.dreamhaus/	PRK DreamHaus	PRK DreamHaus entstand 2024 aus der Fusion der Kölner PRK Peter Rieger Konzertagentur (seit 1983) mit dem Berliner DreamHaus (seit 2020), beide Teil der CTS Eventim. Die Agentur veranstaltet Arena- und Hallentourneen, in Berlin etwa im Velodrom und Astra Kulturhaus.	PRK DreamHaus was formed in 2024 by merging Cologne's PRK Peter Rieger Konzertagentur (founded 1983) with Berlin's DreamHaus (founded 2020), both part of CTS Eventim. It promotes arena and hall tours, in Berlin at the Velodrom and Astra Kulturhaus among others.	10	2026-11-08 scan: Instagram linked from prk-dreamhaus.com
+psychberg affairs	psychberg-affairs	promoter	none	https://www.instagram.com/psychberg_affairs/	psychberg affairs			1	Schokoladen collective; RA: Instagram is the only site; 2026-11-08 scan: the stored website is the Instagram profile
+punkfilmfest berlin	punkfilmfest-berlin	promoter			punkfilmfest berlin			7	
+Pura Vida Theater Und Musical	pura-vida-theater-und-musical	promoter	none		Pura Vida Theater Und Musical			1	2026-11-08 scan: the stored link is a tribute show's site that credits Pura Vida only for the concept
+Pure Obsessions & Red Nights	pure-obsessions-red-nights	party			Pure Obsessions & Red Nights			1	
+Puschen	puschen	promoter	https://puschen.net/	https://www.instagram.com/puschenshows/	Puschen	Puschen ist eine Booking- und Promotion-Agentur aus Neukölln, gegründet von Andreas Oberschelp, mit einem Roster aus Indie, Folk und Alternative. Die Berliner Shows laufen unter anderem in Huxleys Neue Welt, silent green und Schokoladen.	Puschen is a booking and promotion agency in Neukölln, founded by Andreas Oberschelp, with a roster of indie, folk and alternative acts. Its Berlin shows run at Huxleys Neue Welt, silent green and Schokoladen, among others.	16	2026-11-08 scan: Instagram linked from puschen.net
+Qu	qu	junk			Qu			1	deleted by V026
+QU Entertainment	qu-entertainment	promoter	https://www.qu-entertainment.com/		QU Entertainment	QU Entertainment ist ein europäischer Veranstalter für K-Pop-Konzerte, Tourneen und Fan-Events, von Clubshows bis zur Halle.	QU Entertainment is a European promoter of K-pop concerts, tours and fan events, from club shows to halls.	1	minted on production 2026-09-13 from Hole 44's "QU Entertainment UG (haftungsbeschränkt) presents"; the brand writes "Q:U Entertainment", the legal name is kept so the slug stands
+Quasimodo	quasimodo	venue	https://quasimodo.de/		Quasimodo			2	
+Quiero Stand Up!	quiero-stand-up	promoter			Quiero Stand Up!			1	
+Radio Bob	radio-bob	media	https://www.radiobob.de/		RADIO BOB!			1	site writes RADIO BOB!
+Radio France International	radio-france-internationale	media	https://www.rfi.fr/		Radio France Internationale			1	
+radioeins	radioeins	media	https://www.radioeins.de/		radioeins	radioeins ist das Erwachsenenprogramm des rbb, auf 95,8 MHz in Berlin und Potsdam. Der Sender präsentiert Konzerte in der Stadt, vom Frannz Club bis zur Zitadelle.	radioeins is rbb's grown-up station, on 95.8 MHz in Berlin and Potsdam. It presents concerts across the city, from Frannz Club to the Zitadelle.	8	
+Rausgegangen	rausgegangen	media	https://rausgegangen.de/		Rausgegangen	Rausgegangen ist eine Plattform für Veranstaltungstipps, in Berlin und anderen deutschen Städten, mit Programm, Tickets und eigenen Empfehlungen. Sie präsentiert Konzerte in der Stadt, unter anderem in der Zitadelle und im Urban Spree.	Rausgegangen is an event-discovery platform, in Berlin and other German cities, with listings, tickets and its own picks. It presents concerts across the city, at the Zitadelle and Urban Spree among others.	5	event platform
+rbb 88.8	rbb-88-8	media	https://www.rbb888.de/		rbb 88.8			1	
+Reset Production	reset-production	promoter	https://www.resetproduction.de/	https://www.instagram.com/reset_production/	Reset Production			1	2026-11-08 scan: 'Spektakuläre Tribute Shows – auf Tour in ganz Deutschland'; 2026-11-08 scan: Instagram linked from resetproduction.de
+Revelation	revelation	promoter		https://www.instagram.com/revelationconcerts/	Revelation			1	2026-11-08 scan: Instagram linked from revelation-concerts.com
+reverberation	reverberation	promoter			reverberation			1	Schokoladen collective
+Rockitsessions,	rockitsessions	promoter			Rockitsessions			1	stored with trailing comma
+Rolling Stone	rolling-stone	media	https://www.rollingstone.de/		Rolling Stone			3	
+Root Pgr	root-pgr	unverified			Root Pgr			1	
+Rough Trade Europe	rough-trade-europe	promoter			Rough Trade Europe			1	now Believe
+Rudelsingen - Das Original aus Münster	rudelsingen	promoter	https://rudelsingen.de/	https://www.instagram.com/originalrudelsingen/	Rudelsingen			3	2026-11-08 scan: Instagram linked from rudelsingen.de
+S-Promotion	s-promotion	promoter		https://www.instagram.com/s_promotion/	S-Promotion			4	2026-11-08 scan: Instagram linked from s-promotion.de
+Schubert	schubert	unverified			Schubert			1	
+Selective Artists	selective-artists	promoter	https://selectiveartists.com/	https://www.instagram.com/selectiveartists/	Selective Artists	Selective Artists ist eine Konzertagentur und Tourneeveranstalter. In Berlin laufen die Shows unter anderem im Heimathafen Neukölln.	Selective Artists is a concert agency and touring promoter. Its Berlin shows run at Heimathafen Neukölln, among others.	1	2026-11-08 scan: Instagram linked from selectiveartists.com
+Semmel	semmel-concerts	promoter	https://semmel.de/	https://www.instagram.com/semmelconcerts/	Semmel Concerts	Semmel Concerts ist einer der größten Konzertveranstalter Europas, mit Sitz in Bayreuth und einem Büro in Berlin, Teil des Netzwerks EVENTIM LIVE. Über 1.500 Veranstaltungen im Jahr, von Tourneen bis zu eigenen Shows.	Semmel Concerts is one of Europe's largest concert promoters, based in Bayreuth with an office in Berlin and part of the EVENTIM LIVE network. It stages more than 1,500 events a year, from tours to its own productions.	11	2026-11-08 scan: Instagram linked from semmel.de
+Semtainment	semtainment	unverified			Semtainment			1	
+silent green	silent-green	venue	https://www.silent-green.net/		silent green	silent green ist ein Kulturquartier im ehemaligen Krematorium Wedding, seit 2013 in privater Trägerschaft. Das eigene Programm reicht von Konzerten und Klanginstallationen bis zu Ausstellungen und Diskursformaten, quer durch die Disziplinen.	silent green is a cultural quarter in the former Wedding crematorium, privately run since 2013. Its own programme runs from concerts and sound installations to exhibitions and talks, across disciplines.	50	
+Simply Quiz	simply-quiz	promoter			Simply Quiz	Simply Quiz veranstaltet Pubquiz-Abende im Badehaus, mehrmals im Monat und auf Spendenbasis: mehr als 40 Fragen, Reservierung per Nachricht, Einlass ab 19:30.	Simply Quiz runs pub-quiz nights at Badehaus, several times a month and donation-based: more than 40 questions, reservation by message, doors at 19:30.	13	FB/IG only
+Skyline Green	skyline-green	artist	https://www.skylinegreen.de/		Skyline Green			1	band
+Slam	slam	junk			Slam			1	deleted by V026
+Sonic Boom	sonic-boom	promoter			Sonic Boom			1	Schokoladen
+Sonic Seducer	sonic-seducer	media	https://sonic-seducer.de/		Sonic Seducer			1	
+Soulgigs	soulgigs	promoter			Soulgigs			1	site not found
+Sound Of Liberation	sound-of-liberation	promoter	https://www.soundofliberation.com/	https://www.instagram.com/soundofliberation/	Sound Of Liberation			1	2026-11-08 scan: title 'Sound of Liberation | Home'; 2026-11-08 scan: Instagram linked from soundofliberation.com
+Soundcraft	soundcraft	unverified	none		Soundcraft			1	2026-11-08 scan: the stored big-life.org does not resolve
+Sozialo	sozialo	party			Sozialo			2	sozialo.de for sale
+Spanisch in Berlin - Eventos	spanisch-in-berlin-eventos	promoter			Spanisch in Berlin - Eventos			1	
+Spirit	spirit-events	promoter	https://spirittickets.de/		Spirit Events	Spirit Events aus Magdeburg veranstaltet Punk-, Oi!- und Ska-Konzerte, in Berlin etwa OXO 86 in Huxleys Neue Welt.	Spirit Events from Magdeburg promotes punk, Oi! and ska shows, in Berlin for instance OXO 86 at Huxleys Neue Welt.	1	Huxleys credits "Spirit Events presents"; the strip left "Spirit" and V026 dropped it (#1361); V032 renames it
+Spokes	spokes	unverified			Spokes			1	Cosmic Comedy
+Stand in Front	stand-in-front	promoter	https://standinfront.de/	https://www.instagram.com/standinfrontgmbh/	Stand in Front	Stand in Front ist eine Berliner Management- und Tourneeagentur für deutschen Rap, mit Künstlern wie Prinz Pi, Genetikk und Omar76. Die Berliner Shows laufen in der Columbiahalle und im Hole 44.	Stand in Front is a Berlin management and touring company for German rap, with acts such as Prinz Pi, Genetikk and Omar76. Its Berlin shows run at the Columbiahalle and Hole 44.	6	2026-11-08 scan: Instagram linked from standinfront.de
+Starving Artist	starving-artist	unverified			Starving Artist			1	
+Stiftung WissensArt	stiftung-wissensart	sponsor	https://stiftung-wissensart.de/		Stiftung Wissensart			1	stored WissensArt
+Streetlife International	streetlife-international	promoter	https://street.life/		Streetlife International	Streetlife International ist ein Berliner Tourneeveranstalter und eine Künstleragentur, seit 2009 in Schöneberg. In Berlin laufen die Shows unter anderem im Hole 44, Gretchen und Metropol.	Streetlife International is a Berlin touring promoter and artist agency, based in Schöneberg since 2009. Its Berlin shows run at Hole 44, Gretchen and Metropol, among others.	4	
+Subacuatica	subacuatica	unverified			Subacuatica			1	
+Subway Event Berlin	subway-event-berlin	promoter	https://www.subwayevent-berlin.com/		Subway Event Berlin			2	
+Sunday-Matinee	sunday-matinee	junk			Sunday-Matinee			1	series label; deleted by V026
+Swamp	swamp	promoter			Swamp			2	Swamp Booking
+Synthpop Eventmanagement	synthpop-eventmanagement	promoter	https://synthpop-eventmanagement.de		Synthpop Eventmanagement			1	2026-11-08 scan: own site lists AnNa at Festsaal Kreuzberg 28.01.2027
+süper!nice!	super-nice	promoter			süper!nice!			1	
+T.g.c. The Glow Collective	t-g-c-the-glow-collective	promoter			T.g.c. The Glow Collective			1	
+Tag Der Klubkultur	tag-der-klubkultur	junk			Tag Der Klubkultur			1	event name; deleted by V026
+Team Feel Free Energy	team-feel-free-energy	junk			Team Feel Free Energy			1	deleted by V026
+Teenage Couleur	teenage-couleur	party			Teenage Couleur			1	
+the Comedy Nomad	the-comedy-nomad	promoter			the Comedy Nomad			2	
+The Hilarious Deep Amazing Comedy	the-hilarious-deep-amazing-comedy	junk			The Hilarious Deep Amazing Comedy			1	show title; deleted by V026
+The Swag	the-swag	party			The Swag			2	jam session
+Theater Liberi	theater-liberi	promoter	https://www.theater-liberi.de/	https://www.instagram.com/theaterliberi/	Theater Liberi			8	2026-11-08 scan: own site, Theater Liberi, Bochum; 2026-11-08 scan: Instagram linked from theater-liberi.de
+thirsty & miserable	thirsty-miserable	promoter			thirsty & miserable			1	Schokoladen
+Tilos Rádió	tilos-radio	media	https://tilos.hu/		Tilos Rádió			1	
+tipBerlin	tipberlin	media	https://www.tip-berlin.de/		tipBerlin			5	
+Tiq	tiq	promoter	none		Tiq			3	RA lists it as TIQ Berlin; Facebook is the only site; 2026-11-08 scan: the stored link is a Facebook page
+Tirnanog	tirnanog	artist			Tirnanog			1	
+TOP90s Berlin	top90s-berlin	party			TOP90s Berlin			1	
+Topline Berlin	topline-berlin	unverified			Topline Berlin			1	
+Total Black	total-black	unverified			Total Black			1	
+TouringTunes Sp. z o. o.	touringtunes	promoter			TouringTunes			1	Polish agency
+Trinity Music	trinity-music	promoter	https://trinitymusic.de/	https://www.instagram.com/trinitymusicberlin/	Trinity Music	Trinity Music veranstaltet seit 1998 Konzerte in Berlin, rund 1.000 im Jahr, vor allem Rock und Pop – vom Club bis zu den großen Hallen der Stadt. Seit 2005 bespielt die Agentur auch die Zitadelle Spandau als Open-Air-Bühne.	Trinity Music has promoted concerts in Berlin since 1998, around 1,000 a year, mostly rock and pop, from club shows to the city's largest halls. Since 2005 it has also run the Zitadelle Spandau as an open-air stage.	340	2026-11-08 scan: Instagram linked from trinitymusic.de
+Trippleslashdot	trippleslashdot	unverified			Trippleslashdot			1	
+TV Noir	tv-noir	promoter	https://tvnoir.de/	https://www.instagram.com/tvnoir.de/	TV Noir			1	2026-11-08 scan: Instagram linked from tvnoir.de
+Twisted Talent	twisted-talent	promoter			Twisted Talent			1	
+Undercover	undercover	promoter	https://undercover.de/	https://www.instagram.com/undercovergmbh/	Undercover	Undercover ist ein Tourneeveranstalter aus Braunschweig, der Künstler:innen in Deutschland, Österreich und der Schweiz auf Tour bringt und rund 200 örtliche Shows im Jahr veranstaltet. In Berlin laufen die Konzerte unter anderem im Badehaus, Frannz Club und in der Columbiahalle.	Undercover is a touring promoter from Braunschweig that takes acts on tour across Germany, Austria and Switzerland and stages around 200 local shows a year. In Berlin its concerts run at Badehaus, Frannz Club and the Columbiahalle, among others.	8	2026-11-08 scan: Instagram linked from undercover.de
+Unreleased	unreleased-berlin	party	https://unreleased.berlin/		Unreleased Berlin			2	
+untoldency	untoldency	unverified			untoldency			1	
+Urban Spree	urban-spree	venue	https://www.urbanspree.com/		Urban Spree			2	
+Verlag Klaus Wagenbach	verlag-klaus-wagenbach	sponsor	https://www.wagenbach.de/		Verlag Klaus Wagenbach			1	
+Vertikal	vertikal	unverified			Vertikal			1	
+Vk Beats_	vk-beats_	unverified			Vk Beats_			1	trailing underscore
+Volkssolidarität Berlin	volkssolidaritat-berlin	sponsor	https://www.volkssolidaritaet.de/		Volkssolidarität Berlin			1	
+WallCityMusic	wallcitymusic	promoter			WallCityMusic			1	
+We Artists	we-artists	promoter	https://www.weartists.de/		We Artists			1	We Artists GmbH, Booking & Management; the venue writes it so
+Welterforscher Film und so weiter	welterforscher-film-und-so-weiter	promoter			Welterforscher Film und so weiter			1	
+Whiskeyrap	whiskeyrap	party	https://whiskeyrap.de/		Whiskeyrap			1	www.whiskeyrap.de fails TLS; whiskeyrap.de serves the Whiskeyrap shop and tour page (curl 2026-10-09, #2601)
+Wisborg	wisborg	artist			Wisborg			1	band
+You've Got The Love	you-ve-got-the-love	party			You've Got The Love			1	
+Zart	z-art-agency	promoter	https://zart-agency.com/	https://www.instagram.com/zart_agency/	Z|ART Agency			2	2026-11-08 scan: Instagram linked from zart-agency.com

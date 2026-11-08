@@ -26,6 +26,45 @@ class PromoterControllerTest : BaseControllerTest() {
             .returnResult()
             .responseBody!!
 
+    @Test
+    fun `stores the Instagram link, and a PUT without it clears it`() {
+        val created =
+            createPromoter(PromoterRequestFixtures.create(name = "Insta Promoter").copy(instagramUrl = "https://www.instagram.com/insta_promoter/"))
+        created.instagramUrl shouldBe "https://www.instagram.com/insta_promoter/"
+
+        webTestClient
+            .put()
+            .uri("/api/admin/promoters/${created.id}")
+            .bodyValue(PromoterRequestFixtures.create(name = "Insta Promoter"))
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.instagramUrl")
+            .doesNotExist()
+    }
+
+    @Test
+    fun `refuses an Instagram link on another host, without https, or with no profile path`() {
+        listOf(
+            "https://www.facebook.com/promoter/",
+            "http://www.instagram.com/promoter/",
+            "https://www.instagram.com/",
+            "https://notinstagram.com/promoter/"
+        ).forEachIndexed { index, url ->
+            webTestClient
+                .post()
+                .uri("/api/admin/promoters")
+                .bodyValue(PromoterRequestFixtures.create(name = "Refused $index").copy(instagramUrl = url))
+                .exchange()
+                .expectStatus()
+                .isBadRequest
+                .expectBody()
+                .jsonPath("$.errors[?(@.field == 'instagramUrl')]")
+                .exists()
+        }
+    }
+
     private fun deletePromoter(id: Long) {
         webTestClient
             .delete()

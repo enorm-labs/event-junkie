@@ -108,6 +108,7 @@ classDiagram
         String name
         String slug
         String? websiteUrl
+        String? instagramUrl
         String? imageUrl
         String? imageAttribution
         String? imageLicenceId
@@ -479,6 +480,7 @@ Represents an event promoter or presenter. Shared across events and venues.
 | `name`                     | `TEXT`        | No       | Promoter name                                                                                   | `36 Concerts`                                    |
 | `slug`                     | `TEXT` (UQ)   | No       | URL-friendly identifier                                                                         | `36-concerts`                                    |
 | `website_url`              | `TEXT`        | Yes      | Website or social page                                                                          | `https://www.facebook.com/36Concerts/`           |
+| `instagram_url`            | `TEXT`        | Yes      | Instagram profile, a plain link entered by hand, never fetched                                  | `https://www.instagram.com/36concerts/`          |
 | `image_url`                | `TEXT`        | Yes      | Logo image URL                                                                                  | `https://example.com/36-concerts.jpg`            |
 | `description`              | `TEXT`        | Yes      | Short prose description shown on the detail page                                                | `The in-house agency of Lido, Astra and Bi Nuu.` |
 | `description_language`     | `TEXT`        | Yes      | Language of `description`: `de` or `en`                                                         | `en`                                             |

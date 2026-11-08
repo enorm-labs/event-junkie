@@ -78,6 +78,11 @@ data class PromoterDetailResponse(
     val name: String,
     @Schema(description = WEBSITE_URL_DESCRIPTION)
     val websiteUrl: String?,
+    @Schema(
+        description = "URL of the promoter's Instagram profile. A plain outbound link: nothing is embedded and nothing reaches Instagram before a click.",
+        example = "https://www.instagram.com/36concerts/"
+    )
+    val instagramUrl: String?,
     @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
@@ -116,6 +121,7 @@ data class PromoterDetailResponse(
                 slug = entity.slug,
                 name = entity.name,
                 websiteUrl = entity.websiteUrl,
+                instagramUrl = entity.instagramUrl,
                 imageUrl = image.url,
                 imageAttribution = entity.imageAttribution,
                 imageLicenceId = entity.imageLicenceId,
