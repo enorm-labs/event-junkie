@@ -142,6 +142,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "boogaloo" to "Funk",
         "r&b" to "R&B",
         "rnb" to "R&B",
+        // Huxleys' slug drops the `&`, so its de-slugified class arrives as "Rb", as "Kpop" does (#4694).
+        "rb" to "R&B",
         "altrnb" to "R&B",
         // Jazz / Blues
         "jazz" to "Jazz",

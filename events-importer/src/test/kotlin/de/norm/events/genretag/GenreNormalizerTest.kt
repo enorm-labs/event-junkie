@@ -165,6 +165,13 @@ class GenreNormalizerTest {
         normalizeGenre("k pop").shouldContainExactly("K-Pop")
     }
 
+    // Huxleys' `event-tags-rb` loses the `&` in the slug (#4694).
+    @Test
+    fun `folds the slugged R&B spelling onto the R&B tag`() {
+        normalizeGenre("Afrobeats, Rb").shouldContainExactly("Afrobeats", "R&B")
+        normalizeGenre("Hip Hop, Rb, Trap").shouldContainExactly("Hip Hop", "R&B")
+    }
+
     @Test
     fun `nonGenreTokens names the dropped labels as written, and not the noise`() {
         nonGenreTokens("Immersive Ausstellung, Techno").shouldContainExactly("Immersive Ausstellung")
