@@ -2,6 +2,7 @@ package de.norm.events.scraper.hau
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -13,9 +14,9 @@ import java.time.LocalTime
 
 class HauScheduleScraperTest {
     private val url = "https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/"
-    private val october = Jsoup.parse(fixture("hau-schedule.html"), url)
-    private val november = Jsoup.parse(fixture("hau-schedule-2026-11.html"), url)
-    private val december = Jsoup.parse(fixture("hau-schedule-2026-12.html"), url)
+    private val october = fixtureDocument("hau/hau-schedule.html", url)
+    private val november = fixtureDocument("hau/hau-schedule-2026-11.html", url)
+    private val december = fixtureDocument("hau/hau-schedule-2026-12.html", url)
     private val hau1 = HauScheduleScraper(HauHouse.HAU1)
     private val hau2 = HauScheduleScraper(HauHouse.HAU2)
     private val hau3 = HauScheduleScraper(HauHouse.HAU3)
@@ -135,6 +136,4 @@ class HauScheduleScraperTest {
         hau1.scrape(Jsoup.parse("<html><body></body></html>", url), url).shouldBeEmpty()
         hau1.nextMonthPage(Jsoup.parse("<html><body></body></html>", url)).shouldBeNull()
     }
-
-    private fun fixture(name: String): String = requireNotNull(javaClass.classLoader.getResourceAsStream("scraper/hau/$name")).bufferedReader().readText()
 }

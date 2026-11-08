@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -35,17 +36,8 @@ class GoldenGateOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        events = scraper.scrape(fixture("goldengate-overview.html"), baseUrl)
+        events = scraper.scrape(fixtureDocument("goldengate/goldengate-overview.html", baseUrl), baseUrl)
     }
-
-    private fun fixture(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/goldengate/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
 
     private fun headings(vararg texts: String) =
         Jsoup.parse(
@@ -164,7 +156,7 @@ class GoldenGateOverviewPageScraperTest {
     @Test
     fun `moves a night whose weekday names the neighbouring month, as on the live page of 2 October 2026`() {
         // The page printed "Sa. 03. September 2026": 3 September is a Thursday, 3 October the Saturday of the block.
-        val (parsed, warnings) = withWeekdayWarnings { scraper.scrape(fixture("goldengate-overview-month-typo.html"), baseUrl) }
+        val (parsed, warnings) = withWeekdayWarnings { scraper.scrape(fixtureDocument("goldengate/goldengate-overview-month-typo.html", baseUrl), baseUrl) }
         parsed.map { it.sourceId } shouldContainExactly
             listOf(
                 "golden_gate:2026-10-01-cura",
@@ -180,7 +172,7 @@ class GoldenGateOverviewPageScraperTest {
 
     @Test
     fun `logs nothing for headings whose weekday agrees with the date`() {
-        withWeekdayWarnings { scraper.scrape(fixture("goldengate-overview.html"), baseUrl) }.second.shouldBeEmpty()
+        withWeekdayWarnings { scraper.scrape(fixtureDocument("goldengate/goldengate-overview.html", baseUrl), baseUrl) }.second.shouldBeEmpty()
     }
 
     @Test

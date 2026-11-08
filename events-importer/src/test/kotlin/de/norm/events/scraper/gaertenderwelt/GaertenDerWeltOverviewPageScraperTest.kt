@@ -1,6 +1,7 @@
 package de.norm.events.scraper.gaertenderwelt
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -19,19 +20,15 @@ import java.time.LocalTime
  */
 class GaertenDerWeltOverviewPageScraperTest {
     private val scraper = GaertenDerWeltOverviewPageScraper()
-
-    private fun fixture(name: String): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/gaertenderwelt/$name")!!
-                .bufferedReader()
-                .readText(),
-            LISTING_URL
-        )
+    private val overviewHtml = "gaertenderwelt/gaertenderwelt-overview.html"
+    private val page2Html = "gaertenderwelt/gaertenderwelt-overview-page2.html"
+    private val lastHtml = "gaertenderwelt/gaertenderwelt-overview-last.html"
+    private val runsHtml = "gaertenderwelt/gaertenderwelt-overview-runs.html"
+    private val runsPage2Html = "gaertenderwelt/gaertenderwelt-overview-runs-page2.html"
 
     @Test
     fun `keeps only the staged programme on a listing page`() {
-        val events = scraper.scrape(fixture("gaertenderwelt-overview.html"), LISTING_URL)
+        val events = scraper.scrape(fixtureDocument(overviewHtml, LISTING_URL), LISTING_URL)
 
         // Five rows: two Führungen, two Workshops, and the uncategorised games night.
         events shouldHaveSize 1
@@ -40,7 +37,7 @@ class GaertenDerWeltOverviewPageScraperTest {
 
     @Test
     fun `parses a concert row in full`() {
-        val events = scraper.scrape(fixture("gaertenderwelt-overview-page2.html"), LISTING_URL)
+        val events = scraper.scrape(fixtureDocument(page2Html, LISTING_URL), LISTING_URL)
         val concert = events.single { it.title == "Agnes Obel" }
 
         concert.eventType shouldBe EventType.CONCERT.name
@@ -56,7 +53,7 @@ class GaertenDerWeltOverviewPageScraperTest {
 
     @Test
     fun `types the open-air cinema from the park's category rather than the title`() {
-        val events = scraper.scrape(fixture("gaertenderwelt-overview-page2.html"), LISTING_URL)
+        val events = scraper.scrape(fixtureDocument(page2Html, LISTING_URL), LISTING_URL)
         val screening = events.single { it.title.startsWith("Wanderkino") }
 
         screening.eventType shouldBe EventType.SCREENING.name
@@ -68,7 +65,7 @@ class GaertenDerWeltOverviewPageScraperTest {
 
     @Test
     fun `infers a type from the title when the park files a row under no category`() {
-        val gamesNight = scraper.scrape(fixture("gaertenderwelt-overview.html"), LISTING_URL).single()
+        val gamesNight = scraper.scrape(fixtureDocument(overviewHtml, LISTING_URL), LISTING_URL).single()
 
         // "Spieleabend": a games night is a quiz.
         gamesNight.eventType shouldBe EventType.QUIZ.name
@@ -82,7 +79,7 @@ class GaertenDerWeltOverviewPageScraperTest {
 
     @Test
     fun `keeps no end for a row whose time cell is a single clock`() {
-        val screening = scraper.scrape(fixture("gaertenderwelt-overview-page2.html"), LISTING_URL).single { it.title.startsWith("Wanderkino") }
+        val screening = scraper.scrape(fixtureDocument(page2Html, LISTING_URL), LISTING_URL).single { it.title.startsWith("Wanderkino") }
 
         // "21.00 Uhr".
         screening.endDate.shouldBeNull()
@@ -119,21 +116,21 @@ class GaertenDerWeltOverviewPageScraperTest {
 
     @Test
     fun `stores the row teaser as the subtitle`() {
-        val events = scraper.scrape(fixture("gaertenderwelt-overview-last.html"), LISTING_URL)
+        val events = scraper.scrape(fixtureDocument(lastHtml, LISTING_URL), LISTING_URL)
 
         events.single().subtitle shouldBe "Treibende Beats, legendäre Hits und euphorische Partystimmung!"
     }
 
     @Test
     fun `follows the paginator's next link`() {
-        val page1 = fixture("gaertenderwelt-overview.html")
+        val page1 = fixtureDocument(overviewHtml, LISTING_URL)
 
         scraper.nextPageUrl(page1, LISTING_URL) shouldBe "https://www.gaertenderwelt.de/events/veranstaltungen/page2/"
     }
 
     @Test
     fun `reports no next page on the last one`() {
-        val last = fixture("gaertenderwelt-overview-last.html")
+        val last = fixtureDocument(lastHtml, LISTING_URL)
 
         scraper.nextPageUrl(last, LISTING_URL).shouldBeNull()
         last.select(".paginationWrapper").isEmpty() shouldBe false
@@ -170,7 +167,7 @@ class GaertenDerWeltOverviewPageScraperTest {
     @Test
     fun `stores an exhibition listed with its whole run as one event from the first day to the last`() {
         // Captured 4 October 2026: the row's href stamps the next open day, its date cell the run.
-        val run = scraper.scrape(fixture("gaertenderwelt-overview-runs.html"), LISTING_URL).single { it.eventType == EventType.EXHIBITION.name }
+        val run = scraper.scrape(fixtureDocument(runsHtml, LISTING_URL), LISTING_URL).single { it.eventType == EventType.EXHIBITION.name }
 
         run.title shouldBe "Zwischen Himmel und Erde: Ausstellung"
         run.eventDate shouldBe LocalDate.of(2026, 9, 1)
@@ -183,7 +180,7 @@ class GaertenDerWeltOverviewPageScraperTest {
 
     @Test
     fun `keeps a one-day row on the same page dated and keyed by its stamp`() {
-        val gamesNight = scraper.scrape(fixture("gaertenderwelt-overview-runs.html"), LISTING_URL).single { it.title == "Spieleabend" }
+        val gamesNight = scraper.scrape(fixtureDocument(runsHtml, LISTING_URL), LISTING_URL).single { it.title == "Spieleabend" }
 
         gamesNight.eventDate shouldBe LocalDate.of(2026, 10, 9)
         gamesNight.endDate shouldBe LocalDate.of(2026, 10, 9)
@@ -192,7 +189,7 @@ class GaertenDerWeltOverviewPageScraperTest {
 
     @Test
     fun `keeps the stamped night of a show listed over several nights`() {
-        val droneShow = scraper.scrape(fixture("gaertenderwelt-overview-runs-page2.html"), LISTING_URL).single { it.title.startsWith("Drone Art Show") }
+        val droneShow = scraper.scrape(fixtureDocument(runsPage2Html, LISTING_URL), LISTING_URL).single { it.title.startsWith("Drone Art Show") }
 
         // "22.10.2026 - 24.10.2026" under "Konzerte": each night is its own show.
         droneShow.eventType shouldBe EventType.CONCERT.name

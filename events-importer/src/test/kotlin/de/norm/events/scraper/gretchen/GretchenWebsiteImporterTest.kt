@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -26,12 +28,7 @@ class GretchenWebsiteImporterTest {
     @BeforeEach
     fun setUp() {
         importer = GretchenWebsiteImporter(htmlFetcher)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/gretchen/gretchen-overview.html")!!
-                .bufferedReader()
-                .readText()
-        val document = Jsoup.parse(html, sourceUrl)
+        val document = fixtureDocument("gretchen/gretchen-overview.html", sourceUrl)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
@@ -47,11 +44,7 @@ class GretchenWebsiteImporterTest {
     fun `takes the ticket shop the TICKETS popup names`() =
         runTest {
             // The popup of 15 Years GRETCHEN: NATALIA DOCO on 2026-09-30: tixforgigs first, Resident Advisor second.
-            val popup =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/gretchen/gretchen-ticket-popup.html")!!
-                    .bufferedReader()
-                    .readText()
+            val popup = fixtureText("gretchen/gretchen-ticket-popup.html")
             coEvery { htmlFetcher.postForm(POPUP_URL, match { it["list_id"] == "3497" }) } returns popup
 
             val result = importer.importEvents(sourceUrl) as ImportResult.Success

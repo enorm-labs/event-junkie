@@ -1,6 +1,7 @@
 package de.norm.events.scraper.friedrichstadtpalast
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -20,12 +21,7 @@ class FriedrichstadtPalastGastspielePageScraperTest {
     private val baseUrl = "https://www.palast.berlin/gastspiele/"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/friedrichstadtpalast/friedrichstadtpalast-gastspiele.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("friedrichstadtpalast/friedrichstadtpalast-gastspiele.html", baseUrl), baseUrl)
     }
 
     private fun show(title: String) = events.first { it.title == title }

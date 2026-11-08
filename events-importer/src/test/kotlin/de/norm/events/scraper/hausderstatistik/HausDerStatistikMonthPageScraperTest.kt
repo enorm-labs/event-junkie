@@ -1,11 +1,11 @@
 package de.norm.events.scraper.hausderstatistik
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalTime
@@ -13,19 +13,12 @@ import java.time.LocalTime
 class HausDerStatistikMonthPageScraperTest {
     private val scraper = HausDerStatistikMonthPageScraper()
     private val monthUrl = "https://hausderstatistik.org/programm/?typ=veranstaltung&monat%5B%5D=2026-10"
-
-    private fun fixture(name: String): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/hausderstatistik/$name")!!
-                .bufferedReader()
-                .readText(),
-            monthUrl
-        )
+    private val octoberHtml = "hausderstatistik/hausderstatistik-2026-10.html"
+    private val entryHtml = "hausderstatistik/hausderstatistik-entry.html"
 
     @Test
     fun `reads the concert and the talk and drops the weekly get-together`() {
-        val events = scraper.scrape(fixture("hausderstatistik-2026-10.html"), monthUrl)
+        val events = scraper.scrape(fixtureDocument(octoberHtml, monthUrl), monthUrl)
 
         events.map { it.title } shouldContainExactly
             listOf("Matthias Mollner – „Fighters in the Crash Zone“", "lovetempo (NYC / Mattie Safer of The Rapture) + Moriah Plaza")
@@ -33,7 +26,7 @@ class HausDerStatistikMonthPageScraperTest {
 
     @Test
     fun `reads every field of a concert row`() {
-        val concert = scraper.scrape(fixture("hausderstatistik-2026-10.html"), monthUrl).single { it.title.startsWith("lovetempo") }
+        val concert = scraper.scrape(fixtureDocument(octoberHtml, monthUrl), monthUrl).single { it.title.startsWith("lovetempo") }
 
         concert.eventType shouldBe EventType.CONCERT.name
         concert.eventDate shouldBe LocalDate.parse("2026-10-23")
@@ -47,7 +40,7 @@ class HausDerStatistikMonthPageScraperTest {
 
     @Test
     fun `types a talk as a reading without acts`() {
-        val talk = scraper.scrape(fixture("hausderstatistik-2026-10.html"), monthUrl).single { it.title.startsWith("Matthias Mollner") }
+        val talk = scraper.scrape(fixtureDocument(octoberHtml, monthUrl), monthUrl).single { it.title.startsWith("Matthias Mollner") }
 
         talk.eventType shouldBe EventType.READING.name
         talk.description shouldBe
@@ -74,7 +67,7 @@ class HausDerStatistikMonthPageScraperTest {
 
     @Test
     fun `drops workshops, meetings and cooking from the whole programme`() {
-        val titles = scraper.scrape(fixture("hausderstatistik-entry.html"), monthUrl).map { it.title }
+        val titles = scraper.scrape(fixtureDocument(entryHtml, monthUrl), monthUrl).map { it.title }
 
         titles.none { it.contains("Werkstatt", ignoreCase = true) || it.contains("Gartenarbeit") || it.contains("Potluck") } shouldBe true
         titles.none { it == "PreciousPlasticBerlin" || it == "Open Burner Embassy" } shouldBe true

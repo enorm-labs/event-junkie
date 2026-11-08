@@ -1,6 +1,7 @@
 package de.norm.events.scraper.gaertenderwelt
 
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -8,7 +9,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -26,21 +26,9 @@ import java.time.LocalTime
 class GaertenDerWeltDetailPageScraperTest {
     private val scraper = GaertenDerWeltDetailPageScraper()
 
-    private fun fixture(
-        name: String,
-        sourceUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/gaertenderwelt/$name")!!
-                .bufferedReader()
-                .readText(),
-            sourceUrl
-        )
-
     @Test
     fun `lifts every labelled paragraph out of a concert page`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-concert.html", CONCERT_URL), CONCERT_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert.html", CONCERT_URL), CONCERT_URL).shouldNotBeNull()
 
         event.title shouldBe "Agnes Obel"
         event.doorsTime shouldBe LocalTime.of(17, 30)
@@ -59,7 +47,7 @@ class GaertenDerWeltDetailPageScraperTest {
 
     @Test
     fun `keeps the metadata paragraphs out of the description`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-concert.html", CONCERT_URL), CONCERT_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert.html", CONCERT_URL), CONCERT_URL).shouldNotBeNull()
         val description = event.description.shouldNotBeNull()
 
         description shouldContain "Die dänische Ausnahmekünstlerin"
@@ -71,7 +59,7 @@ class GaertenDerWeltDetailPageScraperTest {
 
     @Test
     fun `leaves the date unresolved so the listing stamp decides`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-concert.html", CONCERT_URL), CONCERT_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert.html", CONCERT_URL), CONCERT_URL).shouldNotBeNull()
 
         // The page renders a year-less "Samstag, 15.08." — the URL stamp is the real date.
         event.eventDate shouldBe UNRESOLVED_EVENT_DATE
@@ -81,7 +69,7 @@ class GaertenDerWeltDetailPageScraperTest {
 
     @Test
     fun `parses a single-price page and keeps its pricing note`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-quiz.html", QUIZ_URL), QUIZ_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-quiz.html", QUIZ_URL), QUIZ_URL).shouldNotBeNull()
 
         event.title shouldBe "Quiz Night Show - Gärten der Welt"
         event.pricePresale shouldBe BigDecimal("18")
@@ -93,7 +81,7 @@ class GaertenDerWeltDetailPageScraperTest {
 
     @Test
     fun `reads a price the park labelled Kosten rather than Tickets`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
 
         event.title shouldBe "KARAT live in der Arena"
         event.pricePresale shouldBe BigDecimal("47.00")
@@ -104,7 +92,7 @@ class GaertenDerWeltDetailPageScraperTest {
     @Test
     fun `does not price a free event at the park ticket it names on top`() {
         val html =
-            fixture("gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL)
+            fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL)
                 .outerHtml()
                 .replace("Tickets ab 47,00€", "die Veranstaltung ist kostenfrei (zzgl. Parkeintritt: ab 17.00 Uhr gilt unser Feierabend-Ticket für 5,50 Euro)")
         val event = scraper.scrape(Jsoup.parse(html, KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
@@ -115,7 +103,7 @@ class GaertenDerWeltDetailPageScraperTest {
 
     @Test
     fun `reads a doors time the park wrote without minutes`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
 
         // The page says "Einlass: 18 Uhr", where the concert page says "ab 17:30 Uhr".
         event.doorsTime shouldBe LocalTime.of(18, 0)
@@ -136,7 +124,7 @@ class GaertenDerWeltDetailPageScraperTest {
         doors: String?
     ) {
         val html =
-            fixture("gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL)
+            fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL)
                 .outerHtml()
                 .replace("<strong>Einlass: </strong>18 Uhr", "<strong>Einlass: </strong>$einlass")
         val event = scraper.scrape(Jsoup.parse(html, KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
@@ -146,21 +134,21 @@ class GaertenDerWeltDetailPageScraperTest {
 
     @Test
     fun `takes the doors time rather than the start time when the page lists both on one line`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-quiz.html", QUIZ_URL), QUIZ_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-quiz.html", QUIZ_URL), QUIZ_URL).shouldNotBeNull()
 
         event.doorsTime shouldBe LocalTime.of(17, 0)
     }
 
     @Test
     fun `drops the contact mailbox from the description`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-quiz.html", QUIZ_URL), QUIZ_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-quiz.html", QUIZ_URL), QUIZ_URL).shouldNotBeNull()
 
         event.description.shouldNotBeNull() shouldNotContain "besucherzentrum@gaertenderwelt.de"
     }
 
     @Test
     fun `parses a page that names no price, no doors time and no promoter`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-exhibition.html", EXHIBITION_URL), EXHIBITION_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-exhibition.html", EXHIBITION_URL), EXHIBITION_URL).shouldNotBeNull()
 
         event.title shouldBe "Zwischen Himmel und Erde: Ausstellung"
         event.subtitle shouldBe "Ausstellung der Frauen-Kunst-Karawane"
@@ -175,7 +163,7 @@ class GaertenDerWeltDetailPageScraperTest {
 
     @Test
     fun `reads a promoter line that follows the price on the Tickets paragraph`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-epic-symphony.html", EPIC_URL), EPIC_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-epic-symphony.html", EPIC_URL), EPIC_URL).shouldNotBeNull()
 
         event.promoters shouldContainExactly listOf("Ovation Events GmbH")
         event.pricePresale shouldBe BigDecimal("42.00")
@@ -187,7 +175,7 @@ class GaertenDerWeltDetailPageScraperTest {
 
     @Test
     fun `reads a promoter line that follows the doors time on the Einlass paragraph`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-stereoact.html", STEREOACT_URL), STEREOACT_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-stereoact.html", STEREOACT_URL), STEREOACT_URL).shouldNotBeNull()
 
         event.promoters shouldContainExactly listOf("Semmel Concerts Entertainment GmbH")
         event.doorsTime shouldBe LocalTime.of(18, 0)
@@ -197,7 +185,7 @@ class GaertenDerWeltDetailPageScraperTest {
 
     @Test
     fun `reads a promoter line below two Einlass lines and keeps the first of them`() {
-        val event = scraper.scrape(fixture("gaertenderwelt-detail-mega-90er.html", MEGA_90ER_URL), MEGA_90ER_URL).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-mega-90er.html", MEGA_90ER_URL), MEGA_90ER_URL).shouldNotBeNull()
 
         // "HB Music, Hendrik Büring": the part after the comma is the contact, as on the Loft Concert line.
         event.promoters shouldContainExactly listOf("HB Music")
@@ -210,7 +198,7 @@ class GaertenDerWeltDetailPageScraperTest {
     @Test
     fun `starts no field inside an unlabelled prose paragraph`() {
         val html =
-            fixture("gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL)
+            fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL)
                 .outerHtml()
                 .replace("Die Berliner Kultband KARAT", "Einleitung<br>Veranstalter: kein Name<br>Die Berliner Kultband KARAT")
         val event = scraper.scrape(Jsoup.parse(html, KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
@@ -229,7 +217,7 @@ class GaertenDerWeltDetailPageScraperTest {
     fun `returns null for a detail URL that carries no date stamp`() {
         val unstamped = "https://www.gaertenderwelt.de/events/veranstaltungen/detail/agnes-obel/"
 
-        scraper.scrape(fixture("gaertenderwelt-detail-concert.html", unstamped), unstamped).shouldBeNull()
+        scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert.html", unstamped), unstamped).shouldBeNull()
     }
 
     private companion object {

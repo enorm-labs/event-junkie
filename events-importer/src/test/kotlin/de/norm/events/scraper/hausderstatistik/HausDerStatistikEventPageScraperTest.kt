@@ -1,6 +1,7 @@
 package de.norm.events.scraper.hausderstatistik
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -14,17 +15,6 @@ import java.time.LocalTime
 
 class HausDerStatistikEventPageScraperTest {
     private val scraper = HausDerStatistikEventPageScraper()
-
-    private fun page(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/hausderstatistik/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
 
     private fun listed(
         slug: String,
@@ -42,7 +32,7 @@ class HausDerStatistikEventPageScraperTest {
     fun `reads the text, the doors and show times and the picture of a concert`() {
         val listed = listed("lovetempo-nyc-mattie-safer-of-the-rapture-moriah-plaza", "2026-10-23")
 
-        val event = scraper.scrape(listed, page("hausderstatistik-event-lovetempo.html", listed.sourceUrl)).shouldNotBeNull()
+        val event = scraper.scrape(listed, fixtureDocument("hausderstatistik/hausderstatistik-event-lovetempo.html", listed.sourceUrl)).shouldNotBeNull()
 
         val description = event.description.shouldNotBeNull()
         description shouldStartWith "lovetempo is the soul-drenched"
@@ -57,7 +47,7 @@ class HausDerStatistikEventPageScraperTest {
     fun `reads the price note and keeps the listed start when no show time is stated`() {
         val listed = listed("matthias-mollner-fighters-in-the-crash-zone", "2026-10-16")
 
-        val event = scraper.scrape(listed, page("hausderstatistik-event-mollner.html", listed.sourceUrl)).shouldNotBeNull()
+        val event = scraper.scrape(listed, fixtureDocument("hausderstatistik/hausderstatistik-event-mollner.html", listed.sourceUrl)).shouldNotBeNull()
 
         event.priceNote shouldBe "freier Eintritt"
         event.doorsTime.shouldBeNull()

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.havanna
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,16 +19,7 @@ class HavannaOverviewPageScraperTest {
     private val baseUrl = "https://www.havanna-berlin.de/events"
     private val scraper = HavannaOverviewPageScraper()
 
-    private fun overview() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/havanna/havanna-overview.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
-    private val links by lazy { scraper.scrape(overview(), baseUrl) }
+    private val links by lazy { scraper.scrape(fixtureDocument("havanna/havanna-overview.html", baseUrl), baseUrl) }
 
     @Test
     fun `discovers the three weekly night pages in page order`() {

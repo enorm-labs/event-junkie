@@ -1,5 +1,6 @@
 package de.norm.events.scraper.galilaeakirche
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -13,7 +14,7 @@ import java.time.LocalTime
 class GalilaeakircheEventPageScraperTest {
     private val scraper = GalilaeakircheEventPageScraper()
 
-    private fun scrape(name: String) = scraper.scrape(document(name), url(name))!!
+    private fun scrape(name: String) = scraper.scrape(fixtureDocument("galilaeakirche/galilaeakirche-event-$name.html", url(name)), url(name))!!
 
     @Test
     fun `reads the doors time, the box-office price and the band text`() {
@@ -77,13 +78,4 @@ class GalilaeakircheEventPageScraperTest {
     }
 
     private fun url(name: String) = "https://galilaea-kirche.de/event/$name/"
-
-    private fun document(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/galilaeakirche/galilaeakirche-event-$name.html")!!
-                .bufferedReader()
-                .readText(),
-            url(name)
-        )
 }

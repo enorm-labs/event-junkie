@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -27,12 +28,7 @@ class HeidegluehenMonthPageScraperTest {
     private val sourceUrl = "https://heidegluehen.berlin/monatsvorschau/"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/heidegluehen/heidegluehen-monatsvorschau.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
+        scraper.scrape(fixtureDocument("heidegluehen/heidegluehen-monatsvorschau.html", sourceUrl), sourceUrl)
     }
 
     private fun event(date: LocalDate): ScrapedEvent = events.first { it.eventDate == date }

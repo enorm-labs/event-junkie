@@ -6,6 +6,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -36,18 +38,6 @@ class GaertenDerWeltWebsiteImporterTest {
     private lateinit var importer: GaertenDerWeltWebsiteImporter
     private val htmlFetcher: HtmlFetcher = mockk()
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/gaertenderwelt/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     private fun emptyListing(baseUrl: String): Document =
         Jsoup.parse("""<html><body><div class="tx-events2"><div class="list"></div></div></body></html>""", baseUrl)
 
@@ -56,10 +46,13 @@ class GaertenDerWeltWebsiteImporterTest {
         importer = GaertenDerWeltWebsiteImporter(htmlFetcher)
         // Anything not stubbed below — every detail page but the concert — degrades to listing data.
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
-        coEvery { htmlFetcher.fetchDocument(ENTRY_URL) } returns fixture("gaertenderwelt-overview.html", ENTRY_URL)
-        coEvery { htmlFetcher.fetchDocument(PAGE2_URL) } returns fixture("gaertenderwelt-overview-page2.html", PAGE2_URL)
-        coEvery { htmlFetcher.fetchDocument(PAGE3_URL) } returns fixture("gaertenderwelt-overview-last.html", PAGE3_URL)
-        coEvery { htmlFetcher.fetchDocument(CONCERT_URL) } returns fixture("gaertenderwelt-detail-concert.html", CONCERT_URL)
+        stubFetcher(
+            ENTRY_URL to "gaertenderwelt/gaertenderwelt-overview.html",
+            PAGE2_URL to "gaertenderwelt/gaertenderwelt-overview-page2.html",
+            PAGE3_URL to "gaertenderwelt/gaertenderwelt-overview-last.html",
+            CONCERT_URL to "gaertenderwelt/gaertenderwelt-detail-concert.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test
@@ -141,7 +134,7 @@ class GaertenDerWeltWebsiteImporterTest {
                 title: String,
                 teaser: String
             ): Document {
-                val page = fixture("gaertenderwelt-detail-concert.html", CONCERT_URL)
+                val page = fixtureDocument("gaertenderwelt/gaertenderwelt-detail-concert.html", CONCERT_URL)
                 page.selectFirst(".tx-dreipc-parkevents-single h1")!!.text(title)
                 page.selectFirst(".tx-dreipc-parkevents-single p.lead")!!.text(teaser)
                 page.select(".tx-dreipc-parkevents-single p.textNormal").filter { it.text().startsWith("Support") }.forEach { it.remove() }
@@ -251,7 +244,7 @@ class GaertenDerWeltWebsiteImporterTest {
                 )
             coEvery { htmlFetcher.fetchDocument(ENTRY_URL) } returns listing
             val firstDay = "${ENTRY_URL}detail/2026-09-01_0900/zwischen-himmel-und-erde/"
-            coEvery { htmlFetcher.fetchDocument(firstDay) } returns fixture("gaertenderwelt-detail-exhibition.html", firstDay)
+            stubFetcher(firstDay to "gaertenderwelt/gaertenderwelt-detail-exhibition.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
 
@@ -269,9 +262,12 @@ class GaertenDerWeltWebsiteImporterTest {
     @Test
     fun `importEvents keeps an exhibition listed with its whole run as one event through the detail merge`() =
         runTest {
-            coEvery { htmlFetcher.fetchDocument(ENTRY_URL) } returns fixture("gaertenderwelt-overview-runs.html", ENTRY_URL)
+            stubFetcher(
+                ENTRY_URL to "gaertenderwelt/gaertenderwelt-overview-runs.html",
+                RUN_URL to "gaertenderwelt/gaertenderwelt-detail-exhibition.html",
+                fetcher = htmlFetcher
+            )
             coEvery { htmlFetcher.fetchDocument(PAGE2_URL) } returns emptyListing(PAGE2_URL)
-            coEvery { htmlFetcher.fetchDocument(RUN_URL) } returns fixture("gaertenderwelt-detail-exhibition.html", RUN_URL)
 
             val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
             val run = result.events.single { it.sourceUrl == RUN_URL }

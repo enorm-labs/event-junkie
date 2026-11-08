@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -14,7 +15,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -30,26 +30,17 @@ class HausDerStatistikWebsiteImporterTest {
 
     private fun monthUrl(month: String) = "$entryUrl?typ=veranstaltung&monat%5B%5D=$month"
 
-    private fun fixture(
-        name: String,
-        url: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/hausderstatistik/$name")!!
-                .bufferedReader()
-                .readText(),
-            url
-        )
-
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("hausderstatistik-entry.html", entryUrl)
         months.drop(1).forEach { month ->
             coEvery { htmlFetcher.fetchDocument(monthUrl(month)) } returns Jsoup.parse("<div class='listing'></div>", monthUrl(month))
         }
-        coEvery { htmlFetcher.fetchDocument(monthUrl("2026-10")) } returns fixture("hausderstatistik-2026-10.html", monthUrl("2026-10"))
-        coEvery { htmlFetcher.fetchDocument(concertUrl) } returns fixture("hausderstatistik-event-lovetempo.html", concertUrl)
+        stubFetcher(
+            entryUrl to "hausderstatistik/hausderstatistik-entry.html",
+            monthUrl("2026-10") to "hausderstatistik/hausderstatistik-2026-10.html",
+            concertUrl to "hausderstatistik/hausderstatistik-event-lovetempo.html",
+            fetcher = htmlFetcher
+        )
         coEvery { htmlFetcher.fetchDocument(talkUrl) } throws HttpFetchException(404, talkUrl)
     }
 

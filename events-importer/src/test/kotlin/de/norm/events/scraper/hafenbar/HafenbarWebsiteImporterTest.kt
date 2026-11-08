@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -27,21 +28,13 @@ class HafenbarWebsiteImporterTest {
     private val fridayUrl = "https://www.hafenbar-berlin.de/schlager-party-berlin/"
     private val saturdayUrl = "https://www.hafenbar-berlin.de/kaptains-club-party-berlin/"
 
-    private fun document(
-        fixture: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/hafenbar/$fixture")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetchDocument(fridayUrl) } returns document("hafenbar-freitag.html", fridayUrl)
-        coEvery { htmlFetcher.fetchDocument(saturdayUrl) } returns document("hafenbar-samstag.html", saturdayUrl)
+        stubFetcher(
+            fridayUrl to "hafenbar/hafenbar-freitag.html",
+            saturdayUrl to "hafenbar/hafenbar-samstag.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test
