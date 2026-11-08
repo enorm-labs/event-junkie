@@ -6,6 +6,7 @@ import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.PRESENTED_BY_WORDS
+import de.norm.events.scraper.SCRAPER_JSON_SNAKE_CASE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -25,9 +26,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.PropertyNamingStrategies
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -62,15 +60,6 @@ private const val FESTSAAL_PROGRAMM_BASE = "https://$FESTSAAL_PUBLIC_HOST/de/pro
 class FestsaalApiScraper {
     private val logger = KotlinLogging.logger {}
 
-    // Maps the API's snake_case fields onto camelCase DTO properties, so no per-field
-    // @JsonProperty. Unknown fields are ignored (Jackson 3 default).
-    private val jsonMapper: JsonMapper =
-        JsonMapper
-            .builder()
-            .addModule(kotlinModule())
-            .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-            .build()
-
     /**
      * Parses every event from the Wagtail API listing response [json].
      *
@@ -82,7 +71,7 @@ class FestsaalApiScraper {
         logger.info { "Found ${items.size()} event(s) in Festsaal API response" }
 
         return items.mapSkippingFailures(logger, "Festsaal event") { node ->
-            parseEvent(jsonMapper.treeToValue(node, FestsaalEventNode::class.java))
+            parseEvent(SCRAPER_JSON_SNAKE_CASE.treeToValue(node, FestsaalEventNode::class.java))
         }
     }
 
@@ -91,7 +80,7 @@ class FestsaalApiScraper {
     private fun parseItems(json: String): JsonNode? {
         val root =
             try {
-                jsonMapper.readTree(json)
+                SCRAPER_JSON_SNAKE_CASE.readTree(json)
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse Festsaal Wagtail API response" }
                 return null

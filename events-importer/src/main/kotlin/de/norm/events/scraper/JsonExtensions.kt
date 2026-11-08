@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import tools.jackson.databind.JsonNode
+import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 
@@ -23,4 +24,15 @@ val SCRAPER_JSON: JsonMapper =
     JsonMapper
         .builder()
         .addModule(kotlinModule())
+        .build()
+
+/**
+ * [SCRAPER_JSON] with the snake_case naming strategy, for an API that names its fields in snake_case
+ * and a DTO that names its properties in camelCase: no `@JsonProperty` per field. A key the strategy
+ * cannot derive, one with a leading underscore or a colon, still names itself at the property.
+ */
+val SCRAPER_JSON_SNAKE_CASE: JsonMapper =
+    SCRAPER_JSON
+        .rebuild()
+        .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
         .build()
