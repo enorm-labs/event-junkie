@@ -42,7 +42,7 @@ import java.time.LocalTime
  * applied by [AbstractBogen47WebsiteImporter]; keeping the id beside the event keeps the parser
  * I/O-free.
  */
-internal data class Bogen47Entry(
+data class Bogen47Entry(
     val event: ScrapedEvent,
     val featuredMediaId: Long?
 )
@@ -52,7 +52,7 @@ internal data class Bogen47Entry(
  * is ordered newest-first *by event date* (see [Bogen47ApiScraper]), so a page whose oldest event
  * is past is the last one worth reading.
  */
-internal data class Bogen47Page(
+data class Bogen47Page(
     val entries: List<Bogen47Entry>,
     override val postCount: Int,
     val oldestDate: LocalDate?

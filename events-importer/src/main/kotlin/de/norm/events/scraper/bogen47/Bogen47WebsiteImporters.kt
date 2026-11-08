@@ -2,16 +2,17 @@ package de.norm.events.scraper.bogen47
 
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
+import de.norm.events.scraper.AbstractWpRestImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.WalkedListing
+import de.norm.events.scraper.WpRestWalk
 import de.norm.events.scraper.querySeparator
-import de.norm.events.scraper.walkWpRestPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -46,27 +47,28 @@ abstract class AbstractBogen47WebsiteImporter(
     eventTypes: Map<String, String>,
     /** Clock deciding which events are still upcoming; override in tests. */
     private val clock: Clock
-) : EventImporter {
+) : AbstractWpRestImporter<Bogen47Entry, Bogen47Page>(apiClient, PER_PAGE, MAX_PAGES) {
     private val logger = KotlinLogging.logger {}
 
     private val apiScraper = Bogen47ApiScraper(eventSource, eventsUrl, eventTypes, clock)
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
+    override fun walk(url: String): WpRestWalk<Bogen47Entry, Bogen47Page> {
         val today = LocalDate.now(clock)
         // Ordered by event date, so a page reaching the past holds no more upcoming events.
-        val listing =
-            apiClient.walkWpRestPages(eventSource, { buildListingUrl(url, it) }, PER_PAGE, MAX_PAGES, apiScraper::scrapePage) { page ->
-                page.oldestDate?.let { it < today } == true
-            }
-
-        val events = withPosters(listing.items.distinctBy { it.event.sourceId }, url)
-        logger.info { "Scraped ${events.size} upcoming event(s) for $eventSource" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = listing.complete)
+        return WpRestWalk({ buildListingUrl(url, it) }, apiScraper::scrapePage) { page ->
+            page.oldestDate?.let { it < today } == true
+        }
     }
+
+    override suspend fun toEvents(
+        listing: WalkedListing<Bogen47Entry>,
+        url: String
+    ): List<ScrapedEvent> = withPosters(listing.items.distinctBy { it.event.sourceId }, url)
+
+    override fun scrapedMessage(
+        events: List<ScrapedEvent>,
+        listing: WalkedListing<Bogen47Entry>
+    ): String = "Scraped ${events.size} upcoming event(s) for $eventSource"
 
     /** Resolves the entries' `featured_media` ids in one request and applies the URLs to the events. */
     private suspend fun withPosters(

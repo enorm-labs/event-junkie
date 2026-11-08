@@ -1,16 +1,17 @@
 package de.norm.events.scraper.madameclaude
 
 import de.norm.events.common.BERLIN
+import de.norm.events.scraper.AbstractWpRestImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.WalkedListing
+import de.norm.events.scraper.WpRestWalk
 import de.norm.events.scraper.querySeparator
-import de.norm.events.scraper.walkWpRestPages
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
 import java.time.LocalDate
@@ -25,7 +26,7 @@ import java.time.format.DateTimeFormatter
  * priority 1 in ADR-007 §"Selector Strategy":
  * 1. Build the query from the configured API base ([buildRequestUrl]) — upcoming `event`s only
  * (`after=<today>`), ordered by date, featured image embedded.
- * 2. Walk its pages via [walkWpRestPages]; the upcoming programme usually fits the first.
+ * 2. Walk its pages via [de.norm.events.scraper.walkWpRestPages]; the upcoming programme usually fits the first.
  * 3. Parse each into [de.norm.events.scraper.ScrapedEvent]s via [MadameClaudeApiScraper].
  *
  * The list endpoint returns the full history (past included), so `after` restricts it to
@@ -38,10 +39,8 @@ import java.time.format.DateTimeFormatter
  */
 @Component
 class MadameClaudeWebsiteImporter(
-    private val apiClient: ApiClient
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    apiClient: ApiClient
+) : AbstractWpRestImporter<ScrapedEvent, MadameClaudePage>(apiClient, PER_PAGE, MAX_PAGES) {
     override val eventSource: EventSource = EventSource.MADAME_CLAUDE
 
     private val apiScraper = MadameClaudeApiScraper()
@@ -49,20 +48,20 @@ class MadameClaudeWebsiteImporter(
     /** Berlin-local clock so the `after` cut-off is start of the venue's own day, not UTC. */
     private val clock: Clock = Clock.system(BERLIN)
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
+    override fun walk(url: String): WpRestWalk<ScrapedEvent, MadameClaudePage> {
         val after = LocalDate.now(clock).atStartOfDay().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        val listing = apiClient.walkWpRestPages(eventSource, { buildRequestUrl(url, after, it) }, PER_PAGE, MAX_PAGES, apiScraper::scrapePage)
-        val events = listing.items.distinctBy { it.sourceId }
-        logger.info { "Scraped ${events.size} event(s) from Madame Claude" }
-
-        // No conditional-cache support here; ETag / Last-Modified are always null and change
-        // detection relies on idempotent upserts.
-        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = listing.complete)
+        return WpRestWalk({ buildRequestUrl(url, after, it) }, apiScraper::scrapePage)
     }
+
+    override suspend fun toEvents(
+        listing: WalkedListing<ScrapedEvent>,
+        url: String
+    ): List<ScrapedEvent> = listing.items.distinctBy { it.sourceId }
+
+    override fun scrapedMessage(
+        events: List<ScrapedEvent>,
+        listing: WalkedListing<ScrapedEvent>
+    ): String = "Scraped ${events.size} event(s) from Madame Claude"
 
     /**
      * The WP REST `event` query for one [page] from the configured API base [baseUrl]. Ordering, page size,
