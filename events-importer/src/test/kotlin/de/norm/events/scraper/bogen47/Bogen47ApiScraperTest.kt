@@ -6,6 +6,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -29,13 +30,7 @@ class Bogen47ApiScraperTest {
     private val clock: Clock = Clock.fixed(LocalDate.of(2026, 8, 1).atStartOfDay(BERLIN).toInstant(), BERLIN)
     private val scraper = Bogen47ApiScraper(EventSource.LARK, "https://larkberlin.com/events/", LARK_EVENT_TYPES, clock)
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/bogen47/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private val page: Bogen47Page by lazy { scraper.scrapePage(fixture("lark-events.json")) }
+    private val page: Bogen47Page by lazy { scraper.scrapePage(fixtureText("bogen47/lark-events.json")) }
     private val events: List<ScrapedEvent> by lazy { page.entries.map { it.event } }
 
     private fun eventTitled(title: String): ScrapedEvent = events.first { it.title == title }
@@ -176,7 +171,7 @@ class Bogen47ApiScraperTest {
         // Post 7604 as the API served it on 2026-10-15: the bullets come with a blank line between each.
         val event =
             scraper
-                .scrapePage(fixture("lark-event-kulturschocktherapie.json"))
+                .scrapePage(fixtureText("bogen47/lark-event-kulturschocktherapie.json"))
                 .entries
                 .single()
                 .event
@@ -361,7 +356,7 @@ class Bogen47ApiScraperTest {
 
     @Test
     fun `parseMedia maps attachment ids onto image URLs`() {
-        val posters = scraper.parseMedia(fixture("lark-media.json"))
+        val posters = scraper.parseMedia(fixtureText("bogen47/lark-media.json"))
 
         posters.size shouldBe 20
         posters[7376L].shouldNotBeNull() shouldContain "larkberlin.com/wp-content/uploads/"
@@ -457,7 +452,7 @@ class Bogen47ApiScraperTest {
     private val fitzroy: List<ScrapedEvent> by lazy {
         val fitzroyClock = Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay(BERLIN).toInstant(), BERLIN)
         Bogen47ApiScraper(EventSource.FITZROY, "https://fitzroy-berlin.de/events/", emptyMap(), fitzroyClock)
-            .scrapePage(fixture("fitzroy-events.json"))
+            .scrapePage(fixtureText("bogen47/fitzroy-events.json"))
             .entries
             .map { it.event }
     }

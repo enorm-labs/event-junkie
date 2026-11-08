@@ -12,6 +12,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -41,27 +43,22 @@ class BadehausWebsiteImporterTest {
     private val drunkenUrl = "https://badehaus-berlin.com/events/drunken-swallows/"
     private val futurebaeUrl = "https://badehaus-berlin.com/events/futurebae/"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/badehaus/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = BadehausWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("badehaus-events.html"), sourceUrl),
+                document = fixtureDocument("badehaus/badehaus-events.html", sourceUrl),
                 etag = "\"bh-etag\"",
                 lastModified = "Mon, 06 Jul 2026 09:00:00 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(donnerUrl) } returns
-            Jsoup.parse(fixture("badehaus-detail-promoter.html"), donnerUrl)
-        coEvery { htmlFetcher.fetchDocument(drunkenUrl) } returns
-            Jsoup.parse(fixture("badehaus-detail-concert.html"), drunkenUrl)
+        stubFetcher(
+            donnerUrl to "badehaus/badehaus-detail-promoter.html",
+            drunkenUrl to "badehaus/badehaus-detail-concert.html",
+            fetcher = htmlFetcher
+        )
 
         // Every other detail page returns an empty document, so the importer
         // degrades to the overview data for those events.
@@ -141,8 +138,7 @@ class BadehausWebsiteImporterTest {
     fun `lets the detail page turn a VERLEGT card into a postponement`() =
         runTest {
             val foragerUrl = "https://badehaus-berlin.com/events/forager/"
-            coEvery { htmlFetcher.fetchDocument(foragerUrl) } returns
-                Jsoup.parse(fixture("badehaus-detail-postponed.html"), foragerUrl)
+            stubFetcher(foragerUrl to "badehaus/badehaus-detail-postponed.html", fetcher = htmlFetcher)
 
             val postponed = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:forager" }
             postponed.status shouldBe EventStatus.POSTPONED.name
@@ -157,8 +153,7 @@ class BadehausWebsiteImporterTest {
             before.eventType shouldBe EventType.CONCERT.name
             before.artists.map { it.name } shouldNotBe emptyList<String>()
 
-            coEvery { htmlFetcher.fetchDocument(futurebaeUrl) } returns
-                Jsoup.parse(fixture("badehaus-detail-party-twelve-hour.html"), futurebaeUrl)
+            stubFetcher(futurebaeUrl to "badehaus/badehaus-detail-party-twelve-hour.html", fetcher = htmlFetcher)
 
             val after = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:futurebae" }
             after.eventType shouldBe EventType.PARTY.name
@@ -207,8 +202,7 @@ class BadehausWebsiteImporterTest {
     @Test
     fun `types an Interactive night as other and bills no act`() =
         runTest {
-            coEvery { htmlFetcher.fetchDocument(futurebaeUrl) } returns
-                Jsoup.parse(fixture("badehaus-detail-interactive.html"), futurebaeUrl)
+            stubFetcher(futurebaeUrl to "badehaus/badehaus-detail-interactive.html", fetcher = htmlFetcher)
 
             val event = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:futurebae" }
             event.eventType shouldBe EventType.OTHER.name
@@ -218,7 +212,7 @@ class BadehausWebsiteImporterTest {
     @Test
     fun `logs an unknown category with the page's URL and keeps the card's type`() =
         runTest {
-            val page = Jsoup.parse(fixture("badehaus-detail-interactive.html"), futurebaeUrl)
+            val page = fixtureDocument("badehaus/badehaus-detail-interactive.html", futurebaeUrl)
             page.selectFirst(".post-meta a[rel~=category]").shouldNotBeNull().text("Lecture")
             coEvery { htmlFetcher.fetchDocument(futurebaeUrl) } returns page
 

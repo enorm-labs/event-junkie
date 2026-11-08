@@ -3,6 +3,7 @@ package de.norm.events.scraper.cafekoepenick
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -22,11 +23,7 @@ class CafeKoepenickWebsiteImporterTest {
     @Test
     fun `fetches the configured feed and returns its programme without validators`() =
         runTest {
-            coEvery { apiClient.fetchJson(url) } returns
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/cafekoepenick/cafe-koepenick-calendar.ics")!!
-                    .bufferedReader()
-                    .readText()
+            coEvery { apiClient.fetchJson(url) } returns fixtureText("cafekoepenick/cafe-koepenick-calendar.ics")
 
             val result = importer.importEvents(url)
 

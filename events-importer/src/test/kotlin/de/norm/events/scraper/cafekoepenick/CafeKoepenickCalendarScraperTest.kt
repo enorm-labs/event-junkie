@@ -2,6 +2,7 @@ package de.norm.events.scraper.cafekoepenick
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -17,12 +18,7 @@ class CafeKoepenickCalendarScraperTest {
         "https://export.kalender.digital/ics/2710942/25872d7326c4cadce48e/ffentlicheveranstaltungenangebote.ics?past_months=0&future_months=12"
 
     private val events: List<ScrapedEvent> by lazy {
-        val calendar =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/cafekoepenick/cafe-koepenick-calendar.ics")!!
-                .bufferedReader()
-                .readText()
-        CafeKoepenickCalendarScraper().scrape(calendar, feedUrl)
+        CafeKoepenickCalendarScraper().scrape(fixtureText("cafekoepenick/cafe-koepenick-calendar.ics"), feedUrl)
     }
 
     private fun first(title: String): ScrapedEvent = events.first { it.title == title }

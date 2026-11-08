@@ -2,6 +2,7 @@ package de.norm.events.scraper.ausland
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -14,7 +15,7 @@ import java.time.LocalTime
 
 class AuslandOverviewPageScraperTest {
     private val baseUrl = "https://ausland.berlin/program/all"
-    private val events = AuslandOverviewPageScraper().scrape(Jsoup.parse(fixture("ausland-overview.html"), baseUrl), baseUrl)
+    private val events = AuslandOverviewPageScraper().scrape(fixtureDocument("ausland/ausland-overview.html", baseUrl), baseUrl)
 
     private fun bySlug(slug: String): ScrapedEvent = events.single { it.sourceId == "ausland:$slug" }
 
@@ -95,10 +96,4 @@ class AuslandOverviewPageScraperTest {
 
         AuslandOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).shouldBeEmpty()
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/ausland/$name")!!
-            .bufferedReader()
-            .readText()
 }

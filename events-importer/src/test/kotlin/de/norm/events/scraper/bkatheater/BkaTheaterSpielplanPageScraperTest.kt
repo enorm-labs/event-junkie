@@ -1,6 +1,7 @@
 package de.norm.events.scraper.bkatheater
 
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -18,16 +19,7 @@ class BkaTheaterSpielplanPageScraperTest {
     private val url = "https://www.bka-theater.de/spielplan/"
 
     private val events by lazy {
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/bkatheater/bkatheater-spielplan.html")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            ),
-            url
-        )
+        scraper.scrape(fixtureDocument("bkatheater/bkatheater-spielplan.html", url), url)
     }
 
     @Test

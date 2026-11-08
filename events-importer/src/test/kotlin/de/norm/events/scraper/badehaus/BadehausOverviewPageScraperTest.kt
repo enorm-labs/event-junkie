@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -26,16 +27,7 @@ class BadehausOverviewPageScraperTest {
     private val scraper = BadehausOverviewPageScraper()
     private val baseUrl = "https://badehaus-berlin.com/events/"
 
-    private fun listing() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/badehaus/badehaus-events.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
-    private fun events() = scraper.scrape(listing(), baseUrl)
+    private fun events() = scraper.scrape(fixtureDocument("badehaus/badehaus-events.html", baseUrl), baseUrl)
 
     @Test
     fun `parses every event card on the listing`() {

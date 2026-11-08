@@ -6,6 +6,9 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -45,25 +48,16 @@ class BerghainWebsiteImporterTest {
     private val sourceUrl = "https://www.berghain.berlin/de/program/"
     private val butohDetailUrl = "https://www.berghain.berlin/de/event/80835/"
 
-    private fun loadFixture(path: String): String =
-        javaClass.classLoader
-            .getResourceAsStream(path)!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = BerghainWebsiteImporter(htmlFetcher, clock)
 
-        val overviewDoc = Jsoup.parse(loadFixture("scraper/berghain/berghain-overview.html"), sourceUrl)
-        coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(document = overviewDoc, etag = null, lastModified = null)
+        stubFetcher(sourceUrl to "berghain/berghain-overview.html", fetcher = htmlFetcher)
 
         // Default: an empty detail document — the scraper returns null, so the event keeps overview data.
         coEvery { htmlFetcher.fetchDocument(any()) } returns Jsoup.parse("<html><body></body></html>", sourceUrl)
         // BUTOH Batorū: the full detail snapshot, so image/prices/ticket are merged in.
-        coEvery { htmlFetcher.fetchDocument(butohDetailUrl) } returns
-            Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-full.html"), butohDetailUrl)
+        stubFetcher(butohDetailUrl to "berghain/berghain-detail-full.html", fetcher = htmlFetcher)
     }
 
     @Test
@@ -114,7 +108,7 @@ class BerghainWebsiteImporterTest {
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
                 FetchResult.Success(
-                    document = Jsoup.parse(loadFixture("scraper/berghain/berghain-overview.html"), sourceUrl),
+                    document = fixtureDocument("berghain/berghain-overview.html", sourceUrl),
                     etag = "etag-123",
                     lastModified = "Wed, 01 Jul 2026 00:00:00 GMT"
                 )
@@ -153,8 +147,11 @@ class BerghainWebsiteImporterTest {
         runTest {
             val page2 = "$sourceUrl?page=2"
             val page3 = "$sourceUrl?page=3"
-            coEvery { htmlFetcher.fetchDocument(page2) } returns Jsoup.parse(loadFixture("scraper/berghain/berghain-overview-page-2.html"), page2)
-            coEvery { htmlFetcher.fetchDocument(page3) } returns Jsoup.parse(loadFixture("scraper/berghain/berghain-overview-page-3.html"), page3)
+            stubFetcher(
+                page2 to "berghain/berghain-overview-page-2.html",
+                page3 to "berghain/berghain-overview-page-3.html",
+                fetcher = htmlFetcher
+            )
 
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
@@ -172,8 +169,7 @@ class BerghainWebsiteImporterTest {
     fun `importEvents reads Kantine as one page, since it has no Mehr button`() =
         runTest {
             val kantineUrl = "https://www.berghain.berlin/de/program/kantine-am-berghain/"
-            coEvery { htmlFetcher.fetch(kantineUrl, any(), any()) } returns
-                FetchResult.Success(document = Jsoup.parse(loadFixture("scraper/berghain/kantine-overview.html"), kantineUrl), etag = null, lastModified = null)
+            stubFetcher(kantineUrl to "berghain/kantine-overview.html", fetcher = htmlFetcher)
 
             importer.importEvents(kantineUrl).shouldBeInstanceOf<ImportResult.Success>()
 
@@ -238,8 +234,7 @@ class BerghainWebsiteImporterTest {
             val detailUrl = "https://www.berghain.berlin/de/event/80744/"
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
                 FetchResult.Success(document = Jsoup.parse(overview, sourceUrl), etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
-                Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-running-order.html"), detailUrl)
+            stubFetcher(detailUrl to "berghain/berghain-detail-running-order.html", fetcher = htmlFetcher)
 
             val result = runningOrderImporter.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
@@ -298,7 +293,7 @@ class BerghainWebsiteImporterTest {
                 }
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
                 FetchResult.Success(document = Jsoup.parse("<html><body>$overview</body></html>", sourceUrl), etag = null, lastModified = null)
-            val detail = loadFixture("scraper/berghain/berghain-detail-exhibition.html")
+            val detail = fixtureText("berghain/berghain-detail-exhibition.html")
             days.forEach { (id, date) ->
                 val url = "https://www.berghain.berlin/de/event/$id/"
                 coEvery { htmlFetcher.fetchDocument(url) } returns Jsoup.parse(detail.replace("02.10.2026", date), url)
@@ -327,7 +322,7 @@ class BerghainWebsiteImporterTest {
                 }
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
                 FetchResult.Success(document = Jsoup.parse("<html><body>$overview</body></html>", sourceUrl), etag = null, lastModified = null)
-            val detail = loadFixture("scraper/berghain/berghain-detail-exhibition.html")
+            val detail = fixtureText("berghain/berghain-detail-exhibition.html")
             // The first day's page fails; the default stub answers with an empty document (#2542).
             days.drop(1).forEach { (id, date) ->
                 val url = "https://www.berghain.berlin/de/event/$id/"

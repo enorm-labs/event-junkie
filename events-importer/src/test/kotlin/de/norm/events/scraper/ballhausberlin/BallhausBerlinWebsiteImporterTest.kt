@@ -1,13 +1,12 @@
 package de.norm.events.scraper.ballhausberlin
 
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -19,8 +18,7 @@ class BallhausBerlinWebsiteImporterTest {
     @Test
     fun `imports the dates page`() =
         runTest {
-            coEvery { htmlFetcher.fetch(BALLHAUS_BERLIN_URL, any(), any(), any()) } returns
-                FetchResult.Success(document = ballhausBerlinTermine(), etag = null, lastModified = null)
+            stubFetcher(BALLHAUS_BERLIN_URL to "ballhausberlin/ballhausberlin-termine.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(BALLHAUS_BERLIN_URL)
 
