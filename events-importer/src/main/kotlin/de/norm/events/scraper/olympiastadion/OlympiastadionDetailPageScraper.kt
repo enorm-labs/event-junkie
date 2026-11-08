@@ -1,6 +1,5 @@
 package de.norm.events.scraper.olympiastadion
 
-import de.norm.events.scraper.alternateLanguageUrl
 import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parseClockPrefix
 import org.jsoup.nodes.Document
@@ -14,9 +13,7 @@ data class OlympiastadionDetail(
     val description: String?,
     val startTime: LocalTime?,
     val doorsTime: LocalTime?,
-    val ticketUrl: String?,
-    /** The English version of the page, whose blurb is the event's second language. */
-    val englishUrl: String? = null
+    val ticketUrl: String?
 )
 
 /**
@@ -48,8 +45,7 @@ class OlympiastadionDetailPageScraper {
                 document
                     .select(".twoColTickets__right a[href]")
                     .map { it.absUrl("href") }
-                    .firstOrNull { it.startsWith("http") && URI(it).host?.endsWith(OWN_HOST) == false },
-            englishUrl = document.alternateLanguageUrl(ENGLISH)
+                    .firstOrNull { it.startsWith("http") && URI(it).host?.endsWith(OWN_HOST) == false }
         )
     }
 
@@ -69,7 +65,6 @@ class OlympiastadionDetailPageScraper {
 
     private companion object {
         const val OWN_HOST = "olympiastadion.berlin"
-        const val ENGLISH = "en"
         const val KICK_OFF = "anstoß"
         const val DOORS_LABEL = "stadionöffnung"
         val START_LABELS = listOf("beginn", "uhrzeit", "showbeginn")
