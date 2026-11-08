@@ -23,6 +23,10 @@
 # The plan is read from `tofu show -json`, never from its text, so a reworded release cannot
 # silence the refusal. `No changes` exits 0 without a prompt.
 #
+# Before the plan, every provider version the lock file pins has to be installed for this platform.
+# A missing one fails `tofu plan` with "Required plugins are not installed", which does not name the
+# fix; this names it (#4166).
+#
 # Requires: tofu, jq, and direnv with infra/.envrc allowed (it holds the credentials).
 
 set -euo pipefail
@@ -45,10 +49,11 @@ GUARDED='["hcloud_server","hcloud_volume","hcloud_primary_ip","hcloud_zone"]'
 
 STACK="${1:-}"
 case "$STACK" in
-    bootstrap) DIR="$INFRA/bootstrap" ;;
-    staging | production) DIR="$INFRA/environments/$STACK" ;;
+    bootstrap) REL="infra/bootstrap" ;;
+    staging | production) REL="infra/environments/$STACK" ;;
     *) die "expected bootstrap, staging or production, got '${STACK}'" ;;
 esac
+DIR="${EJ_STACK_DIR:-$(dirname "$INFRA")/$REL}"
 shift
 
 ALLOW_REPLACE=0
@@ -81,6 +86,21 @@ done
 
 command -v jq >/dev/null || die "needs jq"
 command -v direnv >/dev/null || die "needs direnv, which loads the credentials from infra/.envrc"
+command -v tofu >/dev/null || die "needs tofu"
+
+check_providers() {
+    local lock="$DIR/.terraform.lock.hcl" data="${TF_DATA_DIR:-.terraform}" platform source version
+    [ -f "$lock" ] || return 0
+    case "$data" in /*) ;; *) data="$DIR/$data" ;; esac
+    platform="$(tofu version -json | jq -r .platform)"
+    while read -r source version; do
+        [ -d "$data/providers/$source/$version/$platform" ] && continue
+        die "${STACK} has no ${source#*/} ${version} installed for ${platform}, which .terraform.lock.hcl pins. Nothing was planned. Run:
+  (cd ${REL} && tofu init)"
+    done < <(awk '/^provider "/ { gsub(/"/, "", $2); src = $2 }
+        src != "" && $1 == "version" { gsub(/"/, "", $3); print src, $3; src = "" }' "$lock")
+}
+check_providers
 
 tf() { direnv exec "$DIR" tofu -chdir="$DIR" "$@"; }
 

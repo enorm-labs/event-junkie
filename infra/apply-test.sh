@@ -5,6 +5,7 @@
 # Fakes `tofu` and `direnv` on PATH and stands in for check-capacity.sh. The fake `tofu plan` writes
 # a canned `show -json` into the plan file, `show` prints it back, and `apply` only records that it
 # ran, with its arguments. `jq` is the real one, because reading the plan is what the script exists for.
+# EJ_STACK_DIR points the script at a fake stack, whose lock file and installed providers the cases set.
 #
 # Usage: infra/apply-test.sh — reaches no network, writes only under a temp dir it removes.
 
@@ -22,8 +23,33 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 BIN="$WORK/bin"
 STATE="$WORK/state"
-mkdir -p "$BIN" "$STATE"
-export FAKE_STATE="$STATE" PATH="$BIN:$PATH" EJ_CHECK_CAPACITY="$BIN/check-capacity"
+STACK_DIR="$WORK/stack"
+PROVIDERS="$STACK_DIR/.terraform/providers/registry.opentofu.org"
+mkdir -p "$BIN" "$STATE" "$STACK_DIR"
+export FAKE_STATE="$STATE" PATH="$BIN:$PATH" EJ_CHECK_CAPACITY="$BIN/check-capacity" EJ_STACK_DIR="$STACK_DIR"
+unset TF_DATA_DIR
+
+cat >"$STACK_DIR/.terraform.lock.hcl" <<'EOF'
+# This file is maintained automatically by "tofu init".
+
+provider "registry.opentofu.org/aminueza/minio" {
+  version     = "3.3.0"
+  constraints = "~> 3.3"
+  hashes = [
+    "h1:abc=",
+  ]
+}
+
+provider "registry.opentofu.org/hetznercloud/hcloud" {
+  version     = "1.70.2"
+  constraints = "~> 1.68"
+}
+EOF
+install_providers() {
+    rm -rf "$STACK_DIR/.terraform" "$STACK_DIR/data"
+    mkdir -p "$PROVIDERS/aminueza/minio/3.3.0/test_os" "$PROVIDERS/hetznercloud/hcloud/1.70.2/test_os"
+}
+install_providers
 
 cat >"$BIN/direnv" <<'EOF'
 #!/usr/bin/env bash
@@ -32,9 +58,11 @@ exec "$@"
 EOF
 cat >"$BIN/tofu" <<'EOF'
 #!/usr/bin/env bash
-shift
+case "$1" in -chdir=*) shift ;; esac
 case "$1" in
+    version) echo '{"platform":"test_os"}' ;;
     plan)
+        touch "$FAKE_STATE/planned"
         for a in "$@"; do case "$a" in -out=*) out="${a#-out=}" ;; esac; done
         echo "$out" >"$FAKE_STATE/planfile"
         cp "$FAKE_STATE/show.json" "$out"
@@ -67,7 +95,7 @@ plan_of() {
 run() {
     local name="$1" want="$2" input="$3" got=0
     shift 3
-    rm -f "$STATE/applied" "$STATE/probed" "$STATE/planfile"
+    rm -f "$STATE/applied" "$STATE/probed" "$STATE/planfile" "$STATE/planned"
     OUT="$(printf '%s' "$input" | "$SCRIPT" "$@" 2>&1)" || got=$?
     [ "$got" -eq "$want" ] || fail "$name: exit $got, expected $want. Output: $OUT"
     if [ -s "$STATE/planfile" ] && [ -e "$(cat "$STATE/planfile")" ]; then
@@ -76,6 +104,7 @@ run() {
 }
 expect_out() { grep -qF -- "$2" <<<"$OUT" || fail "$1: no '$2' in: $OUT"; }
 applied() { [ -f "$STATE/applied" ]; }
+planned() { [ -f "$STATE/planned" ]; }
 
 SERVER="$(change hcloud_server module.environment.hcloud_server.k3s '["delete","create"]')"
 ATTACH="$(change hcloud_volume_attachment module.environment.hcloud_volume_attachment.postgres '["delete","create"]')"
@@ -160,6 +189,37 @@ applied && fail "creates and an update: applied"
 plan_of "$NEXT_SERVER" "$(change hcloud_server module.environment.hcloud_server.k3s '["create"]')"
 run "unmatched create" 3 "yes" production --yes-if-only-creates "$NEXT_RE"
 applied && fail "unmatched create: applied"
+
+# 13. A pinned version that is not installed stops it before the plan and names `tofu init`, even
+#     with an older version beside it: the shape of the hcloud 1.70.0 bump (#4166).
+plan_of "$FIREWALL"
+rm -rf "$PROVIDERS/hetznercloud/hcloud/1.70.2"
+mkdir -p "$PROVIDERS/hetznercloud/hcloud/1.68.0/test_os"
+run "provider missing" 1 "yes" staging
+expect_out "provider missing" "staging has no hetznercloud/hcloud 1.70.2 installed for test_os"
+expect_out "provider missing" "(cd infra/environments/staging && tofu init)"
+planned && fail "provider missing: planned"
+applied && fail "provider missing: applied"
+
+# 14. Installed for another platform only is not installed.
+install_providers
+mv "$PROVIDERS/aminueza/minio/3.3.0/test_os" "$PROVIDERS/aminueza/minio/3.3.0/other_os"
+run "other platform" 1 "yes" production
+expect_out "other platform" "production has no aminueza/minio 3.3.0 installed for test_os"
+planned && fail "other platform: planned"
+
+# 15. No .terraform at all, on bootstrap: the hint names bootstrap's directory.
+rm -rf "$STACK_DIR/.terraform"
+run "never initialised" 1 "yes" bootstrap
+expect_out "never initialised" "(cd infra/bootstrap && tofu init)"
+planned && fail "never initialised: planned"
+
+# 16. TF_DATA_DIR moves where the providers are looked for, relative to the stack.
+install_providers
+mv "$STACK_DIR/.terraform" "$STACK_DIR/data"
+TF_DATA_DIR=data run "data dir" 0 "yes" staging
+planned || fail "data dir: not planned"
+applied || fail "data dir: not applied"
 
 if [ "$FAILURES" -gt 0 ]; then
     echo "apply-test: $FAILURES failure(s)" >&2
