@@ -1,6 +1,7 @@
 package de.norm.events.scraper.yaam
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -14,13 +15,7 @@ import java.time.LocalTime
 
 class YaamApiScraperTest {
     private val scraper = YaamApiScraper()
-    private val page =
-        scraper.scrapePage(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/yaam/yaam-events.json")!!
-                .bufferedReader()
-                .readText()
-        )
+    private val page = scraper.scrapePage(fixtureText("yaam/yaam-events.json"))
 
     private fun event(slug: String) = page.events.single { it.sourceId == "yaam:$slug" }
 

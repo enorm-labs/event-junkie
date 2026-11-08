@@ -6,6 +6,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -35,18 +37,13 @@ class VoidClubOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-08-04T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val scraper = VoidClubOverviewPageScraper(clock)
     private val baseUrl = "https://www.void-club.de/"
+    private val overviewFixture = "voidclub/voidclub-overview.html"
     private lateinit var events: List<ScrapedEvent>
 
     @BeforeEach
     fun setUp() {
-        events = scraper.scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument(overviewFixture, baseUrl), baseUrl)
     }
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/voidclub/voidclub-overview.html")!!
-            .bufferedReader()
-            .readText()
 
     private fun event(title: String): ScrapedEvent = events.first { it.title == title }
 
@@ -178,7 +175,7 @@ class VoidClubOverviewPageScraperTest {
 
     @Test
     fun `falls back to the rendered calendar spans when the accessible label is gone`() {
-        val stripped = fixture().replace(Regex("""aria-label="(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, [^"]*""""), "")
+        val stripped = fixtureText(overviewFixture).replace(Regex("""aria-label="(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, [^"]*""""), "")
         val fallback = scraper.scrape(Jsoup.parse(stripped, baseUrl), baseUrl)
         fallback.map { it.eventDate } shouldBe events.map { it.eventDate }
     }
@@ -211,7 +208,7 @@ class VoidClubOverviewPageScraperTest {
 
     @Test
     fun `logs nothing when the label and the spans agree`() {
-        val (_, warnings) = withScraperWarnings { scraper.scrape(Jsoup.parse(fixture(), baseUrl), baseUrl) }
+        val (_, warnings) = withScraperWarnings { scraper.scrape(fixtureDocument(overviewFixture, baseUrl), baseUrl) }
 
         warnings.shouldBeEmpty()
     }

@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -11,7 +12,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -19,10 +19,14 @@ import java.time.LocalDate
 
 class VolksbuehneEventPageScraperTest {
     private val scraper = VolksbuehneEventPageScraper()
+    private val baseUri = "https://www.volksbuehne-berlin.de/"
+    private val yearWithoutSummer = "volksbuehne/volksbuehne-event-a-year-without-summer.html"
+    private val spaceAfrika = "volksbuehne/volksbuehne-event-space-afrika.html"
+    private val spaceAfrikaEn = "volksbuehne/volksbuehne-event-space-afrika-en.html"
 
     @Test
     fun `reads the text, the JSON-LD image and the schema type`() {
-        val page = scraper.scrape(page("volksbuehne-event-a-year-without-summer.html")).shouldNotBeNull()
+        val page = scraper.scrape(fixtureDocument(yearWithoutSummer, baseUri)).shouldNotBeNull()
 
         page.description.shouldNotBeNull() shouldStartWith "BEATRICE CORDUA 1943 – 2025"
         page.imageUrl.shouldNotBeNull() shouldStartWith "https://www.volksbuehne-berlin.de/media/images/"
@@ -31,8 +35,8 @@ class VolksbuehneEventPageScraperTest {
 
     @Test
     fun `reads the English page's text for the second language`() {
-        scraper.description(page("volksbuehne-event-space-afrika-en.html")).shouldNotBeNull() shouldStartWith "Some music demands our attention."
-        scraper.scrape(page("volksbuehne-event-space-afrika.html")).shouldNotBeNull().eventType shouldBe EventType.CONCERT
+        scraper.description(fixtureDocument(spaceAfrikaEn, baseUri)).shouldNotBeNull() shouldStartWith "Some music demands our attention."
+        scraper.scrape(fixtureDocument(spaceAfrika, baseUri)).shouldNotBeNull().eventType shouldBe EventType.CONCERT
     }
 
     @Test
@@ -49,7 +53,7 @@ class VolksbuehneEventPageScraperTest {
 
     @Test
     fun `reads the writer line's names`() {
-        scraper.scrape(page("volksbuehne-event-a-year-without-summer.html")).shouldNotBeNull().writers shouldContainExactly listOf("Florentina Holzinger")
+        scraper.scrape(fixtureDocument(yearWithoutSummer, baseUri)).shouldNotBeNull().writers shouldContainExactly listOf("Florentina Holzinger")
     }
 
     @Test
@@ -159,10 +163,4 @@ class VolksbuehneEventPageScraperTest {
         sourceUrl = "https://www.volksbuehne-berlin.de/produktionen/row/20261103-1830/",
         sourceId = "volksbuehne:row-20261103-1830"
     )
-
-    private fun page(name: String): Document =
-        Jsoup.parse(
-            requireNotNull(javaClass.classLoader.getResourceAsStream("scraper/volksbuehne/$name")).bufferedReader().readText(),
-            "https://www.volksbuehne-berlin.de/"
-        )
 }

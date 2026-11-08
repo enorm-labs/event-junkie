@@ -3,6 +3,7 @@ package de.norm.events.scraper.weltwirtschaft
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,11 +23,7 @@ class WeltwirtschaftWebsiteImporterTest {
     @Test
     fun `imports the one page of the programme`() =
         runTest {
-            coEvery { apiClient.fetchJson("$sourceUrl?per_page=50") } returns
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/weltwirtschaft/weltwirtschaft-events.json")!!
-                    .bufferedReader()
-                    .readText()
+            coEvery { apiClient.fetchJson("$sourceUrl?per_page=50") } returns fixtureText("weltwirtschaft/weltwirtschaft-events.json")
 
             val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
 

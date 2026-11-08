@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zku
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -16,8 +17,7 @@ class ZkuCalendarScraperTest {
     private val baseUrl = "https://www.zku-berlin.org/"
 
     private val events by lazy {
-        val html = javaClass.classLoader.getResource("scraper/zku/zku-home.html")!!.readText()
-        ZkuCalendarScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        ZkuCalendarScraper().scrape(fixtureDocument("zku/zku-home.html", baseUrl), baseUrl)
     }
 
     private fun event(title: String) = events.single { it.title.startsWith(title) }

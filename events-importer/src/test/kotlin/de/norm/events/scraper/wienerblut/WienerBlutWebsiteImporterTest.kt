@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -26,12 +27,7 @@ class WienerBlutWebsiteImporterTest {
     @Test
     fun `imports the listed gig with the page's validators`() =
         runTest {
-            val html =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/wienerblut/wienerblut-overview.html")!!
-                    .bufferedReader()
-                    .readText()
-            stub(FetchResult.Success(Jsoup.parse(html, sourceUrl), "W/\"wix\"", null))
+            stub(FetchResult.Success(fixtureDocument("wienerblut/wienerblut-overview.html", sourceUrl), "W/\"wix\"", null))
 
             val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
 

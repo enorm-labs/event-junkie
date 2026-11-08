@@ -3,6 +3,7 @@ package de.norm.events.scraper.tiffanyclub
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -21,13 +22,7 @@ import java.time.ZoneId
 class TiffanyClubOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-10-01T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val sourceUrl = "https://tiffany-berlin.de/upcoming-events/"
-    private val events = TiffanyClubOverviewPageScraper(clock).scrape(Jsoup.parse(fixture(), sourceUrl), sourceUrl)
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/tiffanyclub/tiffanyclub-overview.html")!!
-            .bufferedReader()
-            .readText()
+    private val events = TiffanyClubOverviewPageScraper(clock).scrape(fixtureDocument("tiffanyclub/tiffanyclub-overview.html", sourceUrl), sourceUrl)
 
     private fun on(
         date: LocalDate,

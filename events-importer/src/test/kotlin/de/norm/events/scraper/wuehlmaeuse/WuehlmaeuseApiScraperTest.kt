@@ -1,6 +1,7 @@
 package de.norm.events.scraper.wuehlmaeuse
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.forChildrenPhrase
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
@@ -18,12 +19,6 @@ import java.time.LocalTime
 class WuehlmaeuseApiScraperTest {
     private val scraper = WuehlmaeuseApiScraper()
 
-    private fun readFixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/wuehlmaeuse/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun ticket(
         act: String,
         programme: String
@@ -40,14 +35,14 @@ class WuehlmaeuseApiScraperTest {
         cancelled = false
     )
 
-    private val pageOne by lazy { scraper.scrapePage(readFixture("wuehlmaeuse-shop-page1.json")) }
-    private val picked by lazy { scraper.toEvents(scraper.scrapePage(readFixture("wuehlmaeuse-shop-last.json")).tickets) }
+    private val pageOne by lazy { scraper.scrapePage(fixtureText("wuehlmaeuse/wuehlmaeuse-shop-page1.json")) }
+    private val picked by lazy { scraper.toEvents(scraper.scrapePage(fixtureText("wuehlmaeuse/wuehlmaeuse-shop-last.json")).tickets) }
 
     @Test
     fun `reads a full page of tickets and says another may follow`() {
         pageOne.tickets shouldHaveSize 100
         pageOne.full shouldBe true
-        scraper.scrapePage(readFixture("wuehlmaeuse-shop-last.json")).full shouldBe false
+        scraper.scrapePage(fixtureText("wuehlmaeuse/wuehlmaeuse-shop-last.json")).full shouldBe false
     }
 
     @Test

@@ -2,6 +2,7 @@ package de.norm.events.scraper.velomax
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -27,14 +28,7 @@ class VelomaxDetailPageScraperTest {
         fixture: String,
         sourceUrl: String,
         hall: VelomaxHall
-    ): ScrapedEvent? {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/velomax/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl, hall)
-    }
+    ): ScrapedEvent? = scraper.scrape(fixtureDocument("velomax/$fixture", sourceUrl), sourceUrl, hall)
 
     @Test
     fun `reads every field from the schema-org Microdata`() {

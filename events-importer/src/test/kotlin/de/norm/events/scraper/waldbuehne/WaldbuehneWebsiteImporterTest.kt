@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -20,23 +22,12 @@ class WaldbuehneWebsiteImporterTest {
     private val sourceUrl = "https://www.waldbuehne-berlin.de/programm-und-tickets/"
     private val blink = "https://www.waldbuehne-berlin.de/event/blink-182_2027-06-08_00/"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/waldbuehne/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
-            FetchResult.Success(document = loadDocument("waldbuehne-programm.html", sourceUrl), etag = "\"v1\"", lastModified = null)
-        coEvery { htmlFetcher.fetchDocument(any()) } returns loadDocument("waldbuehne-event-no-presale.html", sourceUrl)
-        coEvery { htmlFetcher.fetchDocument(blink) } returns loadDocument("waldbuehne-event-support.html", blink)
+            FetchResult.Success(document = fixtureDocument("waldbuehne/waldbuehne-programm.html", sourceUrl), etag = "\"v1\"", lastModified = null)
+        coEvery { htmlFetcher.fetchDocument(any()) } returns fixtureDocument("waldbuehne/waldbuehne-event-no-presale.html", sourceUrl)
+        stubFetcher(blink to "waldbuehne/waldbuehne-event-support.html", fetcher = htmlFetcher)
     }
 
     @Test

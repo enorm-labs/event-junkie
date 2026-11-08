@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zitaclub
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -13,14 +14,9 @@ import java.time.LocalDate
 class ZitaClubEventPageScraperTest {
     private val scraper = ZitaClubEventPageScraper()
 
-    private fun page(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/zitaclub/$name")!!
-                .bufferedReader()
-                .readText(),
-            "https://zita-club.de/events/"
-        )
+    private val eventsUrl = "https://zita-club.de/events/"
+    private val rockPage = "zitaclub/zitaclub-event-rock-at-zita.html"
+    private val dansePage = "zitaclub/zitaclub-event-danse-macabre.html"
 
     private fun row(slug: String) =
         ScrapedEvent(
@@ -32,7 +28,7 @@ class ZitaClubEventPageScraperTest {
 
     @Test
     fun `enrich reads the tags as the genre, the price and the ticket link`() {
-        val event = scraper.enrich(row("rock-at-zita-16"), page("zitaclub-event-rock-at-zita.html")).shouldNotBeNull()
+        val event = scraper.enrich(row("rock-at-zita-16"), fixtureDocument(rockPage, eventsUrl)).shouldNotBeNull()
 
         event.genre shouldBe "Alternativ Rock, Classic Rock, Metal, Rock"
         event.pricePresale shouldBe BigDecimal("10.00")
@@ -42,7 +38,7 @@ class ZitaClubEventPageScraperTest {
     @Test
     fun `a page without tags or price leaves those fields empty and keeps its ticket link`() {
         val event =
-            scraper.enrich(row("danse-macabre-a-tribute-to-bruno-kramm"), page("zitaclub-event-danse-macabre.html")).shouldNotBeNull()
+            scraper.enrich(row("danse-macabre-a-tribute-to-bruno-kramm"), fixtureDocument(dansePage, eventsUrl)).shouldNotBeNull()
 
         event.genre.shouldBeNull()
         event.pricePresale.shouldBeNull()

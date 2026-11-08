@@ -3,6 +3,7 @@ package de.norm.events.scraper.zosch
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -19,12 +20,7 @@ class ZoschOverviewPageScraperTest {
     private val baseUrl = "https://www.zosch-berlin.de/"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/zosch/zosch-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("zosch/zosch-overview.html", baseUrl), baseUrl)
     }
 
     /** One night in the accordion markup; [bodyId] null leaves the collapse body without an id. */

@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -29,16 +30,10 @@ class ZigZagWebsiteImportersTest {
     private val hallImporter = ZigZagHallWebsiteImporter(htmlFetcher, clock)
     private val listingUrl = "https://www.zigzag-jazzclub.berlin/programmneu"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zigzag/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun stubListing() {
         coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("zigzag-programm.html"), listingUrl),
+                document = fixtureDocument("zigzag/zigzag-programm.html", listingUrl),
                 etag = "\"zigzag-etag\"",
                 lastModified = "Thu, 01 Oct 2026 08:00:00 GMT"
             )
@@ -58,7 +53,7 @@ class ZigZagWebsiteImportersTest {
     fun `keeps every hall night, although its page points away from the club`() =
         runTest {
             stubListing()
-            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("zigzag-hall-detail.html"), firstArg<String>()) }
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("zigzag/zigzag-hall-detail.html", firstArg<String>()) }
 
             val result = hallImporter.importEvents(listingUrl)
 
@@ -80,7 +75,7 @@ class ZigZagWebsiteImportersTest {
     fun `fills each night from its page and propagates conditional headers`() =
         runTest {
             stubListing()
-            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("zigzag-detail.html"), firstArg<String>()) }
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("zigzag/zigzag-detail.html", firstArg<String>()) }
 
             val result = importer.importEvents(listingUrl)
 
@@ -101,9 +96,9 @@ class ZigZagWebsiteImportersTest {
     fun `drops a night whose page names another location`() =
         runTest {
             stubListing()
-            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("zigzag-detail.html"), firstArg<String>()) }
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("zigzag/zigzag-detail.html", firstArg<String>()) }
             coEvery { htmlFetcher.fetchDocument("https://www.zigzag-jazzclub.berlin/program-mai/joelovanocoltra100") } returns
-                Jsoup.parse(fixture("zigzag-detail-elsewhere.html"))
+                fixtureDocument("zigzag/zigzag-detail-elsewhere.html")
 
             val result = importer.importEvents(listingUrl)
 
@@ -115,7 +110,7 @@ class ZigZagWebsiteImportersTest {
     fun `bills a tribute night from its page and keeps a titled night's act`() =
         runTest {
             stubListing()
-            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("zigzag-detail-tribute.html"), firstArg<String>()) }
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("zigzag/zigzag-detail-tribute.html", firstArg<String>()) }
 
             val result = importer.importEvents(listingUrl)
 
@@ -165,7 +160,7 @@ class ZigZagWebsiteImportersTest {
     fun `prices a box-office-only night at the door`() =
         runTest {
             stubListing()
-            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("zigzag-detail-jam.html"), firstArg<String>()) }
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("zigzag/zigzag-detail-jam.html", firstArg<String>()) }
 
             val result = importer.importEvents(listingUrl)
 

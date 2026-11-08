@@ -4,7 +4,9 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isForChildren
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -31,19 +33,16 @@ class UfaFabrikWebsiteImporterTest {
     private val elsaUrl = "https://ufafabrik.de/veranstaltung/40154/elsa"
     private val bozkusUrl = "https://ufafabrik.de/veranstaltung/40877/ahmet-bozkus"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/ufafabrik/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun stubPages() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(Jsoup.parse(fixture("ufafabrik-spielplan.html"), sourceUrl), "\"ufa-etag\"", null)
-        coEvery { htmlFetcher.fetchDocument(novemberUrl) } returns Jsoup.parse(fixture("ufafabrik-program-202611.html"), novemberUrl)
-        coEvery { htmlFetcher.fetchDocument(decemberUrl) } returns Jsoup.parse(fixture("ufafabrik-program-202612.html"), decemberUrl)
-        coEvery { htmlFetcher.fetchDocument(elsaUrl) } returns Jsoup.parse(fixture("ufafabrik-detail-elsa.html"), elsaUrl)
-        coEvery { htmlFetcher.fetchDocument(bozkusUrl) } returns Jsoup.parse(fixture("ufafabrik-detail-ahmet-bozkus.html"), bozkusUrl)
+            FetchResult.Success(fixtureDocument("ufafabrik/ufafabrik-spielplan.html", sourceUrl), "\"ufa-etag\"", null)
+        stubFetcher(
+            novemberUrl to "ufafabrik/ufafabrik-program-202611.html",
+            decemberUrl to "ufafabrik/ufafabrik-program-202612.html",
+            elsaUrl to "ufafabrik/ufafabrik-detail-elsa.html",
+            bozkusUrl to "ufafabrik/ufafabrik-detail-ahmet-bozkus.html",
+            fetcher = htmlFetcher
+        )
         coEvery { htmlFetcher.fetchDocument(match { it !in setOf(novemberUrl, decemberUrl, elsaUrl, bozkusUrl) }) } throws IOException("refused")
     }
 

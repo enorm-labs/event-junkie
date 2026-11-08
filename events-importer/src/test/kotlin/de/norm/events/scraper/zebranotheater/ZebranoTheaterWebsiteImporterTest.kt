@@ -4,7 +4,9 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isForChildren
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -25,16 +27,10 @@ class ZebranoTheaterWebsiteImporterTest {
     private val listingUrl = "https://www.zebrano-theater.de/programm.html"
     private val childrensUrl = "https://www.zebrano-theater.de/kinderprogramm.html"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zebranotheater/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun stubListing() {
         coEvery { htmlFetcher.fetch(listingUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("zebranotheater-programm.html"), listingUrl),
+                document = fixtureDocument("zebranotheater/zebranotheater-programm.html", listingUrl),
                 etag = "\"16b49-65dc9e685cec5\"",
                 lastModified = "Wed, 14 Oct 2026 09:53:17 GMT"
             )
@@ -58,8 +54,8 @@ class ZebranoTheaterWebsiteImporterTest {
     fun `reads the page of each evening that links one, then the children's programme, and propagates conditional headers`() =
         runTest {
             stubListing()
-            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("zebranotheater-20261125.html"), firstArg<String>()) }
-            coEvery { htmlFetcher.fetchDocument(childrensUrl) } returns Jsoup.parse(fixture("zebranotheater-kinderprogramm.html"), childrensUrl)
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("zebranotheater/zebranotheater-20261125.html", firstArg<String>()) }
+            stubFetcher(childrensUrl to "zebranotheater/zebranotheater-kinderprogramm.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(listingUrl)
 

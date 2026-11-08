@@ -7,6 +7,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -48,32 +50,26 @@ class UrbanSpreeWebsiteImporterTest {
 
     private val clock = Clock.fixed(LocalDate.of(2026, 7, 30).atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/urbanspree/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     private fun emptyListing(baseUrl: String): Document = Jsoup.parse("""<html><body><div id="pdopage"></div></body></html>""", baseUrl)
 
     @BeforeEach
     fun setUp() {
         importer = UrbanSpreeWebsiteImporter(htmlFetcher, clock)
-        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("urbanspree-overview.html", entryUrl)
-        coEvery { htmlFetcher.fetchDocument(page2Url) } returns fixture("urbanspree-overview-page2.html", page2Url)
-        coEvery { htmlFetcher.fetchDocument(page3Url) } returns fixture("urbanspree-overview-past-boundary.html", page3Url)
+        stubFetcher(
+            entryUrl to "urbanspree/urbanspree-overview.html",
+            page2Url to "urbanspree/urbanspree-overview-page2.html",
+            page3Url to "urbanspree/urbanspree-overview-past-boundary.html",
+            fetcher = htmlFetcher
+        )
         coEvery { htmlFetcher.fetchDocument(page4Url) } returns emptyListing(page4Url)
         coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } returns emptyListing(exhibitionsUrl)
         // Every detail page that is not stubbed explicitly falls back to the listing card's data.
         coEvery { htmlFetcher.fetchDocument(match { it.contains("/program/concerts/") }) } throws IllegalStateException("no fixture")
-        coEvery { htmlFetcher.fetchDocument(TWIN_NOIR_URL) } returns fixture("urbanspree-detail-concert.html", TWIN_NOIR_URL)
-        coEvery { htmlFetcher.fetchDocument(SOM_URL) } returns fixture("urbanspree-detail-cancelled.html", SOM_URL)
+        stubFetcher(
+            TWIN_NOIR_URL to "urbanspree/urbanspree-detail-concert.html",
+            SOM_URL to "urbanspree/urbanspree-detail-cancelled.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test
@@ -200,7 +196,7 @@ class UrbanSpreeWebsiteImporterTest {
     fun `importEvents appends the page parameter to an entry URL that already has a query`() =
         runTest {
             val queryEntryUrl = "https://www.urbanspree.com/program/?lang=en"
-            coEvery { htmlFetcher.fetchDocument(queryEntryUrl) } returns fixture("urbanspree-overview.html", queryEntryUrl)
+            stubFetcher(queryEntryUrl to "urbanspree/urbanspree-overview.html", fetcher = htmlFetcher)
             coEvery { htmlFetcher.fetchDocument("$queryEntryUrl&page=2") } returns emptyListing(queryEntryUrl)
             coEvery { htmlFetcher.fetchDocument("https://www.urbanspree.com/program/exhibitions/?lang=en") } returns emptyListing(queryEntryUrl)
 
@@ -223,7 +219,7 @@ class UrbanSpreeWebsiteImporterTest {
         runTest {
             coEvery { htmlFetcher.fetchDocument(entryUrl) } returns lateCard("program/concerts/urban-spree-klubnacht-005.html")
             coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
-            coEvery { htmlFetcher.fetchDocument(KLUBNACHT_URL) } returns fixture("urbanspree-detail-klubnacht.html", KLUBNACHT_URL)
+            stubFetcher(KLUBNACHT_URL to "urbanspree/urbanspree-detail-klubnacht.html", fetcher = htmlFetcher)
 
             val event =
                 importer
@@ -241,7 +237,7 @@ class UrbanSpreeWebsiteImporterTest {
         runTest {
             coEvery { htmlFetcher.fetchDocument(entryUrl) } returns lateCard("program/concerts/urban-spree-klubnacht-005.html")
             coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
-            val detail = fixture("urbanspree-detail-klubnacht.html", KLUBNACHT_URL)
+            val detail = fixtureDocument("urbanspree/urbanspree-detail-klubnacht.html", KLUBNACHT_URL)
             detail.select(".rte.tv-content p").remove()
             coEvery { htmlFetcher.fetchDocument(KLUBNACHT_URL) } returns detail
 
@@ -267,7 +263,7 @@ class UrbanSpreeWebsiteImporterTest {
                     entryUrl
                 )
             coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
-            coEvery { htmlFetcher.fetchDocument(OTHA_URL) } returns fixture("urbanspree-detail-doors-clock-first.html", OTHA_URL)
+            stubFetcher(OTHA_URL to "urbanspree/urbanspree-detail-doors-clock-first.html", fetcher = htmlFetcher)
 
             val event =
                 importer
@@ -330,7 +326,7 @@ class UrbanSpreeWebsiteImporterTest {
                 entryUrl
             )
         coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
-        coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture(detailFixture, WHOLETRAIN_URL)
+        stubFetcher(WHOLETRAIN_URL to "urbanspree/$detailFixture", fetcher = htmlFetcher)
 
         return importer
             .importEvents(entryUrl)
@@ -343,15 +339,21 @@ class UrbanSpreeWebsiteImporterTest {
 
     /** The entry URL serves the live page that held Wholetrain on 2026-11-06, between concerts of both sides of the opening. */
     private fun serveRunningExhibitionListing() {
-        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("urbanspree-overview-running-exhibition.html", entryUrl)
-        coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture("urbanspree-detail-exhibition-vernissage.html", WHOLETRAIN_URL)
+        stubFetcher(
+            entryUrl to "urbanspree/urbanspree-overview-running-exhibition.html",
+            WHOLETRAIN_URL to "urbanspree/urbanspree-detail-exhibition-vernissage.html",
+            fetcher = htmlFetcher
+        )
     }
 
     /** No card on the listing, and the live category page: nine shows, of which only Wholetrain closes after 2026-11-06. */
     private fun serveExhibitionsPageOnly() {
         coEvery { htmlFetcher.fetchDocument(entryUrl) } returns emptyListing(entryUrl)
-        coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } returns fixture("urbanspree-exhibitions.html", exhibitionsUrl)
-        coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture("urbanspree-detail-exhibition-vernissage.html", WHOLETRAIN_URL)
+        stubFetcher(
+            exhibitionsUrl to "urbanspree/urbanspree-exhibitions.html",
+            WHOLETRAIN_URL to "urbanspree/urbanspree-detail-exhibition-vernissage.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test
@@ -398,7 +400,7 @@ class UrbanSpreeWebsiteImporterTest {
                     </div></body></html>""",
                     entryUrl
                 )
-            coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture("urbanspree-detail-exhibition-vernissage.html", WHOLETRAIN_URL)
+            stubFetcher(WHOLETRAIN_URL to "urbanspree/urbanspree-detail-exhibition-vernissage.html", fetcher = htmlFetcher)
 
             val result = importerOn(LocalDate.of(2026, 11, 7)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
 
@@ -448,7 +450,7 @@ class UrbanSpreeWebsiteImporterTest {
     fun `importEvents yields one event for a card on both the listing and the exhibitions page`() =
         runTest {
             serveRunningExhibitionListing()
-            coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } returns fixture("urbanspree-exhibitions.html", exhibitionsUrl)
+            stubFetcher(exhibitionsUrl to "urbanspree/urbanspree-exhibitions.html", fetcher = htmlFetcher)
 
             val result = importerOn(LocalDate.of(2026, 11, 7)).importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
 
@@ -471,7 +473,7 @@ class UrbanSpreeWebsiteImporterTest {
     fun `importEvents does not mark a broken walk complete because the exhibitions page answered`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(page2Url) } throws RuntimeException("connection reset")
-            coEvery { htmlFetcher.fetchDocument(exhibitionsUrl) } returns fixture("urbanspree-exhibitions.html", exhibitionsUrl)
+            stubFetcher(exhibitionsUrl to "urbanspree/urbanspree-exhibitions.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
 

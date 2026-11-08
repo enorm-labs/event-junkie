@@ -3,6 +3,7 @@ package de.norm.events.scraper.yaam
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,11 +23,7 @@ class YaamWebsiteImporterTest {
     @Test
     fun `imports the one page of the programme`() =
         runTest {
-            coEvery { apiClient.fetchJson("$sourceUrl?per_page=50") } returns
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/yaam/yaam-events.json")!!
-                    .bufferedReader()
-                    .readText()
+            coEvery { apiClient.fetchJson("$sourceUrl?per_page=50") } returns fixtureText("yaam/yaam-events.json")
 
             val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
 

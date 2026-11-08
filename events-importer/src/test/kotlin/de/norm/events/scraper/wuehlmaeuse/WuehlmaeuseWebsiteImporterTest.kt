@@ -6,6 +6,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -16,7 +18,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -29,29 +30,18 @@ class WuehlmaeuseWebsiteImporterTest {
     private val page1 = "$sourceUrl?per_page=100&page=1"
     private val page2 = "$sourceUrl?per_page=100&page=2"
 
-    private fun readFixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/wuehlmaeuse/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(readFixture(name), url)
-
     @BeforeEach
     fun setUp() {
-        coEvery { apiClient.fetchJson(page1) } returns readFixture("wuehlmaeuse-shop-page1.json")
-        coEvery { apiClient.fetchJson(page2) } returns readFixture("wuehlmaeuse-shop-last.json")
-        coEvery { htmlFetcher.fetchDocument(any()) } answers { loadDocument("wuehlmaeuse-production-placeholder.html", firstArg()) }
-        coEvery { htmlFetcher.fetchDocument(RUDELSINGEN) } answers { loadDocument("wuehlmaeuse-production-rudelsingen.html", firstArg()) }
+        coEvery { apiClient.fetchJson(page1) } returns fixtureText("wuehlmaeuse/wuehlmaeuse-shop-page1.json")
+        coEvery { apiClient.fetchJson(page2) } returns fixtureText("wuehlmaeuse/wuehlmaeuse-shop-last.json")
+        coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("wuehlmaeuse/wuehlmaeuse-production-placeholder.html", firstArg()) }
+        coEvery { htmlFetcher.fetchDocument(RUDELSINGEN) } answers { fixtureDocument("wuehlmaeuse/wuehlmaeuse-production-rudelsingen.html", firstArg()) }
     }
 
     @Test
     fun `gives every performance of a production the text of its page, read once`() =
         runTest {
-            coEvery { apiClient.fetchJson(page1) } returns readFixture("wuehlmaeuse-shop-rudelsingen.json")
+            coEvery { apiClient.fetchJson(page1) } returns fixtureText("wuehlmaeuse/wuehlmaeuse-shop-rudelsingen.json")
 
             val events = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events
 
@@ -67,7 +57,7 @@ class WuehlmaeuseWebsiteImporterTest {
     @Test
     fun `flags a production whose page fails, so the upsert keeps its stored text`() =
         runTest {
-            coEvery { apiClient.fetchJson(page1) } returns readFixture("wuehlmaeuse-shop-rudelsingen.json")
+            coEvery { apiClient.fetchJson(page1) } returns fixtureText("wuehlmaeuse/wuehlmaeuse-shop-rudelsingen.json")
             coEvery { htmlFetcher.fetchDocument(RUDELSINGEN) } throws HttpFetchException(503, RUDELSINGEN)
 
             val events = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events

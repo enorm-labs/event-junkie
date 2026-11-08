@@ -3,6 +3,7 @@ package de.norm.events.scraper.volksbuehne
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.forChildrenPhrase
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -19,11 +20,7 @@ import java.time.LocalTime
 
 class VolksbuehneSpielplanScraperTest {
     private val url = "https://www.volksbuehne-berlin.de/"
-    private val document =
-        Jsoup.parse(
-            requireNotNull(javaClass.classLoader.getResourceAsStream("scraper/volksbuehne/volksbuehne-spielplan.html")).bufferedReader().readText(),
-            url
-        )
+    private val document = fixtureDocument("volksbuehne/volksbuehne-spielplan.html", url)
 
     private val main = VolksbuehneSpielplanScraper(VolksbuehneHouse.ROSA_LUXEMBURG_PLATZ).scrape(document, url)
     private val prater = VolksbuehneSpielplanScraper(VolksbuehneHouse.PRATER).scrape(document, url)

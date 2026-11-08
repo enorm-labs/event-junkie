@@ -3,6 +3,7 @@ package de.norm.events.scraper.weltwirtschaft
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -17,14 +18,8 @@ import java.time.LocalTime
 class WeltwirtschaftApiScraperTest {
     private val scraper = WeltwirtschaftApiScraper()
 
-    private fun fixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/weltwirtschaft/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private val live = scraper.scrapePage(fixture("weltwirtschaft-events.json")).events
-    private val year = scraper.scrapePage(fixture("weltwirtschaft-events-2026.json")).events
+    private val live = scraper.scrapePage(fixtureText("weltwirtschaft/weltwirtschaft-events.json")).events
+    private val year = scraper.scrapePage(fixtureText("weltwirtschaft/weltwirtschaft-events-2026.json")).events
 
     private fun event(slug: String) = year.single { it.sourceId == "weltwirtschaft:$slug" }
 

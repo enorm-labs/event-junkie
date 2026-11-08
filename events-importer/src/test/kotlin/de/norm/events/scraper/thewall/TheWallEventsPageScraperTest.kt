@@ -1,5 +1,6 @@
 package de.norm.events.scraper.thewall
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -15,17 +16,7 @@ class TheWallEventsPageScraperTest {
     private val scraper = TheWallEventsPageScraper()
     private val url = "https://thewallcomedy.com/venues/thewallcomedy/events/"
 
-    private fun scrape(name: String) =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/thewall/$name")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            ),
-            url
-        )
+    private fun scrape(name: String) = scraper.scrape(fixtureDocument("thewall/$name", url), url)
 
     @Test
     fun `reads the twelve events of the first page`() {

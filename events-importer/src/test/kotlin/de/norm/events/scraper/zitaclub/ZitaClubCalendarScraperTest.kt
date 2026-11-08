@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zitaclub
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -15,14 +16,7 @@ import java.time.LocalTime
 class ZitaClubCalendarScraperTest {
     private val scraper = ZitaClubCalendarScraper()
 
-    private val events: List<ScrapedEvent> by lazy {
-        scraper.scrape(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/zitaclub/zitaclub-events.ics")!!
-                .bufferedReader()
-                .readText()
-        )
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureText("zitaclub/zitaclub-events.ics")) }
 
     private fun event(slug: String) = events.single { it.sourceId == "zita_club:$slug" }
 

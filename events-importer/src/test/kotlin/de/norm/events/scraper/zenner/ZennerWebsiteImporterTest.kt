@@ -3,6 +3,7 @@ package de.norm.events.scraper.zenner
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -28,16 +29,12 @@ class ZennerWebsiteImporterTest {
     private val apiClient: ApiClient = mockk()
     private val programmeUrl = "https://zenner.berlin/programm"
 
-    private val fixtureJson: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zenner/zenner-page-data.json")!!
-            .bufferedReader()
-            .readText()
+    private val pageData = "zenner/zenner-page-data.json"
 
     @BeforeEach
     fun setUp() {
         importer = ZennerWebsiteImporter(apiClient)
-        coEvery { apiClient.fetchJson(any()) } returns fixtureJson
+        coEvery { apiClient.fetchJson(any()) } returns fixtureText(pageData)
     }
 
     @Test
@@ -55,7 +52,7 @@ class ZennerWebsiteImporterTest {
     fun `importEvents derives the Gatsby page-data URL from the configured programme page`() =
         runTest {
             val requestUrl = slot<String>()
-            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureJson
+            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText(pageData)
 
             importer.importEvents(programmeUrl)
 
@@ -67,7 +64,7 @@ class ZennerWebsiteImporterTest {
     fun `importEvents derives the page-data URL from a trailing-slash programme page`() =
         runTest {
             val requestUrl = slot<String>()
-            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureJson
+            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText(pageData)
 
             importer.importEvents("https://zenner.berlin/programm/")
 
@@ -78,7 +75,7 @@ class ZennerWebsiteImporterTest {
     fun `importEvents derives the index page-data URL from the site root`() =
         runTest {
             val requestUrl = slot<String>()
-            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureJson
+            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText(pageData)
 
             importer.importEvents("https://zenner.berlin/")
 

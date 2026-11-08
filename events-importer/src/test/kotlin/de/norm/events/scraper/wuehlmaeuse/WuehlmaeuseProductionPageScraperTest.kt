@@ -1,5 +1,6 @@
 package de.norm.events.scraper.wuehlmaeuse
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -11,20 +12,13 @@ import org.junit.jupiter.api.Test
 class WuehlmaeuseProductionPageScraperTest {
     private val scraper = WuehlmaeuseProductionPageScraper()
 
-    private fun loadDocument(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/wuehlmaeuse/$name")!!
-                .bufferedReader()
-                .readText(),
-            "https://wuehlmaeuse.de/veranstaltung/rudelsingen/"
-        )
+    private val pageUrl = "https://wuehlmaeuse.de/veranstaltung/rudelsingen/"
 
     @Test
     fun `reads the show text after the empty heading`() {
         val description =
             scraper
-                .scrape(loadDocument("wuehlmaeuse-production-rudelsingen.html"))
+                .scrape(fixtureDocument("wuehlmaeuse/wuehlmaeuse-production-rudelsingen.html", pageUrl))
                 .shouldNotBeNull()
                 .description
                 .shouldNotBeNull()
@@ -38,7 +32,7 @@ class WuehlmaeuseProductionPageScraperTest {
 
     @Test
     fun `drops a line that is only a link, and the note box after the text`() {
-        val description = scraper.scrape(loadDocument("wuehlmaeuse-production-rudelsingen.html"))?.description.shouldNotBeNull()
+        val description = scraper.scrape(fixtureDocument("wuehlmaeuse/wuehlmaeuse-production-rudelsingen.html", pageUrl))?.description.shouldNotBeNull()
 
         description shouldNotContain "Homepage"
         description shouldNotContain "BITTE BEACHTEN"
@@ -47,7 +41,7 @@ class WuehlmaeuseProductionPageScraperTest {
     @Test
     fun `reads the placeholder of a production not yet described as no text`() {
         scraper
-            .scrape(loadDocument("wuehlmaeuse-production-placeholder.html"))
+            .scrape(fixtureDocument("wuehlmaeuse/wuehlmaeuse-production-placeholder.html", pageUrl))
             .shouldNotBeNull()
             .description
             .shouldBeNull()

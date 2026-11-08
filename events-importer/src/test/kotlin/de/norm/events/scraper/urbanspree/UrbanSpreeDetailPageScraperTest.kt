@@ -3,6 +3,7 @@ package de.norm.events.scraper.urbanspree
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -28,23 +29,11 @@ class UrbanSpreeDetailPageScraperTest {
     private val cancelledUrl = "https://www.urbanspree.com/program/concerts/som-berlin-urban-spree.html"
     private val freeUrl = "https://www.urbanspree.com/program/concerts/this-eternal-decay-(-dark-wave-it)-night-nail-(dark-wave-us/de).html"
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/urbanspree/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     private val klubnachtUrl = "https://www.urbanspree.com/program/concerts/urban-spree-klubnacht-005.html"
 
     @Test
     fun `scrape resolves a club night's 23-59 placeholder and bills its DJ sets`() {
-        val event = scraper.scrape(fixture("urbanspree-detail-klubnacht.html", klubnachtUrl), klubnachtUrl).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("urbanspree/urbanspree-detail-klubnacht.html", klubnachtUrl), klubnachtUrl).shouldNotBeNull()
 
         event.eventDate shouldBe LocalDate.of(2026, 9, 25)
         event.startTime shouldBe LocalTime.of(21, 0)
@@ -55,7 +44,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `scrape keeps 23-59 when the description's stamp names another date`() {
-        val document = fixture("urbanspree-detail-klubnacht.html", klubnachtUrl)
+        val document = fixtureDocument("urbanspree/urbanspree-detail-klubnacht.html", klubnachtUrl)
         document.selectFirst(".rte.tv-content p:contains(25.09.26)")!!.text("26.09.26 21:00 — LATE")
 
         scraper.scrape(document, klubnachtUrl).shouldNotBeNull().startTime shouldBe LocalTime.of(23, 59)
@@ -65,7 +54,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `scrape bills a co-branded Klubnacht's featured acts instead of its title`() {
-        val event = scraper.scrape(fixture("urbanspree-detail-cobranded-klubnacht.html", coBrandedUrl), coBrandedUrl).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("urbanspree/urbanspree-detail-cobranded-klubnacht.html", coBrandedUrl), coBrandedUrl).shouldNotBeNull()
 
         event.title shouldBe "Human Tree x Urban Spree Klubnacht"
         event.sourceId shouldBe "urban_spree:concerts/human-tree-x-urban-spree-klubnacht"
@@ -77,7 +66,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `scrape bills nobody for a co-branded Klubnacht whose description names no line-up`() {
-        val document = fixture("urbanspree-detail-cobranded-klubnacht.html", coBrandedUrl)
+        val document = fixtureDocument("urbanspree/urbanspree-detail-cobranded-klubnacht.html", coBrandedUrl)
         document.selectFirst(".rte.tv-content")!!.text("A night of live music and club culture.")
 
         scraper
@@ -91,7 +80,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `scrape types a Klubnacht as a party and bills the DJs in its title's bracket`() {
-        val event = scraper.scrape(fixture("urbanspree-detail-klubnacht-bracket.html", bracketUrl), bracketUrl).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("urbanspree/urbanspree-detail-klubnacht-bracket.html", bracketUrl), bracketUrl).shouldNotBeNull()
 
         event.title shouldBe "Urban Spree KLUBNACHT (Kim, Kyra)"
         event.eventType shouldBe EventType.PARTY.name
@@ -100,7 +89,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `scrape prefers a Klubnacht's running order to its title's bracket`() {
-        val document = fixture("urbanspree-detail-klubnacht.html", klubnachtUrl)
+        val document = fixtureDocument("urbanspree/urbanspree-detail-klubnacht.html", klubnachtUrl)
         document.selectFirst("#pseudo-card h1.title")!!.text("Urban Spree KLUBNACHT (Kim & Kyra)")
 
         scraper
@@ -113,7 +102,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `scrape keeps a concert's type and title acts when its title ends in a bracket`() {
-        val document = fixture("urbanspree-detail-concert.html", concertUrl)
+        val document = fixtureDocument("urbanspree/urbanspree-detail-concert.html", concertUrl)
         document.selectFirst("#pseudo-card h1.title")!!.text("Coilguns (CH)")
 
         val event = scraper.scrape(document, concertUrl).shouldNotBeNull()
@@ -121,7 +110,7 @@ class UrbanSpreeDetailPageScraperTest {
         event.artists.map { it.name to it.role } shouldContainExactly listOf("Coilguns" to ArtistRole.HEADLINER)
     }
 
-    private fun scrapeConcert() = scraper.scrape(fixture("urbanspree-detail-concert.html", concertUrl), concertUrl)
+    private fun scrapeConcert() = scraper.scrape(fixtureDocument("urbanspree/urbanspree-detail-concert.html", concertUrl), concertUrl)
 
     @Test
     fun `scrape reads all fields of a fully populated detail page`() {
@@ -159,7 +148,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `scrape reads a cancelled event's status and promoter`() {
-        val event = scraper.scrape(fixture("urbanspree-detail-cancelled.html", cancelledUrl), cancelledUrl).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("urbanspree/urbanspree-detail-cancelled.html", cancelledUrl), cancelledUrl).shouldNotBeNull()
 
         event.status shouldBe EventStatus.CANCELLED.name
         event.title shouldBe "SOM"
@@ -171,7 +160,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `splits two promoters joined with an ampersand and keeps a plus inside one name`() {
-        val document = fixture("urbanspree-detail-concert.html", concertUrl)
+        val document = fixtureDocument("urbanspree/urbanspree-detail-concert.html", concertUrl)
         document.select(".info-data").first { it.text() == "Aufnahme + wiedergabe" }.text("Positive Transmitter & Crunch Tapes")
 
         scraper.scrape(document, concertUrl).shouldNotBeNull().promoters shouldContainExactly
@@ -183,7 +172,7 @@ class UrbanSpreeDetailPageScraperTest {
     // #1356: one party name carries the venue's own join character.
     @Test
     fun `keeps a single name that carries an ampersand whole`() {
-        val document = fixture("urbanspree-detail-concert.html", concertUrl)
+        val document = fixtureDocument("urbanspree/urbanspree-detail-concert.html", concertUrl)
         document.select(".info-data").first { it.text() == "Aufnahme + wiedergabe" }.text("Pure Obsessions & Red Nights")
 
         scraper.scrape(document, concertUrl).shouldNotBeNull().promoters shouldContainExactly listOf("Pure Obsessions & Red Nights")
@@ -191,7 +180,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `scrape flags free entry and drops the empty ticket link`() {
-        val event = scraper.scrape(fixture("urbanspree-detail-free.html", freeUrl), freeUrl).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("urbanspree/urbanspree-detail-free.html", freeUrl), freeUrl).shouldNotBeNull()
 
         event.free shouldBe true
         event.pricePresale.shouldBeNull()
@@ -316,7 +305,7 @@ class UrbanSpreeDetailPageScraperTest {
     @Test
     fun `scrape reads the hero time as doors when the description opens with a clock-first pair`() {
         val url = "https://www.urbanspree.com/program/concerts/otha-berlin-urban-spree.html"
-        val event = scraper.scrape(fixture("urbanspree-detail-doors-clock-first.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("urbanspree/urbanspree-detail-doors-clock-first.html", url), url).shouldNotBeNull()
 
         event.doorsTime shouldBe LocalTime.of(19, 0)
         event.startTime shouldBe LocalTime.of(20, 0)
@@ -325,7 +314,7 @@ class UrbanSpreeDetailPageScraperTest {
     @Test
     fun `scrape reads the hero time as doors when the description opens with a labelled pair`() {
         val url = "https://www.urbanspree.com/program/concerts/banda-entopica-urban-spree-berlin.html"
-        val event = scraper.scrape(fixture("urbanspree-detail-doors-labelled.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("urbanspree/urbanspree-detail-doors-labelled.html", url), url).shouldNotBeNull()
 
         event.doorsTime shouldBe LocalTime.of(20, 0)
         event.startTime shouldBe LocalTime.of(21, 0)
@@ -334,7 +323,7 @@ class UrbanSpreeDetailPageScraperTest {
     @Test
     fun `scrape keeps the hero time as the start when the pair's doors differ from it`() {
         val url = "https://www.urbanspree.com/program/concerts/banda-entopica-urban-spree-berlin.html"
-        val document = fixture("urbanspree-detail-doors-labelled.html", url)
+        val document = fixtureDocument("urbanspree/urbanspree-detail-doors-labelled.html", url)
         document.select("#pseudo-card .ct-dates li.infos")[1].text("19:00")
         val event = scraper.scrape(document, url).shouldNotBeNull()
 
@@ -345,7 +334,7 @@ class UrbanSpreeDetailPageScraperTest {
     private val exhibitionUrl = "https://www.urbanspree.com/program/exhibitions/wholetrain-20.html"
 
     private fun exhibitionPage(vernissage: String = "Nov 06, 2026 18:00"): Document =
-        fixture("urbanspree-detail-exhibition-vernissage.html", exhibitionUrl).also { document ->
+        fixtureDocument("urbanspree/urbanspree-detail-exhibition-vernissage.html", exhibitionUrl).also { document ->
             document.select(".ct-info .info-data").first { it.text() == "Nov 06, 2026 18:00" }.text(vernissage)
         }
 
@@ -398,7 +387,7 @@ class UrbanSpreeDetailPageScraperTest {
 
     @Test
     fun `scrape drops the band a DJ is billed with`() {
-        val doc = fixture("urbanspree-detail-concert.html", concertUrl)
+        val doc = fixtureDocument("urbanspree/urbanspree-detail-concert.html", concertUrl)
         doc.allElements.forEach { e -> e.textNodes().forEach { t -> t.text(t.text().replace("TWIN NOIR + HINFORT", "NAARI + DJ JONAS POPPE (OUM SHATT)")) } }
         scraper
             .scrape(doc, concertUrl)

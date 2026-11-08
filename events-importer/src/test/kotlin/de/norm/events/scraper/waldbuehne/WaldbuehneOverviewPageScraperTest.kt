@@ -1,6 +1,7 @@
 package de.norm.events.scraper.waldbuehne
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -17,16 +18,7 @@ import java.time.LocalTime
 class WaldbuehneOverviewPageScraperTest {
     private val url = "https://www.waldbuehne-berlin.de/programm-und-tickets/"
     private val events =
-        WaldbuehneOverviewPageScraper().scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/waldbuehne/waldbuehne-programm.html")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            ),
-            url
-        )
+        WaldbuehneOverviewPageScraper().scrape(fixtureDocument("waldbuehne/waldbuehne-programm.html", url), url)
 
     @Test
     fun `reads every date but the orchestra concert`() {

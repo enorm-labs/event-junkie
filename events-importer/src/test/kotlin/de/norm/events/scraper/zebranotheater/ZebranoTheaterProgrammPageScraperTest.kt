@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -20,12 +21,7 @@ class ZebranoTheaterProgrammPageScraperTest {
     private val scraper = ZebranoTheaterProgrammPageScraper()
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/zebranotheater/zebranotheater-programm.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("zebranotheater/zebranotheater-programm.html", baseUrl), baseUrl)
     }
 
     private fun event(date: String): ScrapedEvent = events.single { it.eventDate == LocalDate.parse(date) }

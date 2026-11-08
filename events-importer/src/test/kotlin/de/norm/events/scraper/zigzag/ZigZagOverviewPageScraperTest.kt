@@ -3,6 +3,7 @@ package de.norm.events.scraper.zigzag
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -20,14 +21,9 @@ import java.time.ZoneId
 class ZigZagOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-10-01T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val sourceUrl = "https://www.zigzag-jazzclub.berlin/programmneu"
-    private val events = ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_JAZZ_CLUB, clock).scrape(Jsoup.parse(fixture(), sourceUrl), sourceUrl)
-    private val hall = ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_HALL, clock).scrape(Jsoup.parse(fixture(), sourceUrl), sourceUrl)
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zigzag/zigzag-programm.html")!!
-            .bufferedReader()
-            .readText()
+    private val programme = "zigzag/zigzag-programm.html"
+    private val events = ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_JAZZ_CLUB, clock).scrape(fixtureDocument(programme, sourceUrl), sourceUrl)
+    private val hall = ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_HALL, clock).scrape(fixtureDocument(programme, sourceUrl), sourceUrl)
 
     private fun on(date: LocalDate): ScrapedEvent = events.single { it.eventDate == date }
 

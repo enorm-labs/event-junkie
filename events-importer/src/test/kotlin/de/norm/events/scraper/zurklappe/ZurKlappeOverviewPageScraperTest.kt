@@ -4,6 +4,8 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -26,13 +28,7 @@ class ZurKlappeOverviewPageScraperTest {
     private val scraper = ZurKlappeOverviewPageScraper()
     private val baseUrl = "https://zurklappe.org/events"
 
-    private fun fixture(name: String = "zurklappe-overview.html") =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zurklappe/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private fun scrapeFixture() = scraper.scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
+    private fun scrapeFixture() = scraper.scrape(fixtureDocument("zurklappe/zurklappe-overview.html", baseUrl), baseUrl)
 
     private fun scrapeHtml(html: String) = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
@@ -123,7 +119,7 @@ class ZurKlappeOverviewPageScraperTest {
 
     @Test
     fun `scrape reads the empty-state page as an empty programme, not a broken payload`() {
-        val (events, lines) = withScraperLog { scrapeHtml(fixture("zurklappe-overview-empty.html")) }
+        val (events, lines) = withScraperLog { scrapeHtml(fixtureText("zurklappe/zurklappe-overview-empty.html")) }
 
         events.shouldBeEmpty()
         lines.map { it.level } shouldBe listOf(Level.INFO)
@@ -133,7 +129,7 @@ class ZurKlappeOverviewPageScraperTest {
     @Test
     fun `scrape warns when the events array is missing and the page states no empty programme`() {
         // The real empty page, minus its empty-state line: the payload alone cannot tell the two apart.
-        val html = fixture("zurklappe-overview-empty.html").replace("No upcoming events.", "Coming soon.")
+        val html = fixtureText("zurklappe/zurklappe-overview-empty.html").replace("No upcoming events.", "Coming soon.")
 
         val (events, lines) = withScraperLog { scrapeHtml(html) }
 

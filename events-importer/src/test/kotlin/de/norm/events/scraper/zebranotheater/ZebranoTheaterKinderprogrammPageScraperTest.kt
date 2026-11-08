@@ -2,9 +2,9 @@ package de.norm.events.scraper.zebranotheater
 
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.forChildrenPhrase
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.Clock
@@ -18,13 +18,7 @@ class ZebranoTheaterKinderprogrammPageScraperTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-24T10:00:00Z"), BERLIN)
     private val events =
         ZebranoTheaterKinderprogrammPageScraper(clock).scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/zebranotheater/zebranotheater-kinderprogramm.html")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            ),
+            fixtureDocument("zebranotheater/zebranotheater-kinderprogramm.html", url),
             url
         )
 

@@ -2,6 +2,7 @@ package de.norm.events.scraper.thedoor
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,12 +19,7 @@ class TheDoorEventsPageScraperTest {
     private val baseUrl = "https://thedoor.club/events/"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/thedoor/thedoor-events.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("thedoor/thedoor-events.html", baseUrl), baseUrl)
     }
 
     private fun night(date: String) = events.single { it.eventDate == LocalDate.parse(date) }

@@ -6,6 +6,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -34,32 +36,24 @@ class ZitadelleWebsiteImporterTest {
 
     private fun detailUrl(slug: String) = "https://citadel-music-festival.de/event/$slug"
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zitadelle/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = ZitadelleWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("zitadelle-overview.html"), sourceUrl),
+                document = fixtureDocument("zitadelle/zitadelle-overview.html", sourceUrl),
                 etag = "\"cmf-etag\"",
                 lastModified = "Mon, 03 Aug 2026 09:00:00 GMT"
             )
 
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
-        listOf(
-            "2026-08-15-antilopen-gang" to "antilopen-gang",
-            "2026-08-19-off-days" to "off-days",
-            "2027-08-13-alexander-marcus" to "alexander-marcus"
-        ).forEach { (slug, fixture) ->
-            coEvery { htmlFetcher.fetchDocument(detailUrl(slug)) } returns
-                Jsoup.parse(readFixture("zitadelle-detail-$fixture.html"), detailUrl(slug))
-        }
+        stubFetcher(
+            detailUrl("2026-08-15-antilopen-gang") to "zitadelle/zitadelle-detail-antilopen-gang.html",
+            detailUrl("2026-08-19-off-days") to "zitadelle/zitadelle-detail-off-days.html",
+            detailUrl("2027-08-13-alexander-marcus") to "zitadelle/zitadelle-detail-alexander-marcus.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test

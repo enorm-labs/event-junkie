@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -27,14 +28,9 @@ class VoidClubWebsiteImporterTest {
     private val overviewUrl = "https://www.void-club.de/"
 
     private fun stubOverview() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/voidclub/voidclub-overview.html")!!
-                .bufferedReader()
-                .readText()
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(html, overviewUrl),
+                document = fixtureDocument("voidclub/voidclub-overview.html", overviewUrl),
                 etag = "\"void-club-etag\"",
                 lastModified = "Tue, 04 Aug 2026 03:00:00 GMT"
             )

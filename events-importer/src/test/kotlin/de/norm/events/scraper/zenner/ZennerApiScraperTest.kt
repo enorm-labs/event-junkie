@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureText
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -27,15 +28,11 @@ import java.time.LocalTime
  * 19 July 2026 so the one cancelled event in the fixture is still in scope.
  */
 class ZennerApiScraperTest {
-    private val fixtureJson: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zenner/zenner-page-data.json")!!
-            .bufferedReader()
-            .readText()
+    private val pageData = "zenner/zenner-page-data.json"
 
     private val scraper = ZennerApiScraper(CUTOFF_CLOCK)
 
-    private fun scrape() = scraper.scrape(fixtureJson, SOURCE_URL)
+    private fun scrape() = scraper.scrape(fixtureText(pageData), SOURCE_URL)
 
     @Test
     fun `scrape extracts every published upcoming event`() {
@@ -109,7 +106,7 @@ class ZennerApiScraperTest {
     @Test
     fun `scrape drops past events`() {
         // Same fixture, a clock eleven days later: only the 19 July event falls out.
-        val later = ZennerApiScraper(fixedClock("2026-07-30T09:00:00Z")).scrape(fixtureJson, SOURCE_URL)
+        val later = ZennerApiScraper(fixedClock("2026-07-30T09:00:00Z")).scrape(fixtureText(pageData), SOURCE_URL)
 
         later shouldHaveSize 8
         later.none { it.title == "SIP!" } shouldBe true
@@ -252,7 +249,7 @@ class ZennerApiScraperTest {
 
         scraper.scrape(payload, SOURCE_URL).map { it.title } shouldContainExactly listOf("Eisdisko")
         // The snapshot's two "Pop-Up Flohmarkt (Indoor)" dates in the Saal.
-        val archive = ZennerApiScraper(fixedClock("2023-01-01T00:00:00Z")).scrape(fixtureJson, SOURCE_URL).map { it.title }
+        val archive = ZennerApiScraper(fixedClock("2023-01-01T00:00:00Z")).scrape(fixtureText(pageData), SOURCE_URL).map { it.title }
         archive.filter { "Flohmarkt" in it } shouldHaveSize 0
     }
 
