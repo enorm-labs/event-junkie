@@ -1,18 +1,18 @@
 package de.norm.events.scraper.wuehlmaeuse
 
 import de.norm.events.event.SpokenLanguage
+import de.norm.events.scraper.AbstractWpRestImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.WalkedListing
+import de.norm.events.scraper.WpRestWalk
 import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.querySeparator
-import de.norm.events.scraper.walkWpRestPages
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -33,31 +33,30 @@ import org.springframework.stereotype.Component
  */
 @Component
 class WuehlmaeuseWebsiteImporter(
-    private val apiClient: ApiClient,
+    apiClient: ApiClient,
     private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+) : AbstractWpRestImporter<WuehlmaeuseTicket, WuehlmaeuseShopPage>(apiClient, WUEHLMAEUSE_PER_PAGE, MAX_PAGES) {
     override val eventSource: EventSource = EventSource.WUEHLMAEUSE
     override val fetchesBeyondEntryPage: Boolean = true
 
     private val apiScraper = WuehlmaeuseApiScraper()
     private val productionScraper = WuehlmaeuseProductionPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val pageUrl = { page: Int -> "$url${url.querySeparator()}per_page=$WUEHLMAEUSE_PER_PAGE&page=$page" }
-        val walked = apiClient.walkWpRestPages(eventSource, pageUrl, WUEHLMAEUSE_PER_PAGE, MAX_PAGES, apiScraper::scrapePage)
-        val events =
-            htmlFetcher.enrichFromSharedPages(apiScraper.toEvents(walked.items), productionScraper::scrape, { production, event ->
-                event.copy(description = production.description)
-            })
-        logger.info { "Scraped ${events.size} performance(s) from ${walked.items.size} Wühlmäuse ticket(s) across ${walked.pages} page(s)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = walked.complete)
-    }
+    override fun walk(url: String): WpRestWalk<WuehlmaeuseTicket, WuehlmaeuseShopPage> =
+        WpRestWalk({ page -> "$url${url.querySeparator()}per_page=$WUEHLMAEUSE_PER_PAGE&page=$page" }, apiScraper::scrapePage)
+
+    override suspend fun toEvents(
+        listing: WalkedListing<WuehlmaeuseTicket>,
+        url: String
+    ): List<ScrapedEvent> =
+        htmlFetcher.enrichFromSharedPages(apiScraper.toEvents(listing.items), productionScraper::scrape, { production, event ->
+            event.copy(description = production.description)
+        })
+
+    override fun scrapedMessage(
+        events: List<ScrapedEvent>,
+        listing: WalkedListing<WuehlmaeuseTicket>
+    ): String = "Scraped ${events.size} performance(s) from ${listing.items.size} Wühlmäuse ticket(s) across ${listing.pages} page(s)"
 
     private companion object {
         /** A runaway guard on the page walk; the shop runs to eighteen pages. */

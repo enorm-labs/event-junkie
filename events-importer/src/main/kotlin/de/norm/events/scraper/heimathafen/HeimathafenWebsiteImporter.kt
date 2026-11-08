@@ -1,16 +1,18 @@
 package de.norm.events.scraper.heimathafen
 
 import de.norm.events.common.BERLIN
+import de.norm.events.scraper.AbstractWpRestImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.WalkedListing
+import de.norm.events.scraper.WpRestWalk
+import de.norm.events.scraper.heimathafen.HeimathafenApiScraper.HeimathafenPage
 import de.norm.events.scraper.querySeparator
-import de.norm.events.scraper.walkWpRestPages
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
 
@@ -40,27 +42,25 @@ import java.time.Clock
  */
 @Component
 class HeimathafenWebsiteImporter(
-    private val apiClient: ApiClient,
+    apiClient: ApiClient,
     /** Clock for the scraper's past-performance cut-off; override in tests. */
     clock: Clock = Clock.system(BERLIN)
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+) : AbstractWpRestImporter<ScrapedEvent, HeimathafenPage>(apiClient, PER_PAGE, MAX_PAGES) {
     override val eventSource: EventSource = EventSource.HEIMATHAFEN
 
     private val apiScraper = HeimathafenApiScraper(clock)
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val listing = apiClient.walkWpRestPages(eventSource, { buildRequestUrl(url, it) }, PER_PAGE, MAX_PAGES, apiScraper::scrape)
+    override fun walk(url: String): WpRestWalk<ScrapedEvent, HeimathafenPage> = WpRestWalk({ buildRequestUrl(url, it) }, apiScraper::scrape)
 
-        val distinct = listing.items.distinctBy { it.sourceId }
-        logger.info { "Scraped ${distinct.size} upcoming event(s) from Heimathafen" }
-        return ImportResult.Success(events = distinct, etag = null, lastModified = null, complete = listing.complete)
-    }
+    override suspend fun toEvents(
+        listing: WalkedListing<ScrapedEvent>,
+        url: String
+    ): List<ScrapedEvent> = listing.items.distinctBy { it.sourceId }
+
+    override fun scrapedMessage(
+        events: List<ScrapedEvent>,
+        listing: WalkedListing<ScrapedEvent>
+    ): String = "Scraped ${events.size} upcoming event(s) from Heimathafen"
 
     /**
      * The WP REST query for one [page] from the configured API base [baseUrl]. Page size and field
