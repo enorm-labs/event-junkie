@@ -3,6 +3,8 @@ package de.norm.events.scraper.derweissehase
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -33,12 +35,7 @@ class DerWeisseHaseOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/derweissehase/derweissehase-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("derweissehase/derweissehase-overview.html", baseUrl), baseUrl)
     }
 
     /** Wraps the given `.eventrahm` inner markup in the block structure the CMS emits. */
@@ -182,12 +179,7 @@ class DerWeisseHaseOverviewPageScraperTest {
     // Production stored only `Marre` for the 27 Oct night: the CMS wrote one `<p>` per act (#4030).
     @Test
     fun `reads a roster written as one paragraph per act`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/derweissehase/derweissehase-overview-2026-10-27.html")!!
-                .bufferedReader()
-                .readText()
-        val nights = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        val nights = scraper.scrape(fixtureDocument("derweissehase/derweissehase-overview-2026-10-27.html", baseUrl), baseUrl)
 
         val tuesdayRave = nights.single { it.eventDate == LocalDate.of(2026, 10, 27) }
         tuesdayRave.artists shouldContainExactly
@@ -298,10 +290,7 @@ class DerWeisseHaseOverviewPageScraperTest {
     @Test
     fun `splits a name glued to the number tag before it`() {
         val glued =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/derweissehase/derweissehase-overview.html")!!
-                .bufferedReader()
-                .readText()
+            fixtureText("derweissehase/derweissehase-overview.html")
                 .replace("Cat Vermillion<br>TechNovaBader", "Cat Vermillion<br>Emma (8)Youston")
         val tuesdayRave = scraper.scrape(Jsoup.parse(glued, baseUrl), baseUrl).single { it.eventDate == LocalDate.of(2026, 8, 11) }
         tuesdayRave.artists.map { it.name } shouldContainExactly listOf("Cat Vermillion", "Emma (8)", "Youston")

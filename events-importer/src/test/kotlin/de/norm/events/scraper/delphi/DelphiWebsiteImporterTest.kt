@@ -6,6 +6,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -34,27 +36,20 @@ class DelphiWebsiteImporterTest {
 
     private fun productionUrl(id: String) = "https://theater-im-delphi.de/programm/?prod=$id"
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/delphi/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = DelphiWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("delphi-programm.html"), sourceUrl),
+                document = fixtureDocument("delphi/delphi-programm.html", sourceUrl),
                 etag = "\"delphi-etag\"",
                 lastModified = "Mon, 03 Aug 2026 09:00:00 GMT"
             )
 
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
         listOf("488", "528", "519").forEach { id ->
-            coEvery { htmlFetcher.fetchDocument(productionUrl(id)) } returns
-                Jsoup.parse(readFixture("delphi-production-$id.html"), productionUrl(id))
+            stubFetcher(productionUrl(id) to "delphi/delphi-production-$id.html", fetcher = htmlFetcher)
         }
     }
 

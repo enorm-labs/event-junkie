@@ -5,6 +5,7 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -30,22 +31,16 @@ class CosmicComedyWebsiteImporterTest {
     private val sourceUrl = "https://comedyclubberlin.com/wp-json/tribe/events/v1/events"
     private val firstPageUrl = "$sourceUrl?per_page=50"
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/cosmiccomedy/$name")!!
-            .bufferedReader()
-            .readText()
-
     /** The cursor the first fixture page hands back, which the importer must follow verbatim. */
     private val secondPageUrl: String by lazy {
-        CosmicComedyApiScraper().scrapePage(readFixture("cosmiccomedy-events-page1.json")).nextPageUrl!!
+        CosmicComedyApiScraper().scrapePage(fixtureText("cosmiccomedy/cosmiccomedy-events-page1.json")).nextPageUrl!!
     }
 
     @BeforeEach
     fun setUp() {
         importer = CosmicComedyWebsiteImporter(apiClient)
-        coEvery { apiClient.fetchJson(firstPageUrl) } returns readFixture("cosmiccomedy-events-page1.json")
-        coEvery { apiClient.fetchJson(secondPageUrl) } returns readFixture("cosmiccomedy-events-page2.json")
+        coEvery { apiClient.fetchJson(firstPageUrl) } returns fixtureText("cosmiccomedy/cosmiccomedy-events-page1.json")
+        coEvery { apiClient.fetchJson(secondPageUrl) } returns fixtureText("cosmiccomedy/cosmiccomedy-events-page2.json")
     }
 
     @Test
@@ -82,7 +77,7 @@ class CosmicComedyWebsiteImporterTest {
     fun `importEvents appends to a query the configured endpoint already carries`() =
         runTest {
             val filtered = "$sourceUrl?status=publish"
-            coEvery { apiClient.fetchJson("$filtered&per_page=50") } returns readFixture("cosmiccomedy-events-page2.json")
+            coEvery { apiClient.fetchJson("$filtered&per_page=50") } returns fixtureText("cosmiccomedy/cosmiccomedy-events-page2.json")
 
             val result = importer.importEvents(filtered)
             result.shouldBeInstanceOf<ImportResult.Success>()

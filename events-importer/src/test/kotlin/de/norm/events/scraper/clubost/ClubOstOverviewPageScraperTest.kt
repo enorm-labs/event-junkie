@@ -2,6 +2,7 @@ package de.norm.events.scraper.clubost
 
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -23,15 +24,9 @@ class ClubOstOverviewPageScraperTest {
 
     private fun scrapeFixture() =
         scraper.scrape(
-            Jsoup.parse(loadFixture("scraper/clubost/clubost-overview.html"), sourceUrl),
+            fixtureDocument("clubost/clubost-overview.html", sourceUrl),
             sourceUrl
         )
-
-    private fun loadFixture(path: String): String =
-        javaClass.classLoader
-            .getResourceAsStream(path)!!
-            .bufferedReader()
-            .readText()
 
     @Test
     fun `stores every night Techno, the club's sound, since the venue names no style`() {
@@ -173,7 +168,7 @@ class ClubOstOverviewPageScraperTest {
         // pattern dropped two of the ten and merged others onto one id (#1131).
         val events =
             scraper.scrape(
-                Jsoup.parse(loadFixture("scraper/clubost/clubost-overview-uuid.html"), sourceUrl),
+                fixtureDocument("clubost/clubost-overview-uuid.html", sourceUrl),
                 sourceUrl
             )
 

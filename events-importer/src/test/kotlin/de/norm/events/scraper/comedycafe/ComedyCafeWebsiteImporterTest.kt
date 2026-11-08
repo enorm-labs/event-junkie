@@ -4,6 +4,7 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -21,18 +22,12 @@ class ComedyCafeWebsiteImporterTest {
     private val importer = ComedyCafeWebsiteImporter(apiClient)
     private val sourceUrl = "https://www.comedycafeberlin.com/wp-json/tribe/events/v1/events"
     private val firstPageUrl = "$sourceUrl?per_page=50"
-    private val secondPageUrl by lazy { ComedyCafeApiScraper().scrapePage(readFixture("comedycafe-events-page1.json")).nextPageUrl!! }
-
-    private fun readFixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/comedycafe/$name")!!
-            .bufferedReader()
-            .readText()
+    private val secondPageUrl by lazy { ComedyCafeApiScraper().scrapePage(fixtureText("comedycafe/comedycafe-events-page1.json")).nextPageUrl!! }
 
     @BeforeEach
     fun setUp() {
-        coEvery { apiClient.fetchJson(firstPageUrl) } returns readFixture("comedycafe-events-page1.json")
-        coEvery { apiClient.fetchJson(secondPageUrl) } returns readFixture("comedycafe-events-page2.json")
+        coEvery { apiClient.fetchJson(firstPageUrl) } returns fixtureText("comedycafe/comedycafe-events-page1.json")
+        coEvery { apiClient.fetchJson(secondPageUrl) } returns fixtureText("comedycafe/comedycafe-events-page2.json")
     }
 
     @Test

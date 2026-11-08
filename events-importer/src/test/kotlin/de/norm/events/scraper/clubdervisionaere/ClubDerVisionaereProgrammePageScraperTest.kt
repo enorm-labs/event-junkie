@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -42,18 +43,11 @@ class ClubDerVisionaereProgrammePageScraperTest {
     private val winterScraper =
         ClubDerVisionaereProgrammePageScraper(Clock.fixed(Instant.parse("2025-12-20T10:00:00Z"), ZoneOffset.UTC))
 
-    private fun page(fixture: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/clubdervisionaere/$fixture")!!
-                .bufferedReader()
-                .readText(),
-            sourceUrl
-        )
+    private fun summer(room: ClubDerVisionaereRoom) =
+        summerScraper.scrape(fixtureDocument("clubdervisionaere/clubdervisionaere-programm.html", sourceUrl), sourceUrl, room)
 
-    private fun summer(room: ClubDerVisionaereRoom) = summerScraper.scrape(page("clubdervisionaere-programm.html"), sourceUrl, room)
-
-    private fun winter(room: ClubDerVisionaereRoom) = winterScraper.scrape(page("clubdervisionaere-programm-winter.html"), sourceUrl, room)
+    private fun winter(room: ClubDerVisionaereRoom) =
+        winterScraper.scrape(fixtureDocument("clubdervisionaere/clubdervisionaere-programm-winter.html", sourceUrl), sourceUrl, room)
 
     private val clubEvents by lazy { summer(ClubDerVisionaereRoom.CLUB) }
     private val sonnenraumEvents by lazy { summer(ClubDerVisionaereRoom.SONNENRAUM) }

@@ -6,6 +6,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -32,16 +34,9 @@ class ColosseumWebsiteImporterTest {
     @BeforeEach
     fun setUp() {
         importer = ColosseumWebsiteImporter(htmlFetcher)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/colosseum/colosseum-overview.html")!!
-                .bufferedReader()
-                .readText()
-        val document = Jsoup.parse(html, sourceUrl)
-
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = document,
+                document = fixtureDocument("colosseum/colosseum-overview.html", sourceUrl),
                 etag = "W/\"6f1a0d2b8c3e4a5d9f0b1c2d3e4f5a6b\"",
                 lastModified = null
             )
@@ -49,23 +44,16 @@ class ColosseumWebsiteImporterTest {
         coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(statusCode = 404, url = sourceUrl)
     }
 
-    private fun detailPage(fixture: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/colosseum/$fixture")!!
-                .bufferedReader()
-                .readText(),
-            sourceUrl
-        )
-
     private fun eventPage(slug: String) = "https://www.colosseumberlin.com/details-registrierung/$slug"
 
     @Test
     fun `takes the times and the ticket's own price from the event page and keeps the listing's link`() =
         runTest {
-            coEvery { htmlFetcher.fetchDocument(eventPage("investment")) } returns detailPage("colosseum-detail-ticket-price.html")
-            coEvery { htmlFetcher.fetchDocument(eventPage("gysis-begegnungen-mit-felix-jaehn")) } returns
-                detailPage("colosseum-detail-gysi.html")
+            stubFetcher(
+                eventPage("investment") to "colosseum/colosseum-detail-ticket-price.html",
+                eventPage("gysis-begegnungen-mit-felix-jaehn") to "colosseum/colosseum-detail-gysi.html",
+                fetcher = htmlFetcher
+            )
 
             val events = (importer.importEvents(sourceUrl) as ImportResult.Success).events.associateBy { it.sourceId }
 
@@ -86,8 +74,11 @@ class ColosseumWebsiteImporterTest {
     fun `types a night the listing left OTHER from its own page, and keeps a typed one`() =
         runTest {
             // A synthetic pairing: the cue-less listing row gets a comedian's page.
-            coEvery { htmlFetcher.fetchDocument(eventPage("babywho-connect")) } returns detailPage("colosseum-detail-siddiq.html")
-            coEvery { htmlFetcher.fetchDocument(eventPage("cornelia-funke")) } returns detailPage("colosseum-detail-sandberg.html")
+            stubFetcher(
+                eventPage("babywho-connect") to "colosseum/colosseum-detail-siddiq.html",
+                eventPage("cornelia-funke") to "colosseum/colosseum-detail-sandberg.html",
+                fetcher = htmlFetcher
+            )
 
             val events = (importer.importEvents(sourceUrl) as ImportResult.Success).events.associateBy { it.sourceId }
 

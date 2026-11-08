@@ -1,5 +1,6 @@
 package de.norm.events.scraper.crackbellmer
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
@@ -17,15 +18,9 @@ class CrackBellmerDetailPageScraperTest {
     private val scraper = CrackBellmerDetailPageScraper()
     private val pageUrl = "https://www.crackbellmer.de/events/bad-dad-yr8lk"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/crackbellmer/$name")!!
-            .bufferedReader()
-            .readText()
-
     @Test
     fun `joins the blurb's paragraphs and drops the spacer lines`() {
-        val description = scraper.scrapeDescription(Jsoup.parse(fixture("crackbellmer-detail-blurb.html"), pageUrl))
+        val description = scraper.scrapeDescription(fixtureDocument("crackbellmer/crackbellmer-detail-blurb.html", pageUrl))
 
         description shouldBe
             "We're standing at the peak of summer and if not now, when? Join us on our terrace, in our garden or " +
@@ -39,7 +34,7 @@ class CrackBellmerDetailPageScraperTest {
 
     @Test
     fun `returns null when the page carries no blurb`() {
-        scraper.scrapeDescription(Jsoup.parse(fixture("crackbellmer-detail-no-blurb.html"), pageUrl)).shouldBeNull()
+        scraper.scrapeDescription(fixtureDocument("crackbellmer/crackbellmer-detail-no-blurb.html", pageUrl)).shouldBeNull()
     }
 
     @Test

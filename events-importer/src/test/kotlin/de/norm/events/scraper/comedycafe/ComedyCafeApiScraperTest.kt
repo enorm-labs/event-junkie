@@ -1,5 +1,6 @@
 package de.norm.events.scraper.comedycafe
 
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -16,13 +17,7 @@ import java.time.LocalTime
 class ComedyCafeApiScraperTest {
     private val scraper = ComedyCafeApiScraper()
 
-    private fun readFixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/comedycafe/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private val pageOne by lazy { scraper.scrapePage(readFixture("comedycafe-events-page1.json")) }
+    private val pageOne by lazy { scraper.scrapePage(fixtureText("comedycafe/comedycafe-events-page1.json")) }
 
     @Test
     fun `reads the fifty events of the first page except the one at the training studio`() {
@@ -33,7 +28,7 @@ class ComedyCafeApiScraperTest {
     @Test
     fun `hands back the API's cursor, and none on the last page`() {
         pageOne.nextPageUrl.shouldNotBeNull() shouldContain "page=2"
-        scraper.scrapePage(readFixture("comedycafe-events-page2.json")).nextPageUrl.shouldBeNull()
+        scraper.scrapePage(fixtureText("comedycafe/comedycafe-events-page2.json")).nextPageUrl.shouldBeNull()
     }
 
     @Test

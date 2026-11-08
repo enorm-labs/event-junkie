@@ -1,6 +1,7 @@
 package de.norm.events.scraper.claerchensballhaus
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -20,14 +21,7 @@ import java.time.LocalTime
 private const val BASE_URL = "https://claerchensball.haus/programm/"
 
 /** The `/programm/` page saved on 2026-10-23. */
-fun claerchensCalendar(): Document =
-    Jsoup.parse(
-        ClaerchensBallhausCalendarScraperTest::class.java.classLoader
-            .getResourceAsStream("scraper/claerchensballhaus/claerchensballhaus-overview.html")!!
-            .bufferedReader()
-            .readText(),
-        BASE_URL
-    )
+fun claerchensCalendar(): Document = fixtureDocument("claerchensballhaus/claerchensballhaus-overview.html", BASE_URL)
 
 class ClaerchensBallhausCalendarScraperTest {
     private val events = ClaerchensBallhausCalendarScraper().scrape(claerchensCalendar(), BASE_URL)

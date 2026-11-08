@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -27,14 +28,9 @@ class DerWeisseHaseWebsiteImporterTest {
     private val listingUrl = "https://derweissehase.club/events"
 
     private fun stubListing() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/derweissehase/derweissehase-overview.html")!!
-                .bufferedReader()
-                .readText()
         coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(html, listingUrl),
+                document = fixtureDocument("derweissehase/derweissehase-overview.html", listingUrl),
                 etag = "\"derweissehase-etag\"",
                 lastModified = "Thu, 06 Aug 2026 10:00:00 GMT"
             )

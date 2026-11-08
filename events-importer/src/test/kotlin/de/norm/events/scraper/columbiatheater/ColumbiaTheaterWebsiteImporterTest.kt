@@ -7,6 +7,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -39,31 +41,24 @@ class ColumbiaTheaterWebsiteImporterTest {
     private val turbopaoloUrl = "https://columbia-theater.de/event/20260928-turbopaolo/"
     private val kmfdmUrl = "https://columbia-theater.de/event/20270325-kmfdm/"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/columbiatheater/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = ColumbiaTheaterWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("columbiatheater-overview.html"), overviewUrl),
+                document = fixtureDocument("columbiatheater/columbiatheater-overview.html", overviewUrl),
                 etag = "\"columbia-etag\"",
                 lastModified = "Sat, 01 Aug 2026 03:00:00 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(soulflyUrl) } returns
-            Jsoup.parse(fixture("columbiatheater-detail-concert.html"), soulflyUrl)
-        coEvery { htmlFetcher.fetchDocument(templesUrl) } returns
-            Jsoup.parse(fixture("columbiatheater-detail-presenters.html"), templesUrl)
-        coEvery { htmlFetcher.fetchDocument(turbopaoloUrl) } returns
-            Jsoup.parse(fixture("columbiatheater-detail-relocated.html"), turbopaoloUrl)
-        coEvery { htmlFetcher.fetchDocument(kmfdmUrl) } returns
-            Jsoup.parse(fixture("columbiatheater-detail-postponed.html"), kmfdmUrl)
+        stubFetcher(
+            soulflyUrl to "columbiatheater/columbiatheater-detail-concert.html",
+            templesUrl to "columbiatheater/columbiatheater-detail-presenters.html",
+            turbopaoloUrl to "columbiatheater/columbiatheater-detail-relocated.html",
+            kmfdmUrl to "columbiatheater/columbiatheater-detail-postponed.html",
+            fetcher = htmlFetcher
+        )
 
         // Every other event's detail page is unavailable, so the importer degrades to overview
         // data (which already carries a real date, so nothing is dropped).

@@ -3,6 +3,8 @@ package de.norm.events.scraper.crackbellmer
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -35,13 +37,8 @@ class CrackBellmerOverviewPageScraperTest {
     private val upcoming = scrape(captureDate)
     private val everything = scrape(beforeProgramme)
 
-    private fun scrape(clock: Clock): List<ScrapedEvent> = CrackBellmerOverviewPageScraper(clock).scrape(Jsoup.parse(fixture(), sourceUrl), sourceUrl)
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/crackbellmer/crackbellmer-overview.html")!!
-            .bufferedReader()
-            .readText()
+    private fun scrape(clock: Clock): List<ScrapedEvent> =
+        CrackBellmerOverviewPageScraper(clock).scrape(fixtureDocument("crackbellmer/crackbellmer-overview.html", sourceUrl), sourceUrl)
 
     private fun List<ScrapedEvent>.on(
         date: LocalDate,
@@ -183,7 +180,10 @@ class CrackBellmerOverviewPageScraperTest {
 
     /** The 29 August night with its withheld `Secret Line-Up` replaced by [lineup]. */
     private fun lineupOfStayToxic(lineup: String): List<String> {
-        val html = fixture().replace("fs-list-field=\"lineup\">Secret Line-Up<", "fs-list-field=\"lineup\">$lineup<")
+        val html =
+            fixtureText(
+                "crackbellmer/crackbellmer-overview.html"
+            ).replace("fs-list-field=\"lineup\">Secret Line-Up<", "fs-list-field=\"lineup\">$lineup<")
         return CrackBellmerOverviewPageScraper(beforeProgramme)
             .scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
             .on(LocalDate.of(2026, 8, 29), "STAY TOXIC")

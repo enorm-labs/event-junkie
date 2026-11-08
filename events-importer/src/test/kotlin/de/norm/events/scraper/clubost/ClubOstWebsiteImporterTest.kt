@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -38,7 +40,7 @@ class ClubOstWebsiteImporterTest {
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(loadFixture("scraper/clubost/clubost-overview.html"), sourceUrl),
+                document = fixtureDocument("clubost/clubost-overview.html", sourceUrl),
                 etag = "\"ost-1\"",
                 lastModified = "Tue, 04 Aug 2026 22:00:00 GMT"
             )
@@ -47,17 +49,12 @@ class ClubOstWebsiteImporterTest {
         // content container, so the scraper returns null and the overview card is kept whole.
         coEvery { htmlFetcher.fetchDocument(any()) } returns
             Jsoup.parse("<html><body></body></html>", sourceUrl)
-        coEvery { htmlFetcher.fetchDocument(blasphemyUrl) } returns
-            Jsoup.parse(loadFixture("scraper/clubost/clubost-detail-blasphemy.html"), blasphemyUrl)
-        coEvery { htmlFetcher.fetchDocument(newYearUrl) } returns
-            Jsoup.parse(loadFixture("scraper/clubost/clubost-detail-nye-no-logo.html"), newYearUrl)
+        stubFetcher(
+            blasphemyUrl to "clubost/clubost-detail-blasphemy.html",
+            newYearUrl to "clubost/clubost-detail-nye-no-logo.html",
+            fetcher = htmlFetcher
+        )
     }
-
-    private fun loadFixture(path: String): String =
-        javaClass.classLoader
-            .getResourceAsStream(path)!!
-            .bufferedReader()
-            .readText()
 
     @Test
     fun `eventSource matches the enum value`() {
