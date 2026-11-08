@@ -232,14 +232,14 @@ proved what happens when something exists only in a place that gets destroyed.
 | `event-junkie-production-healthcheck-url`              | #21                | as above                                                                                |
 | `event-junkie-production-events-db`                    | #20                | by hand, and encrypted into git                                                         |
 | `event-junkie-staging-o2-root-password`                | #8                 | `scripts/cluster-secrets.sh`, into `openobserve-credentials`                            |
-| `event-junkie-staging-metrics-password`                | the `metrics` role | `scripts/cluster-secrets.sh`, into `postgres-exporter`                                  |
+| `event-junkie-staging-metrics-password`                | the `metrics` role | by hand, and encrypted into git as `postgres-exporter`                                  |
 | `event-junkie-production-o2-root-password`             | #8                 | `scripts/cluster-secrets.sh`, into `openobserve-credentials`                            |
-| `event-junkie-production-metrics-password`             | the `metrics` role | `scripts/cluster-secrets.sh`, into `postgres-exporter`                                  |
-| `event-junkie-production-bff-password`                 | the `bff` role     | `scripts/cluster-secrets.sh`, into `events-bff-db`                                      |
+| `event-junkie-production-metrics-password`             | the `metrics` role | by hand, and encrypted into git as `postgres-exporter`                                  |
+| `event-junkie-production-bff-password`                 | the `bff` role     | by hand, and encrypted into git as `events-bff-db`                                      |
 | `event-junkie-anthropic-api-key`                       | #26                | the repository-root `.envrc`, and `scripts/cluster-secrets.sh`                          |
 | `discogs-consumer-key`, `-secret`                      | #27                | `scripts/cluster-secrets.sh`, into `event-junkie-discogs`                               |
 | `instagram-token`                                      | #28                | `scripts/instagram-posts.sh`, and `scripts/cluster-secrets.sh`                          |
-| `event-junkie-staging-bff-password`                    | the `bff` role     | `scripts/cluster-secrets.sh`, into `events-bff-db`                                      |
+| `event-junkie-staging-bff-password`                    | the `bff` role     | by hand, and encrypted into git as `events-bff-db`                                      |
 | `event-junkie-alerts-smtp-password`                    | #7a                | `scripts/cluster-secrets.sh`, into `openobserve-smtp`                                   |
 | `event-junkie-scaleway-project-id`                     | #29                | `scripts/cluster-secrets.sh`, the `event-junkie-mail` username                          |
 | `event-junkie-<env>-tem-secret-key`                    | #29                | `scripts/cluster-secrets.sh`, into `event-junkie-mail`                                  |

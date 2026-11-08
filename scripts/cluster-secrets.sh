@@ -18,8 +18,8 @@
 # the value as an argument, visible to `ps` for that moment. It never overwrites an item.
 #
 # `flux-system` exists only after `flux bootstrap` (CLUSTER_BOOTSTRAP.md §9). Without it the
-# Secrets there are skipped, and a second run after §9 adds them. The database roles `metrics` and
-# `bff` are `psql` by hand first (SECRETS.md). `events-db` is not here: Flux restores it from git.
+# Secrets there are skipped, and a second run after §9 adds them. The three database Secrets are not
+# here: Flux restores `events-db`, `events-bff-db` and `postgres-exporter` from git.
 #
 # EJ_KUBE_CONTEXT names another context, such as event-junkie-<env>-next for the second pair of
 # #4128. EJ_SKIP_SECRETS lists `<namespace>/<name>` Secrets to leave out, which rebuild-node.sh
@@ -44,8 +44,7 @@ die() {
 
 ENV="${1:-}"
 case "$ENV" in
-    staging) DB_HOST=10.1.1.10 ;;
-    production) DB_HOST=10.0.1.21 ;;
+    staging | production) ;;
     *) die "expected staging or production, got '${ENV}'" ;;
 esac
 MODE="${2:-write}"
@@ -83,10 +82,7 @@ spec() {
     done
     # The header is read only from flux-system: the collector's valuesFrom and the deploy/*/apply.sh scripts.
     echo "flux-system openobserve-credentials O2_BASIC_AUTH_HEADER derived:o2-header"
-    echo "observability postgres-exporter DATA_SOURCE_NAME derived:metrics-dsn"
     echo "observability openobserve-smtp ZO_SMTP_PASSWORD kc:event-junkie-alerts-smtp-password"
-    echo "event-junkie events-bff-db username const:bff"
-    echo "event-junkie events-bff-db password kc:event-junkie-$ENV-bff-password"
     echo "event-junkie event-junkie-mail username kc:event-junkie-scaleway-project-id"
     echo "event-junkie event-junkie-mail password kc:event-junkie-$ENV-tem-secret-key"
     echo "event-junkie event-junkie-push APP_PUSH_VAPID_PRIVATE_KEY kc:event-junkie-$ENV-vapid-private-key"
@@ -137,16 +133,6 @@ resolve() {
             }
             pw="$(kc "event-junkie-$ENV-o2-root-password")"
             printf 'Basic %s' "$(printf '%s:%s' "$O2_ROOT_EMAIL" "$pw" | b64)" | b64
-            ;;
-        derived:metrics-dsn)
-            kc_exists "event-junkie-$ENV-metrics-password" || {
-                echo "event-junkie-$ENV-metrics-password" >&2
-                return 1
-            }
-            pw="$(kc "event-junkie-$ENV-metrics-password")"
-            # A URI: an unencoded `@` or `#` parses as something else (CLUSTER_BOOTSTRAP.md §8).
-            pw="$(printf '%s' "$pw" | jq -sRr @uri)"
-            printf 'postgresql://metrics:%s@%s:5432/events?sslmode=require' "$pw" "$DB_HOST" | b64
             ;;
         *) die "unknown source '$source'" ;;
     esac

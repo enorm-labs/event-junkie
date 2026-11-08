@@ -209,7 +209,8 @@ printf '%s\n' "$PGPASS" | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
 unset PGPASS                                                          # expect: events|events
 ```
 
-`events-db` is committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Fourteen hand-made objects are left, and one command creates them**
+`events-db`, `events-bff-db` and `postgres-exporter` are committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Thirteen hand-made objects
+are left, and one command creates them**
 from the Keychain:
 
 ```sh
@@ -218,7 +219,7 @@ scripts/cluster-secrets.sh staging           # create or update all of them
 ```
 
 1. **Create the database roles first.** `postgres-exporter` and `events-bff-db` log in as `metrics` and `bff`, and those are `psql` by hand
-   ([SECRETS.md](SECRETS.md) §postgres-exporter and §events-bff-db). The passwords go into the Keychain items the script reads.
+   ([SECRETS.md](SECRETS.md) §postgres-exporter and §events-bff-db). Each password must match its encrypted file in git. The Keychain items keep a copy.
 2. **Run it before §9, then again after.** `flux-system` exists only after `flux bootstrap`. The first run skips the Secrets there and says so.
 3. **A missing Keychain item stops the run before it writes anything.** The message names the item and the Secret. The items are listed in
    [CREDENTIALS.md](../CREDENTIALS.md) § What is in the macOS Keychain.
@@ -718,9 +719,10 @@ The list stays as the explanation of each step:
 3. Run `scripts/cluster-access.sh <env>` on each Mac. It replaces the server key in the client config, the host keys and both kubeconfigs, and ends with
    `get nodes`. Your own key and the peer list do not change.
 4. Close `admin_cidrs` again once the tunnel works on this Mac. Another Mac then reads the server key over its own tunnel, or takes `--server-key`.
-5. Check `events-db` against the role with `SOPS_AGE_KEY_FILE=~/.config/sops/age/event-junkie.txt`. sops does not look for that file name.
-6. Set the `metrics` and `bff` passwords to their Keychain values with `ALTER ROLE`. The roles survive on the volume.
-7. Run `kubectl create namespace flux-system`, then `scripts/cluster-secrets.sh <env>`. It creates the other namespaces and the 14 hand-made
+5. Check the three database Secrets in git against their roles with `SOPS_AGE_KEY_FILE=~/.config/sops/age/event-junkie.txt`. sops does not look
+   for that file name.
+6. Set the `metrics` and `bff` passwords to the values in git with `ALTER ROLE`. The roles survive on the volume.
+7. Run `kubectl create namespace flux-system`, then `scripts/cluster-secrets.sh <env>`. It creates the other namespaces and the hand-made
    objects, and `--check` confirms them.
 8. Do not run `flux bootstrap`. The repository holds the cluster's `flux-system` already. Create the `flux-system` Secret with `flux create secret git`.
    Replace the cluster's deploy key with `gh repo deploy-key`. Then run `kubectl apply -k deploy/clusters/<env>/flux-system`. Nothing pushes to `main`,

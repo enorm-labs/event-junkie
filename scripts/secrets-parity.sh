@@ -67,7 +67,9 @@ if [ "$rows" -lt 1 ] || [ "$rows" -ge "${#WORDS[@]}" ]; then
     exit 1
 fi
 count="${WORDS[$rows]}"
-hand_made="${WORDS[$((rows - 1))]}"
+# Flux restores what is encrypted under deploy/clusters/staging/secrets/; the script makes the rest.
+in_git="$(find deploy/clusters/staging/secrets -name '*.yaml' | grep -c . || true)"
+hand_made="${WORDS[$((rows - in_git))]}"
 
 # Each phrase is matched with the number as a wildcard, then the word found is compared, case
 # aside. A missing phrase is a finding too: the sentence was rewritten and the check no longer

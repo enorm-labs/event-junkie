@@ -4,8 +4,8 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Sixteen objects.** One, `events-db`, is encrypted into git and restored by Flux. `scripts/cluster-secrets.sh <env>` creates the other fifteen from the
-  Keychain, and `--check` compares them with it.
+- **Sixteen objects.** Three are encrypted into git and restored by Flux: `events-db`, `events-bff-db` and `postgres-exporter`.
+  `scripts/cluster-secrets.sh <env>` creates the other thirteen from the Keychain, and `--check` compares them with it.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
@@ -16,7 +16,7 @@ sops -d deploy/clusters/staging/secrets/events-db.yaml | head  # can I still dec
 flux --context event-junkie-staging get helmreleases -A       # a missing credential fails the release, by design
 ```
 
-> **In place on both staging and production.** `events-db` is committed encrypted and restored by Flux. `hetzner` and `github-dispatch` stay hand-made by
+> **In place on both staging and production.** The three database Secrets are committed encrypted and restored by Flux. `hetzner` and `github-dispatch` stay hand-made by
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
@@ -28,16 +28,16 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `hetzner`                 | `cert-manager`                                    | an hcloud API token, **read+write** — staging only    | §8                                                             |
 | `openobserve-credentials` | `flux-system` **and** `observability` — see below | the root login and an `-o2` S3 keypair                | [SECRETS.md](SECRETS.md) §openobserve-credentials              |
 | `github-dispatch`         | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
-| `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                              | §postgres-exporter, below                                      |
+| `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                              | git, encrypted — §postgres-exporter, below                     |
 | `event-junkie-anthropic`  | `event-junkie`                                    | the Claude API key for every Anthropic caller         | §event-junkie-anthropic, below                                 |
 | `event-junkie-discogs`    | `event-junkie`                                    | the Discogs application's consumer key and secret     | §event-junkie-discogs, below                                   |
 | `event-junkie-instagram`  | `event-junkie`                                    | the Meta Page token for the Instagram drafts          | §event-junkie-instagram, below                                 |
-| `sops-age`                | `flux-system`                                     | the age private key that decrypts `events-db`         | §3, below                                                      |
+| `sops-age`                | `flux-system`                                     | the age key that decrypts the three database Secrets  | §3, below                                                      |
 | `event-junkie-images`     | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**    | §event-junkie-images, below                                    |
 | `event-junkie-imgproxy`   | `event-junkie`                                    | the key and salt that sign imgproxy URLs              | §event-junkie-imgproxy, below                                  |
 | `openobserve-smtp`        | `observability`                                   | the `alerts@` mailbox password, for the alert mail    | §openobserve-smtp, below                                       |
 | `event-junkie-mail`       | `event-junkie`                                    | the Scaleway TEM login the BFF sends mail with        | §event-junkie-mail, below                                      |
-| `events-bff-db`           | `event-junkie`                                    | the `bff` role's password, the BFF's own login        | §events-bff-db, below                                          |
+| `events-bff-db`           | `event-junkie`                                    | the `bff` role's password, the BFF's own login        | git, encrypted — §events-bff-db, below                         |
 | `event-junkie-push`       | `event-junkie`                                    | the VAPID key pair the BFF signs Web Push with        | §event-junkie-push, below                                      |
 | `event-junkie-mail-quota` | `event-junkie`                                    | the read-only Scaleway key — production only          | §event-junkie-mail-quota, below                                |
 
@@ -170,8 +170,8 @@ never creates it is healthy. `importer.translation.engine` defaults to `none`, a
 **Hand-made, like `hetzner`, not encrypted like `events-db`.** The rebuild-survival benefit is small, because recreating a PAT is a two-minute job, and the
 exposure cost is higher than the cost of `hetzner`.
 
-**One Secret is in git today: `events-db`.** Three rows say **Yes**. `events-bff-db` and `postgres-exporter` pass the same test as `events-db`, and both
-are still hand-made. Every other Secret stays hand-made by decision.
+**Three Secrets are in git today: `events-db`, `events-bff-db` and `postgres-exporter`.** They are the three rows that say **Yes**. Every other Secret stays
+hand-made by decision.
 
 **What hand-made means operationally**, because it is easy to assume Flux will handle it. Nothing in this repository creates this Secret, and no deploy brings
 it. It is typed once against the cluster and exists nowhere else:
@@ -326,8 +326,7 @@ expired or revoked token fires `ej-instagram-access-refused`.
 
 ### `postgres-exporter` — a monitoring role, not the application's
 
-**Hand-made, and for a different reason than the others.** This one is not about ciphertext exposure:
-it needs a database role that does not exist yet, and creating one is `psql`, not `kubectl`.
+**Encrypted into git, as `events-db`. The role behind it is made by hand**, because creating a role is `psql`, not `kubectl`.
 
 **Do not reuse the `events` role.** It owns the schema and can write. An exporter that only reads
 `pg_stat_*` has no business holding that. PostgreSQL ships `pg_monitor` for exactly this: a
@@ -361,36 +360,33 @@ GRANT pg_monitor TO metrics;
 -- No GRANT on the events schema. It is not supposed to read application data.
 ```
 
-Then the connection string, as a single value — the whole DSN is the credential, so it is not
-assembled from parts in a manifest:
+Then the connection string, as a single value. The whole DSN is the credential, so it is not
+assembled from parts in a manifest. It goes into git as an encrypted file, and Flux applies it.
+
+**`DATA_SOURCE_NAME` is a URI, so the password has to be percent-encoded.** A generated password containing `@`, `#`, `%` or `&` silently yields a DSN
+that parses as something else. A generator satisfying OpenObserve's policy will happily produce all four. `@` starts the host, `#` starts a fragment, and
+the exporter reports a connection failure that looks nothing like a quoting problem. The `PGENC` line encodes it.
+
+Run this in a checkout on a branch. `sops` reads the manifest from the pipe, so no plaintext file is written:
 
 ```sh
 printf 'metrics role password: '; read -rs PGPW; echo
+PGENC="$(python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.readline().rstrip("\n"), safe=""))' <<<"$PGPW")"
+ENV=staging DB=10.1.1.10        # production: ENV=production DB=10.0.1.21
 
-kubectl --context event-junkie-staging create secret generic postgres-exporter -n observability \
-  --from-literal=DATA_SOURCE_NAME="postgresql://metrics:${PGPW}@10.1.1.10:5432/events?sslmode=require"
+kubectl create secret generic postgres-exporter -n observability --dry-run=client -o json \
+  --from-literal=DATA_SOURCE_NAME="postgresql://metrics:${PGENC}@${DB}:5432/events?sslmode=require" \
+  | sops -e --input-type json --output-type yaml --filename-override deploy/clusters/$ENV/secrets/postgres-exporter.yaml /dev/stdin \
+  > deploy/clusters/$ENV/secrets/postgres-exporter.yaml
 
-unset PGPW
+unset PGPW PGENC
 ```
 
-Production, with its own role password and its own address:
+Store the password in the Keychain item `event-junkie-<env>-metrics-password` too. Commit the file, and Flux applies it at merge.
 
-```sh
-kubectl --context event-junkie-production create secret generic postgres-exporter -n observability \
-  --from-literal=DATA_SOURCE_NAME="postgresql://metrics:${PGPW}@10.0.1.21:5432/events?sslmode=require"
-```
-
-**That address appears twice on production and both copies must agree**: here, and as an `ipBlock` in
+**Production's address appears twice and both copies must agree**: in the DSN, and as an `ipBlock` in
 `deploy/clusters/production/observability-netpol.yaml`. NetworkPolicy speaks CIDRs and cannot resolve a name. Get the DSN right and the policy wrong, and
 the exporter starts and stays Ready. Its probe only asks whether `/metrics` answers, so the symptom is no database metrics at all.
-
-**`DATA_SOURCE_NAME` is a URI, so the password has to be percent-encoded**, and the line above does not do it. A generated password containing `@`, `#`, `%`
-or `&` silently yields a DSN that parses as something else. A generator satisfying OpenObserve's policy will happily produce all four. `@` starts the host,
-`#` starts a fragment, and the exporter reports a connection failure that looks nothing like a quoting problem. Encode it:
-
-```sh
-PGENC="$(python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.readline().rstrip("\n"), safe=""))' <<<"$PGPW")"
-```
 
 **`10.1.1.10` is staging's `postgres_ip`**, the same address the application chart's `database.host`
 carries. Staging co-locates PostgreSQL on the k3s node and still reaches it over the network.
@@ -441,15 +437,20 @@ CREATE ROLE bff WITH LOGIN;
 \password bff
 ```
 
-Then the Secret, with the same key names as `events-db`:
+Then the Secret, with the same key names as `events-db`. It goes into git as an encrypted file, as §postgres-exporter does. Run this once per cluster, in a
+checkout on a branch:
 
 ```sh
-printf 'bff password (staging): '; read -rs P; echo
-kubectl --context event-junkie-staging -n event-junkie create secret generic events-bff-db --from-literal=username=bff --from-literal=password="$P"
-printf 'bff password (production): '; read -rs P; echo
-kubectl --context event-junkie-production -n event-junkie create secret generic events-bff-db --from-literal=username=bff --from-literal=password="$P"
+ENV=staging                     # then ENV=production, with that cluster's password
+printf "bff password ($ENV): "; read -rs P; echo
+kubectl create secret generic events-bff-db -n event-junkie --dry-run=client -o json \
+  --from-literal=username=bff --from-literal=password="$P" \
+  | sops -e --input-type json --output-type yaml --filename-override deploy/clusters/$ENV/secrets/events-bff-db.yaml /dev/stdin \
+  > deploy/clusters/$ENV/secrets/events-bff-db.yaml
 unset P
 ```
+
+Store the password in the Keychain item `event-junkie-<env>-bff-password` too. Commit the file, and Flux applies it at merge.
 
 Last, set `bff.database.existingSecret: events-bff-db` in each cluster's `helm-release.yaml`. Both clusters set it. Without it the BFF uses the shared
 login, which still works. Each cluster gets its own password, so a leak on one does not reach the other.
@@ -666,7 +667,8 @@ secret and let Flux put it back. That is the test, and the whole point of the ex
 Rotating the **age key**: generate a new keypair and add it as a second recipient in `.sops.yaml`. Run `sops updatekeys` over each encrypted file, replace the
 cluster secret, then drop the old recipient. Two recipients briefly, so nothing is undecryptable mid-flight.
 
-Rotating a **secret's value** is the ordinary path — edit with `sops`, commit, let Flux apply it. Note that the old ciphertext stays in git history forever,
+Rotating a **secret's value** is the ordinary path — edit with `sops`, commit, let Flux apply it. For `events-bff-db` and `postgres-exporter`, change the role's password with `\password` first, then the file, then
+the Keychain item. Note that the old ciphertext stays in git history forever,
 which is the public-repository caveat above, restated: **rotation changes the future, not the past.**
 
 ## What this does not solve
