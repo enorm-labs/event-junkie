@@ -55,7 +55,7 @@ class EventPageTest {
         runTest {
             stubPage("<p>A blurb</p>")
 
-            val result = htmlFetcher.withEventPageOrFlagged(event) { event.copy(description = it.selectFirst("p")?.text()) }
+            val result = withEventPageOrFlagged(htmlFetcher::fetchDocument, event) { event.copy(description = it.selectFirst("p")?.text()) }
 
             result.description shouldBe "A blurb"
             result.detailUnavailable shouldBe false
@@ -67,7 +67,7 @@ class EventPageTest {
         runTest {
             coEvery { htmlFetcher.fetchDocument(event.sourceUrl) } throws RuntimeException("boom")
 
-            val result = htmlFetcher.withEventPageOrFlagged(event) { event.copy(description = "never") }
+            val result = withEventPageOrFlagged(htmlFetcher::fetchDocument, event) { event.copy(description = "never") }
 
             result shouldBe event.copy(detailUnavailable = true)
             warnings() shouldHaveSize 1
@@ -81,7 +81,7 @@ class EventPageTest {
         runTest {
             stubPage("<p></p>")
 
-            val result = htmlFetcher.withEventPageOrFlagged(event) { null }
+            val result = withEventPageOrFlagged(htmlFetcher::fetchDocument, event) { null }
 
             result shouldBe event.copy(detailUnavailable = true)
             warnings().shouldBeEmpty()
@@ -92,7 +92,7 @@ class EventPageTest {
         runTest {
             stubPage("<p></p>")
 
-            val result = htmlFetcher.withEventPageOrFlagged(event) { error("unexpected markup") }
+            val result = withEventPageOrFlagged(htmlFetcher::fetchDocument, event) { error("unexpected markup") }
 
             result shouldBe event.copy(detailUnavailable = true)
             warnings() shouldHaveSize 1
@@ -103,7 +103,7 @@ class EventPageTest {
         runTest {
             stubPage("<p></p>")
 
-            htmlFetcher.readEventPage(event) { LoggerFactory.getLogger(javaClass).warn("parsing") }
+            readEventPage(htmlFetcher::fetchDocument, event) { LoggerFactory.getLogger(javaClass).warn("parsing") }
 
             appender.list.single { it.formattedMessage == "parsing" }.mdcPropertyMap[LogFields.URL] shouldBe event.sourceUrl
         }
@@ -113,7 +113,7 @@ class EventPageTest {
         runTest {
             coEvery { htmlFetcher.fetchDocument(event.sourceUrl) } throws RuntimeException("boom")
 
-            htmlFetcher.readEventPage(event) { "parsed" }.shouldBeNull()
+            readEventPage(htmlFetcher::fetchDocument, event) { "parsed" }.shouldBeNull()
         }
 
     private val otherPage = "https://venue.example/events/matinee"
@@ -123,7 +123,8 @@ class EventPageTest {
     private suspend fun enrich(
         vararg events: ScrapedEvent,
         pageOwns: Set<ScrapedField> = emptySet()
-    ) = htmlFetcher.enrichFromSharedPages(
+    ) = enrichFromSharedPages(
+        htmlFetcher::fetchDocument,
         events.toList(),
         { it.selectFirst("p")?.text() },
         { blurb, row -> row.copy(description = blurb) },
@@ -175,7 +176,8 @@ class EventPageTest {
             val sameShowElsewhere = matinee.copy(title = event.title)
 
             val result =
-                htmlFetcher.enrichFromSharedPages(
+                enrichFromSharedPages(
+                    htmlFetcher::fetchDocument,
                     listOf(event, sameShowElsewhere),
                     { it.selectFirst("p")?.text() },
                     { blurb, row -> row.copy(description = blurb) },

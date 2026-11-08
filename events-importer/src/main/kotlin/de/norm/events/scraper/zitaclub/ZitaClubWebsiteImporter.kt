@@ -42,7 +42,7 @@ class ZitaClubWebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val listing = calendarScraper.scrape(apiClient.fetchJson(URI(url).resolve(FEED_PATH).toString()))
-        val events = htmlFetcher.withEventPages(listing) { event, document -> eventPageScraper.enrich(event, document) }
+        val events = withEventPages(htmlFetcher::fetchDocument, listing) { event, document -> eventPageScraper.enrich(event, document) }
         logger.info { "Scraped ${events.size} event(s) from Zita Club" }
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }

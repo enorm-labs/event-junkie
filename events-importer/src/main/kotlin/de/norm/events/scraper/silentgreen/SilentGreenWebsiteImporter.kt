@@ -65,16 +65,16 @@ class SilentGreenWebsiteImporter(
         logger.info { "Scraped ${distinct.size} silent green event(s) across ${listing.pages} month page(s) from $url" }
         // An exhibition's days share one page, and the page's date block is the run (ADR-029, #337).
         val runs =
-            htmlFetcher
-                .enrichFromSharedPages(
-                    distinct,
-                    detailPageScraper::scrape,
-                    SilentGreenEventDetails::applyTo,
-                    pageOwns = setOf(ScrapedField.RUN_DATES),
-                    secondLanguage = SecondLanguagePage("en", detailPageScraper::description)
-                ).collapseExhibitionRuns { event ->
-                    "${EventSource.SILENT_GREEN.sourceIdPrefix}${silentGreenDetailSlug(event.sourceUrl)}"
-                }
+            enrichFromSharedPages(
+                htmlFetcher::fetchDocument,
+                distinct,
+                detailPageScraper::scrape,
+                SilentGreenEventDetails::applyTo,
+                pageOwns = setOf(ScrapedField.RUN_DATES),
+                secondLanguage = SecondLanguagePage("en", detailPageScraper::description)
+            ).collapseExhibitionRuns { event ->
+                "${EventSource.SILENT_GREEN.sourceIdPrefix}${silentGreenDetailSlug(event.sourceUrl)}"
+            }
         return ImportResult.Success(events = runs, etag = null, lastModified = null, complete = listing.complete)
     }
 

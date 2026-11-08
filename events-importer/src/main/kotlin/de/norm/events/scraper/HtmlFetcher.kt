@@ -267,6 +267,9 @@ sealed interface FetchResult {
     ) : FetchResult
 }
 
+/** Fetches one page as a [Document]; an importer passes [HtmlFetcher.fetchDocument], a test its own stub. */
+typealias DocumentFetch = suspend (String) -> Document
+
 /**
  * Fetches the entry page [url] conditionally and imports it: a 304 is [ImportResult.NotModified],
  * a page is what [read] makes of it, stored with the response's validators.

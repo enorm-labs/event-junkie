@@ -58,7 +58,7 @@ abstract class AbstractZigZagWebsiteImporter(
     /** The event with its page's fields, flagged when the page yields nothing, or null when the page moves it elsewhere. */
     private suspend fun withDetail(event: ScrapedEvent): ScrapedEvent? {
         val detail =
-            htmlFetcher.readEventPage(event) { detailPageScraper.scrape(it).takeUnless(ZigZagDetail::isEmpty) }
+            readEventPage(htmlFetcher::fetchDocument, event) { detailPageScraper.scrape(it).takeUnless(ZigZagDetail::isEmpty) }
                 ?: return event.copy(detailUnavailable = true)
         val dropped = detail.elsewhere && !keepsElsewhere
         if (dropped) logger.info { "Dropping '${event.title}': its page names another location" }

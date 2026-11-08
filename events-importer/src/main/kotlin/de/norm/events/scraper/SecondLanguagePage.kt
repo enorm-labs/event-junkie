@@ -35,12 +35,13 @@ fun Document.alternateLanguageUrl(hreflang: String): String? =
  * language for those rows this run.
  */
 @Suppress("TooGenericExceptionCaught") // Intentional: a missing second language must not fail the import
-suspend fun <T : Any> HtmlFetcher.readSecondLanguagePage(
+suspend fun <T : Any> readSecondLanguagePage(
+    fetch: DocumentFetch,
     url: String,
     parse: (Document) -> T?
 ): T? =
     try {
-        val document = fetchDocument(url)
+        val document = fetch(url)
         withContext(LogContext.forPage(url)) { parse(document) }
     } catch (e: CancellationException) {
         throw e
@@ -83,13 +84,14 @@ class SecondLanguageListing(
  * [events] with the second language read from the [secondLanguage] version of the listing
  * [document], when the listing links one. One more page per run, and no request per event.
  */
-suspend fun HtmlFetcher.withSecondLanguageListing(
+suspend fun withSecondLanguageListing(
+    fetch: DocumentFetch,
     events: List<ScrapedEvent>,
     document: Document,
     secondLanguage: SecondLanguageListing
 ): List<ScrapedEvent> {
     val alternates =
-        document.alternateLanguageUrl(secondLanguage.hreflang)?.let { readSecondLanguagePage(it, secondLanguage.descriptions) } ?: return events
+        document.alternateLanguageUrl(secondLanguage.hreflang)?.let { readSecondLanguagePage(fetch, it, secondLanguage.descriptions) } ?: return events
     val matched = events.withDescriptionAlts(alternates, ScrapedEvent::sourceId)
     logger.info { "Read ${alternates.size} event text(s) from the ${secondLanguage.hreflang} listing, ${matched.count { it.descriptionAlt != null }} differ" }
     return matched

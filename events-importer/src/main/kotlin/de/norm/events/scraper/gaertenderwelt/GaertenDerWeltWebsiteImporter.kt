@@ -56,11 +56,12 @@ class GaertenDerWeltWebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val listing =
-            htmlFetcher.scrapeListingPages(
+            scrapeListingPages(
                 eventSource,
                 htmlFetcher.fetchDocument(url),
                 url,
                 MAX_PAGES,
+                htmlFetcher::fetchDocument,
                 overviewPageScraper::nextPageUrl,
                 overviewPageScraper::scrape
             )
@@ -77,7 +78,7 @@ class GaertenDerWeltWebsiteImporter(
      * [ScrapedEvent.detailUnavailable]. Its poster is a thumbnail, so a stored one wins (#2465).
      */
     private suspend fun enrichFromDetailPage(row: ScrapedEvent): ScrapedEvent =
-        htmlFetcher.withEventPageOrFlagged(row, eventPageOwns = setOf(ScrapedField.IMAGE, ScrapedField.SUBTITLE)) { document ->
+        withEventPageOrFlagged(htmlFetcher::fetchDocument, row, eventPageOwns = setOf(ScrapedField.IMAGE, ScrapedField.SUBTITLE)) { document ->
             detailPageScraper.scrape(document, row.sourceUrl)?.let { merge(detail = it, row = row) }
         }
 

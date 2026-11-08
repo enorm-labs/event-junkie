@@ -46,7 +46,7 @@ class BallhausWeddingWebsiteImporter(
     ): ImportResult {
         val listing = overviewPageScraper.scrape(htmlFetcher.fetchDocument(url), url, LocalDate.now(clock))
         val events =
-            htmlFetcher.withEventPages(listing, EVENT_PAGE_OWNS, hasEventPage = { it.sourceUrl != url }) { event, document ->
+            withEventPages(htmlFetcher::fetchDocument, listing, EVENT_PAGE_OWNS, hasEventPage = { it.sourceUrl != url }) { event, document ->
                 eventPageScraper.enrich(event, document)
             }
         logger.info { "Scraped ${events.size} Ballhaus Wedding event(s), ${events.count { it.sourceUrl != url }} with an event page" }

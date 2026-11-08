@@ -83,7 +83,8 @@ abstract class AbstractTwoPageWebsiteImporter(
             HtmlImport(
                 entry = HtmlImport.Entry.Conditional(cookies),
                 readListing = { document, entryUrl ->
-                    val overview = htmlFetcher.scrapeListingPages(eventSource, document, entryUrl, maxOverviewPages, ::nextOverviewPage, scrapeOverview)
+                    val overview =
+                        scrapeListingPages(eventSource, document, entryUrl, maxOverviewPages, htmlFetcher::fetchDocument, ::nextOverviewPage, scrapeOverview)
                     HtmlImport.Listing(overview.events, overview.complete)
                 },
                 listedLine = { count -> "Scraped $count event(s) from ${eventSource.name} overview" },

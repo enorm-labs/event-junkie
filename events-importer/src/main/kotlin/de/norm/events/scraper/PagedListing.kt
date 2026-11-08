@@ -78,11 +78,12 @@ suspend fun <P, T> walkListingPages(
  * A later page is fetched without validators: they cover the entry page only.
  */
 @Suppress("LongParameterList") // The walk's parameters plus the two per-page readers
-suspend fun HtmlFetcher.scrapeListingPages(
+suspend fun scrapeListingPages(
     source: EventSource,
     first: Document,
     url: String,
     maxPages: Int,
+    fetch: DocumentFetch,
     nextPage: (Document, String) -> String?,
     scrape: (Document, String) -> List<ScrapedEvent>
 ): ListingPages {
@@ -92,7 +93,7 @@ suspend fun HtmlFetcher.scrapeListingPages(
             first,
             url,
             maxPages,
-            ::fetchDocument
+            fetch
         ) { document, pageUrl -> ListingPage(scrape(document, pageUrl), nextPage(document, pageUrl)) }
     return ListingPages(walked.items.distinctBy { it.sourceId }, walked.complete)
 }
