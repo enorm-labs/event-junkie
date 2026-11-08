@@ -1,10 +1,31 @@
 package de.norm.events.ai
 
+import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalTime
+
+/**
+ * Why an answer is no JSON, told without its words (#4108). The answer quotes a venue's text, which can carry a
+ * person's contact, so the log gets its length, where the parser stopped, and the [shape] around that point.
+ */
+data class Unparseable(
+    val length: Int,
+    /** The character offset where the parser stopped, or null when Jackson reports none. */
+    val offset: Long?,
+    /** Up to [ModelAnswer.SHAPE_RADIUS] characters on each side of [offset]: each letter is `a`, each digit `9`, and `⟨here⟩` marks the offset. */
+    val shape: String
+) {
+    override fun toString(): String = "$length character(s), stopped at ${offset ?: "an unknown offset"}: $shape"
+}
+
+/** The model answered text that does not parse as JSON. */
+class UnparseableAnswer(
+    val unparseable: Unparseable,
+    cause: JacksonException
+) : RuntimeException("The answer is not JSON: $unparseable", cause)
 
 /**
  * Reads one value out of the JSON a model answered, for every validator that checks one (ADR-050).
@@ -24,6 +45,9 @@ object ModelAnswer {
 
     private const val HALF_DAY = 12
 
+    /** Enough of the shape on each side to show an unescaped quote and the key it sits in. */
+    const val SHAPE_RADIUS = 30
+
     /** A quote shorter than this proves nothing, and a longer one is no quote but a copy. */
     val EVIDENCE_LENGTH = 3..500
 
@@ -34,10 +58,44 @@ object ModelAnswer {
      *
      * A model fences its JSON often enough that stripping the fence belongs here, not at a call site.
      *
-     * @throws tools.jackson.core.JacksonException for text that is no JSON at all. The caller logs it,
-     *   because the name of the answer is the part worth reading.
+     * @throws UnparseableAnswer for text that is no JSON at all. The caller logs it and counts it, because the
+     *   name of the answer is the part worth reading.
      */
-    fun jsonObject(raw: String): JsonNode? = mapper.readTree(raw.trim().replace(CODE_FENCE, "")).takeIf { it.isObject }
+    fun jsonObject(raw: String): JsonNode? {
+        val text = raw.trim().replace(CODE_FENCE, "")
+        return try {
+            mapper.readTree(text).takeIf { it.isObject }
+        } catch (e: JacksonException) {
+            throw UnparseableAnswer(unparseable(text, e), e)
+        }
+    }
+
+    private fun unparseable(
+        text: String,
+        error: JacksonException
+    ): Unparseable {
+        val offset = error.location?.charOffset?.takeIf { it >= 0 }
+        val shape =
+            offset
+                ?.let {
+                    val at = it.toInt().coerceAtMost(text.length)
+                    shapeOf(text.substring((at - SHAPE_RADIUS).coerceAtLeast(0), at)) + "⟨here⟩" +
+                        shapeOf(text.substring(at, (at + SHAPE_RADIUS).coerceAtMost(text.length)))
+                }.orEmpty()
+        return Unparseable(text.length, offset, shape)
+    }
+
+    /** [text] with its words blanked out and its punctuation kept. */
+    private fun shapeOf(text: String): String =
+        text
+            .map {
+                when {
+                    it.isLetter() -> 'a'
+                    it.isDigit() -> '9'
+                    it.isWhitespace() -> ' '
+                    else -> it
+                }
+            }.joinToString("")
 
     /** A price the model wrote as a number or as text, at the scale every stored price carries. */
     fun price(node: JsonNode?): BigDecimal? {

@@ -17,6 +17,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
@@ -198,6 +199,19 @@ class EventClassificationCheckTest : BaseControllerTest() {
             check().checkEvent(upcoming)
 
             suggestions(upcoming).map { it.proposed } shouldContainExactly listOf("SHOW")
+        }
+
+    @Test
+    fun `an answer that is no JSON counts as rejected and not JSON, and its event as checked`(): Unit =
+        runBlocking {
+            val event = insertEvent("Spaeti-Ritter", type = "OTHER")
+            server.enqueue(textResponse("""{"eventType": {"value": "SHOW", "evidence": "Die "Show"", "confidence": 0.9}}"""))
+
+            val lines = captureLogs { check().checkSource(SOURCE) }
+
+            suggestions(event).shouldBeEmpty()
+            withClue("the same text is not sent again") { check().checkEvent(event).unchanged shouldBe 1 }
+            lines.single { it.formattedMessage.contains("finished") }.formattedMessage shouldContain "0 failed, 1 rejected (1 not JSON)"
         }
 
     @Test
@@ -442,7 +456,7 @@ class EventClassificationCheckTest : BaseControllerTest() {
             info.map { it.formattedMessage } shouldContainExactly
                 listOf(
                     "Event classification of source '$SOURCE' started: 1 candidate(s), at most 50 model call(s), 0 of 3000000 tokens used this month",
-                    "Event classification of source '$SOURCE' finished: 1 checked, 0 unchanged, 0 failed, 0 over the cap, " +
+                    "Event classification of source '$SOURCE' finished: 1 checked, 0 unchanged, 0 failed, 0 rejected (0 not JSON), 0 over the cap, " +
                         "0 over the token budget; suggested {eventType=1}; " +
                         "skipped 0 COMEDY/SHOW type(s), 0 dismissed on another date and 0 open on another date"
                 )

@@ -1,11 +1,36 @@
 package de.norm.events.ai
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalTime
 
 class ModelAnswerTest {
+    @Test
+    fun `an answer that is no JSON says where it broke and its shape there, and none of its words`() {
+        val raw =
+            """```json
+            |{"eventType": {"value": "SHOW", "evidence": "Die "Show" am 12. Mai", "confidence": 0.9}}
+            |```
+            """.trimMargin()
+
+        val error = shouldThrow<UnparseableAnswer> { ModelAnswer.jsonObject(raw) }
+
+        val unparseable = error.unparseable
+        unparseable.length shouldBe 88
+        unparseable.offset shouldBe 50L
+        unparseable.shape shouldBe "a\": \"aaaa\", \"aaaaaaaa\": \"aaa \"⟨here⟩aaaa\" aa 99. aaa\", \"aaaaaaaaaa"
+        error.message.orEmpty() shouldNotContain "Show"
+        error.cause?.message.orEmpty() shouldNotContain "Show"
+    }
+
+    @Test
+    fun `text that parses as no object is null, not an error`() {
+        ModelAnswer.jsonObject("[1, 2]") shouldBe null
+    }
+
     @Test
     fun `an hour is named on either clock, with or without minutes and a leading zero`() {
         ModelAnswer.namesHour(LocalTime.of(20, 0), "Beginn 20 Uhr") shouldBe true

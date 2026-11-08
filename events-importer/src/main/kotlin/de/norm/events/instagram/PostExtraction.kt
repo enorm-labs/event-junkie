@@ -3,8 +3,6 @@ package de.norm.events.instagram
 import de.norm.events.ai.ModelAnswer
 import de.norm.events.common.BERLIN
 import de.norm.events.common.QuotedText
-import io.github.oshai.kotlinlogging.KotlinLogging
-import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import java.math.BigDecimal
 import java.time.DayOfWeek
@@ -78,7 +76,9 @@ sealed interface ExtractionResult {
 
     /** The model answered, and the answer was no JSON object or a refusal. Asking again gives the same answer. */
     data class Rejected(
-        override val tokens: Long
+        override val tokens: Long,
+        /** The answer was no JSON at all (#4108), rather than a refusal or another kind of value. */
+        val notJson: Boolean = false
     ) : ExtractionResult
 
     /** No answer came back: the call failed, or there is no key. The post is read again on the next pass. */
@@ -100,8 +100,6 @@ sealed interface ExtractionResult {
  * person who approves the draft compares the flyer text with the post.
  */
 object PostExtractionValidator {
-    private val logger = KotlinLogging.logger {}
-
     private const val MAX_TITLE_LENGTH = 200
     private const val MAX_LOGGED_DATE_LENGTH = 20
 
@@ -127,13 +125,17 @@ object PostExtractionValidator {
             DayOfWeek.SUNDAY to "sunday|sonntag"
         ).mapValues { (_, names) -> Regex("(?<![\\p{L}])(?:$names)(?![\\p{L}])", RegexOption.IGNORE_CASE) }
 
-    /** Null when the answer is no JSON object. */
+    /**
+     * Null when the answer parses as no JSON object.
+     *
+     * @throws de.norm.events.ai.UnparseableAnswer for text that is no JSON at all.
+     */
     fun parse(
         raw: String,
         input: PostInput,
         minConfidence: Double
     ): ParsedAnswer? {
-        val root = readObject(raw) ?: return null
+        val root = ModelAnswer.jsonObject(raw) ?: return null
         val events =
             root
                 .path("events")
@@ -256,14 +258,6 @@ object PostExtractionValidator {
         try {
             LocalDate.parse(value.trim())
         } catch (_: DateTimeParseException) {
-            null
-        }
-
-    private fun readObject(raw: String): JsonNode? =
-        try {
-            ModelAnswer.jsonObject(raw)
-        } catch (e: JacksonException) {
-            logger.warn(e) { "The extraction answer is not JSON" }
             null
         }
 }
