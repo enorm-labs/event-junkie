@@ -3,6 +3,7 @@ package de.norm.events.scraper.jonnyknuppel
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
@@ -22,14 +23,7 @@ import java.time.LocalTime
 class JonnyKnuppelOverviewPageScraperTest {
     private val baseUrl = "https://jonnyknueppel.de/"
 
-    private val events by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/jonnyknuppel/jonnyknuppel-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scrape(html)
-    }
+    private val events by lazy { scrape(fixtureText("jonnyknuppel/jonnyknuppel-overview.html")) }
 
     private fun scrape(html: String): List<ScrapedEvent> = JonnyKnuppelOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl)
 

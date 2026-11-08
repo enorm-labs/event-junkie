@@ -7,6 +7,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -54,27 +56,24 @@ class HuxleysWebsiteImporterTest {
         </article></body></html>
         """.trimIndent()
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/huxleys/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = HuxleysWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("huxleys-overview.html"), overviewUrl),
+                document = fixtureDocument("huxleys/huxleys-overview.html", overviewUrl),
                 etag = "\"huxleys-etag\"",
                 lastModified = "Sat, 01 Aug 2026 03:00:00 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(thieveryUrl) } returns Jsoup.parse(fixture("huxleys-detail-soldout.html"), thieveryUrl)
-        coEvery { htmlFetcher.fetchDocument(kardUrl) } returns Jsoup.parse(fixture("huxleys-detail-simple.html"), kardUrl)
-        coEvery { htmlFetcher.fetchDocument(currentJoysUrl) } returns Jsoup.parse(fixture("huxleys-detail-relocated.html"), currentJoysUrl)
-        coEvery { htmlFetcher.fetchDocument(rockLegendsUrl) } returns Jsoup.parse(fixture("huxleys-detail-cancelled.html"), rockLegendsUrl)
+        stubFetcher(
+            thieveryUrl to "huxleys/huxleys-detail-soldout.html",
+            kardUrl to "huxleys/huxleys-detail-simple.html",
+            currentJoysUrl to "huxleys/huxleys-detail-relocated.html",
+            rockLegendsUrl to "huxleys/huxleys-detail-cancelled.html",
+            fetcher = htmlFetcher
+        )
 
         val stubbed = setOf(thieveryUrl, kardUrl, currentJoysUrl, rockLegendsUrl)
         coEvery { htmlFetcher.fetchDocument(match { it !in stubbed }) } returns Jsoup.parse("<html><body></body></html>", overviewUrl)
@@ -201,7 +200,7 @@ class HuxleysWebsiteImporterTest {
             val palaceUrl = "https://huxleysneuewelt.de/event/9740"
             coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
                 FetchResult.Success(Jsoup.parse(listing, overviewUrl), etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(palaceUrl) } returns Jsoup.parse(fixture("huxleys-detail-id-only.html"), palaceUrl)
+            stubFetcher(palaceUrl to "huxleys/huxleys-detail-id-only.html", fetcher = htmlFetcher)
 
             val palace = event(importer.importEvents(overviewUrl), "9740")
             palace.title shouldBe "PALACE"

@@ -3,6 +3,7 @@ package de.norm.events.scraper.heimathafen
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -36,15 +37,9 @@ class HeimathafenApiScraperTest {
     private val scraper = HeimathafenApiScraper(clock)
     private lateinit var page: HeimathafenApiScraper.HeimathafenPage
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/heimathafen/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
-        page = scraper.scrape(fixture("heimathafen-events-page1.json"))
+        page = scraper.scrape(fixtureText("heimathafen/heimathafen-events-page1.json"))
     }
 
     private fun event(sourceIdSuffix: String): ScrapedEvent = page.events.first { it.sourceId == "heimathafen:$sourceIdSuffix" }
@@ -188,7 +183,7 @@ class HeimathafenApiScraperTest {
     // A crowd sing-along whose first category is `musik`; the karaoke tag makes it a party, which bills no act (#2788).
     @Test
     fun `types a karaoke post as a party and bills no act whatever its category`() {
-        val singAlong = scraper.scrape(fixture("heimathafen-events-page5.json")).events.filter { it.title == "SING DELA SING" }
+        val singAlong = scraper.scrape(fixtureText("heimathafen/heimathafen-events-page5.json")).events.filter { it.title == "SING DELA SING" }
 
         singAlong.shouldNotBeEmpty()
         singAlong.forEach {
@@ -438,7 +433,7 @@ class HeimathafenApiScraperTest {
 
     @Test
     fun `parses the short last page of the archive`() {
-        val last = scraper.scrape(fixture("heimathafen-events-page5.json"))
+        val last = scraper.scrape(fixtureText("heimathafen/heimathafen-events-page5.json"))
         last.postCount shouldBe 8
         // A short page is the caller's signal to stop paging; it still carries upcoming events.
         last.events.isNotEmpty() shouldBe true

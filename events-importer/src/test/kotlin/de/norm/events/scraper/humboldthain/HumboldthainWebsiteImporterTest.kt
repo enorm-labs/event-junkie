@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -32,16 +33,12 @@ class HumboldthainWebsiteImporterTest {
     private val clock: Clock = Clock.fixed(LocalDate.of(2026, 8, 1).atStartOfDay(BERLIN).toInstant(), BERLIN)
     private val bootUrl = "https://core.service.elfsight.com/p/boot/?w=ee9a7876-11b1-4268-88e7-84b4d7397c75"
 
-    private val fixtureJson: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/humboldthain/humboldthain-api.json")!!
-            .bufferedReader()
-            .readText()
+    private val apiJson = "humboldthain/humboldthain-api.json"
 
     @BeforeEach
     fun setUp() {
         importer = HumboldthainWebsiteImporter(apiClient, clock)
-        coEvery { apiClient.fetchJson(any()) } returns fixtureJson
+        coEvery { apiClient.fetchJson(any()) } returns fixtureText(apiJson)
     }
 
     @Test
@@ -56,7 +53,7 @@ class HumboldthainWebsiteImporterTest {
     fun `importEvents fetches the configured boot URL verbatim`() =
         runTest {
             val requestUrl = slot<String>()
-            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureJson
+            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText(apiJson)
 
             importer.importEvents(bootUrl)
 

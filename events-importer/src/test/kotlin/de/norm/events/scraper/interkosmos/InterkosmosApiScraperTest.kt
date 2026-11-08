@@ -2,6 +2,7 @@ package de.norm.events.scraper.interkosmos
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -14,15 +15,11 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /** The two `wp/v2/events` answers saved on 2026-10-23, the one-off events from that day and the rules, plus row 2679 from 2026-10-29. */
-fun interkosmosFixture(name: String): String =
-    InterkosmosApiScraperTest::class.java.classLoader
-        .getResourceAsStream("scraper/interkosmos/$name")!!
-        .bufferedReader()
-        .readText()
-
 class InterkosmosApiScraperTest {
     private val today = LocalDate.of(2026, 10, 23)
-    private val events = InterkosmosApiScraper().scrape(interkosmosFixture("interkosmos-events.json"), interkosmosFixture("interkosmos-rules.json"), today)
+    private val eventsJson = "interkosmos/interkosmos-events.json"
+    private val rulesJson = "interkosmos/interkosmos-rules.json"
+    private val events = InterkosmosApiScraper().scrape(fixtureText(eventsJson), fixtureText(rulesJson), today)
 
     @Test
     fun `reads the one-off events and thirteen weeks of comedy nights, without the yoga`() {

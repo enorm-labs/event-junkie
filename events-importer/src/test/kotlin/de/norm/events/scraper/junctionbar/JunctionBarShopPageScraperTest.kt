@@ -1,10 +1,10 @@
 package de.norm.events.scraper.junctionbar
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -16,18 +16,11 @@ import java.time.LocalDate
 class JunctionBarShopPageScraperTest {
     private val scraper = JunctionBarShopPageScraper()
 
-    private fun fixture(name: String): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/junctionbar/$name")!!
-                .bufferedReader()
-                .readText(),
-            "https://junction-bar-shop.de/"
-        )
+    private val shopUrl = "https://junction-bar-shop.de/"
 
     @Test
     fun `reads the price of a night on sale, not the header cart's zero`() {
-        val offer = scraper.scrape(fixture("junctionbar-shop-priced.html"))
+        val offer = scraper.scrape(fixtureDocument("junctionbar/junctionbar-shop-priced.html", shopUrl))
 
         offer.pricePresale shouldBe BigDecimal("13.00")
         offer.soldOut shouldBe false
@@ -35,7 +28,7 @@ class JunctionBarShopPageScraperTest {
 
     @Test
     fun `reads the sold-out badge and keeps the price beside it`() {
-        val offer = scraper.scrape(fixture("junctionbar-shop-sold-out.html"))
+        val offer = scraper.scrape(fixtureDocument("junctionbar/junctionbar-shop-sold-out.html", shopUrl))
 
         offer.soldOut shouldBe true
         offer.pricePresale shouldBe BigDecimal("10.00")

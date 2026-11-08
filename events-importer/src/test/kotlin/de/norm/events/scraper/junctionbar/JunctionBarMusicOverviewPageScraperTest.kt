@@ -3,6 +3,7 @@ package de.norm.events.scraper.junctionbar
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -24,16 +25,10 @@ class JunctionBarMusicOverviewPageScraperTest {
     private val baseUrl = "https://www.junction-bar.de/program/07_2026/07_26.html"
     private val scraper = JunctionBarMusicOverviewPageScraper()
 
-    private fun program() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/junctionbar/junctionbar-music-07_2026.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
+    private val julyHtml = "junctionbar/junctionbar-music-07_2026.html"
+    private val octoberHtml = "junctionbar/junctionbar-music-10_2026.html"
 
-    private val events by lazy { scraper.scrape(program(), baseUrl) }
+    private val events by lazy { scraper.scrape(fixtureDocument(julyHtml, baseUrl), baseUrl) }
 
     @Test
     fun `parses every dated night and skips the PRIVAT PARTY nights`() {
@@ -100,7 +95,7 @@ class JunctionBarMusicOverviewPageScraperTest {
 
     @Test
     fun `returns no events for a URL without a month folder`() {
-        scraper.scrape(program(), "https://www.junction-bar.de/index.html").shouldBeEmpty()
+        scraper.scrape(fixtureDocument(julyHtml, baseUrl), "https://www.junction-bar.de/index.html").shouldBeEmpty()
     }
 
     @Test
@@ -113,14 +108,7 @@ class JunctionBarMusicOverviewPageScraperTest {
     fun `drops a format phrase from the act and keeps the billing as the title`() {
         // October 2026 page: `LA RONY <span>acoustic set</span> <span>Soul, Rnb, Pop</span>` (#2208).
         val octoberUrl = "https://www.junction-bar.de/program/10_2026/10_26.html"
-        val october =
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/junctionbar/junctionbar-music-10_2026.html")!!
-                    .bufferedReader()
-                    .readText(),
-                octoberUrl
-            )
+        val october = fixtureDocument(octoberHtml, octoberUrl)
         val night = scraper.scrape(october, octoberUrl).single { it.eventDate == LocalDate.of(2026, 10, 1) }
 
         // The second act's block carries `.Stil12221`, not `.Stil1222` (#2267).
@@ -132,14 +120,7 @@ class JunctionBarMusicOverviewPageScraperTest {
     @Test
     fun `bills the photographed band where the heading names the night`() {
         val octoberUrl = "https://www.junction-bar.de/program/10_2026/10_26.html"
-        val october =
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/junctionbar/junctionbar-music-10_2026.html")!!
-                    .bufferedReader()
-                    .readText(),
-                octoberUrl
-            )
+        val october = fixtureDocument(octoberHtml, octoberUrl)
         val friday = scraper.scrape(october, octoberUrl).single { it.eventDate == LocalDate.of(2026, 10, 2) }
 
         // "Tag der Gelben Einheit" is the night; the photo and the bio name the band, Yellow Snow (#2267).
@@ -151,14 +132,7 @@ class JunctionBarMusicOverviewPageScraperTest {
     @Test
     fun `leaves the headings of a translation in another script out of the title`() {
         val octoberUrl = "https://www.junction-bar.de/program/10_2026/10_26.html"
-        val october =
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/junctionbar/junctionbar-music-10_2026.html")!!
-                    .bufferedReader()
-                    .readText(),
-                octoberUrl
-            )
+        val october = fixtureDocument(octoberHtml, octoberUrl)
         val night = scraper.scrape(october, octoberUrl).single { it.eventDate == LocalDate.of(2026, 10, 16) }
 
         // The night repeats its billing in Chinese, with headings of its own: `（叫我克里斯）携格律之习`, `驻场助演` (#3301).
@@ -187,14 +161,7 @@ class JunctionBarMusicOverviewPageScraperTest {
     @Test
     fun `keeps the heading when the photo alt has no colon and the bio does not spell the photo name`() {
         val novemberUrl = "https://www.junction-bar.de/program/11_2026/11_26.html"
-        val november =
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/junctionbar/junctionbar-music-11_2026.html")!!
-                    .bufferedReader()
-                    .readText(),
-                novemberUrl
-            )
+        val november = fixtureDocument("junctionbar/junctionbar-music-11_2026.html", novemberUrl)
         val night = scraper.scrape(november, novemberUrl).single { it.eventDate == LocalDate.of(2026, 11, 19) }
 
         // The alt reads "Bandfoto Ray's Al-Aassad", a line break, then the poster description; the bio spells the heading (#3279).

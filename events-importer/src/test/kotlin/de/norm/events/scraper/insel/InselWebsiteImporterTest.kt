@@ -3,6 +3,7 @@ package de.norm.events.scraper.insel
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -28,12 +29,6 @@ class InselWebsiteImporterTest {
     private val programmeUrl = "https://www.inselberlin.de/"
     private val pageDataUrl = "https://www.inselberlin.de/page-data/index/page-data.json"
 
-    private fun fixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/insel/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun sqUrl(hash: String) = "https://www.inselberlin.de/page-data/sq/d/$hash.json"
 
     @Test
@@ -45,9 +40,9 @@ class InselWebsiteImporterTest {
     fun `derives the page-data url from the programme page and imports the programme artefact`() =
         runTest {
             // The real page-data lists six static queries; the programme is the second of them.
-            coEvery { apiClient.fetchJson(pageDataUrl) } returns fixture("insel-page-data.json")
+            coEvery { apiClient.fetchJson(pageDataUrl) } returns fixtureText("insel/insel-page-data.json")
             coEvery { apiClient.fetchJson(sqUrl("2282490745")) } returns """{"data":{"datoCmsOpeningtime":{}}}"""
-            coEvery { apiClient.fetchJson(sqUrl("3497155224")) } returns fixture("insel-events.json")
+            coEvery { apiClient.fetchJson(sqUrl("3497155224")) } returns fixtureText("insel/insel-events.json")
 
             val result = importer.importEvents(programmeUrl)
 
@@ -67,8 +62,8 @@ class InselWebsiteImporterTest {
         runTest {
             coEvery { apiClient.fetchJson(pageDataUrl) } returns
                 """{"staticQueryHashes":["111","3497155224","999"]}"""
-            coEvery { apiClient.fetchJson(sqUrl("111")) } returns fixture("insel-dates-only.json")
-            coEvery { apiClient.fetchJson(sqUrl("3497155224")) } returns fixture("insel-events.json")
+            coEvery { apiClient.fetchJson(sqUrl("111")) } returns fixtureText("insel/insel-dates-only.json")
+            coEvery { apiClient.fetchJson(sqUrl("3497155224")) } returns fixtureText("insel/insel-events.json")
 
             importer.importEvents(programmeUrl)
 
@@ -81,7 +76,7 @@ class InselWebsiteImporterTest {
         runTest {
             coEvery { apiClient.fetchJson(pageDataUrl) } returns """{"staticQueryHashes":["111","222"]}"""
             coEvery { apiClient.fetchJson(sqUrl("111")) } returns """{"data":{"datoCmsFooter":{}}}"""
-            coEvery { apiClient.fetchJson(sqUrl("222")) } returns fixture("insel-dates-only.json")
+            coEvery { apiClient.fetchJson(sqUrl("222")) } returns fixtureText("insel/insel-dates-only.json")
 
             val result = importer.importEvents(programmeUrl)
 

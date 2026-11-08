@@ -4,13 +4,13 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 
 class HouseOfMusicWebsiteImporterTest {
@@ -21,9 +21,9 @@ class HouseOfMusicWebsiteImporterTest {
     @Test
     fun `imports the programme with the page's validators`() =
         runTest {
-            val html = javaClass.classLoader.getResourceAsStream("scraper/houseofmusic/houseofmusic-overview.html")!!
+            val page = fixtureDocument("houseofmusic/houseofmusic-overview.html", url)
             coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns
-                FetchResult.Success(document = Jsoup.parse(html, null, url), etag = "\"houseofmusic\"", lastModified = "Thu, 08 Oct 2026 06:00:00 GMT")
+                FetchResult.Success(document = page, etag = "\"houseofmusic\"", lastModified = "Thu, 08 Oct 2026 06:00:00 GMT")
 
             val result = importer.importEvents(url)
 

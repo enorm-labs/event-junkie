@@ -3,6 +3,7 @@ package de.norm.events.scraper.heimathafen
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -35,12 +36,6 @@ class HeimathafenWebsiteImporterTest {
     private val importer = HeimathafenWebsiteImporter(apiClient, clock)
     private val baseUrl = "https://heimathafen-neukoelln.de/wp-json/wp/v2/events"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/heimathafen/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun pageUrl(page: Int) = "$baseUrl?per_page=100&page=$page&_fields=id,link,title,excerpt,content,acf,class_list,featured_images"
 
     @Test
@@ -51,8 +46,8 @@ class HeimathafenWebsiteImporterTest {
     @Test
     fun `walks pages until one comes back short`() =
         runTest {
-            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixture("heimathafen-events-page1.json")
-            coEvery { apiClient.fetchJson(pageUrl(2)) } returns fixture("heimathafen-events-page5.json")
+            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixtureText("heimathafen/heimathafen-events-page1.json")
+            coEvery { apiClient.fetchJson(pageUrl(2)) } returns fixtureText("heimathafen/heimathafen-events-page5.json")
 
             val result = importer.importEvents(baseUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
@@ -66,7 +61,7 @@ class HeimathafenWebsiteImporterTest {
     @Test
     fun `stops after a single short page`() =
         runTest {
-            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixture("heimathafen-events-page5.json")
+            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixtureText("heimathafen/heimathafen-events-page5.json")
 
             importer.importEvents(baseUrl).shouldBeInstanceOf<ImportResult.Success>()
             coVerify(exactly = 0) { apiClient.fetchJson(pageUrl(2)) }
@@ -75,7 +70,7 @@ class HeimathafenWebsiteImporterTest {
     @Test
     fun `returns events with no conditional headers`() =
         runTest {
-            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixture("heimathafen-events-page5.json")
+            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixtureText("heimathafen/heimathafen-events-page5.json")
 
             val result = importer.importEvents(baseUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
@@ -87,7 +82,7 @@ class HeimathafenWebsiteImporterTest {
     @Test
     fun `keeps the first page when a later page fails`() =
         runTest {
-            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixture("heimathafen-events-page1.json")
+            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixtureText("heimathafen/heimathafen-events-page1.json")
             coEvery { apiClient.fetchJson(pageUrl(2)) } returns "[]"
             val firstPageOnly = importer.importEvents(baseUrl).shouldBeInstanceOf<ImportResult.Success>()
             coEvery { apiClient.fetchJson(pageUrl(2)) } throws RuntimeException("connection reset")
@@ -103,8 +98,8 @@ class HeimathafenWebsiteImporterTest {
     fun `deduplicates events repeated across pages`() =
         runTest {
             // A post shifting between pages between two requests would otherwise be imported twice.
-            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixture("heimathafen-events-page1.json")
-            coEvery { apiClient.fetchJson(pageUrl(2)) } returns fixture("heimathafen-events-page1.json")
+            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixtureText("heimathafen/heimathafen-events-page1.json")
+            coEvery { apiClient.fetchJson(pageUrl(2)) } returns fixtureText("heimathafen/heimathafen-events-page1.json")
             coEvery { apiClient.fetchJson(pageUrl(3)) } returns "[]"
 
             val result = importer.importEvents(baseUrl)

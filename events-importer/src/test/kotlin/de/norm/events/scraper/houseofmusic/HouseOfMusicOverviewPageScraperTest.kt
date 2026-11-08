@@ -2,6 +2,8 @@ package de.norm.events.scraper.houseofmusic
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
@@ -11,10 +13,12 @@ import java.time.LocalTime
 
 class HouseOfMusicOverviewPageScraperTest {
     private val baseUrl = "https://www.houseofmusic.berlin/"
-    private val events = HouseOfMusicOverviewPageScraper().scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
+    private val overviewHtml = "houseofmusic/houseofmusic-overview.html"
+    private val laterHtml = "houseofmusic/houseofmusic-overview-2026-10-20.html"
+    private val events = HouseOfMusicOverviewPageScraper().scrape(fixtureDocument(overviewHtml, baseUrl), baseUrl)
 
     private val later =
-        HouseOfMusicOverviewPageScraper().scrape(Jsoup.parse(fixture("houseofmusic-overview-2026-10-20.html"), baseUrl), baseUrl)
+        HouseOfMusicOverviewPageScraper().scrape(fixtureDocument(laterHtml, baseUrl), baseUrl)
 
     private fun titled(title: String) = events.first { it.title == title }
 
@@ -22,7 +26,7 @@ class HouseOfMusicOverviewPageScraperTest {
 
     private fun retitled(title: String) =
         HouseOfMusicOverviewPageScraper()
-            .scrape(Jsoup.parse(fixture("houseofmusic-overview-2026-10-20.html").replace("House of Music Quiz", title), baseUrl), baseUrl)
+            .scrape(Jsoup.parse(fixtureText(laterHtml).replace("House of Music Quiz", title), baseUrl), baseUrl)
             .first { it.title.equals(title, ignoreCase = true) }
 
     @Test
@@ -129,7 +133,7 @@ class HouseOfMusicOverviewPageScraperTest {
 
     @Test
     fun `keeps a concert that names a film a concert`() {
-        val html = fixture().replace("JAZZTICK - Undertale Concert Determination", "JAZZTICK - Ghibli Film Concert")
+        val html = fixtureText(overviewHtml).replace("JAZZTICK - Undertale Concert Determination", "JAZZTICK - Ghibli Film Concert")
         val concert = HouseOfMusicOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "JAZZTICK - Ghibli Film Concert" }
 
         concert.eventType shouldBe EventType.CONCERT.name
@@ -150,10 +154,4 @@ class HouseOfMusicOverviewPageScraperTest {
     fun `yields nothing for a page without the warmup payload`() {
         HouseOfMusicOverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
-
-    private fun fixture(name: String = "houseofmusic-overview.html"): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/houseofmusic/$name")!!
-            .bufferedReader()
-            .readText()
 }

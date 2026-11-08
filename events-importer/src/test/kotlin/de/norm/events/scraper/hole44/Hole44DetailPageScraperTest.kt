@@ -3,6 +3,8 @@ package de.norm.events.scraper.hole44
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -26,14 +28,7 @@ class Hole44DetailPageScraperTest {
     private fun parse(
         fixture: String,
         url: String
-    ): ScrapedEvent? {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/hole44/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
-    }
+    ): ScrapedEvent? = scraper.scrape(fixtureDocument("hole44/$fixture", url), url)
 
     @Test
     fun `parses all detail fields for a fully populated concert`() {
@@ -87,10 +82,7 @@ class Hole44DetailPageScraperTest {
     fun `keeps a promoter whose own name ends in Presents whole`() {
         val url = "https://hole-berlin.de/event/2026-07-27-kang-yuchan/"
         val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/hole44/hole44-detail-simple.html")!!
-                .bufferedReader()
-                .readText()
+            fixtureText("hole44/hole44-detail-simple.html")
                 .replace("Weird World Booking &amp; Promotion GmbH presents", "AEG Presents")
         val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
 

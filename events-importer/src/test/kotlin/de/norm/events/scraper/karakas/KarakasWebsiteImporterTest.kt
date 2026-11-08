@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -34,17 +35,14 @@ class KarakasWebsiteImporterTest {
     private val pageScript = "https://img1.wsimg.com/blobby/go/ad795882-2f3c-4098-9227-326ffaee1e1f/gpub/8a1257d2a3cc8f98/script.js"
     private val siteScript = "https://img1.wsimg.com/blobby/go/ad795882-2f3c-4098-9227-326ffaee1e1f/gpub/ac4d62496081468/script.js"
 
-    private fun fixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/karakas/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetchDocument(comedyUrl) } returns Jsoup.parse(fixture("karakas-comedy-shows.html"), comedyUrl)
-        coEvery { htmlFetcher.fetchDocument(quizUrl) } returns Jsoup.parse(fixture("karakas-pub-quiz.html"), quizUrl)
-        coEvery { htmlFetcher.fetchHtml(pageScript) } returns fixture("karakas-calendar-script.js")
+        stubFetcher(
+            comedyUrl to "karakas/karakas-comedy-shows.html",
+            quizUrl to "karakas/karakas-pub-quiz.html",
+            pageScript to "karakas/karakas-calendar-script.js",
+            fetcher = htmlFetcher
+        )
         coEvery { htmlFetcher.fetchHtml(siteScript) } returns "window.wsb={};"
     }
 
@@ -77,7 +75,7 @@ class KarakasWebsiteImporterTest {
     fun `importEvents tries the next script when the first carries no calendar`() =
         runTest {
             coEvery { htmlFetcher.fetchHtml(pageScript) } returns "window.wsb={};"
-            coEvery { htmlFetcher.fetchHtml(siteScript) } returns fixture("karakas-calendar-script.js")
+            stubFetcher(siteScript to "karakas/karakas-calendar-script.js", fetcher = htmlFetcher)
 
             val result = importer.importEvents(homeUrl) as ImportResult.Success
 

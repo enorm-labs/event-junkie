@@ -3,11 +3,11 @@ package de.norm.events.scraper.hole44
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -28,12 +28,7 @@ class Hole44OverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/hole44/hole44-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("hole44/hole44-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(sourceIdSuffix: String): ScrapedEvent = events.first { it.sourceId == "hole44:$sourceIdSuffix" }

@@ -5,6 +5,8 @@ import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -38,12 +40,7 @@ class KaterOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/kater/kater-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("kater/kater-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(id: String): ScrapedEvent = events.first { it.sourceId == "kater:$id" }
@@ -297,11 +294,7 @@ class KaterOverviewPageScraperTest {
     @Test
     fun `reads the rare flyer the summary carries inline`() {
         // Seifentheater: KASSANDRA, from the homepage on 2026-09-30.
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/kater/kater-overview-inline-flyer.html")!!
-                .bufferedReader()
-                .readText()
+        val html = fixtureText("kater/kater-overview-inline-flyer.html")
         val baseUrl = "https://www.katerclub.de/"
         KaterOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).first().imageUrl shouldBe
             "https://www.katerclub.de/wp-content/uploads/2026/09/Kassandra-Facebook-Beitrag-300x300.jpeg"

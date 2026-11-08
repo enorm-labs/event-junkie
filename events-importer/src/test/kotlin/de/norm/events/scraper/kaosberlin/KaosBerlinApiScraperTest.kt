@@ -1,6 +1,7 @@
 package de.norm.events.scraper.kaosberlin
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,14 +19,9 @@ import java.time.LocalTime
 class KaosBerlinApiScraperTest {
     private val scraper = KaosBerlinApiScraper()
 
-    private val fixture by lazy {
-        javaClass.classLoader
-            .getResourceAsStream("scraper/kaosberlin/kaosberlin-events.json")!!
-            .bufferedReader()
-            .readText()
-    }
+    private val eventsJson = "kaosberlin/kaosberlin-events.json"
 
-    private val page by lazy { scraper.scrapePage(fixture) }
+    private val page by lazy { scraper.scrapePage(fixtureText(eventsJson)) }
 
     private fun event(slug: String) = page.events.single { it.sourceId == "kaos_berlin:$slug" }
 
@@ -35,7 +31,7 @@ class KaosBerlinApiScraperTest {
         vararg amounts: String
     ): ScrapedEvent =
         JsonMapper().let { mapper ->
-            val root = mapper.readTree(fixture) as ObjectNode
+            val root = mapper.readTree(fixtureText(eventsJson)) as ObjectNode
             val events = root.withArray("events")
             val night = events.first { it.path("slug").asString() == "crashpad-psychrusader-slothtronaut-live-kaos-berlin" } as ObjectNode
             night.put("cost", cost)
@@ -54,7 +50,7 @@ class KaosBerlinApiScraperTest {
         website: String = ""
     ): ScrapedEvent? =
         JsonMapper().let { mapper ->
-            val root = mapper.readTree(fixture) as ObjectNode
+            val root = mapper.readTree(fixtureText(eventsJson)) as ObjectNode
             val events = root.withArray("events")
             val night = events.first() as ObjectNode
             night.put("title", title)

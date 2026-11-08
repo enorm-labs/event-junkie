@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -25,8 +26,8 @@ class InterkosmosWebsiteImporterTest {
         runTest {
             coEvery {
                 apiClient.fetchJson("$url?dateRangeStart=2026-10-23&dateRangeEnd=2027-10-23&orderby=_ik_date&order=asc&per_page=100")
-            } returns interkosmosFixture("interkosmos-events.json")
-            coEvery { apiClient.fetchJson("$url?repetition=true&per_page=100") } returns interkosmosFixture("interkosmos-rules.json")
+            } returns fixtureText("interkosmos/interkosmos-events.json")
+            coEvery { apiClient.fetchJson("$url?repetition=true&per_page=100") } returns fixtureText("interkosmos/interkosmos-rules.json")
 
             val result = importer.importEvents(url)
 
