@@ -1,6 +1,8 @@
 package de.norm.events.scraper.colosseum
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -24,17 +26,7 @@ import java.time.LocalTime
 class ColosseumDetailPageScraperTest {
     private val scraper = ColosseumDetailPageScraper()
 
-    private fun scrape(fixture: String) =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/colosseum/$fixture")!!
-                    .bufferedReader()
-                    .readText(),
-                URL
-            ),
-            URL
-        )
+    private fun scrape(fixture: String) = scraper.scrape(fixtureDocument("colosseum/$fixture", URL), URL)
 
     @Test
     fun `reads the doors and start the event states, not the cloned boilerplate line`() {
@@ -131,10 +123,7 @@ class ColosseumDetailPageScraperTest {
         // No live event does this today; the path exists because the house edits these lines by hand.
         val page =
             Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/colosseum/colosseum-detail-kramer.html")!!
-                    .bufferedReader()
-                    .readText()
+                fixtureText("colosseum/colosseum-detail-kramer.html")
                     .replace("Einlass: 18:30 Uhr", "Einlass:")
                     .replace("Beginn: 19:30 Uhr", "Beginn:"),
                 URL

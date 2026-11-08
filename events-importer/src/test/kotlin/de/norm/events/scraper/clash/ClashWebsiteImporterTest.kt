@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -25,16 +26,9 @@ class ClashWebsiteImporterTest {
     @BeforeEach
     fun setUp() {
         importer = ClashWebsiteImporter(htmlFetcher)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/clash/clash-overview.html")!!
-                .bufferedReader()
-                .readText()
-        val document = Jsoup.parse(html, sourceUrl)
-
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = document,
+                document = fixtureDocument("clash/clash-overview.html", sourceUrl),
                 etag = "\"abc123\"",
                 lastModified = "Sun, 12 Jul 2026 10:00:00 GMT"
             )

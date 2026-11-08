@@ -3,6 +3,7 @@ package de.norm.events.scraper.clash
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -26,17 +27,7 @@ class ClashOverviewPageScraperTest {
     private val scraper = ClashOverviewPageScraper()
     private val baseUrl = "https://clash-berlin.de/"
 
-    private fun parseFixture() =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/clash/clash-overview.html")!!
-                    .bufferedReader()
-                    .readText(),
-                baseUrl
-            ),
-            baseUrl
-        )
+    private fun parseFixture() = scraper.scrape(fixtureDocument("clash/clash-overview.html", baseUrl), baseUrl)
 
     @Test
     fun `scrape extracts all events from fixture`() {

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.clubost
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
@@ -17,20 +18,14 @@ class ClubOstDetailPageScraperTest {
     private fun scrapeFixture(
         fixture: String,
         url: String
-    ) = scraper.scrape(Jsoup.parse(loadFixture(fixture), url), url)
-
-    private fun loadFixture(path: String): String =
-        javaClass.classLoader
-            .getResourceAsStream(path)!!
-            .bufferedReader()
-            .readText()
+    ) = scraper.scrape(fixtureDocument(fixture, url), url)
 
     @Test
     fun `scrape reads the title in the casing the venue typed`() {
         // The reason this page is fetched at all: the listing shouts "BLASPHEMY".
         val event =
             scrapeFixture(
-                "scraper/clubost/clubost-detail-blasphemy.html",
+                "clubost/clubost-detail-blasphemy.html",
                 "https://clubost.de/event/231438/"
             )
 
@@ -48,7 +43,7 @@ class ClubOstDetailPageScraperTest {
     fun `scrape maps the placeholder description to null`() {
         val event =
             scrapeFixture(
-                "scraper/clubost/clubost-detail-blasphemy.html",
+                "clubost/clubost-detail-blasphemy.html",
                 "https://clubost.de/event/231438/"
             )
 
@@ -60,7 +55,7 @@ class ClubOstDetailPageScraperTest {
     fun `scrape parses a page with no flyer uploaded`() {
         val event =
             scrapeFixture(
-                "scraper/clubost/clubost-detail-nye-no-logo.html",
+                "clubost/clubost-detail-nye-no-logo.html",
                 "https://clubost.de/event/239128/"
             )
 
@@ -77,7 +72,7 @@ class ClubOstDetailPageScraperTest {
         // before the start is the following day (ADR-029). It used to be dropped as a model limitation.
         val event =
             scrapeFixture(
-                "scraper/clubost/clubost-detail-blasphemy.html",
+                "clubost/clubost-detail-blasphemy.html",
                 "https://clubost.de/event/231438/"
             )
 

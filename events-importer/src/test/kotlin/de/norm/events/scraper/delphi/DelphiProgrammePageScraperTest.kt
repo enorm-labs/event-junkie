@@ -4,6 +4,8 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
@@ -28,30 +30,15 @@ class DelphiProgrammePageScraperTest {
     private val baseUrl = "https://theater-im-delphi.de/programm/"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/delphi/delphi-programm.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("delphi/delphi-programm.html", baseUrl), baseUrl)
     }
 
     private val credits: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/delphi/delphi-programm-credits.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("delphi/delphi-programm-credits.html", baseUrl), baseUrl)
     }
 
     private val variete: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/delphi/delphi-programm-variete.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("delphi/delphi-programm-variete.html", baseUrl), baseUrl)
     }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
@@ -338,11 +325,7 @@ class DelphiProgrammePageScraperTest {
     @Test
     fun `survives a page whose leaked dump has been fixed away`() {
         // The leak is an accident; losing it must cost only the prices.
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/delphi/delphi-programm.html")!!
-                .bufferedReader()
-                .readText()
+        val html = fixtureText("delphi/delphi-programm.html")
         val withoutDump = html.replace(Regex("""<!--array\(23\).*?-->""", RegexOption.DOT_MATCHES_ALL), "")
         val stripped = scraper.scrape(Jsoup.parse(withoutDump, baseUrl), baseUrl)
 

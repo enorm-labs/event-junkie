@@ -3,6 +3,7 @@ package de.norm.events.scraper.columbiahalle
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -10,7 +11,6 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -33,12 +33,7 @@ class ColumbiahalleOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/columbiahalle/columbiahalle-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("columbiahalle/columbiahalle-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(eventId: String): ScrapedEvent = events.first { it.sourceId == "columbiahalle:$eventId" }
@@ -118,13 +113,7 @@ class ColumbiahalleOverviewPageScraperTest {
 
     private val teaserEvents by lazy {
         scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/columbiahalle/columbiahalle-overview-teaser.html")!!
-                    .bufferedReader()
-                    .readText(),
-                baseUrl
-            ),
+            fixtureDocument("columbiahalle/columbiahalle-overview-teaser.html", baseUrl),
             baseUrl
         )
     }
@@ -209,12 +198,7 @@ class ColumbiahalleOverviewPageScraperTest {
     @Test
     fun `types a show whose blurb names its comedians COMEDY, and bills the comedians of its Live mit line`() {
         // The Bratwurst & Baklava card from the live listing on 2026-10-23 (#3767).
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/columbiahalle/columbiahalle-overview-comedy.html")!!
-                .bufferedReader()
-                .readText()
-        val show = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        val show = scraper.scrape(fixtureDocument("columbiahalle/columbiahalle-overview-comedy.html", baseUrl), baseUrl).single()
 
         show.title shouldBe "Bratwurst & Baklava"
         show.eventType shouldBe "COMEDY"
@@ -238,12 +222,7 @@ class ColumbiahalleOverviewPageScraperTest {
     @Test
     fun `stores the destination a relocation sticker names`() {
         // The Betontod card from the live listing on 2026-09-30.
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/columbiahalle/columbiahalle-overview-relocated.html")!!
-                .bufferedReader()
-                .readText()
-        val betontod = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        val betontod = scraper.scrape(fixtureDocument("columbiahalle/columbiahalle-overview-relocated.html", baseUrl), baseUrl).single()
         val stored = betontod.toEventEntity(venueId = 1L, venueSlug = "columbiahalle", eventSourceId = 1L)
 
         stored.status shouldBe "RELOCATED"

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.clubdervisionaere
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.maps.shouldBeEmpty
 import io.kotest.matchers.maps.shouldContainExactly
 import io.kotest.matchers.maps.shouldHaveSize
@@ -17,18 +18,9 @@ import java.time.LocalTime
 class ClubDerVisionaereHomePageScraperTest {
     private val scraper = ClubDerVisionaereHomePageScraper()
 
-    private fun fixture(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/clubdervisionaere/$name")!!
-                .bufferedReader()
-                .readText(),
-            "https://clubdervisionaere.com/"
-        )
-
     @Test
     fun `reads one start time per NEXT block, keyed by post id`() {
-        val times = scraper.scrape(fixture("clubdervisionaere-home-september.html"))
+        val times = scraper.scrape(fixtureDocument("clubdervisionaere/clubdervisionaere-home-september.html", "https://clubdervisionaere.com/"))
 
         times shouldHaveSize 10
         times["7227"] shouldBe LocalTime.of(23, 0) // So. 13.9.   11:00 p.m. — the boat's Sunday night
@@ -40,7 +32,7 @@ class ClubDerVisionaereHomePageScraperTest {
 
     @Test
     fun `the TODAY block is not read because it has no post id`() {
-        val times = scraper.scrape(fixture("clubdervisionaere-home-september.html"))
+        val times = scraper.scrape(fixtureDocument("clubdervisionaere/clubdervisionaere-home-september.html", "https://clubdervisionaere.com/"))
 
         // Today's night on the fixture is post 41860 on the programme; the homepage names it by title only.
         times.keys.contains("41860") shouldBe false

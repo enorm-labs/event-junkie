@@ -6,6 +6,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
@@ -32,14 +34,9 @@ class ColumbiahalleWebsiteImporterTest {
     private val overviewUrl = "https://www.columbiahalle.berlin/veranstaltungen.html"
 
     private fun stubOverview() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/columbiahalle/columbiahalle-overview.html")!!
-                .bufferedReader()
-                .readText()
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(html, overviewUrl),
+                document = fixtureDocument("columbiahalle/columbiahalle-overview.html", overviewUrl),
                 etag = "\"columbiahalle-etag\"",
                 lastModified = "Sat, 01 Aug 2026 03:00:00 GMT"
             )
@@ -83,9 +80,11 @@ class ColumbiahalleWebsiteImporterTest {
         runTest {
             val germanUrl = overviewUrl
             val englishUrl = "https://www.columbiahalle.berlin/events.html"
-            coEvery { htmlFetcher.fetch(germanUrl, any(), any()) } returns
-                FetchResult.Success(document = Jsoup.parse(fixture("columbiahalle-overview-de-pair.html"), germanUrl), etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(englishUrl) } returns Jsoup.parse(fixture("columbiahalle-overview-en-pair.html"), englishUrl)
+            stubFetcher(
+                germanUrl to "columbiahalle/columbiahalle-overview-de-pair.html",
+                englishUrl to "columbiahalle/columbiahalle-overview-en-pair.html",
+                fetcher = htmlFetcher
+            )
 
             val result = importer.importEvents(germanUrl)
 
@@ -106,8 +105,7 @@ class ColumbiahalleWebsiteImporterTest {
     @Test
     fun `keeps the first language when the English listing fails`() =
         runTest {
-            coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
-                FetchResult.Success(document = Jsoup.parse(fixture("columbiahalle-overview-de-pair.html"), overviewUrl), etag = null, lastModified = null)
+            stubFetcher(overviewUrl to "columbiahalle/columbiahalle-overview-de-pair.html", fetcher = htmlFetcher)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://www.columbiahalle.berlin/events.html")
 
             val result = importer.importEvents(overviewUrl)
@@ -116,12 +114,6 @@ class ColumbiahalleWebsiteImporterTest {
             result.events.shouldNotBeEmpty()
             result.events.forEach { it.descriptionAlt.shouldBeNull() }
         }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/columbiahalle/$name")!!
-            .bufferedReader()
-            .readText()
 
     @Test
     fun `returns no events for a page without an event list`() =

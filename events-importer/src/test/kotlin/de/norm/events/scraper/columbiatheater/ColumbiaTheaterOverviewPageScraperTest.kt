@@ -3,6 +3,7 @@ package de.norm.events.scraper.columbiatheater
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.inferConcertVenueType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -29,12 +30,7 @@ class ColumbiaTheaterOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/columbiatheater/columbiatheater-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("columbiatheater/columbiatheater-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(sourceIdSuffix: String): ScrapedEvent = events.first { it.sourceId == "columbia_theater:$sourceIdSuffix" }

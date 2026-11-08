@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -32,14 +33,7 @@ class ColosseumOverviewPageScraperTest {
     private val events: List<ScrapedEvent> by lazy { parse("colosseum-overview.html") }
     private val edgeCaseEvents: List<ScrapedEvent> by lazy { parse("colosseum-overview-edge-cases.html") }
 
-    private fun parse(fixture: String): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/colosseum/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private fun parse(fixture: String): List<ScrapedEvent> = scraper.scrape(fixtureDocument("colosseum/$fixture", baseUrl), baseUrl)
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 

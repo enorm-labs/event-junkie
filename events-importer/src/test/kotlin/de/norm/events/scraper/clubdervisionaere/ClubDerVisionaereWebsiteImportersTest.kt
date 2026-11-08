@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -49,29 +51,20 @@ class ClubDerVisionaereWebsiteImportersTest {
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = fixture("clubdervisionaere-programm.html", sourceUrl),
+                document = fixtureDocument("clubdervisionaere/clubdervisionaere-programm.html", sourceUrl),
                 etag = "\"cdv-etag\"",
                 lastModified = "Fri, 31 Jul 2026 09:12:00 GMT"
             )
         coEvery { htmlFetcher.fetchDocument(homeUrl) } throws HttpFetchException(HTTP_NOT_FOUND, homeUrl)
     }
 
-    private fun fixture(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/clubdervisionaere/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     /** Points the fetcher at the September pair, whose homepage lists the programme's nights with times. */
     private fun useSeptemberPair() {
-        coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(document = fixture("clubdervisionaere-programm-september.html", sourceUrl), etag = null, lastModified = null)
-        coEvery { htmlFetcher.fetchDocument(homeUrl) } returns fixture("clubdervisionaere-home-september.html", homeUrl)
+        stubFetcher(
+            sourceUrl to "clubdervisionaere/clubdervisionaere-programm-september.html",
+            homeUrl to "clubdervisionaere/clubdervisionaere-home-september.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test

@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -24,14 +25,8 @@ import java.time.LocalTime
 class CosmicComedyApiScraperTest {
     private val scraper = CosmicComedyApiScraper()
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/cosmiccomedy/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private val pageOne: TecPage by lazy { scraper.scrapePage(readFixture("cosmiccomedy-events-page1.json")) }
-    private val pageTwo: TecPage by lazy { scraper.scrapePage(readFixture("cosmiccomedy-events-page2.json")) }
+    private val pageOne: TecPage by lazy { scraper.scrapePage(fixtureText("cosmiccomedy/cosmiccomedy-events-page1.json")) }
+    private val pageTwo: TecPage by lazy { scraper.scrapePage(fixtureText("cosmiccomedy/cosmiccomedy-events-page2.json")) }
     private val events: List<ScrapedEvent> by lazy { pageOne.events + pageTwo.events }
 
     /**
@@ -40,7 +35,7 @@ class CosmicComedyApiScraperTest {
      * comedian's special filed without one.
      */
     private val showcaseSpecial: List<ScrapedEvent> by lazy {
-        scraper.scrapePage(readFixture("cosmiccomedy-events-showcase-special.json")).events
+        scraper.scrapePage(fixtureText("cosmiccomedy/cosmiccomedy-events-showcase-special.json")).events
     }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
@@ -60,7 +55,7 @@ class CosmicComedyApiScraperTest {
     @Test
     fun `reads a sold-out marker in the title and keeps the title as published`() {
         val json =
-            readFixture("cosmiccomedy-events-showcase-special.json")
+            fixtureText("cosmiccomedy/cosmiccomedy-events-showcase-special.json")
                 .replace("IL POLIZIOTTO DEL FORMAGGIO 2026", "IL POLIZIOTTO DEL FORMAGGIO 2026 (SOLD OUT!!!)")
         val turbopaolo = scraper.scrapePage(json).events.single { it.title.startsWith("TURBOPAOLO") }
         turbopaolo.title shouldBe "TURBOPAOLO – IL POLIZIOTTO DEL FORMAGGIO 2026 (SOLD OUT!!!)"

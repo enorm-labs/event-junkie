@@ -3,6 +3,7 @@ package de.norm.events.scraper.columbiatheater
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -30,12 +31,7 @@ class ColumbiaTheaterDetailPageScraperTest {
         slug: String
     ): ScrapedEvent? {
         val url = "https://columbia-theater.de/event/$slug/"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/columbiatheater/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
+        return scraper.scrape(fixtureDocument("columbiatheater/$fixture", url), url)
     }
 
     @Test
