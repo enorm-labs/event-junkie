@@ -16,6 +16,12 @@ import tools.jackson.module.kotlin.kotlinModule
 fun JsonNode.stringOrNull(field: String): String? = path(field).asString("").blankToNull()
 
 /**
+ * The HTML a WordPress REST post holds under [field]`.rendered` (`title`, `excerpt`, `content`), trimmed, or `null` when blank.
+ * Entities stay encoded: each venue decodes or flattens the HTML in its own way.
+ */
+fun JsonNode.wpRendered(field: String): String? = path(field).stringOrNull("rendered")
+
+/**
  * The mapper every scraper reads JSON with. Jackson 3 ignores unknown fields by default, and the Kotlin
  * module binds Kotlin classes. A mapper is immutable, so one instance serves every import.
  */

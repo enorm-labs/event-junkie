@@ -13,6 +13,7 @@ import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.wpRendered
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
@@ -93,8 +94,7 @@ class InterkosmosApiScraper {
         if (type in PARTICIPATION) return null
         val cleanedTitle =
             node
-                .path("title")
-                .stringOrNull("rendered")
+                .wpRendered("title")
                 ?.let(::decodeHtmlEntities)
                 ?.let(::cleanEventTitle) ?: return null
         val title = cleanedTitle.text
@@ -115,7 +115,7 @@ class InterkosmosApiScraper {
         return ScrapedEvent(
             title = title,
             soldOut = cleanedTitle.soldOut,
-            description = node.path("content").stringOrNull("rendered")?.let(::descriptionOf),
+            description = node.wpRendered("content")?.let(::descriptionOf),
             eventType = TYPES[type] ?: EventType.READING.name.takeIf { author != null } ?: EventType.OTHER.name,
             typeIsFallback = type !in TYPES && author == null,
             eventDate = date,

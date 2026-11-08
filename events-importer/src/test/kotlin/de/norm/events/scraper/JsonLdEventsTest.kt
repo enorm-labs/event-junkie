@@ -21,6 +21,7 @@ class JsonLdEventsTest {
         names("""[{"@type": "MusicEvent", "name": "A"}, {"@type": "MusicEvent", "name": "B"}]""") shouldContainExactly listOf("A", "B")
         names("""{"@graph": [{"@type": "WebPage"}, {"@type": "Event", "name": "Graph"}]}""") shouldContainExactly listOf("Graph")
         names("""[{"@graph": [{"@type": "Festival", "name": "Nested"}]}]""") shouldContainExactly listOf("Nested")
+        names("""{"@type": "ItemList", "itemListElement": [{"@type": "Event", "name": "Listed"}]}""") shouldContainExactly listOf("Listed")
     }
 
     @Test

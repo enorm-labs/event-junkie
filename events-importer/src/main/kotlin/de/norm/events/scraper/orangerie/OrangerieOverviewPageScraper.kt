@@ -3,7 +3,6 @@ package de.norm.events.scraper.orangerie
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.commaListActs
@@ -24,15 +23,13 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 
 /**
  * Pure parser for the Orangerie Neukölln one-pager, whose `#programm` section lists every announced night.
  *
  * A schema.org `ItemList` of `Event`s carries the name, the dated start and the price, so it decides the rows.
- * The shared JSON-LD reader does not open an `ItemList`, so this one reads `itemListElement` itself. Each
- * `div.card` with the same `h3.card-title` adds the cover, the style tags and the Rausgegangen ticket link.
+ * Each `div.card` with the same `h3.card-title` adds the cover, the style tags and the Rausgegangen ticket link.
  * A `tag-food` tag names a food pop-up, not a style, so it never reaches the genre.
  */
 class OrangerieOverviewPageScraper {
@@ -42,25 +39,11 @@ class OrangerieOverviewPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val nights = programme(document)
+        val nights = document.jsonLdEvents()
         logger.info { "Found ${nights.size} night(s) in the Orangerie programme JSON-LD" }
         val cards = document.select("div.card").associateBy { it.textAt("h3.card-title") }
         return nights.mapSkippingFailures(logger, "Orangerie night") { parseNight(it, cards, baseUrl) }
     }
-
-    private fun programme(document: Document): List<JsonNode> =
-        document
-            .select("script[type=application/ld+json]")
-            .mapNotNull { script -> parse(script.data()) }
-            .filter { it.path("@type").asString("") == ITEM_LIST }
-            .flatMap { list -> jsonLdEvents(list.path("itemListElement").toString()) }
-
-    private fun parse(json: String): JsonNode? =
-        try {
-            SCRAPER_JSON.readTree(json)
-        } catch (_: JacksonException) {
-            null
-        }
 
     private fun parseNight(
         node: JsonNode,
@@ -133,7 +116,6 @@ class OrangerieOverviewPageScraper {
     private fun tagText(tag: Element): String = (tag.selectFirst("[lang=en]") ?: tag).text().trim()
 
     private companion object {
-        const val ITEM_LIST = "ItemList"
         const val CONCERT_TAG = "Concert"
         const val FOOD_TAG = "tag-food"
         const val LIVE_SERIES = "Parkside Sessions"
