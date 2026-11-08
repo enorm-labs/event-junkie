@@ -80,7 +80,7 @@ class AnthropicTranslationEngine(
     private suspend fun call(request: TranslationRequest): String? {
         val reply = client.call(systemPrompt(request), request.text)
         if (reply.refused) logger.warn { "The model declined to translate a description" }
-        return reply.text
+        return reply.text?.let { QuotePairs.repair(it, request.to) }
     }
 
     /**
