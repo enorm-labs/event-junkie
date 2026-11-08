@@ -3,6 +3,7 @@ package de.norm.events.scraper.orwohaus
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -26,15 +27,9 @@ class OrwohausWebsiteImporterTest {
     private val listingUrl = "https://www.orwohaus.de/veranstaltungen/"
     private val requestUrl = slot<String>()
 
-    private val fixture: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/orwohaus/orwohaus-events.ics")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
-        coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixture
+        coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText("orwohaus/orwohaus-events.ics")
     }
 
     @Test

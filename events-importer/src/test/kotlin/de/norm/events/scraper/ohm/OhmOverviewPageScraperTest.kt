@@ -7,6 +7,8 @@ import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -40,14 +42,7 @@ class OhmOverviewPageScraperTest {
     private fun scrape(
         fixture: String,
         clock: Clock
-    ): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/ohm/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return OhmOverviewPageScraper(clock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    ): List<ScrapedEvent> = OhmOverviewPageScraper(clock).scrape(fixtureDocument("ohm/$fixture", baseUrl), baseUrl)
 
     private val events: List<ScrapedEvent> by lazy { scrape("ohm-overview.html", captureClock) }
     private val edgeCases: List<ScrapedEvent> by lazy { scrape("ohm-overview-edge-cases.html", newYearClock) }
@@ -469,10 +464,7 @@ class OhmOverviewPageScraperTest {
     @Test
     fun `bills each act a room heads in brackets on that room`() {
         val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/ohm/ohm-overview.html")!!
-                .bufferedReader()
-                .readText()
+            fixtureText("ohm/ohm-overview.html")
                 .replace("Rafush", "Vorraum (Harba &amp; Delta Division Live)")
         val ouch = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "Ouch x FemmeDecks" }
         ouch.artists.takeLast(2) shouldBe

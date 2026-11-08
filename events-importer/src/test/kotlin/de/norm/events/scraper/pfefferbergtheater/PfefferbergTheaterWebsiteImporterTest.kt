@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.forChildrenPhrase
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -27,25 +28,18 @@ class PfefferbergTheaterWebsiteImporterTest {
     private val sourceUrl = "https://pfefferberg-theater.de/spielplan/kalender/"
     private val maerchenUrl = "https://pfefferberg-theater.de/spielplan/maerchenimglaspalast26_27/"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/pfefferbergtheater/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
-            FetchResult.Success(document = loadDocument("pfefferbergtheater-calendar.html", sourceUrl), etag = "\"pt\"", lastModified = null)
+            FetchResult.Success(
+                document = fixtureDocument("pfefferbergtheater/pfefferbergtheater-calendar.html", sourceUrl),
+                etag = "\"pt\"",
+                lastModified = null
+            )
         coEvery { htmlFetcher.fetchDocument(match { it.startsWith(sourceUrl) }) } answers
-            { loadDocument("pfefferbergtheater-production.html", firstArg()) }
+            { fixtureDocument("pfefferbergtheater/pfefferbergtheater-production.html", firstArg()) }
         coEvery { htmlFetcher.fetchDocument(match { it.startsWith(maerchenUrl) }) } answers
-            { loadDocument(maerchenPage(firstArg()), firstArg()) }
+            { fixtureDocument("pfefferbergtheater/${maerchenPage(firstArg())}", firstArg()) }
     }
 
     private fun maerchenPage(url: String) =

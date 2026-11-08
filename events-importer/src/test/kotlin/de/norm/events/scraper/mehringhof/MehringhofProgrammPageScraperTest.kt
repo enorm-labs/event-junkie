@@ -1,8 +1,8 @@
 package de.norm.events.scraper.mehringhof
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalTime
@@ -11,17 +11,7 @@ class MehringhofProgrammPageScraperTest {
     private val scraper = MehringhofProgrammPageScraper()
     private val url = "https://www.mehringhoftheater.de/programm/"
 
-    private fun scrape(name: String) =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/mehringhof/$name")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            ),
-            url
-        )
+    private fun scrape(name: String) = scraper.scrape(fixtureDocument("mehringhof/$name", url), url)
 
     @Test
     fun `reads the performances and skips the dark days`() {

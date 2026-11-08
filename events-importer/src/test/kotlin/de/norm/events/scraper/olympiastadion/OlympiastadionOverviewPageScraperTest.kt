@@ -2,6 +2,7 @@ package de.norm.events.scraper.olympiastadion
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -13,13 +14,7 @@ class OlympiastadionOverviewPageScraperTest {
     private val baseUrl = "https://olympiastadion.berlin/termine-und-tickets/"
     private val scraper = OlympiastadionOverviewPageScraper()
 
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/olympiastadion/olympiastadion-overview.html")!!
-            .bufferedReader()
-            .readText()
-
-    private val events = scraper.scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
+    private val events = scraper.scrape(fixtureDocument("olympiastadion/olympiastadion-overview.html", baseUrl), baseUrl)
 
     @Test
     fun `reads each event card once and skips Hertha's game cards`() {

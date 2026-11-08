@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -35,28 +37,20 @@ class ModusWebsiteImporterTest {
             "270826-SpreevomWeizenOpenAir-PoetrySlam-StandUpShow" to "poetry-slam"
         )
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/modus/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = ModusWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("modus-overview.html"), sourceUrl),
+                document = fixtureDocument("modus/modus-overview.html", sourceUrl),
                 etag = "\"modus-etag\"",
                 lastModified = "Sat, 01 Aug 2026 12:00:00 GMT"
             )
 
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
         detailFixtures.forEach { (slug, fixture) ->
-            val detailUrl = "https://modus-berlin.de/event/$slug"
-            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
-                Jsoup.parse(readFixture("modus-detail-$fixture.html"), detailUrl)
+            stubFetcher("https://modus-berlin.de/event/$slug" to "modus/modus-detail-$fixture.html", fetcher = htmlFetcher)
         }
     }
 

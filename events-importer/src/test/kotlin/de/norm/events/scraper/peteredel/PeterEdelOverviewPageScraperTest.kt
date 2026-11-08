@@ -3,6 +3,7 @@ package de.norm.events.scraper.peteredel
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.forChildrenPhrase
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -43,12 +44,7 @@ class PeterEdelOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/peteredel/peteredel-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("peteredel/peteredel-overview.html", baseUrl), baseUrl)
     }
 
     /** One event box's markup — the unit both grid builders compose. */
@@ -385,24 +381,12 @@ class PeterEdelOverviewPageScraperTest {
         title: String,
         type: String
     ) {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/peteredel/peteredel-blurbs-2026-10.html")!!
-                .bufferedReader()
-                .readText()
-        val parsed = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        val parsed = scraper.scrape(fixtureDocument("peteredel/peteredel-blurbs-2026-10.html", baseUrl), baseUrl)
         parsed.single { it.eventDate == date && it.title == title }.eventType shouldBe type
     }
 
     /** Two boxes cut from the live page of 2026-10-21: FIL's extra show of 2027-02-20, and the night that points to it. */
-    private fun extraShowEvents(): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/peteredel/peteredel-extra-show-2026-10.html")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private fun extraShowEvents(): List<ScrapedEvent> = scraper.scrape(fixtureDocument("peteredel/peteredel-extra-show-2026-10.html", baseUrl), baseUrl)
 
     @Test
     fun `bills the act before a quoted show and types the comedian's night`() {

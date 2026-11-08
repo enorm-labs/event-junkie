@@ -6,6 +6,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -26,24 +27,16 @@ class MarmorbarWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://www.marmorbar.com/en/event-list"
 
-    private fun page(fixture: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/marmorbar/$fixture")!!
-                .bufferedReader()
-                .readText(),
-            sourceUrl
-        )
-
     private fun eventPage(slug: String) = "https://www.marmorbar.com/en/event-details/$slug"
 
     @BeforeEach
     fun setUp() {
         importer = MarmorbarWebsiteImporter(htmlFetcher)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(document = page("marmorbar-overview.html"), etag = "W/\"marmorbar\"", lastModified = null)
+            FetchResult.Success(document = fixtureDocument("marmorbar/marmorbar-overview.html", sourceUrl), etag = "W/\"marmorbar\"", lastModified = null)
         coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(statusCode = 404, url = sourceUrl)
-        coEvery { htmlFetcher.fetchDocument(eventPage("kylie-wears-berghaus")) } returns page("marmorbar-detail-kylie.html")
+        coEvery { htmlFetcher.fetchDocument(eventPage("kylie-wears-berghaus")) } returns
+            fixtureDocument("marmorbar/marmorbar-detail-kylie.html", sourceUrl)
     }
 
     @Test

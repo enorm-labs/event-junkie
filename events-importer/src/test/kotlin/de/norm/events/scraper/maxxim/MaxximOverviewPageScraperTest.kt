@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -31,14 +32,7 @@ class MaxximOverviewPageScraperTest {
     private val events: List<ScrapedEvent> by lazy { parse("maxxim-overview.html") }
     private val edgeCaseEvents: List<ScrapedEvent> by lazy { parse("maxxim-overview-edge-cases.html") }
 
-    private fun parse(fixture: String): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/maxxim/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private fun parse(fixture: String): List<ScrapedEvent> = scraper.scrape(fixtureDocument("maxxim/$fixture", baseUrl), baseUrl)
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 

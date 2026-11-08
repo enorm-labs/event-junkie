@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -28,14 +29,9 @@ class PeterEdelWebsiteImporterTest {
     private val listingUrl = "https://www.peteredel.de/events/"
 
     private fun stubListing() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/peteredel/peteredel-overview.html")!!
-                .bufferedReader()
-                .readText()
         coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(html, listingUrl),
+                document = fixtureDocument("peteredel/peteredel-overview.html", listingUrl),
                 etag = "\"peteredel-etag\"",
                 lastModified = "Thu, 06 Aug 2026 10:00:00 GMT"
             )

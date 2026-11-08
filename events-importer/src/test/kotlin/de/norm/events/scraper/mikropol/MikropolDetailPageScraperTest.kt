@@ -3,6 +3,8 @@ package de.norm.events.scraper.mikropol
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
@@ -26,14 +28,7 @@ class MikropolDetailPageScraperTest {
     private fun parse(
         fixture: String,
         url: String
-    ): ScrapedEvent? {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/mikropol/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
-    }
+    ): ScrapedEvent? = scraper.scrape(fixtureDocument("mikropol/$fixture", url), url)
 
     @Test
     fun `parses all detail fields for a fully populated sold-out concert`() {
@@ -142,10 +137,7 @@ class MikropolDetailPageScraperTest {
         event.title shouldBe "Dice"
         event.promoters shouldBe listOf("Trinity Music")
         val coPromoted =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/mikropol/mikropol-detail-promoter.html")!!
-                .bufferedReader()
-                .readText()
+            fixtureText("mikropol/mikropol-detail-promoter.html")
                 .replace("Trinity Music presents:", "DRIFT &amp; Puschen presents:")
         scraper.scrape(Jsoup.parse(coPromoted, url), url)!!.promoters shouldBe listOf("DRIFT", "Puschen")
         parse("mikropol-detail-simple.html", "https://mikropol-berlin.de/event/2026-07-14-house-of-protection/")

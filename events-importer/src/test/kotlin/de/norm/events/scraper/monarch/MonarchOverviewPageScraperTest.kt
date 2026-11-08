@@ -1,6 +1,7 @@
 package de.norm.events.scraper.monarch
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,15 +23,6 @@ import java.time.LocalTime
 class MonarchOverviewPageScraperTest {
     private val baseUrl = "https://kottimonarch.de/programm.php"
     private val scraper = MonarchOverviewPageScraper()
-
-    private fun programme() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/monarch/monarch-overview.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
 
     private fun block(
         dateLine: String,
@@ -67,12 +59,12 @@ class MonarchOverviewPageScraperTest {
 
     @Test
     fun `parses every event block from the retro programme page`() {
-        scraper.scrape(programme(), baseUrl) shouldHaveSize 18
+        scraper.scrape(fixtureDocument("monarch/monarch-overview.html", baseUrl), baseUrl) shouldHaveSize 18
     }
 
     @Test
     fun `extracts a fully-populated concert without a ticket link`() {
-        val event = scraper.scrape(programme(), baseUrl).first()
+        val event = scraper.scrape(fixtureDocument("monarch/monarch-overview.html", baseUrl), baseUrl).first()
 
         // "SAINT PERRY PEAN (KONZERT)" → title stripped of the concert marker.
         event.title shouldBe "SAINT PERRY PEAN"
@@ -94,7 +86,7 @@ class MonarchOverviewPageScraperTest {
     fun `extracts the ticket link for a concert that has one`() {
         val byrd =
             scraper
-                .scrape(programme(), baseUrl)
+                .scrape(fixtureDocument("monarch/monarch-overview.html", baseUrl), baseUrl)
                 .single { it.title == "M. BYRD" }
 
         byrd.eventType shouldBe "CONCERT"
@@ -105,7 +97,7 @@ class MonarchOverviewPageScraperTest {
 
     @Test
     fun `types an unmarked night that starts at nine or later as a club night with no artists`() {
-        val events = scraper.scrape(programme(), baseUrl)
+        val events = scraper.scrape(fixtureDocument("monarch/monarch-overview.html", baseUrl), baseUrl)
         val offBeat = events.single { it.title == "OFF BEAT: SUMMER SESSIONS" }
 
         // No "(KONZERT)" marker and no keyword in the title, but a 23:00 start: a club night,
@@ -127,7 +119,7 @@ class MonarchOverviewPageScraperTest {
         // artist website icon link (tapeterecords.de) inside its td.tom cell.
         val event =
             scraper
-                .scrape(programme(), baseUrl)
+                .scrape(fixtureDocument("monarch/monarch-overview.html", baseUrl), baseUrl)
                 .single { it.title == "DAS LUNSENTRIO" }
 
         event.ticketUrl shouldBe "https://vvk.link/xa4sd"

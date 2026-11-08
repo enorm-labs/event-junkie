@@ -7,6 +7,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -38,29 +40,23 @@ class MorphineWebsiteImporterTest {
     private val birdsUrl = "http://www.morphinerecords.com/events/all-about-birds-jon-rose-hinterland"
     private val neumannUrl = "http://www.morphinerecords.com/events/neumann-schick-voglsinger"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/morphine/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = MorphineWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("morphine-overview.html"), overviewUrl),
+                document = fixtureDocument("morphine/morphine-overview.html", overviewUrl),
                 etag = "\"morphine-etag\"",
                 lastModified = "Thu, 06 Aug 2026 13:55:57 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(sardyUrl) } returns
-            Jsoup.parse(fixture("morphine-detail-simple.html"), sardyUrl)
-        coEvery { htmlFetcher.fetchDocument(birdsUrl) } returns
-            Jsoup.parse(fixture("morphine-detail-paypal.html"), birdsUrl)
-        coEvery { htmlFetcher.fetchDocument(neumannUrl) } returns
-            Jsoup.parse(fixture("morphine-detail-door-price.html"), neumannUrl)
+        stubFetcher(
+            sardyUrl to "morphine/morphine-detail-simple.html",
+            birdsUrl to "morphine/morphine-detail-paypal.html",
+            neumannUrl to "morphine/morphine-detail-door-price.html",
+            fetcher = htmlFetcher
+        )
 
         // Every other night's detail page is unavailable, so the importer degrades to overview
         // data (which already carries a real date, so nothing is dropped).
@@ -125,8 +121,7 @@ class MorphineWebsiteImporterTest {
                     """<span>05.11.26</span><span>Ahmed Maher - Maktoub Album Release</span></a></div>"""
             coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
                 FetchResult.Success(document = Jsoup.parse(overview, overviewUrl), etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(ahmedUrl) } returns
-                Jsoup.parse(fixture("morphine-detail-album-release.html"), ahmedUrl)
+            stubFetcher(ahmedUrl to "morphine/morphine-detail-album-release.html", fetcher = htmlFetcher)
 
             val ahmed = event(importer.importEvents(overviewUrl), "ahmed-maher-maktoub")
 

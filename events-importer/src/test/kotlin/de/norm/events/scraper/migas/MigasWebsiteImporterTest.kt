@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -31,25 +33,13 @@ class MigasWebsiteImporterTest {
     @BeforeEach
     fun setUp() {
         importer = MigasWebsiteImporter(htmlFetcher)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/migas/migas-overview.html")!!
-                .bufferedReader()
-                .readText()
-
-        coEvery { htmlFetcher.fetchDocument(sourceUrl) } returns Jsoup.parse(html, sourceUrl)
-        coEvery { htmlFetcher.postForm(ajaxUrl, page(2)) } returns fixture("migas-load-events-page-2")
+        stubFetcher(sourceUrl to "migas/migas-overview.html", fetcher = htmlFetcher)
+        coEvery { htmlFetcher.postForm(ajaxUrl, page(2)) } returns fixtureText("migas/migas-load-events-page-2.html")
     }
 
     private val ajaxUrl = "https://migas.berlin/wp-admin/admin-ajax.php"
 
     private fun page(n: Int) = mapOf("action" to "load_events", "paged" to "$n", "type" to "upcoming")
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/migas/$name.html")!!
-            .bufferedReader()
-            .readText()
 
     @Test
     fun `eventSource identifies this importer as migas`() {
@@ -84,7 +74,7 @@ class MigasWebsiteImporterTest {
     @Test
     fun `a page with no Load More button asks for no further page`() =
         runTest {
-            val html = fixture("migas-overview").replace("data-target=\"load-more\"", "data-target=\"gone\"")
+            val html = fixtureText("migas/migas-overview.html").replace("data-target=\"load-more\"", "data-target=\"gone\"")
             coEvery { htmlFetcher.fetchDocument(sourceUrl) } returns Jsoup.parse(html, sourceUrl)
 
             importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events shouldHaveSize 10

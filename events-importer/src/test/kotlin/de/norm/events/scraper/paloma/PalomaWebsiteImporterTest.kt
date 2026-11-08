@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -24,18 +25,12 @@ class PalomaWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://www.palomabar.de/programm.php"
 
-    private fun fixture() =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/paloma/paloma-overview.html")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = PalomaWebsiteImporter(htmlFetcher, Clock.fixed(Instant.parse("2026-10-16T12:00:00Z"), BERLIN))
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture(), sourceUrl),
+                document = fixtureDocument("paloma/paloma-overview.html", sourceUrl),
                 etag = "\"8242-paloma\"",
                 lastModified = "Fri, 16 Oct 2026 18:00:00 GMT"
             )

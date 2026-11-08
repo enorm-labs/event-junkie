@@ -1,5 +1,7 @@
 package de.norm.events.scraper.pfefferbergtheater
 
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -12,15 +14,7 @@ class PfefferbergTheaterProductionPageScraperTest {
     private val url = "https://pfefferberg-theater.de/spielplan/kalender/lesung-fil-01/"
 
     private val production by lazy {
-        PfefferbergTheaterProductionPageScraper().scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/pfefferbergtheater/pfefferbergtheater-production.html")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            )
-        )
+        PfefferbergTheaterProductionPageScraper().scrape(fixtureDocument("pfefferbergtheater/pfefferbergtheater-production.html", url))
     }
 
     @Test
@@ -31,13 +25,7 @@ class PfefferbergTheaterProductionPageScraperTest {
         description shouldNotContain "Rollstuhlfahrer"
     }
 
-    private fun audienceOf(fixture: String) =
-        audienceOfPage(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/pfefferbergtheater/$fixture")!!
-                .bufferedReader()
-                .readText()
-        )
+    private fun audienceOf(fixture: String) = audienceOfPage(fixtureText("pfefferbergtheater/$fixture"))
 
     private fun audienceOfPage(html: String) = PfefferbergTheaterProductionPageScraper().scrape(Jsoup.parse(html, url)).childrensAudience
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.marmorbar
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -18,17 +19,7 @@ import java.time.LocalDate
 class MarmorbarDetailPageScraperTest {
     private val scraper = MarmorbarDetailPageScraper()
 
-    private fun scrape(fixture: String) =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/marmorbar/$fixture")!!
-                    .bufferedReader()
-                    .readText(),
-                URL
-            ),
-            URL
-        )
+    private fun scrape(fixture: String) = scraper.scrape(fixtureDocument("marmorbar/$fixture", URL), URL)
 
     @Test
     fun `takes the lowest tier's own price, without the Wix fee, and notes the range`() {

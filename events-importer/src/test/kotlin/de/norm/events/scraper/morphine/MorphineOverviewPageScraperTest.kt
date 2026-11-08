@@ -3,6 +3,7 @@ package de.norm.events.scraper.morphine
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -21,12 +22,7 @@ class MorphineOverviewPageScraperTest {
     private val baseUrl = "http://www.morphinerecords.com/events"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/morphine/morphine-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("morphine/morphine-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(sourceIdSuffix: String): ScrapedEvent = events.first { it.sourceId == "morphine:$sourceIdSuffix" }

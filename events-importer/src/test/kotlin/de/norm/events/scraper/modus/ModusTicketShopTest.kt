@@ -1,9 +1,9 @@
 package de.norm.events.scraper.modus
 
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
@@ -19,20 +19,16 @@ class ModusTicketShopTest {
     private val detailUrl = "https://modus-berlin.de/event/211026-ModusComedy"
     private val shopUrl = "https://mb.ticketlodge.de/211026-ModusComedy/"
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/modus/$name")!!
-            .bufferedReader()
-            .readText()
-
     private suspend fun importedNight(shopPage: String?): ScrapedEvent {
-        coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
-            FetchResult.Success(document = Jsoup.parse(readFixture("modus-overview-comedy.html"), overviewUrl), etag = null, lastModified = null)
-        coEvery { htmlFetcher.fetchDocument(detailUrl) } returns Jsoup.parse(readFixture("modus-detail-modus-comedy.html"), detailUrl)
+        stubFetcher(
+            overviewUrl to "modus/modus-overview-comedy.html",
+            detailUrl to "modus/modus-detail-modus-comedy.html",
+            fetcher = htmlFetcher
+        )
         if (shopPage == null) {
             coEvery { htmlFetcher.fetchDocument(shopUrl) } throws IllegalStateException("shop down")
         } else {
-            coEvery { htmlFetcher.fetchDocument(shopUrl) } returns Jsoup.parse(readFixture(shopPage), shopUrl)
+            stubFetcher(shopUrl to "modus/$shopPage", fetcher = htmlFetcher)
         }
         val result = ModusWebsiteImporter(htmlFetcher).importEvents(overviewUrl, null, null)
         result.shouldBeInstanceOf<ImportResult.Success>()

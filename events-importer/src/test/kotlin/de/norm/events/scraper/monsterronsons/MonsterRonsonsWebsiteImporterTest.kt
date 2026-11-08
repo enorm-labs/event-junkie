@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -45,7 +46,7 @@ class MonsterRonsonsWebsiteImporterTest {
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(loadFixture("monsterronsons-overview.html"), sourceUrl),
+                document = fixtureDocument("monsterronsons/monsterronsons-overview.html", sourceUrl),
                 etag = "\"events-1\"",
                 lastModified = "Thu, 06 Aug 2026 06:00:00 GMT"
             )
@@ -55,22 +56,16 @@ class MonsterRonsonsWebsiteImporterTest {
             val url = firstArg<String>()
             val fixture =
                 when (url) {
-                    page2Url -> "monsterronsons-overview-page-2.html"
-                    page3Url -> "monsterronsons-overview-page-last.html"
-                    else -> "monsterronsons-detail-hosted.html"
+                    page2Url -> "monsterronsons/monsterronsons-overview-page-2.html"
+                    page3Url -> "monsterronsons/monsterronsons-overview-page-last.html"
+                    else -> "monsterronsons/monsterronsons-detail-hosted.html"
                 }
-            Jsoup.parse(loadFixture(fixture), url)
+            fixtureDocument(fixture, url)
         }
     }
 
     private val page2Url = "$sourceUrl?0ac6f618_page=2"
     private val page3Url = "$sourceUrl?0ac6f618_page=3"
-
-    private fun loadFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/monsterronsons/$name")!!
-            .bufferedReader()
-            .readText()
 
     @Test
     fun `imports every listing page and propagates cache headers`() =

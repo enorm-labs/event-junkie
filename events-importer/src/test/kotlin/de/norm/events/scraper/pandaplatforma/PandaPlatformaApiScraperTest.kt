@@ -1,6 +1,7 @@
 package de.norm.events.scraper.pandaplatforma
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -19,14 +20,7 @@ import java.time.LocalTime
 class PandaPlatformaApiScraperTest {
     private val scraper = PandaPlatformaApiScraper()
 
-    private val fixture by lazy {
-        javaClass.classLoader
-            .getResourceAsStream("scraper/pandaplatforma/pandaplatforma-events.json")!!
-            .bufferedReader()
-            .readText()
-    }
-
-    private val page by lazy { scraper.scrapePage(fixture) }
+    private val page by lazy { scraper.scrapePage(fixtureText("pandaplatforma/pandaplatforma-events.json")) }
 
     private fun event(slug: String) = page.events.single { it.sourceId == "panda_platforma:$slug" }
 
@@ -36,7 +30,7 @@ class PandaPlatformaApiScraperTest {
         vararg amounts: String
     ): ScrapedEvent =
         JsonMapper().let { mapper ->
-            val root = mapper.readTree(fixture) as ObjectNode
+            val root = mapper.readTree(fixtureText("pandaplatforma/pandaplatforma-events.json")) as ObjectNode
             val events = root.withArray("events")
             val night = events.first { it.path("slug").asString() == "igr-titov" } as ObjectNode
             night.put("cost", cost)
@@ -53,7 +47,7 @@ class PandaPlatformaApiScraperTest {
         title: String,
         description: String
     ) = JsonMapper().let { mapper ->
-        val root = mapper.readTree(fixture) as ObjectNode
+        val root = mapper.readTree(fixtureText("pandaplatforma/pandaplatforma-events.json")) as ObjectNode
         val events = root.withArray("events")
         val night = events.first { it.path("slug").asString() == "igr-titov" } as ObjectNode
         night.put("title", title).put("description", description)

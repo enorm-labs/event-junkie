@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -29,32 +31,24 @@ class OraniaWebsiteImporterTest {
     private val page3Url = "$sourceUrl/page/3"
     private val detailUrl = "https://orania.berlin/oraniaconcerts/event/event/matti-klein-tayfun-schulzke-20261002"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/orania/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
         importer = OraniaWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = loadDocument("orania-overview.html", sourceUrl),
+                document = fixtureDocument("orania/orania-overview.html", sourceUrl),
                 etag = "\"orania1\"",
                 lastModified = "Sat, 03 Oct 2026 08:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(page2Url) } returns loadDocument("orania-overview-page-2.html", page2Url)
-        coEvery { htmlFetcher.fetchDocument(page3Url) } returns loadDocument("orania-overview-page-last.html", page3Url)
+        stubFetcher(
+            page2Url to "orania/orania-overview-page-2.html",
+            page3Url to "orania/orania-overview-page-last.html",
+            fetcher = htmlFetcher
+        )
         // One detail fixture stands in for every event page.
         coEvery { htmlFetcher.fetchDocument(match { it.contains("/oraniaconcerts/") }) } answers
-            { loadDocument("orania-detail.html", firstArg()) }
+            { fixtureDocument("orania/orania-detail.html", firstArg()) }
     }
 
     @Test
@@ -80,8 +74,8 @@ class OraniaWebsiteImporterTest {
         runTest {
             val germanUrl = "https://orania.berlin/de/konzerte/event/termin/agita-rando-20261014"
             coEvery { htmlFetcher.fetchDocument(match { it.contains("/oraniaconcerts/") }) } answers
-                { loadDocument("orania-detail-agita-rando-en.html", firstArg()) }
-            coEvery { htmlFetcher.fetchDocument(germanUrl) } returns loadDocument("orania-detail-agita-rando-de.html", germanUrl)
+                { fixtureDocument("orania/orania-detail-agita-rando-en.html", firstArg()) }
+            stubFetcher(germanUrl to "orania/orania-detail-agita-rando-de.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(sourceUrl)
 
@@ -96,7 +90,7 @@ class OraniaWebsiteImporterTest {
     fun `keeps the English text when the German event page fails`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(match { it.contains("/oraniaconcerts/") }) } answers
-                { loadDocument("orania-detail-agita-rando-en.html", firstArg()) }
+                { fixtureDocument("orania/orania-detail-agita-rando-en.html", firstArg()) }
             coEvery { htmlFetcher.fetchDocument(match { it.contains("/de/konzerte/") }) } throws HttpFetchException(404, "de")
 
             val result = importer.importEvents(sourceUrl)

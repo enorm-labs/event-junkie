@@ -6,6 +6,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
@@ -29,9 +31,9 @@ class PasticheWebsiteImporterTest {
     fun `reads each event's page and flags the ones that fail`() =
         runTest {
             coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns
-                FetchResult.Success(document = Jsoup.parse(fixture("pastiche-programme.html"), url), etag = "\"v1\"", lastModified = null)
+                FetchResult.Success(document = fixtureDocument("pastiche/pastiche-programme.html", url), etag = "\"v1\"", lastModified = null)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://pasticheinternational.com/")
-            coEvery { htmlFetcher.fetchDocument(ramziUrl) } returns Jsoup.parse(fixture("pastiche-ramzi.html"), ramziUrl)
+            stubFetcher(ramziUrl to "pastiche/pastiche-ramzi.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(url)
 
@@ -51,8 +53,7 @@ class PasticheWebsiteImporterTest {
             val page =
                 """<div class="pages"><bodycopy><h1>Thurs, 22nd October<br />20:00 - 22:30</h1>""" +
                     """<column-set><column-unit slot="1">Text.</column-unit></column-set></bodycopy></div>"""
-            coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns
-                FetchResult.Success(document = Jsoup.parse(fixture("pastiche-programme.html"), url), etag = null, lastModified = null)
+            stubFetcher(url to "pastiche/pastiche-programme.html", fetcher = htmlFetcher)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://pasticheinternational.com/")
             coEvery { htmlFetcher.fetchDocument(ramziUrl) } returns Jsoup.parse(page, ramziUrl)
 
@@ -106,10 +107,4 @@ class PasticheWebsiteImporterTest {
         importer.listsWholeProgramme shouldBe false
         importer.fetchesBeyondEntryPage shouldBe true
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/pastiche/$name")!!
-            .bufferedReader()
-            .readText()
 }

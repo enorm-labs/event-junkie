@@ -2,6 +2,7 @@ package de.norm.events.scraper.passionskirche
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isFestivalTitle
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -20,7 +21,10 @@ class PassionskircheEventPageScraperTest {
     private val scraper = PassionskircheEventPageScraper()
 
     private fun scrape(slug: String) =
-        scraper.scrape(Jsoup.parse(fixture("passionskirche-event-$slug.html"), "https://www.halle-luja.berlin/$slug"), "https://www.halle-luja.berlin/$slug")
+        scraper.scrape(
+            fixtureDocument("passionskirche/passionskirche-event-$slug.html", "https://www.halle-luja.berlin/$slug"),
+            "https://www.halle-luja.berlin/$slug"
+        )
 
     @Test
     fun `reads the schedule block, the text and the ticket link`() {
@@ -90,10 +94,4 @@ class PassionskircheEventPageScraperTest {
         event.description shouldBe "Ein Abend."
         scraper.scrape(Jsoup.parse("<main></main>", "https://www.halle-luja.berlin/x"), "https://www.halle-luja.berlin/x").shouldBeNull()
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/passionskirche/$name")!!
-            .bufferedReader()
-            .readText()
 }

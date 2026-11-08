@@ -3,6 +3,7 @@ package de.norm.events.scraper.morphine
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -30,14 +31,7 @@ class MorphineDetailPageScraperTest {
     private fun parse(
         fixture: String,
         url: String
-    ): ScrapedEvent? {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/morphine/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
-    }
+    ): ScrapedEvent? = scraper.scrape(fixtureDocument("morphine/$fixture", url), url)
 
     @Test
     fun `bills the act of an act and work set line, never the work`() {

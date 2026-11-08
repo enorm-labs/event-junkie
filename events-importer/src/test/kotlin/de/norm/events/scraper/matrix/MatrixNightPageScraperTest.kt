@@ -3,6 +3,7 @@ package de.norm.events.scraper.matrix
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,15 +23,9 @@ class MatrixNightPageScraperTest {
 
     private fun nightUrl(format: String) = "https://www.matrix-berlin.de/de/night/$format"
 
-    private fun html(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/matrix/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun night(
         format: String,
-        page: String = html("matrix-night-$format-de.html")
+        page: String = fixtureText("matrix/matrix-night-$format-de.html")
     ) = scraper.scrape(Jsoup.parse(page, nightUrl(format)), nightUrl(format))
 
     @Test
@@ -94,14 +89,14 @@ class MatrixNightPageScraperTest {
 
     @Test
     fun `skips a format page that shows no next date`() {
-        val page = html("matrix-night-social-de.html").replace("Do., 08.10.2026", "Bald wieder")
+        val page = fixtureText("matrix/matrix-night-social-de.html").replace("Do., 08.10.2026", "Bald wieder")
 
         night("social", page).shouldBeNull()
     }
 
     @Test
     fun `keeps a night whose line-up is empty`() {
-        val document = Jsoup.parse(html("matrix-night-social-de.html"), nightUrl("social"))
+        val document = Jsoup.parse(fixtureText("matrix/matrix-night-social-de.html"), nightUrl("social"))
         document.select(".nd-dj").remove()
 
         val event = scraper.scrape(document, nightUrl("social")).shouldNotBeNull()
@@ -138,7 +133,7 @@ class MatrixNightPageScraperTest {
     }
 
     private fun withLineUp(name: String): Document =
-        Jsoup.parse(html("matrix-night-social-de.html"), nightUrl("social")).also { document ->
+        Jsoup.parse(fixtureText("matrix/matrix-night-social-de.html"), nightUrl("social")).also { document ->
             document.selectFirst(".nd-dj b").shouldNotBeNull().text(name)
         }
 }

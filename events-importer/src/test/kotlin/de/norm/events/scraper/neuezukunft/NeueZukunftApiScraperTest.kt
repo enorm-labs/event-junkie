@@ -3,6 +3,7 @@ package de.norm.events.scraper.neuezukunft
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.headlinersFromTitle
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -30,14 +31,7 @@ class NeueZukunftApiScraperTest {
     private val berlin = ZoneId.of("Europe/Berlin")
     private val scraper = NeueZukunftApiScraper(Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay(berlin).toInstant(), berlin))
 
-    private val rawJson: String by lazy {
-        javaClass.classLoader
-            .getResourceAsStream("scraper/neuezukunft/neuezukunft-api.json")!!
-            .bufferedReader()
-            .readText()
-    }
-
-    private val events: List<ScrapedEvent> by lazy { scraper.scrape(rawJson) }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureText("neuezukunft/neuezukunft-api.json")) }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 

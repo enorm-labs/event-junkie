@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -25,14 +26,9 @@ class MonarchWebsiteImporterTest {
     @BeforeEach
     fun setUp() {
         importer = MonarchWebsiteImporter(htmlFetcher)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/monarch/monarch-overview.html")!!
-                .bufferedReader()
-                .readText()
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(html, sourceUrl),
+                document = fixtureDocument("monarch/monarch-overview.html", sourceUrl),
                 etag = "\"monarch-etag\"",
                 lastModified = "Sun, 12 Jul 2026 08:00:00 GMT"
             )
