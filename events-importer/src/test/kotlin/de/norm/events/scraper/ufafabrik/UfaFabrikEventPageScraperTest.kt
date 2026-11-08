@@ -1,6 +1,7 @@
 package de.norm.events.scraper.ufafabrik
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldEndWith
@@ -14,18 +15,12 @@ class UfaFabrikEventPageScraperTest {
     private val scraper = UfaFabrikEventPageScraper()
     private val url = "https://ufafabrik.de/veranstaltung/40877/ahmet-bozkus"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/ufafabrik/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun scrapeBody(body: String): ScrapedEvent? =
         scraper.scrape(Jsoup.parse("""<article><div class="field--name-body">$body</div></article>""", url), url)
 
     @Test
     fun `a Ticketlink line becomes the ticket link and leaves the blurb`() {
-        val event = scraper.scrape(Jsoup.parse(fixture("ufafabrik-detail-ahmet-bozkus.html"), url), url)!!
+        val event = scraper.scrape(fixtureDocument("ufafabrik/ufafabrik-detail-ahmet-bozkus.html", url), url)!!
         event.ticketUrl shouldBe "https://www.tickettailor.com/events/dwjmm/2315670"
         val description = event.description.orEmpty()
         description shouldNotContain "Ticketlink"
@@ -63,14 +58,14 @@ class UfaFabrikEventPageScraperTest {
     @Test
     fun `a move note set as a heading is read, and the link to the new date is not`() {
         val krumbiegel = "https://ufafabrik.de/veranstaltung/39793/sebastian-krumbiegel"
-        val description = scraper.scrape(Jsoup.parse(fixture("ufafabrik-detail-krumbiegel.html"), krumbiegel), krumbiegel)!!.description.orEmpty()
+        val description = scraper.scrape(fixtureDocument("ufafabrik/ufafabrik-detail-krumbiegel.html", krumbiegel), krumbiegel)!!.description.orEmpty()
         description shouldStartWith "Verlegt auf den 02.04.2027. Tickets behalten NICHT ihre Gültigkeit.\nSebastian Krumbiegel ist"
         description shouldNotContain "Link zum neuen Termin"
     }
 
     @Test
     fun `a show without the line has no ticket link`() {
-        val event = scraper.scrape(Jsoup.parse(fixture("ufafabrik-detail-elsa.html"), url), url)!!
+        val event = scraper.scrape(fixtureDocument("ufafabrik/ufafabrik-detail-elsa.html", url), url)!!
         event.ticketUrl.shouldBeNull()
     }
 

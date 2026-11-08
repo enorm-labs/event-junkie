@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -37,19 +39,13 @@ class WuhlheideWebsiteImporterTest {
             "die-aerzte/2027-06-05" to "die-aerzte"
         )
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/wuhlheide/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = WuhlheideWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("wuhlheide-overview.html"), sourceUrl),
+                document = fixtureDocument("wuhlheide/wuhlheide-overview.html", sourceUrl),
                 etag = "\"wuhlheide-etag\"",
                 lastModified = "Sat, 01 Aug 2026 09:00:00 GMT"
             )
@@ -57,8 +53,7 @@ class WuhlheideWebsiteImporterTest {
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
         detailFixtures.forEach { (slug, fixture) ->
             val detailUrl = "https://www.wuhlheide.de/programm/$slug"
-            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
-                Jsoup.parse(readFixture("wuhlheide-detail-$fixture.html"), detailUrl)
+            stubFetcher(detailUrl to "wuhlheide/wuhlheide-detail-$fixture.html", fetcher = htmlFetcher)
         }
     }
 

@@ -2,6 +2,7 @@ package de.norm.events.scraper.wuhlheide
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
@@ -24,13 +25,8 @@ class WuhlheideDetailPageScraperTest {
         fixture: String,
         slug: String
     ): ScrapedEvent {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/wuhlheide/wuhlheide-detail-$fixture.html")!!
-                .bufferedReader()
-                .readText()
         val sourceUrl = "https://www.wuhlheide.de/programm/$slug"
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+        return scraper.scrape(fixtureDocument("wuhlheide/wuhlheide-detail-$fixture.html", sourceUrl), sourceUrl)!!
     }
 
     @Test

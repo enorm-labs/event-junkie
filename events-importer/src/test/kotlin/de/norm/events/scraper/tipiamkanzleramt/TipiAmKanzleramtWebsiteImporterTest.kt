@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -32,8 +34,10 @@ class TipiAmKanzleramtWebsiteImporterTest {
 
     private val sourceUrl = "https://www.tipi-am-kanzleramt.de/de/programm/kalender.html"
 
+    private val overviewFixture = "tipiamkanzleramt/tipiamkanzleramt-overview.html"
+
     private val batchUrl by lazy {
-        Jsoup.parse(loadFixture("tipiamkanzleramt-overview.html"), sourceUrl).selectFirst("[data-render-partial-url]")!!.absUrl("data-render-partial-url")
+        fixtureDocument(overviewFixture, sourceUrl).selectFirst("[data-render-partial-url]")!!.absUrl("data-render-partial-url")
     }
 
     @BeforeEach
@@ -42,24 +46,21 @@ class TipiAmKanzleramtWebsiteImporterTest {
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(loadFixture("tipiamkanzleramt-overview.html"), sourceUrl),
+                document = fixtureDocument(overviewFixture, sourceUrl),
                 etag = "\"tipi-1\"",
                 lastModified = "Fri, 16 Oct 2026 10:00:00 GMT"
             )
         coEvery { htmlFetcher.fetchDocument(match { "programmuebersicht" in it || "programme-overview" in it }) } returns
             Jsoup.parse("<html><body></body></html>", sourceUrl)
-        coEvery { htmlFetcher.fetchDocument(MEHRLING_URL) } returns Jsoup.parse(loadFixture("tipiamkanzleramt-show-mehrling.html"), MEHRLING_URL)
-        coEvery { htmlFetcher.fetchDocument(KORNEEV_URL) } returns Jsoup.parse(loadFixture("tipiamkanzleramt-show-korneev.html"), KORNEEV_URL)
-        coEvery { htmlFetcher.fetchDocument(THALBACH_URL) } returns Jsoup.parse(loadFixture("tipiamkanzleramt-show-thalbach.html"), THALBACH_URL)
+        stubFetcher(
+            MEHRLING_URL to "tipiamkanzleramt/tipiamkanzleramt-show-mehrling.html",
+            KORNEEV_URL to "tipiamkanzleramt/tipiamkanzleramt-show-korneev.html",
+            THALBACH_URL to "tipiamkanzleramt/tipiamkanzleramt-show-thalbach.html",
+            fetcher = htmlFetcher
+        )
         coEvery { htmlFetcher.fetchDocument(match { it.startsWith(batchUrl) }) } returns
-            Jsoup.parse(loadFixture("tipiamkanzleramt-calendar-batch-empty.html"), batchUrl)
+            fixtureDocument("tipiamkanzleramt/tipiamkanzleramt-calendar-batch-empty.html", batchUrl)
     }
-
-    private fun loadFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/tipiamkanzleramt/$name")!!
-            .bufferedReader()
-            .readText()
 
     private suspend fun importedEvents() = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events
 
@@ -186,8 +187,7 @@ class TipiAmKanzleramtWebsiteImporterTest {
     @Test
     fun `importEvents reads a later batch, and a card whose phone-booking modal precedes its JSON-LD`() =
         runTest {
-            coEvery { htmlFetcher.fetchDocument("$batchUrl&currentPage=2") } returns
-                Jsoup.parse(loadFixture("tipiamkanzleramt-calendar-batch-2.html"), "$batchUrl&currentPage=2")
+            stubFetcher("$batchUrl&currentPage=2" to "tipiamkanzleramt/tipiamkanzleramt-calendar-batch-2.html", fetcher = htmlFetcher)
 
             val events = importedEvents()
 

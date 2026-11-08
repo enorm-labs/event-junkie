@@ -1,6 +1,8 @@
 package de.norm.events.scraper.tresor
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -27,12 +29,7 @@ class TresorDetailPageScraperTest {
         slug: String
     ): ScrapedEvent? {
         val url = "https://tresorberlin.com/event/$slug/"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/tresor/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
+        return scraper.scrape(fixtureDocument("tresor/$fixture", url), url)
     }
 
     @Test
@@ -52,10 +49,7 @@ class TresorDetailPageScraperTest {
 
         val url = "https://tresorberlin.com/event/20260801-tresor-klubnacht/"
         val withoutOpenGraph =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/tresor/tresor-detail-klubnacht.html")!!
-                .bufferedReader()
-                .readText()
+            fixtureText("tresor/tresor-detail-klubnacht.html")
                 .replace("og:image", "og:removed")
         scraper.scrape(Jsoup.parse(withoutOpenGraph, url), url).shouldNotBeNull().imageUrl shouldBe
             "https://tresorberlin.com/wp-content/uploads/2026/06/aspiration-180x140-oil-on-canvas-2024-ch-e1782818421888-2880x2882.jpg"

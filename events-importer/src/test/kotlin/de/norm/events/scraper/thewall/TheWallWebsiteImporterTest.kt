@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -27,23 +28,14 @@ class TheWallWebsiteImporterTest {
     private val page2Url = "$partials?page=2"
     private val page3Url = "$partials?page=3"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/thewall/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(document = loadDocument("thewall-events.html", sourceUrl), etag = null, lastModified = null)
-        coEvery { htmlFetcher.fetchDocument(page2Url) } returns loadDocument("thewall-events-page-2.html", page2Url)
-        coEvery { htmlFetcher.fetchDocument(page3Url) } returns loadDocument("thewall-events-page-last.html", page3Url)
+        stubFetcher(
+            sourceUrl to "thewall/thewall-events.html",
+            page2Url to "thewall/thewall-events-page-2.html",
+            page3Url to "thewall/thewall-events-page-last.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test

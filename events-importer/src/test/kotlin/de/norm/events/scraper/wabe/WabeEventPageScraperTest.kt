@@ -1,6 +1,7 @@
 package de.norm.events.scraper.wabe
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -17,13 +18,7 @@ class WabeEventPageScraperTest {
 
     @Test
     fun `reads the description and the ticket link`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/wabe/wabe-event-okt-2026-3.html")!!
-                .bufferedReader()
-                .readText()
-
-        val event = WabeEventPageScraper().scrape(listed, Jsoup.parse(html, url))!!
+        val event = WabeEventPageScraper().scrape(listed, fixtureDocument("wabe/wabe-event-okt-2026-3.html", url))!!
 
         event.ticketUrl shouldBe "https://shop.entrello.app/de/wabe/events/ev_3GRgDeriIgGTiIuYPZ5te0zDNb5/tickets"
         val description = event.description.shouldNotBeNull()

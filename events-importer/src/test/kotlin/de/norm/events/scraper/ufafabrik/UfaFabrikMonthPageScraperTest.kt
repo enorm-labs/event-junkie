@@ -3,6 +3,7 @@ package de.norm.events.scraper.ufafabrik
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
@@ -18,16 +19,7 @@ import java.time.LocalTime
 class UfaFabrikMonthPageScraperTest {
     private val baseUrl = "https://ufafabrik.de/spielplan.html"
 
-    private fun month(name: String) =
-        UfaFabrikMonthPageScraper().scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/ufafabrik/$name")!!
-                    .bufferedReader()
-                    .readText(),
-                baseUrl
-            )
-        )
+    private fun month(name: String) = UfaFabrikMonthPageScraper().scrape(fixtureDocument("ufafabrik/$name", baseUrl))
 
     private val october = month("ufafabrik-spielplan.html")
 

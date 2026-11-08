@@ -6,6 +6,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -32,23 +34,20 @@ class TresorWebsiteImporterTest {
     private val klubnachtUrl = "https://tresorberlin.com/event/20260801-tresor-klubnacht/"
     private val aquabahnUrl = "https://tresorberlin.com/event/20260807-tresor-aquabahn-x-mechatronica/"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/tresor/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = TresorWebsiteImporter(htmlFetcher)
         coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("tresor-events.html"), listingUrl),
+                document = fixtureDocument("tresor/tresor-events.html", listingUrl),
                 etag = "\"tresor-etag\"",
                 lastModified = "Sat, 01 Aug 2026 03:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(klubnachtUrl) } returns Jsoup.parse(fixture("tresor-detail-klubnacht.html"), klubnachtUrl)
-        coEvery { htmlFetcher.fetchDocument(aquabahnUrl) } returns Jsoup.parse(fixture("tresor-detail-blurb.html"), aquabahnUrl)
+        stubFetcher(
+            klubnachtUrl to "tresor/tresor-detail-klubnacht.html",
+            aquabahnUrl to "tresor/tresor-detail-blurb.html",
+            fetcher = htmlFetcher
+        )
 
         val stubbed = setOf(klubnachtUrl, aquabahnUrl)
         coEvery { htmlFetcher.fetchDocument(match { it !in stubbed }) } returns Jsoup.parse("<html><body></body></html>", listingUrl)

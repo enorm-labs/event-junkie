@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -26,13 +27,8 @@ class ZitadelleDetailPageScraperTest {
         fixture: String,
         slug: String
     ): ScrapedEvent {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/zitadelle/zitadelle-detail-$fixture.html")!!
-                .bufferedReader()
-                .readText()
         val sourceUrl = "https://citadel-music-festival.de/event/$slug"
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+        return scraper.scrape(fixtureDocument("zitadelle/zitadelle-detail-$fixture.html", sourceUrl), sourceUrl)!!
     }
 
     private val antilopen: ScrapedEvent by lazy { scrape("antilopen-gang", "2026-08-15-antilopen-gang") }

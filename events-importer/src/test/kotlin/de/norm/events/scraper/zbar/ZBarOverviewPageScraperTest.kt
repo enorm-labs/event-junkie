@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zbar
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -20,12 +21,7 @@ class ZBarOverviewPageScraperTest {
     private val baseUrl = "https://zbarberlin.com/kulturprogramm/"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/zbar/zbar-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("zbar/zbar-overview.html", baseUrl), baseUrl)
     }
 
     private fun page(vararg blocks: String) = Jsoup.parse("""<div class="entry-content">${blocks.joinToString("")}</div>""", baseUrl)

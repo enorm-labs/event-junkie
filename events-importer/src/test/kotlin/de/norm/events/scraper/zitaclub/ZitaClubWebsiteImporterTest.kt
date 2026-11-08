@@ -4,6 +4,8 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -12,8 +14,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -23,22 +23,14 @@ class ZitaClubWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val importer = ZitaClubWebsiteImporter(apiClient, htmlFetcher)
 
-    private fun resource(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zitaclub/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private fun page(
-        name: String,
-        url: String
-    ): Document = Jsoup.parse(resource(name), url)
-
     @BeforeEach
     fun setUp() {
-        coEvery { apiClient.fetchJson(FEED) } returns resource("zitaclub-events.ics")
-        coEvery { htmlFetcher.fetchDocument(ROCK) } returns page("zitaclub-event-rock-at-zita.html", ROCK)
-        coEvery { htmlFetcher.fetchDocument(DANSE) } returns page("zitaclub-event-danse-macabre.html", DANSE)
+        coEvery { apiClient.fetchJson(FEED) } returns fixtureText("zitaclub/zitaclub-events.ics")
+        stubFetcher(
+            ROCK to "zitaclub/zitaclub-event-rock-at-zita.html",
+            DANSE to "zitaclub/zitaclub-event-danse-macabre.html",
+            fetcher = htmlFetcher
+        )
         coEvery { htmlFetcher.fetchDocument(DANSE_2) } throws IllegalStateException("page down")
     }
 

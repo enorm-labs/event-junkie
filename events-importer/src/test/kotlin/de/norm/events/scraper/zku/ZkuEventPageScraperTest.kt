@@ -3,6 +3,7 @@ package de.norm.events.scraper.zku
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -18,10 +19,7 @@ import java.time.LocalDate
 class ZkuEventPageScraperTest {
     private val scraper = ZkuEventPageScraper()
 
-    private fun page(slug: String) =
-        "https://www.zku-berlin.org/timeline/$slug/".let { url ->
-            Jsoup.parse(javaClass.classLoader.getResource("scraper/zku/zku-event-$slug.html")!!.readText(), url)
-        }
+    private fun page(slug: String) = fixtureDocument("zku/zku-event-$slug.html", "https://www.zku-berlin.org/timeline/$slug/")
 
     private fun row(
         title: String,

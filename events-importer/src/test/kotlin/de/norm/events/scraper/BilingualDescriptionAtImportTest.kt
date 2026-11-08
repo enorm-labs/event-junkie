@@ -54,7 +54,7 @@ class BilingualDescriptionAtImportTest {
     // Badehaus opens the text with a rule of tildes, in both languages, on production on 2026-10-10.
     @Test
     fun `Badehaus's description and second language lose the rule they open with`() {
-        val text = fixture("badehaus-call-me-maybe.txt")
+        val text = fixtureText("bilingual/badehaus-call-me-maybe.txt").trimEnd()
         val alt = text.replace("Tickets At The Door", "Tickets An Der Tür")
 
         val row = scraped(text).toEventEntity(venueId = 1L, venueSlug = "badehaus", eventSourceId = 1L)
@@ -68,7 +68,7 @@ class BilingualDescriptionAtImportTest {
     // Spanish is neither of the two languages the schema stores (#330).
     @Test
     fun `SO36's Spanish and English text comes back unchanged`() {
-        val text = fixture("so36-la-casa-del-perreo.txt")
+        val text = fixtureText("bilingual/so36-la-casa-del-perreo.txt").trimEnd()
         val row = scraped(text).toEventEntity(venueId = 1L, venueSlug = "so36", eventSourceId = 1L)
 
         row.description shouldBe text
@@ -79,7 +79,7 @@ class BilingualDescriptionAtImportTest {
     fun `the venue's own second half replaces a stored machine translation`() {
         val existing = stored("ufafabrik-verbotene-lieben-3000.txt", "ufafabrik").copy(descriptionAlt = "Maschinell", descriptionAltOrigin = "MACHINE")
 
-        val row = scraped(fixture("ufafabrik-verbotene-lieben-3000.txt")).toEventEntity(1L, "ufafabrik", 1L, existing = existing)
+        val row = scraped(fixtureText("bilingual/ufafabrik-verbotene-lieben-3000.txt").trimEnd()).toEventEntity(1L, "ufafabrik", 1L, existing = existing)
 
         row.descriptionAltOrigin shouldBe PUBLISHER_ORIGIN
         row.descriptionAlt!! shouldStartWith "Verbotene Lieben 3000 is an outlandish comedy"
@@ -88,7 +88,7 @@ class BilingualDescriptionAtImportTest {
     private fun stored(
         name: String,
         venueSlug: String
-    ): EventEntity = scraped(fixture(name)).toEventEntity(venueId = 1L, venueSlug = venueSlug, eventSourceId = 1L)
+    ): EventEntity = scraped(fixtureText("bilingual/$name").trimEnd()).toEventEntity(venueId = 1L, venueSlug = venueSlug, eventSourceId = 1L)
 
     private fun scraped(description: String) =
         ScrapedEvent(
@@ -98,11 +98,4 @@ class BilingualDescriptionAtImportTest {
             sourceUrl = "https://example.org",
             sourceId = "x:1"
         )
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/bilingual/$name")!!
-            .bufferedReader()
-            .readText()
-            .trimEnd()
 }

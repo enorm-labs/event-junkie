@@ -1,6 +1,7 @@
 package de.norm.events.scraper.wildatheart
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -27,24 +28,17 @@ class WildAtHeartOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-07-10T10:00:00Z"), ZoneOffset.UTC)
     private val scraper = WildAtHeartOverviewPageScraper(clock)
 
-    private fun programme() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/wildatheart/wildatheart-concerts.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
+    private val programme = "wildatheart/wildatheart-concerts.html"
 
     @Test
     fun `parses every dated event row from the programme page`() {
         // 77 `<tr>` rows carry a `.datum` cell in the fixture.
-        scraper.scrape(programme(), baseUrl) shouldHaveSize 77
+        scraper.scrape(fixtureDocument(programme, baseUrl), baseUrl) shouldHaveSize 77
     }
 
     @Test
     fun `fully populates a representative concert with headliner and support`() {
-        val event = scraper.scrape(programme(), baseUrl).first { it.title == "Foxy" }
+        val event = scraper.scrape(fixtureDocument(programme, baseUrl), baseUrl).first { it.title == "Foxy" }
 
         // "Mi 15.07." with no year → 2026 (the year 15 July lands on a Wednesday nearest today).
         event.eventDate shouldBe LocalDate.of(2026, 7, 15)
@@ -69,7 +63,7 @@ class WildAtHeartOverviewPageScraperTest {
 
     @Test
     fun `extracts ticket link and subtitle from a headline banner and a DJ from the lineup`() {
-        val event = scraper.scrape(programme(), baseUrl).first { it.title == "Zeit Driver" }
+        val event = scraper.scrape(fixtureDocument(programme, baseUrl), baseUrl).first { it.title == "Zeit Driver" }
 
         event.eventDate shouldBe LocalDate.of(2026, 7, 17)
         event.genre shouldBe "Heavy Rock"
@@ -90,12 +84,7 @@ class WildAtHeartOverviewPageScraperTest {
     fun `lifts a Tickets unter link out of the banner, with or without a colon`() {
         // The 14 October 2026 programme: Holy Mother says "Tickets unter: <url>", The Spitfires "Tickets unter <url>" (#3283).
         val octoberClock = Clock.fixed(Instant.parse("2026-10-14T10:00:00Z"), ZoneOffset.UTC)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/wildatheart/wildatheart-concerts-october.html")!!
-                .bufferedReader()
-                .readText()
-        val events = WildAtHeartOverviewPageScraper(octoberClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        val events = WildAtHeartOverviewPageScraper(octoberClock).scrape(fixtureDocument("wildatheart/wildatheart-concerts-october.html", baseUrl), baseUrl)
 
         val holyMother = events.first { it.title == "Holy Mother" }
         holyMother.eventDate shouldBe LocalDate.of(2026, 11, 14)
@@ -111,7 +100,7 @@ class WildAtHeartOverviewPageScraperTest {
 
     @Test
     fun `flags a Wild Wednesday free-entry night and starts it from the banner time`() {
-        val event = scraper.scrape(programme(), baseUrl).first { it.title == "La Retraite de la Peur" }
+        val event = scraper.scrape(fixtureDocument(programme, baseUrl), baseUrl).first { it.title == "La Retraite de la Peur" }
 
         event.eventDate shouldBe LocalDate.of(2026, 9, 9)
         event.free shouldBe true
@@ -124,7 +113,7 @@ class WildAtHeartOverviewPageScraperTest {
     fun `drops a plus-Guest support slot, keeping only the headliner`() {
         // "Bash Tru" (Fr 07.08.) lists an unannounced support as `+Guest` — a billing
         // placeholder, not a performer — so it is dropped; the headliner and aftershow DJ remain.
-        val event = scraper.scrape(programme(), baseUrl).first { it.title == "Bash Tru" }
+        val event = scraper.scrape(fixtureDocument(programme, baseUrl), baseUrl).first { it.title == "Bash Tru" }
 
         event.artists.map { it.name to it.role } shouldBe
             listOf(
@@ -186,12 +175,7 @@ class WildAtHeartOverviewPageScraperTest {
     fun `reads an ab-Uhr banner time and gives a row with no published time the house doors`() {
         // The 5 September 2026 programme: the flea market says "ab 14 Uhr"; Les Calcatoggios states no time at all.
         val autumnClock = Clock.fixed(Instant.parse("2026-09-04T10:00:00Z"), ZoneOffset.UTC)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/wildatheart/wildatheart-concerts-autumn.html")!!
-                .bufferedReader()
-                .readText()
-        val events = WildAtHeartOverviewPageScraper(autumnClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        val events = WildAtHeartOverviewPageScraper(autumnClock).scrape(fixtureDocument("wildatheart/wildatheart-concerts-autumn.html", baseUrl), baseUrl)
 
         val fleaMarket = events.first { it.title.startsWith("Punk & Rock`n`Roll Flohmarkt") }
         fleaMarket.startTime shouldBe LocalTime.of(14, 0)

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.weekend
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,16 +19,7 @@ class WeekendUpcomingPageScraperTest {
     private val scraper = WeekendUpcomingPageScraper()
 
     private val events by lazy {
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/weekend/weekend-upcoming.html")!!
-                    .bufferedReader()
-                    .readText(),
-                sourceUrl
-            ),
-            sourceUrl
-        )
+        scraper.scrape(fixtureDocument("weekend/weekend-upcoming.html", sourceUrl), sourceUrl)
     }
 
     private fun event(title: String) = events.first { it.title == title }

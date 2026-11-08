@@ -2,6 +2,7 @@ package de.norm.events.scraper.urbanspree
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -28,21 +29,9 @@ class UrbanSpreeOverviewPageScraperTest {
     private val page2Url = "https://www.urbanspree.com/program/?page=2"
     private val boundaryUrl = "https://www.urbanspree.com/program/?page=3"
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/urbanspree/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
+    private fun scrapeListing() = scraper.scrape(fixtureDocument("urbanspree/urbanspree-overview.html", listingUrl), listingUrl)
 
-    private fun scrapeListing() = scraper.scrape(fixture("urbanspree-overview.html", listingUrl), listingUrl)
-
-    private fun scrapeBoundary() = scraper.scrape(fixture("urbanspree-overview-past-boundary.html", boundaryUrl), boundaryUrl)
+    private fun scrapeBoundary() = scraper.scrape(fixtureDocument("urbanspree/urbanspree-overview-past-boundary.html", boundaryUrl), boundaryUrl)
 
     @Test
     fun `scrape extracts every card on the listing page`() {
@@ -55,7 +44,7 @@ class UrbanSpreeOverviewPageScraperTest {
     fun `scrape reads every card of the live exhibitions category page`() {
         val exhibitionsUrl = "https://www.urbanspree.com/program/exhibitions/"
 
-        val events = scraper.scrape(fixture("urbanspree-exhibitions.html", exhibitionsUrl), exhibitionsUrl)
+        val events = scraper.scrape(fixtureDocument("urbanspree/urbanspree-exhibitions.html", exhibitionsUrl), exhibitionsUrl)
 
         events shouldHaveSize 9
         events.all { it.eventType == EventType.EXHIBITION.name } shouldBe true
@@ -92,7 +81,7 @@ class UrbanSpreeOverviewPageScraperTest {
         // Hrefs are relative ("program/concerts/…") and the page carries
         // <base href="https://www.urbanspree.com/">. Resolving against the page URL instead
         // would produce a doubled "/program/program/…" path on every page past the first.
-        val event = scraper.scrape(fixture("urbanspree-overview-page2.html", page2Url), page2Url).first()
+        val event = scraper.scrape(fixtureDocument("urbanspree/urbanspree-overview-page2.html", page2Url), page2Url).first()
 
         event.sourceUrl shouldBe "https://www.urbanspree.com/program/concerts/jud-urban-spree-berlin.html"
         event.sourceId shouldBe "urban_spree:concerts/jud-urban-spree-berlin"

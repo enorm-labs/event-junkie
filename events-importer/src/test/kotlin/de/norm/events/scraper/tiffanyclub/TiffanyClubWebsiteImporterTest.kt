@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -27,16 +28,10 @@ class TiffanyClubWebsiteImporterTest {
     private val importer = TiffanyClubWebsiteImporter(htmlFetcher, clock)
     private val listingUrl = "https://tiffany-berlin.de/upcoming-events/"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/tiffanyclub/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun stubListing() {
         coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("tiffanyclub-overview.html"), listingUrl),
+                document = fixtureDocument("tiffanyclub/tiffanyclub-overview.html", listingUrl),
                 etag = "\"tiffany-etag\"",
                 lastModified = "Thu, 01 Oct 2026 08:00:00 GMT"
             )
@@ -58,7 +53,7 @@ class TiffanyClubWebsiteImporterTest {
     fun `imports every night with its blurb and propagates conditional headers`() =
         runTest {
             stubListing()
-            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("tiffanyclub-detail.html"), firstArg<String>()) }
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("tiffanyclub/tiffanyclub-detail.html", firstArg<String>()) }
 
             val result = importer.importEvents(listingUrl)
 
@@ -92,7 +87,7 @@ class TiffanyClubWebsiteImporterTest {
     fun `marks the listing row when the event page has no blurb`() =
         runTest {
             stubListing()
-            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("tiffanyclub-detail-private.html"), firstArg<String>()) }
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("tiffanyclub/tiffanyclub-detail-private.html", firstArg<String>()) }
 
             val result = importer.importEvents(listingUrl)
 

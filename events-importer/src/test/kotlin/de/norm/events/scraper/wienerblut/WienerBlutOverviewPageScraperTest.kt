@@ -3,6 +3,7 @@ package de.norm.events.scraper.wienerblut
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -17,17 +18,7 @@ import java.time.LocalTime
 class WienerBlutOverviewPageScraperTest {
     private val baseUrl = "https://www.wienerblut.org/event-list"
 
-    private fun parse(fixture: String): List<ScrapedEvent> =
-        WienerBlutOverviewPageScraper().scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/wienerblut/$fixture")!!
-                    .bufferedReader()
-                    .readText(),
-                baseUrl
-            ),
-            baseUrl
-        )
+    private fun parse(fixture: String): List<ScrapedEvent> = WienerBlutOverviewPageScraper().scrape(fixtureDocument("wienerblut/$fixture", baseUrl), baseUrl)
 
     private val edgeCases by lazy { parse("wienerblut-overview-edge-cases.html") }
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.velomax
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -25,14 +26,7 @@ class VelomaxOverviewPageScraperTest {
     private val scraper = VelomaxOverviewPageScraper()
     private val baseUrl = "https://www.velomax.de/events"
 
-    private fun scrape(hall: VelomaxHall): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/velomax/velomax-overview.html")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl, hall)
-    }
+    private fun scrape(hall: VelomaxHall): List<ScrapedEvent> = scraper.scrape(fixtureDocument("velomax/velomax-overview.html", baseUrl), baseUrl, hall)
 
     @Test
     fun `splits the shared listing across the three halls`() {

@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -21,14 +22,7 @@ class WabeMonthPageScraperTest {
 
     private fun monthUrl(month: String) = "https://www.wabe-berlin.info/$month-2026/"
 
-    private fun scrape(month: String): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/wabe/wabe-$month-2026.html")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, monthUrl(month)), monthUrl(month))
-    }
+    private fun scrape(month: String): List<ScrapedEvent> = scraper.scrape(fixtureDocument("wabe/wabe-$month-2026.html", monthUrl(month)), monthUrl(month))
 
     private fun List<ScrapedEvent>.on(date: String) = single { it.eventDate == LocalDate.parse(date) }
 

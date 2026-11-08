@@ -2,6 +2,7 @@ package de.norm.events.scraper.torhausberlin
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,13 +19,7 @@ class TorhausBerlinOverviewPageScraperTest {
     private val scraper = TorhausBerlinOverviewPageScraper()
     private val baseUrl = "https://torhausberlin.de/de"
 
-    private fun fixture() =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/torhausberlin/torhausberlin-overview.html")!!
-            .bufferedReader()
-            .readText()
-
-    private fun scrapeFixture() = scraper.scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
+    private fun scrapeFixture() = scraper.scrape(fixtureDocument("torhausberlin/torhausberlin-overview.html", baseUrl), baseUrl)
 
     /** A page of [cards] whose flight payload carries [keys], pushed through the same chunk path as the live page. */
     private fun scrapeCards(

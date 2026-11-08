@@ -2,6 +2,7 @@ package de.norm.events.scraper.zimmer16
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.forChildrenPhrase
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -20,10 +21,10 @@ import java.time.LocalTime
 
 class Zimmer16ScrapersTest {
     private val baseUrl = "https://zimmer16.com/"
-    private val events = Zimmer16OverviewPageScraper().scrape(Jsoup.parse(fixture("zimmer16-home.html"), baseUrl), baseUrl)
+    private val events = Zimmer16OverviewPageScraper().scrape(fixtureDocument("zimmer16/zimmer16-home.html", baseUrl), baseUrl)
     private val eventPage = Zimmer16EventPageScraper()
     private val childrensUrl = "https://zimmer16.com/programm-fuer-kinder-mikado-e-v/"
-    private val childrens = Zimmer16OverviewPageScraper().scrape(Jsoup.parse(fixture("zimmer16-kinder.html"), childrensUrl), childrensUrl)
+    private val childrens = Zimmer16OverviewPageScraper().scrape(fixtureDocument("zimmer16/zimmer16-kinder.html", childrensUrl), childrensUrl)
 
     @Test
     fun `reads the homepage's 20 cards with their year and drops the audience from the title`() {
@@ -79,7 +80,7 @@ class Zimmer16ScrapersTest {
     fun `adds the time, the end, the price and the full text from the event page`() {
         val bourbon = events.first { it.title == "Claude Bourbon" }
 
-        val enriched = eventPage.enrich(bourbon, Jsoup.parse(fixture("yesticket-claude-bourbon.html"), bourbon.sourceUrl)).shouldNotBeNull()
+        val enriched = eventPage.enrich(bourbon, fixtureDocument("zimmer16/yesticket-claude-bourbon.html", bourbon.sourceUrl)).shouldNotBeNull()
 
         enriched.startTime shouldBe LocalTime.of(20, 0)
         enriched.endDate shouldBe LocalDate.of(2026, 10, 10)
@@ -97,7 +98,7 @@ class Zimmer16ScrapersTest {
     fun `marks a sold-out night`() {
         val zillmer = events.first { it.title == "Arno Zillmer" }
 
-        eventPage.enrich(zillmer, Jsoup.parse(fixture("yesticket-arno-zillmer.html"), zillmer.sourceUrl)).shouldNotBeNull().soldOut shouldBe true
+        eventPage.enrich(zillmer, fixtureDocument("zimmer16/yesticket-arno-zillmer.html", zillmer.sourceUrl)).shouldNotBeNull().soldOut shouldBe true
     }
 
     @Test
@@ -165,12 +166,6 @@ class Zimmer16ScrapersTest {
         childrens.first().title shouldBe "Wusel und der goldene Ring – Theater Katinchen"
         events.none { it.isForChildren } shouldBe true
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zimmer16/$name")!!
-            .bufferedReader()
-            .readText()
 
     private companion object {
         /** Production titles from 2026-10-12 (#3164). */

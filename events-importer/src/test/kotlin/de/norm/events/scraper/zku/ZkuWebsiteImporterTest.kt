@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -21,9 +23,7 @@ class ZkuWebsiteImporterTest {
     private val importer = ZkuWebsiteImporter(htmlFetcher)
     private val url = "https://www.zku-berlin.org/"
 
-    private fun fixture(name: String): String = javaClass.classLoader.getResource("scraper/zku/$name")!!.readText()
-
-    private fun stubCalendar(html: String = fixture("zku-home.html")) {
+    private fun stubCalendar(html: String = fixtureText("zku/zku-home.html")) {
         coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns
             FetchResult.Success(document = Jsoup.parse(html, url), etag = "\"zku\"", lastModified = "Sat, 17 Oct 2026 03:00:00 GMT")
     }
@@ -47,7 +47,7 @@ class ZkuWebsiteImporterTest {
             coEvery { htmlFetcher.fetchDocument(any()) } answers {
                 val pageUrl = firstArg<String>()
                 val name = if ("unruh-friends" in pageUrl) "zku-event-unruh-friends.html" else "zku-event-diffusion-a-meddling.html"
-                Jsoup.parse(fixture(name), pageUrl)
+                fixtureDocument("zku/$name", pageUrl)
             }
 
             val result = importer.importEvents(url)

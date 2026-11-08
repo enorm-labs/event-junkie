@@ -3,6 +3,7 @@ package de.norm.events.scraper.urania
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -26,13 +27,8 @@ class UraniaEventPageScraperTest {
         fixture: String,
         slug: String
     ): ScrapedEvent {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/urania/urania-event-$fixture.html")!!
-                .bufferedReader()
-                .readText()
         val sourceUrl = "https://www.urania.de/event/$slug/"
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+        return scraper.scrape(fixtureDocument("urania/urania-event-$fixture.html", sourceUrl), sourceUrl)!!
     }
 
     private val opening: ScrapedEvent by lazy { scrape("demokratie-vor-der-wahl", "demokratie-vor-der-wahl") }

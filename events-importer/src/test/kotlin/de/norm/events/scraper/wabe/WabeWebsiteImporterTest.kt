@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -13,7 +14,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -25,25 +25,13 @@ class WabeWebsiteImporterTest {
 
     private fun monthUrl(month: String) = "https://www.wabe-berlin.info/$month-2026/"
 
-    private fun fixture(
-        name: String,
-        url: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/wabe/$name")!!
-                .bufferedReader()
-                .readText(),
-            url
-        )
-
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("wabe-entry.html", entryUrl)
+        stubFetcher(entryUrl to "wabe/wabe-entry.html", fetcher = htmlFetcher)
         listOf("okt", "nov", "dez").forEach { month ->
-            coEvery { htmlFetcher.fetchDocument(monthUrl(month)) } returns fixture("wabe-$month-2026.html", monthUrl(month))
+            stubFetcher(monthUrl(month) to "wabe/wabe-$month-2026.html", fetcher = htmlFetcher)
         }
-        coEvery { htmlFetcher.fetchDocument(eventPageUrl) } returns fixture("wabe-event-okt-2026-3.html", eventPageUrl)
+        stubFetcher(eventPageUrl to "wabe/wabe-event-okt-2026-3.html", fetcher = htmlFetcher)
         coEvery { htmlFetcher.fetchDocument(match { it != entryUrl && it != eventPageUrl && !it.endsWith("-2026/") }) } throws
             HttpFetchException(404, "event page")
     }

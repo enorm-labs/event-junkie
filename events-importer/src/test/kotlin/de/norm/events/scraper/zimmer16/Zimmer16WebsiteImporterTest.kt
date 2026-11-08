@@ -6,6 +6,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.isForChildren
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -14,7 +15,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalTime
 
@@ -28,11 +28,13 @@ class Zimmer16WebsiteImporterTest {
     @Test
     fun `reads the homepage and the children's page, then each card's event page, and flags the ones that fail`() =
         runTest {
-            coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns
-                FetchResult.Success(document = Jsoup.parse(fixture("zimmer16-home.html"), url), etag = null, lastModified = null)
+            stubFetcher(url to "zimmer16/zimmer16-home.html", fetcher = htmlFetcher)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://www.yesticket.org/")
-            coEvery { htmlFetcher.fetchDocument(bourbonUrl) } returns Jsoup.parse(fixture("yesticket-claude-bourbon.html"), bourbonUrl)
-            coEvery { htmlFetcher.fetchDocument(childrensUrl) } returns Jsoup.parse(fixture("zimmer16-kinder.html"), childrensUrl)
+            stubFetcher(
+                bourbonUrl to "zimmer16/yesticket-claude-bourbon.html",
+                childrensUrl to "zimmer16/zimmer16-kinder.html",
+                fetcher = htmlFetcher
+            )
 
             val result = importer.importEvents(url)
 
@@ -59,10 +61,4 @@ class Zimmer16WebsiteImporterTest {
         importer.listsWholeProgramme shouldBe false
         importer.fetchesBeyondEntryPage shouldBe true
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/zimmer16/$name")!!
-            .bufferedReader()
-            .readText()
 }

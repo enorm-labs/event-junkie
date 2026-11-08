@@ -2,6 +2,7 @@ package de.norm.events.scraper.zigzag
 
 import de.norm.events.artist.artistSlugFor
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -18,16 +19,7 @@ import java.time.LocalTime
 class ZigZagDetailPageScraperTest {
     private val scraper = ZigZagDetailPageScraper()
 
-    private fun page(name: String) =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/zigzag/$name")!!
-                    .bufferedReader()
-                    .readText(),
-                "https://www.zigzag-jazzclub.berlin/program-mai/x"
-            )
-        )
+    private fun page(name: String) = scraper.scrape(fixtureDocument("zigzag/$name", "https://www.zigzag-jazzclub.berlin/program-mai/x"))
 
     @Test
     fun `reads times, admission, ticket link and blurb`() {

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zebranotheater
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -16,13 +17,8 @@ class ZebranoTheaterEventPageScraperTest {
 
     private fun page(date: String): Pair<ScrapedEvent, org.jsoup.nodes.Document> {
         val url = "https://www.zebrano-theater.de/programm/$date.shtml"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/zebranotheater/zebranotheater-$date.html")!!
-                .bufferedReader()
-                .readText()
         val event = ScrapedEvent(title = "t", eventDate = LocalDate.of(2026, 10, 4), sourceUrl = url, sourceId = "zebrano_theater:$date")
-        return event to Jsoup.parse(html, url)
+        return event to fixtureDocument("zebranotheater/zebranotheater-$date.html", url)
     }
 
     @Test

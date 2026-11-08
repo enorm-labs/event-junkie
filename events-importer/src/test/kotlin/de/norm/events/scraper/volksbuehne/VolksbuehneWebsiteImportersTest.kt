@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -12,7 +13,6 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
 
 class VolksbuehneWebsiteImportersTest {
@@ -23,11 +23,13 @@ class VolksbuehneWebsiteImportersTest {
     fun `reads the Spielplan and enriches each row from its performance page`() =
         runTest {
             coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns
-                FetchResult.Success(document = document("volksbuehne-spielplan.html", url), etag = "\"v1\"", lastModified = null)
+                FetchResult.Success(document = fixtureDocument("volksbuehne/volksbuehne-spielplan.html", url), etag = "\"v1\"", lastModified = null)
             coEvery { htmlFetcher.fetchDocument(match { "/en/" !in it }) } answers {
-                document("volksbuehne-event-a-year-without-summer.html", firstArg())
+                fixtureDocument("volksbuehne/volksbuehne-event-a-year-without-summer.html", firstArg())
             }
-            coEvery { htmlFetcher.fetchDocument(match { "/en/" in it }) } answers { document("volksbuehne-event-space-afrika-en.html", firstArg()) }
+            coEvery { htmlFetcher.fetchDocument(match { "/en/" in it }) } answers {
+                fixtureDocument("volksbuehne/volksbuehne-event-space-afrika-en.html", firstArg())
+            }
 
             val result = VolksbuehnePraterWebsiteImporter(htmlFetcher).importEvents(url)
 
@@ -65,9 +67,4 @@ class VolksbuehneWebsiteImportersTest {
         VolksbuehnePraterWebsiteImporter(htmlFetcher).eventSource shouldBe EventSource.VOLKSBUEHNE_PRATER
         VolksbuehneWebsiteImporter(htmlFetcher).fetchesBeyondEntryPage shouldBe true
     }
-
-    private fun document(
-        name: String,
-        baseUri: String
-    ): Document = Jsoup.parse(requireNotNull(javaClass.classLoader.getResourceAsStream("scraper/volksbuehne/$name")).bufferedReader().readText(), baseUri)
 }

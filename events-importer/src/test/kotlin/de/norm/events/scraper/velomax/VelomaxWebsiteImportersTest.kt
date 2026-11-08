@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -33,23 +35,20 @@ class VelomaxWebsiteImportersTest {
     private val showUrl = "https://www.max-schmeling-halle.de/events/event/die-nervigen-max-schmeling-halle-2026-10-23"
     private val reezyUrl = "https://www.ufo-velodrom.de/events/event/reezy-ufo-2026-09-12"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/velomax/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("velomax-overview.html"), overviewUrl),
+                document = fixtureDocument("velomax/velomax-overview.html", overviewUrl),
                 etag = "\"velomax-etag\"",
                 lastModified = "Sat, 01 Aug 2026 03:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(jojiUrl) } returns Jsoup.parse(fixture("velomax-detail-concert.html"), jojiUrl)
-        coEvery { htmlFetcher.fetchDocument(showUrl) } returns Jsoup.parse(fixture("velomax-detail-show.html"), showUrl)
-        coEvery { htmlFetcher.fetchDocument(reezyUrl) } returns Jsoup.parse(fixture("velomax-detail-ufo.html"), reezyUrl)
+        stubFetcher(
+            jojiUrl to "velomax/velomax-detail-concert.html",
+            showUrl to "velomax/velomax-detail-show.html",
+            reezyUrl to "velomax/velomax-detail-ufo.html",
+            fetcher = htmlFetcher
+        )
 
         val stubbed = setOf(jojiUrl, showUrl, reezyUrl)
         coEvery { htmlFetcher.fetchDocument(match { it !in stubbed }) } returns Jsoup.parse("<html><body></body></html>", overviewUrl)

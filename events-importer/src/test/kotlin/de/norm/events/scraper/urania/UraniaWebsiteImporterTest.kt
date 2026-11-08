@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -33,19 +35,13 @@ class UraniaWebsiteImporterTest {
 
     private fun eventUrl(slug: String) = "https://www.urania.de/event/$slug/"
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/urania/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = UraniaWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("urania-kalender.html"), sourceUrl),
+                document = fixtureDocument("urania/urania-kalender.html", sourceUrl),
                 etag = "\"urania-etag\"",
                 lastModified = "Mon, 03 Aug 2026 09:00:00 GMT"
             )
@@ -56,8 +52,7 @@ class UraniaWebsiteImporterTest {
             "how-context-modulates-memory-in-flies-and-humans" to "how-context-modulates-memory",
             "die-pionierinnen-der-goldenen-1920er-jahre" to "die-pionierinnen"
         ).forEach { (slug, fixture) ->
-            coEvery { htmlFetcher.fetchDocument(eventUrl(slug)) } returns
-                Jsoup.parse(readFixture("urania-event-$fixture.html"), eventUrl(slug))
+            stubFetcher(eventUrl(slug) to "urania/urania-event-$fixture.html", fetcher = htmlFetcher)
         }
     }
 
