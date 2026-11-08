@@ -1,18 +1,16 @@
 package de.norm.events.scraper.heidegluehen
 
 import de.norm.events.common.rethrowIfCancelled
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ListingPages
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.importEntryPage
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -25,10 +23,10 @@ import org.springframework.stereotype.Component
  * 2. `/aktuell/` — the imminent party only, the one place a DJ lineup appears. Fetched
  * unconditionally after the month page, its lineup applied to the matching date.
  *
- * The second fetch is why this implements [EventImporter] directly rather than the per-event
- * detail pattern: one week page for the whole programme, not one per event, and on most days
- * it adds nothing — each lineup is posted a few days ahead. A week page that fails, names
- * another month's date, or has no lineup yet is no error; those events keep the month page's data.
+ * The second fetch is the [afterListing] pass rather than the per-event detail pattern: one week
+ * page for the whole programme, not one per event, and on most days it adds nothing — each
+ * lineup is posted a few days ahead. A week page that fails, names another month's date, or has
+ * no lineup yet is no error; those events keep the month page's data.
  *
  * @see HeidegluehenMonthPageScraper for the programme parsing.
  * @see HeidegluehenWeekPageScraper for the lineup parsing.
@@ -37,36 +35,26 @@ import org.springframework.stereotype.Component
 @Component
 class HeidegluehenWebsiteImporter(
     private val htmlFetcher: HtmlFetcher
-) : EventImporter {
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Heideglühen", HeidegluehenMonthPageScraper()::scrape) {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.HEIDEGLUEHEN
     override val fetchesBeyondEntryPage: Boolean = true
+    override val listedLine: (Int) -> String = { count -> "Scraped $count party date(s) from the Heideglühen month page" }
 
-    private val monthPageScraper = HeidegluehenMonthPageScraper()
     private val weekPageScraper = HeidegluehenWeekPageScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        htmlFetcher.importEntryPage(url, etag, lastModified) { document ->
-            val events = monthPageScraper.scrape(document, url)
-            logger.info { "Scraped ${events.size} party date(s) from the Heideglühen month page" }
-            ListingPages(applyLineup(events, url), complete = true)
-        }
 
     /**
      * Applies the week page's lineup to the party it belongs to. A lineup matching none of the
      * month's dates is dropped rather than guessed: at a month boundary the week page can already
      * show a party the month page no longer lists.
      */
-    private suspend fun applyLineup(
+    override suspend fun afterListing(
         events: List<ScrapedEvent>,
-        monthPageUrl: String
+        document: Document,
+        url: String
     ): List<ScrapedEvent> {
-        val lineup = fetchLineup(resolveUrl(monthPageUrl, WEEK_PAGE_PATH)) ?: return events
+        val lineup = fetchLineup(resolveUrl(url, WEEK_PAGE_PATH)) ?: return events
         logger.info { "Heideglühen published ${lineup.artists.size} DJ(s) for ${lineup.date}" }
 
         return events.map { event -> if (event.eventDate == lineup.date) lineup.applyTo(event) else event }

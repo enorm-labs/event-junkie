@@ -27,6 +27,10 @@ import org.springframework.stereotype.Component
  * venue states one ([resolveGenres]).
  * 3. Each production page's performances via [AdmiralspalastDetailPageScraper].
  *
+ * Not on the single-page base's [afterListing][de.norm.events.scraper.AbstractSinglePageWebsiteImporter.afterListing]
+ * pass either: the entry page lists productions, not events, and a failed production page must
+ * mark the run incomplete, which that pass cannot report.
+ *
  * One request per production plus one per category. The per-host throttle keeps the walk
  * polite. A failed production page costs that production's performances for the run, and marks
  * the result incomplete so the stale cleanup does not delete them (#1980).

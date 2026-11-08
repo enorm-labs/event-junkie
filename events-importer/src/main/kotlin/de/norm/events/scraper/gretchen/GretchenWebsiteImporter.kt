@@ -1,19 +1,17 @@
 package de.norm.events.scraper.gretchen
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ListingPages
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.importEntryPage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.CancellationException
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.net.URI
 
@@ -23,9 +21,9 @@ import java.net.URI
  * conditional fetch via [HtmlFetcher] and one parse via [GretchenOverviewPageScraper].
  *
  * The ticket shop is not on the page: the `TICKETS` button opens a popup that a form POST to
- * [TICKET_POPUP_PATH] fills. One POST per night reads it ([parseTicketPopup]); the popup's
- * `list_id` is the night's `detail.php` id. A night whose popup fails or names no shop keeps the
- * Resident Advisor link the card carries.
+ * [TICKET_POPUP_PATH] fills. One POST per night reads it in [afterListing] ([parseTicketPopup]);
+ * the popup's `list_id` is the night's `detail.php` id. A night whose popup fails or names no shop
+ * keeps the Resident Advisor link the card carries.
  *
  * @see GretchenOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.gretchen-club.de/">Gretchen Berlin</a>
@@ -33,25 +31,25 @@ import java.net.URI
 @Component
 class GretchenWebsiteImporter(
     private val htmlFetcher: HtmlFetcher
-) : EventImporter {
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Gretchen", GretchenOverviewPageScraper()::scrape) {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.GRETCHEN
     override val listsWholeProgramme: Boolean = true
 
-    private val overviewPageScraper = GretchenOverviewPageScraper()
+    // Logged in afterListing, once the ticket links are known.
+    override val listedLine: ((Int) -> String)? = null
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        htmlFetcher.importEntryPage(url, etag, lastModified) { document ->
-            val popupUrl = URI(url).resolve(TICKET_POPUP_PATH).toString()
-            val events = overviewPageScraper.scrape(document, url).map { withTicketShop(it, popupUrl) }
-            logger.info { "Scraped ${events.size} event(s) from Gretchen, ${events.count { it.ticketUrl != null }} with a ticket link" }
-            ListingPages(events, complete = true)
-        }
+    override suspend fun afterListing(
+        events: List<ScrapedEvent>,
+        document: Document,
+        url: String
+    ): List<ScrapedEvent> {
+        val popupUrl = URI(url).resolve(TICKET_POPUP_PATH).toString()
+        val withShops = events.map { withTicketShop(it, popupUrl) }
+        logger.info { "Scraped ${withShops.size} event(s) from Gretchen, ${withShops.count { it.ticketUrl != null }} with a ticket link" }
+        return withShops
+    }
 
     /** [event] with the shop its `TICKETS` popup names, or unchanged when the popup names none or fails. */
     @Suppress("TooGenericExceptionCaught") // Intentional: one failed popup keeps the card's link, not the whole import
