@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -23,20 +25,14 @@ class ArtStalkerWebsiteImporterTest {
     private val sourceUrl = "https://art-stalker.reservix.de/"
     private val patlanskyUrl = "https://art-stalker.reservix.de/tickets-dan-patlansky-blues-rock-in-berlin-art-stalker-am-3-10-2026/e2535642"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/artstalker/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun stubListing() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("artstalker-overview.html"), sourceUrl),
+                document = fixtureDocument("artstalker/artstalker-overview.html", sourceUrl),
                 etag = "\"rx-etag\"",
                 lastModified = "Thu, 01 Oct 2026 08:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(patlanskyUrl) } returns Jsoup.parse(fixture("artstalker-detail-patlansky.html"), patlanskyUrl)
+        stubFetcher(patlanskyUrl to "artstalker/artstalker-detail-patlansky.html", fetcher = htmlFetcher)
         coEvery { htmlFetcher.fetchDocument(match { it != patlanskyUrl }) } throws IOException("refused")
     }
 

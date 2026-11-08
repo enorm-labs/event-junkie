@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -34,12 +35,7 @@ class AdmiralspalastDetailPageScraperTest {
         category: String? = null
     ): List<ScrapedEvent> {
         val url = "https://www.admiralspalast.theater/veranstaltung/$slug.html"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/admiralspalast/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url, category)
+        return scraper.scrape(fixtureDocument("admiralspalast/$fixture", url), url, category)
     }
 
     @Test

@@ -3,6 +3,7 @@ package de.norm.events.scraper.artstalker
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -16,15 +17,7 @@ import java.time.LocalTime
 class ArtStalkerOverviewPageScraperTest {
     private val baseUrl = "https://art-stalker.reservix.de/"
     private val events =
-        ArtStalkerOverviewPageScraper().scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/artstalker/artstalker-overview.html")!!
-                    .bufferedReader()
-                    .readText(),
-                baseUrl
-            )
-        )
+        ArtStalkerOverviewPageScraper().scrape(fixtureDocument("artstalker/artstalker-overview.html", baseUrl))
 
     private fun bySourceId(id: String) = events.single { it.sourceId == "art_stalker:$id" }
 

@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -28,10 +30,13 @@ class AcudMachtNeuWebsiteImporterTest {
     fun `reads this month and the next but no further, merges each event page and flags the ones that fail`() =
         runTest {
             coEvery { htmlFetcher.fetch(url, any(), any()) } returns
-                FetchResult.Success(document = document("acudmachtneu-overview.html", url), etag = "\"a1\"", lastModified = null)
+                FetchResult.Success(document = fixtureDocument("acudmachtneu/acudmachtneu-overview.html", url), etag = "\"a1\"", lastModified = null)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://acudmachtneu.de/")
-            coEvery { htmlFetcher.fetchDocument(nextMonthUrl) } returns document("acudmachtneu-month-empty.html", nextMonthUrl)
-            coEvery { htmlFetcher.fetchDocument(burreUrl) } returns document("acudmachtneu-event-burre.html", burreUrl)
+            stubFetcher(
+                nextMonthUrl to "acudmachtneu/acudmachtneu-month-empty.html",
+                burreUrl to "acudmachtneu/acudmachtneu-event-burre.html",
+                fetcher = htmlFetcher
+            )
 
             val result = importer.importEvents(url)
 
@@ -70,15 +75,4 @@ class AcudMachtNeuWebsiteImporterTest {
         importer.eventSource shouldBe EventSource.ACUD_MACHT_NEU
         importer.fetchesBeyondEntryPage shouldBe true
     }
-
-    private fun document(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/acudmachtneu/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
 }

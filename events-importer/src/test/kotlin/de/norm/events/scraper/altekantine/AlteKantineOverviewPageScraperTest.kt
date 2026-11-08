@@ -2,11 +2,11 @@ package de.norm.events.scraper.altekantine
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -36,12 +36,7 @@ class AlteKantineOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/altekantine/altekantine-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("altekantine/altekantine-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(postId: String): ScrapedEvent = events.first { it.sourceId == "alte_kantine:$postId" }
@@ -91,12 +86,11 @@ class AlteKantineOverviewPageScraperTest {
 
     @Test
     fun `types the label-less Kantinenlesen as a reading from its title`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/altekantine/altekantine-overview-page-2.html")!!
-                .bufferedReader()
-                .readText()
-        val lesen = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single { it.sourceId == "alte_kantine:12466" }
+        val lesen =
+            scraper.scrape(fixtureDocument("altekantine/altekantine-overview-page-2.html", baseUrl), baseUrl).single {
+                it.sourceId ==
+                    "alte_kantine:12466"
+            }
 
         lesen.title shouldBe "Kantinenlesen"
         lesen.eventType shouldBe EventType.READING.name

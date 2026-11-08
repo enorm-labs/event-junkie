@@ -1,6 +1,7 @@
 package de.norm.events.scraper.acudmachtneu
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -16,7 +17,7 @@ class AcudMachtNeuEventPageScraperTest {
     private fun scrape(
         name: String,
         url: String
-    ) = scraper.scrape(document(name, url), url)!!
+    ) = scraper.scrape(fixtureDocument("acudmachtneu/$name", url), url)!!
 
     @Test
     fun `reads the room and time from the header, the text, the picture and the presale link`() {
@@ -212,15 +213,4 @@ class AcudMachtNeuEventPageScraperTest {
                 """<div class="event-article__content"><p>$paragraph</p></div></article>"""
         return scraper.scrape(Jsoup.parse(html, url), url)!!
     }
-
-    private fun document(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/acudmachtneu/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
 }

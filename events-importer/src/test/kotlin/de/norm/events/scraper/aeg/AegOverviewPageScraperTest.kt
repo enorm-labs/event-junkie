@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -40,14 +41,7 @@ class AegOverviewPageScraperTest {
         fixture: String,
         baseUrl: String,
         eventSource: EventSource
-    ): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/aeg/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl, eventSource)
-    }
+    ): List<ScrapedEvent> = scraper.scrape(fixtureDocument("aeg/$fixture", baseUrl), baseUrl, eventSource)
 
     private fun arena(sourceId: String): ScrapedEvent = arenaEvents.first { it.sourceId == sourceId }
 

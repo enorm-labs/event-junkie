@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -15,7 +17,6 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -33,25 +34,16 @@ class AmtWebsiteImporterTest {
     private val juneUrl = "https://www.club-amt.berlin/month/june"
     private val julyUrl = "https://www.club-amt.berlin/month/july"
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/amt/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     @BeforeEach
     fun setUp() {
         importer = AmtWebsiteImporter(htmlFetcher)
-        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("amt-overview.html", entryUrl)
-        coEvery { htmlFetcher.fetchDocument(juneUrl) } returns fixture("amt-month-june.html", juneUrl)
-        coEvery { htmlFetcher.fetchDocument(julyUrl) } returns fixture("amt-month-july.html", julyUrl)
-        coEvery { htmlFetcher.fetchDocument(match { "/event/" in it }) } answers { fixture("amt-event-brace-brace.html", firstArg()) }
+        stubFetcher(
+            entryUrl to "amt/amt-overview.html",
+            juneUrl to "amt/amt-month-june.html",
+            julyUrl to "amt/amt-month-july.html",
+            fetcher = htmlFetcher
+        )
+        coEvery { htmlFetcher.fetchDocument(match { "/event/" in it }) } answers { fixtureDocument("amt/amt-event-brace-brace.html", firstArg()) }
     }
 
     @Test
@@ -92,7 +84,7 @@ class AmtWebsiteImporterTest {
             withPoster.map { it.imageUrl }.distinct() shouldBe
                 listOf("https://cdn.prod.website-files.com/692dbb0dfdd864c5db8ed6f0/6abfe41caea6cbfa177ddb42_f622930102e3188e3699b808740d6e2320dd1fb7.webp")
 
-            coEvery { htmlFetcher.fetchDocument(match { "/event/" in it }) } answers { fixture("amt-event-dollhaus-x-slime.html", firstArg()) }
+            coEvery { htmlFetcher.fetchDocument(match { "/event/" in it }) } answers { fixtureDocument("amt/amt-event-dollhaus-x-slime.html", firstArg()) }
             val withPlaceholder = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>().events
             withPlaceholder.all { it.imageUrl == null } shouldBe true
             withPlaceholder.all { "Slime and DOLLHAUS come together" in it.description.orEmpty() } shouldBe true

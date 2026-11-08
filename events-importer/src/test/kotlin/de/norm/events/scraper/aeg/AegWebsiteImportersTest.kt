@@ -6,6 +6,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -39,12 +41,6 @@ class AegWebsiteImportersTest {
     private val musicHallUrl = "https://www.uber-eats-music-hall.de/events/all"
     private val musicHallDetailUrl = "https://www.uber-eats-music-hall.de/events/detail/jony/2026-09-15-1900"
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/aeg/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         arenaImporter = UberArenaWebsiteImporter(htmlFetcher)
@@ -52,24 +48,24 @@ class AegWebsiteImportersTest {
 
         coEvery { htmlFetcher.fetch(arenaUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("uberarena-overview.html"), arenaUrl),
+                document = fixtureDocument("aeg/uberarena-overview.html", arenaUrl),
                 etag = "\"ua-etag\"",
                 lastModified = "Mon, 03 Aug 2026 09:00:00 GMT"
             )
         coEvery { htmlFetcher.fetch(musicHallUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("ubereatsmusichall-overview.html"), musicHallUrl),
+                document = fixtureDocument("aeg/ubereatsmusichall-overview.html", musicHallUrl),
                 etag = "\"uemh-etag\"",
                 lastModified = "Mon, 03 Aug 2026 09:30:00 GMT"
             )
 
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
-        coEvery { htmlFetcher.fetchDocument(arenaDetailUrl) } returns
-            Jsoup.parse(readFixture("uberarena-detail-diljit-dosanjh.html"), arenaDetailUrl)
-        coEvery { htmlFetcher.fetchDocument(superShowDetailUrl) } returns
-            Jsoup.parse(readFixture("uberarena-detail-90s-super-show.html"), superShowDetailUrl)
-        coEvery { htmlFetcher.fetchDocument(musicHallDetailUrl) } returns
-            Jsoup.parse(readFixture("ubereatsmusichall-detail-jony.html"), musicHallDetailUrl)
+        stubFetcher(
+            arenaDetailUrl to "aeg/uberarena-detail-diljit-dosanjh.html",
+            superShowDetailUrl to "aeg/uberarena-detail-90s-super-show.html",
+            musicHallDetailUrl to "aeg/ubereatsmusichall-detail-jony.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test

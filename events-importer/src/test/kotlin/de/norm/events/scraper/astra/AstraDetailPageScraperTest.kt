@@ -2,6 +2,7 @@ package de.norm.events.scraper.astra
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -27,14 +28,7 @@ class AstraDetailPageScraperTest {
     private fun parseFixture(
         fixture: String,
         sourceUrl: String
-    ): ScrapedEvent {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/astra/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
-    }
+    ): ScrapedEvent = scraper.scrape(fixtureDocument("astra/$fixture", sourceUrl), sourceUrl)!!
 
     private val greenLung: ScrapedEvent by lazy {
         parseFixture("astra-detail-green-lung.html", "https://www.astra-berlin.de/events/2026-05-18-green-lung")

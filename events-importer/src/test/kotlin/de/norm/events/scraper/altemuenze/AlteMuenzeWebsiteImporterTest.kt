@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.dropPastEvents
+import de.norm.events.scraper.fixtureText
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -31,11 +32,7 @@ class AlteMuenzeWebsiteImporterTest {
 
     @BeforeEach
     fun setUp() {
-        coEvery { apiClient.fetchJson(firstPageUrl) } returns
-            javaClass.classLoader
-                .getResourceAsStream("scraper/altemuenze/altemuenze-events.json")!!
-                .bufferedReader()
-                .readText()
+        coEvery { apiClient.fetchJson(firstPageUrl) } returns fixtureText("altemuenze/altemuenze-events.json")
     }
 
     @Test

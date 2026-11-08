@@ -1,6 +1,7 @@
 package de.norm.events.scraper.altemuenze
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContainAnyOf
@@ -17,12 +18,7 @@ import java.time.LocalTime
 class AlteMuenzeApiScraperTest {
     private val scraper = AlteMuenzeApiScraper()
 
-    private val fixture by lazy {
-        javaClass.classLoader
-            .getResourceAsStream("scraper/altemuenze/altemuenze-events.json")!!
-            .bufferedReader()
-            .readText()
-    }
+    private val fixture by lazy { fixtureText("altemuenze/altemuenze-events.json") }
 
     private val page by lazy { scraper.scrapePage(fixture) }
 

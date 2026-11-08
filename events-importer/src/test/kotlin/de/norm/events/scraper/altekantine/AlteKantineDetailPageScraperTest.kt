@@ -3,6 +3,7 @@ package de.norm.events.scraper.altekantine
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -35,16 +36,7 @@ class AlteKantineDetailPageScraperTest {
     private fun parse(
         fixture: String,
         sourceUrl: String
-    ) = scraper.scrape(
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/altekantine/$fixture")!!
-                .bufferedReader()
-                .readText(),
-            sourceUrl
-        ),
-        sourceUrl
-    )
+    ) = scraper.scrape(fixtureDocument("altekantine/$fixture", sourceUrl), sourceUrl)
 
     @Test
     fun `parses all fields of a party night`() {

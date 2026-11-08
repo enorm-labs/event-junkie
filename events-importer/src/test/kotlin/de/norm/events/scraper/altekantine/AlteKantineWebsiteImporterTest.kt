@@ -8,6 +8,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -45,27 +47,22 @@ class AlteKantineWebsiteImporterTest {
     private val partyUrl = "https://alte-kantine.eu/?p=12371"
     private val quizUrl = "https://alte-kantine.eu/?p=12281"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/altekantine/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = AlteKantineWebsiteImporter(htmlFetcher, clock)
 
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("altekantine-overview.html"), overviewUrl),
+                document = fixtureDocument("altekantine/altekantine-overview.html", overviewUrl),
                 etag = "\"altekantine-etag\"",
                 lastModified = "Sun, 12 Jul 2026 03:00:00 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(partyUrl) } returns
-            Jsoup.parse(fixture("altekantine-detail-party.html"), partyUrl)
-        coEvery { htmlFetcher.fetchDocument(quizUrl) } returns
-            Jsoup.parse(fixture("altekantine-detail-quiz.html"), quizUrl)
+        stubFetcher(
+            partyUrl to "altekantine/altekantine-detail-party.html",
+            quizUrl to "altekantine/altekantine-detail-quiz.html",
+            fetcher = htmlFetcher
+        )
 
         // Every other event's detail page is unavailable, so the importer degrades to
         // overview data (which already carries a real date, so nothing is dropped).
@@ -88,7 +85,7 @@ class AlteKantineWebsiteImporterTest {
     fun `follows the grid paginator to the next page until a page has none`() =
         runTest {
             val page2 = "$overviewUrl?_page=2"
-            coEvery { htmlFetcher.fetchDocument(page2) } returns Jsoup.parse(fixture("altekantine-overview-page-2.html"), page2)
+            stubFetcher(page2 to "altekantine/altekantine-overview-page-2.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(overviewUrl)
 

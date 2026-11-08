@@ -1,5 +1,6 @@
 package de.norm.events.scraper.admiralspalast
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -15,18 +16,9 @@ class AdmiralspalastListingPageScraperTest {
     private val scraper = AdmiralspalastListingPageScraper()
     private val listingUrl = "https://www.admiralspalast.theater/veranstaltungsuebersicht.html"
 
-    private fun parse(fixture: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/admiralspalast/$fixture")!!
-                .bufferedReader()
-                .readText(),
-            listingUrl
-        )
-
     @Test
     fun `reads every production once, though each tile links to it several times`() {
-        val urls = scraper.scrapeProductionUrls(parse("admiralspalast-overview.html"), listingUrl)
+        val urls = scraper.scrapeProductionUrls(fixtureDocument("admiralspalast/admiralspalast-overview.html", listingUrl), listingUrl)
         urls shouldHaveSize 100
         urls.distinct() shouldHaveSize 100
         urls shouldContain "https://www.admiralspalast.theater/veranstaltung/abba-gold-the-concert-show-emotion.html"
@@ -34,14 +26,14 @@ class AdmiralspalastListingPageScraperTest {
 
     @Test
     fun `resolves the links to absolute URLs and drops the fragment`() {
-        val urls = scraper.scrapeProductionUrls(parse("admiralspalast-overview.html"), listingUrl)
+        val urls = scraper.scrapeProductionUrls(fixtureDocument("admiralspalast/admiralspalast-overview.html", listingUrl), listingUrl)
         urls.all { it.startsWith("https://www.admiralspalast.theater/veranstaltung/") } shouldBe true
         urls.none { it.contains('#') } shouldBe true
     }
 
     @Test
     fun `reads the category filter pages the venue offers`() {
-        val genres = scraper.scrapeGenreUrls(parse("admiralspalast-overview.html"), listingUrl)
+        val genres = scraper.scrapeGenreUrls(fixtureDocument("admiralspalast/admiralspalast-overview.html", listingUrl), listingUrl)
         genres.size shouldBe 20
         genres["https://www.admiralspalast.theater/veranstaltungsuebersicht/eventkategorie/comedy.html"] shouldBe "Comedy"
         genres["https://www.admiralspalast.theater/veranstaltungsuebersicht/eventkategorie/musical.html"] shouldBe "Musical"
@@ -50,7 +42,7 @@ class AdmiralspalastListingPageScraperTest {
     @Test
     fun `a category page lists only its own productions`() {
         val comedyUrl = "https://www.admiralspalast.theater/veranstaltungsuebersicht/eventkategorie/comedy.html"
-        val urls = scraper.scrapeProductionUrls(parse("admiralspalast-genre-comedy.html"), comedyUrl)
+        val urls = scraper.scrapeProductionUrls(fixtureDocument("admiralspalast/admiralspalast-genre-comedy.html", listingUrl), comedyUrl)
         urls shouldHaveSize 21
         urls shouldContain "https://www.admiralspalast.theater/veranstaltung/buelent-ceylan-diktatuerk.html"
     }

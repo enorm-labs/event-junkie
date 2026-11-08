@@ -1,5 +1,6 @@
 package de.norm.events.scraper.artstalker
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -19,12 +20,7 @@ class ArtStalkerDetailPageScraperTest {
         name: String,
         id: String
     ) = scraper.scrape(
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/artstalker/artstalker-detail-$name.html")!!
-                .bufferedReader()
-                .readText()
-        ),
+        fixtureDocument("artstalker/artstalker-detail-$name.html"),
         "https://art-stalker.reservix.de/tickets-$name/e$id"
     )
 

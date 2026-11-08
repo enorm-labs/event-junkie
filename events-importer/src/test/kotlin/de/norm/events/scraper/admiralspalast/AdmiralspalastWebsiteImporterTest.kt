@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -29,29 +31,21 @@ class AdmiralspalastWebsiteImporterTest {
     private val abbaUrl = "$host/veranstaltung/abba-gold-the-concert-show-emotion.html"
     private val antigoneUrl = "$host/veranstaltung/bodo-wartke-antigone.html"
 
-    private fun document(
-        fixture: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/admiralspalast/$fixture")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
         importer = AdmiralspalastWebsiteImporter(htmlFetcher)
         coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
             FetchResult.Success(
-                document = document("admiralspalast-overview.html", listingUrl),
+                document = fixtureDocument("admiralspalast/admiralspalast-overview.html", listingUrl),
                 etag = "\"admiralspalast-etag\"",
                 lastModified = "Sat, 01 Aug 2026 06:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(comedyUrl) } returns document("admiralspalast-genre-comedy.html", comedyUrl)
-        coEvery { htmlFetcher.fetchDocument(abbaUrl) } returns document("admiralspalast-detail-abba.html", abbaUrl)
-        coEvery { htmlFetcher.fetchDocument(antigoneUrl) } returns document("admiralspalast-detail-single.html", antigoneUrl)
+        stubFetcher(
+            comedyUrl to "admiralspalast/admiralspalast-genre-comedy.html",
+            abbaUrl to "admiralspalast/admiralspalast-detail-abba.html",
+            antigoneUrl to "admiralspalast/admiralspalast-detail-single.html",
+            fetcher = htmlFetcher
+        )
 
         val stubbed = setOf(comedyUrl, abbaUrl, antigoneUrl)
         coEvery { htmlFetcher.fetchDocument(match { it !in stubbed }) } returns Jsoup.parse("<html><body></body></html>", host)

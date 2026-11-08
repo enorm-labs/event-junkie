@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -20,12 +21,6 @@ class ATraneWebsiteImporterTest {
     private val importer = ATraneWebsiteImporter(htmlFetcher)
     private val programmeUrl = "https://a-trane.de/programm/"
 
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/atrane/atrane-programm.html")!!
-            .bufferedReader()
-            .readText()
-
     @Test
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.A_TRANE
@@ -36,7 +31,7 @@ class ATraneWebsiteImporterTest {
         runTest {
             coEvery { htmlFetcher.fetch(programmeUrl, any(), any()) } returns
                 FetchResult.Success(
-                    document = Jsoup.parse(fixture(), programmeUrl),
+                    document = fixtureDocument("atrane/atrane-programm.html", programmeUrl),
                     etag = "\"atrane-etag\"",
                     lastModified = "Thu, 01 Oct 2026 08:00:00 GMT"
                 )
