@@ -133,7 +133,8 @@ class AnthropicEventClassifier(
               - A listening session or an album playback is OTHER.
               - A talk, a panel, a talk show, a live podcast or a live narration (Live-Erzählung) is READING.
               - Kabarett, Musikkabarett, satire, stand-up and comedy theatre are COMEDY, also when an ensemble stages them as a production.
-              - A children's show, a musical, a dance piece or a play is SHOW.
+              - A children's show, a musical, a dance piece or a play is SHOW. A gala of songs from musicals is SHOW.
+              - A tribute band, an orchestra or a band is CONCERT, also when the text calls the evening a show or a stage production. The word Show alone decides nothing.
               - When the text names neither the kind of stage show nor its genre, leave out eventType.
               - FESTIVAL is only for an event over several days or stages, never for one night of a series.
             - "titleActs": {"value", "evidence", "confidence"}. value lists the performing artists, bands and DJs the title names. Act rules:
@@ -145,6 +146,7 @@ class AnthropicEventClassifier(
             - "features": a list of {"feature", "confirmed", "evidence", "confidence"}, one for each entry of uncertainCues only. confirmed is true only when the text states the feature for the whole night. Features: ${EventFeature.entries.joinToString {
                 it.slug
             }}.
+              - queer is confirmed only when the night calls itself queer, gay or LGBTQ, or invites a queer audience. A queer artist, a queer theme or a queer perspective in a show is not.
             - "startTime": {"value", "evidence", "confidence"}. value is the time the programme starts, as HH:mm. Doors or admission time is not the start time.
             - "pricePresale": {"value", "evidence", "confidence"}. value is the advance ticket price in euros as a number.
             - "priceBoxOffice": {"value", "evidence", "confidence"}. value is the price at the door in euros as a number.
