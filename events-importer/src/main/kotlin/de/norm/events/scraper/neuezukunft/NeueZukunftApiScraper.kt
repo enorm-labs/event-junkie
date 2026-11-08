@@ -71,7 +71,7 @@ class NeueZukunftApiScraper(
      *   absent, unparseable or without events.
      */
     fun scrape(json: String): List<ScrapedEvent> {
-        val eventNodes = parseElfsightEventNodes(SCRAPER_JSON, json, VENUE_NAME) ?: return emptyList()
+        val eventNodes = parseElfsightEventNodes(json, VENUE_NAME) ?: return emptyList()
         logger.info { "Found ${eventNodes.size} event(s) in Neue Zukunft widget response" }
 
         val parsed =
