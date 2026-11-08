@@ -1,6 +1,7 @@
 package de.norm.events.scraper.hafenbar
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -22,16 +23,7 @@ class HafenbarPartyPageScraperTest {
     private fun scrape(
         fixture: String,
         url: String
-    ) = scraper.scrape(
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/hafenbar/$fixture")!!
-                .bufferedReader()
-                .readText(),
-            url
-        ),
-        url
-    )
+    ) = scraper.scrape(fixtureDocument("hafenbar/$fixture", url), url)
 
     @Test
     fun `scrape reads the Friday page's next night and nothing more`() {

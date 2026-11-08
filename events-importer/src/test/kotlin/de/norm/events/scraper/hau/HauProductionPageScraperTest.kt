@@ -1,6 +1,7 @@
 package de.norm.events.scraper.hau
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -12,10 +13,11 @@ import java.time.LocalDate
 
 class HauProductionPageScraperTest {
     private val scraper = HauProductionPageScraper()
+    private val seedStoryUrl = pdetail("machina-ex-tadpole-repertory-a-seed-story")
 
     @Test
     fun `reads the text, poster and a single price with its reduction as the note`() {
-        val production = scraper.scrape(page("hau-production-soapskin.html", "soapskin-konzert")).shouldNotBeNull()
+        val production = scraper.scrape(fixtureDocument("hau/hau-production-soapskin.html", pdetail("soapskin-konzert"))).shouldNotBeNull()
 
         production.description.shouldNotBeNull() shouldStartWith "The Austrian Anja Plaschg, known as SOAP&SKIN"
         production.imageUrl.shouldNotBeNull() shouldStartWith "https://www.hebbel-am-ufer.de/fileadmin/_processed_/4/0/"
@@ -25,7 +27,7 @@ class HauProductionPageScraperTest {
 
     @Test
     fun `takes the lowest full price of a range`() {
-        val production = scraper.scrape(page("hau-production-isabelle-schad.html", "isabelle-schad-piece-of-changes")).shouldNotBeNull()
+        val production = scraper.scrape(fixtureDocument("hau/hau-production-isabelle-schad.html", pdetail("isabelle-schad-piece-of-changes"))).shouldNotBeNull()
 
         production.pricePresale shouldBe BigDecimal("20")
         production.priceNote shouldBe "€20–25, reduced €12–15"
@@ -33,8 +35,8 @@ class HauProductionPageScraperTest {
 
     @Test
     fun `reads the price line alone, after a capacity note or before the surtitle dates`() {
-        val surtitled = scraper.scrape(page("hau-production-she-she-pop.html", "she-she-pop-alles-moegliche")).shouldNotBeNull()
-        val lowCapacity = scraper.scrape(page("hau-production-seed-story.html", "machina-ex-tadpole-repertory-a-seed-story")).shouldNotBeNull()
+        val surtitled = scraper.scrape(fixtureDocument("hau/hau-production-she-she-pop.html", pdetail("she-she-pop-alles-moegliche"))).shouldNotBeNull()
+        val lowCapacity = scraper.scrape(fixtureDocument("hau/hau-production-seed-story.html", seedStoryUrl)).shouldNotBeNull()
 
         surtitled.pricePresale shouldBe BigDecimal("22")
         surtitled.priceNote shouldBe "22 €, reduced 12 €"
@@ -55,7 +57,7 @@ class HauProductionPageScraperTest {
 
     @Test
     fun `leaves the price empty where the page names none`() {
-        val production = scraper.scrape(page("hau-production-break-wau.html", "break-dj-set-kidcat-broccoli")).shouldNotBeNull()
+        val production = scraper.scrape(fixtureDocument("hau/hau-production-break-wau.html", pdetail("break-dj-set-kidcat-broccoli"))).shouldNotBeNull()
 
         production.pricePresale.shouldBeNull()
         production.priceNote.shouldBeNull()
@@ -85,11 +87,5 @@ class HauProductionPageScraperTest {
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>")).shouldBeNull()
     }
 
-    private fun page(
-        name: String,
-        slug: String
-    ) = Jsoup.parse(
-        requireNotNull(javaClass.classLoader.getResourceAsStream("scraper/hau/$name")).bufferedReader().readText(),
-        "https://www.hebbel-am-ufer.de/en/programme/pdetail/$slug/"
-    )
+    private fun pdetail(slug: String) = "https://www.hebbel-am-ufer.de/en/programme/pdetail/$slug/"
 }

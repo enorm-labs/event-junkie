@@ -9,6 +9,7 @@ import de.norm.events.importing.PerformerTyping
 import de.norm.events.importing.UpsertOutcome
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -67,25 +67,16 @@ class GaertenDerWeltExhibitionRunUpsertTest {
             eventType = "EXHIBITION"
         )
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/gaertenderwelt/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     @BeforeEach
     fun setUp() {
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
-        coEvery { htmlFetcher.fetchDocument(ENTRY_URL) } returns fixture("gaertenderwelt-overview-runs.html", ENTRY_URL)
+        stubFetcher(
+            ENTRY_URL to "gaertenderwelt/gaertenderwelt-overview-runs.html",
+            RUN_URL to "gaertenderwelt/gaertenderwelt-detail-exhibition.html",
+            fetcher = htmlFetcher
+        )
         coEvery { htmlFetcher.fetchDocument(PAGE2_URL) } returns
             Jsoup.parse("""<html><body><div class="tx-events2"><div class="list"></div></div></body></html>""", PAGE2_URL)
-        coEvery { htmlFetcher.fetchDocument(RUN_URL) } returns fixture("gaertenderwelt-detail-exhibition.html", RUN_URL)
         coEvery { eventRepository.findBySlugIn(any()) } returns emptyFlow()
         coEvery { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) } returns emptyFlow()
     }

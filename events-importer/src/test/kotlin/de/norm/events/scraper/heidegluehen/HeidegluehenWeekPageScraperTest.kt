@@ -2,6 +2,7 @@ package de.norm.events.scraper.heidegluehen
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,14 +23,7 @@ class HeidegluehenWeekPageScraperTest {
     private val scraper = HeidegluehenWeekPageScraper()
     private val sourceUrl = "https://heidegluehen.berlin/aktuell/"
 
-    private fun scrape(fixture: String): HeidegluehenLineup? {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/heidegluehen/heidegluehen-aktuell-$fixture.html")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, sourceUrl))
-    }
+    private fun scrape(fixture: String): HeidegluehenLineup? = scraper.scrape(fixtureDocument("heidegluehen/heidegluehen-aktuell-$fixture.html", sourceUrl))
 
     @Test
     fun `reads the announced lineup in the order the venue bills it`() {

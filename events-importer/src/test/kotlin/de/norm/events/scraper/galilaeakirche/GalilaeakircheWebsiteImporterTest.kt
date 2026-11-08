@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -29,9 +31,9 @@ class GalilaeakircheWebsiteImporterTest {
     fun `merges each event page into its listing row and flags the ones that fail`() =
         runTest {
             coEvery { htmlFetcher.fetch(url, any(), any()) } returns
-                FetchResult.Success(document = document("galilaeakirche-overview.html", url), etag = "\"g1\"", lastModified = null)
+                FetchResult.Success(document = fixtureDocument("galilaeakirche/galilaeakirche-overview.html", url), etag = "\"g1\"", lastModified = null)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://galilaea-kirche.de/")
-            coEvery { htmlFetcher.fetchDocument(zeaUrl) } returns document("galilaeakirche-event-zea.html", zeaUrl)
+            stubFetcher(zeaUrl to "galilaeakirche/galilaeakirche-event-zea.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(url)
 
@@ -71,15 +73,4 @@ class GalilaeakircheWebsiteImporterTest {
         importer.listsWholeProgramme shouldBe true
         importer.fetchesBeyondEntryPage shouldBe true
     }
-
-    private fun document(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/galilaeakirche/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
 }

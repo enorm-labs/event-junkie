@@ -1,5 +1,6 @@
 package de.norm.events.scraper.havanna
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -24,15 +25,7 @@ class HavannaDetailPageScraperTest {
 
     private fun night(day: String): HavannaWeeklyNight {
         val url = "https://www.havanna-berlin.de/$day"
-        val document =
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/havanna/havanna-detail-$day.html")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            )
-        return scraper.scrape(document, url)!!
+        return scraper.scrape(fixtureDocument("havanna/havanna-detail-$day.html", url), url)!!
     }
 
     private val wednesday by lazy { night("wednesday") }

@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -27,14 +28,9 @@ class GartnWebsiteImporterTest {
     private val overviewUrl = "https://www.gartn.xyz/"
 
     private fun stubOverview() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/gartn/gartn-overview.html")!!
-                .bufferedReader()
-                .readText()
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(html, overviewUrl),
+                document = fixtureDocument("gartn/gartn-overview.html", overviewUrl),
                 etag = "\"2a9df-65834084bdc88\"",
                 lastModified = "Tue, 04 Aug 2026 07:59:20 GMT"
             )

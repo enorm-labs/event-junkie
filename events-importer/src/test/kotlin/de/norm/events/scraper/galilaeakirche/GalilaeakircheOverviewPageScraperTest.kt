@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -16,7 +17,7 @@ import java.time.LocalTime
 
 class GalilaeakircheOverviewPageScraperTest {
     private val baseUrl = "https://galilaea-kirche.de/programm/"
-    private val events = scrape(fixture("galilaeakirche-overview.html"))
+    private val events = scrape(fixtureText("galilaeakirche/galilaeakirche-overview.html"))
 
     private fun scrape(html: String) = GalilaeakircheOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
@@ -165,10 +166,4 @@ class GalilaeakircheOverviewPageScraperTest {
             """<h3 class="vsel-meta-title"><a href="/event/$slug/">${slug.uppercase()}</a></h3>""" +
             """<div class="vsel-meta-date vsel-meta-single-date"><span>$date</span></div><div class="vsel-meta-time"><span>$time</span></div>$cats</div>"""
     }
-
-    private fun fixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/galilaeakirche/$name")!!
-            .bufferedReader()
-            .readText()
 }

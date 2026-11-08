@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -28,25 +30,17 @@ class HeidegluehenWebsiteImporterTest {
     private val monthUrl = "https://heidegluehen.berlin/monatsvorschau/"
     private val weekUrl = "https://heidegluehen.berlin/aktuell/"
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/heidegluehen/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private fun weekPage(fixture: String) = Jsoup.parse(readFixture("heidegluehen-aktuell-$fixture.html"), weekUrl)
-
     @BeforeEach
     fun setUp() {
         importer = HeidegluehenWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(monthUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("heidegluehen-monatsvorschau.html"), monthUrl),
+                document = fixtureDocument("heidegluehen/heidegluehen-monatsvorschau.html", monthUrl),
                 etag = "\"hg-etag\"",
                 lastModified = "Thu, 30 Jul 2026 12:24:09 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(weekUrl) } returns weekPage("ohne-lineup")
+        stubFetcher(weekUrl to "heidegluehen/heidegluehen-aktuell-ohne-lineup.html", fetcher = htmlFetcher)
     }
 
     @Test
@@ -113,7 +107,7 @@ class HeidegluehenWebsiteImporterTest {
                 )
             coEvery { htmlFetcher.fetch(monthUrl, any(), any()) } returns
                 FetchResult.Success(document = juneMonth, etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(weekUrl) } returns weekPage("mit-lineup")
+            stubFetcher(weekUrl to "heidegluehen/heidegluehen-aktuell-mit-lineup.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(monthUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
@@ -143,7 +137,7 @@ class HeidegluehenWebsiteImporterTest {
     fun `drops a lineup for a date the month no longer lists`() =
         runTest {
             // At a month boundary the week page can already show a party the month page has dropped.
-            coEvery { htmlFetcher.fetchDocument(weekUrl) } returns weekPage("mit-lineup")
+            stubFetcher(weekUrl to "heidegluehen/heidegluehen-aktuell-mit-lineup.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(monthUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()

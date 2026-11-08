@@ -3,6 +3,7 @@ package de.norm.events.scraper.giri
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -23,14 +24,7 @@ class GiriProgrammePageScraperTest {
     private fun scrape(
         fixture: String,
         url: String = programmeUrl
-    ): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/giri/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
-    }
+    ): List<ScrapedEvent> = scraper.scrape(fixtureDocument("giri/$fixture", url), url)
 
     private fun scrapeHtml(html: String): List<ScrapedEvent> = scraper.scrape(Jsoup.parse(html, programmeUrl), programmeUrl)
 

@@ -3,6 +3,7 @@ package de.norm.events.scraper.gretchen
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.assertions.assertSoftly
@@ -34,11 +35,7 @@ class GretchenOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/gretchen/gretchen-overview.html")!!
-                .bufferedReader()
-                .readText()
+        html = fixtureText("gretchen/gretchen-overview.html")
     }
 
     private fun scrape(): List<ScrapedEvent> = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
@@ -832,11 +829,7 @@ class GretchenOverviewPageScraperTest {
     @Test
     fun `reads a free-entry line as the price note, so the night is free`() {
         // Event 3603 from the listing on 2026-09-30: a Tag der Clubkultur night.
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/gretchen/gretchen-overview-free-entry.html")!!
-                .bufferedReader()
-                .readText()
+        val html = fixtureText("gretchen/gretchen-overview-free-entry.html")
         val baseUrl = "https://www.gretchen-club.de/"
         val night = GretchenOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
 

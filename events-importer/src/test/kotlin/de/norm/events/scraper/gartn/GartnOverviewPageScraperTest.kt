@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -35,14 +36,8 @@ class GartnOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        events = scraper.scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("gartn/gartn-overview.html", baseUrl), baseUrl)
     }
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/gartn/gartn-overview.html")!!
-            .bufferedReader()
-            .readText()
 
     private fun event(title: String): ScrapedEvent = events.first { it.title == title }
 

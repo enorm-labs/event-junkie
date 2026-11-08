@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -37,24 +38,12 @@ class HavannaWebsiteImporterTest {
     private val overviewUrl = "https://www.havanna-berlin.de/events"
     private val fridayUrl = "https://www.havanna-berlin.de/friday"
 
-    private fun document(
-        fixture: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/havanna/$fixture")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
         importer = HavannaWebsiteImporter(htmlFetcher, clock)
-        coEvery { htmlFetcher.fetchDocument(overviewUrl) } returns document("havanna-overview.html", overviewUrl)
+        stubFetcher(overviewUrl to "havanna/havanna-overview.html", fetcher = htmlFetcher)
         for (day in listOf("wednesday", "friday", "saturday")) {
-            val url = "https://www.havanna-berlin.de/$day"
-            coEvery { htmlFetcher.fetchDocument(url) } returns document("havanna-detail-$day.html", url)
+            stubFetcher("https://www.havanna-berlin.de/$day" to "havanna/havanna-detail-$day.html", fetcher = htmlFetcher)
         }
     }
 

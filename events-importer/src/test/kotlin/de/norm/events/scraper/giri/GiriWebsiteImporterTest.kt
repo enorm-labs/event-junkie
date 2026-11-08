@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -14,7 +16,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -31,28 +32,16 @@ class GiriWebsiteImporterTest {
     private fun emptyMonthLinking(next: String) =
         Jsoup.parse("""<a class="circle-button" id="month-next" href="$next" aria-label="Next month">→</a>""", sourceUrl)
 
-    private fun document(
-        fixture: String,
-        url: String
-    ): Document {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/giri/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return Jsoup.parse(html, url)
-    }
-
     @BeforeEach
     fun setUp() {
         importer = GiriWebsiteImporter(htmlFetcher)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = document("giri-overview.html", sourceUrl),
+                document = fixtureDocument("giri/giri-overview.html", sourceUrl),
                 etag = "\"giri-1\"",
                 lastModified = "Fri, 16 Oct 2026 18:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(decemberUrl) } returns document("giri-month-2026-12.html", decemberUrl)
+        stubFetcher(decemberUrl to "giri/giri-month-2026-12.html", fetcher = htmlFetcher)
     }
 
     @Test
@@ -85,7 +74,7 @@ class GiriWebsiteImporterTest {
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
                 FetchResult.Success(document = emptyMonthLinking(januaryUrl), etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(januaryUrl) } returns document("giri-month-2026-12.html", januaryUrl)
+            stubFetcher(januaryUrl to "giri/giri-month-2026-12.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(sourceUrl)
 
