@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON_SNAKE_CASE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
@@ -26,9 +27,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.PropertyNamingStrategies
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -58,16 +56,6 @@ import java.time.LocalTime
 class MadameClaudeApiScraper {
     private val logger = KotlinLogging.logger {}
 
-    // Maps the API's snake_case fields onto camelCase DTO properties, so no per-field
-    // @JsonProperty (except the two WP keys — `_embedded` and the colon-bearing `wp:featuredmedia`
-    // — the SNAKE_CASE strategy cannot derive). Unknown fields are ignored (Jackson 3 default).
-    private val jsonMapper: JsonMapper =
-        JsonMapper
-            .builder()
-            .addModule(kotlinModule())
-            .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-            .build()
-
     /**
      * Parses every event from the WP REST API listing response [json].
      *
@@ -83,7 +71,7 @@ class MadameClaudeApiScraper {
 
         val events =
             root.mapSkippingFailures(logger, "Madame Claude event") { node ->
-                parseEvent(jsonMapper.treeToValue(node, MadameClaudeEventNode::class.java))
+                parseEvent(SCRAPER_JSON_SNAKE_CASE.treeToValue(node, MadameClaudeEventNode::class.java))
             }
         return MadameClaudePage(events, postCount = root.size())
     }
@@ -93,7 +81,7 @@ class MadameClaudeApiScraper {
     private fun parseRoot(json: String): JsonNode? {
         val root =
             try {
-                jsonMapper.readTree(json)
+                SCRAPER_JSON_SNAKE_CASE.readTree(json)
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse Madame Claude WP REST API response" }
                 return null
