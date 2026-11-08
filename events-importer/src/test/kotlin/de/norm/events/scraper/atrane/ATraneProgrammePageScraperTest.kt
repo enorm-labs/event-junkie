@@ -4,6 +4,8 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
@@ -23,13 +25,7 @@ import java.time.LocalTime
 /** Unit tests for [ATraneProgrammePageScraper], against a snapshot taken on 2026-10-01. */
 class ATraneProgrammePageScraperTest {
     private val sourceUrl = "https://a-trane.de/programm/"
-    private val events = ATraneProgrammePageScraper().scrape(Jsoup.parse(fixture(), sourceUrl))
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/atrane/atrane-programm.html")!!
-            .bufferedReader()
-            .readText()
+    private val events = ATraneProgrammePageScraper().scrape(fixtureDocument("atrane/atrane-programm.html", sourceUrl))
 
     private fun on(date: LocalDate): ScrapedEvent = events.single { it.eventDate == date }
 
@@ -429,7 +425,7 @@ class ATraneProgrammePageScraperTest {
 
     @Test
     fun `drops the club's own name from a homecoming title`() {
-        val homecoming = fixture().replace("VIGNOLO-MUELLER", "JC DOOK BACK AT A-TRANE")
+        val homecoming = fixtureText("atrane/atrane-programm.html").replace("VIGNOLO-MUELLER", "JC DOOK BACK AT A-TRANE")
         val night = ATraneProgrammePageScraper().scrape(Jsoup.parse(homecoming, sourceUrl)).single { it.eventDate == LocalDate.of(2026, 10, 13) }
         night.artists
             .first()

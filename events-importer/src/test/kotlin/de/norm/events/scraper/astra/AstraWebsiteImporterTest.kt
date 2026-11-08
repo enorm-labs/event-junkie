@@ -6,6 +6,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
@@ -33,29 +35,24 @@ class AstraWebsiteImporterTest {
     private val sourceUrl = "https://www.astra-berlin.de/"
     private val teaserUrl = "https://www.astra-berlin.de/events/2026-06-13-berlin-breakout--2026"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/astra/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = AstraWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("astra-overview.html"), sourceUrl),
+                document = fixtureDocument("astra/astra-overview.html", sourceUrl),
                 etag = "\"astra-etag\"",
                 lastModified = "Sat, 13 Jun 2026 10:00:00 GMT"
             )
 
         val greenLungUrl = "https://www.astra-berlin.de/events/2026-05-18-green-lung"
         val chapoUrl = "https://www.astra-berlin.de/events/2026-12-09-chapo102"
-        coEvery { htmlFetcher.fetchDocument(greenLungUrl) } returns
-            Jsoup.parse(fixture("astra-detail-green-lung.html"), greenLungUrl)
-        coEvery { htmlFetcher.fetchDocument(chapoUrl) } returns
-            Jsoup.parse(fixture("astra-detail-chapo.html"), chapoUrl)
+        stubFetcher(
+            greenLungUrl to "astra/astra-detail-green-lung.html",
+            chapoUrl to "astra/astra-detail-chapo.html",
+            fetcher = htmlFetcher
+        )
 
         // Day 3 of the festival: Astra mislabels it as "Konzert" on the detail
         // page too, so the merge must not let it override the overview's

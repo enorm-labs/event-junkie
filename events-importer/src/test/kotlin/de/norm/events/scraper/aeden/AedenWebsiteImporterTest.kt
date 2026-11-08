@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -13,7 +15,6 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -31,26 +32,11 @@ class AedenWebsiteImporterTest {
 
     private fun monthUrl(month: String) = "https://aedenberlin.com/month/?month=$month"
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/aeden/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     @BeforeEach
     fun setUp() {
         importer = AedenWebsiteImporter(htmlFetcher)
-        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("aeden-overview.html", entryUrl)
-        listOf("2026-07", "2026-08", "2026-09", "2026-10").forEach { month ->
-            coEvery { htmlFetcher.fetchDocument(monthUrl(month)) } returns
-                fixture("aeden-month-$month.html", monthUrl(month))
-        }
+        val months = listOf("2026-07", "2026-08", "2026-09", "2026-10").map { monthUrl(it) to "aeden/aeden-month-$it.html" }
+        stubFetcher(entryUrl to "aeden/aeden-overview.html", *months.toTypedArray(), fetcher = htmlFetcher)
     }
 
     @Test
@@ -79,7 +65,7 @@ class AedenWebsiteImporterTest {
             // The venue occasionally leaves a night on the neighbouring month page; the same date and
             // title yield the same sourceId, so it must be imported once.
             coEvery { htmlFetcher.fetchDocument(monthUrl("2026-09")) } returns
-                fixture("aeden-month-2026-08.html", monthUrl("2026-09"))
+                fixtureDocument("aeden/aeden-month-2026-08.html", monthUrl("2026-09"))
 
             val result = importer.importEvents(entryUrl)
 

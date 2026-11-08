@@ -3,6 +3,7 @@ package de.norm.events.scraper.aeden
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -27,19 +28,8 @@ class AedenOverviewPageScraperTest {
     private val julyUrl = "https://aedenberlin.com/month/?month=2026-07"
     private val augustUrl = "https://aedenberlin.com/month/?month=2026-08"
 
-    private fun monthPage(
-        name: String,
-        baseUrl: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/aeden/$name")!!
-            .bufferedReader()
-            .readText(),
-        baseUrl
-    )
-
-    private val julyEvents by lazy { scraper.scrape(monthPage("aeden-month-2026-07.html", julyUrl), julyUrl) }
-    private val augustEvents by lazy { scraper.scrape(monthPage("aeden-month-2026-08.html", augustUrl), augustUrl) }
+    private val julyEvents by lazy { scraper.scrape(fixtureDocument("aeden/aeden-month-2026-07.html", julyUrl), julyUrl) }
+    private val augustEvents by lazy { scraper.scrape(fixtureDocument("aeden/aeden-month-2026-08.html", augustUrl), augustUrl) }
 
     @Test
     fun `parses every dated night on a month page`() {

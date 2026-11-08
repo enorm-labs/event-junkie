@@ -1,12 +1,12 @@
 package de.norm.events.scraper.acudmachtneu
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -14,7 +14,7 @@ class AcudMachtNeuOverviewPageScraperTest {
     private val scraper = AcudMachtNeuOverviewPageScraper()
     private val url = "https://acudmachtneu.de/programm/"
 
-    private val events = scraper.scrape(document("acudmachtneu-overview.html"), url)
+    private val events = scraper.scrape(fixtureDocument("acudmachtneu/acudmachtneu-overview.html", url), url)
 
     private fun event(id: Int) = events.single { it.sourceId == "acud_macht_neu:$id" }
 
@@ -69,17 +69,8 @@ class AcudMachtNeuOverviewPageScraperTest {
 
     @Test
     fun `reads only the running exhibitions from a month the venue has not filled yet`() {
-        val month = scraper.scrape(document("acudmachtneu-month-empty.html"), "https://acudmachtneu.de/programm/2026/11/")
+        val month = scraper.scrape(fixtureDocument("acudmachtneu/acudmachtneu-month-empty.html", url), "https://acudmachtneu.de/programm/2026/11/")
 
         month.map { it.sourceId } shouldContainExactly listOf("acud_macht_neu:2331", "acud_macht_neu:2379")
     }
-
-    private fun document(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/acudmachtneu/$name")!!
-                .bufferedReader()
-                .readText(),
-            url
-        )
 }

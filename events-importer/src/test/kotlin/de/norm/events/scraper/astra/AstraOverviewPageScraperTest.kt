@@ -4,12 +4,12 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.splitSubtitleNotice
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -29,12 +29,7 @@ class AstraOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/astra/astra-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("astra/astra-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(titleFragment: String): ScrapedEvent = events.first { it.title.contains(titleFragment, ignoreCase = true) }
@@ -195,12 +190,7 @@ class AstraOverviewPageScraperTest {
 
     @Test
     fun `takes a subtitle made only of a sold-out banner as the description`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/astra/astra-overview-notice-only-subtitle.html")!!
-                .bufferedReader()
-                .readText()
-        val lilPeep = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        val lilPeep = scraper.scrape(fixtureDocument("astra/astra-overview-notice-only-subtitle.html", baseUrl), baseUrl).single()
 
         lilPeep.subtitle shouldBe null
         lilPeep.description shouldBe "DIE SHOW IST RESTLOS AUSVERKAUFT UND ES WIRD KEINE TICKETS AN DER ABENDKASSE GEBEN!"

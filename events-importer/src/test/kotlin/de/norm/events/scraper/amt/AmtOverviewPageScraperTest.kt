@@ -3,6 +3,7 @@ package de.norm.events.scraper.amt
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -27,20 +28,9 @@ class AmtOverviewPageScraperTest {
     private val julyUrl = "https://www.club-amt.berlin/month/july"
     private val octoberUrl = "https://www.club-amt.berlin/month/october"
 
-    private fun monthPage(
-        name: String,
-        baseUrl: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/amt/$name")!!
-            .bufferedReader()
-            .readText(),
-        baseUrl
-    )
-
-    private val juneEvents by lazy { scraper.scrape(monthPage("amt-month-june.html", juneUrl), juneUrl) }
-    private val julyEvents by lazy { scraper.scrape(monthPage("amt-month-july.html", julyUrl), julyUrl) }
-    private val octoberEvents by lazy { scraper.scrape(monthPage("amt-month-october.html", octoberUrl), octoberUrl) }
+    private val juneEvents by lazy { scraper.scrape(fixtureDocument("amt/amt-month-june.html", juneUrl), juneUrl) }
+    private val julyEvents by lazy { scraper.scrape(fixtureDocument("amt/amt-month-july.html", julyUrl), julyUrl) }
+    private val octoberEvents by lazy { scraper.scrape(fixtureDocument("amt/amt-month-october.html", octoberUrl), octoberUrl) }
 
     private fun octoberNight(day: Int) = octoberEvents.first { it.eventDate == LocalDate.of(2026, 10, day) }
 

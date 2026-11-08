@@ -1,16 +1,15 @@
 package de.norm.events.scraper.aeg
 
 import de.norm.events.event.ArtistRole
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 
 /**
@@ -25,28 +24,17 @@ class AegCoBillMergeTest {
     private val overviewUrl = "https://www.uber-eats-music-hall.de/events/all"
     private val detailUrl = "https://www.uber-eats-music-hall.de/events/detail/d-block-french-montana/2026-11-05-2000"
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/aeg/$name")!!
-            .bufferedReader()
-            .readText()
-
     private suspend fun importedEvent(
         detailPage: String?,
         overviewPage: String = "ubereatsmusichall-overview-cobill.html",
         detailUrl: String = this.detailUrl
     ): de.norm.events.scraper.ScrapedEvent {
-        coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
-            FetchResult.Success(
-                document = Jsoup.parse(readFixture(overviewPage), overviewUrl),
-                etag = null,
-                lastModified = null
-            )
+        stubFetcher(overviewUrl to "aeg/$overviewPage", fetcher = htmlFetcher)
         // The base class follows each row with `fetchDocument`; a throw is its degrade-to-overview path.
         if (detailPage == null) {
             coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no detail page")
         } else {
-            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns Jsoup.parse(readFixture(detailPage), detailUrl)
+            stubFetcher(detailUrl to "aeg/$detailPage", fetcher = htmlFetcher)
         }
         val result = UberEatsMusicHallWebsiteImporter(htmlFetcher).importEvents(overviewUrl, null, null)
         result.shouldBeInstanceOf<ImportResult.Success>()

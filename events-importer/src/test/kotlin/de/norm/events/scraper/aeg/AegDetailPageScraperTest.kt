@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -35,14 +36,7 @@ class AegDetailPageScraperTest {
         fixture: String,
         sourceUrl: String,
         eventSource: EventSource
-    ): ScrapedEvent {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/aeg/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl, eventSource)!!
-    }
+    ): ScrapedEvent = scraper.scrape(fixtureDocument("aeg/$fixture", sourceUrl), sourceUrl, eventSource)!!
 
     @Test
     fun `reads the doors time, the only place the venue states one`() {
