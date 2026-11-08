@@ -5,7 +5,6 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
-import de.norm.events.scraper.GERMAN_DAY_MONTH
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.ScrapedArtist
@@ -20,6 +19,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseGermanDayMonth
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.resolveUrl
@@ -32,7 +32,6 @@ import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.MonthDay
 
 /**
  * Pure HTML parser for Roadrunner's Paradise' retro `programm.html` event page.
@@ -373,14 +372,8 @@ class RoadrunnerOverviewPageScraper(
         val match = DATE_PATTERN.find(text) ?: return null
         val (weekdayName, day, month) = match.destructured
         val weekday = parseGermanWeekday(weekdayName)
-        return parseGermanMonthDay(day, month)?.let { inferYearForWeekday(it, weekday, clock) }
+        return parseGermanDayMonth(day, month)?.let { inferYearForWeekday(it, weekday, clock) }
     }
-
-    /** Parses "29" + "Mai" (or a zero-padded "05") into a [MonthDay], or `null` when unparseable. */
-    private fun parseGermanMonthDay(
-        day: String,
-        month: String
-    ): MonthDay? = runCatching { MonthDay.parse("${day.toInt()}. $month", GERMAN_DAY_MONTH) }.getOrNull()
 
     // -- Line classification ----------------------------------------------
 

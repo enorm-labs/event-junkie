@@ -3,7 +3,6 @@ package de.norm.events.scraper.frannz
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.GERMAN_DAY_MONTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
@@ -13,6 +12,7 @@ import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseGermanDayMonth
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -26,8 +26,6 @@ import org.jsoup.nodes.TextNode
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
-import java.time.MonthDay
-import java.time.format.DateTimeParseException
 
 /**
  * Pure HTML parser for Frannz Club Berlin's WordPress homepage event listing.
@@ -174,12 +172,7 @@ class FrannzOverviewPageScraper(
         val day = article.textAt(".event-day") ?: return null
         val month = article.textAt(".event-month") ?: return null
 
-        val monthDay =
-            try {
-                MonthDay.parse("$day. $month", GERMAN_DAY_MONTH)
-            } catch (_: DateTimeParseException) {
-                return null
-            }
+        val monthDay = parseGermanDayMonth(day, month) ?: return null
 
         val today = LocalDate.now(clock)
         val upcoming = (0..YEARS_AHEAD).map { monthDay.atYear(today.year + it) }.filterNot { it.isBefore(today) }

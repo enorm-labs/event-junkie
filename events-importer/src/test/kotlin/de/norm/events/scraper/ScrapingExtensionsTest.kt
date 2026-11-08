@@ -81,6 +81,26 @@ class ScrapingExtensionsTest {
     }
 
     @Nested
+    inner class LazyImgSrcAt {
+        @Test
+        fun `returns the absolute data-src, not the placeholder src`() {
+            val el = html("""<div><img class="photo" src="data:image/gif;base64,R0lGOD" data-src="https://cdn.example.com/img.jpg"></div>""")
+            el.lazyImgSrcAt("img.photo") shouldBe "https://cdn.example.com/img.jpg"
+        }
+
+        @Test
+        fun `returns null for a relative or blank data-src`() {
+            html("""<div><img class="photo" data-src="/images/img.jpg"></div>""").lazyImgSrcAt("img.photo") shouldBe null
+            html("""<div><img class="photo" src="https://cdn.example.com/img.jpg" data-src=""></div>""").lazyImgSrcAt("img.photo") shouldBe null
+        }
+
+        @Test
+        fun `returns null when no element matches`() {
+            html("""<div></div>""").lazyImgSrcAt("img.missing") shouldBe null
+        }
+    }
+
+    @Nested
     inner class HrefAt {
         @Test
         fun `returns absolute href`() {

@@ -11,6 +11,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
+import de.norm.events.scraper.lazyImgSrcAt
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseIsoTime
@@ -109,7 +110,7 @@ class MigasOverviewPageScraper {
             eventType = mapEventType(category, EVENT_TYPE_SYNONYMS),
             eventDate = eventDate,
             startTime = startTime,
-            imageUrl = popup.lazyImage(POPUP_IMAGE_SELECTOR) ?: item.lazyImage(ITEM_IMAGE_SELECTOR),
+            imageUrl = popup.lazyImgSrcAt(POPUP_IMAGE_SELECTOR) ?: item.lazyImgSrcAt(ITEM_IMAGE_SELECTOR),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.MIGAS.sourceIdPrefix}${extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)}",
             artists = artistsFor(title),
@@ -123,14 +124,6 @@ class MigasOverviewPageScraper {
         attr(POPUP_TARGET_ATTRIBUTE)
             .takeIf { it.startsWith("#") }
             ?.let { document.selectFirst(it) }
-
-    /**
-     * The real poster URL from the first matching `<img>`'s `data-src`. The lazy-loader keeps an
-     * inline SVG placeholder in `src` until the image scrolls into view.
-     */
-    private fun Element.lazyImage(cssQuery: String): String? =
-        attrAt(cssQuery, LAZY_IMAGE_ATTRIBUTE)
-            ?.takeIf { it.startsWith("http") }
 
     /**
      * Splits the calendar button's ISO-8601 offset datetime into date and local time. The observed
@@ -177,7 +170,6 @@ class MigasOverviewPageScraper {
         const val POPUP_TARGET_ATTRIBUTE = "data-target"
         const val START_DATE_ATTRIBUTE = "data-start-date"
         const val SHARE_URL_ATTRIBUTE = "data-url"
-        const val LAZY_IMAGE_ATTRIBUTE = "data-src"
 
         /** Permalink path prefix stripped to leave the event slug: `/event/sitaad/` → `sitaad`. */
         const val EVENT_PATH_PREFIX = "/event/"

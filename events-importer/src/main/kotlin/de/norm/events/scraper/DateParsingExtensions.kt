@@ -1,8 +1,11 @@
+@file:Suppress("TooManyFunctions") // Small single-purpose date readers that every scraper shares.
+
 package de.norm.events.scraper
 
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month
+import java.time.MonthDay
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.DateTimeParseException
@@ -102,6 +105,15 @@ fun parseGermanDate(text: String?): LocalDate? = parseGerman(text, GERMAN_DATE_F
  * resolve to 2000–2099, single-digit day/month accepted.
  */
 fun parseGermanShortDate(text: String?): LocalDate? = parseGerman(text, GERMAN_SHORT_DATE_FORMATTER)
+
+/**
+ * Parses a day and a German month name without a year (`29` and `Mai`, `05` and `oktober`), or `null` when they do not
+ * parse. The caller infers the year, often with [inferYearForWeekday].
+ */
+fun parseGermanDayMonth(
+    day: String,
+    month: String
+): MonthDay? = runCatching { MonthDay.parse("$day. $month", GERMAN_DAY_MONTH) }.getOrNull()
 
 /**
  * Maps a German month abbreviation onto its [Month], case- and punctuation-insensitively. Spelled

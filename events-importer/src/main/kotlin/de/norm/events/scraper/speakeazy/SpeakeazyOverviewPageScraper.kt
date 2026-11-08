@@ -8,6 +8,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.lazyImgSrcAt
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
@@ -80,7 +81,7 @@ class SpeakeazyOverviewPageScraper {
                     article.attrAt("time.event-time-localized-end", "datetime")?.let(::parseIsoDate) ?: endOn(eventDate, startTime, it)
                 },
             endTime = endTime,
-            imageUrl = article.attrAt("img[data-src]", "data-src")?.takeIf { it.startsWith("http") },
+            imageUrl = article.lazyImgSrcAt("img[data-src]"),
             sourceUrl = url,
             sourceId = "${EventSource.SPEAKEAZY.sourceIdPrefix}${extractEventSlug(url)}",
             soldOut = cleanedTitle.soldOut,

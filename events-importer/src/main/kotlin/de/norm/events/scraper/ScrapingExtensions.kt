@@ -42,6 +42,14 @@ fun Element.imgSrcAt(cssQuery: String): String? =
         ?.takeIf { it.startsWith("http") }
 
 /**
+ * The absolute image URL in the `data-src` of the first element matching [cssQuery], or `null` as for [imgSrcAt].
+ * A lazy-loading theme keeps a placeholder in `src` and the real URL here.
+ */
+fun Element.lazyImgSrcAt(cssQuery: String): String? =
+    attrAt(cssQuery, "data-src")
+        ?.takeIf { it.startsWith("http") }
+
+/**
  * Extracts an absolute URL from the `href` attribute of the first
  * anchor element matching [cssQuery].
  *
