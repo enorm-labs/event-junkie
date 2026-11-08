@@ -29,6 +29,11 @@ description and English as the alternate, because German is the site's authorita
 V027, V029, V030) and the normalizer. A rename through the API changes the slug, and the next import would then mint
 the old row again.
 
+**`SEARCHED.tsv` records the searches that settled nothing.** Each row is a promoter a scan searched for. `result` is `nothing`
+when no own site turned up. It is `medium` when a site turned up with some doubt, and `candidate` holds that site. `scripts/enrichment-coverage.py --next` skips these rows, so
+`/enrich` does not search them again. No script writes this file to a cluster. A row there is not a review, so the import may still copy a venue's credit
+link onto the promoter (#3027). A row moves to `REVIEWED.tsv` when a person decides it.
+
 **What was checked, and how.** For every `promoter`, `media`, `venue` and `sponsor` row with a
 website, that site was opened. Its title, logo text or imprint gave the spelling. The `note` says
 where the site and the credit disagree. A `party`, `artist` or `junk` row was read from its events
