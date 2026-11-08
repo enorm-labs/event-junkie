@@ -139,7 +139,7 @@ class UrbanSpreeWebsiteImporter(
      * carries title, date, type, price and poster, flagged [ScrapedEvent.detailUnavailable].
      */
     private suspend fun enrichFromDetailPage(card: ScrapedEvent): ScrapedEvent =
-        htmlFetcher.withEventPageOrFlagged(card, URBAN_SPREE_PAGE_OWNS) { document ->
+        withEventPageOrFlagged(htmlFetcher::fetchDocument, card, URBAN_SPREE_PAGE_OWNS) { document ->
             detailPageScraper.scrape(document, card.sourceUrl, card.eventType)?.let { merge(detail = it, card = card) }
         }
 

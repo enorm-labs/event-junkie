@@ -44,9 +44,9 @@ internal class HtmlImportPipeline(
         import.listedLine?.let { line -> logger.info { line(listing.events.size) } }
 
         val translated =
-            import.secondLanguageListing?.let { htmlFetcher.withSecondLanguageListing(listing.events, entry.document, it) } ?: listing.events
+            import.secondLanguageListing?.let { withSecondLanguageListing(htmlFetcher::fetchDocument, listing.events, entry.document, it) } ?: listing.events
         val enriched = import.eventPages?.let { readEventPages(translated, it) } ?: translated
-        val folded = import.foldRuns(htmlFetcher.withSharedPages(enriched, import.sharedPages))
+        val folded = import.foldRuns(withSharedPages(htmlFetcher::fetchDocument, enriched, import.sharedPages))
         val events = dropUnresolvedDates(folded)
         import.doneLine?.let { line -> logger.info { line(events.size, listing.pages) } }
 
@@ -82,7 +82,7 @@ internal class HtmlImportPipeline(
         val attempts = if (event.eventDate == UNRESOLVED_EVENT_DATE) DATELESS_ATTEMPTS else 1
         repeat(attempts) { attempt ->
             val read =
-                htmlFetcher.readEventPage(event) { document ->
+                readEventPage(htmlFetcher::fetchDocument, event) { document ->
                     pages.enrich(event, document)?.let {
                         EnrichedPage(
                             it,
@@ -103,7 +103,7 @@ internal class HtmlImportPipeline(
         language: SecondLanguagePage?
     ): ScrapedEvent {
         if (language == null || alternateUrl == null || event.description == listed.description) return event
-        return event.withDescriptionAlt(htmlFetcher.readSecondLanguagePage(alternateUrl, language.description))
+        return event.withDescriptionAlt(readSecondLanguagePage(htmlFetcher::fetchDocument, alternateUrl, language.description))
     }
 
     /** One event as its page enriched it, and the URL of that page's version in the second language. */
@@ -187,7 +187,7 @@ internal class HtmlImportPipeline(
         language: SecondLanguagePage?
     ): String? =
         language?.let {
-            detailDoc.alternateLanguageUrl(it.hreflang)?.let { url -> htmlFetcher.readSecondLanguagePage(url, it.description) }
+            detailDoc.alternateLanguageUrl(it.hreflang)?.let { url -> readSecondLanguagePage(htmlFetcher::fetchDocument, url, it.description) }
         }
 
     private fun ScrapedEvent.degraded(owns: Set<ScrapedField>): ScrapedEvent = copy(detailUnavailable = true, detailPageOwns = owns)

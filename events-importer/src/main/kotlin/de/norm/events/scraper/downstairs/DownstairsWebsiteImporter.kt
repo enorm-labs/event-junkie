@@ -63,20 +63,19 @@ class DownstairsWebsiteImporter(
     }
 
     private suspend fun enrichFromTicketPages(events: List<ScrapedEvent>): List<ScrapedEvent> =
-        htmlFetcher
-            .enrichFromSharedPages(events, ticketScraper::scrape, { show, event ->
-                if (show.soldElsewhere) {
-                    event.copy(description = show.description, detailUnavailable = true)
-                } else {
-                    event.copy(
-                        description = show.description,
-                        imageUrl = show.imageUrl,
-                        pricePresale = show.price,
-                        priceNote = show.priceNote,
-                        doorsTime = show.doorsTime
-                    )
-                }
-            })
+        enrichFromSharedPages(htmlFetcher::fetchDocument, events, ticketScraper::scrape, { show, event ->
+            if (show.soldElsewhere) {
+                event.copy(description = show.description, detailUnavailable = true)
+            } else {
+                event.copy(
+                    description = show.description,
+                    imageUrl = show.imageUrl,
+                    pricePresale = show.price,
+                    priceNote = show.priceNote,
+                    doorsTime = show.doorsTime
+                )
+            }
+        })
             .also { enriched ->
                 val elsewhere = enriched.count { it.detailUnavailable && it.description != null }
                 if (elsewhere > 0) logger.info { "Read only the text of $elsewhere Downstairs performance(s) sold by another seller" }

@@ -43,7 +43,15 @@ class PagedListingTest {
     private suspend fun walk(
         first: Document,
         maxPages: Int = 5
-    ) = htmlFetcher.scrapeListingPages(EventSource.SCHOKOLADEN, first, entryUrl, maxPages, { document, _ -> document.nextPageUrl("a.next") }, ::scrape)
+    ) = scrapeListingPages(
+        EventSource.SCHOKOLADEN,
+        first,
+        entryUrl,
+        maxPages,
+        htmlFetcher::fetchDocument,
+        { document, _ -> document.nextPageUrl("a.next") },
+        ::scrape
+    )
 
     @Test
     fun `reads every page in order until the last renders no next link`() =

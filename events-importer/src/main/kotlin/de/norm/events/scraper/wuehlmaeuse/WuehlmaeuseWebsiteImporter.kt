@@ -49,7 +49,7 @@ class WuehlmaeuseWebsiteImporter(
         listing: WalkedListing<WuehlmaeuseTicket>,
         url: String
     ): List<ScrapedEvent> =
-        htmlFetcher.enrichFromSharedPages(apiScraper.toEvents(listing.items), productionScraper::scrape, { production, event ->
+        enrichFromSharedPages(htmlFetcher::fetchDocument, apiScraper.toEvents(listing.items), productionScraper::scrape, { production, event ->
             event.copy(description = production.description)
         })
 

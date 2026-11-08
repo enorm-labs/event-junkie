@@ -91,7 +91,7 @@ abstract class AbstractSinglePageWebsiteImporter(
         url: String
     ): HtmlImport.Listing =
         if (maxListingPages > 1) {
-            val walked = htmlFetcher.scrapeListingPages(eventSource, document, url, maxListingPages, ::nextListingPage, scrape)
+            val walked = scrapeListingPages(eventSource, document, url, maxListingPages, htmlFetcher::fetchDocument, ::nextListingPage, scrape)
             HtmlImport.Listing(walked.events, walked.complete)
         } else {
             HtmlImport.Listing(scrape(document, url), complete = true)
@@ -110,13 +110,14 @@ class SharedPages<T : Any>(
     private val secondLanguage: SecondLanguagePage? = null
 ) {
     internal suspend fun applyTo(
-        htmlFetcher: HtmlFetcher,
+        fetch: DocumentFetch,
         events: List<ScrapedEvent>
-    ): List<ScrapedEvent> = htmlFetcher.enrichFromSharedPages(events, parse, apply, pageOwns, secondLanguage = secondLanguage)
+    ): List<ScrapedEvent> = enrichFromSharedPages(fetch, events, parse, apply, pageOwns, secondLanguage = secondLanguage)
 }
 
 /** [events] read through [pages], or [events] unchanged for a venue whose rows have no shared page. */
-internal suspend fun HtmlFetcher.withSharedPages(
+internal suspend fun withSharedPages(
+    fetch: DocumentFetch,
     events: List<ScrapedEvent>,
     pages: SharedPages<*>?
-): List<ScrapedEvent> = pages?.applyTo(this, events) ?: events
+): List<ScrapedEvent> = pages?.applyTo(fetch, events) ?: events

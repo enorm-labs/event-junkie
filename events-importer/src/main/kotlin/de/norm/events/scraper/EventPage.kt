@@ -14,18 +14,20 @@ private val logger = KotlinLogging.logger {}
  * [eventPageOwns] names the fields the page supplies over the listing's; a stored value wins for those (#2505).
  * An importer that fetches event pages calls this, or [withEventPages] for a whole listing.
  */
-suspend fun HtmlFetcher.withEventPageOrFlagged(
+suspend fun withEventPageOrFlagged(
+    fetch: DocumentFetch,
     event: ScrapedEvent,
     eventPageOwns: Set<ScrapedField> = emptySet(),
     enrich: (Document) -> ScrapedEvent?
-): ScrapedEvent = readEventPage(event, enrich) ?: event.copy(detailUnavailable = true, detailPageOwns = eventPageOwns)
+): ScrapedEvent = readEventPage(fetch, event, enrich) ?: event.copy(detailUnavailable = true, detailPageOwns = eventPageOwns)
 
 /**
  * [events] enriched one by one from the page each links, through [withEventPageOrFlagged]. Only the
  * rows [hasEventPage] accepts are fetched; a null [enrich] reads no page at all, for a venue whose
  * listing is the whole record. [eventPageOwns] is as there.
  */
-internal suspend fun HtmlFetcher.withEventPages(
+internal suspend fun withEventPages(
+    fetch: DocumentFetch,
     events: List<ScrapedEvent>,
     eventPageOwns: Set<ScrapedField> = emptySet(),
     hasEventPage: (ScrapedEvent) -> Boolean = { true },
@@ -33,7 +35,7 @@ internal suspend fun HtmlFetcher.withEventPages(
 ): List<ScrapedEvent> {
     val read = enrich ?: return events
     return events.map { event ->
-        if (hasEventPage(event)) withEventPageOrFlagged(event, eventPageOwns) { document -> read(event, document) } else event
+        if (hasEventPage(event)) withEventPageOrFlagged(fetch, event, eventPageOwns) { document -> read(event, document) } else event
     }
 }
 
@@ -43,12 +45,13 @@ internal suspend fun HtmlFetcher.withEventPages(
  * page can still drop the row; [withEventPageOrFlagged] covers every other case.
  */
 @Suppress("TooGenericExceptionCaught") // Intentional: one broken event page must not fail the whole import
-suspend fun <T : Any> HtmlFetcher.readEventPage(
+suspend fun <T : Any> readEventPage(
+    fetch: DocumentFetch,
     event: ScrapedEvent,
     parse: (Document) -> T?
 ): T? =
     try {
-        val document = fetchDocument(event.sourceUrl)
+        val document = fetch(event.sourceUrl)
         // After the fetch: the fetch and the WARN below write `url` as a payload, and a line cannot carry it twice (#982).
         withContext(LogContext.forPage(event.sourceUrl)) { parse(document) }
     } catch (e: CancellationException) {
@@ -70,7 +73,8 @@ suspend fun <T : Any> HtmlFetcher.readEventPage(
  * With [secondLanguage], each page's version in that language is fetched once more for its text.
  */
 @Suppress("LongParameterList") // The page readers plus three optional knobs, each named at the call site
-suspend fun <T : Any> HtmlFetcher.enrichFromSharedPages(
+suspend fun <T : Any> enrichFromSharedPages(
+    fetch: DocumentFetch,
     events: List<ScrapedEvent>,
     parse: (Document) -> T?,
     apply: (T, ScrapedEvent) -> ScrapedEvent,
@@ -82,11 +86,11 @@ suspend fun <T : Any> HtmlFetcher.enrichFromSharedPages(
     logger.info { "Fetching ${groups.size} shared page(s) for ${events.size} event(s)" }
     val pages =
         groups.mapValues { (_, rows) ->
-            readEventPage(rows.first()) { document ->
+            readEventPage(fetch, rows.first()) { document ->
                 parse(document)?.let { SharedPage(it, secondLanguage?.let { language -> document.alternateLanguageUrl(language.hreflang) }) }
             }
         }
-    val alternates = secondLanguage?.let { readAlternates(pages, it) }.orEmpty()
+    val alternates = secondLanguage?.let { readAlternates(fetch, pages, it) }.orEmpty()
     return events.map { event ->
         val page = pages[key(event)]
         page?.let { apply(it.parsed, event).withDescriptionAlt(alternates[key(event)]) }
@@ -101,12 +105,13 @@ private class SharedPage<T>(
 )
 
 /** The second-language text of each page that links a version in [language]. */
-private suspend fun HtmlFetcher.readAlternates(
+private suspend fun readAlternates(
+    fetch: DocumentFetch,
     pages: Map<Any, SharedPage<*>?>,
     language: SecondLanguagePage
 ): Map<Any, String?> {
     val linked = pages.mapNotNull { (key, page) -> page?.alternateUrl?.let { key to it } }
-    val texts = linked.associate { (key, url) -> key to readSecondLanguagePage(url, language.description) }
+    val texts = linked.associate { (key, url) -> key to readSecondLanguagePage(fetch, url, language.description) }
     logger.info { "Read ${texts.count { it.value != null }} of ${linked.size} ${language.hreflang} page(s) for the second language" }
     return texts
 }

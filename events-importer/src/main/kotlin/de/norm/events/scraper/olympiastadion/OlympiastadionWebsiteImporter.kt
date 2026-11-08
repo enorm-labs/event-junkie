@@ -59,7 +59,7 @@ class OlympiastadionWebsiteImporter(
 
     /** The card with its page's fields, flagged when the page fails, or null when the page is a sport event's. */
     private suspend fun withDetail(card: ScrapedEvent): ScrapedEvent? {
-        val detail = htmlFetcher.readEventPage(card) { detailPageScraper.scrape(it) } ?: return card.copy(detailUnavailable = true)
+        val detail = readEventPage(htmlFetcher::fetchDocument, card) { detailPageScraper.scrape(it) } ?: return card.copy(detailUnavailable = true)
         if (detail.sport) {
             logger.info { "Dropping '${card.title}': its page files it as sport" }
             return null
@@ -72,7 +72,7 @@ class OlympiastadionWebsiteImporter(
                 ticketUrl = detail.ticketUrl
             )
         val english = detail.englishUrl?.takeIf { detail.description != null }
-        return event.withDescriptionAlt(english?.let { htmlFetcher.readSecondLanguagePage(it, detailPageScraper::description) })
+        return event.withDescriptionAlt(english?.let { readSecondLanguagePage(htmlFetcher::fetchDocument, it, detailPageScraper::description) })
     }
 }
 

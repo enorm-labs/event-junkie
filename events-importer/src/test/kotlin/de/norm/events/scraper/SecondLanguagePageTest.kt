@@ -34,7 +34,8 @@ class SecondLanguagePageTest {
     private val read = { document: Document -> document.selectFirst("p.text")?.text() }
 
     private suspend fun enrich(events: List<ScrapedEvent>) =
-        htmlFetcher.enrichFromSharedPages(
+        enrichFromSharedPages(
+            htmlFetcher::fetchDocument,
             events,
             parse = read,
             apply = { text: String, event: ScrapedEvent -> event.copy(description = text) },
