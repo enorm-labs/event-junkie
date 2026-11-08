@@ -1,0 +1,36 @@
+- main:
+  - article:
+    - heading "Tonight Show" [level=1]
+    - paragraph: /Sat, \d+ Aug \d+ \d+:\d+ Mock Venue/
+    - heading "Running order" [level=2]
+    - heading "Main Floor" [level=3]
+    - list:
+      - listitem:
+        - text: /\d+:\d+–\d+:\d+/
+        - link "Mock Artist":
+          - /url: /en/artists/mock-artist
+    - heading "When" [level=2]
+    - paragraph: /Sat, \d+ Aug \d+/
+    - paragraph: /Start \d+:\d+/
+    - paragraph: End not announced
+    - heading "Venue" [level=2]
+    - link "Mock Venue":
+      - /url: /en/venues/mock-venue
+    - paragraph: Test Str. 1, Berlin
+    - heading "Tickets" [level=2]
+    - paragraph: Price not announced
+    - group "Your plans for this event":
+      - link "Interested":
+        - /url: /en/sign-in?next=/en/events/tonight-show
+      - link "Going":
+        - /url: /en/sign-in?next=/en/events/tonight-show
+    - button "Share"
+    - status
+    - heading "Promoters" [level=2]
+    - paragraph:
+      - link "Mock Promoter":
+        - /url: /en/promoters/mock-promoter
+    - paragraph:
+      - text: "Something wrong with this event? Report it by email:"
+      - link "hello@event-junkie.de":
+        - /url: mailto:hello@event-junkie.de?subject=Wrong%20data%3A%20Tonight%20Show&body=Page%3A%20https%3A%2F%2Fevent-junkie.de%2Fen%2Fevents%2Ftonight-show%0A%0AWhat%20is%20wrong%3A%0A

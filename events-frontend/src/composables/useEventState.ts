@@ -69,5 +69,11 @@ export function useEventState(event: () => EventSummary) {
     return null
   })
 
-  return { eventType, isLive, language, state, timeHint }
+  // What the dot reads out: nothing when the state line already says "on now", or a screen reader
+  // hears it twice (#4744). "Running since Fri" still needs it.
+  const liveLabel = computed(() =>
+    state.value?.label === t('events.card.onNow') ? undefined : t('events.card.onNow'),
+  )
+
+  return { eventType, isLive, language, liveLabel, state, timeHint }
 }

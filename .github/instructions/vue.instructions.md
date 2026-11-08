@@ -1,9 +1,10 @@
 ---
-applyTo: "events-frontend/**/*.vue,events-frontend/**/*.css,events-frontend/e2e/a11y.spec.ts"
+applyTo: "events-frontend/**/*.vue,events-frontend/**/*.css,events-frontend/e2e/a11y.spec.ts,events-frontend/e2e/screen-reader.spec.ts"
 paths:
     - "events-frontend/**/*.vue"
     - "events-frontend/**/*.css"
     - "events-frontend/e2e/a11y.spec.ts"
+    - "events-frontend/e2e/screen-reader.spec.ts"
 ---
 
 # Vue Components: Structure, Styling and Accessibility
@@ -72,13 +73,16 @@ two of its suggestions are deliberately not: focus is not moved to the top on ro
 - **`@axe-core/playwright`** via `e2e/a11y.spec.ts` in `npm run test:e2e`; `npm run test:a11y` (`-- --project=chromium` for the fast loop) is a **filter over
   the same suite**, so CI needs nothing extra. A contrast failure is fixed in the token, never by excluding the rule.
 - **`e2e/keyboard-flows.spec.ts`** in `npm run test:e2e` — each main flow by key presses alone, with a visible focus indicator at every stop (#2989).
+- **`e2e/screen-reader.spec.ts`** in `npm run test:e2e` — the accessibility tree of the events list, an event detail and the calendar, both locales, pinned
+  as aria snapshots in `screen-reader.spec.ts-snapshots/` (#373). A diff there is what a screen reader now reads differently: update it with
+  `--update-snapshots` only when the change is intended, and say so in the PR.
 - **`scripts/lighthouse.sh`** against production, from `lighthouse.yml` — accessibility at 100, after each production deployment and weekly.
 
 Three passes: **static routes, no BFF**, both locales plus a light-theme pass; **data-driven routes, BFF mocked** — home feeds, events list with filter bar and
 pagination, venues, an event detail, the calendar grid — because an error state renders none of the interactive markup, so **a new data-driven view is added
 here** or the static pass goes green on its error state; **`best-practice`, informational** — recommendations, never gated, printed by rule id. Open today:
 `empty-table-header` on `/calendar`, FullCalendar's own header cells. A rule that was investigated and fixed becomes its own narrow gate (as `heading-order`
-did); a rule nobody has looked at stays a report. **The mock matchers must not overlap** — `/events` has `/today`, `/calendar` and `/{slug}`, Playwright
+did); a rule nobody has looked at stays a report. **The mock matchers in `e2e/bff-mocks.ts` must not overlap** — `/events` has `/today`, `/calendar` and `/{slug}`, Playwright
 consults handlers in reverse registration order, and a feed served an object renders an empty state axe passes happily.
 
 **Not the axe CLI**: it drives ChromeDriver against URLs, so no state behind an interaction, no BFF mock, one browser, a second automation dependency.

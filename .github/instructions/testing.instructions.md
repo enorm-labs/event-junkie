@@ -53,9 +53,9 @@ Extend what is already here rather than repeating its boilerplate.
   (watch), `-- --run`, `test:unit:coverage`.
 - **e2e**: `e2e/*.spec.ts` over **five projects** — Chromium, Firefox, WebKit, Mobile Chrome (Pixel 5), Mobile Safari (iPhone 12), the last two ~390 px.
   Dev mode reuses `:5173`; `CI=1` builds and serves `:4173`. CI runs the full matrix; `/verify` runs chromium only.
-- **Locale strategy: every suite is pinned to `/en` except `e2e/i18n.spec.ts` and the axe sweep.** The others are behaviour tests using English accessible
+- **Locale strategy: every suite is pinned to `/en` except `e2e/i18n.spec.ts`, the axe sweep and the aria snapshots.** The others are behaviour tests using English accessible
   names as stable handles — and landmark names are translated, so `getByRole('navigation', { name: 'Main' })` is `'Haupt'` under `/de`. Anything that exists
-  only in a second language (the URL contract, the switcher, date formats, the per-locale pages) goes in `i18n.spec.ts`. The axe sweep runs both locales
+  only in a second language (the URL contract, the switcher, date formats, the per-locale pages) goes in `i18n.spec.ts`. The axe sweep and `screen-reader.spec.ts` run both locales
   because German is longer, which is where overflow and contrast regress.
 - **Two kinds of e2e spec, and the directory is the rule.** `e2e/*.spec.ts` mock the BFF with
   `page.route` and run against a dev server; they cover component behaviour and gate every pull request.

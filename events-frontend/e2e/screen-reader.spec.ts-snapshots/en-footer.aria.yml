@@ -1,0 +1,52 @@
+- contentinfo:
+  - text: Event Junkie
+  - paragraph: Can't get enough of Berlin
+  - paragraph: Event data is aggregated from public sources and provided without warranty. Always check with the venue before you go.
+  - link "Feed":
+    - /url: /feed.xml?locale=en
+  - link "This week in Berlin":
+    - /url: /en/week
+  - link "Install as app":
+    - /url: /en/about#install
+  - navigation "Project":
+    - heading "Project" [level=2]
+    - list:
+      - listitem:
+        - link "Source on GitHub":
+          - /url: https://github.com/enorm-labs/event-junkie
+      - listitem:
+        - link "Feedback by email":
+          - /url: mailto:hello@event-junkie.de?subject=Feedback%20on%20Event%20Junkie
+      - listitem:
+        - link "Report on GitHub":
+          - /url: https://github.com/enorm-labs/event-junkie/issues/new/choose
+      - listitem:
+        - link "Contributing":
+          - /url: https://github.com/enorm-labs/event-junkie/blob/main/CONTRIBUTING.md
+      - listitem:
+        - link "Changelog":
+          - /url: https://github.com/enorm-labs/event-junkie/releases
+  - navigation "Legal":
+    - heading "Legal" [level=2]
+    - list:
+      - listitem:
+        - link "Imprint":
+          - /url: /en/legal/imprint
+      - listitem:
+        - link "Privacy":
+          - /url: /en/legal/privacy
+      - listitem:
+        - link "Open-source notices":
+          - /url: /en/legal/notices
+      - listitem:
+        - link "For venues":
+          - /url: /en/legal/for-venues
+  - paragraph:
+    - text: /© \d+ Event Junkie ·/
+    - link "Code under BUSL-1.1":
+      - /url: https://github.com/enorm-labs/event-junkie/blob/main/LICENSE
+  - navigation "Language":
+    - link "English":
+      - /url: /en/events
+    - link "Deutsch":
+      - /url: /de/events

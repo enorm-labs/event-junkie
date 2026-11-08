@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/vue3'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import EventCalendar from '@/components/EventCalendar.vue'
 import { i18n } from '@/i18n'
-import { todayIso } from '@/lib/format'
+import { formatLongDate, todayIso } from '@/lib/format'
 
 /** The calendar's chrome follows the page locale, and its times use the 24-hour clock (#2658). */
 
@@ -61,6 +61,35 @@ describe('EventCalendar', () => {
 
     expect(wrapper.text()).toContain('18:00')
     expect(wrapper.text()).not.toMatch(/\b6p\b/)
+  })
+
+  it.each([
+    ['en', '+2 more on'],
+    ['de', '+2 weitere am'],
+  ] as const)('names the %s "+N more" button by its day (#4746)', async (locale, words) => {
+    i18n.global.locale.value = locale
+    const day = todayIso()
+    const crowded = Array.from({ length: 8 }, (_, i) => ({
+      title: `Night ${i}`,
+      start: `${day}T${String(10 + i)}:00:00`,
+    }))
+    const wrapper = mount(EventCalendar, { props: { events: crowded }, attachTo: document.body })
+    await flushPromises()
+
+    const more = wrapper.get('[aria-haspopup="dialog"]')
+    expect(more.attributes('aria-label')).toBe(`${words} ${formatLongDate(day, locale)}`)
+  })
+
+  it('announces the new month, not the first one (#4747)', async () => {
+    const wrapper = await render('en')
+    const status = wrapper.get('[role="status"]')
+    expect(status.text()).toBe('')
+
+    wrapper.findComponent(FullCalendar).vm.getApi().next()
+    await flushPromises()
+
+    expect(status.text()).toBe(wrapper.findComponent(FullCalendar).vm.getApi().view.title)
+    expect(status.text()).not.toBe('')
   })
 
   it('uses the 24-hour clock on an English page too', async () => {

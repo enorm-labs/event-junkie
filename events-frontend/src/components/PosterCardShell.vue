@@ -10,13 +10,15 @@ import { useViewportFocus } from '@/composables/useViewportFocus'
  * The link and poster box an `EventCard` and a `VenueCard` share. The card owns the text below,
  * the drawn poster for a missing image (`#fallback`), and anything laid over the poster
  * (`#overlay`, which makes the box `relative`).
+ *
+ * The image is decorative: it sits inside the link beside the card's heading, so an `alt` of the
+ * title made a screen reader read the title twice (#4744).
  */
 withDefaults(
   defineProps<{
     to: RouteLocationRaw
     imageUrl?: string | null
     imageSources?: ImageSource[] | null
-    alt: string
     /** The first card of a list, whose poster is a likely LCP element: see `CachedImage`. */
     priority?: boolean
     /** The image's credit as one line of plain text: see `CachedImage`. */
@@ -43,7 +45,7 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         v-if="imageUrl"
         :src="imageUrl"
         :sources="imageSources"
-        :alt="alt"
+        alt=""
         :title="title"
         :priority="priority"
         :aspect="aspect"

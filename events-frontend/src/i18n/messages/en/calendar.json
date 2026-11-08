@@ -8,5 +8,6 @@
     "list": "List"
   },
   "viewHint": "{view} view",
-  "more": "more"
+  "more": "more",
+  "moreOn": "{more} on {day}"
 }

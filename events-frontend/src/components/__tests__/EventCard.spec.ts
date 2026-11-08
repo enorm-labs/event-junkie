@@ -172,6 +172,23 @@ describe('EventCard', () => {
     expect(tonight.text()).not.toContain('On now')
   })
 
+  it('reads its title and "On now" once to a screen reader (#4744)', () => {
+    const wrapper = mount(EventCard, {
+      props: {
+        event: {
+          ...event,
+          eventDate: todayIso(),
+          startTime: '10:00',
+          imageUrl: '/api/images/abc/192.jpg',
+        },
+      },
+      global: { stubs },
+    })
+
+    expect(wrapper.get('img').attributes('alt')).toBe('')
+    expect(wrapper.text().match(/On now/g)).toHaveLength(1)
+  })
+
   it('shows the event type as a readable pill alongside the genres', () => {
     const wrapper = mount(EventCard, { props: { event }, global: { stubs } })
     expect(wrapper.text()).toContain('Party')

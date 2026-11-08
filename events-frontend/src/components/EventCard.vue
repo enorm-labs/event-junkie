@@ -42,7 +42,7 @@ const { formatEventDates, formatEventTime, formatShortDate } = useFormat()
 const posterDate = computed(() => formatShortDate(props.event.eventDate))
 const genreFamilies = useGenreFamilies()
 
-const { eventType, isLive, language, state, timeHint } = useEventState(() => props.event)
+const { eventType, isLive, language, liveLabel, state, timeHint } = useEventState(() => props.event)
 
 // Type and genre are different taxonomies, but both are filter values in the query string, so
 // they read as one list (#1248).
@@ -65,7 +65,6 @@ const { t } = useI18n()
     :class="lead && CARD_LEAD_CLASS"
     :image-url="event.imageUrl"
     :image-sources="event.imageSources"
-    :alt="event.title ?? ''"
     :priority="priority"
     :aspect="lead ? CARD_LEAD_POSTER_ASPECT : undefined"
     :sizes="lead ? '(min-width: 640px) 960px, 100vw' : undefined"
@@ -105,7 +104,7 @@ const { t } = useI18n()
     </template>
     <div class="min-w-0 space-y-1">
       <div class="flex min-w-0 items-center gap-2">
-        <LiveDot v-if="isLive" :label="t('events.card.onNow')" />
+        <LiveDot v-if="isLive" :label="liveLabel" />
         <!--
             Both lines are `truncate`d, so the native `title` spells each out on hover, sharing
             `eventLabel` with the calendar cells. Scoped to the clipped elements, not the card.

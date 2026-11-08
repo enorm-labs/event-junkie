@@ -824,7 +824,7 @@ The operator accepted the licence on 2026-10-15. A change to the source or to wh
 
 **Target: WCAG 2.1 Level AA** — the level German and EU law reference (BFSG / EN 301 549).
 
-What enforces it: four automated checks.
+What enforces it: five automated checks.
 
 1. `eslint-plugin-vuejs-accessibility` checks the source. `events-frontend/eslint.config.ts` loads its `flat/recommended` rules into `npm run lint`.
 2. An `@axe-core/playwright` sweep checks every static route **in both locales and both themes**. It is `events-frontend/e2e/a11y.spec.ts`. German is
@@ -833,8 +833,10 @@ What enforces it: four automated checks.
 3. The keyboard flows complete each main flow with the keyboard alone (#2989). They are `events-frontend/e2e/keyboard-flows.spec.ts`. Each stop asserts a
    visible focus indicator (WCAG 2.4.7). They run in the desktop Chromium and Firefox projects only.
 4. The Lighthouse gate requires an accessibility score of 100. It is `scripts/lighthouse.sh`, on `/de/events` and one event detail page, mobile and desktop.
+5. Aria snapshots keep the accessibility tree of the events list, an event detail and the calendar the same (#373). A screen reader reads this tree. They are
+   `events-frontend/e2e/screen-reader.spec.ts`, in both locales, in Chromium only.
 
-`build-frontend.yml` runs the first three on each pull request that changes the frontend. `lighthouse.yml` runs the fourth against production, after each
+`build-frontend.yml` runs the first three and the fifth on each pull request that changes the frontend. `lighthouse.yml` runs the fourth against production, after each
 production deployment and once a week.
 
 **Do not claim conformance publicly** until something measures it end to end. axe finds roughly a third of WCAG

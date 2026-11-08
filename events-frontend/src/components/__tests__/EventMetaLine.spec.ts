@@ -23,6 +23,14 @@ describe('EventMetaLine', () => {
     expect(wrapper.text()).toBe('Mi., 7. Okt. 2026 · 20:00 · Kantine am Berghain')
   })
 
+  it('reads with a space between two items once the dots are hidden', () => {
+    const wrapper = mount(EventMetaLine, { props: { items } })
+    const read = wrapper.find('p').element.cloneNode(true) as HTMLElement
+    read.querySelectorAll('[aria-hidden="true"]').forEach((hidden) => hidden.remove())
+
+    expect(read.textContent).toBe('Mi., 7. Okt. 2026 20:00 Kantine am Berghain')
+  })
+
   it('renders a status as a pill and keeps a state word coloured', () => {
     const wrapper = mount(EventMetaLine, {
       props: {

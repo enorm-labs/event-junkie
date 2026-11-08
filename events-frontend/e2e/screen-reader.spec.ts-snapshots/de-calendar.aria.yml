@@ -1,0 +1,82 @@
+- main:
+  - heading "Kalender" [level=1]
+  - paragraph: Kommende Musikveranstaltungen in Berlin im Überblick.
+  - search:
+    - searchbox "Events durchsuchen …"
+  - button "Mehr Filter"
+  - button "Vorheriger Monat"
+  - button "Nächster Monat"
+  - button "Heute" [disabled]
+  - heading /August \d+/ [level=2]
+  - tablist:
+    - tab "Ansicht Monat" [selected]
+    - tab "Ansicht Woche"
+    - tab "Ansicht Liste"
+  - table /August \d+/:
+    - rowgroup:
+      - row "Montag Dienstag Mittwoch Donnerstag Freitag Samstag Sonntag":
+        - columnheader "Montag"
+        - columnheader "Dienstag"
+        - columnheader "Mittwoch"
+        - columnheader "Donnerstag"
+        - columnheader "Freitag"
+        - columnheader "Samstag"
+        - columnheader "Sonntag"
+    - rowgroup:
+      - row /Woche \d+/:
+        - cell /\d+\. Juli \d+ Second Show \d+:\d+ Tonight Show/:
+          - text: ""
+          - list:
+            - listitem:
+              - link "Second Show":
+                - /url: /de/events/second-show
+            - listitem:
+              - link /\d+:\d+ Tonight Show/:
+                - /url: /de/events/tonight-show
+        - cell /\d+\. Juli \d+/
+        - cell /\d+\. Juli \d+/
+        - cell /\d+\. Juli \d+/
+        - cell /\d+\. Juli \d+/
+        - cell /1\. August \d+/
+        - cell /2\. August \d+/
+      - row /Woche \d+/:
+        - cell /3\. August \d+/
+        - cell /4\. August \d+/
+        - cell /5\. August \d+/
+        - cell /6\. August \d+/
+        - cell /7\. August \d+/
+        - cell /8\. August \d+/
+        - cell /9\. August \d+/
+      - row /Woche \d+/:
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+      - row /Woche \d+/:
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+      - row /Woche \d+/:
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+        - cell /\d+\. August \d+/
+      - row /Woche \d+/:
+        - cell /\d+\. August \d+/
+        - cell /1\. September \d+/
+        - cell /2\. September \d+/
+        - cell /3\. September \d+/
+        - cell /4\. September \d+/
+        - cell /5\. September \d+/
+        - cell /6\. September \d+/
+  - status

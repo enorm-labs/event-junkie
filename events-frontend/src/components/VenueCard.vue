@@ -57,7 +57,6 @@ const localePath = useLocalePath()
     :to="localePath(`/venues/${venue.slug}`)"
     :image-url="venue.imageUrl"
     :image-sources="venue.imageSources"
-    :alt="venue.name ?? ''"
     :title="creditTitle"
   >
     <template #fallback>
