@@ -283,7 +283,10 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
     scraper that tells a stated type from its own default writes fallback rows (ADR-039). A type of `OTHER` always gets
     a proposal. The check proposes no change between `COMEDY` and `SHOW` at any venue, because the venue's own genre
     decides ([#3658](https://github.com/enorm-labs/event-junkie/issues/3658)). It stores no suggestion that a person
-    dismissed on another date of the show: the same venue, title, field and proposed value. The check never writes to `event`. `event_classification_check` keeps a hash of the title, subtitle and description, and the
+    dismissed on another date of the show: the same venue, title, field and proposed value. It also stores no
+    suggestion that is open with the same stored value on another upcoming date. A person decides a show once ([#4736](https://github.com/enorm-labs/event-junkie/issues/4736)). A dismissal closes the open twins on
+    the other dates. An acceptance in the admin app saves the value on each other date that holds the same stored
+    value. The check never writes to `event`. `event_classification_check` keeps a hash of the title, subtitle and description, and the
     check skips an event whose text did not change since its last answer. `app.data-quality.classification.enabled`
     switches it on. It is off by default.
 

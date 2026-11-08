@@ -2,9 +2,10 @@
  * The importer's suggestion store: the fixes a data-quality check proposes. Hand-written:
  * `EventSuggestionController.kt` and `EventClassificationCheck.kt` are the source of truth.
  *
- * A check only proposes (ADR-041). Accept applies the value with `PUT /api/admin/events/{id}`, or
+ * A check only proposes (ADR-041).  * Accept applies the value with `PUT /api/admin/events/{id}`, or
  * `PUT /api/admin/events/{id}/features` for features. Both pin the field (ADR-042). Then the suggestion
- * is marked accepted.
+ * is marked accepted, and the value goes to the other dates of the show that hold the same stored
+ * value (#4736).
  */
 import {
   type AdminEvent,
@@ -44,6 +45,15 @@ export interface Suggestion {
   model: string | null
   status: SuggestionStatus
   createdAt: string
+  /** The other upcoming dates of the show: the events of the same venue and title, soonest first. */
+  showEventIds: number[]
+}
+
+/** What [applyToShowDates] did with the other dates of a show. */
+export interface ShowDatesResult {
+  saved: number
+  /** The dates that hold another value, and the dates whose save failed. */
+  skipped: number
 }
 
 export interface SuggestionPage {
@@ -205,13 +215,14 @@ function sameSet(a: string[], b: string[]) {
  * A blind PUT would drop a feature added since the check ran, so a changed event is refused.
  */
 async function applyFeatures(
+  eventId: number,
   suggestion: Suggestion,
   fetchFn: typeof fetch,
 ): Promise<EventFeatures> {
   const proposed = listItems(suggestion.proposedValue)
   const unknown = proposed.filter((slug) => !FEATURE_SLUGS.includes(slug))
   if (unknown.length > 0) throw new Error(`"${unknown.join('", "')}" is no event feature.`)
-  const current = await fetchEventFeatures(suggestion.eventId, fetchFn)
+  const current = await fetchEventFeatures(eventId, fetchFn)
   const stored = current.features.map((entry) => entry.feature)
   if (!sameSet(stored, listItems(suggestion.storedValue ?? ''))) {
     throw new Error(
@@ -219,24 +230,56 @@ async function applyFeatures(
         'The suggestion stays open: reject it, or edit the event.',
     )
   }
-  const saved = await setEventFeatures(suggestion.eventId, proposed, fetchFn)
-  await acceptSuggestion(suggestion.id, fetchFn)
-  return saved
+  return setEventFeatures(eventId, proposed, fetchFn)
+}
+
+/** What [field] of [event] holds, written as the check writes `storedValue`. */
+async function storedForm(event: AdminEvent, field: string, fetchFn: typeof fetch) {
+  switch (field) {
+    case 'eventType':
+      return event.eventType
+    case 'startTime':
+      return event.startTime?.slice(0, 5) ?? null
+    case 'pricePresale':
+      return event.pricePresale?.toFixed(2) ?? null
+    case 'priceBoxOffice':
+      return event.priceBoxOffice?.toFixed(2) ?? null
+    case 'artists': {
+      const lineup = [...event.artists].sort((a, b) => a.billingOrder - b.billingOrder)
+      const names = await fetchNames(
+        'artists',
+        lineup.map((artist) => artist.artistId),
+        fetchFn,
+      )
+      return lineup.map((artist) => names.get(artist.artistId)?.name ?? '').join('; ') || null
+    }
+    default:
+      return undefined
+  }
 }
 
 /**
- * Applies [suggestion] to its event and marks it accepted. The PUT sends every other field as it
- * was read, so only the suggested field changes. When the answer does not pin that field, the
- * suggestion stays open and this throws: nothing changed, and accepting would claim a fix.
+ * Applies [suggestion] to event [eventId] and returns the saved event. The PUT sends every other
+ * field as it was read, so only the suggested field changes. It throws when the answer does not pin
+ * the field, and with [sameStored] also when the event holds another value than the suggestion's.
  */
-export async function applySuggestion(
+async function applyTo(
+  eventId: number,
   suggestion: Suggestion,
-  fetchFn: typeof fetch = fetch,
+  sameStored: boolean,
+  fetchFn: typeof fetch,
 ): Promise<AdminEvent | EventFeatures> {
-  if (suggestion.field === 'features') return applyFeatures(suggestion, fetchFn)
+  // The features PUT checks the stored set itself.
+  if (suggestion.field === 'features') return applyFeatures(eventId, suggestion, fetchFn)
   const pin = PINS[suggestion.field]
   if (!pin) throw new Error(cannotApply(suggestion.field) ?? `Cannot apply "${suggestion.field}".`)
-  const event = await fetchEvent(suggestion.eventId, fetchFn)
+  const event = await fetchEvent(eventId, fetchFn)
+  if (
+    sameStored &&
+    (await storedForm(event, suggestion.field, fetchFn)) !== suggestion.storedValue
+  ) {
+    throw new Error('This date holds another value.')
+  }
   // The genre goes back untrimmed, as read, so the PUT does not pin it.
   const unchanged = {
     ...toEventRequest(event, { eventType: event.eventType, genre: event.genre ?? '' }),
@@ -250,6 +293,39 @@ export async function applySuggestion(
         'The suggestion stays open: reject it, or edit the event.',
     )
   }
+  return saved
+}
+
+/**
+ * Applies [suggestion] to its event and marks it accepted. When the answer does not pin the field,
+ * the suggestion stays open and this throws: nothing changed, and accepting would claim a fix.
+ */
+export async function applySuggestion(
+  suggestion: Suggestion,
+  fetchFn: typeof fetch = fetch,
+): Promise<AdminEvent | EventFeatures> {
+  const saved = await applyTo(suggestion.eventId, suggestion, false, fetchFn)
   await acceptSuggestion(suggestion.id, fetchFn)
   return saved
+}
+
+/**
+ * Applies an accepted [suggestion] to the other dates of its show, one at a time. A date that holds
+ * another value than the suggestion's stored value is skipped, and so is a date whose save fails:
+ * the dates saved before it stay saved.
+ */
+export async function applyToShowDates(
+  suggestion: Suggestion,
+  fetchFn: typeof fetch = fetch,
+): Promise<ShowDatesResult> {
+  const result: ShowDatesResult = { saved: 0, skipped: 0 }
+  for (const eventId of suggestion.showEventIds) {
+    try {
+      await applyTo(eventId, suggestion, true, fetchFn)
+      result.saved++
+    } catch {
+      result.skipped++
+    }
+  }
+  return result
 }

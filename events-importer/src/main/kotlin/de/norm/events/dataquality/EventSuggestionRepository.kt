@@ -36,7 +36,9 @@ data class EventSuggestionRow(
     val checkName: String,
     val model: String?,
     val status: EventSuggestionStatus,
-    val createdAt: OffsetDateTime
+    val createdAt: OffsetDateTime,
+    /** The other upcoming dates of the show: the events of the same venue and title, soonest first (#4736). */
+    val showEventIds: List<Long>
 )
 
 /** The event a suggestion is for, as a reviewer recognises it. */
@@ -133,6 +135,27 @@ class EventSuggestionRepository(
             .rowsUpdated()
             .awaitSingle()
 
+    /**
+     * Dismisses the OPEN suggestions that make the same proposal as [id], from the same stored value, on
+     * the other dates of its show, and returns how many changed (#4736). The check stores one suggestion
+     * per show since then, and the rows stored before stay open until this or a person closes them.
+     */
+    suspend fun dismissShowTwins(id: Long): Long =
+        template.databaseClient
+            .sql(
+                """
+                UPDATE $EVENTS_SCHEMA.event_suggestion t SET status = 'DISMISSED'
+                FROM $EVENTS_SCHEMA.event_suggestion s, $EVENTS_SCHEMA.event se, $EVENTS_SCHEMA.event te
+                WHERE s.id = :id AND se.id = s.event_id AND te.id = t.event_id
+                  AND t.status = 'OPEN' AND t.id <> s.id AND t.check_name = s.check_name AND t.field = s.field
+                  AND t.proposed_value = s.proposed_value AND t.stored_value IS NOT DISTINCT FROM s.stored_value
+                  AND te.venue_id = se.venue_id AND te.title = se.title
+                """.trimIndent()
+            ).bind("id", id)
+            .fetch()
+            .rowsUpdated()
+            .awaitSingle()
+
     private fun where(filter: EventSuggestionFilter): String =
         listOfNotNull(
             "s.event_id = :eventId".takeIf { filter.eventId != null },
@@ -172,7 +195,8 @@ class EventSuggestionRepository(
             checkName = required("check_name", String::class.java),
             model = get("model", String::class.java),
             status = EventSuggestionStatus.valueOf(required("status", String::class.java)),
-            createdAt = required("created_at", OffsetDateTime::class.java)
+            createdAt = required("created_at", OffsetDateTime::class.java),
+            showEventIds = get("show_event_ids", Array<Long>::class.java)?.toList().orEmpty()
         )
 
     private fun <T : Any> Readable.required(
@@ -183,7 +207,9 @@ class EventSuggestionRepository(
     private companion object {
         const val COLUMNS =
             "s.id, s.event_id, s.field, s.stored_value, s.proposed_value, s.evidence, s.confidence, s.check_name, s.model, " +
-                "s.status, s.created_at, e.title AS event_title, e.slug AS event_slug, e.event_date, v.name AS venue_name"
+                "s.status, s.created_at, e.title AS event_title, e.slug AS event_slug, e.event_date, v.name AS venue_name, " +
+                "ARRAY(SELECT o.id FROM $EVENTS_SCHEMA.event o WHERE o.venue_id = e.venue_id AND o.title = e.title " +
+                "AND o.id <> e.id AND o.event_date >= CURRENT_DATE ORDER BY o.event_date, o.id) AS show_event_ids"
 
         /** Inner joins lose no row: a suggestion needs its event, and an event its venue. */
         const val FROM =

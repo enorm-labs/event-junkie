@@ -96,8 +96,9 @@ class EventSuggestionController(
     @Operation(
         summary = "Dismiss one suggestion",
         description =
-            "Sets the status to DISMISSED and returns the suggestion. Dismissing a dismissed one " +
-                "again is a no-op. An unknown id is a 404 and an accepted suggestion is a 409: " +
+            "Sets the status to DISMISSED and returns the suggestion. The same proposal from the same " +
+                "stored value, open on another date of the show (same venue and title), is dismissed with it. " +
+                "Dismissing a dismissed one again is a no-op. An unknown id is a 404 and an accepted suggestion is a 409: " +
                 "a fix that was applied is not taken back by dismissing its proposal."
     )
     @PostMapping("/{id}/dismiss")
@@ -113,7 +114,13 @@ class EventSuggestionController(
             )
         val row = repository.findById(id) ?: throw EventSuggestionNotFoundException(id)
         if (row.status == EventSuggestionStatus.ACCEPTED) throw EventSuggestionAlreadyAcceptedException(id)
-        if (changed > 0) logger.info { "Suggestion $id dismissed: ${row.field} of event ${row.eventId}, from check ${row.checkName}" }
+        if (changed > 0) {
+            val twins = repository.dismissShowTwins(id)
+            logger.info {
+                "Suggestion $id dismissed: ${row.field} of event ${row.eventId}, from check ${row.checkName}, " +
+                    "with $twins open on other dates of the show"
+            }
+        }
         return EventSuggestionResponse.from(row)
     }
 }
@@ -162,7 +169,14 @@ data class EventSuggestionResponse(
     @Schema(description = "The model that made it. Null for a deterministic check", example = "claude-haiku-4-5", nullable = true)
     val model: String?,
     val status: EventSuggestionStatus,
-    val createdAt: OffsetDateTime
+    val createdAt: OffsetDateTime,
+    @Schema(
+        description =
+            "The other upcoming dates of the show, the events of the same venue and title, soonest first. " +
+                "Accepting applies the value to each one that holds the stored value",
+        example = "[4712, 4713]"
+    )
+    val showEventIds: List<Long>
 ) {
     companion object {
         fun from(row: EventSuggestionRow): EventSuggestionResponse =
@@ -181,7 +195,8 @@ data class EventSuggestionResponse(
                 checkName = row.checkName,
                 model = row.model,
                 status = row.status,
-                createdAt = row.createdAt
+                createdAt = row.createdAt,
+                showEventIds = row.showEventIds
             )
     }
 }
