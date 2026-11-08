@@ -22,7 +22,10 @@ defineProps<{ items: MetaItem[] }>()
 <template>
   <p class="text-body text-muted-foreground">
     <template v-for="(item, index) in items" :key="index">
-      <span v-if="index > 0" aria-hidden="true" data-meta-separator>&nbsp;· </span>
+      <!-- The space stays outside the hidden dot, or a screen reader joins the items: "202614:00" (#4745). -->
+      <template v-if="index > 0"
+        ><span aria-hidden="true" data-meta-separator>&nbsp;·</span>{{ ' ' }}</template
+      >
       <BaseBadge v-if="item.badge" variant="destructive">{{ item.text }}</BaseBadge>
       <del v-else-if="item.struck" :class="item.class">{{ item.text }}</del>
       <span

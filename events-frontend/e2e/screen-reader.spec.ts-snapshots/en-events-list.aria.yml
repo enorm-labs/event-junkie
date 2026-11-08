@@ -1,0 +1,38 @@
+- main:
+  - heading "Events" [level=1]
+  - paragraph: Browse and filter upcoming music events across Berlin.
+  - search:
+    - searchbox "Search events…"
+  - button "More filters"
+  - text: From
+  - textbox "From"
+  - text: To
+  - textbox "To"
+  - button "On now"
+  - button "Today"
+  - button "This weekend"
+  - button "Next 7 days"
+  - paragraph: 2 events found
+  - link "Near me, on the map":
+    - /url: /en/map
+  - button "Subscribe to calendar"
+  - status
+  - link "Subscribe to new events as an RSS feed":
+    - /url: /feed.xml?locale=en
+    - text: ""
+  - text: Sort
+  - group "Sort":
+    - button "Date" [pressed]
+    - button "Newest added"
+  - link /Tonight Show With a support act Sat, \d+ Aug \d+ · \d+:\d+ · Mock Venue/:
+    - /url: /en/events/tonight-show
+    - heading "Tonight Show" [level=2]
+    - paragraph: With a support act
+    - paragraph: /Sat, \d+ Aug \d+ · \d+:\d+ · Mock Venue/
+  - link /Second Show Sun, \d+ Aug \d+ · Time not announced/:
+    - /url: /en/events/second-show
+    - heading "Second Show" [level=2]
+    - paragraph: /Sun, \d+ Aug \d+ · Time not announced/
+  - link "Show more events":
+    - /url: /en/events?page=1
+  - paragraph: 2 of 2 shown

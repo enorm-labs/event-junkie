@@ -5,12 +5,13 @@ import type {
   EventClickInfo,
   EventDisplayInfo,
   EventInput,
+  MoreLinkInfo,
   MountInfo,
 } from '@fullcalendar/vue3'
 import FullCalendar from '@fullcalendar/vue3'
 import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { berlinTimeIso, eventLabel, todayIso } from '@/lib/format'
+import { berlinTimeIso, eventLabel, formatLongDate, todayIso } from '@/lib/format'
 import { isLocale } from '@/i18n/locales'
 // v7 ships plugins as subpaths of the framework package; the standalone
 // @fullcalendar/daygrid et al. have no v7 release.
@@ -54,7 +55,14 @@ function viewButton(text: string) {
   return { text, hint: t('calendar.viewHint', { view: text }) }
 }
 
+// Focus stays on the button that moved the range, so the new one is announced (#4747). The first
+// range is not: the page load reads the heading anyway.
+const announcement = ref('')
+let firstRange = true
+
 function handleDatesSet(arg: DatesSetInfo) {
+  if (firstRange) firstRange = false
+  else announcement.value = arg.view.title
   // FullCalendar's `end` is exclusive; the BFF's `to` is inclusive, so step back a day.
   const inclusiveEnd = new Date(arg.end)
   inclusiveEnd.setDate(inclusiveEnd.getDate() - 1)
@@ -81,6 +89,19 @@ function handleEventDidMount(arg: MountInfo<EventDisplayInfo>) {
     label.textContent = t('events.card.onNow')
     arg.el.append(label)
   }
+}
+
+/** Tab reaches "+48 more" without its cell, so the name carries the day too (#4746). */
+function handleMoreLinkDidMount(arg: MountInfo<MoreLinkInfo>) {
+  const day = arg.el.closest<HTMLElement>('[data-date]')?.dataset.date
+  if (!day) return
+  arg.el.setAttribute(
+    'aria-label',
+    t('calendar.moreOn', {
+      more: arg.el.textContent.trim(),
+      day: formatLongDate(day, locale.value),
+    }),
+  )
 }
 
 const { t, locale } = useI18n()
@@ -171,12 +192,14 @@ const options = computed<CalendarOptions>(() => ({
   datesSet: handleDatesSet,
   eventClick: handleEventClick,
   eventDidMount: handleEventDidMount,
+  moreLinkDidMount: handleMoreLinkDidMount,
 }))
 </script>
 
 <template>
   <div class="event-calendar">
     <FullCalendar ref="calendar" :options="options" />
+    <p aria-live="polite" class="sr-only" role="status">{{ announcement }}</p>
   </div>
 </template>
 

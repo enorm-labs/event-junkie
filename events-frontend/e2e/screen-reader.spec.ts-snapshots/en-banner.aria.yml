@@ -1,0 +1,24 @@
+- banner:
+  - navigation "Main":
+    - link "Event Junkie":
+      - /url: /en
+    - link "Event Junkie is in beta. Data may be incomplete or out of date. See what that means.":
+      - /url: /en/about#beta
+      - text: ""
+    - link "Events":
+      - /url: /en/events
+    - link "Calendar":
+      - /url: /en/calendar
+    - link "Map":
+      - /url: /en/map
+    - link "Venues":
+      - /url: /en/venues
+    - link "Promoters":
+      - /url: /en/promoters
+    - link "About":
+      - /url: /en/about
+    - button "Search events, venues, artists and promoters"
+    - button "Language"
+    - button "Display settings"
+    - link "Sign in":
+      - /url: /en/sign-in

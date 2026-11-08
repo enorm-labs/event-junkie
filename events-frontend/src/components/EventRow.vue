@@ -37,7 +37,7 @@ const { formatShortDate, formatEventTime } = useFormat()
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-const { eventType, isLive, language, state, timeHint } = useEventState(() => props.event)
+const { eventType, isLive, language, liveLabel, state, timeHint } = useEventState(() => props.event)
 
 // Venue, kind of night and genres read as one list, as they do on the card (#1248).
 const meta = computed(() =>
@@ -70,7 +70,7 @@ const rsvp = computed(() => (props.event.slug ? statuses.value[props.event.slug]
           <span v-if="timeHint" class="sr-only">({{ timeHint }})</span>
         </span>
       </span>
-      <LiveDot v-if="isLive" :label="t('events.card.onNow')" />
+      <LiveDot v-if="isLive" :label="liveLabel" />
       <PickBadge v-if="showsPick" small class="shrink-0 self-center" />
       <component
         :is="as"

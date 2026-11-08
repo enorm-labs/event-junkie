@@ -1,0 +1,38 @@
+- main:
+  - heading "Events" [level=1]
+  - paragraph: Kommende Musikveranstaltungen in Berlin durchstöbern und filtern.
+  - search:
+    - searchbox "Events durchsuchen …"
+  - button "Mehr Filter"
+  - text: Von
+  - textbox "Von"
+  - text: Bis
+  - textbox "Bis"
+  - button "Läuft gerade"
+  - button "Heute"
+  - button "Dieses Wochenende"
+  - button "Nächste 7 Tage"
+  - paragraph: 2 Events gefunden
+  - link "In meiner Nähe, auf der Karte":
+    - /url: /de/map
+  - button "Kalender abonnieren"
+  - status
+  - link "Neue Veranstaltungen als RSS-Feed abonnieren":
+    - /url: /feed.xml?locale=de
+    - text: ""
+  - text: Sortieren
+  - group "Sortieren":
+    - button "Datum" [pressed]
+    - button "Zuletzt hinzugefügt"
+  - link /Tonight Show With a support act Sa\., \d+\. Aug\. \d+ · \d+:\d+ · Mock Venue/:
+    - /url: /de/events/tonight-show
+    - heading "Tonight Show" [level=2]
+    - paragraph: With a support act
+    - paragraph: /Sa\., \d+\. Aug\. \d+ · \d+:\d+ · Mock Venue/
+  - link /Second Show So\., \d+\. Aug\. \d+ · Uhrzeit nicht bekannt/:
+    - /url: /de/events/second-show
+    - heading "Second Show" [level=2]
+    - paragraph: /So\., \d+\. Aug\. \d+ · Uhrzeit nicht bekannt/
+  - link "Mehr Events zeigen":
+    - /url: /de/events?page=1
+  - paragraph: 2 von 2 angezeigt

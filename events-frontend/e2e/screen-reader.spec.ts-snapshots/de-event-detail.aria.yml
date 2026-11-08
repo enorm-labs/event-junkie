@@ -1,0 +1,36 @@
+- main:
+  - article:
+    - heading "Tonight Show" [level=1]
+    - paragraph: /Sa\., \d+\. Aug\. \d+ \d+:\d+ Mock Venue/
+    - heading "Spielzeiten" [level=2]
+    - heading "Main Floor" [level=3]
+    - list:
+      - listitem:
+        - text: /\d+:\d+–\d+:\d+/
+        - link "Mock Artist":
+          - /url: /de/artists/mock-artist
+    - heading "Wann" [level=2]
+    - paragraph: /Sa\., \d+\. Aug\. \d+/
+    - paragraph: /Beginn \d+:\d+/
+    - paragraph: Ende nicht bekannt gegeben
+    - heading "Location" [level=2]
+    - link "Mock Venue":
+      - /url: /de/venues/mock-venue
+    - paragraph: Test Str. 1, Berlin
+    - heading "Tickets" [level=2]
+    - paragraph: Preis nicht bekannt
+    - group "Deine Pläne für dieses Event":
+      - link "Interessiert":
+        - /url: /de/sign-in?next=/de/events/tonight-show
+      - link "Dabei":
+        - /url: /de/sign-in?next=/de/events/tonight-show
+    - button "Teilen"
+    - status
+    - heading "Veranstalter" [level=2]
+    - paragraph:
+      - link "Mock Promoter":
+        - /url: /de/promoters/mock-promoter
+    - paragraph:
+      - text: "Stimmt bei diesem Event etwas nicht? Melde es per E-Mail:"
+      - link "hello@event-junkie.de":
+        - /url: mailto:hello@event-junkie.de?subject=Fehler%20in%20den%20Daten%3A%20Tonight%20Show&body=Seite%3A%20https%3A%2F%2Fevent-junkie.de%2Fde%2Fevents%2Ftonight-show%0A%0AWas%20stimmt%20nicht%3A%0A

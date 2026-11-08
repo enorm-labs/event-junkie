@@ -231,6 +231,7 @@ the first column. It fails in two cases:
 | `a11y.spec.ts`                         | e2e quality check: accessibility, not a feature                                                         |
 | `keyboard-flows.spec.ts`               | e2e quality check: main flows by keyboard alone, not a feature                                          |
 | `layout-shift.spec.ts`                 | e2e quality check: layout shift, not a feature                                                          |
+| `screen-reader.spec.ts`                | e2e quality check: what a screen reader reads, not a feature                                            |
 | `page-title.spec.ts`                   | e2e quality check: page titles, not a feature                                                           |
 | `scroll-restoration.spec.ts`           | e2e quality check: scroll position, not a feature                                                       |
 | `smoke.spec.ts`                        | e2e quality check: every page renders, not a feature                                                    |

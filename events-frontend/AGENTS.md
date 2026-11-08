@@ -19,7 +19,7 @@ npm run check:knip                                # unused files, exports, depen
 
 1. **A legal or About page is a document per language, not translated strings.** Edit both languages or neither — [docs/LEGAL.md](../docs/LEGAL.md) §6.1.
 2. **A change that adds a third-party request or stores anything on the visitor's device needs the privacy notice updated in the same PR, in both languages.**
-3. **Accessibility is WCAG 2.1 AA and it is linted** — [vue.instructions.md](../.github/instructions/vue.instructions.md) has the target and the two checks.
+3. **Accessibility is WCAG 2.1 AA and it is linted** — [vue.instructions.md](../.github/instructions/vue.instructions.md) has the target and the checks.
 4. **`schema.d.ts` is generated and committed, and a BFF API change regenerates it in the same PR.** `Build & Test (backend)` fails on a stale file and
    prints the command; [§ API Communication](#api-communication) has it.
 
