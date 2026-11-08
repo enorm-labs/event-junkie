@@ -1,6 +1,7 @@
 package de.norm.events.scraper.kitkatclub
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -24,8 +25,7 @@ class KitKatClubProgrammePageScraperTest {
     private val scraper = KitKatClubProgrammePageScraper(clock)
 
     private val events by lazy {
-        val html = javaClass.classLoader.getResourceAsStream("scraper/kitkatclub/kitkatclub-programme.html")!!
-        scraper.scrape(Jsoup.parse(html, null, sourceUrl), sourceUrl)
+        scraper.scrape(fixtureDocument("kitkatclub/kitkatclub-programme.html", sourceUrl, charset = null), sourceUrl)
     }
 
     private fun night(date: String) = events.single { it.eventDate == LocalDate.parse(date) }

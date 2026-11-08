@@ -4,10 +4,12 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import java.nio.charset.Charset
 
 class ScraperFixturesTest {
     private val path = "aeden/aeden-overview.html"
@@ -25,6 +27,16 @@ class ScraperFixturesTest {
 
         document.location() shouldBe url
         document.title() shouldBe "Events – aedenberlin.com"
+    }
+
+    @Test
+    fun `detects the charset from the page when none is given`() {
+        val latin1 = "kitkatclub/kitkatclub-programme.html"
+
+        fun description(charset: Charset?) = fixtureDocument(latin1, charset = charset).select("meta[name=description]").attr("content")
+
+        description(charset = null) shouldContain "informiert über"
+        description(Charsets.UTF_8) shouldNotContain "informiert über"
     }
 
     @Test

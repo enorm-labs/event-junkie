@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -37,12 +38,7 @@ class ArcanoaWebsiteImporterTest {
         importer = ArcanoaWebsiteImporter(htmlFetcher, clock)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document =
-                    Jsoup.parse(
-                        javaClass.classLoader.getResourceAsStream("scraper/arcanoa/arcanoa-overview.html")!!,
-                        null,
-                        sourceUrl
-                    ),
+                document = fixtureDocument("arcanoa/arcanoa-overview.html", sourceUrl, charset = null),
                 etag = etag,
                 lastModified = lastModified
             )
