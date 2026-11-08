@@ -32,6 +32,10 @@ import org.springframework.stereotype.Component
  * A show sold elsewhere takes the other seller's text and stays flagged, so it keeps its stored image,
  * doors and price.
  *
+ * It implements [EventImporter] directly because every list page is read through `fetchTurboFrame`.
+ * `AbstractSinglePageWebsiteImporter` reads its entry page and its later listing pages without the `Turbo-Frame` header,
+ * and stores the entry page's validators.
+ *
  * @see DownstairsTicketListScraper for the list.
  * @see <a href="https://www.downstairscomedy.shop/tickets">Downstairs tickets</a>
  */
