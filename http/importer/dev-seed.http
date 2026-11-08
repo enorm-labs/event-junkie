@@ -1353,6 +1353,38 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# BANKERT. — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create BANKERT. venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "BANKERT.",
+    "address": "Proskauer Straße 5",
+    "city": "Berlin",
+    "postalCode": "10247",
+    "district": "friedrichshain",
+    "latitude": 52.516015,
+    "longitude": 13.460851,
+    "instagramUrl": "https://www.instagram.com/bankert.berlin/",
+    "description": "A record shop and vegan café in Friedrichshain that now and then clears space among the shelves for in-store gigs and neighbourhood concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Plattenladen und veganes Café in Friedrichshain, das ab und zu zwischen den Regalen Platz für Instore-Gigs und Nachbarschaftskonzerte macht.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://www.instagram.com/bankert.berlin/",
+    "reviewedAt": "2026-11-08T12:00:00Z"
+}
+
+> {%
+    client.test("BANKERT. venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Bar jeder Vernunft
 # ————————————————————————————————————————————————————————————
 
