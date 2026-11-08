@@ -10,9 +10,9 @@ import java.util.HexFormat
  *
  * [detect] answers German or English only, and an honest `null` for everything else: a line-up list,
  * a two-line note, a Spanish biography, or one field that carries both languages (ADR-026). [classify]
- * adds [UNDETERMINED] for a text written mostly in a non-Latin script, which is neither of our two
- * for certain (#4665). The rule is
- * deliberately not a library. Lingua ships every language model in one jar for a question with two
+ * adds [UNDETERMINED] for a text that is neither of our two for certain: one the Spanish, French,
+ * Italian and Turkish stop words lead (#4685), or one written mostly in a non-Latin script (#4665).
+ * The rule is deliberately not a library. Lingua ships every language model in one jar for a question with two
  * answers, and a stop-word count is measured on the real corpus in [DescriptionLanguageTest].
  */
 enum class DescriptionLanguage(
@@ -87,10 +87,18 @@ enum class DescriptionLanguage(
         /** The share of letters outside the Latin script above which a text is written in another script. */
         private const val MIN_FOREIGN_SHARE = 0.5
 
-        /** [detect], else [UNDETERMINED] for a text written mostly in a non-Latin script. The language stored for an event. */
-        fun classify(text: String?): Detection? = detect(text) ?: text?.let(::undetermined)
+        /**
+         * [detect], else [UNDETERMINED] for a text a third language leads or a non-Latin script fills.
+         * The language stored for an event.
+         */
+        fun classify(text: String?): Detection? = detect(text) ?: text?.let { thirdLanguage(it) ?: otherScript(it) }
 
-        private fun undetermined(text: String): Detection? {
+        private fun thirdLanguage(text: String): Detection? =
+            Counts.of(text).thirdLanguageShare()?.let {
+                Detection(UNDETERMINED, BigDecimal(it).setScale(CONFIDENCE_SCALE, RoundingMode.HALF_UP))
+            }
+
+        private fun otherScript(text: String): Detection? {
             val letters = text.filter { it.isLetter() }
             if (letters.length < MIN_SCRIPT_LETTERS) return null
             val share = letters.count { Character.UnicodeScript.of(it.code) != Character.UnicodeScript.LATIN }.toDouble() / letters.length
@@ -128,6 +136,16 @@ enum class DescriptionLanguage(
             private fun hasEnoughToJudge(): Boolean = total >= MIN_WORDS && hits >= MIN_HITS && hits >= total * MIN_HIT_DENSITY
 
             private fun isLedByAThirdLanguage(): Boolean = other * 2 > leader
+
+            /**
+             * The third-language markers' share of all hits, when they carry the text on their own. The
+             * share floor is [MIN_SHARE], not [isLedByAThirdLanguage]'s: a field that holds German and
+             * Spanish is bilingual, and an English translation would hide its German half.
+             */
+            fun thirdLanguageShare(): Double? {
+                if (total < MIN_WORDS || other < MIN_HITS || other < total * MIN_HIT_DENSITY) return null
+                return (other.toDouble() / (other + hits)).takeIf { it >= MIN_SHARE }
+            }
 
             companion object {
                 fun of(text: String): Counts {

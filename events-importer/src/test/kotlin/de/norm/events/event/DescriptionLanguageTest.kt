@@ -57,11 +57,7 @@ class DescriptionLanguageTest {
     @Test
     @DisplayName("a third language is unknown rather than the nearer of the two")
     fun `declines a third language`() {
-        val spanish =
-            "Perotá Chingó es un dúo argentino que ha conquistado audiencias de todo el mundo con su propuesta de folk " +
-                "latinoamericano, armonías vocales y una sensibilidad que atraviesa el continente."
-
-        DescriptionLanguage.detect(spanish).shouldBeNull()
+        DescriptionLanguage.detect(SPANISH_DESCRIPTION).shouldBeNull()
     }
 
     // Event 12923 (the-cloud) and two SO36 nights: the stop words find nothing, and the script says it is neither of ours.
@@ -77,15 +73,42 @@ class DescriptionLanguageTest {
     }
 
     @Test
-    @DisplayName("German that names a Cyrillic band, a short Cyrillic note, and a Latin third language stay as they were")
-    fun `leaves German, a short note and a Latin third language as they were`() {
+    @DisplayName("German that names a Cyrillic band, and a short Cyrillic note, stay as they were")
+    fun `leaves German and a short note as they were`() {
         val german = "Die Band Кино spielt heute Abend im Club, und wir freuen uns auf einen langen Abend mit euch und der Musik."
 
         DescriptionLanguage.classify(german)?.language shouldBe DescriptionLanguage.GERMAN
         DescriptionLanguage.classify("Группа Кино").shouldBeNull()
-        DescriptionLanguage
-            .classify("Perotá Chingó es un dúo argentino que ha conquistado audiencias de todo el mundo con su propuesta de folk.")
-            .shouldBeNull()
+    }
+
+    // Events 10200 and 1766 are Spanish, 3893 Italian: detect declines them, and classify sends them to English (#4685).
+    @Test
+    @DisplayName("a text a Latin third language leads is classified undetermined")
+    fun `classifies a Latin third language as undetermined`() {
+        val italian =
+            "Un viaggio nella musica italiana con la band che ha portato il cantautorato per le strade di tutta Europa, " +
+                "e non solo."
+
+        DescriptionLanguage.classify(SPANISH_DESCRIPTION)?.language shouldBe DescriptionLanguage.UNDETERMINED
+        DescriptionLanguage.classify(italian)?.language shouldBe DescriptionLanguage.UNDETERMINED
+    }
+
+    // A German text that names Spanish bands gains Spanish hits, and German still outweighs them.
+    @Test
+    @DisplayName("German that quotes Spanish names stays German")
+    fun `keeps German that quotes Spanish names`() {
+        val german =
+            "Los Lobos und La Santa Cecilia spielen zum ersten Mal zusammen in Berlin. Die beiden Bands aus Los Angeles " +
+                "bringen ihre Mischung aus Rock und Cumbia mit, und es wird ein langer Abend mit euch."
+
+        DescriptionLanguage.classify(german)?.language shouldBe DescriptionLanguage.GERMAN
+    }
+
+    // Translating a German-and-Spanish field into English would hide its German half from a German visitor.
+    @Test
+    @DisplayName("one field holding German and Spanish stays unknown")
+    fun `declines a German and Spanish field`() {
+        DescriptionLanguage.classify("$GERMAN_DESCRIPTION $SPANISH_DESCRIPTION").shouldBeNull()
     }
 
     @Test
@@ -110,5 +133,8 @@ class DescriptionLanguageTest {
         const val ENGLISH_DESCRIPTION =
             "Tara Nome Doyle is a Berlin-based singer-songwriter and producer with Norwegian-Irish roots. Over three " +
                 "albums and a widening web of collaborations, she has made a sound that is entirely her own."
+        const val SPANISH_DESCRIPTION =
+            "Perotá Chingó es un dúo argentino que ha conquistado audiencias de todo el mundo con su propuesta de folk " +
+                "latinoamericano, armonías vocales y una sensibilidad que atraviesa el continente."
     }
 }
