@@ -2,7 +2,8 @@
 
 `REVIEWED.tsv` holds one row per promoter the site has (#328). The rows were read on staging on
 2026-09-11, after the merges in `V023__merge_duplicate_promoters.sql`. Each row records what a
-person decided about that promoter.
+person decided about that promoter. A row whose `note` starts with `2026-11-08 scan` comes from a
+search over the promoters with upcoming events on production. A person confirmed each result.
 
 | Column           | What it holds                                                                                                                                                                                                                                                                                               |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
