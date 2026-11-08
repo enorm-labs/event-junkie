@@ -360,6 +360,9 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "prkdreamhouse" to "PRK DreamHaus",
         "rausgeganger" to "Rausgegangen",
         "punkfilmfestivalberlin" to "punkfilmfest berlin",
+        // Schokoladen misspells the festival once and shortens the collective's name once (#4733).
+        "punkfimfest" to "punkfilmfest berlin",
+        "psychberg" to "psychberg affairs",
         // Berghain credits the festival as both "CTM" and "CTM Festival"; the de-shouter lowers the
         // latter to "Ctm Festival" (#2176).
         "ctm" to "CTM Festival",
