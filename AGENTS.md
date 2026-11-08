@@ -250,6 +250,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/compact-comments` — classify each comment block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, measure the drop
 - `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs, traffic, `/admin-review`; merges the ready bot PRs, drafts the rest
 - `/data-quality-audit` — read-only audit of the whole `events` database
+- `/enrich [--count N] [--venues]` — websites, Instagram links and descriptions for the promoters with the most upcoming events, from their own sites, into `docs/promoters/REVIEWED.tsv` and one PR; 35 rows a run, the search budget's size
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
 - `/fix-events [<url> ["<note>"]…]` — events the operator saw wrong on the site, or with no argument the "Report a problem" queue (#4399), each to a verdict: a parser fix with a test in one PR, a scope rule, an accepted limitation, or a numbered hand fix applied only on the operator's word
 - `/git-cleanup` — worktrees and local branches sorted into safe, ask first and keep by PR state and `git cherry`; removes only what the operator confirms

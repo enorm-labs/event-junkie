@@ -4,7 +4,8 @@ One entry point for the maintenance loop: read where the loop stands, name the o
 run. The steps are the existing commands; this command only joins them.
 
 ```text
-/daily-check → file the drafts → (/refine-issues) → /afk → /afk merge → cut a release → /post-release → (weekly) /musicbrainz-review → again
+/daily-check → file the drafts → (/refine-issues) → /afk → /afk merge → cut a release → /post-release
+  → (weekly) /musicbrainz-review, /artist-cleanup, /enrich → (monthly) /data-quality-audit → (idle) /next-importer → again
 ```
 
 ## Important
@@ -32,6 +33,8 @@ run. The steps are the existing commands; this command only joins them.
 scripts/daily-check.sh --hours 24 > temp/maintain-state.json     # read-only; every key below comes from it
 scripts/ej.sh status                                             # tunnels and clusters
 ls -t temp/daily-check-*.md temp/worklist-*.md temp/admin-review-*.md temp/afk-handover-*.md 2>/dev/null | head -6
+ls -t temp/musicbrainz-review-production-*.tsv temp/artist-cleanup-production-*.json temp/promoter-cleanup-production-*.json \
+  temp/enrich-*.md temp/data-quality-*.md 2>/dev/null                 # the dated steps: when each last ran
 gh issue list --label afk-ok --state open --json number,title,assignees --jq 'length'
 ```
 
@@ -51,21 +54,31 @@ The first row that holds decides. Each row names its evidence; report it with th
 | 6   | `release.commits` holds a `feat`, `fix` or `perf` subject                                         | The cut, as two commands for the operator         | proposes     |
 | 7   | `after_deploy` has a released step whose `due` has come (below)                                   | `/post-release`                                   | runs         |
 | 8   | No `temp/musicbrainz-review-production-*.tsv` from the last 7 days, and the tunnel is up          | `/musicbrainz-review production`                  | runs         |
-| 9   | No open `afk-ok` issue, and no `temp/refine-*.md` from the last 7 days                            | `/refine-issues` on the next milestone            | proposes     |
-| 10  | None of the above                                                                                 | "Nothing due", and the next date anything is due  | reports      |
+| 9   | No `temp/artist-cleanup-production-*.json` from the last 7 days, and the tunnel is up             | `/artist-cleanup production`                      | runs         |
+| 10  | No `temp/promoter-cleanup-production-*.json` from the last 7 days, and the tunnel is up           | `/artist-cleanup production --kind promoters`     | runs         |
+| 11  | No `temp/enrich-*.md` from the last 7 days                                                        | `/enrich`                                         | runs         |
+| 12  | No `temp/data-quality-*.md` from the last 30 days, and the tunnel is up                           | `/data-quality-audit`                             | runs         |
+| 13  | No open `afk-ok` issue, and no `temp/refine-*.md` from the last 7 days                            | `/refine-issues` on the next milestone            | proposes     |
+| 14  | A 🔨 Ready venue in `docs/EVENT_DATA_SOURCES.md`, and no open `importer` pull request             | `/next-importer`                                  | proposes     |
+| 15  | None of the above                                                                                 | "Nothing due", and the next date anything is due  | reports      |
 
 - **Stage 3**: list the drafts, one line each with `afk-ok: yes|no — reason`, and stop. When the operator answers, file exactly those, as
   [`/daily-check`](daily-check.prompt.md) Step 7 says: the label from the verdict, the board in one batch, the heading rewritten to `(filed #N)`.
 - **Stage 5**: "no session holds" is [`/start-issue`](start-issue.prompt.md) step 2's three signals: board Status, a remote branch, an open pull
   request. `/afk` checks them again; this row only decides whether starting it is worth a turn.
 - **Stage 6**: give `gh workflow run cut-release.yml -f dry_run=true` for the highlights, then `-f dry_run=false`, and the subjects that make it a
-  product release. A release cut less than two hours ago has not settled: stage 7 waits for the rollout and the first imports, so it skips to stage 10.
+  product release. A release cut less than two hours ago has not settled: stage 7 waits for the rollout and the first imports, so it skips to stage 15.
 - **Stage 7**: a step's `due` has come when it is `now`, a date on or before today, `deploy+<N>d` with N days passed since the change reached that
   environment, or a dark day that is today. A `when:<text>` step has come only when its text holds. [`/post-release`](post-release.prompt.md)
   § When a step is due says how to read each.
 - **Stage 8**: the review writes a file of proposals and applies nothing. Applying waits for the operator's word, as that prompt says.
-- **Stage 9**: `/refine-issues` asks the operator a question per issue, so this command names it and does not run it.
-- **Stage 10**: the next date is the earliest future `due`, the day the MusicBrainz review is due again, or the next dark day of a `dark-day` step.
+- **Stages 9 and 10**: the full sweep. `/daily-check` judges only the rows the last day minted, so a parser that has drifted shows here first. Its
+  fixes are pull requests. A MERGE waits for the operator's word.
+- **Stage 11**: after stage 10, because a row that is not a promoter wastes a search. It opens a pull request and writes nothing to a cluster.
+- **Stage 12**: read-only. It writes its report and files nothing.
+- **Stages 13 and 14**: each asks something of the operator or takes an hour or more, so this command names it and does not run it.
+- **The dated stages read the newest file in `temp/`.** Deleting a report makes its step due again, which is the safe way round.
+- **Stage 15**: the next date is the earliest future `due`, the day a weekly or monthly stage is due again, or the next dark day of a `dark-day` step.
 
 ## Step 3 — Run or hand over
 
@@ -73,7 +86,7 @@ Run the step when the stage says _runs_, under its prompt. Then go back to Step 
 in the same invocation: the operator reads each result before the next one starts.
 
 Under `/loop /maintain`, a step that waits on something outside the session — CI, a rollout, a release window — ends the turn with a wakeup matched to it,
-not a poll. Stages 3, 6 and 9 end the loop's turn with the question, and stage 10 sleeps until the next due date or the next morning, whichever comes first.
+not a poll. Stages 3, 6, 13 and 14 end the loop's turn with the question, and stage 15 sleeps until the next due date or the next morning, whichever comes first.
 
 ## Step 4 — The report
 

@@ -64,6 +64,8 @@ scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .fr
    Then work the admin app's review pages: "Suggested fixes", "Instagram drafts", "Artists to review" and "Venues to review". `/admin-review` gives
    each item a verdict and applies the ones you name. Three or more suggestions for one field at one venue are a parser defect.
    File it, and do not accept each one.
+   `python3 scripts/enrichment-coverage.py` prints how many promoters and venues with upcoming events have a website, an Instagram link and a
+   description. `/enrich` raises the numbers, and `/maintain` runs it once a week.
 9. **The two places no command reads.** Look at the `alerts@` mailbox and the healthchecks.io dashboard ([HEALTHCHECKS.md](HEALTHCHECKS.md)).
 10. **A release.** If `main` has product commits since the last release, cut one. See [RELEASING.md](RELEASING.md).
 
