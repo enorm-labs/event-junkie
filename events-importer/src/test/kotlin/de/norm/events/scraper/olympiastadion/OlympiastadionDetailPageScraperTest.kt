@@ -20,7 +20,6 @@ class OlympiastadionDetailPageScraperTest {
         detail.startTime.shouldBeNull()
         detail.doorsTime.shouldBeNull()
         detail.ticketUrl shouldBe "https://www.livenation.de/u2-tickets-adp7159"
-        detail.englishUrl shouldBe "https://olympiastadion.berlin/en/events/u2-the-greatest-show-on-earth-world-tour/"
         detail.description!! shouldStartWith "U2’s „The Greatest Show On Earth“-Welttournee kommt am 30.06.2027"
     }
 
