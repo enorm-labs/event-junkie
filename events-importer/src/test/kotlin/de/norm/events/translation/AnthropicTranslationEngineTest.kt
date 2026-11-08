@@ -93,6 +93,16 @@ class AnthropicTranslationEngineTest {
             engine().translate(request()) shouldBe TranslationResult.Rejected
         }
 
+    @Test
+    @DisplayName("a German answer that closes a low-nine quote with a straight one comes back repaired")
+    fun `repairs a German closing quote`() =
+        runTest {
+            server.enqueue(textResponse("Ein Abend im Klunkerkranich mit „Elsa Shelelé\" und Gästen über den Dächern."))
+
+            engine().translate(request().copy(text = ENGLISH, from = DescriptionLanguage.ENGLISH, to = DescriptionLanguage.GERMAN)) shouldBe
+                TranslationResult.Translated("Ein Abend im Klunkerkranich mit „Elsa Shelelé“ und Gästen über den Dächern.")
+        }
+
     // Found on the first real run against the API. The protected terms are the whole bill, and a
     // description routinely names none of them: UFO im Velodrom writes "Im UFO", never the venue's
     // full name, so requiring it back rejected a sound translation.
