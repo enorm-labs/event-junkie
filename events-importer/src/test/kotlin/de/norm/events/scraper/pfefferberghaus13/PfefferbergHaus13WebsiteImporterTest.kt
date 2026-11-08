@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -26,19 +28,16 @@ class PfefferbergHaus13WebsiteImporterTest {
     private val page2Url = "https://haus13.pfefferwerk.de/veranstaltungen/page/2/"
     private val event = "https://haus13.pfefferwerk.de/event/"
 
-    private fun doc(
-        name: String,
-        url: String
-    ) = Jsoup.parse(javaClass.classLoader.getResourceAsStream("scraper/pfefferberghaus13/$name")!!, null, url)
-
     @Test
     fun `reads both listing pages and merges each event page`() =
         runTest {
             coEvery { htmlFetcher.fetch(listingUrl, any(), any(), any()) } returns
-                FetchResult.Success(doc("pfefferberghaus13-overview.html", listingUrl), etag = "\"haus13\"", lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(page2Url) } returns doc("pfefferberghaus13-overview-page2.html", page2Url)
-            coEvery { htmlFetcher.fetchDocument("${event}punk-rocktopus-vol-3/") } returns
-                doc("pfefferberghaus13-event-punk-rocktopus.html", "${event}punk-rocktopus-vol-3/")
+                FetchResult.Success(fixtureDocument("pfefferberghaus13/pfefferberghaus13-overview.html", listingUrl), etag = "\"haus13\"", lastModified = null)
+            stubFetcher(
+                page2Url to "pfefferberghaus13/pfefferberghaus13-overview-page2.html",
+                "${event}punk-rocktopus-vol-3/" to "pfefferberghaus13/pfefferberghaus13-event-punk-rocktopus.html",
+                fetcher = htmlFetcher
+            )
             coEvery { htmlFetcher.fetchDocument(match { it.startsWith(event) && !it.endsWith("punk-rocktopus-vol-3/") }) } returns
                 Jsoup.parse("<html><body></body></html>", listingUrl)
 
@@ -60,9 +59,11 @@ class PfefferbergHaus13WebsiteImporterTest {
             val liveImporter =
                 PfefferbergHaus13WebsiteImporter(htmlFetcher, Clock.fixed(Instant.parse("2026-11-07T10:00:00Z"), ZoneId.of("Europe/Berlin")))
             val salsaUrl = "${event}vamos-a-bailar-la-fiesta-de-la-salsa-conexion-feat-mayelis-17/"
-            coEvery { htmlFetcher.fetch(listingUrl, any(), any(), any()) } returns
-                FetchResult.Success(doc("pfefferberghaus13-overview-multi-day.html", listingUrl), etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(salsaUrl) } returns doc("pfefferberghaus13-event-vamos-a-bailar.html", salsaUrl)
+            stubFetcher(
+                listingUrl to "pfefferberghaus13/pfefferberghaus13-overview-multi-day.html",
+                salsaUrl to "pfefferberghaus13/pfefferberghaus13-event-vamos-a-bailar.html",
+                fetcher = htmlFetcher
+            )
             coEvery { htmlFetcher.fetchDocument(match { it != salsaUrl }) } returns Jsoup.parse("<html><body></body></html>", listingUrl)
 
             val result = liveImporter.importEvents(listingUrl)

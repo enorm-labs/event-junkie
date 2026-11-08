@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -23,13 +25,7 @@ class OlympiastadionWebsiteImporterTest {
     private val listingUrl = "https://olympiastadion.berlin/termine-und-tickets/"
     private val eventUrl = "https://olympiastadion.berlin/events/"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/olympiastadion/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private fun stubListing(html: String = fixture("olympiastadion-overview.html")) {
+    private fun stubListing(html: String = fixtureText("olympiastadion/olympiastadion-overview.html")) {
         coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
             FetchResult.Success(
                 document = Jsoup.parse(html, listingUrl),
@@ -44,10 +40,10 @@ class OlympiastadionWebsiteImporterTest {
             "s25-berlin-2027" to "olympiastadion-detail-run.html",
             "u2-the-greatest-show-on-earth-world-tour" to "olympiastadion-detail-concert.html"
         ).forEach { (slug, file) ->
-            coEvery { htmlFetcher.fetchDocument("$eventUrl$slug/") } returns Jsoup.parse(fixture(file), "$eventUrl$slug/")
+            stubFetcher("$eventUrl$slug/" to "olympiastadion/$file", fetcher = htmlFetcher)
         }
         val english = "https://olympiastadion.berlin/en/events/u2-the-greatest-show-on-earth-world-tour/"
-        coEvery { htmlFetcher.fetchDocument(english) } returns Jsoup.parse(fixture("olympiastadion-detail-concert-en.html"), english)
+        stubFetcher(english to "olympiastadion/olympiastadion-detail-concert-en.html", fetcher = htmlFetcher)
     }
 
     @Test

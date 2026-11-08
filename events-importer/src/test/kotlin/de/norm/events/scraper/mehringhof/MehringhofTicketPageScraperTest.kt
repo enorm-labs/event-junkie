@@ -1,5 +1,6 @@
 package de.norm.events.scraper.mehringhof
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -15,12 +16,7 @@ class MehringhofTicketPageScraperTest {
 
     @Test
     fun `reads text, image, price and time from the JSON-LD`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/mehringhof/mehringhof-ticket.html")!!
-                .bufferedReader()
-                .readText()
-        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("mehringhof/mehringhof-ticket.html", url), url).shouldNotBeNull()
 
         event.description.shouldNotBeNull() shouldStartWith "LIVE Stand Up Comedy im Mehringhof-Theater!"
         event.imageUrl.shouldNotBeNull() shouldStartWith "https://tickets.mehringhoftheater.de/uploads/"

@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -24,12 +25,7 @@ class MetropolOverviewPageScraperTest {
     private val baseUrl = "https://metropol-berlin.de/events"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/metropol/metropol-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("metropol/metropol-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }

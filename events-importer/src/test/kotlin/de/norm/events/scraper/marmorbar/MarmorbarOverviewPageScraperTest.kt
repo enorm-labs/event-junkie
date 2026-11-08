@@ -3,6 +3,7 @@ package de.norm.events.scraper.marmorbar
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -17,16 +18,7 @@ class MarmorbarOverviewPageScraperTest {
     private val scraper = MarmorbarOverviewPageScraper()
     private val baseUrl = "https://www.marmorbar.com/en/event-list"
 
-    private fun fixture() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/marmorbar/marmorbar-overview.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
-    private val events by lazy { scraper.scrape(fixture(), baseUrl).associateBy { it.title } }
+    private val events by lazy { scraper.scrape(fixtureDocument("marmorbar/marmorbar-overview.html", baseUrl), baseUrl).associateBy { it.title } }
 
     @Test
     fun `reads every event in the payload`() {

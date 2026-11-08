@@ -7,6 +7,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -38,29 +40,23 @@ class MikropolWebsiteImporterTest {
     private val vowwsUrl = "https://mikropol-berlin.de/event/2026-07-25-vowws/"
     private val cultureWarsUrl = "https://mikropol-berlin.de/event/2026-07-16-verlegt-in-den-frannz-club-culture-wars/"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/mikropol/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = MikropolWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("mikropol-overview.html"), overviewUrl),
+                document = fixtureDocument("mikropol/mikropol-overview.html", overviewUrl),
                 etag = "\"mikropol-etag\"",
                 lastModified = "Mon, 13 Jul 2026 03:00:00 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(houseUrl) } returns
-            Jsoup.parse(fixture("mikropol-detail-soldout.html"), houseUrl)
-        coEvery { htmlFetcher.fetchDocument(vowwsUrl) } returns
-            Jsoup.parse(fixture("mikropol-detail-cancelled.html"), vowwsUrl)
-        coEvery { htmlFetcher.fetchDocument(cultureWarsUrl) } returns
-            Jsoup.parse(fixture("mikropol-detail-relocated.html"), cultureWarsUrl)
+        stubFetcher(
+            houseUrl to "mikropol/mikropol-detail-soldout.html",
+            vowwsUrl to "mikropol/mikropol-detail-cancelled.html",
+            cultureWarsUrl to "mikropol/mikropol-detail-relocated.html",
+            fetcher = htmlFetcher
+        )
 
         // Every other event's detail page is unavailable, so the importer degrades to overview
         // data (which already carries a real date, so nothing is dropped).
@@ -134,7 +130,7 @@ class MikropolWebsiteImporterTest {
             val overviewHtml = """<html><body><a class="event" href="$freeUrl"><span class="eventname">Große Hip Hop Offensive 17</span></a></body></html>"""
             coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
                 FetchResult.Success(document = Jsoup.parse(overviewHtml, overviewUrl), etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(freeUrl) } returns Jsoup.parse(fixture("mikropol-detail-free.html"), freeUrl)
+            stubFetcher(freeUrl to "mikropol/mikropol-detail-free.html", fetcher = htmlFetcher)
 
             val free = event(importer.importEvents(overviewUrl), "2026-10-05-grosse-hip-hop-offensive-17")
             free.priceBoxOffice shouldBe BigDecimal("0.00")

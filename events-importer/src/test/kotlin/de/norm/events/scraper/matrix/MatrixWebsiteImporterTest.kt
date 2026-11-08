@@ -4,6 +4,8 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -13,7 +15,6 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.IOException
@@ -32,24 +33,12 @@ class MatrixWebsiteImporterTest {
 
     private fun nightUrl(format: String) = "https://www.matrix-berlin.de/de/night/$format"
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/matrix/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     @BeforeEach
     fun setUp() {
         importer = MatrixWebsiteImporter(htmlFetcher)
-        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("matrix-home-de.html", "https://www.matrix-berlin.de/de")
+        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixtureDocument("matrix/matrix-home-de.html", "https://www.matrix-berlin.de/de")
         formats.forEach { format ->
-            coEvery { htmlFetcher.fetchDocument(nightUrl(format)) } returns fixture("matrix-night-$format-de.html", nightUrl(format))
+            stubFetcher(nightUrl(format) to "matrix/matrix-night-$format-de.html", fetcher = htmlFetcher)
         }
     }
 
@@ -89,7 +78,7 @@ class MatrixWebsiteImporterTest {
     fun `importEvents stays complete when a format page shows no next date`() =
         runTest {
             val undated =
-                fixture("matrix-night-icon-de.html", nightUrl("icon")).apply { select(".eyebrow").first()?.text("Bald wieder") }
+                fixtureDocument("matrix/matrix-night-icon-de.html", nightUrl("icon")).apply { select(".eyebrow").first()?.text("Bald wieder") }
             coEvery { htmlFetcher.fetchDocument(nightUrl("icon")) } returns undated
 
             val result = importer.importEvents(entryUrl)

@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -41,14 +42,8 @@ class MigasOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        events = scraper.scrape(Jsoup.parse(fixture(), baseUrl))
+        events = scraper.scrape(fixtureDocument("migas/migas-overview.html", baseUrl))
     }
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/migas/migas-overview.html")!!
-            .bufferedReader()
-            .readText()
 
     private fun event(title: String): ScrapedEvent = events.first { it.title == title }
 

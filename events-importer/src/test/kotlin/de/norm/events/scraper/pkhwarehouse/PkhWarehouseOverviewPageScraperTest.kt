@@ -3,6 +3,7 @@ package de.norm.events.scraper.pkhwarehouse
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -21,12 +22,7 @@ class PkhWarehouseOverviewPageScraperTest {
     private val baseUrl = "https://www.pkh.events/"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/pkhwarehouse/pkhwarehouse-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("pkhwarehouse/pkhwarehouse-overview.html", baseUrl), baseUrl)
     }
 
     private fun night(date: String) = events.single { it.eventDate == LocalDate.parse(date) }

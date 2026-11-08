@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -20,7 +21,7 @@ import java.time.LocalTime
 class OrangerieOverviewPageScraperTest {
     private val scraper = OrangerieOverviewPageScraper()
     private val baseUrl = "https://www.orangerie-nk.de/?lang=de"
-    private val events = scraper.scrape(Jsoup.parse(fixture("orangerie-home.html"), baseUrl), baseUrl)
+    private val events = scraper.scrape(fixtureDocument("orangerie/orangerie-home.html", baseUrl), baseUrl)
 
     @Test
     fun `reads every night in the programme list`() {
@@ -172,10 +173,4 @@ class OrangerieOverviewPageScraperTest {
                 """<body>$cards</body></html>"""
         return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/orangerie/$name")!!
-            .bufferedReader()
-            .readText()
 }

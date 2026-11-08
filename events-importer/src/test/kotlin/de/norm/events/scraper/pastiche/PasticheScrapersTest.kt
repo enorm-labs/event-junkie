@@ -3,6 +3,8 @@ package de.norm.events.scraper.pastiche
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -21,7 +23,7 @@ class PasticheScrapersTest {
     private val sourceUrl = "https://pasticheinternational.com/programme-1"
     private val ramziUrl = "https://pasticheinternational.com/ramzi-i-live-i-22-10"
 
-    private val events by lazy { scrape(fixture("pastiche-programme.html")) }
+    private val events by lazy { scrape(fixtureText("pastiche/pastiche-programme.html")) }
 
     @Test
     fun `reads the month's nights and drops the workshop and the record fair`() {
@@ -133,7 +135,7 @@ class PasticheScrapersTest {
     @Test
     fun `adds the poster and the full text from the event page`() {
         val enriched =
-            PasticheEventPageScraper().enrich(listing(), Jsoup.parse(fixture("pastiche-ramzi.html"), ramziUrl)) ?: error("no enrichment")
+            PasticheEventPageScraper().enrich(listing(), fixtureDocument("pastiche/pastiche-ramzi.html", ramziUrl)) ?: error("no enrichment")
 
         enriched.imageUrl shouldBe "https://freight.cargo.site/w/1200/i/M3166503320842509328530710884728/RAMZi-digi-3.jpeg"
         val description = enriched.description ?: error("no description")
@@ -207,10 +209,4 @@ class PasticheScrapersTest {
         at: String = "2026-10-17T10:00:00Z"
     ): List<ScrapedEvent> =
         PasticheProgrammePageScraper(Clock.fixed(Instant.parse(at), ZoneId.of("Europe/Berlin"))).scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/pastiche/$name")!!
-            .bufferedReader()
-            .readText()
 }

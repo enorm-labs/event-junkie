@@ -1,6 +1,7 @@
 package de.norm.events.scraper.orania
 
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -13,17 +14,7 @@ class OraniaDetailPageScraperTest {
     private val scraper = OraniaDetailPageScraper()
     private val url = "https://orania.berlin/oraniaconcerts/event/event/matti-klein-tayfun-schulzke-20261002"
 
-    private fun scrape() =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/orania/orania-detail.html")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            ),
-            url
-        )
+    private fun scrape() = scraper.scrape(fixtureDocument("orania/orania-detail.html", url), url)
 
     @Test
     fun `reads the biography without the teaser the listing already carries`() {

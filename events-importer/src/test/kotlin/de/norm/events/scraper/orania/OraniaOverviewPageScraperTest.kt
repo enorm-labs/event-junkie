@@ -2,6 +2,7 @@ package de.norm.events.scraper.orania
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
@@ -17,16 +18,7 @@ class OraniaOverviewPageScraperTest {
     private fun scrape(
         name: String,
         url: String = "https://orania.berlin/concerts"
-    ) = scraper.scrape(
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/orania/$name")!!
-                .bufferedReader()
-                .readText(),
-            url
-        ),
-        url
-    )
+    ) = scraper.scrape(fixtureDocument("orania/$name", url), url)
 
     @Test
     fun `reads the ten concerts of the first page`() {

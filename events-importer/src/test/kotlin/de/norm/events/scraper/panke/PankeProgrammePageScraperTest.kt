@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -31,12 +32,7 @@ class PankeProgrammePageScraperTest {
     private val sourceUrl = "https://www.pankeculture.com/programme/"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/panke/panke-programme.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
+        scraper.scrape(fixtureDocument("panke/panke-programme.html", sourceUrl), sourceUrl)
     }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }

@@ -3,13 +3,13 @@ package de.norm.events.scraper.mbia
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalTime
@@ -18,17 +18,7 @@ class MbiaOverviewPageScraperTest {
     private val scraper = MbiaOverviewPageScraper()
     private val baseUrl = "https://www.m-bia.de/veranstaltungen"
 
-    private fun scrape(fixture: String) =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/mbia/$fixture")!!
-                    .bufferedReader()
-                    .readText(),
-                baseUrl
-            ),
-            baseUrl
-        )
+    private fun scrape(fixture: String) = scraper.scrape(fixtureDocument("mbia/$fixture", baseUrl), baseUrl)
 
     private val events by lazy { scrape("mbia-veranstaltungen.html").associateBy { it.title } }
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.monsterronsons
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -25,12 +26,7 @@ class MonsterRonsonsDetailPageScraperTest {
 
     private fun scrape(fixture: String): MonsterRonsonsNightDetail? {
         val url = "https://www.karaokemonster.de/posts/$fixture"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/monsterronsons/monsterronsons-detail-$fixture.html")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
+        return scraper.scrape(fixtureDocument("monsterronsons/monsterronsons-detail-$fixture.html", url), url)
     }
 
     @Test

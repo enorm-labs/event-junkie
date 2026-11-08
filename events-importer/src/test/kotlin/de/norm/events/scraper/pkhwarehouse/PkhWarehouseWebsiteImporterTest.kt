@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -24,18 +25,12 @@ class PkhWarehouseWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://www.pkh.events/"
 
-    private fun fixture() =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/pkhwarehouse/pkhwarehouse-overview.html")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = PkhWarehouseWebsiteImporter(htmlFetcher, Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), BERLIN))
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture(), sourceUrl),
+                document = fixtureDocument("pkhwarehouse/pkhwarehouse-overview.html", sourceUrl),
                 etag = null,
                 lastModified = "Fri, 09 Oct 2026 10:22:43 GMT"
             )

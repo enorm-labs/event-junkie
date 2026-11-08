@@ -1,16 +1,16 @@
 package de.norm.events.scraper.mehringhof
 
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -21,24 +21,15 @@ class MehringhofWebsiteImporterTest {
     private val november = "https://www.mehringhoftheater.de/programm/november-2026/"
     private val december = "https://www.mehringhoftheater.de/programm/dezember-2026/"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/mehringhof/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(document = loadDocument("mehringhof-programm.html", sourceUrl), etag = null, lastModified = null)
-        coEvery { htmlFetcher.fetchDocument(november) } returns loadDocument("mehringhof-programm-november.html", november)
-        coEvery { htmlFetcher.fetchDocument(december) } returns loadDocument("mehringhof-programm-dezember.html", december)
-        coEvery { htmlFetcher.fetchDocument(match { "/produkte/" in it }) } answers { loadDocument("mehringhof-ticket.html", firstArg()) }
+        stubFetcher(
+            sourceUrl to "mehringhof/mehringhof-programm.html",
+            november to "mehringhof/mehringhof-programm-november.html",
+            december to "mehringhof/mehringhof-programm-dezember.html",
+            fetcher = htmlFetcher
+        )
+        coEvery { htmlFetcher.fetchDocument(match { "/produkte/" in it }) } answers { fixtureDocument("mehringhof/mehringhof-ticket.html", firstArg()) }
     }
 
     @Test

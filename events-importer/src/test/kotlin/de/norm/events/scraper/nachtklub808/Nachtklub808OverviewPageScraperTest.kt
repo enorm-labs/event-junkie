@@ -1,6 +1,7 @@
 package de.norm.events.scraper.nachtklub808
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
@@ -10,7 +11,7 @@ import java.time.LocalTime
 
 class Nachtklub808OverviewPageScraperTest {
     private val baseUrl = "https://808.berlin/"
-    private val events = Nachtklub808OverviewPageScraper().scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
+    private val events = Nachtklub808OverviewPageScraper().scrape(fixtureDocument("nachtklub808/nachtklub808-overview.html", baseUrl), baseUrl)
 
     @Test
     fun `reads every night from the EventList island, dated in Berlin`() {
@@ -44,10 +45,4 @@ class Nachtklub808OverviewPageScraperTest {
     fun `yields nothing for a page without the island`() {
         Nachtklub808OverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/nachtklub808/nachtklub808-overview.html")!!
-            .bufferedReader()
-            .readText()
 }

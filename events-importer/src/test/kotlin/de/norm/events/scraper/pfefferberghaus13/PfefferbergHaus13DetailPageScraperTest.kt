@@ -3,6 +3,7 @@ package de.norm.events.scraper.pfefferberghaus13
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
@@ -19,7 +20,7 @@ class PfefferbergHaus13DetailPageScraperTest {
         fixture: String,
         slug: String
     ) = "https://haus13.pfefferwerk.de/event/$slug/".let { url ->
-        scraper.scrape(Jsoup.parse(read("pfefferberghaus13-event-$fixture.html"), url), url)!!
+        scraper.scrape(fixtureDocument("pfefferberghaus13/pfefferberghaus13-event-$fixture.html", url), url)!!
     }
 
     @Test
@@ -113,10 +114,4 @@ class PfefferbergHaus13DetailPageScraperTest {
                 "https://haus13.pfefferwerk.de/event/x/"
             ).shouldBeNull()
     }
-
-    private fun read(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/pfefferberghaus13/$name")!!
-            .bufferedReader()
-            .readText()
 }

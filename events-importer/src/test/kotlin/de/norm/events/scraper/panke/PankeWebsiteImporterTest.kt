@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -27,18 +28,12 @@ class PankeWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://www.pankeculture.com/programme/"
 
-    private fun readFixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/panke/panke-programme.html")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = PankeWebsiteImporter(htmlFetcher)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture(), sourceUrl),
+                document = fixtureDocument("panke/panke-programme.html", sourceUrl),
                 etag = "\"panke-etag\"",
                 lastModified = "Mon, 03 Aug 2026 09:00:00 GMT"
             )

@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -39,19 +41,13 @@ class MetropolWebsiteImporterTest {
             "2026-11-21-frank-martini-party-of-the-century" to "frank-martini-party"
         )
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/metropol/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = MetropolWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("metropol-overview.html"), sourceUrl),
+                document = fixtureDocument("metropol/metropol-overview.html", sourceUrl),
                 etag = "\"abc123\"",
                 lastModified = "Sat, 01 Aug 2026 10:00:00 GMT"
             )
@@ -59,9 +55,7 @@ class MetropolWebsiteImporterTest {
         // Unstubbed detail pages fail, so most events fall back to their overview data.
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
         detailFixtures.forEach { (slug, fixture) ->
-            val detailUrl = "https://metropol-berlin.de/event/$slug"
-            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
-                Jsoup.parse(readFixture("metropol-detail-$fixture.html"), detailUrl)
+            stubFetcher("https://metropol-berlin.de/event/$slug" to "metropol/metropol-detail-$fixture.html", fetcher = htmlFetcher)
         }
     }
 

@@ -1,28 +1,21 @@
 package de.norm.events.scraper.olympiastadion
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
 import java.time.LocalTime
 
 class OlympiastadionDetailPageScraperTest {
     private val scraper = OlympiastadionDetailPageScraper()
 
-    private fun page(name: String): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/olympiastadion/$name")!!
-                .bufferedReader()
-                .readText(),
-            "https://olympiastadion.berlin/events/x/"
-        )
+    private val pageUrl = "https://olympiastadion.berlin/events/x/"
 
     @Test
     fun `reads a concert page whose start is not set yet`() {
-        val detail = scraper.scrape(page("olympiastadion-detail-concert.html"))
+        val detail = scraper.scrape(fixtureDocument("olympiastadion/olympiastadion-detail-concert.html", pageUrl))
         detail.sport shouldBe false
         detail.startTime.shouldBeNull()
         detail.doorsTime.shouldBeNull()
@@ -33,13 +26,13 @@ class OlympiastadionDetailPageScraperTest {
 
     @Test
     fun `files a national-team match as sport by its kick-off and league`() {
-        val detail = scraper.scrape(page("olympiastadion-detail-match.html"))
+        val detail = scraper.scrape(fixtureDocument("olympiastadion/olympiastadion-detail-match.html", pageUrl))
         detail.sport shouldBe true
     }
 
     @Test
     fun `files a run as sport by its kind heading`() {
-        val detail = scraper.scrape(page("olympiastadion-detail-run.html"))
+        val detail = scraper.scrape(fixtureDocument("olympiastadion/olympiastadion-detail-run.html", pageUrl))
         detail.sport shouldBe true
         detail.startTime shouldBe LocalTime.of(9, 30)
     }

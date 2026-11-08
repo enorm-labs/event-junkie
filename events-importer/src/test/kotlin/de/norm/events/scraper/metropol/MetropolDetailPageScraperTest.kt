@@ -3,6 +3,7 @@ package de.norm.events.scraper.metropol
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -25,13 +26,8 @@ class MetropolDetailPageScraperTest {
         fixture: String,
         slug: String
     ): ScrapedEvent {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/metropol/metropol-detail-$fixture.html")!!
-                .bufferedReader()
-                .readText()
         val sourceUrl = "https://metropol-berlin.de/event/$slug"
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+        return scraper.scrape(fixtureDocument("metropol/metropol-detail-$fixture.html", sourceUrl), sourceUrl)!!
     }
 
     @Test

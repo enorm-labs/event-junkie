@@ -1,6 +1,7 @@
 package de.norm.events.scraper.orwohaus
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -22,14 +23,7 @@ class OrwohausCalendarScraperTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-16T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val scraper = OrwohausCalendarScraper(clock)
 
-    private val events: List<ScrapedEvent> by lazy {
-        scraper.scrape(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/orwohaus/orwohaus-events.ics")!!
-                .bufferedReader()
-                .readText()
-        )
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureText("orwohaus/orwohaus-events.ics")) }
 
     private fun event(slug: String) = events.single { it.sourceId == "orwohaus:$slug" }
 

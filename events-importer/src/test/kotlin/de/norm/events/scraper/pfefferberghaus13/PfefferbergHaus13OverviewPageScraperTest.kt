@@ -1,6 +1,7 @@
 package de.norm.events.scraper.pfefferberghaus13
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
@@ -15,7 +16,7 @@ class PfefferbergHaus13OverviewPageScraperTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-08T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val scraper = PfefferbergHaus13OverviewPageScraper(clock)
     private val listingUrl = "https://haus13.pfefferwerk.de/veranstaltungen/"
-    private val events = scraper.scrape(Jsoup.parse(fixture("pfefferberghaus13-overview.html"), listingUrl), listingUrl)
+    private val events = scraper.scrape(fixtureDocument("pfefferberghaus13/pfefferberghaus13-overview.html", listingUrl), listingUrl)
 
     private fun titled(prefix: String) = events.first { it.title.startsWith(prefix) }
 
@@ -43,7 +44,7 @@ class PfefferbergHaus13OverviewPageScraperTest {
     @Test
     fun `bills acts only from a title that frames them`() {
         val page2Url = "https://haus13.pfefferwerk.de/veranstaltungen/page/2/"
-        val page2 = scraper.scrape(Jsoup.parse(fixture("pfefferberghaus13-overview-page2.html"), page2Url), page2Url)
+        val page2 = scraper.scrape(fixtureDocument("pfefferberghaus13/pfefferberghaus13-overview-page2.html", page2Url), page2Url)
 
         page2.first { it.title.startsWith("Soul Night") }.artists.map { it.name } shouldBe listOf("Montigo Rim", "Hiddit")
         titled("Resonanzen").artists.shouldBeEmpty()
@@ -54,7 +55,7 @@ class PfefferbergHaus13OverviewPageScraperTest {
     fun `dates a multi-day row by its first day and ends it on its last`() {
         val liveClock = Clock.fixed(Instant.parse("2026-11-07T10:00:00Z"), ZoneId.of("Europe/Berlin"))
         val live = PfefferbergHaus13OverviewPageScraper(liveClock)
-        val rows = live.scrape(Jsoup.parse(fixture("pfefferberghaus13-overview-multi-day.html"), listingUrl), listingUrl)
+        val rows = live.scrape(fixtureDocument("pfefferberghaus13/pfefferberghaus13-overview-multi-day.html", listingUrl), listingUrl)
 
         rows.size shouldBe 5
         val salsa = rows.first { it.title.startsWith("¡VAMOS A BAILAR!") }
@@ -89,10 +90,4 @@ class PfefferbergHaus13OverviewPageScraperTest {
     fun `yields nothing for a page without rows`() {
         scraper.scrape(Jsoup.parse("<html><body></body></html>", listingUrl), listingUrl).shouldBeEmpty()
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/pfefferberghaus13/$name")!!
-            .bufferedReader()
-            .readText()
 }

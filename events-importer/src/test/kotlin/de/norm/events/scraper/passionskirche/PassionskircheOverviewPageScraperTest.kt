@@ -2,6 +2,7 @@ package de.norm.events.scraper.passionskirche
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -17,7 +18,7 @@ import java.time.ZoneId
 class PassionskircheOverviewPageScraperTest {
     private val baseUrl = "https://www.halle-luja.berlin/kommende-events"
     private val clock = Clock.fixed(Instant.parse("2026-10-17T10:00:00Z"), ZoneId.of("Europe/Berlin"))
-    private val events = scrape(fixture("passionskirche-overview.html"))
+    private val events = scrape(fixtureText("passionskirche/passionskirche-overview.html"))
 
     private fun scrape(html: String) = PassionskircheOverviewPageScraper(clock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
@@ -92,10 +93,4 @@ class PassionskircheOverviewPageScraperTest {
         isOutOfScope("The High Kings am 16.11.2026 um 20.00 Uhr", "Irlands führende Folk-Gruppe") shouldBe false
         isOutOfScope("SingAlong – Das große Mitsing-Konzert am 12.12.2026 um 20.00 Uhr", "Ein Sing-along mit Band") shouldBe false
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/passionskirche/$name")!!
-            .bufferedReader()
-            .readText()
 }

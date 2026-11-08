@@ -5,6 +5,7 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -27,11 +28,7 @@ class PandaPlatformaWebsiteImporterTest {
 
     @BeforeEach
     fun setUp() {
-        coEvery { apiClient.fetchJson(firstPageUrl) } returns
-            javaClass.classLoader
-                .getResourceAsStream("scraper/pandaplatforma/pandaplatforma-events.json")!!
-                .bufferedReader()
-                .readText()
+        coEvery { apiClient.fetchJson(firstPageUrl) } returns fixtureText("pandaplatforma/pandaplatforma-events.json")
     }
 
     @Test

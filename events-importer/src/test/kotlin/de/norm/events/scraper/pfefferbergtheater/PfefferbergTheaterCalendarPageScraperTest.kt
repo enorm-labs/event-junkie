@@ -2,6 +2,7 @@ package de.norm.events.scraper.pfefferbergtheater
 
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.forChildrenPhrase
 import de.norm.events.scraper.isForChildren
 import io.kotest.assertions.withClue
@@ -11,7 +12,6 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalTime
@@ -21,31 +21,13 @@ class PfefferbergTheaterCalendarPageScraperTest {
     private val url = "https://pfefferberg-theater.de/spielplan/kalender/"
 
     private val events by lazy {
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/pfefferbergtheater/pfefferbergtheater-calendar.html")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            ),
-            url
-        )
+        scraper.scrape(fixtureDocument("pfefferbergtheater/pfefferbergtheater-calendar.html", url), url)
     }
 
     private val maerchenUrl = "https://pfefferberg-theater.de/spielplan/maerchenimglaspalast26_27/"
 
     private val maerchen by lazy {
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/pfefferbergtheater/pfefferbergtheater-maerchen.html")!!
-                    .bufferedReader()
-                    .readText(),
-                maerchenUrl
-            ),
-            maerchenUrl
-        )
+        scraper.scrape(fixtureDocument("pfefferbergtheater/pfefferbergtheater-maerchen.html", maerchenUrl), maerchenUrl)
     }
 
     private fun event(sourceId: String) = events.single { it.sourceId == "pfefferberg_theater:$sourceId" }

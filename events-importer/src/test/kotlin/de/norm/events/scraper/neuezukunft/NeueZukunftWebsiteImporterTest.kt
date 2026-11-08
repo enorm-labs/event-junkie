@@ -4,6 +4,7 @@ import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -34,16 +35,10 @@ class NeueZukunftWebsiteImporterTest {
     private val clock: Clock = Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay(berlin).toInstant(), berlin)
     private val bootUrl = "https://core.service.elfsight.com/p/boot/?w=e767cbbe-0026-4173-a511-5aaa105ed563"
 
-    private val fixtureJson: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/neuezukunft/neuezukunft-api.json")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = NeueZukunftWebsiteImporter(apiClient, clock)
-        coEvery { apiClient.fetchJson(any()) } returns fixtureJson
+        coEvery { apiClient.fetchJson(any()) } returns fixtureText("neuezukunft/neuezukunft-api.json")
     }
 
     @Test
@@ -59,7 +54,7 @@ class NeueZukunftWebsiteImporterTest {
     fun `importEvents fetches the configured boot URL verbatim`() =
         runTest {
             val requestUrl = slot<String>()
-            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureJson
+            coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText("neuezukunft/neuezukunft-api.json")
 
             importer.importEvents(bootUrl)
 

@@ -6,6 +6,7 @@ import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -24,12 +25,7 @@ class MinimalBarOverviewPageScraperTest {
     private val baseUrl = "https://minimal.berlin/dates/"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/minimalbar/minimalbar-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("minimalbar/minimalbar-overview.html", baseUrl), baseUrl)
     }
 
     private fun night(date: String) = events.single { it.eventDate == LocalDate.parse(date) }

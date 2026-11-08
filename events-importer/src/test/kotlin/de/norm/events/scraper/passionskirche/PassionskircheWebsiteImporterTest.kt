@@ -6,6 +6,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -33,10 +35,10 @@ class PassionskircheWebsiteImporterTest {
     fun `lets the event page own the date and times and flags the pages that fail`() =
         runTest {
             coEvery { htmlFetcher.fetch(url, any(), any()) } returns
-                FetchResult.Success(document = document("passionskirche-overview.html", url), etag = "\"p1\"", lastModified = null)
+                FetchResult.Success(document = fixtureDocument("passionskirche/passionskirche-overview.html", url), etag = "\"p1\"", lastModified = null)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, site)
             for (slug in listOf("wintertales-from-around-the-world", "everytime-we-touch-tour-2026", "the-dublin-legends")) {
-                coEvery { htmlFetcher.fetchDocument("$site/$slug") } returns document("passionskirche-event-$slug.html", "$site/$slug")
+                stubFetcher("$site/$slug" to "passionskirche/passionskirche-event-$slug.html", fetcher = htmlFetcher)
             }
 
             val result = importer.importEvents(url)
@@ -81,15 +83,4 @@ class PassionskircheWebsiteImporterTest {
         importer.listsWholeProgramme shouldBe true
         importer.fetchesBeyondEntryPage shouldBe true
     }
-
-    private fun document(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/passionskirche/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
 }
