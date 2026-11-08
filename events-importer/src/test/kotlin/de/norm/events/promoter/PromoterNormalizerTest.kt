@@ -424,6 +424,18 @@ class PromoterNormalizerTest {
         }
     }
 
+    // #4733: a misspelt and a shortened Schokoladen credit each keyed a second promoter.
+    @Test
+    fun `folds punkfimfest and psychberg onto the promoters they name`() {
+        assertSoftly {
+            canonicalPromoterName("punkfimfest") shouldBe "punkfilmfest berlin"
+            canonicalPromoterName("Psychberg") shouldBe "psychberg affairs"
+            canonicalPromoterName("psychberg affairs") shouldBe "psychberg affairs"
+            SlugGenerator.slugify(canonicalPromoterName("punkfimfest")) shouldBe "punkfilmfest-berlin"
+            SlugGenerator.slugify(canonicalPromoterName("psychberg")) shouldBe "psychberg-affairs"
+        }
+    }
+
     // #3577: the strip leaves one word that reads as a verb, so the name is pinned whole.
     @Test
     fun `keeps Join Live Events whole and restores the row the strip had reduced`() {
