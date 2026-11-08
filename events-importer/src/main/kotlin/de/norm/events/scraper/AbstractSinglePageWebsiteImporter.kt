@@ -7,9 +7,9 @@ import org.jsoup.nodes.Document
  * Base class for a venue whose whole programme is one listing: fetch it conditionally, parse it
  * with [scrape], return the events with the page's validators. The one-page counterpart of
  * [AbstractTwoPageWebsiteImporter]. A listing paged by a next link sets [maxListingPages] and
- * [nextListingPage]; rows that share one page per production set [sharedPages]; a venue that reads
- * one more page for the whole listing does it in [afterListing]. A venue that needs any other fetch
- * implements [EventImporter] directly.
+ * [nextListingPage]; rows that share one page per production set [sharedPages]; an event page that
+ * can drop its row sets [eventPageReader]; a venue that reads one more page for the whole listing
+ * does it in [afterListing]. A venue that needs any other fetch implements [EventImporter] directly.
  *
  * [venueName] is how the log line names the source, kept as each venue wrote it.
  */
@@ -28,7 +28,13 @@ abstract class AbstractSinglePageWebsiteImporter(
      */
     protected open val enrichFromEventPage: ((ScrapedEvent, Document) -> ScrapedEvent?)? = null
 
-    /** Whether [event] links a page of its own rather than the listing; [enrichFromEventPage] reads only those. */
+    /**
+     * In place of [enrichFromEventPage], for a venue whose event page can also drop its row, as a page that
+     * files the event as sport does. Read with the same retry, flag and second language.
+     */
+    protected open val eventPageReader: EventPageReader<*>? = null
+
+    /** Whether [event] links a page of its own rather than the listing; the event-page read takes only those. */
     protected open fun hasEventPage(event: ScrapedEvent): Boolean = true
 
     /** The fields a good run takes from the event page over the listing's, see [withEventPageOrFlagged]. */
@@ -70,6 +76,9 @@ abstract class AbstractSinglePageWebsiteImporter(
     /** Logged with the listing's event count; null for a venue that logs its own line in [afterListing]. */
     protected open val listedLine: ((Int) -> String)? = { count -> "Scraped $count event(s) from $venueName" }
 
+    /** Logged at the end with the events kept and the listing's count, for a venue whose event pages drop rows; null logs nothing. */
+    protected open val doneLine: ((kept: Int, listed: Int) -> String)? = null
+
     /** A runaway guard on [nextListingPage]; 1 reads the entry page alone. */
     protected open val maxListingPages: Int = 1
 
@@ -81,7 +90,7 @@ abstract class AbstractSinglePageWebsiteImporter(
 
     /** A run that reads event pages or later listing pages cannot be skipped on the entry page's validators. */
     override val fetchesBeyondEntryPage: Boolean
-        get() = enrichFromEventPage != null || sharedPages != null || maxListingPages > 1 || secondLanguage != null
+        get() = enrichFromEventPage != null || eventPageReader != null || sharedPages != null || maxListingPages > 1 || secondLanguage != null
 
     final override suspend fun importEvents(
         url: String,
@@ -95,13 +104,16 @@ abstract class AbstractSinglePageWebsiteImporter(
                 listedLine = listedLine,
                 afterListing = ::afterListing,
                 secondLanguageListing = secondLanguage,
-                eventPages = enrichFromEventPage?.let { HtmlImport.EventPages.Enrich(it, ::hasEventPage, eventPageOwns, eventPageSecondLanguage) },
-                sharedPages = sharedPages
+                eventPages = eventPageRead()?.let { HtmlImport.EventPages.Enrich(it, ::hasEventPage, eventPageOwns, eventPageSecondLanguage) },
+                sharedPages = sharedPages,
+                doneLine = doneLine?.let { line -> { events, listing -> line(events.size, listing.events.size) } }
             ),
             url,
             etag,
             lastModified
         )
+
+    private fun eventPageRead(): EventPageReader<*>? = eventPageReader ?: enrichFromEventPage?.let { EventPageReader.enriching(it) }
 
     private suspend fun readListing(
         document: Document,

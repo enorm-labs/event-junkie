@@ -50,7 +50,7 @@ SO36,
   Events Calendar: extend `AbstractTecImporter`. A WordPress REST collection: extend `AbstractWpRestImporter`, which pages it with `walkWpRestPages`, never one page of 100. Single-page HTML:
   extend `AbstractSinglePageWebsiteImporter(htmlFetcher, "<Venue>", <Venue>OverviewPageScraper()::scrape)`, which owns the conditional fetch and the
   `NotModified` case; a listing paged by a next link overrides `maxListingPages` and `nextListingPage`, and an entry page that only links month pages
-  extends `AbstractMonthPagesWebsiteImporter`. A loop over pages that keeps the others when one fails uses `readEach`; to add fields from each event's own page, override `enrichFromEventPage` with a parser. **Never fetch an event page
+  extends `AbstractMonthPagesWebsiteImporter`. A loop over pages that keeps the others when one fails uses `readEach`; to add fields from each event's own page, override `enrichFromEventPage` with a parser, or `eventPageReader` when the page can also drop the row. **Never fetch an event page
   yourself**: the hook, or `withEventPageOrFlagged` in an importer that implements `EventImporter` directly, owns the catch, the `WARN` and the
   `detailUnavailable` flag that keeps the stored fields when the page fails. A performance listing whose rows share one page per production overrides
   `sharedPages`, which reads each page once through `enrichFromSharedPages` and flags every row of a failed one. All three HTML bases run one `HtmlImportPipeline`, so `cookies`, `sharedPages` and the second-language hooks mean the same on each. List+detail: extend `AbstractTwoPageWebsiteImporter`,

@@ -66,6 +66,32 @@ suspend fun <T : Any> readEventPage(
     }
 
 /**
+ * One event's page read in two steps, for a venue whose page can also drop its row. [parse] reads the
+ * page inside its log context; null flags the row, as [withEventPageOrFlagged] flags it. [resolve]
+ * then runs outside that context, so a venue's own line about the row carries no page URL. It
+ * returns the enriched row, or null to drop it: a page that files the event as out of scope.
+ */
+class EventPageReader<T : Any>(
+    private val parse: (ScrapedEvent, Document) -> T?,
+    private val resolve: (ScrapedEvent, T) -> ScrapedEvent?
+) {
+    internal fun read(
+        event: ScrapedEvent,
+        document: Document
+    ): ReadEventPage? = parse(event, document)?.let { page -> ReadEventPage { resolve(event, page) } }
+
+    internal companion object {
+        /** A page that only enriches: [enrich] null flags the row, and no row is dropped. */
+        fun enriching(enrich: (ScrapedEvent, Document) -> ScrapedEvent?): EventPageReader<ScrapedEvent> = EventPageReader(enrich) { _, enriched -> enriched }
+    }
+}
+
+/** An event page [EventPageReader] has parsed, still to resolve into the row or null. */
+internal fun interface ReadEventPage {
+    fun resolve(): ScrapedEvent?
+}
+
+/**
  * [events] enriched from the pages they share: a performance listing whose rows link one page per
  * production. Each distinct [key] (the page URL by default) is fetched once, through its first row,
  * with [readEventPage]; [apply] copies the page onto every row that shares it. A page that fails or
