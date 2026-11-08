@@ -11,8 +11,9 @@ The upcoming counts come from the public read API (`--site`). The Instagram link
 admin API (`--host`, the `ej.sh` forward); without it the summary leaves those columns out and says so.
 
 `--next` lists the promoters with upcoming events that lack a website or a description, the most events first. It
-skips a row `docs/promoters/REVIEWED.tsv` already settled: a stored website or `none`, a kind that gets no
-description (`junk`, `artist`, `party`, `unverified`), or a note from an earlier scan that found nothing.
+skips a row `docs/promoters/REVIEWED.tsv` already settled: a website or `none`, a description, or a kind that gets no
+description (`junk`, `artist`, `party`, `unverified`). It also skips a row `docs/promoters/SEARCHED.tsv` lists,
+because a search already found nothing or only a doubtful site.
 """
 
 import argparse
@@ -25,6 +26,7 @@ import urllib.request
 
 USER_AGENT = "event-junkie-spike/0.1 ( https://github.com/enorm-labs/event-junkie )"
 REVIEWED = "docs/promoters/REVIEWED.tsv"
+SEARCHED = "docs/promoters/SEARCHED.tsv"
 SITE = "https://event-junkie.de"
 HOST = "http://localhost:28081"
 PAGE_SIZE = 100
@@ -56,17 +58,13 @@ def share(rows, field):
 
 
 def settled(row):
-    """True when a person or an earlier scan already decided this promoter, so a search would repeat it."""
-    if row.get("website"):
-        return True
-    if row.get("kind") in NO_DESCRIPTION_KINDS:
-        return True
-    return "scan" in row.get("note", "") and not row.get("description_de")
+    """True when a person already decided this promoter, so a search would repeat it."""
+    return bool(row.get("website") or row.get("description_de")) or row.get("kind") in NO_DESCRIPTION_KINDS
 
 
-def read_reviewed():
+def read_table(path):
     try:
-        with open(REVIEWED, encoding="utf-8", newline="") as handle:
+        with open(path, encoding="utf-8", newline="") as handle:
             return {r["slug"]: r for r in csv.DictReader(handle, delimiter="\t")}
     except OSError:
         return {}
@@ -111,11 +109,14 @@ def main():
         )
 
     if args.next:
-        reviewed = read_reviewed()
+        reviewed = read_table(REVIEWED)
+        searched = read_table(SEARCHED)
         todo = [
             p
             for p in promoters
-            if not (p.get("websiteUrl") and p.get("description")) and not settled(reviewed.get(p["slug"], {}))
+            if not (p.get("websiteUrl") and p.get("description"))
+            and not settled(reviewed.get(p["slug"], {}))
+            and p["slug"] not in searched
         ]
         print(f"\n{len(todo)} promoters left to research; the next {min(args.next, len(todo))}:")
         print("slug\tname\tupcoming\twebsite\tdescription")

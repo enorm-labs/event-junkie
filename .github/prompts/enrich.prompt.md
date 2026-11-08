@@ -65,9 +65,10 @@ because the default quoting re-quotes every row that holds a `"`. `name` is the 
 - **high** — `website`, and `instagram` when the site links one. Write a description where the site has an About page: one to three sentences in German
   and in English, from that page and the venues our events list. Say what it is, since when, what it books and where in Berlin. End on a fact, not on a
   hedged extra format.
-- **low** — `kind` `unverified`, `note` `<date> scan: nothing found`, so the next run skips it.
+- **low** — a row in `SEARCHED.tsv`, result `nothing`, so the next run skips it. Never a `REVIEWED.tsv` row: that stamps
+  `reviewed_at`, and the import then never copies a venue's credit link onto the promoter (#3027).
 - **other** — its `kind`, and a line for `/artist-cleanup` in the report.
-- **medium** — nothing in the table. A line in the report, for the operator.
+- **medium** — a row in `SEARCHED.tsv`, result `medium`, with the site in `candidate`, and a line in the report for the operator.
 
 A `note` starts with `<date> scan:` and says what decided the row. Then parse the table with the script's own reader: ten columns on every row.
 
