@@ -1,15 +1,13 @@
 package de.norm.events.scraper.hafenbar
 
+import de.norm.events.scraper.AbstractFanOutImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.readEach
 import de.norm.events.scraper.resolveUrl
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -28,26 +26,23 @@ import org.springframework.stereotype.Component
 @Component
 class HafenbarWebsiteImporter(
     private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+) : AbstractFanOutImporter<String>() {
     override val eventSource: EventSource = EventSource.HAFENBAR
-    override val fetchesBeyondEntryPage: Boolean = true
     override val listsWholeProgramme: Boolean = true
+    override val noInputReadMessage: String = "No Hafenbar party page could be read"
 
     private val scraper = HafenbarPartyPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val pages = PARTY_PAGES.map { resolveUrl(url, it) }
-        val read = readEach(pages, { "Failed to read Hafenbar party page $it, skipping" }) { scraper.scrape(htmlFetcher.fetchDocument(it), it) }
-        check(read.complete || read.items.isNotEmpty()) { "No Hafenbar party page could be read" }
-        logger.info { "Scraped ${read.items.size} Hafenbar night(s) from ${pages.size} weekly party page(s)" }
-        return ImportResult.Success(events = read.items, etag = null, lastModified = null, complete = read.complete)
-    }
+    override suspend fun inputs(url: String): List<String> = PARTY_PAGES.map { resolveUrl(url, it) }
+
+    override suspend fun read(input: String): List<ScrapedEvent> = scraper.scrape(htmlFetcher.fetchDocument(input), input)
+
+    override fun failure(input: String): String = "Failed to read Hafenbar party page $input, skipping"
+
+    override fun doneLine(
+        events: Int,
+        inputs: Int
+    ): String = "Scraped $events Hafenbar night(s) from $inputs weekly party page(s)"
 
     private companion object {
         val PARTY_PAGES = listOf("schlager-party-berlin/", "kaptains-club-party-berlin/")
