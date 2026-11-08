@@ -3,6 +3,7 @@ package de.norm.events.scraper.labsaal
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,15 +23,9 @@ class LabsaalWebsiteImporterTest {
     private val listingUrl = "https://labsaal.de/events/"
     private val requestUrl = slot<String>()
 
-    private val fixture: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/labsaal/labsaal-feed.ics")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
-        coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixture
+        coEvery { apiClient.fetchJson(capture(requestUrl)) } returns fixtureText("labsaal/labsaal-feed.ics")
     }
 
     @Test

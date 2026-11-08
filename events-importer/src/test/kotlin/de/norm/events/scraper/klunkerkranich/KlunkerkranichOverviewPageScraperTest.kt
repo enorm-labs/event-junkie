@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
@@ -34,15 +35,9 @@ class KlunkerkranichOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-08-05T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val sourceUrl = "https://klunkerkranich.org/events/"
     private val scraper = KlunkerkranichOverviewPageScraper(clock)
-    private val events = scrape(fixture())
+    private val events = scrape(fixtureText("klunkerkranich/klunkerkranich-overview.html"))
 
     private fun scrape(html: String): List<ScrapedEvent> = scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/klunkerkranich/klunkerkranich-overview.html")!!
-            .bufferedReader()
-            .readText()
 
     private fun on(
         date: LocalDate,
@@ -232,11 +227,7 @@ class KlunkerkranichOverviewPageScraperTest {
     fun `bills a collective and its members as separate acts`() {
         // "…Miz Kiara,In Limbo Audio: Sven Howland & Niklas Gietmann & Nicolai Toma, p.toile": the
         // first member kept the team's name glued to its own (#1137).
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/klunkerkranich/klunkerkranich-overview-collective.html")!!
-                .bufferedReader()
-                .readText()
+        val html = fixtureText("klunkerkranich/klunkerkranich-overview-collective.html")
         val clique = scrape(html).first { it.title.startsWith("CLIQUE BOOKING") }
 
         val names = clique.artists.map { it.name }

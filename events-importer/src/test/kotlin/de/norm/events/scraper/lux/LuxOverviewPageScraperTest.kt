@@ -3,6 +3,7 @@ package de.norm.events.scraper.lux
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -20,14 +21,7 @@ class LuxOverviewPageScraperTest {
     private val scraper = LuxOverviewPageScraper(clock)
     private val baseUrl = "https://www.lux-berlin.net/"
 
-    private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/lux/lux-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("lux/lux-overview.html", baseUrl), baseUrl) }
 
     private fun night(date: String) = events.single { it.eventDate == LocalDate.parse(date) }
 

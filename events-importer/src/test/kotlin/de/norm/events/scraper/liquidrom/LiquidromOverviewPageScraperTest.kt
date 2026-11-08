@@ -2,6 +2,7 @@ package de.norm.events.scraper.liquidrom
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -21,13 +22,9 @@ class LiquidromOverviewPageScraperTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-26T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val scraper = LiquidromOverviewPageScraper(clock)
 
-    private val html: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/liquidrom/liquidrom-overview.html")!!
-            .bufferedReader()
-            .readText()
+    private val overviewHtml = "liquidrom/liquidrom-overview.html"
 
-    private val events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+    private val events = scraper.scrape(fixtureDocument(overviewHtml, baseUrl), baseUrl)
     private val sessions = events.filter { it.eventType == EventType.PARTY.name }
     private val specials = events.filter { it.eventType == EventType.SHOW.name }
 
@@ -92,7 +89,7 @@ class LiquidromOverviewPageScraperTest {
     fun `scrape drops a past night`() {
         val later = Clock.fixed(Instant.parse("2026-11-20T10:00:00Z"), ZoneId.of("Europe/Berlin"))
 
-        val upcoming = LiquidromOverviewPageScraper(later).scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        val upcoming = LiquidromOverviewPageScraper(later).scrape(fixtureDocument(overviewHtml, baseUrl), baseUrl)
 
         upcoming.none { it.eventDate < LocalDate.of(2026, 11, 20) } shouldBe true
         upcoming.none { it.title == "Ballet Sur_real" } shouldBe true

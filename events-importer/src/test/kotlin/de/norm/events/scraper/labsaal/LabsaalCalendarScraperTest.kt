@@ -1,6 +1,7 @@
 package de.norm.events.scraper.labsaal
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.forChildrenPhrase
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -18,14 +19,7 @@ import java.time.LocalTime
 class LabsaalCalendarScraperTest {
     private val scraper = LabsaalCalendarScraper()
 
-    private val events: List<ScrapedEvent> by lazy {
-        scraper.scrape(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/labsaal/labsaal-feed.ics")!!
-                .bufferedReader()
-                .readText()
-        )
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureText("labsaal/labsaal-feed.ics")) }
 
     private fun event(slug: String) = events.single { it.sourceId == "labsaal:$slug" }
 

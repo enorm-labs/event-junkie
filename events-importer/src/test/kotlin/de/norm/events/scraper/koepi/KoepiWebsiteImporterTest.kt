@@ -3,6 +3,7 @@ package de.norm.events.scraper.koepi
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -19,16 +20,12 @@ class KoepiWebsiteImporterTest {
     private val importer = KoepiWebsiteImporter(apiClient)
     private val url = "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=13&limit=500"
 
-    private val fixtureJson: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/radar/radar-group-koepi.json")!!
-            .bufferedReader()
-            .readText()
+    private val radarJson = "radar/radar-group-koepi.json"
 
     @Test
     fun `imports the concerts with the bill read from each description`() =
         runTest {
-            coEvery { apiClient.fetchJson(url) } returns fixtureJson
+            coEvery { apiClient.fetchJson(url) } returns fixtureText(radarJson)
 
             val result = importer.importEvents(url)
 
@@ -47,7 +44,7 @@ class KoepiWebsiteImporterTest {
     @Test
     fun `marks a page the limit cut short as incomplete`() =
         runTest {
-            val cut = fixtureJson.replace("\"count\":26", "\"count\":40")
+            val cut = fixtureText(radarJson).replace("\"count\":26", "\"count\":40")
             coEvery { apiClient.fetchJson(url) } returns cut
 
             val result = importer.importEvents(url)

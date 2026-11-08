@@ -3,6 +3,7 @@ package de.norm.events.scraper.madmonkeyroom
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,14 +19,7 @@ class MadMonkeyRoomShopPageScraperTest {
     private val baseUrl = "https://t.rausgegangen.de/tickets/shop/mad-monkey-2"
     private val scraper = MadMonkeyRoomShopPageScraper()
 
-    private val events by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/madmonkeyroom/madmonkeyroom-shop.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private val events by lazy { scraper.scrape(fixtureDocument("madmonkeyroom/madmonkeyroom-shop.html", baseUrl), baseUrl) }
 
     @Test
     fun `reads every dated show at the club`() {

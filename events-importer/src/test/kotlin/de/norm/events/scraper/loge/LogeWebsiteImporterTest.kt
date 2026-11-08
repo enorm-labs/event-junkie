@@ -6,6 +6,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -34,27 +36,22 @@ class LogeWebsiteImporterTest {
     private val estamoeUrl = "https://www.loge-berlin.org/event-details/estamoe-daloy-furie"
     private val kaOhUrl = "https://www.loge-berlin.org/event-details/ka-oh-zweikant"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/loge/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = LogeWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("loge-overview.html"), sourceUrl),
+                document = fixtureDocument("loge/loge-overview.html", sourceUrl),
                 etag = "\"loge-etag\"",
                 lastModified = "Fri, 26 Jun 2026 09:48:03 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(estamoeUrl) } returns
-            Jsoup.parse(fixture("loge-detail-estamoe.html"), estamoeUrl)
-        coEvery { htmlFetcher.fetchDocument(kaOhUrl) } returns
-            Jsoup.parse(fixture("loge-detail-cancelled.html"), kaOhUrl)
+        stubFetcher(
+            estamoeUrl to "loge/loge-detail-estamoe.html",
+            kaOhUrl to "loge/loge-detail-cancelled.html",
+            fetcher = htmlFetcher
+        )
 
         // Every other detail page: return a JSON-LD-less document so the importer
         // degrades to overview data for that event.

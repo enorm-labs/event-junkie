@@ -1,5 +1,6 @@
 package de.norm.events.scraper.klunkerkranich
 
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.splitBilingualDescription
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -29,18 +30,11 @@ class KlunkerkranichDetailPageScraperTest {
     private val rangeTitle = "HMWL x KLUNKERKRANICH w. Lex Ludlow, Kaldera, Martin Brodin, Alex Esser, Jesper Aubin, Raj Shindi"
     private val singleTitle = "LA MAISON x KLUNKERKRANICH"
 
-    private fun page(name: String): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/klunkerkranich/$name")!!
-                .bufferedReader()
-                .readText(),
-            "https://klunkerkranich.org/events/x/"
-        )
+    private val pageUrl = "https://klunkerkranich.org/events/x/"
 
-    private fun rangePage(): Document = page("klunkerkranich-detail-price-range.html")
+    private fun rangePage(): Document = fixtureDocument("klunkerkranich/klunkerkranich-detail-price-range.html", pageUrl)
 
-    private fun singlePage(): Document = page("klunkerkranich-detail-single-price.html")
+    private fun singlePage(): Document = fixtureDocument("klunkerkranich/klunkerkranich-detail-single-price.html", pageUrl)
 
     @Test
     fun `keeps the blurb and drops the schedule preamble, room labels and footer`() {

@@ -3,6 +3,7 @@ package de.norm.events.scraper.lido
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -28,12 +29,7 @@ class LidoOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/lido/lido-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("lido/lido-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(titleFragment: String): ScrapedEvent = events.first { it.title.contains(titleFragment, ignoreCase = true) }
@@ -258,12 +254,7 @@ class LidoOverviewPageScraperTest {
 
     @Test
     fun `stores the subtitle without the sold-out banner below it`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/lido/lido-overview-sold-out-notice.html")!!
-                .bufferedReader()
-                .readText()
-        val kayla = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        val kayla = scraper.scrape(fixtureDocument("lido/lido-overview-sold-out-notice.html", baseUrl), baseUrl).single()
 
         kayla.subtitle shouldBe "„Sad Girl Summer TOUR 2026\" + Support: DANI LIA"
         kayla.soldOut shouldBe true

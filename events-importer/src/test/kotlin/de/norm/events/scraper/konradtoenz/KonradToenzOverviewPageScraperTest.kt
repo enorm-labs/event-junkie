@@ -2,6 +2,7 @@ package de.norm.events.scraper.konradtoenz
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -17,14 +18,7 @@ class KonradToenzOverviewPageScraperTest {
     private val scraper = KonradToenzOverviewPageScraper()
     private val baseUrl = "http://www.konradtoenzbar.de/"
 
-    private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/konradtoenz/konradtoenz-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("konradtoenz/konradtoenz-overview.html", baseUrl), baseUrl) }
 
     private fun night(date: String) = events.single { it.eventDate == LocalDate.parse(date) }
 

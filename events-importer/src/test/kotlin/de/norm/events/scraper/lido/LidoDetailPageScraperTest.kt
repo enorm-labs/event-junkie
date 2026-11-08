@@ -2,6 +2,7 @@ package de.norm.events.scraper.lido
 
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -23,14 +24,7 @@ class LidoDetailPageScraperTest {
     private val scraper = LidoDetailPageScraper()
     private val sourceUrl = "https://www.lido-berlin.de/events/2026-06-15-sorry"
 
-    private val sorry: ScrapedEvent by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/lido/lido-detail-sorry.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
-    }
+    private val sorry: ScrapedEvent by lazy { scraper.scrape(fixtureDocument("lido/lido-detail-sorry.html", sourceUrl), sourceUrl)!! }
 
     @Test
     fun `parses title, type and times from the shared event header`() {
@@ -88,12 +82,7 @@ class LidoDetailPageScraperTest {
     @Test
     fun `keeps the shouted banner under the subtitle as the status note, which names where the show moved`() {
         val url = "https://www.lido-berlin.de/events/2026-11-10-sons-of-legion"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/lido/lido-detail-relocated.html")!!
-                .bufferedReader()
-                .readText()
-        val sonsOfLegion = scraper.scrape(Jsoup.parse(html, url), url)!!
+        val sonsOfLegion = scraper.scrape(fixtureDocument("lido/lido-detail-relocated.html", url), url)!!
 
         sonsOfLegion.status shouldBe "RELOCATED"
         sonsOfLegion.subtitle shouldBe "„Soul to SØL World Tour 2026\""

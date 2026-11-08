@@ -3,6 +3,7 @@ package de.norm.events.scraper.maaya
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -33,15 +34,10 @@ import java.time.ZoneOffset
 class MaayaOverviewPageScraperTest {
     private val scraper = MaayaOverviewPageScraper()
     private val sourceUrl = "https://maaya.de/"
+    private val septemberHtml = "maaya/maaya-overview-2026-09.html"
+    private val octoberHtml = "maaya/maaya-overview-2026-10.html"
 
-    private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/maaya/maaya-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("maaya/maaya-overview.html", sourceUrl), sourceUrl) }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
@@ -178,14 +174,7 @@ class MaayaOverviewPageScraperTest {
     inner class RebuiltPage {
         private val scraper = MaayaOverviewPageScraper(Clock.fixed(Instant.parse("2026-09-17T10:00:00Z"), ZoneOffset.UTC))
 
-        private val events: List<ScrapedEvent> by lazy {
-            val html =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/maaya/maaya-overview-2026-09.html")!!
-                    .bufferedReader()
-                    .readText()
-            scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
-        }
+        private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument(septemberHtml, sourceUrl), sourceUrl) }
 
         private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
@@ -257,12 +246,7 @@ class MaayaOverviewPageScraperTest {
         // MAAYA bills a concert as "CONCERT <act>"; the September fixture carries none, so one title is renamed.
         @Test
         fun `types a CONCERT-prefixed night as a concert and bills the act`() {
-            val html =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/maaya/maaya-overview-2026-09.html")!!
-                    .bufferedReader()
-                    .readText()
-            val doc = Jsoup.parse(html, sourceUrl)
+            val doc = fixtureDocument(septemberHtml, sourceUrl)
             doc.select(".elementor-heading-title").first { it.text() == "AFROECLIPSE" }.text("CONCERT AGNES NUNES")
 
             val concert = scraper.scrape(doc, sourceUrl).first { it.title == "CONCERT AGNES NUNES" }
@@ -291,14 +275,7 @@ class MaayaOverviewPageScraperTest {
     inner class BareHourPage {
         private val scraper = MaayaOverviewPageScraper(Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC))
 
-        private val events: List<ScrapedEvent> by lazy {
-            val html =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/maaya/maaya-overview-2026-10.html")!!
-                    .bufferedReader()
-                    .readText()
-            scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
-        }
+        private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument(octoberHtml, sourceUrl), sourceUrl) }
 
         private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 

@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -24,14 +25,7 @@ class LogeOverviewPageScraperTest {
     private val scraper = LogeOverviewPageScraper()
     private val baseUrl = "https://www.loge-berlin.org/event-list"
 
-    private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/loge/loge-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("loge/loge-overview.html", baseUrl), baseUrl) }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
