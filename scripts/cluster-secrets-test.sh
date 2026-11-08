@@ -82,7 +82,7 @@ event-junkie-alerts-smtp-password event-junkie-scaleway-project-id event-junkie-
 event-junkie-images-secret-key event-junkie-anthropic-api-key discogs-consumer-key discogs-consumer-secret instagram-token
 event-junkie-tem-read-key"
 for env in staging production; do
-    for suffix in github-dispatch o2-root-password metrics-password bff-password tem-secret-key vapid-private-key \
+    for suffix in github-dispatch o2-root-password tem-secret-key vapid-private-key \
         vapid-public-key imgproxy-key imgproxy-salt; do
         ITEMS="$ITEMS event-junkie-$env-$suffix"
     done
@@ -120,9 +120,8 @@ secret observability-openobserve-credentials || fail "staging write: no observab
 [ "$(key_of flux-system-github-dispatch token)" = zq9x-event-junkie-staging-github-dispatch ] ||
     fail "staging write: the token was not stored exactly"
 [ "$(key_of flux-system-sops-age age.agekey)" = "AGE-SECRET-KEY-1zq9x" ] || fail "staging write: the age key differs"
-[ "$(key_of observability-postgres-exporter DATA_SOURCE_NAME)" = \
-    "postgresql://metrics:zq9x-event-junkie-staging-metrics-password@10.1.1.10:5432/events?sslmode=require" ] ||
-    fail "staging write: wrong DSN"
+secret observability-postgres-exporter && fail "staging write: postgres-exporter is Flux's, from git"
+secret event-junkie-events-bff-db && fail "staging write: events-bff-db is Flux's, from git"
 want_header="Basic $(printf '%s' 'hello@event-junkie.de:zq9x-event-junkie-staging-o2-root-password' | base64 | tr -d '\n')"
 [ "$(key_of flux-system-openobserve-credentials O2_BASIC_AUTH_HEADER)" = "$want_header" ] || fail "staging write: wrong header"
 grep -q zq9x "$FAKE_LOG" && fail "staging write: a value reached a kubectl argument"
@@ -141,16 +140,13 @@ run "check differs" 1 staging --check
 expect_out "check differs" "ZO_SMTP_PASSWORD             differs (cluster 38 bytes, Keychain 12 bytes)"
 printf 'zq9x-event-junkie-alerts-smtp-password' >"$FAKE_KC/event-junkie-alerts-smtp-password"
 
-# 5. Production: no hetzner, an Instagram and a mail quota Secret, its own database host, and a percent-encoded DSN password.
+# 5. Production: no hetzner, and an Instagram and a mail quota Secret.
 rm -rf "${FAKE_CLUSTER:?}"/*
-printf 'zq9x@p#w' >"$FAKE_KC/event-junkie-production-metrics-password"
 FAKE_FLUX=1 run "production write" 0 production
 secret cert-manager-hetzner && fail "production write: a hetzner Secret on production"
 secret event-junkie-event-junkie-instagram || fail "production write: no Instagram Secret"
 [ "$(key_of event-junkie-event-junkie-mail-quota api-key)" = zq9x-event-junkie-tem-read-key ] ||
     fail "production write: no mail quota Secret, or the wrong key in it"
-key_of observability-postgres-exporter DATA_SOURCE_NAME | grep -qF 'metrics:zq9x%40p%23w@10.0.1.21:5432/' ||
-    fail "production write: the DSN host or encoding is wrong"
 
 # 6. Before flux bootstrap, flux-system is skipped and said so.
 rm -rf "${FAKE_CLUSTER:?}"/*

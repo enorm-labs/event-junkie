@@ -17,6 +17,8 @@ resources:
   # Encrypted; decrypted by the sops-age patch in flux-system/kustomization.yaml, which is why that patch
   # has to reach the cluster.
   - secrets/events-db.yaml
+  - secrets/events-bff-db.yaml
+  - secrets/postgres-exporter.yaml
   - cert-manager.yaml
   # The observability stack (#880); each file argues its own difference from staging's copy.
   - openobserve.yaml
