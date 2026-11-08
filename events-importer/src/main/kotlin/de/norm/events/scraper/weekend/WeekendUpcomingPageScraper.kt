@@ -13,6 +13,7 @@ import de.norm.events.scraper.endOn
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.lazyImgSrcAt
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseIsoDate
@@ -75,7 +76,7 @@ class WeekendUpcomingPageScraper {
             startTime = startTime,
             endDate = endTime?.let { end.attr("datetime").let(::parseIsoDate) ?: endOn(eventDate, startTime, it) },
             endTime = endTime,
-            imageUrl = article.attrAt("img[data-src]", "data-src")?.takeIf { it.startsWith("http") },
+            imageUrl = article.lazyImgSrcAt("img[data-src]"),
             sourceUrl = url,
             sourceId = "${EventSource.WEEKEND.sourceIdPrefix}${extractEventSlug(url, "/upcoming/")}",
             ticketUrl = article.attrAt(".eventlist-description iframe[src*=xceed.me]", "src"),

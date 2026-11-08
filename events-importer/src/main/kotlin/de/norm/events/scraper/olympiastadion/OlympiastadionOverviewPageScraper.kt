@@ -3,11 +3,11 @@ package de.norm.events.scraper.olympiastadion
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.lazyImgSrcAt
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -53,7 +53,7 @@ class OlympiastadionOverviewPageScraper {
             eventType = eventType,
             typeIsFallback = true,
             eventDate = eventDate,
-            imageUrl = card.attrAt("img[data-src]", "data-src")?.takeIf { it.startsWith("http") },
+            imageUrl = card.lazyImgSrcAt("img[data-src]"),
             sourceUrl = url,
             sourceId = "${EventSource.OLYMPIASTADION.sourceIdPrefix}${extractEventSlug(url, EVENT_PATH)}",
             artists = buildArtistsForEventType(title, null, eventType)

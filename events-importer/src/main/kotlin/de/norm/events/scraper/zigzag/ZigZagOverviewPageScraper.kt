@@ -5,10 +5,10 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.ENGLISH_LONG_DATE
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.lazyImgSrcAt
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -68,7 +68,7 @@ class ZigZagOverviewPageScraper(
             title = title,
             eventType = EventType.CONCERT.name,
             eventDate = eventDate,
-            imageUrl = item.attrAt("img.summary-thumbnail-image", "data-src")?.takeIf { it.startsWith("http") },
+            imageUrl = item.lazyImgSrcAt("img.summary-thumbnail-image"),
             sourceUrl = url,
             sourceId = "${eventSource.sourceIdPrefix}${extractEventSlug(url, EVENT_PATH)}",
             genre =

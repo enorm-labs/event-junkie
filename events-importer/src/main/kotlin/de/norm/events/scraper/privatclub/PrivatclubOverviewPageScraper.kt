@@ -5,11 +5,9 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.GERMAN_DAY_MONTH
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.encodeForUri
@@ -17,9 +15,11 @@ import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.lazyImgSrcAt
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseGermanDayMonth
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.schemaDate
@@ -37,8 +37,6 @@ import java.net.URI
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.MonthDay
-import java.time.format.DateTimeParseException
 
 /**
  * Pure HTML parser for Privatclub Berlin's WordPress event overview page.
@@ -231,7 +229,7 @@ class PrivatclubOverviewPageScraper(
 
     /**
      * Fallback date from `.datum`: "Sa. 16." (part1) and "Mai" (part2). Day number by
-     * regex, month by [GERMAN_DAY_MONTH], year = current or next depending on
+     * regex, month by [parseGermanDayMonth], year = current or next depending on
      * whether the date has passed. Only used without JSON-LD.
      */
     private fun parseDateFromHtml(header: Element): LocalDate? {
@@ -239,12 +237,7 @@ class PrivatclubOverviewPageScraper(
         val datumPart2 = header.textAt(".datum_part2") ?: return null // e.g. "Mai"
 
         val day = DAY_NUMBER_PATTERN.find(datumPart1)?.value ?: return null
-        val monthDay =
-            try {
-                MonthDay.parse("$day. ${datumPart2.trim()}", GERMAN_DAY_MONTH)
-            } catch (_: DateTimeParseException) {
-                return null
-            }
+        val monthDay = parseGermanDayMonth(day, datumPart2.trim()) ?: return null
 
         // Nearest future occurrence
         val now = LocalDate.now(clock)
@@ -274,10 +267,7 @@ class PrivatclubOverviewPageScraper(
      * Image from the banner's `data-src`: the theme lazy-loads, `src` is a tiny thumbnail.
      * Fallback when JSON-LD has no image.
      */
-    private fun parseImageUrl(detail: Element?): String? =
-        detail
-            ?.attrAt(".banner img.desktop[data-src]", "data-src")
-            ?.takeIf { it.startsWith("http") }
+    private fun parseImageUrl(detail: Element?): String? = detail?.lazyImgSrcAt(".banner img.desktop[data-src]")
 
     /**
      * Prices from the ticket/entry section:

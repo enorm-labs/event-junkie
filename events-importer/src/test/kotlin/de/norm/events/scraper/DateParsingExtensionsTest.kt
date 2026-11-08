@@ -105,6 +105,24 @@ class DateParsingExtensionsTest {
         parseBasicIsoDatePrefix("20261332-nathan-evans").shouldBeNull()
     }
 
+    // --- parseGermanDayMonth ---
+
+    @Test
+    fun `parseGermanDayMonth reads a day and a German month name, padded or not, in any case`() {
+        parseGermanDayMonth("29", "Mai") shouldBe MonthDay.of(5, 29)
+        parseGermanDayMonth("05", "oktober") shouldBe MonthDay.of(10, 5)
+        parseGermanDayMonth("1", "MÄRZ") shouldBe MonthDay.of(3, 1)
+    }
+
+    @Test
+    fun `parseGermanDayMonth returns null for an abbreviation, an English month or an impossible day`() {
+        parseGermanDayMonth("29", "Mai.").shouldBeNull()
+        parseGermanDayMonth("3", "Okt").shouldBeNull()
+        parseGermanDayMonth("3", "October").shouldBeNull()
+        parseGermanDayMonth("31", "April").shouldBeNull()
+        parseGermanDayMonth("", "Mai").shouldBeNull()
+    }
+
     // --- parseGermanDate ---
 
     @Test

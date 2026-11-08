@@ -7,13 +7,13 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.lazyImgSrcAt
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -78,7 +78,7 @@ class EightMmProgramPageScraper(
             eventType = eventType,
             eventDate = eventDate,
             startTime = parseClock(dateLine.groups["clock"]?.value, dateLine.groups["meridiem"]?.value),
-            imageUrl = item.attrAt("img[data-src]", "data-src")?.takeIf { it.startsWith("http") },
+            imageUrl = item.lazyImgSrcAt("img[data-src]"),
             sourceUrl = url,
             sourceId = "${EventSource.EIGHT_MM.sourceIdPrefix}${extractEventSlug(url, "/program/").replace('/', '-')}",
             soldOut = cleanedTitle.soldOut,
