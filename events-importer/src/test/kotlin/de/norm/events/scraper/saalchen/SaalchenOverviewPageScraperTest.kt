@@ -7,6 +7,7 @@ import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -37,14 +38,7 @@ class SaalchenOverviewPageScraperTest {
 
     private val events: List<ScrapedEvent> by lazy { scrapeFixture("saalchen-kalender.html") }
 
-    private fun scrapeFixture(name: String): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/saalchen/$name")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private fun scrapeFixture(name: String): List<ScrapedEvent> = scraper.scrape(fixtureDocument("saalchen/$name", baseUrl), baseUrl)
 
     /** One synthetic Säälchen row with the given AddToCalendar start and description. */
     private fun rowWithNotice(

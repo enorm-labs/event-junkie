@@ -2,6 +2,7 @@ package de.norm.events.scraper.quasimodo
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,14 +23,7 @@ class QuasimodoOverviewPageScraperTest {
     private val scraper = QuasimodoOverviewPageScraper()
     private val baseUrl = "https://quasimodo.club/events"
 
-    private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/quasimodo/quasimodo-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("quasimodo/quasimodo-overview.html", baseUrl), baseUrl) }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 

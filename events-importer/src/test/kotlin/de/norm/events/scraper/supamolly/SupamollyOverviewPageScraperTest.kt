@@ -3,6 +3,7 @@ package de.norm.events.scraper.supamolly
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -27,14 +28,7 @@ class SupamollyOverviewPageScraperTest {
     private val baseUrl = "https://www.supamolly.de/?p=programm"
     private val scraper = SupamollyOverviewPageScraper()
 
-    private fun scrape(fixture: String = SEPTEMBER): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/supamolly/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private fun scrape(fixture: String = SEPTEMBER): List<ScrapedEvent> = scraper.scrape(fixtureDocument("supamolly/$fixture", baseUrl), baseUrl)
 
     private fun eventWithStamp(
         stamp: String,

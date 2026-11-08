@@ -3,6 +3,7 @@ package de.norm.events.scraper.ritterbutzke
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,14 +23,7 @@ class RitterButzkeOverviewPageScraperTest {
     private val scraper = RitterButzkeOverviewPageScraper()
     private val baseUrl = "https://club.ritterbutzke.com/events"
 
-    private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/ritterbutzke/ritterbutzke-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("ritterbutzke/ritterbutzke-overview.html", baseUrl), baseUrl) }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 

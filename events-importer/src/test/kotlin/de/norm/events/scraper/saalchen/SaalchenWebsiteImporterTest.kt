@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -26,15 +27,10 @@ class SaalchenWebsiteImporterTest {
     @BeforeEach
     fun setUp() {
         importer = SaalchenWebsiteImporter(htmlFetcher)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/saalchen/saalchen-kalender.html")!!
-                .bufferedReader()
-                .readText()
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(html, sourceUrl),
+                document = fixtureDocument("saalchen/saalchen-kalender.html", sourceUrl),
                 etag = "\"holzmarkt-etag\"",
                 lastModified = "Sat, 01 Aug 2026 11:00:00 GMT"
             )

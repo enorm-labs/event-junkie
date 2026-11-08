@@ -1,5 +1,6 @@
 package de.norm.events.scraper.so36
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -18,18 +19,9 @@ class So36OverviewPageScraperTest {
     private val scraper = So36OverviewPageScraper()
     private val baseUrl = "https://www.so36.com/tickets"
 
-    private fun overview() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/so36/so36-overview.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     @Test
     fun `discovers every distinct event on the overview page`() {
-        val events = scraper.scrape(overview(), baseUrl)
+        val events = scraper.scrape(fixtureDocument("so36/so36-overview.html", baseUrl), baseUrl)
         // 108 distinct product ids; the featured "TONIGHT" teaser repeats one of them
         // and must be deduplicated rather than double-counted.
         events shouldHaveSize 108
@@ -39,7 +31,7 @@ class So36OverviewPageScraperTest {
     @Test
     fun `extracts title, date, source url and stable source id from a product link`() {
         val poisonRuin =
-            scraper.scrape(overview(), baseUrl).firstOrNull { it.sourceId == "so36:95201" }
+            scraper.scrape(fixtureDocument("so36/so36-overview.html", baseUrl), baseUrl).firstOrNull { it.sourceId == "so36:95201" }
         poisonRuin.shouldNotBeNull()
         poisonRuin.title shouldBe "POISON RUIN"
         poisonRuin.eventDate shouldBe LocalDate.of(2026, 7, 9)

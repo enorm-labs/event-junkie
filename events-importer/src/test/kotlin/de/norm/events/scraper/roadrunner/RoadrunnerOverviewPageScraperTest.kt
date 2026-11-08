@@ -6,6 +6,7 @@ import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -37,14 +38,7 @@ class RoadrunnerOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-05-01T10:00:00Z"), ZoneOffset.UTC)
     private val scraper = RoadrunnerOverviewPageScraper(clock)
 
-    private fun programme() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/roadrunner/roadrunner-programm.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
+    private fun programme() = fixtureDocument("roadrunner/roadrunner-programm.html", baseUrl)
 
     @Test
     fun `stores every night Rock, the venue's sound, since it names no style`() {
@@ -79,16 +73,7 @@ class RoadrunnerOverviewPageScraperTest {
         // canonical "Mittwoch, 11. November:"; the strict pattern found none of them (#1130).
         val autumnClock = Clock.fixed(Instant.parse("2026-09-05T10:00:00Z"), ZoneOffset.UTC)
         val events =
-            RoadrunnerOverviewPageScraper(autumnClock).scrape(
-                Jsoup.parse(
-                    javaClass.classLoader
-                        .getResourceAsStream("scraper/roadrunner/roadrunner-programm-autumn.html")!!
-                        .bufferedReader()
-                        .readText(),
-                    baseUrl
-                ),
-                baseUrl
-            )
+            RoadrunnerOverviewPageScraper(autumnClock).scrape(fixtureDocument("roadrunner/roadrunner-programm-autumn.html", baseUrl), baseUrl)
 
         events.map { it.eventDate } shouldBe
             listOf(
@@ -107,16 +92,8 @@ class RoadrunnerOverviewPageScraperTest {
     }
 
     private fun october(): List<ScrapedEvent> =
-        RoadrunnerOverviewPageScraper(Clock.fixed(Instant.parse("2026-10-02T10:00:00Z"), ZoneOffset.UTC)).scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/roadrunner/roadrunner-programm-october.html")!!
-                    .bufferedReader()
-                    .readText(),
-                baseUrl
-            ),
-            baseUrl
-        )
+        RoadrunnerOverviewPageScraper(Clock.fixed(Instant.parse("2026-10-02T10:00:00Z"), ZoneOffset.UTC))
+            .scrape(fixtureDocument("roadrunner/roadrunner-programm-october.html", baseUrl), baseUrl)
 
     private fun ScrapedEvent.billing() = artists.map { it.name to it.role }
 
@@ -277,16 +254,7 @@ class RoadrunnerOverviewPageScraperTest {
     fun `reads an inline Live list, and a Support line as confirming the title is the act`() {
         val autumnClock = Clock.fixed(Instant.parse("2026-09-05T10:00:00Z"), ZoneOffset.UTC)
         val events =
-            RoadrunnerOverviewPageScraper(autumnClock).scrape(
-                Jsoup.parse(
-                    javaClass.classLoader
-                        .getResourceAsStream("scraper/roadrunner/roadrunner-programm-autumn.html")!!
-                        .bufferedReader()
-                        .readText(),
-                    baseUrl
-                ),
-                baseUrl
-            )
+            RoadrunnerOverviewPageScraper(autumnClock).scrape(fixtureDocument("roadrunner/roadrunner-programm-autumn.html", baseUrl), baseUrl)
 
         events[0].billing() shouldBe listOf("UNSTRUT" to ArtistRole.HEADLINER, "BOXI BARRÉ" to ArtistRole.HEADLINER, "NERVE CENTER" to ArtistRole.HEADLINER)
         events[1].billing() shouldBe listOf("HERBST IN PEKING" to ArtistRole.HEADLINER, "TARWATER" to ArtistRole.HEADLINER)

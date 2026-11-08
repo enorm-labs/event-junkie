@@ -2,6 +2,7 @@ package de.norm.events.scraper.rosa
 
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,13 +23,7 @@ class RosaOverviewPageScraperTest {
     private val scraper = RosaOverviewPageScraper()
     private val baseUrl = "https://www.rosaclub.de/dates"
 
-    private fun fixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/rosa/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private fun scrape(name: String) = scraper.scrape(Jsoup.parse(fixture(name), baseUrl), baseUrl)
+    private fun scrape(name: String) = scraper.scrape(fixtureDocument("rosa/$name", baseUrl), baseUrl)
 
     @Test
     fun `stores every night Techno, the club's sound, since it names no style`() {

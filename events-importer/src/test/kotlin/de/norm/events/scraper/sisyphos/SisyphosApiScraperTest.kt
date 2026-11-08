@@ -3,6 +3,7 @@ package de.norm.events.scraper.sisyphos
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -21,14 +22,7 @@ class SisyphosApiScraperTest {
     private val scraper = SisyphosApiScraper()
     private val baseUrl = "https://www.sisyphos-berlin.net/collections/tickets/products.json"
 
-    private val events: List<ScrapedEvent> by lazy {
-        val json =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/sisyphos/sisyphos-tickets.json")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(json, baseUrl)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureText("sisyphos/sisyphos-tickets.json"), baseUrl) }
 
     @Test
     fun `stores every night Techno, House, the club's sound, since the venue names no style`() {

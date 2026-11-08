@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -22,18 +23,12 @@ class RosaWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://www.rosaclub.de/dates"
 
-    private fun fixture(name: String) =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/rosa/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = RosaWebsiteImporter(htmlFetcher)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("rosa-overview.html"), sourceUrl),
+                document = fixtureDocument("rosa/rosa-overview.html", sourceUrl),
                 etag = "\"abc123\"",
                 lastModified = "Fri, 11 Sep 2026 10:00:00 GMT"
             )
@@ -54,7 +49,7 @@ class RosaWebsiteImporterTest {
             val cookies = slot<Map<String, String>>()
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), capture(cookies)) } returns
                 FetchResult.Success(
-                    document = Jsoup.parse(fixture("rosa-overview.html"), sourceUrl),
+                    document = fixtureDocument("rosa/rosa-overview.html", sourceUrl),
                     etag = null,
                     lastModified = null
                 )

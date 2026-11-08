@@ -3,6 +3,7 @@ package de.norm.events.scraper.ritterbutzke
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -26,13 +27,8 @@ class RitterButzkeDetailPageScraperTest {
         fixture: String,
         slug: String
     ): ScrapedEvent {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/ritterbutzke/ritterbutzke-detail-$fixture.html")!!
-                .bufferedReader()
-                .readText()
         val sourceUrl = "https://club.ritterbutzke.com/event/$slug"
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+        return scraper.scrape(fixtureDocument("ritterbutzke/ritterbutzke-detail-$fixture.html", sourceUrl), sourceUrl)!!
     }
 
     @Test

@@ -6,6 +6,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
+import de.norm.events.scraper.stubFetcher
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -17,7 +19,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -32,16 +33,6 @@ class SisyphosWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val feedUrl = "https://www.sisyphos-berlin.net/collections/tickets/products.json"
     private val calendarUrl = "https://dashboard.sisyphos-berlin.net/kalender-media/events.json"
-
-    private fun resource(path: String): String =
-        javaClass.classLoader
-            .getResourceAsStream(path)!!
-            .bufferedReader()
-            .readText()
-
-    private val shopJson = resource("scraper/sisyphos/sisyphos-tickets.json")
-    private val calendarJson = resource("scraper/sisyphos/sisyphos-calendar.json")
-    private val sisyfanPage = Jsoup.parse(resource("scraper/sisyphos/sisyfan-home.html"), "https://sisy.fan/")
 
     /** A Wednesday, outside the sisy.fan window, with the calendar's NICHTGEBURTSTAG two days ahead. */
     private val wednesday = LocalDateTime.of(2026, 9, 30, 12, 0)
@@ -61,9 +52,9 @@ class SisyphosWebsiteImporterTest {
     @BeforeEach
     fun setUp() {
         importer = importerAt(wednesday)
-        coEvery { apiClient.fetchJson(calendarUrl) } returns calendarJson
-        coEvery { apiClient.fetchJson(feedUrl) } returns shopJson
-        coEvery { htmlFetcher.fetchDocument("https://sisy.fan/") } returns sisyfanPage
+        coEvery { apiClient.fetchJson(calendarUrl) } returns fixtureText("sisyphos/sisyphos-calendar.json")
+        coEvery { apiClient.fetchJson(feedUrl) } returns fixtureText("sisyphos/sisyphos-tickets.json")
+        stubFetcher("https://sisy.fan/" to "sisyphos/sisyfan-home.html", fetcher = htmlFetcher)
     }
 
     @Test

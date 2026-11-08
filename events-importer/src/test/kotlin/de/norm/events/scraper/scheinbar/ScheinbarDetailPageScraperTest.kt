@@ -1,5 +1,6 @@
 package de.norm.events.scraper.scheinbar
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -10,16 +11,7 @@ import org.junit.jupiter.api.Test
 class ScheinbarDetailPageScraperTest {
     private val scraper = ScheinbarDetailPageScraper()
 
-    private fun scrape(name: String) =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/scheinbar/$name")!!
-                    .bufferedReader()
-                    .readText(),
-                "https://www.scheinbar.de/programm/"
-            )
-        )
+    private fun scrape(name: String) = scraper.scrape(fixtureDocument("scheinbar/$name", "https://www.scheinbar.de/programm/"))
 
     @Test
     fun `reads the acts after Mit dabei in page order`() {

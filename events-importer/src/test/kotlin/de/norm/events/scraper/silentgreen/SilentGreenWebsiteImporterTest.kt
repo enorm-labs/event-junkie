@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -15,7 +16,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -39,34 +39,25 @@ class SilentGreenWebsiteImporterTest {
 
     private fun detailUrl(slug: String) = "https://www.silent-green.net/programm/detail/$slug"
 
-    private fun fixture(
-        name: String,
-        baseUrl: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/silentgreen/$name")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
     @BeforeEach
     fun setUp() {
         importer = SilentGreenWebsiteImporter(htmlFetcher)
-        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("silentgreen-month-august.html", entryUrl)
-        coEvery { htmlFetcher.fetchDocument(septemberUrl) } returns fixture("silentgreen-month-september.html", septemberUrl)
-        // The venue renders an empty calendar for any month asked for, which is what ends the walk.
-        coEvery { htmlFetcher.fetchDocument(octoberUrl) } returns fixture("silentgreen-month-empty.html", octoberUrl)
+        stubFetcher(
+            entryUrl to "silentgreen/silentgreen-month-august.html",
+            septemberUrl to "silentgreen/silentgreen-month-september.html",
+            // The venue renders an empty calendar for any month asked for, which is what ends the walk.
+            octoberUrl to "silentgreen/silentgreen-month-empty.html",
+            fetcher = htmlFetcher
+        )
         // Any detail page other than the snapshotted ones contributes nothing.
         coEvery { htmlFetcher.fetchDocument(match { it.startsWith(detailUrl("")) }) } returns
             Jsoup.parse("<html><body></body></html>", entryUrl)
-        coEvery { htmlFetcher.fetchDocument(detailUrl("htrk")) } returns
-            fixture("silentgreen-detail-konzert.html", detailUrl("htrk"))
-        coEvery { htmlFetcher.fetchDocument(detailUrl("bjoern-melhus-lost-in-finity")) } returns
-            fixture("silentgreen-detail-ausstellung.html", detailUrl("bjoern-melhus-lost-in-finity"))
-        coEvery { htmlFetcher.fetchDocument(detailUrl("pop-kultur-festival-2026")) } returns
-            fixture("silentgreen-detail-festival.html", detailUrl("pop-kultur-festival-2026"))
+        stubFetcher(
+            detailUrl("htrk") to "silentgreen/silentgreen-detail-konzert.html",
+            detailUrl("bjoern-melhus-lost-in-finity") to "silentgreen/silentgreen-detail-ausstellung.html",
+            detailUrl("pop-kultur-festival-2026") to "silentgreen/silentgreen-detail-festival.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test
@@ -152,9 +143,12 @@ class SilentGreenWebsiteImporterTest {
         runTest {
             val novemberUrl = "https://www.silent-green.net/programm/2026/11"
             val festivalUrl = detailUrl("9-festival-of-animation-berlin-2026")
-            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("silentgreen-month-october.html", entryUrl)
-            coEvery { htmlFetcher.fetchDocument(novemberUrl) } returns fixture("silentgreen-month-empty.html", novemberUrl)
-            coEvery { htmlFetcher.fetchDocument(festivalUrl) } returns fixture("silentgreen-detail-festival-hours.html", festivalUrl)
+            stubFetcher(
+                entryUrl to "silentgreen/silentgreen-month-october.html",
+                novemberUrl to "silentgreen/silentgreen-month-empty.html",
+                festivalUrl to "silentgreen/silentgreen-detail-festival-hours.html",
+                fetcher = htmlFetcher
+            )
 
             val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
 
@@ -172,10 +166,13 @@ class SilentGreenWebsiteImporterTest {
             val novemberUrl = "https://www.silent-green.net/programm/2026/11"
             val festivalUrl = detailUrl("9-festival-of-animation-berlin-2026")
             val exhibitionUrl = detailUrl("fab-dimensional-2026")
-            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("silentgreen-month-october.html", entryUrl)
-            coEvery { htmlFetcher.fetchDocument(novemberUrl) } returns fixture("silentgreen-month-empty.html", novemberUrl)
-            coEvery { htmlFetcher.fetchDocument(festivalUrl) } returns fixture("silentgreen-detail-festival-hours.html", festivalUrl)
-            coEvery { htmlFetcher.fetchDocument(exhibitionUrl) } returns fixture("silentgreen-detail-fab-dimensional.html", exhibitionUrl)
+            stubFetcher(
+                entryUrl to "silentgreen/silentgreen-month-october.html",
+                novemberUrl to "silentgreen/silentgreen-month-empty.html",
+                festivalUrl to "silentgreen/silentgreen-detail-festival-hours.html",
+                exhibitionUrl to "silentgreen/silentgreen-detail-fab-dimensional.html",
+                fetcher = htmlFetcher
+            )
 
             val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
 
@@ -220,7 +217,7 @@ class SilentGreenWebsiteImporterTest {
     @Test
     fun `importEvents returns no events when the entry month is empty`() =
         runTest {
-            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("silentgreen-month-empty.html", entryUrl)
+            stubFetcher(entryUrl to "silentgreen/silentgreen-month-empty.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
 

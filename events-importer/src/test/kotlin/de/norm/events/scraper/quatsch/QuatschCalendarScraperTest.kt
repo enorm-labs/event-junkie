@@ -2,6 +2,8 @@ package de.norm.events.scraper.quatsch
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,17 +20,11 @@ import java.time.LocalTime
 class QuatschCalendarScraperTest {
     private val scraper = QuatschCalendarScraper()
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/quatsch/$name")!!
-            .bufferedReader()
-            .readText()
-
-    private fun day(name: String) = scraper.scrapeDay(fixture("quatsch-day-$name.json"))
+    private fun day(name: String) = scraper.scrapeDay(fixtureText("quatsch/quatsch-day-$name.json"))
 
     @Test
     fun `reads the plugin's settings off the tickets page`() {
-        val calendar = scraper.calendar(Jsoup.parse(fixture("quatsch-tickets.html"), "https://quatsch-comedy-club.de/tickets/")).shouldNotBeNull()
+        val calendar = scraper.calendar(fixtureDocument("quatsch/quatsch-tickets.html", "https://quatsch-comedy-club.de/tickets/")).shouldNotBeNull()
 
         calendar.ajaxUrl shouldBe "https://quatsch-comedy-club.de/wp-admin/admin-ajax.php"
         calendar.nonce shouldBe "a732979e64"

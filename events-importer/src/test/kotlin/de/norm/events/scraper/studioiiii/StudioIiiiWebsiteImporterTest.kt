@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -24,18 +25,12 @@ class StudioIiiiWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://studioiiii.de/"
 
-    private fun fixture() =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/studioiiii/studioiiii-overview.html")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = StudioIiiiWebsiteImporter(htmlFetcher, Clock.fixed(Instant.parse("2026-10-17T10:00:00Z"), BERLIN))
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture(), sourceUrl),
+                document = fixtureDocument("studioiiii/studioiiii-overview.html", sourceUrl),
                 etag = "\"1001-studioiiii\"",
                 lastModified = "Thu, 15 Oct 2026 13:48:04 GMT"
             )

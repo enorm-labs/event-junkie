@@ -3,6 +3,7 @@ package de.norm.events.scraper.soulcat
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -15,14 +16,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 class SoulcatApiScraperTest {
-    private val events =
-        SoulcatApiScraper()
-            .scrapePage(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/soulcat/soulcat-events.json")!!
-                    .bufferedReader()
-                    .readText()
-            ).events
+    private val events = SoulcatApiScraper().scrapePage(fixtureText("soulcat/soulcat-events.json")).events
 
     private fun event(slug: String) = events.single { it.sourceId == "soulcat:$slug" }
 

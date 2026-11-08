@@ -1,5 +1,6 @@
 package de.norm.events.scraper.speakeazy
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -15,18 +16,7 @@ class SpeakeazyOverviewPageScraperTest {
     private val sourceUrl = "https://www.speakeazyberlin.de/events"
     private val scraper = SpeakeazyOverviewPageScraper()
 
-    private val events by lazy {
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/speakeazy/speakeazy-events.html")!!
-                    .bufferedReader()
-                    .readText(),
-                sourceUrl
-            ),
-            sourceUrl
-        )
-    }
+    private val events by lazy { scraper.scrape(fixtureDocument("speakeazy/speakeazy-events.html", sourceUrl), sourceUrl) }
 
     private fun event(slug: String) = events.single { it.sourceId == "speakeazy:$slug" }
 

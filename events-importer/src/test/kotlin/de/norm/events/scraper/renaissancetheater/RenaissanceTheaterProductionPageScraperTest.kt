@@ -1,5 +1,6 @@
 package de.norm.events.scraper.renaissancetheater
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -15,15 +16,7 @@ class RenaissanceTheaterProductionPageScraperTest {
     private fun scrape(
         name: String,
         url: String
-    ) = scraper.scrape(
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/renaissancetheater/$name")!!
-                .bufferedReader()
-                .readText(),
-            url
-        )
-    )
+    ) = scraper.scrape(fixtureDocument("renaissancetheater/$name", url))
 
     @Test
     fun `reads the text with its folded part and the hero image`() {

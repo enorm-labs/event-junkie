@@ -1,6 +1,7 @@
 package de.norm.events.scraper.thecloud
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -13,13 +14,7 @@ import java.time.LocalTime
 
 class TheCloudApiScraperTest {
     private val scraper = TheCloudApiScraper()
-    private val page =
-        scraper.scrapePage(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/thecloud/thecloud-events.json")!!
-                .bufferedReader()
-                .readText()
-        )
+    private val page = scraper.scrapePage(fixtureText("thecloud/thecloud-events.json"))
 
     private fun event(slug: String) = page.events.single { it.sourceId == "the_cloud:$slug" }
 

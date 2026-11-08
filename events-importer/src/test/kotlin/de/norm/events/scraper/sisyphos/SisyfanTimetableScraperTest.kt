@@ -2,6 +2,7 @@ package de.norm.events.scraper.sisyphos
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -20,14 +21,7 @@ import java.time.LocalTime
 class SisyfanTimetableScraperTest {
     private val scraper = SisyfanTimetableScraper()
 
-    private val weekends: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/sisyphos/sisyfan-home.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, "https://sisy.fan/"))
-    }
+    private val weekends: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("sisyphos/sisyfan-home.html", "https://sisy.fan/")) }
 
     private val weekend: ScrapedEvent by lazy { weekends.single() }
 

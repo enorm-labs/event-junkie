@@ -1,5 +1,6 @@
 package de.norm.events.scraper.schlossparktheater
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
@@ -13,9 +14,8 @@ class SchlossparkTheaterProductionPageScraperTest {
     @Test
     fun `reads the production text up to the first rule`() {
         val url = "https://www.schlossparktheater.de/produktionen/putsch.html"
-        val html = javaClass.classLoader.getResource("scraper/schlossparktheater/schlossparktheater-putsch.html")!!.readText()
 
-        val text = scraper.scrape(Jsoup.parse(html, url))!!
+        val text = scraper.scrape(fixtureDocument("schlossparktheater/schlossparktheater-putsch.html", url))!!
 
         text shouldStartWith "Was passiert, wenn Satire zur Macht wird?\n\nKlara Milkowski ist witzig"
         text.split("\n\n").size shouldBe 4

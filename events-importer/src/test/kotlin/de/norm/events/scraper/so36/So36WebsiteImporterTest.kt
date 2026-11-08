@@ -7,7 +7,9 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isForChildren
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -36,27 +38,22 @@ class So36WebsiteImporterTest {
     private val partyUrl =
         "https://www.so36.com/produkte/97683-tickets-last-night-so36-berlin-am-03-07-2026"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/so36/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = So36WebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("so36-overview.html"), sourceUrl),
+                document = fixtureDocument("so36/so36-overview.html", sourceUrl),
                 etag = "\"so36-etag\"",
                 lastModified = "Fri, 03 Jul 2026 21:00:00 GMT"
             )
 
-        coEvery { htmlFetcher.fetchDocument(concertUrl) } returns
-            Jsoup.parse(fixture("so36-detail-concert.html"), concertUrl)
-        coEvery { htmlFetcher.fetchDocument(partyUrl) } returns
-            Jsoup.parse(fixture("so36-detail-party.html"), partyUrl)
+        stubFetcher(
+            concertUrl to "so36/so36-detail-concert.html",
+            partyUrl to "so36/so36-detail-party.html",
+            fetcher = htmlFetcher
+        )
 
         // Every other detail page returns an empty document, so the importer
         // degrades to the overview data (title + date from the product link).
@@ -128,8 +125,7 @@ class So36WebsiteImporterTest {
                     "Tickets PÖBEL &amp; GESOCKS in Berlin am 03.10.2026</a></body></html>"
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
                 FetchResult.Success(document = Jsoup.parse(overview, sourceUrl), etag = null, lastModified = null)
-            coEvery { htmlFetcher.fetchDocument(url) } returns
-                Jsoup.parse(fixture("so36-detail-support-label.html"), url)
+            stubFetcher(url to "so36/so36-detail-support-label.html", fetcher = htmlFetcher)
 
             val event = events(importer.importEvents(sourceUrl)).single()
             event.artists.filter { it.role == ArtistRole.SUPPORT }.map { it.name } shouldBe listOf("GRENZER", "BIERTOIFEL")

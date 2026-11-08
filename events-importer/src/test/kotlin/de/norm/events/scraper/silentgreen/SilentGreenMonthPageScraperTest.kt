@@ -2,6 +2,7 @@ package de.norm.events.scraper.silentgreen
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -26,14 +27,7 @@ class SilentGreenMonthPageScraperTest {
     private fun parse(
         fixture: String,
         baseUrl: String
-    ): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/silentgreen/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    ): List<ScrapedEvent> = scraper.scrape(fixtureDocument("silentgreen/$fixture", baseUrl), baseUrl)
 
     private val august by lazy { parse("silentgreen-month-august.html", augustUrl) }
     private val september by lazy { parse("silentgreen-month-september.html", septemberUrl) }

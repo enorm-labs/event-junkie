@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -25,12 +26,7 @@ class SupamollyWebsiteImporterTest {
     @BeforeEach
     fun setUp() {
         importer = SupamollyWebsiteImporter(htmlFetcher)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/supamolly/supamolly-overview-2026-10.html")!!
-                .bufferedReader()
-                .readText()
-        val document = Jsoup.parse(html, sourceUrl)
+        val document = fixtureDocument("supamolly/supamolly-overview-2026-10.html", sourceUrl)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(

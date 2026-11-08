@@ -1,6 +1,7 @@
 package de.norm.events.scraper.richten25
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
@@ -9,7 +10,7 @@ import java.time.LocalDate
 
 class Richten25OverviewPageScraperTest {
     private val baseUrl = "https://richten25.de/events"
-    private val events = Richten25OverviewPageScraper().scrape(Jsoup.parse(fixture("richten25-events.html"), baseUrl), baseUrl)
+    private val events = Richten25OverviewPageScraper().scrape(fixtureDocument("richten25/richten25-events.html", baseUrl), baseUrl)
 
     @Test
     fun `reads the upcoming nights from the embed in the island props and skips the past ones`() {
@@ -111,10 +112,4 @@ class Richten25OverviewPageScraperTest {
                 ),
                 baseUrl
             ).single()
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/richten25/$name")!!
-            .bufferedReader()
-            .readText()
 }

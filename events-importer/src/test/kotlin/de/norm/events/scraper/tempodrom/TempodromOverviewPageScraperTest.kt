@@ -3,6 +3,7 @@ package de.norm.events.scraper.tempodrom
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -32,12 +33,7 @@ class TempodromOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/tempodrom/tempodrom-programme.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl))
+        events = scraper.scrape(fixtureDocument("tempodrom/tempodrom-programme.html", baseUrl))
     }
 
     private fun event(idSuffix: String): ScrapedEvent = events.first { it.sourceId == "tempodrom:$idSuffix" }
@@ -251,12 +247,7 @@ class TempodromOverviewPageScraperTest {
 
     @Test
     fun `bills the band a tribute show names after performed by, not the show title`() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/tempodrom/tempodrom-programme-performed-by.html")!!
-                .bufferedReader()
-                .readText()
-        val nights = scraper.scrape(Jsoup.parse(html, baseUrl))
+        val nights = scraper.scrape(fixtureDocument("tempodrom/tempodrom-programme-performed-by.html", baseUrl))
 
         nights.map { it.eventDate } shouldContainExactly listOf(LocalDate.of(2026, 10, 22), LocalDate.of(2026, 10, 23))
         nights.forEach {

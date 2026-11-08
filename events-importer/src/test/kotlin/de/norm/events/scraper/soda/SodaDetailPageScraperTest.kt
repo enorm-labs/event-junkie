@@ -2,6 +2,7 @@ package de.norm.events.scraper.soda
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -30,14 +31,7 @@ class SodaDetailPageScraperTest {
     private fun parse(
         fixture: String,
         url: String
-    ): ScrapedEvent? {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/soda/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
-    }
+    ): ScrapedEvent? = scraper.scrape(fixtureDocument("soda/$fixture", url), url)
 
     private fun parseHtml(
         html: String,

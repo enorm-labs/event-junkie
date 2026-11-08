@@ -3,6 +3,7 @@ package de.norm.events.scraper.silentgreen
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.alternateLanguageUrl
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -26,12 +27,7 @@ class SilentGreenDetailPageScraperTest {
 
     private fun parse(fixture: String): SilentGreenEventDetails? {
         val url = "https://www.silent-green.net/programm/detail/htrk"
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/silentgreen/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return scraper.scrape(Jsoup.parse(html, url))
+        return scraper.scrape(fixtureDocument("silentgreen/$fixture", url))
     }
 
     @Test
@@ -40,19 +36,9 @@ class SilentGreenDetailPageScraperTest {
         val german = parse("silentgreen-detail-ledesma-de.html").shouldNotBeNull()
         german.description.shouldNotBeNull() shouldStartWith "Felisha Ledesma & Angelo Harmsworth"
 
-        val englishHtml =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/silentgreen/silentgreen-detail-ledesma-en.html")!!
-                .bufferedReader()
-                .readText()
         val englishUrl = "https://www.silent-green.net/en/programme/detail/${path.substringAfter("programm/detail/")}"
-        val germanHtml =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/silentgreen/silentgreen-detail-ledesma-de.html")!!
-                .bufferedReader()
-                .readText()
-        Jsoup.parse(germanHtml, "https://www.silent-green.net/$path").alternateLanguageUrl("en") shouldBe englishUrl
-        val english = scraper.description(Jsoup.parse(englishHtml, englishUrl)).shouldNotBeNull()
+        fixtureDocument("silentgreen/silentgreen-detail-ledesma-de.html", "https://www.silent-green.net/$path").alternateLanguageUrl("en") shouldBe englishUrl
+        val english = scraper.description(fixtureDocument("silentgreen/silentgreen-detail-ledesma-en.html", englishUrl)).shouldNotBeNull()
         english shouldStartWith "Felisha Ledesma & Angelo Harmsworth"
         english shouldContain "come together in a collaboration"
         english shouldNotContain "silent green presents"

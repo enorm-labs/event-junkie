@@ -1,5 +1,6 @@
 package de.norm.events.scraper.punchline
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -15,18 +16,7 @@ class PunchlineTicketsPageScraperTest {
     private val scraper = PunchlineTicketsPageScraper()
     private val url = "https://punchlineberlin.com/de/tickets"
 
-    private val events by lazy {
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/punchline/punchline-tickets.html")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            ),
-            url
-        )
-    }
+    private val events by lazy { scraper.scrape(fixtureDocument("punchline/punchline-tickets.html", url), url) }
 
     @Test
     fun `reads every date of the payload`() {

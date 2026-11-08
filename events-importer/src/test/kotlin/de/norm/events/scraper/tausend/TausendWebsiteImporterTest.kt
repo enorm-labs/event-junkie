@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -27,11 +29,11 @@ class TausendWebsiteImporterTest {
     fun setUp() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture("tausend-overview.html"), sourceUrl),
+                document = fixtureDocument("tausend/tausend-overview.html", sourceUrl),
                 etag = "\"tausend\"",
                 lastModified = "Thu, 08 Oct 2026 03:38:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(englishUrl) } returns Jsoup.parse(fixture("tausend-overview-en.html"), englishUrl)
+        stubFetcher(englishUrl to "tausend/tausend-overview-en.html", fetcher = htmlFetcher)
     }
 
     @Test
@@ -85,10 +87,4 @@ class TausendWebsiteImporterTest {
         importer.listsWholeProgramme shouldBe true
         importer.fetchesBeyondEntryPage shouldBe true
     }
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/tausend/$name")!!
-            .bufferedReader()
-            .readText()
 }
