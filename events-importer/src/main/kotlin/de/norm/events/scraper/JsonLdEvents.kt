@@ -22,7 +22,7 @@ fun Element.jsonLdEvents(): List<JsonNode> = select(JSON_LD_SCRIPT).flatMap { js
 
 /**
  * The schema.org `Event` nodes in one JSON-LD block, whatever the venue wrapped them in: a bare
- * object, an array, an `@graph`, or any nesting of these. Empty when the block does not parse.
+ * object, an array, an `@graph`, an `ItemList`, or any nesting of these. Empty when the block does not parse.
  */
 fun jsonLdEvents(json: String): List<JsonNode> {
     val root =
@@ -39,6 +39,7 @@ private fun JsonNode.jsonLdNodes(): List<JsonNode> =
     when {
         isArray -> flatMap { it.jsonLdNodes() }
         path("@graph").isArray -> path("@graph").flatMap { it.jsonLdNodes() }
+        path("itemListElement").isArray -> path("itemListElement").flatMap { it.jsonLdNodes() }
         isObject -> listOf(this)
         else -> emptyList()
     }

@@ -27,6 +27,7 @@ import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.wpRendered
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.TextNode
@@ -176,7 +177,7 @@ internal class Bogen47ApiScraper(
         // The archive reaches back to 2022; only upcoming shows are worth minting.
         if (startedAt.toLocalDate() < today) return null
 
-        val rawTitle = decodeHtmlEntities(post.path("title").path("rendered").asString(""))
+        val rawTitle = decodeHtmlEntities(post.wpRendered("title").orEmpty())
         if (rawTitle.isBlank()) {
             logger.warn { "$eventSource event $id has no title, skipping" }
             return null

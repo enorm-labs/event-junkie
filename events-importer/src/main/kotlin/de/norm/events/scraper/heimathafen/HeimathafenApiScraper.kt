@@ -21,6 +21,7 @@ import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.wpRendered
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
@@ -104,14 +105,14 @@ class HeimathafenApiScraper(
         today: LocalDate
     ): List<ScrapedEvent> {
         val postId = post.path("id").asInt(0).takeIf { it > 0 } ?: return emptyList()
-        val cleanedTitle = htmlToText(post.path("title").path("rendered").asString(""))?.let(::cleanEventTitle) ?: return emptyList()
+        val cleanedTitle = post.wpRendered("title")?.let(::htmlToText)?.let(::cleanEventTitle) ?: return emptyList()
         val title = cleanedTitle.text
 
         val acf = post.path("acf")
         val classes = post.path("class_list").mapNotNull { it.asString(null) }
         val eventType = resolveEventType(classes, title)
         val genre = resolveGenre(classes)
-        val subtitle = htmlToText(post.path("excerpt").path("rendered").asString(""))
+        val subtitle = post.wpRendered("excerpt")?.let(::htmlToText)
         val (presale, boxOffice, priceNote) = parsePrices(acf.path("event_prices"))
 
         val shared =
@@ -119,7 +120,7 @@ class HeimathafenApiScraper(
                 title = title,
                 titleSoldOut = cleanedTitle.soldOut,
                 subtitle = subtitle,
-                description = htmlToText(post.path("content").path("rendered").asString("")),
+                description = post.wpRendered("content")?.let(::htmlToText),
                 eventType = eventType,
                 imageUrl = post.path("featured_images").path("large").asString(null),
                 sourceUrl = post.path("link").asString(""),
