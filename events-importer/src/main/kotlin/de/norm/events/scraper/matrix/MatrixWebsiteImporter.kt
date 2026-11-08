@@ -39,6 +39,10 @@ import org.springframework.stereotype.Component
  * Conditional requests are not used: the site sends `Cache-Control: no-store` and neither ETag nor
  * Last-Modified.
  *
+ * It implements [EventImporter] directly. On `AbstractMonthPagesWebsiteImporter` or `AbstractFanOutImporter`, a home
+ * page that links no night is a complete run, so the stale cleanup removes every stored night. A failed night page
+ * also logs through `readEach`, without its URL and on another logger.
+ *
  * @see MatrixNightPageScraper for the per-night parsing.
  * @see <a href="https://www.matrix-berlin.de/de">Matrix home page</a>
  */

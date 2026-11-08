@@ -19,8 +19,9 @@ import java.time.LocalDate
  * Website importer for Ballhaus Wedding: the `/veranstaltungen` programme, then the Wix Events page of each entry that
  * links one. About a third do; the others link a promoter's shop or nothing, and keep the programme's text and URL.
  *
- * It implements [EventImporter] directly because only some rows have a page of their own. The programme carries no
- * validators that cover the event pages, so every run reads it in full.
+ * It implements [EventImporter] directly. The programme carries no validators that cover the event pages, so every run
+ * reads it in full and stores none. `AbstractSinglePageWebsiteImporter` fetches the programme conditionally and stores
+ * its validators, and its end line cannot count the entries with an event page.
  *
  * @see BallhausWeddingOverviewPageScraper for the programme.
  * @see BallhausWeddingEventPageScraper for the event pages.
