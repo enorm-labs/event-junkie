@@ -8,7 +8,9 @@ import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -72,6 +74,8 @@ class ColosseumWebsiteImporterTest {
             investment.priceNote.shouldBeNull()
             investment.ticketUrl shouldBe eventPage("investment")
             val gysi = events.getValue("colosseum:gysis-begegnungen-mit-felix-jaehn")
+            // The listing carries no text, so the page's own fills the description (#4686).
+            gysi.description.shouldNotBeNull() shouldContain "Gregor Gysi trifft Menschen"
             gysi.doorsTime shouldBe LocalTime.of(11, 0)
             gysi.startTime shouldBe LocalTime.of(11, 30)
             // The page sells no ticket itself, so the listing's price and link stand.

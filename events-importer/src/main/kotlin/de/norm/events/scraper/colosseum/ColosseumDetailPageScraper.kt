@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.WixEventsWarmupData
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.parseWixTicketPrice
 import de.norm.events.scraper.stringOrNull
@@ -15,8 +16,8 @@ import org.jsoup.nodes.Document
 import java.time.LocalTime
 
 /**
- * Pure parser for one Colosseum event page (`/details-registrierung/<slug>`), read for its times
- * and its ticket price.
+ * Pure parser for one Colosseum event page (`/details-registrierung/<slug>`), read for its times,
+ * its ticket price and its description.
  *
  * **The page states two Einlass/Beginn pairs, and the field they sit in tells them apart.** The
  * payload's `about` is a cloned block the house never rewrites: all 18 live events carry the same
@@ -36,7 +37,8 @@ import java.time.LocalTime
  * Several tiers give the lowest as the price and the range as the note.
  *
  * **The event's own text also names its type**, where the listing gives none: a comedian, a
- * concert or a composer ([typeOf]). The description is still refused, for the reason in
+ * concert or a composer ([typeOf]). That text is also the description, `Einlass` and `Beginn` lines
+ * included, as the venue wrote them (#4686). The cloned `about` block stays out, for the reason in
  * [ColosseumWebsiteImporter]'s KDoc.
  *
  * @see ColosseumWebsiteImporter for the fetch orchestration.
@@ -68,6 +70,7 @@ class ColosseumDetailPageScraper {
         }
         return ScrapedEvent(
             title = event.stringOrNull("title").orEmpty(),
+            description = text.mapNotNull { it.blankToNull() }.joinToString("\n\n").blankToNull(),
             eventDate = schedule.date ?: UNRESOLVED_EVENT_DATE,
             eventType = typeOf(text),
             doorsTime = doors,
