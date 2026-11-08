@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -21,9 +22,9 @@ class KitKatClubWebsiteImporterTest {
 
     @BeforeEach
     fun setUp() {
-        val html = javaClass.classLoader.getResourceAsStream("scraper/kitkatclub/kitkatclub-programme.html")!!
+        val programme = fixtureDocument("kitkatclub/kitkatclub-programme.html", sourceUrl, charset = null)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(document = Jsoup.parse(html, null, sourceUrl), etag = "\"abc\"", lastModified = "Sun, 04 Oct 2026 10:00:00 GMT")
+            FetchResult.Success(document = programme, etag = "\"abc\"", lastModified = "Sun, 04 Oct 2026 10:00:00 GMT")
     }
 
     @Test

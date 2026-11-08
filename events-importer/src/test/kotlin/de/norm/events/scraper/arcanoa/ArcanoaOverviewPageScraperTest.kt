@@ -1,6 +1,7 @@
 package de.norm.events.scraper.arcanoa
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -35,12 +36,7 @@ class ArcanoaOverviewPageScraperTest {
      * Parses the snapshot from its bytes with no charset override, exactly as `HtmlFetcher`
      * does — the page declares `iso-8859-1` in a meta tag only, so Jsoup has to detect it.
      */
-    private fun programme(): Document =
-        Jsoup.parse(
-            javaClass.classLoader.getResourceAsStream("scraper/arcanoa/arcanoa-overview.html")!!,
-            null,
-            baseUrl
-        )
+    private fun programme(): Document = fixtureDocument("arcanoa/arcanoa-overview.html", baseUrl, charset = null)
 
     @Nested
     inner class RealSnapshot {

@@ -4,23 +4,35 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.io.InputStream
+import java.nio.charset.Charset
 
 private object ScraperFixtures
 
-/** The test resource `scraper/[path]` as UTF-8 text. */
-fun fixtureText(path: String): String {
-    val stream =
-        checkNotNull(ScraperFixtures::class.java.classLoader.getResourceAsStream("scraper/$path")) {
-            "No fixture at scraper/$path"
-        }
-    return stream.bufferedReader().use { it.readText() }
-}
+private fun fixtureStream(path: String): InputStream =
+    checkNotNull(ScraperFixtures::class.java.classLoader.getResourceAsStream("scraper/$path")) {
+        "No fixture at scraper/$path"
+    }
 
-/** The test resource `scraper/[path]`, parsed as HTML with [baseUri] for resolving relative links. */
+/** The test resource `scraper/[path]` as UTF-8 text. */
+fun fixtureText(path: String): String = fixtureStream(path).bufferedReader().use { it.readText() }
+
+/**
+ * The test resource `scraper/[path]`, parsed as HTML with [baseUri] for resolving relative links.
+ *
+ * A null [charset] parses the bytes the way `HtmlFetcher` does: Jsoup reads the charset from the
+ * page's meta tag. A snapshot of a page that is not UTF-8 needs it.
+ */
 fun fixtureDocument(
     path: String,
-    baseUri: String = ""
-): Document = Jsoup.parse(fixtureText(path), baseUri)
+    baseUri: String = "",
+    charset: Charset? = Charsets.UTF_8
+): Document =
+    if (charset == Charsets.UTF_8) {
+        Jsoup.parse(fixtureText(path), baseUri)
+    } else {
+        fixtureStream(path).use { Jsoup.parse(it, charset?.name(), baseUri) }
+    }
 
 /**
  * Stubs [fetcher] to answer each URL with its fixture, parsed with the URL as base URI.
