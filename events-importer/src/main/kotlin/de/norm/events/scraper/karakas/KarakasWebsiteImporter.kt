@@ -2,17 +2,14 @@ package de.norm.events.scraper.karakas
 
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
+import de.norm.events.scraper.AbstractFanOutImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.readEach
 import de.norm.events.scraper.resolveUrl
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
 
@@ -35,27 +32,24 @@ import java.time.Clock
 class KarakasWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     clock: Clock = Clock.system(BERLIN)
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+) : AbstractFanOutImporter<Pair<String, EventType>>() {
     override val eventSource: EventSource = EventSource.KARAKAS
-    override val fetchesBeyondEntryPage: Boolean = true
     override val listsWholeProgramme: Boolean = true
+    override val noInputReadMessage: String = "No Karakas programme page could be read"
 
     private val pageScraper = KarakasPageScraper(clock)
     private val calendarScraper = KarakasCalendarScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val pages = PROGRAMME_PAGES.map { (path, type) -> resolveUrl(url, path) to type }
-        val read = readEach(pages, { "Failed to read Karakas page ${it.first}, skipping" }) { (page, type) -> readPage(page, type) }
-        check(read.complete || read.items.isNotEmpty()) { "No Karakas programme page could be read" }
-        logger.info { "Scraped ${read.items.size} Karakas event(s) from ${pages.size} page(s)" }
-        return ImportResult.Success(events = read.items, etag = null, lastModified = null, complete = read.complete)
-    }
+    override suspend fun inputs(url: String): List<Pair<String, EventType>> = PROGRAMME_PAGES.map { (path, type) -> resolveUrl(url, path) to type }
+
+    override suspend fun read(input: Pair<String, EventType>): List<ScrapedEvent> = readPage(input.first, input.second)
+
+    override fun failure(input: Pair<String, EventType>): String = "Failed to read Karakas page ${input.first}, skipping"
+
+    override fun doneLine(
+        events: Int,
+        inputs: Int
+    ): String = "Scraped $events Karakas event(s) from $inputs page(s)"
 
     private suspend fun readPage(
         pageUrl: String,

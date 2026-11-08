@@ -1,16 +1,13 @@
 package de.norm.events.scraper.quatsch
 
 import de.norm.events.event.SpokenLanguage
+import de.norm.events.scraper.AbstractFanOutImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.readEach
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 
@@ -32,31 +29,18 @@ import java.time.LocalDate
 @Component
 class QuatschWebsiteImporter(
     private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+) : AbstractFanOutImporter<QuatschWebsiteImporter.CalendarDay>() {
     override val eventSource: EventSource = EventSource.QUATSCH
-    override val fetchesBeyondEntryPage: Boolean = true
 
     private val scraper = QuatschCalendarScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
+    override suspend fun inputs(url: String): List<CalendarDay> {
         val calendar = checkNotNull(scraper.calendar(htmlFetcher.fetchDocument(url))) { "Quatsch Comedy Club tickets page carries no calendar settings" }
-        val days = calendar.days.take(MAX_DAYS)
-        val answers = readEach(days, { "Failed to read the Quatsch Comedy Club calendar for $it, skipping it" }) { day -> readDay(calendar, day) }
-        val events = answers.items.distinctBy { it.sourceId }
-        logger.info { "Scraped ${events.size} Quatsch Comedy Club show(s) from ${days.size} calendar day(s)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = answers.complete)
+        return calendar.days.take(MAX_DAYS).map { CalendarDay(calendar, it) }
     }
 
-    private suspend fun readDay(
-        calendar: QuatschCalendar,
-        day: LocalDate
-    ): List<ScrapedEvent> {
+    override suspend fun read(input: CalendarDay): List<ScrapedEvent> {
+        val (calendar, day) = input
         val form =
             mapOf(
                 "action" to "eventim_calendar",
@@ -68,6 +52,21 @@ class QuatschWebsiteImporter(
             )
         return scraper.scrapeDay(htmlFetcher.postForm(calendar.ajaxUrl, form))
     }
+
+    override fun failure(input: CalendarDay): String = "Failed to read the Quatsch Comedy Club calendar for ${input.day}, skipping it"
+
+    override fun combine(events: List<ScrapedEvent>): List<ScrapedEvent> = events.distinctBy { it.sourceId }
+
+    override fun doneLine(
+        events: Int,
+        inputs: Int
+    ): String = "Scraped $events Quatsch Comedy Club show(s) from $inputs calendar day(s)"
+
+    /** One day the calendar names, with the settings its request carries. */
+    data class CalendarDay(
+        val calendar: QuatschCalendar,
+        val day: LocalDate
+    )
 
     private companion object {
         /** A runaway guard; the calendar lists about 65 days. */

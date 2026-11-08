@@ -1,15 +1,14 @@
 package de.norm.events.scraper.havanna
 
 import de.norm.events.common.BERLIN
+import de.norm.events.scraper.AbstractFanOutImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.readEach
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -34,37 +33,38 @@ class HavannaWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     /** Clock anchoring the rolling occurrence horizon. Defaults to the system clock; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)
-) : EventImporter {
+) : AbstractFanOutImporter<HavannaNightLink>() {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.HAVANNA
-    override val fetchesBeyondEntryPage: Boolean = true
 
     private val overviewPageScraper = HavannaOverviewPageScraper()
     private val detailPageScraper = HavannaDetailPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val overview = htmlFetcher.fetchDocument(url)
-        val nightLinks = overviewPageScraper.scrape(overview, url)
+    override suspend fun inputs(url: String): List<HavannaNightLink> {
+        val nightLinks = overviewPageScraper.scrape(htmlFetcher.fetchDocument(url), url)
         logger.info { "Found ${nightLinks.size} weekly night page(s) linked from Havanna $url" }
-
-        val nights = readEach(nightLinks, { "Failed to import Havanna night page ${it.url}, skipping" }) { scrapeNight(it) }
-        val events = nights.items.distinctBy { it.sourceId }
-        logger.info { "Generated ${events.size} Havanna event(s) from ${nightLinks.size} weekly night(s)" }
-        // A failed night page would otherwise read as a cancelled weekday (#1980).
-        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = nights.complete)
+        return nightLinks
     }
 
-    /** Fetches one night page and expands it into its weekly occurrences. */
-    private suspend fun scrapeNight(link: HavannaNightLink): List<ScrapedEvent> {
-        val night = detailPageScraper.scrape(htmlFetcher.fetchDocument(link.url), link.url)
+    override fun failure(input: HavannaNightLink): String = "Failed to import Havanna night page ${input.url}, skipping"
+
+    override fun combine(events: List<ScrapedEvent>): List<ScrapedEvent> = events.distinctBy { it.sourceId }
+
+    override fun doneLine(
+        events: Int,
+        inputs: Int
+    ): String = "Generated $events Havanna event(s) from $inputs weekly night(s)"
+
+    /**
+     * Fetches one night page and expands it into its weekly occurrences. A failed page marks the run
+     * incomplete, as it would otherwise read as a cancelled weekday (#1980).
+     */
+    override suspend fun read(input: HavannaNightLink): List<ScrapedEvent> {
+        val night = detailPageScraper.scrape(htmlFetcher.fetchDocument(input.url), input.url)
         return night
             // The night pages carry their own poster; the overview teaser is the fallback.
-            ?.copy(imageUrl = night.imageUrl ?: link.imageUrl)
+            ?.copy(imageUrl = night.imageUrl ?: input.imageUrl)
             ?.toScrapedEvents(clock)
             .orEmpty()
     }
