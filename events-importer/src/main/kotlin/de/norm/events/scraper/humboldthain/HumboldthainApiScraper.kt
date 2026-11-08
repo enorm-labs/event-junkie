@@ -70,7 +70,7 @@ class HumboldthainApiScraper(
      * @return the [ScrapedEvent]s; empty if absent, unparseable or without events.
      */
     fun scrape(json: String): List<ScrapedEvent> {
-        val eventNodes = parseElfsightEventNodes(SCRAPER_JSON, json, VENUE_NAME) ?: return emptyList()
+        val eventNodes = parseElfsightEventNodes(json, VENUE_NAME) ?: return emptyList()
         logger.info { "Found ${eventNodes.size} calendar entry/entries in Humboldthain widget response" }
 
         val parsed =
