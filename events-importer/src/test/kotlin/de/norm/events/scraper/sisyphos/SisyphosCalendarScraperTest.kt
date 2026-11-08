@@ -1,5 +1,6 @@
 package de.norm.events.scraper.sisyphos
 
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -12,13 +13,7 @@ import java.time.LocalTime
 class SisyphosCalendarScraperTest {
     private val scraper = SisyphosCalendarScraper()
 
-    private val fixtureJson: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/sisyphos/sisyphos-calendar.json")!!
-            .bufferedReader()
-            .readText()
-
-    private val events = scraper.scrape(fixtureJson)
+    private val events = scraper.scrape(fixtureText("sisyphos/sisyphos-calendar.json"))
 
     private fun night(title: String) = events.single { it.title == title }
 

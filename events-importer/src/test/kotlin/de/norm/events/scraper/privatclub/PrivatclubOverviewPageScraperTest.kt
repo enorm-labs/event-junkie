@@ -2,13 +2,13 @@ package de.norm.events.scraper.privatclub
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -27,20 +27,11 @@ import java.time.ZonedDateTime
 class PrivatclubOverviewPageScraperTest {
     private val scraper = PrivatclubOverviewPageScraper()
     private val baseUrl = "https://privatclub-berlin.de/"
-    private lateinit var html: String
-
-    @BeforeEach
-    fun setUp() {
-        html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/privatclub/privatclub-overview.html")!!
-                .bufferedReader()
-                .readText()
-    }
+    private val overviewHtml = "privatclub/privatclub-overview.html"
 
     @Test
     fun `scrape extracts all events from fixture`() {
-        val document = Jsoup.parse(html, baseUrl)
+        val document = fixtureDocument(overviewHtml, baseUrl)
         val events = scraper.scrape(document, baseUrl)
 
         events shouldHaveSize 7
@@ -50,7 +41,7 @@ class PrivatclubOverviewPageScraperTest {
     inner class ConcertParsing {
         @Test
         fun `parses concert with full data`() {
-            val document = Jsoup.parse(html, baseUrl)
+            val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val concert = events.first { it.title == "Sean Rowe" }
 
@@ -71,7 +62,7 @@ class PrivatclubOverviewPageScraperTest {
 
         @Test
         fun `parses concert with support act in subtitle`() {
-            val document = Jsoup.parse(html, baseUrl)
+            val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val concert = events.first { it.title == "Sandra Hesch" }
 
@@ -89,7 +80,7 @@ class PrivatclubOverviewPageScraperTest {
 
         @Test
         fun `extracts title as headliner from concert without support line`() {
-            val document = Jsoup.parse(html, baseUrl)
+            val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val concert = events.first { it.title == "Sean Rowe" }
 
@@ -102,7 +93,7 @@ class PrivatclubOverviewPageScraperTest {
     inner class PartyParsing {
         @Test
         fun `parses party event with genre and complex pricing`() {
-            val document = Jsoup.parse(html, baseUrl)
+            val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val party = events.first { it.title == "This Charming Man" }
 
@@ -121,7 +112,7 @@ class PrivatclubOverviewPageScraperTest {
 
         @Test
         fun `party events do not extract artists`() {
-            val document = Jsoup.parse(html, baseUrl)
+            val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val party = events.first { it.title == "This Charming Man" }
 
@@ -207,7 +198,7 @@ class PrivatclubOverviewPageScraperTest {
     inner class StatusHandling {
         @Test
         fun `detects sold out status`() {
-            val document = Jsoup.parse(html, baseUrl)
+            val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val event = events.first { it.title == "Rita Dakota" }
 
@@ -217,7 +208,7 @@ class PrivatclubOverviewPageScraperTest {
 
         @Test
         fun `detects rescheduled status`() {
-            val document = Jsoup.parse(html, baseUrl)
+            val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val event = events.first { it.title == "TELENOVA" }
 
@@ -228,7 +219,7 @@ class PrivatclubOverviewPageScraperTest {
 
         @Test
         fun `detects cancelled status`() {
-            val document = Jsoup.parse(html, baseUrl)
+            val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val event = events.first { it.title == "Velvet Wasted" }
 
@@ -241,7 +232,7 @@ class PrivatclubOverviewPageScraperTest {
     inner class PriceParsing {
         @Test
         fun `parses AK price as box office price`() {
-            val document = Jsoup.parse(html, baseUrl)
+            val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val event = events.first { it.title == "Sandra Hesch" }
 
@@ -250,7 +241,7 @@ class PrivatclubOverviewPageScraperTest {
 
         @Test
         fun `keeps the lowest of three presale tiers and names every tier in the note`() {
-            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "Sonya Shats" }
+            val event = scraper.scrape(fixtureDocument(overviewHtml, baseUrl), baseUrl).first { it.title == "Sonya Shats" }
 
             event.pricePresale shouldBe BigDecimal("25")
             event.priceBoxOffice shouldBe null
@@ -354,7 +345,7 @@ class PrivatclubOverviewPageScraperTest {
 
         @Test
         fun `leaves a single presale price without a note`() {
-            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "Sandra Hesch" }
+            val event = scraper.scrape(fixtureDocument(overviewHtml, baseUrl), baseUrl).first { it.title == "Sandra Hesch" }
 
             event.priceNote shouldBe null
         }
@@ -364,7 +355,7 @@ class PrivatclubOverviewPageScraperTest {
     inner class ImageParsing {
         @Test
         fun `percent-encodes a Cyrillic poster file name from JSON-LD`() {
-            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "Sonya Shats" }
+            val event = scraper.scrape(fixtureDocument(overviewHtml, baseUrl), baseUrl).first { it.title == "Sonya Shats" }
 
             event.imageUrl shouldBe
                 "https://privatclub-berlin.de/wp-content/uploads/2026/08/%D0%BF%D0%BE%D1%81%D1%82_%D0%B1%D0%B5%D1%80%D0%BB%D0%B8%D0%BD-1960x2450.png"

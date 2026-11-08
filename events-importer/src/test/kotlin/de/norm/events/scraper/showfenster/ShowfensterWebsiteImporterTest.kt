@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -27,12 +28,7 @@ class ShowfensterWebsiteImporterTest {
     @Test
     fun `imports the fixture and passes the validator on`() =
         runTest {
-            serve(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/showfenster/showfenster-overview.html")!!
-                    .bufferedReader()
-                    .readText()
-            )
+            serve(fixtureText("showfenster/showfenster-overview.html"))
 
             val result = importer.importEvents(sourceUrl)
 

@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -13,7 +15,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -23,30 +24,18 @@ class SpeakeazyWebsiteImporterTest {
     private val importer = SpeakeazyWebsiteImporter(htmlFetcher)
     private val sourceUrl = "https://www.speakeazyberlin.de/events"
 
-    private fun fixture(
-        name: String,
-        url: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/speakeazy/$name")!!
-                .bufferedReader()
-                .readText(),
-            url
-        )
-
     private val bluesUrl = "$sourceUrl/the-sixth-dimension-blues"
 
     @BeforeEach
     fun setUp() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = fixture("speakeazy-events.html", sourceUrl),
+                document = fixtureDocument("speakeazy/speakeazy-events.html", sourceUrl),
                 etag = "\"abc\"",
                 lastModified = "Sat, 24 Oct 2026 10:00:00 GMT"
             )
         coEvery { htmlFetcher.fetchDocument(any()) } returns Jsoup.parse("<html><body></body></html>", sourceUrl)
-        coEvery { htmlFetcher.fetchDocument(bluesUrl) } returns fixture("speakeazy-event-the-sixth-dimension-blues.html", bluesUrl)
+        stubFetcher(bluesUrl to "speakeazy/speakeazy-event-the-sixth-dimension-blues.html", fetcher = htmlFetcher)
     }
 
     @Test

@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -35,12 +36,7 @@ class RenateOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/renate/renate-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixtureDocument("renate/renate-overview.html", baseUrl), baseUrl)
     }
 
     private fun event(

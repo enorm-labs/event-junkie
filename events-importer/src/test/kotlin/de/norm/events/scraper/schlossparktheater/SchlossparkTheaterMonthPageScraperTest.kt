@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -20,8 +21,7 @@ class SchlossparkTheaterMonthPageScraperTest {
 
     private fun scrape(month: String): List<ScrapedEvent> {
         val url = "https://www.schlossparktheater.de/spielplan/$month.html"
-        val html = javaClass.classLoader.getResource("scraper/schlossparktheater/schlossparktheater-$month.html")!!.readText()
-        return scraper.scrape(Jsoup.parse(html, url), url)
+        return scraper.scrape(fixtureDocument("schlossparktheater/schlossparktheater-$month.html", url), url)
     }
 
     private val november by lazy { scrape("november-2026") }

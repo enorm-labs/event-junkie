@@ -1,5 +1,6 @@
 package de.norm.events.scraper.radar
 
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -10,13 +11,7 @@ import java.time.LocalDateTime
 
 /** Unit tests for [parseRadarEvents], on radar group responses saved on 2026-09-30. */
 class RadarEventsTest {
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/radar/radar-group-$name.json")!!
-            .bufferedReader()
-            .readText()
-
-    private val koepi by lazy { parseRadarEvents(fixture("koepi"), "KØPI") }
+    private val koepi by lazy { parseRadarEvents(fixtureText("radar/radar-group-koepi.json"), "KØPI") }
 
     @Test
     fun `keeps concert and party rows and drops film, bar and meeting rows`() {
@@ -46,7 +41,7 @@ class RadarEventsTest {
 
     @Test
     fun `files an open-decks night radar calls a concert as a party`() {
-        val drugstore = parseRadarEvents(fixture("drugstore"), "Drugstore").events
+        val drugstore = parseRadarEvents(fixtureText("radar/radar-group-drugstore.json"), "Drugstore").events
         // Node 598025 is filed under music/concert and party, and its body reads "Open Breakbeat Decks".
         drugstore.single { it.nodeId == 598025L }.eventType shouldBe "PARTY"
         drugstore.single { it.title == "Hardcore for Solidarity" }.eventType shouldBe "CONCERT"
@@ -62,7 +57,7 @@ class RadarEventsTest {
 
     @Test
     fun `keeps a free-text price as written`() {
-        val abstand = parseRadarEvents(fixture("abstand"), "Abstand")
+        val abstand = parseRadarEvents(fixtureText("radar/radar-group-abstand.json"), "Abstand")
         abstand.events.single { it.title == "Geburtstagsgeballer" }.price shouldBe "7-78€"
     }
 

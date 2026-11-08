@@ -1,10 +1,10 @@
 package de.norm.events.scraper.scheinbar
 
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -14,18 +14,7 @@ class ScheinbarProgrammPageScraperTest {
     private val scraper = ScheinbarProgrammPageScraper()
     private val url = "https://www.scheinbar.de/programm/"
 
-    private val events by lazy {
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/scheinbar/scheinbar-programm.html")!!
-                    .bufferedReader()
-                    .readText(),
-                url
-            ),
-            url
-        )
-    }
+    private val events by lazy { scraper.scrape(fixtureDocument("scheinbar/scheinbar-programm.html", url), url) }
 
     @Test
     fun `reads every evening of the three months`() {

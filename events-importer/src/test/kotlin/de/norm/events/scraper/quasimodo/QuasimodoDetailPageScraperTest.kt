@@ -4,6 +4,8 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -26,13 +28,8 @@ class QuasimodoDetailPageScraperTest {
         fixture: String,
         slug: String
     ): ScrapedEvent {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/quasimodo/quasimodo-detail-$fixture.html")!!
-                .bufferedReader()
-                .readText()
         val sourceUrl = "https://quasimodo.club/events/$slug"
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+        return scraper.scrape(fixtureDocument("quasimodo/quasimodo-detail-$fixture.html", sourceUrl), sourceUrl)!!
     }
 
     @Test
@@ -121,10 +118,7 @@ class QuasimodoDetailPageScraperTest {
     @Test
     fun `splits a credit that names two promoters`() {
         val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/quasimodo/quasimodo-detail-otis-kane.html")!!
-                .bufferedReader()
-                .readText()
+            fixtureText("quasimodo/quasimodo-detail-otis-kane.html")
                 .replace("FKP Scorpio präsentiert:", "Selecta G &amp; Seven Inch Soldiers präsentiert:")
         val sourceUrl = "https://quasimodo.club/events/otis-kane-7410"
         scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.promoters shouldBe listOf("Selecta G", "Seven Inch Soldiers")

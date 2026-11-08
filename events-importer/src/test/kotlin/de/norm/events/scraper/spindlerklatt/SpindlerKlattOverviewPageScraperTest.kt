@@ -1,6 +1,7 @@
 package de.norm.events.scraper.spindlerklatt
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -17,12 +18,7 @@ class SpindlerKlattOverviewPageScraperTest {
     private val baseUrl = "https://www.spindlerklatt.com/club"
 
     private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/spindlerklatt/spindlerklatt-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        scraper.scrape(fixtureDocument("spindlerklatt/spindlerklatt-overview.html", baseUrl), baseUrl)
     }
 
     private fun night(date: String) = events.single { it.eventDate == LocalDate.parse(date) }

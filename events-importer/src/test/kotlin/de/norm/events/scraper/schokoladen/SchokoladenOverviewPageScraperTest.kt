@@ -3,6 +3,7 @@ package de.norm.events.scraper.schokoladen
 import de.norm.events.event.ArtistRole
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -11,7 +12,6 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -26,18 +26,8 @@ import java.time.LocalTime
 class SchokoladenOverviewPageScraperTest {
     private val scraper = SchokoladenOverviewPageScraper()
     private val baseUrl = "https://www.schokoladen-mitte.de/"
-    private lateinit var html: String
 
-    @BeforeEach
-    fun setUp() {
-        html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/schokoladen/schokoladen-overview.html")!!
-                .bufferedReader()
-                .readText()
-    }
-
-    private fun scrape() = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+    private fun scrape() = scraper.scrape(fixtureDocument("schokoladen/schokoladen-overview.html", baseUrl), baseUrl)
 
     @Test
     fun `scrape extracts all events from fixture`() {
@@ -46,16 +36,10 @@ class SchokoladenOverviewPageScraperTest {
 
     @Nested
     inner class Pagination {
-        private fun load(name: String) =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/schokoladen/$name")!!
-                .bufferedReader()
-                .readText()
-
         @Test
         fun `parses a later page in the next year`() {
             val url = "https://www.schokoladen-mitte.de/?page=8"
-            val events = scraper.scrape(Jsoup.parse(load("schokoladen-overview-page-last.html"), url), url)
+            val events = scraper.scrape(fixtureDocument("schokoladen/schokoladen-overview-page-last.html", url), url)
 
             events shouldHaveSize 8
             events.first().eventDate shouldBe LocalDate.of(2027, 2, 6)
@@ -88,12 +72,8 @@ class SchokoladenOverviewPageScraperTest {
         @Test
         fun `reads the sold-out banner and the title genres of a sold-out show`() {
             // 17 September 2026 (#1495): the banner is the subtitle and the last description paragraph.
-            val autumn =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/schokoladen/schokoladen-overview-sold-out.html")!!
-                    .bufferedReader()
-                    .readText()
-            val events = scraper.scrape(Jsoup.parse(autumn, baseUrl), baseUrl)
+            val autumn = fixtureDocument("schokoladen/schokoladen-overview-sold-out.html", baseUrl)
+            val events = scraper.scrape(autumn, baseUrl)
             val rabbits = events.first { it.sourceId == "schokoladen:e20260917" }
 
             rabbits.title shouldBe "1000 Rabbits (art-pop, uk) + Lande Hekt (indie-pop/songwriter, uk)"
@@ -300,12 +280,8 @@ class SchokoladenOverviewPageScraperTest {
         @Test
         fun `reads times written before their labels, with Konzert as the start`() {
             // Revolte Tanzbein, 5 September 2026: "19:00 Einlass - 20:00 Konzert - 22:00 DJ-Set" (#1141).
-            val autumn =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/schokoladen/schokoladen-overview-time-line.html")!!
-                    .bufferedReader()
-                    .readText()
-            val revolte = scraper.scrape(Jsoup.parse(autumn, baseUrl), baseUrl).first { it.sourceId == "schokoladen:e20260905" }
+            val autumn = fixtureDocument("schokoladen/schokoladen-overview-time-line.html", baseUrl)
+            val revolte = scraper.scrape(autumn, baseUrl).first { it.sourceId == "schokoladen:e20260905" }
             revolte.doorsTime shouldBe LocalTime.of(19, 0)
             revolte.startTime shouldBe LocalTime.of(20, 0)
         }
@@ -369,12 +345,8 @@ class SchokoladenOverviewPageScraperTest {
 
         @Test
         fun `splits co-promoters the venue joins with commas and ampersands`() {
-            val autumn =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/schokoladen/schokoladen-overview-time-line.html")!!
-                    .bufferedReader()
-                    .readText()
-            val event = scraper.scrape(Jsoup.parse(autumn, baseUrl), baseUrl).first { it.sourceId == "schokoladen:e20260910" }
+            val autumn = fixtureDocument("schokoladen/schokoladen-overview-time-line.html", baseUrl)
+            val event = scraper.scrape(autumn, baseUrl).first { it.sourceId == "schokoladen:e20260910" }
             event.promoters shouldContainExactly listOf("beav boloney", "wild wax", "little league shows")
         }
 

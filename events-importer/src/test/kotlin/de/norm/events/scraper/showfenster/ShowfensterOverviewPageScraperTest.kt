@@ -1,6 +1,7 @@
 package de.norm.events.scraper.showfenster
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isForChildren
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -15,8 +16,7 @@ import java.time.LocalTime
 
 class ShowfensterOverviewPageScraperTest {
     private val events: List<ScrapedEvent> by lazy {
-        val html = javaClass.getResource("/scraper/showfenster/showfenster-overview.html")!!.readText()
-        ShowfensterOverviewPageScraper().scrape(Jsoup.parse(html, BASE_URL), BASE_URL)
+        ShowfensterOverviewPageScraper().scrape(fixtureDocument("showfenster/showfenster-overview.html", BASE_URL), BASE_URL)
     }
 
     private fun on(

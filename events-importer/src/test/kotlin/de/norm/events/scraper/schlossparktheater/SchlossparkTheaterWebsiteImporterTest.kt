@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -14,7 +16,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -28,19 +29,19 @@ class SchlossparkTheaterWebsiteImporterTest {
 
     private fun monthUrl(month: String) = "${site}spielplan/$month.html"
 
-    private fun fixture(
-        name: String,
-        url: String
-    ): Document = Jsoup.parse(javaClass.classLoader.getResource("scraper/schlossparktheater/schlossparktheater-$name.html")!!.readText(), url)
+    private val kalenderHtml = "schlossparktheater/schlossparktheater-kalender.html"
 
     @BeforeEach
     fun setUp() {
         coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse("<html><body></body></html>", firstArg<String>()) }
-        coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("kalender", entryUrl)
-        coEvery { htmlFetcher.fetchDocument(monthUrl("oktober-2026")) } returns fixture("kalender", monthUrl("oktober-2026"))
-        coEvery { htmlFetcher.fetchDocument(monthUrl("november-2026")) } returns fixture("november-2026", monthUrl("november-2026"))
-        coEvery { htmlFetcher.fetchDocument(monthUrl("februar-2027")) } returns fixture("februar-2027", monthUrl("februar-2027"))
-        coEvery { htmlFetcher.fetchDocument(putschUrl) } returns fixture("putsch", putschUrl)
+        stubFetcher(
+            entryUrl to kalenderHtml,
+            monthUrl("oktober-2026") to kalenderHtml,
+            monthUrl("november-2026") to "schlossparktheater/schlossparktheater-november-2026.html",
+            monthUrl("februar-2027") to "schlossparktheater/schlossparktheater-februar-2027.html",
+            putschUrl to "schlossparktheater/schlossparktheater-putsch.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test
@@ -107,6 +108,6 @@ class SchlossparkTheaterWebsiteImporterTest {
 
     @Test
     fun `month links resolve against the page base`() {
-        fixture("kalender", entryUrl).baseUri() shouldStartWith site
+        fixtureDocument(kalenderHtml, entryUrl).baseUri() shouldStartWith site
     }
 }

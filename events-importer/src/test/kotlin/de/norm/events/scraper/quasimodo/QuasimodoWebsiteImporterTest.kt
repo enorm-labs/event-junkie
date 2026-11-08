@@ -6,6 +6,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -40,19 +42,13 @@ class QuasimodoWebsiteImporterTest {
             "berlin-beat-invasion-no-8-7316" to "berlin-beat-invasion"
         )
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/quasimodo/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = QuasimodoWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("quasimodo-overview.html"), sourceUrl),
+                document = fixtureDocument("quasimodo/quasimodo-overview.html", sourceUrl),
                 etag = "\"quasimodo-etag\"",
                 lastModified = "Sat, 01 Aug 2026 10:00:00 GMT"
             )
@@ -60,8 +56,7 @@ class QuasimodoWebsiteImporterTest {
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
         detailFixtures.forEach { (slug, fixture) ->
             val detailUrl = "https://quasimodo.club/events/$slug"
-            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
-                Jsoup.parse(readFixture("quasimodo-detail-$fixture.html"), detailUrl)
+            stubFetcher(detailUrl to "quasimodo/quasimodo-detail-$fixture.html", fetcher = htmlFetcher)
         }
     }
 
@@ -124,8 +119,7 @@ class QuasimodoWebsiteImporterTest {
     fun `keeps the detail page's cancellation over the listing's silence`() =
         runTest {
             val detailUrl = "https://quasimodo.club/events/otis-kane-7410"
-            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
-                Jsoup.parse(readFixture("quasimodo-detail-otis-kane-cancelled.html"), detailUrl)
+            stubFetcher(detailUrl to "quasimodo/quasimodo-detail-otis-kane-cancelled.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()

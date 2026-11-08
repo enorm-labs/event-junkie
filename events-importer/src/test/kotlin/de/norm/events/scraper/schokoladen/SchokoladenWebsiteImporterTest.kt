@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -29,29 +31,21 @@ class SchokoladenWebsiteImporterTest {
     private val page2Url = "$sourceUrl?page=2"
     private val page3Url = "$sourceUrl?page=3"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/schokoladen/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
         importer = SchokoladenWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = loadDocument("schokoladen-overview.html", sourceUrl),
+                document = fixtureDocument("schokoladen/schokoladen-overview.html", sourceUrl),
                 etag = "\"choc123\"",
                 lastModified = "Sat, 11 Jul 2026 10:00:00 GMT"
             )
-        coEvery { htmlFetcher.fetchDocument(page2Url) } returns loadDocument("schokoladen-overview-page-2.html", page2Url)
-        coEvery { htmlFetcher.fetchDocument(page3Url) } returns loadDocument("schokoladen-overview-page-last.html", page3Url)
+        stubFetcher(
+            page2Url to "schokoladen/schokoladen-overview-page-2.html",
+            page3Url to "schokoladen/schokoladen-overview-page-last.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test

@@ -2,6 +2,7 @@ package de.norm.events.scraper.slaughterhouse
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -15,7 +16,7 @@ import java.time.LocalTime
 
 class SlaughterhouseOverviewPageScraperTest {
     private val baseUrl = "https://slaughterhouse-berlin.de/konzerte/"
-    private val events = SlaughterhouseOverviewPageScraper().scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
+    private val events = SlaughterhouseOverviewPageScraper().scrape(fixtureDocument("slaughterhouse/slaughterhouse-konzerte.html", baseUrl), baseUrl)
 
     private fun on(day: Int) = events.first { it.eventDate == LocalDate.of(2026, 10, day) }
 
@@ -185,10 +186,4 @@ class SlaughterhouseOverviewPageScraperTest {
     fun `yields nothing for a page without the post`() {
         SlaughterhouseOverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
-
-    private fun fixture(): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/slaughterhouse/slaughterhouse-konzerte.html")!!
-            .bufferedReader()
-            .readText()
 }

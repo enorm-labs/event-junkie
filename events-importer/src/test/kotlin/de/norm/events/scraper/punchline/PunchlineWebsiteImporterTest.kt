@@ -4,13 +4,13 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 
 class PunchlineWebsiteImporterTest {
@@ -21,12 +21,8 @@ class PunchlineWebsiteImporterTest {
     @Test
     fun `imports the dates with the page's validators`() =
         runTest {
-            val html =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/punchline/punchline-tickets.html")!!
-                    .bufferedReader()
-                    .readText()
-            coEvery { htmlFetcher.fetch(url, any(), any()) } returns FetchResult.Success(Jsoup.parse(html, url), "\"pl\"", null)
+            coEvery { htmlFetcher.fetch(url, any(), any()) } returns
+                FetchResult.Success(fixtureDocument("punchline/punchline-tickets.html", url), "\"pl\"", null)
 
             val result = importer.importEvents(url)
 

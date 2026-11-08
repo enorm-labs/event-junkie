@@ -3,6 +3,7 @@ package de.norm.events.scraper.tempodrom
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.jsoup.Jsoup
@@ -39,18 +40,17 @@ class TempodromDetailPageScraperTest {
     private fun descriptionPage(blurb: String) =
         Jsoup.parse("""<button class="acc-button btn" aria-controls="event-txt-1">Beschreibung <span></span></button><div id="event-txt-1"><p>$blurb</div>""")
 
-    private fun page(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/tempodrom/$name")!!
-                .bufferedReader()
-                .readText(),
-            listingRow.sourceUrl
-        )
+    private val pageUrl = listingRow.sourceUrl
+    private val trinityHtml = "tempodrom/tempodrom-detail-trinity-music.html"
+    private val d2mberlinHtml = "tempodrom/tempodrom-detail-d2mberlin.html"
+    private val shadenHtml = "tempodrom/tempodrom-detail-shaden-comedy.html"
+    private val comedyPromoterHtml = "tempodrom/tempodrom-detail-comedy-promoter-no-cue.html"
+    private val carrackHtml = "tempodrom/tempodrom-detail-paul-carrack-relocated.html"
+    private val tributeHtml = "tempodrom/tempodrom-detail-tribute-band-in-blurb.html"
 
     @Test
     fun `reads the promoter and its website from the Veranstalter credit`() {
-        val event = scraper.addPromoter(listingRow, page("tempodrom-detail-trinity-music.html"))
+        val event = scraper.addPromoter(listingRow, fixtureDocument(trinityHtml, pageUrl))
 
         event.promoters shouldBe listOf("Trinity Music GmbH")
         event.promoterWebsites shouldBe mapOf("Trinity Music GmbH" to "http://www.trinitymusic.de")
@@ -58,7 +58,7 @@ class TempodromDetailPageScraperTest {
 
     @Test
     fun `reads a second promoter from another page`() {
-        val event = scraper.addPromoter(listingRow, page("tempodrom-detail-d2mberlin.html"))
+        val event = scraper.addPromoter(listingRow, fixtureDocument(d2mberlinHtml, pageUrl))
 
         event.promoters shouldBe listOf("d2mberlin GmbH")
         event.promoterWebsites shouldBe mapOf("d2mberlin GmbH" to "http://www.d2mberlin.de")
@@ -67,7 +67,7 @@ class TempodromDetailPageScraperTest {
     @Test
     fun `never reads the media partner the blurb names`() {
         // The Jill Scott page says "präsentiert von Radio Eins" in its blurb (#2653).
-        scraper.addPromoter(listingRow, page("tempodrom-detail-trinity-music.html")).promoters shouldBe listOf("Trinity Music GmbH")
+        scraper.addPromoter(listingRow, fixtureDocument(trinityHtml, pageUrl)).promoters shouldBe listOf("Trinity Music GmbH")
     }
 
     @Test
@@ -101,7 +101,7 @@ class TempodromDetailPageScraperTest {
     @Test
     fun `types a fallback night COMEDY when the Beschreibung names a comedian`() {
         // "The iconic standup comedian Shaden premieres her … brand new special" (#3380).
-        val event = scraper.enrich(fallbackRow("SHADEN (أنا إمرأة تعبانة) Show", subtitle = null), page("tempodrom-detail-shaden-comedy.html"))
+        val event = scraper.enrich(fallbackRow("SHADEN (أنا إمرأة تعبانة) Show", subtitle = null), fixtureDocument(shadenHtml, pageUrl))
 
         event.eventType shouldBe "COMEDY"
         event.typeIsFallback shouldBe false
@@ -113,7 +113,7 @@ class TempodromDetailPageScraperTest {
         // Abishek Kumar's page credits "The Comedy Cornershop" and its blurb names no comedy.
         val row = fallbackRow("Abishek Kumar", "Abishek wants to Enjoy Life! - Europe/UK tour 2026")
 
-        val event = scraper.enrich(row, page("tempodrom-detail-comedy-promoter-no-cue.html"))
+        val event = scraper.enrich(row, fixtureDocument(comedyPromoterHtml, pageUrl))
 
         event.eventType shouldBe "CONCERT"
         event.typeIsFallback shouldBe true
@@ -164,7 +164,7 @@ class TempodromDetailPageScraperTest {
     @Test
     fun `reads the verlegt badge as RELOCATED over the JSON-LD's EventCancelled`() {
         // paul_carrack_2026-10-18_19: JSON-LD `EventCancelled`, the page `big-btn relocated` (#3576).
-        val event = scraper.enrich(carrackRow, page("tempodrom-detail-paul-carrack-relocated.html"))
+        val event = scraper.enrich(carrackRow, fixtureDocument(carrackHtml, pageUrl))
 
         event.status shouldBe "RELOCATED"
     }
@@ -173,7 +173,7 @@ class TempodromDetailPageScraperTest {
     fun `stores the house the subtitle names as relocatedTo`() {
         val entity =
             scraper
-                .enrich(carrackRow, page("tempodrom-detail-paul-carrack-relocated.html"))
+                .enrich(carrackRow, fixtureDocument(carrackHtml, pageUrl))
                 .toEventEntity(venueId = 1L, venueSlug = "tempodrom", eventSourceId = 1L)
 
         entity.status shouldBe "RELOCATED"
@@ -185,7 +185,7 @@ class TempodromDetailPageScraperTest {
         listOf("tempodrom-detail-trinity-music.html", "tempodrom-detail-d2mberlin.html").forEach { name ->
             listOf("SCHEDULED", "CANCELLED", "POSTPONED").forEach { status ->
                 val row = listingRow.copy(status = status)
-                scraper.enrich(row, page(name)).status shouldBe status
+                scraper.enrich(row, fixtureDocument("tempodrom/$name", pageUrl)).status shouldBe status
             }
         }
     }
@@ -204,7 +204,7 @@ class TempodromDetailPageScraperTest {
     fun `bills the tribute band the blurb names when the format line names none`() {
         // Both 2027 nights print "NIGHT FEVER gilt als die erfolgreichste … BEE GEES Tribute-Band" (#3828).
         listOf(6, 7).forEach { day ->
-            val event = scraper.enrich(tributeRow(day), page("tempodrom-detail-tribute-band-in-blurb.html"))
+            val event = scraper.enrich(tributeRow(day), fixtureDocument(tributeHtml, pageUrl))
 
             event.artists shouldBe listOf(ScrapedArtist("Night Fever", ArtistRole.HEADLINER))
             event.title shouldBe "NIGHTS ON BROADWAY: Anniversary Tour '27"

@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -29,12 +30,7 @@ class SpeichesWebsiteImporterTest {
     @Test
     fun `imports the fixture and passes the validator on`() =
         runTest {
-            serve(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/speiches/speiches-overview.html")!!
-                    .bufferedReader()
-                    .readText()
-            )
+            serve(fixtureText("speiches/speiches-overview.html"))
 
             val result = importer.importEvents(sourceUrl)
 

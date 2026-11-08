@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -21,18 +22,12 @@ class SurpriseWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://surprise-berlin.de/events-programs.php"
 
-    private fun fixture() =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/surprise/surprise-overview.html")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = SurpriseWebsiteImporter(htmlFetcher)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture(), sourceUrl),
+                document = fixtureDocument("surprise/surprise-overview.html", sourceUrl),
                 etag = "\"4cbe-surprise\"",
                 lastModified = "Fri, 16 Oct 2026 18:00:00 GMT"
             )

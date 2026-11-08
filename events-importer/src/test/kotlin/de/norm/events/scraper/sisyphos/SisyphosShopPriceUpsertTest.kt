@@ -11,6 +11,7 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -55,14 +56,6 @@ class SisyphosShopPriceUpsertTest {
     private val productUrl = "https://www.sisyphos-berlin.net/products/generations-10-okt-2026"
     private val generations = "sisyphos:2026-10-10"
 
-    private fun resource(path: String): String =
-        javaClass.classLoader
-            .getResourceAsStream(path)!!
-            .bufferedReader()
-            .readText()
-
-    private val shopJson = resource("scraper/sisyphos/sisyphos-tickets.json")
-
     /** The generationS night as a good shop read stored it. */
     private val stored =
         EventEntity(
@@ -83,7 +76,7 @@ class SisyphosShopPriceUpsertTest {
 
     @BeforeEach
     fun setUp() {
-        coEvery { apiClient.fetchJson(calendarUrl) } returns resource("scraper/sisyphos/sisyphos-calendar.json")
+        coEvery { apiClient.fetchJson(calendarUrl) } returns fixtureText("sisyphos/sisyphos-calendar.json")
         coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored).asFlow()
         coEvery { eventRepository.findBySlugIn(any()) } returns emptyFlow()
         coEvery { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) } returns emptyFlow()
@@ -115,7 +108,7 @@ class SisyphosShopPriceUpsertTest {
     @Test
     fun `a refused shop read after a restart keeps the price the earlier process stored`() =
         runTest {
-            coEvery { apiClient.fetchJson(feedUrl) } returns shopJson
+            coEvery { apiClient.fetchJson(feedUrl) } returns fixtureText("sisyphos/sisyphos-tickets.json")
             importer().importEvents(feedUrl).shouldBeInstanceOf<ImportResult.Success>()
             refuseShop()
             written(importer()).pricePresale shouldBe BigDecimal("20.00")
@@ -124,7 +117,7 @@ class SisyphosShopPriceUpsertTest {
     @Test
     fun `a refused read after a good one in the same process joins the price that read saw`() =
         runTest {
-            coEvery { apiClient.fetchJson(feedUrl) } returns shopJson
+            coEvery { apiClient.fetchJson(feedUrl) } returns fixtureText("sisyphos/sisyphos-tickets.json")
             val importer = importer()
             importer.importEvents(feedUrl).shouldBeInstanceOf<ImportResult.Success>()
             refuseShop()

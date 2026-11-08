@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureText
+import de.norm.events.scraper.stubFetcher
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -21,12 +23,6 @@ class QuatschWebsiteImporterTest {
     private val sourceUrl = "https://quatsch-comedy-club.de/tickets/"
     private val ajaxUrl = "https://quatsch-comedy-club.de/wp-admin/admin-ajax.php"
 
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/quatsch/$name")!!
-            .bufferedReader()
-            .readText()
-
     private fun dayForm(date: String) =
         mapOf(
             "action" to "eventim_calendar",
@@ -39,10 +35,10 @@ class QuatschWebsiteImporterTest {
 
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetchDocument(sourceUrl) } returns Jsoup.parse(fixture("quatsch-tickets.html"), sourceUrl)
-        coEvery { htmlFetcher.postForm(ajaxUrl, any()) } returns fixture("quatsch-day-no-show.json")
-        coEvery { htmlFetcher.postForm(ajaxUrl, dayForm("4.10.2026")) } returns fixture("quatsch-day-house-shows.json")
-        coEvery { htmlFetcher.postForm(ajaxUrl, dayForm("6.10.2026")) } returns fixture("quatsch-day-guest-show.json")
+        stubFetcher(sourceUrl to "quatsch/quatsch-tickets.html", fetcher = htmlFetcher)
+        coEvery { htmlFetcher.postForm(ajaxUrl, any()) } returns fixtureText("quatsch/quatsch-day-no-show.json")
+        coEvery { htmlFetcher.postForm(ajaxUrl, dayForm("4.10.2026")) } returns fixtureText("quatsch/quatsch-day-house-shows.json")
+        coEvery { htmlFetcher.postForm(ajaxUrl, dayForm("6.10.2026")) } returns fixtureText("quatsch/quatsch-day-guest-show.json")
     }
 
     @Test

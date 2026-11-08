@@ -2,6 +2,7 @@ package de.norm.events.scraper.speiches
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -21,12 +22,7 @@ class SpeichesOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-10-08T12:00:00Z"), ZoneOffset.UTC)
 
     private val events by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/speiches/speiches-overview.html")!!
-                .bufferedReader()
-                .readText()
-        SpeichesOverviewPageScraper(clock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        SpeichesOverviewPageScraper(clock).scrape(fixtureDocument("speiches/speiches-overview.html", baseUrl), baseUrl)
     }
 
     private fun on(

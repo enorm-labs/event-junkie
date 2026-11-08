@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -32,14 +33,9 @@ class RoadrunnerWebsiteImporterTest {
     @BeforeEach
     fun setUp() {
         importer = RoadrunnerWebsiteImporter(htmlFetcher, clock)
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/roadrunner/roadrunner-programm.html")!!
-                .bufferedReader()
-                .readText()
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(html, sourceUrl),
+                document = fixtureDocument("roadrunner/roadrunner-programm.html", sourceUrl),
                 etag = "\"rr-etag\"",
                 lastModified = "Mon, 06 Jul 2026 08:00:00 GMT"
             )

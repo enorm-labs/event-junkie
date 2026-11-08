@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -16,7 +18,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -26,23 +27,12 @@ class ScheinbarWebsiteImporterTest {
     private val importer = ScheinbarWebsiteImporter(htmlFetcher)
     private val sourceUrl = "https://www.scheinbar.de/programm/"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/scheinbar/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(document = loadDocument("scheinbar-programm.html", sourceUrl), etag = "\"sb\"", lastModified = null)
+            FetchResult.Success(document = fixtureDocument("scheinbar/scheinbar-programm.html", sourceUrl), etag = "\"sb\"", lastModified = null)
         coEvery { htmlFetcher.fetchDocument(match { it.startsWith("https://www.scheinbar.de/programm/") }) } answers
-            { loadDocument("scheinbar-programm-detail.html", firstArg()) }
+            { fixtureDocument("scheinbar/scheinbar-programm-detail.html", firstArg()) }
     }
 
     @Test
@@ -69,7 +59,7 @@ class ScheinbarWebsiteImporterTest {
     fun `bills a guest show's title act first, then the acts its page lists`() =
         runTest {
             val page = "https://www.scheinbar.de/programm/stage-diven/"
-            coEvery { htmlFetcher.fetchDocument(page) } returns loadDocument("scheinbar-programm-stage-diven.html", page)
+            stubFetcher(page to "scheinbar/scheinbar-programm-stage-diven.html", fetcher = htmlFetcher)
 
             val result = importer.importEvents(sourceUrl)
 

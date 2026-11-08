@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -37,19 +39,13 @@ class RitterButzkeWebsiteImporterTest {
             "100427-WeltauswahlbyExtrawelt" to "extrawelt"
         )
 
-    private fun readFixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/ritterbutzke/$name")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = RitterButzkeWebsiteImporter(htmlFetcher)
 
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("ritterbutzke-overview.html"), sourceUrl),
+                document = fixtureDocument("ritterbutzke/ritterbutzke-overview.html", sourceUrl),
                 etag = "\"rb-etag\"",
                 lastModified = "Sun, 03 Aug 2026 08:00:00 GMT"
             )
@@ -57,8 +53,7 @@ class RitterButzkeWebsiteImporterTest {
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
         detailFixtures.forEach { (slug, fixture) ->
             val detailUrl = "https://club.ritterbutzke.com/event/$slug"
-            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
-                Jsoup.parse(readFixture("ritterbutzke-detail-$fixture.html"), detailUrl)
+            stubFetcher(detailUrl to "ritterbutzke/ritterbutzke-detail-$fixture.html", fetcher = htmlFetcher)
         }
     }
 

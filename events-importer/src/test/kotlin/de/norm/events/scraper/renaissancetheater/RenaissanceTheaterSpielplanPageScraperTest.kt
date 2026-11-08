@@ -3,6 +3,7 @@ package de.norm.events.scraper.renaissancetheater
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.forChildrenPhrase
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -22,14 +23,7 @@ class RenaissanceTheaterSpielplanPageScraperTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-17T10:00:00Z"), BERLIN)
     private val scraper = RenaissanceTheaterSpielplanPageScraper(clock)
 
-    private val events by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/renaissancetheater/renaissancetheater-spielplan.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private val events by lazy { scraper.scrape(fixtureDocument("renaissancetheater/renaissancetheater-spielplan.html", baseUrl), baseUrl) }
 
     private fun event(sourceId: String) = events.single { it.sourceId == sourceId }
 

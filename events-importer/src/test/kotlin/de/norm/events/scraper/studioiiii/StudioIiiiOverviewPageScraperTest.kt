@@ -5,6 +5,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.importing.strippedArtists
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -23,14 +24,7 @@ class StudioIiiiOverviewPageScraperTest {
     private val scraper = StudioIiiiOverviewPageScraper(clock)
     private val baseUrl = "https://studioiiii.de/"
 
-    private val events: List<ScrapedEvent> by lazy {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/studioiiii/studioiiii-overview.html")!!
-                .bufferedReader()
-                .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("studioiiii/studioiiii-overview.html", baseUrl), baseUrl) }
 
     private fun night(title: String) = events.single { it.title == title }
 

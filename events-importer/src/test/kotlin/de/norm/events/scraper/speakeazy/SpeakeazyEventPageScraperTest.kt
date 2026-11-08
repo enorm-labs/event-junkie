@@ -1,6 +1,7 @@
 package de.norm.events.scraper.speakeazy
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -15,6 +16,9 @@ import java.time.LocalDate
 class SpeakeazyEventPageScraperTest {
     private val scraper = SpeakeazyEventPageScraper()
     private val base = "https://www.speakeazyberlin.de/events"
+    private val bluesHtml = "speakeazy/speakeazy-event-the-sixth-dimension-blues.html"
+    private val siebertHtml = "speakeazy/speakeazy-event-markus-siebert-band.html"
+    private val bassballHtml = "speakeazy/speakeazy-event-bassball.html"
 
     private fun listed(slug: String) =
         ScrapedEvent(
@@ -25,24 +29,12 @@ class SpeakeazyEventPageScraperTest {
             sourceId = "speakeazy:$slug"
         )
 
-    private fun fixture(
-        name: String,
-        slug: String
-    ): Document =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/speakeazy/$name")!!
-                .bufferedReader()
-                .readText(),
-            "$base/$slug"
-        )
-
     private fun page(body: String): Document = Jsoup.parse("<html><body>$body</body></html>", "$base/inline")
 
     @Test
     fun `reads the blurb, the door price and the ticket shop`() {
         val slug = "the-sixth-dimension-blues"
-        val blues = scraper.enrich(listed(slug), fixture("speakeazy-event-the-sixth-dimension-blues.html", slug)).shouldNotBeNull()
+        val blues = scraper.enrich(listed(slug), fixtureDocument(bluesHtml, "$base/$slug")).shouldNotBeNull()
 
         blues.description!! shouldStartWith "Wir sind The Sixth Dimension Blues aus Berlin-Brandenburg"
         blues.description shouldNotContain "Abendkasse"
@@ -54,13 +46,13 @@ class SpeakeazyEventPageScraperTest {
     @Test
     fun `reads the regular price from a qualified door price`() {
         val slug = "markus-siebert-band"
-        scraper.enrich(listed(slug), fixture("speakeazy-event-markus-siebert-band.html", slug))!!.priceBoxOffice shouldBe BigDecimal("26")
+        scraper.enrich(listed(slug), fixtureDocument(siebertHtml, "$base/$slug"))!!.priceBoxOffice shouldBe BigDecimal("26")
     }
 
     @Test
     fun `keeps the blurb of a page that prints no price`() {
         val slug = "bassball-singer-songwriter-session-rybgg-7jwze-5z8w4-pjye6"
-        val session = scraper.enrich(listed(slug), fixture("speakeazy-event-bassball.html", slug)).shouldNotBeNull()
+        val session = scraper.enrich(listed(slug), fixtureDocument(bassballHtml, "$base/$slug")).shouldNotBeNull()
 
         session.description!! shouldStartWith "Musikalische Unterstützung von einer hochkarätigen Studioband"
         session.priceBoxOffice.shouldBeNull()

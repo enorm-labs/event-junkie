@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -25,27 +26,16 @@ class RenaissanceTheaterWebsiteImporterTest {
     private val sourceUrl = "https://renaissance-theater.de/spielplan/"
     private val fischen = "https://renaissance-theater.de/produktion/von-fischen-und-frauen/"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/renaissancetheater/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = loadDocument("renaissancetheater-spielplan.html", sourceUrl),
+                document = fixtureDocument("renaissancetheater/renaissancetheater-spielplan.html", sourceUrl),
                 etag = "\"rt\"",
                 lastModified = "Sat, 17 Oct 2026 04:00:00 GMT"
             )
         coEvery { htmlFetcher.fetchDocument(match { it.startsWith("https://renaissance-theater.de/produktion/") }) } answers
-            { loadDocument("renaissancetheater-von-fischen-und-frauen.html", firstArg()) }
+            { fixtureDocument("renaissancetheater/renaissancetheater-von-fischen-und-frauen.html", firstArg()) }
     }
 
     @Test

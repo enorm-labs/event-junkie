@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -27,26 +28,18 @@ class TempodromWebsiteImporterTest {
     private val listingUrl = "https://www.tempodrom.de/programm-und-tickets/"
 
     private fun stubListing() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/tempodrom/tempodrom-programme.html")!!
-                .bufferedReader()
-                .readText()
         coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(html, listingUrl),
+                document = fixtureDocument("tempodrom/tempodrom-programme.html", listingUrl),
                 etag = null,
                 lastModified = "Sat, 01 Aug 2026 11:45:00 GMT"
             )
     }
 
     private fun stubEventPages() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/tempodrom/tempodrom-detail-trinity-music.html")!!
-                .bufferedReader()
-                .readText()
-        coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(html, firstArg<String>()) }
+        coEvery { htmlFetcher.fetchDocument(any()) } answers {
+            fixtureDocument("tempodrom/tempodrom-detail-trinity-music.html", firstArg<String>())
+        }
     }
 
     @Test

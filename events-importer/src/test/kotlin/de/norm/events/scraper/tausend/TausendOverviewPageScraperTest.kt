@@ -3,6 +3,7 @@ package de.norm.events.scraper.tausend
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,7 +19,7 @@ import java.time.LocalTime
 class TausendOverviewPageScraperTest {
     private val scraper = TausendOverviewPageScraper()
     private val baseUrl = "https://tausendberlin.com/lineup/"
-    private val document = Jsoup.parse(fixture("tausend-overview.html"), baseUrl)
+    private val document = fixtureDocument("tausend/tausend-overview.html", baseUrl)
     private val events = scraper.scrape(document, baseUrl)
 
     @Test
@@ -99,7 +100,7 @@ class TausendOverviewPageScraperTest {
     @Test
     fun `keys the English page's text on the same source ids`() {
         val englishUrl = "https://tausendberlin.com/en/lineup/"
-        val english = scraper.descriptions(Jsoup.parse(fixture("tausend-overview-en.html"), englishUrl))
+        val english = scraper.descriptions(fixtureDocument("tausend/tausend-overview-en.html", englishUrl))
 
         english.keys shouldBe events.map { it.sourceId }.toSet()
         english.getValue("tausend:2026-10-09-carla-valenti")!! shouldStartWith "The Chilean DJ and producer"
@@ -118,10 +119,4 @@ class TausendOverviewPageScraperTest {
          "startDate":"2026-12-09T21:00:00+01:00","url":"https://tausendberlin.com/lineup/#act-desney-bailey-dj-jauche-20261209"}
         </script>
         """.trimIndent()
-
-    private fun fixture(name: String): String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/tausend/$name")!!
-            .bufferedReader()
-            .readText()
 }

@@ -3,6 +3,7 @@ package de.norm.events.scraper.so36
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -31,20 +32,9 @@ class So36DetailPageScraperTest {
     private val partyUrl =
         "https://www.so36.com/produkte/97683-tickets-last-night-so36-berlin-am-03-07-2026"
 
-    private fun fixture(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/so36/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @Test
     fun `parses all fields of a concert detail page`() {
-        val event = scraper.scrape(fixture("so36-detail-concert.html", concertUrl), concertUrl)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-concert.html", concertUrl), concertUrl)
         event.shouldNotBeNull()
 
         event.title shouldBe "POISON RUIN"
@@ -73,7 +63,7 @@ class So36DetailPageScraperTest {
             title: String,
             subtitle: String
         ): Pair<String?, List<String>> {
-            val document = fixture("so36-detail-concert.html", concertUrl)
+            val document = fixtureDocument("so36/so36-detail-concert.html", concertUrl)
             document.selectFirst("h1 [itemprop=name]")!!.text(title)
             document.selectFirst("small.subtitle")!!.text(subtitle)
             val event = scraper.scrape(document, concertUrl)!!
@@ -102,7 +92,7 @@ class So36DetailPageScraperTest {
             """<td class="price"><span class="hidden" content="$price" itemprop="price"></span></td></tr>"""
 
         fun prices(vararg offers: String): Pair<BigDecimal?, BigDecimal?> {
-            val document = fixture("so36-detail-concert.html", concertUrl)
+            val document = fixtureDocument("so36/so36-detail-concert.html", concertUrl)
             document.selectFirst("table.variants-listing tbody")!!.html(offers.joinToString(""))
             val event = scraper.scrape(document, concertUrl)!!
             return event.pricePresale to event.priceBoxOffice
@@ -120,7 +110,7 @@ class So36DetailPageScraperTest {
 
     @Test
     fun `extracts the concert lineup with the title as headliner and plus-prefixed support acts`() {
-        val event = scraper.scrape(fixture("so36-detail-concert.html", concertUrl), concertUrl)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-concert.html", concertUrl), concertUrl)
         event.shouldNotBeNull()
 
         event.artists shouldHaveSize 3
@@ -134,7 +124,7 @@ class So36DetailPageScraperTest {
     fun `reads the acts after a mit billing frame and never the night's name`() {
         // "SADTEMBER mit TAHA, JOHNBOY M.IKARUS" + "+ Arbok 48 + Support": SADTEMBER is the night (#1132).
         val url = "https://www.so36.com/produkte/96647-tickets-sadtember-mit-taha-johnboy-m-ikarus-so36-berlin-am-05-09-2026"
-        val event = scraper.scrape(fixture("so36-detail-mit-billing.html", url), url)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-mit-billing.html", url), url)
         event.shouldNotBeNull()
 
         event.title shouldBe "SADTEMBER mit TAHA, JOHNBOY M.IKARUS"
@@ -146,7 +136,7 @@ class So36DetailPageScraperTest {
     fun `bills the performers a show's subtitle names after mit`() {
         // "TALK OHNE GAST", subtitle "Qualitätspodcast mit Till Reiners und Moritz Neumeier", 3 December 2026.
         val url = "https://www.so36.com/produkte/100408-tickets-talk-ohne-gast-so36-berlin-am-03-12-2026"
-        val event = scraper.scrape(fixture("so36-detail-show-mit-performers.html", url), url)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-show-mit-performers.html", url), url)
         event.shouldNotBeNull()
 
         event.eventType shouldBe "SHOW"
@@ -157,7 +147,7 @@ class So36DetailPageScraperTest {
     fun `bills the part of a piped title before the pipe`() {
         // "SADSVIT | HYPHEN DASH", 30 September 2026; the ticket line is "SADSVIT | Ticket".
         val url = "https://www.so36.com/produkte/100114-tickets-sadsvit-hyphen-dash-so36-berlin-am-30-09-2026"
-        val event = scraper.scrape(fixture("so36-detail-pipe-title.html", url), url)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-pipe-title.html", url), url)
         event.shouldNotBeNull()
 
         event.title shouldBe "SADSVIT | HYPHEN DASH"
@@ -168,7 +158,7 @@ class So36DetailPageScraperTest {
     fun `bills the act of a show-dash-act title that the description names alone`() {
         // Event 12027: "HERE WE ARE - BRIGADE LOCO" celebrates "10 years of Brigade Loco", 6 February 2027.
         val url = "https://www.so36.com/produkte/97728-tickets-here-we-are-brigade-loco-so36-berlin-am-06-02-2027"
-        val event = scraper.scrape(fixture("so36-detail-show-named-act.html", url), url)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-show-named-act.html", url), url)
         event.shouldNotBeNull()
 
         event.title shouldBe "HERE WE ARE - BRIGADE LOCO"
@@ -207,7 +197,7 @@ class So36DetailPageScraperTest {
     fun `reads a support line that opens with its label instead of a plus`() {
         // "PÖBEL & GESOCKS" with the subtitle "Support: GRENZER & BIERTOIFEL" (#1903).
         val url = "https://www.so36.com/produkte/99596-tickets-poebel-gesocks-so36-berlin-am-03-10-2026"
-        val event = scraper.scrape(fixture("so36-detail-support-label.html", url), url)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-support-label.html", url), url)
         event.shouldNotBeNull()
 
         event.subtitle shouldBe "Support: GRENZER & BIERTOIFEL"
@@ -223,7 +213,7 @@ class So36DetailPageScraperTest {
     fun `reads the support act from the description when the subtitle is a feat line`() {
         // Subtitle "feat. Birte Volta mit Special-Guests"; the description bolds "Support: MDK", then the name (#2865).
         val url = "https://www.so36.com/produkte/91753-tickets-kai-funky-von-ton-steine-scherben-so36-berlin-am-11-12-2026"
-        val event = scraper.scrape(fixture("so36-detail-feat-description-support.html", url), url)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-feat-description-support.html", url), url)
         event.shouldNotBeNull()
 
         event.subtitle shouldBe "feat. Birte Volta mit Special-Guests"
@@ -260,7 +250,7 @@ class So36DetailPageScraperTest {
     fun `keeps a band with an ampersand in its name whole and splits a co-billed title`() {
         // The concert titles with "&" on the listing on 2026-10-03 (#2414).
         fun headliners(title: String): List<String> {
-            val document = fixture("so36-detail-concert.html", concertUrl)
+            val document = fixtureDocument("so36/so36-detail-concert.html", concertUrl)
             document.selectFirst("h1 [itemprop=name]")!!.text(title)
             return scraper
                 .scrape(document, concertUrl)!!
@@ -280,7 +270,7 @@ class So36DetailPageScraperTest {
     fun `reads a support line that opens with an ampersand as support acts`() {
         // "NASTY" with the subtitle "& CRAWLSPACE & PINTGLASS & GHETTO JUSTICE" (#1928).
         val url = "https://www.so36.com/produkte/96899-tickets-nasty-so36-berlin-am-12-11-2026"
-        val event = scraper.scrape(fixture("so36-detail-ampersand.html", url), url)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-ampersand.html", url), url)
         event.shouldNotBeNull()
 
         event.subtitle shouldBe "& CRAWLSPACE & PINTGLASS & GHETTO JUSTICE"
@@ -295,7 +285,7 @@ class So36DetailPageScraperTest {
 
     @Test
     fun `parses a party detail page without a lineup, price or ticket link`() {
-        val event = scraper.scrape(fixture("so36-detail-party.html", partyUrl), partyUrl)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-party.html", partyUrl), partyUrl)
         event.shouldNotBeNull()
 
         event.title shouldBe "LAST NIGHT"
@@ -315,7 +305,7 @@ class So36DetailPageScraperTest {
     @Test
     fun `bills a festival's bold, origin-tagged acts and not its name or presenters`() {
         val url = "https://www.so36.com/produkte/92099-tickets-canarias-calling-festival-so36-berlin-am-08-10-2026"
-        val event = scraper.scrape(fixture("so36-detail-festival-lineup.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-festival-lineup.html", url), url).shouldNotBeNull()
 
         event.eventType shouldBe EventType.FESTIVAL.name
         event.artists.map { it.name to it.role } shouldBe
@@ -329,13 +319,13 @@ class So36DetailPageScraperTest {
 
         // Day 1's subtitle says `Tag 1`; day 2's says nothing, so its rank among the run's dates decides.
         scraper
-            .scrape(fixture("so36-detail-festival-day1.html", day1), day1)
+            .scrape(fixtureDocument("so36/so36-detail-festival-day1.html", day1), day1)
             .shouldNotBeNull()
             .artists
             .map { it.name } shouldBe
             listOf("THE IRON ROSES", "KILL HER FIRST", "NEVER OBEY AGAIN", "WICK BAMBIX")
         scraper
-            .scrape(fixture("so36-detail-festival-day2.html", day2), day2)
+            .scrape(fixtureDocument("so36/so36-detail-festival-day2.html", day2), day2)
             .shouldNotBeNull()
             .artists
             .map { it.name } shouldBe
@@ -345,7 +335,7 @@ class So36DetailPageScraperTest {
     @Test
     fun `bills a festival night's acts from a TAG N MIT subtitle and not the festival's name`() {
         val url = "https://www.so36.com/produkte/102037-tickets-grossstadtwahnsinn-2026-tag-2-so36-berlin-am-07-11-2026"
-        val event = scraper.scrape(fixture("so36-detail-festival-day-lineup.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-festival-day-lineup.html", url), url).shouldNotBeNull()
 
         event.title shouldBe "GROSSSTADTWAHNSINN 2026 | TAG 2"
         event.eventType shouldBe EventType.FESTIVAL.name
@@ -357,7 +347,7 @@ class So36DetailPageScraperTest {
     @Test
     fun `types a bingo night as a show and bills no act for it`() {
         val url = "https://www.so36.com/produkte/100089-tickets-kiezbingo-so36-berlin-am-13-10-2026"
-        val event = scraper.scrape(fixture("so36-detail-bingo.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-bingo.html", url), url).shouldNotBeNull()
 
         event.title shouldBe "KIEZBINGO"
         // The subtitle `Präsentiert von Inge Borg & Gisela Sommer` is the night's credit, not a subtitle (#3319).
@@ -383,7 +373,7 @@ class So36DetailPageScraperTest {
     fun `reads the free-admission notice as a free night`() {
         // The ticket tab shows "Eintritt frei / Admission free!" where a price category would be (#1686).
         val url = "https://www.so36.com/produkte/92090-tickets-dav-jura-slam-so36-berlin-am-17-11-2026"
-        val event = scraper.scrape(fixture("so36-detail-free.html", url), url)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-free.html", url), url)
         event.shouldNotBeNull()
 
         event.title shouldBe "DAV JURA SLAM"
@@ -395,7 +385,7 @@ class So36DetailPageScraperTest {
     @Test
     fun `reads the Anbieter-Veranstalter field as the promoter`() {
         val url = "https://www.so36.com/produkte/99637-tickets-superstars-der-demokratie-so36-berlin-am-20-09-2026"
-        val event = scraper.scrape(fixture("so36-detail-promoter.html", url), url)
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-promoter.html", url), url)
         event.shouldNotBeNull()
 
         event.title shouldBe "SUPERSTARS DER DEMOKRATIE"
@@ -405,7 +395,7 @@ class So36DetailPageScraperTest {
     @Test
     fun `reads a credit subtitle as the promoter of a night filed under the venue`() {
         val url = "https://www.so36.com/produkte/94296-tickets-fliehende-stuerme-der-fluch-totenwald-elektrokohle-so36-berlin-am-23-01-2027"
-        val event = scraper.scrape(fixture("so36-detail-credit-subtitle.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-credit-subtitle.html", url), url).shouldNotBeNull()
 
         event.promoters shouldBe listOf("Subculture Fight Stories")
         event.subtitle shouldBe null
@@ -418,14 +408,14 @@ class So36DetailPageScraperTest {
         val dayTwo = "https://www.so36.com/produkte/102037-tickets-grossstadtwahnsinn-2026-tag-2-so36-berlin-am-07-11-2026"
         val poebel = "https://www.so36.com/produkte/99596-tickets-poebel-gesocks-so36-berlin-am-03-10-2026"
 
-        scraper.scrape(fixture("so36-detail-credit-presents.html", festival), festival).shouldNotBeNull().promoters shouldBe
+        scraper.scrape(fixtureDocument("so36/so36-detail-credit-presents.html", festival), festival).shouldNotBeNull().promoters shouldBe
             listOf("Subculture Fight Stories")
-        scraper.scrape(fixture("so36-detail-credit-tourbooking.html", codefendants), codefendants).shouldNotBeNull().promoters shouldBe
+        scraper.scrape(fixtureDocument("so36/so36-detail-credit-tourbooking.html", codefendants), codefendants).shouldNotBeNull().promoters shouldBe
             listOf("Destiny Tourbooking")
-        scraper.scrape(fixture("so36-detail-festival-day-lineup.html", dayTwo), dayTwo).shouldNotBeNull().promoters shouldBe
+        scraper.scrape(fixtureDocument("so36/so36-detail-festival-day-lineup.html", dayTwo), dayTwo).shouldNotBeNull().promoters shouldBe
             listOf("Subculture Fight Stories")
         // `Subculture Fight Stories presents:`, with a colon.
-        scraper.scrape(fixture("so36-detail-support-label.html", poebel), poebel).shouldNotBeNull().promoters shouldBe
+        scraper.scrape(fixtureDocument("so36/so36-detail-support-label.html", poebel), poebel).shouldNotBeNull().promoters shouldBe
             listOf("Subculture Fight Stories")
     }
 
@@ -433,7 +423,7 @@ class So36DetailPageScraperTest {
     fun `reads a Tourveranstalter line and not the Praesentatoren line above it`() {
         // `Präsentatoren: Headline Concerts und Lonsdale` names a clothing sponsor too.
         val url = "https://www.so36.com/produkte/96974-tickets-the-busters-so36-berlin-am-04-03-2027"
-        val event = scraper.scrape(fixture("so36-detail-credit-tourveranstalter.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-credit-tourveranstalter.html", url), url).shouldNotBeNull()
 
         event.promoters shouldBe listOf("Headline Concerts")
     }
@@ -442,7 +432,7 @@ class So36DetailPageScraperTest {
     fun `splits a Presented by line into its promoters and drops the venue`() {
         // `Presented by Sonido Muchacho, Entre Trópicos & SO36.`
         val url = "https://www.so36.com/produkte/101164-tickets-depresion-sonora-so36-berlin-am-31-01-2027"
-        val event = scraper.scrape(fixture("so36-detail-credit-presented-by.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-credit-presented-by.html", url), url).shouldNotBeNull()
 
         event.promoters shouldBe listOf("Sonido Muchacho", "Entre Trópicos")
         event.subtitle shouldBe "Vacaciones por Europa"
@@ -452,7 +442,7 @@ class So36DetailPageScraperTest {
     fun `reads no promoter from a sponsor roll, a media list or a credit to the venue alone`() {
         val day1 = "https://www.so36.com/produkte/93090-tickets-female-fronted-is-not-a-genre-5-so36-berlin-am-22-10-2026"
         // `SO36, CORETEX, IRIEDAILY, TRUE REBEL, DIFFUS, OX-Fanzine, faemm & KROD Records präsentieren`
-        scraper.scrape(fixture("so36-detail-festival-day1.html", day1), day1).shouldNotBeNull().promoters shouldHaveSize 0
+        scraper.scrape(fixtureDocument("so36/so36-detail-festival-day1.html", day1), day1).shouldNotBeNull().promoters shouldHaveSize 0
 
         fun houseNight(
             subtitle: String,
@@ -592,7 +582,7 @@ class So36DetailPageScraperTest {
     @Test
     fun `keeps the cheapest of several tiers, names every tier, and links its own shop page`() {
         val url = "https://www.so36.com/produkte/100165-tickets-15-years-of-mash-up-so36-berlin-am-02-10-2026"
-        val event = scraper.scrape(fixture("so36-detail-tiers.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-tiers.html", url), url).shouldNotBeNull()
 
         event.pricePresale shouldBe BigDecimal("24.5")
         event.priceNote shouldBe "Ticket social 24,50 € / Ticket regular 29,50 € / Ticket support 34,50 €"
@@ -603,7 +593,7 @@ class So36DetailPageScraperTest {
     @Test
     fun `cuts a description in both languages where the German half begins`() {
         val url = "https://www.so36.com/tickets/x"
-        val event = scraper.scrape(fixture("so36-detail-tiers.html", url), url).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-tiers.html", url), url).shouldNotBeNull()
 
         val english = event.description.shouldNotBeNull()
         english shouldStartWith "A queer-feminist double anniversary with panel, live concerts and DJs"
@@ -614,7 +604,7 @@ class So36DetailPageScraperTest {
 
     @Test
     fun `stores a one-language description with no second language`() {
-        val event = scraper.scrape(fixture("so36-detail-concert.html", concertUrl), concertUrl).shouldNotBeNull()
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-concert.html", concertUrl), concertUrl).shouldNotBeNull()
 
         event.descriptionAlt.shouldBeNull()
     }

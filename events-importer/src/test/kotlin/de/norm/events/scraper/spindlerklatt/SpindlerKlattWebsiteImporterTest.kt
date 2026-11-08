@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -21,18 +22,12 @@ class SpindlerKlattWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val sourceUrl = "https://www.spindlerklatt.com/club"
 
-    private fun fixture() =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/spindlerklatt/spindlerklatt-overview.html")!!
-            .bufferedReader()
-            .readText()
-
     @BeforeEach
     fun setUp() {
         importer = SpindlerKlattWebsiteImporter(htmlFetcher)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(fixture(), sourceUrl),
+                document = fixtureDocument("spindlerklatt/spindlerklatt-overview.html", sourceUrl),
                 etag = "W/\"spindlerklatt-club\"",
                 lastModified = "Sat, 17 Oct 2026 08:00:00 GMT"
             )
