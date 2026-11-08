@@ -4,6 +4,7 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -22,11 +23,7 @@ class DrugstoreWebsiteImporterTest {
     @Test
     fun `imports the nights and reads free entry and the bill from the description`() =
         runTest {
-            coEvery { apiClient.fetchJson(any()) } returns
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/radar/radar-group-drugstore.json")!!
-                    .bufferedReader()
-                    .readText()
+            coEvery { apiClient.fetchJson(any()) } returns fixtureText("radar/radar-group-drugstore.json")
 
             val result = importer.importEvents("https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=1680")
 

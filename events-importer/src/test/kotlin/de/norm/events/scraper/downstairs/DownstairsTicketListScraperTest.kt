@@ -1,5 +1,6 @@
 package de.norm.events.scraper.downstairs
 
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -13,28 +14,19 @@ class DownstairsTicketListScraperTest {
     private val scraper = DownstairsTicketListScraper()
     private val url = "https://www.downstairscomedy.shop/catalog/tickets?limit=100&use_sold=true&use_pagy=true&view_type=list"
 
-    private fun document(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/downstairs/$name")!!
-                .bufferedReader()
-                .readText(),
-            url
-        )
-
     @Test
     fun `reads the hundred performances of the first page and skips the workshops`() {
-        val events = scraper.scrape(document("downstairs-tickets-page1.html"), url)
+        val events = scraper.scrape(fixtureDocument("downstairs/downstairs-tickets-page1.html", url), url)
 
         events shouldHaveSize 98
         events.none { it.title.startsWith("Stand-Up Comedy Workshop") } shouldBe true
-        scraper.nextPage(document("downstairs-tickets-page1.html")) shouldBe 2
-        scraper.nextPage(document("downstairs-tickets-page2.html")) shouldBe null
+        scraper.nextPage(fixtureDocument("downstairs/downstairs-tickets-page1.html", url)) shouldBe 2
+        scraper.nextPage(fixtureDocument("downstairs/downstairs-tickets-page2.html", url)) shouldBe null
     }
 
     @Test
     fun `reads a performance with the year from its ticket link`() {
-        val show = scraper.scrape(document("downstairs-tickets-page1.html"), url).first()
+        val show = scraper.scrape(fixtureDocument("downstairs/downstairs-tickets-page1.html", url), url).first()
 
         show.title shouldBe "Downstairs Allstars - Stand Up Comedy Show"
         show.eventType shouldBe "COMEDY"
@@ -49,7 +41,9 @@ class DownstairsTicketListScraperTest {
 
     @Test
     fun `bills a guest's solo show`() {
-        val events = scraper.scrape(document("downstairs-tickets-page1.html"), url) + scraper.scrape(document("downstairs-tickets-page2.html"), url)
+        val events =
+            scraper.scrape(fixtureDocument("downstairs/downstairs-tickets-page1.html", url), url) +
+                scraper.scrape(fixtureDocument("downstairs/downstairs-tickets-page2.html", url), url)
 
         events.first { it.title.startsWith("Moritz Hohl - Premiere") }.artists.map { it.name } shouldContainExactly listOf("Moritz Hohl")
     }

@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
@@ -36,14 +37,8 @@ import java.time.LocalTime
 class EschschloraqueOverviewPageScraperTest {
     private val baseUrl = "https://www.eschschloraque.de/"
 
-    private fun scrape(fixture: String): List<ScrapedEvent> {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/eschschloraque/$fixture")!!
-                .bufferedReader()
-                .readText()
-        return EschschloraqueOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl)
-    }
+    private fun scrape(fixture: String): List<ScrapedEvent> =
+        EschschloraqueOverviewPageScraper().scrape(fixtureDocument("eschschloraque/$fixture", baseUrl), baseUrl)
 
     private val events: List<ScrapedEvent> by lazy { scrape("eschschloraque-overview.html") }
     private val edgeCases: List<ScrapedEvent> by lazy { scrape("eschschloraque-overview-edge-cases.html") }

@@ -7,6 +7,9 @@ import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -47,43 +50,22 @@ class CassiopeiaWebsiteImporterTest {
 
     private val sourceUrl = "https://cassiopeia-berlin.de/club"
 
-    private val concertDetailHtml = loadFixture("scraper/cassiopeia/cassiopeia-detail-concert.html")
-    private val partyDetailHtml = loadFixture("scraper/cassiopeia/cassiopeia-detail-party.html")
-    private val cancelledDetailHtml = loadFixture("scraper/cassiopeia/cassiopeia-detail-cancelled.html")
-    private val defaultDetailHtml = loadFixture("scraper/cassiopeia/cassiopeia-detail-default.html")
-
     @BeforeEach
     fun setUp() {
         importer = CassiopeiaWebsiteImporter(htmlFetcher, clock)
-        html = loadFixture("scraper/cassiopeia/cassiopeia-club.html")
-
-        val document = Jsoup.parse(html, sourceUrl)
-        coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(
-                document = document,
-                etag = null,
-                lastModified = null
-            )
+        html = fixtureText("cassiopeia/cassiopeia-club.html")
+        stubFetcher(sourceUrl to "cassiopeia/cassiopeia-club.html", fetcher = htmlFetcher)
 
         // Default: return minimal detail page for any URL (falls back to listing data)
-        coEvery { htmlFetcher.fetchDocument(any()) } returns Jsoup.parse(defaultDetailHtml, sourceUrl)
+        coEvery { htmlFetcher.fetchDocument(any()) } returns fixtureDocument("cassiopeia/cassiopeia-detail-default.html", sourceUrl)
         // Per-event detail pages with full data as primary source
-        coEvery {
-            htmlFetcher.fetchDocument("https://cassiopeia-berlin.de/event/super-tuesday-111639689")
-        } returns Jsoup.parse(partyDetailHtml, "https://cassiopeia-berlin.de/event/super-tuesday-111639689")
-        coEvery {
-            htmlFetcher.fetchDocument("https://cassiopeia-berlin.de/event/pharmakon-111623735")
-        } returns Jsoup.parse(concertDetailHtml, "https://cassiopeia-berlin.de/event/pharmakon-111623735")
-        coEvery {
-            htmlFetcher.fetchDocument("https://cassiopeia-berlin.de/event/cancelled-show-111111111")
-        } returns Jsoup.parse(cancelledDetailHtml, "https://cassiopeia-berlin.de/event/cancelled-show-111111111")
+        stubFetcher(
+            "https://cassiopeia-berlin.de/event/super-tuesday-111639689" to "cassiopeia/cassiopeia-detail-party.html",
+            "https://cassiopeia-berlin.de/event/pharmakon-111623735" to "cassiopeia/cassiopeia-detail-concert.html",
+            "https://cassiopeia-berlin.de/event/cancelled-show-111111111" to "cassiopeia/cassiopeia-detail-cancelled.html",
+            fetcher = htmlFetcher
+        )
     }
-
-    private fun loadFixture(path: String): String =
-        javaClass.classLoader
-            .getResourceAsStream(path)!!
-            .bufferedReader()
-            .readText()
 
     @Test
     fun `importEvents extracts all events from fixture`() =
@@ -294,10 +276,11 @@ class CassiopeiaWebsiteImporterTest {
     private fun paginate() {
         val first = html.replace("</body>", "<a href=\"?f74de34a_page=2\" aria-label=\"Next Page\" class=\"w-pagination-next\">Next</a></body>")
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns FetchResult.Success(Jsoup.parse(first, sourceUrl), null, null)
-        coEvery { htmlFetcher.fetchDocument(page2Url) } returns
-            Jsoup.parse(loadFixture("scraper/cassiopeia/cassiopeia-club-page-2.html"), page2Url)
-        coEvery { htmlFetcher.fetchDocument(page3Url) } returns
-            Jsoup.parse(loadFixture("scraper/cassiopeia/cassiopeia-club-page-last.html"), page3Url)
+        stubFetcher(
+            page2Url to "cassiopeia/cassiopeia-club-page-2.html",
+            page3Url to "cassiopeia/cassiopeia-club-page-last.html",
+            fetcher = htmlFetcher
+        )
     }
 
     @Test

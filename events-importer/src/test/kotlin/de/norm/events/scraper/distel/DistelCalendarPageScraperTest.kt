@@ -1,10 +1,10 @@
 package de.norm.events.scraper.distel
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -15,23 +15,14 @@ class DistelCalendarPageScraperTest {
     private val scraper = DistelCalendarPageScraper()
     private val url = "https://distel-berlin.de/spielplan/kalender/"
 
-    private fun document(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/distel/$name")!!
-                .bufferedReader()
-                .readText(),
-            url
-        )
-
     @Test
     fun `reads every performance of the month`() {
-        scraper.scrape(document("distel-kalender.html"), url) shouldHaveSize 32
+        scraper.scrape(fixtureDocument("distel/distel-kalender.html", url), url) shouldHaveSize 32
     }
 
     @Test
     fun `reads a performance with its shop id as identity`() {
-        val first = scraper.scrape(document("distel-kalender.html"), url).first()
+        val first = scraper.scrape(fixtureDocument("distel/distel-kalender.html", url), url).first()
 
         first.title shouldBe "Die Rückkehr der Späti-Ritter"
         first.subtitle shouldBe "Kiosk. Krise. Kanzlerschaft."
@@ -46,23 +37,23 @@ class DistelCalendarPageScraperTest {
 
     @Test
     fun `marks a performance with no seat left as sold out`() {
-        scraper.scrape(document("distel-kalender.html"), url).count { it.soldOut } shouldBe 1
+        scraper.scrape(fixtureDocument("distel/distel-kalender.html", url), url).count { it.soldOut } shouldBe 1
     }
 
     @Test
     fun `reads a later month and stops at an empty one`() {
-        val february = scraper.scrape(document("distel-kalender-202702.html"), url)
+        val february = scraper.scrape(fixtureDocument("distel/distel-kalender-202702.html", url), url)
 
         february shouldHaveSize 2
         february.first().ticketUrl shouldBe null
         february.all { it.eventDate.year == 2027 && it.eventDate.monthValue == 2 } shouldBe true
-        scraper.isEmptyMonth(document("distel-kalender-202703-empty.html")) shouldBe true
-        scraper.scrape(document("distel-kalender-202703-empty.html"), url).shouldBeEmpty()
+        scraper.isEmptyMonth(fixtureDocument("distel/distel-kalender-202703-empty.html", url)) shouldBe true
+        scraper.scrape(fixtureDocument("distel/distel-kalender-202703-empty.html", url), url).shouldBeEmpty()
     }
 
     @Test
     fun `links a guest show's own ticket shop`() {
-        val schnack = scraper.scrape(document("distel-kalender-202612.html"), url).single { it.title.startsWith("SCHNACK") }
+        val schnack = scraper.scrape(fixtureDocument("distel/distel-kalender-202612.html", url), url).single { it.title.startsWith("SCHNACK") }
 
         schnack.eventDate shouldBe LocalDate.of(2026, 12, 14)
         schnack.ticketUrl shouldBe "https://tickets.schnackstandup.de/s/EKZXeX05"
@@ -70,7 +61,7 @@ class DistelCalendarPageScraperTest {
 
     @Test
     fun `bills the guest and host of a talk from the calendar`() {
-        val talk = scraper.scrape(document("distel-kalender.html"), url).first { "Masala" in it.title }
+        val talk = scraper.scrape(fixtureDocument("distel/distel-kalender.html", url), url).first { "Masala" in it.title }
 
         talk.eventType shouldBe "READING"
         talk.artists.map { it.name } shouldBe listOf("Carlo Masala", "Ulrike Herrmann")
@@ -79,7 +70,7 @@ class DistelCalendarPageScraperTest {
 
     @Test
     fun `bills nobody on an ensemble show or one of its marked performances`() {
-        val ensemble = scraper.scrape(document("distel-kalender.html"), url).filter { "Mit aller Kraft" in it.title }
+        val ensemble = scraper.scrape(fixtureDocument("distel/distel-kalender.html", url), url).filter { "Mit aller Kraft" in it.title }
 
         ensemble.map { it.title }.toSet() shouldBe
             setOf("Mit aller Kraft liegen lassen", "PREMIERE: Mit aller Kraft liegen lassen", "Voraufführung: Mit aller Kraft liegen lassen")

@@ -6,6 +6,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -15,7 +17,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -28,24 +29,15 @@ class DistelWebsiteImporterTest {
     private val november = "$sourceUrl?month=202611"
     private val march = "$sourceUrl?month=202703"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/distel/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
-            FetchResult.Success(document = loadDocument("distel-kalender.html", sourceUrl), etag = null, lastModified = null)
-        coEvery { htmlFetcher.fetchDocument(november) } returns loadDocument("distel-kalender-202702.html", november)
-        coEvery { htmlFetcher.fetchDocument(march) } returns loadDocument("distel-kalender-202703-empty.html", march)
-        coEvery { htmlFetcher.fetchDocument(match { "/spielplan/event/" in it }) } answers { loadDocument("distel-show.html", firstArg()) }
+        stubFetcher(
+            sourceUrl to "distel/distel-kalender.html",
+            november to "distel/distel-kalender-202702.html",
+            march to "distel/distel-kalender-202703-empty.html",
+            fetcher = htmlFetcher
+        )
+        coEvery { htmlFetcher.fetchDocument(match { "/spielplan/event/" in it }) } answers { fixtureDocument("distel/distel-show.html", firstArg()) }
     }
 
     @Test
@@ -82,7 +74,7 @@ class DistelWebsiteImporterTest {
     fun `bills a show page's LINE UP in place of the act its title names`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(match { "/spielplan/event/" in it && "masala" in it }) } answers {
-                loadDocument("distel-show-line-up.html", firstArg())
+                fixtureDocument("distel/distel-show-line-up.html", firstArg())
             }
 
             val result = importer.importEvents(sourceUrl)

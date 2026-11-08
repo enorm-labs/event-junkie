@@ -4,6 +4,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -26,22 +28,11 @@ class DownstairsWebsiteImporterTest {
     private val sourceUrl = "https://www.downstairscomedy.shop/catalog/tickets?limit=100&use_sold=true&use_pagy=true&view_type=list"
     private val page2 = "$sourceUrl&page=2"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/downstairs/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetchTurboFrame(sourceUrl, "tickets") } returns loadDocument("downstairs-tickets-page1.html", sourceUrl)
-        coEvery { htmlFetcher.fetchTurboFrame(page2, "tickets") } returns loadDocument("downstairs-tickets-page2.html", page2)
-        coEvery { htmlFetcher.fetchDocument(match { "/catalog/tickets/" in it }) } answers { loadDocument("downstairs-ticket.html", firstArg()) }
+        coEvery { htmlFetcher.fetchTurboFrame(sourceUrl, "tickets") } returns fixtureDocument("downstairs/downstairs-tickets-page1.html", sourceUrl)
+        coEvery { htmlFetcher.fetchTurboFrame(page2, "tickets") } returns fixtureDocument("downstairs/downstairs-tickets-page2.html", page2)
+        coEvery { htmlFetcher.fetchDocument(match { "/catalog/tickets/" in it }) } answers { fixtureDocument("downstairs/downstairs-ticket.html", firstArg()) }
     }
 
     @Test
@@ -69,7 +60,7 @@ class DownstairsWebsiteImporterTest {
         runTest {
             val first = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events
             val (night, other) = first.filter { it.title == first.first().title }.take(2)
-            coEvery { htmlFetcher.fetchDocument(night.sourceUrl) } returns loadDocument("downstairs-ticket-tiers.html", night.sourceUrl)
+            stubFetcher(night.sourceUrl to "downstairs/downstairs-ticket-tiers.html", fetcher = htmlFetcher)
 
             val events = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events
 

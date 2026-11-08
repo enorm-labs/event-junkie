@@ -9,6 +9,7 @@ import de.norm.events.importing.PerformerTyping
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
@@ -52,17 +53,6 @@ class DownstairsSoldElsewhereUpsertTest {
     private val eventSourceId = 1L
     private val storedImage = "https://www.downstairscomedy.shop/uploads/unfallkind.jpg"
 
-    private fun loadDocument(
-        name: String,
-        url: String
-    ) = Jsoup.parse(
-        javaClass.classLoader
-            .getResourceAsStream("scraper/downstairs/$name")!!
-            .bufferedReader()
-            .readText(),
-        url
-    )
-
     /** fienta's JSON-LD: one line of plain spaces, with an address and a phone number. */
     private val sellerPage =
         """
@@ -73,10 +63,10 @@ class DownstairsSoldElsewhereUpsertTest {
 
     @BeforeEach
     fun setUp() {
-        coEvery { htmlFetcher.fetchTurboFrame(sourceUrl, "tickets") } returns loadDocument("downstairs-tickets-page1.html", sourceUrl)
+        coEvery { htmlFetcher.fetchTurboFrame(sourceUrl, "tickets") } returns fixtureDocument("downstairs/downstairs-tickets-page1.html", sourceUrl)
         coEvery { htmlFetcher.fetchTurboFrame("$sourceUrl&page=2", "tickets") } returns
-            loadDocument("downstairs-tickets-page2.html", "$sourceUrl&page=2")
-        coEvery { htmlFetcher.fetchDocument(match { "/catalog/tickets/" in it }) } answers { loadDocument("downstairs-ticket.html", firstArg()) }
+            fixtureDocument("downstairs/downstairs-tickets-page2.html", "$sourceUrl&page=2")
+        coEvery { htmlFetcher.fetchDocument(match { "/catalog/tickets/" in it }) } answers { fixtureDocument("downstairs/downstairs-ticket.html", firstArg()) }
         coEvery { eventRepository.findBySlugIn(any()) } returns emptyFlow()
         coEvery { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) } returns emptyFlow()
     }

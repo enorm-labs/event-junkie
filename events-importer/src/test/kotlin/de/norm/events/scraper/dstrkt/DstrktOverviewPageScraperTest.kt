@@ -1,6 +1,7 @@
 package de.norm.events.scraper.dstrkt
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -14,17 +15,7 @@ class DstrktOverviewPageScraperTest {
     private val scraper = DstrktOverviewPageScraper()
     private val baseUrl = "https://www.dstrkt.de/"
 
-    private fun scrape(fixture: String) =
-        scraper.scrape(
-            Jsoup.parse(
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/dstrkt/$fixture")!!
-                    .bufferedReader()
-                    .readText(),
-                baseUrl
-            ),
-            baseUrl
-        )
+    private fun scrape(fixture: String) = scraper.scrape(fixtureDocument("dstrkt/$fixture", baseUrl), baseUrl)
 
     @Test
     fun `reads every record of the collection`() {

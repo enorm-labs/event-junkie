@@ -3,6 +3,7 @@ package de.norm.events.scraper.donau115
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -24,13 +25,7 @@ class Donau115ApiScraperTest {
     private val scraper = Donau115ApiScraper(clock)
     private val sourceUrl = "https://www.donau115.de/"
 
-    private val fixture: String =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/donau115/donau115-events.json")!!
-            .bufferedReader()
-            .readText()
-
-    private val events = scraper.scrape(fixture, sourceUrl)
+    private val events = scraper.scrape(fixtureText("donau115/donau115-events.json"), sourceUrl)
 
     private fun on(date: String): ScrapedEvent = events.single { it.eventDate == LocalDate.parse(date) }
 

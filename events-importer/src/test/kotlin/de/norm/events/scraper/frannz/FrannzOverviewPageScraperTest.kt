@@ -2,6 +2,8 @@ package de.norm.events.scraper.frannz
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
@@ -42,11 +44,7 @@ class FrannzOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/frannz/frannz-overview.html")!!
-                .bufferedReader()
-                .readText()
+        html = fixtureText("frannz/frannz-overview.html")
     }
 
     private fun scrape() = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
@@ -266,11 +264,7 @@ class FrannzOverviewPageScraperTest {
 
     @Nested
     inner class ClosureNotice {
-        private val notice =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/frannz/frannz-closure-notice.html")!!
-                .bufferedReader()
-                .readText()
+        private val notice = fixtureText("frannz/frannz-closure-notice.html")
 
         private fun titled(title: String) =
             """
@@ -588,13 +582,7 @@ class FrannzOverviewPageScraperTest {
         // copilot or Eventim anchor anywhere in the article (#3281).
         @Test
         fun `reads any seller's anchor from the promo line, not only Eventim`() {
-            val fixture =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/frannz/frannz-greyzone-promo-line.html")!!
-                    .bufferedReader()
-                    .readText()
-
-            val event = scraper.scrape(Jsoup.parse(fixture, baseUrl), baseUrl).single()
+            val event = scraper.scrape(fixtureDocument("frannz/frannz-greyzone-promo-line.html", baseUrl), baseUrl).single()
 
             event.title shouldBe "THE DELINES"
             event.ticketUrl shouldBe "https://www.greyzone-tickets.de/produkte/1240"
@@ -629,13 +617,7 @@ class FrannzOverviewPageScraperTest {
         // Captured from frannz.eu on 2026-10-14: a Schöne Party night that labels its own shop.
         @Test
         fun `reads the seller's anchor from a Tickets online line and keeps the line`() {
-            val fixture =
-                javaClass.classLoader
-                    .getResourceAsStream("scraper/frannz/frannz-tickets-online-line.html")!!
-                    .bufferedReader()
-                    .readText()
-
-            val event = scraper.scrape(Jsoup.parse(fixture, baseUrl), baseUrl).single()
+            val event = scraper.scrape(fixtureDocument("frannz/frannz-tickets-online-line.html", baseUrl), baseUrl).single()
 
             event.title shouldBe "Die Schöne Party"
             event.ticketUrl shouldBe "https://tickets.schoeneparty.de/20261031/"

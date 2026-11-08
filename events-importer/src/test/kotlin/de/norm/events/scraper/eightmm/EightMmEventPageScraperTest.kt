@@ -3,6 +3,7 @@ package de.norm.events.scraper.eightmm
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -15,15 +16,6 @@ import java.time.LocalTime
 class EightMmEventPageScraperTest {
     private val scraper = EightMmEventPageScraper()
 
-    private fun page(name: String) =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/eightmm/$name")!!
-                .bufferedReader()
-                .readText(),
-            "https://www.8mmbar.de/program"
-        )
-
     private fun listed(title: String) =
         ScrapedEvent(
             title = title,
@@ -35,7 +27,7 @@ class EightMmEventPageScraperTest {
 
     @Test
     fun `reads the blurb and the doors and show times`() {
-        val event = scraper.enrich(listed("RMFC LIVE in 8MM"), page("eightmm-event-rmfc.html"))
+        val event = scraper.enrich(listed("RMFC LIVE in 8MM"), fixtureDocument("eightmm/eightmm-event-rmfc.html", "https://www.8mmbar.de/program"))
 
         event.description!! shouldStartWith "ROUGH’n’ROLL Concerts presents:\nR.M.F.C. (Sydney, Australia)"
         event.description shouldContain "Aftershow DJ set Liam Carrol"
@@ -73,7 +65,7 @@ class EightMmEventPageScraperTest {
     fun `a page without a blurb leaves the listed event`() {
         val listed = listed("JEFF CLARK (BLACK LIPS) SUNDAY'S IN OCTOBER DJ RESIDENCY")
 
-        val event = scraper.enrich(listed, page("eightmm-event-residency.html"))
+        val event = scraper.enrich(listed, fixtureDocument("eightmm/eightmm-event-residency.html", "https://www.8mmbar.de/program"))
 
         event shouldBe listed
         event.description.shouldBeNull()

@@ -3,6 +3,7 @@ package de.norm.events.scraper.duncker
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -30,16 +31,7 @@ class DunckerOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-07-01T10:00:00Z"), ZoneOffset.UTC)
     private val scraper = DunckerOverviewPageScraper(clock)
 
-    private fun programme() =
-        Jsoup.parse(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/duncker/duncker-overview.html")!!
-                .bufferedReader()
-                .readText(),
-            baseUrl
-        )
-
-    private val events by lazy { scraper.scrape(programme(), baseUrl) }
+    private val events by lazy { scraper.scrape(fixtureDocument("duncker/duncker-overview.html", baseUrl), baseUrl) }
 
     @Test
     fun `parses every dated programme row and skips the flyer banner rows`() {

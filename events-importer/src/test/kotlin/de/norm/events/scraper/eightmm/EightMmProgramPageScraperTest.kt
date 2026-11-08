@@ -1,6 +1,7 @@
 package de.norm.events.scraper.eightmm
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -17,15 +18,10 @@ import java.time.ZoneId
 
 class EightMmProgramPageScraperTest {
     private val sourceUrl = "https://www.8mmbar.de/program"
-    private val html =
-        javaClass.classLoader
-            .getResourceAsStream("scraper/eightmm/eightmm-program.html")!!
-            .bufferedReader()
-            .readText()
 
     private fun scrape(now: String = "2026-10-17T10:00:00Z") =
         EightMmProgramPageScraper(Clock.fixed(Instant.parse(now), ZoneId.of("Europe/Berlin")))
-            .scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
+            .scrape(fixtureDocument("eightmm/eightmm-program.html", sourceUrl), sourceUrl)
 
     private val events by lazy { scrape() }
 
