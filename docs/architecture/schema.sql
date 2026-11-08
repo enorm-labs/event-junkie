@@ -957,10 +957,12 @@ CREATE TABLE events.promoter (
     description_alt_language text,
     reviewed_at timestamp with time zone,
     name_search text GENERATED ALWAYS AS (events.search_text(name)) STORED,
+    instagram_url text,
     CONSTRAINT promoter_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL)))),
     CONSTRAINT promoter_description_alt_language_valid CHECK (((description_alt_language IS NULL) OR (description_alt_language = ANY (ARRAY['de'::text, 'en'::text])))),
     CONSTRAINT promoter_description_language_valid CHECK (((description_language IS NULL) OR (description_language = ANY (ARRAY['de'::text, 'en'::text])))),
-    CONSTRAINT promoter_image_attributed CHECK (((image_url IS NULL) OR ((image_attribution IS NOT NULL) AND (image_licence_id IS NOT NULL) AND (image_source_url IS NOT NULL))))
+    CONSTRAINT promoter_image_attributed CHECK (((image_url IS NULL) OR ((image_attribution IS NOT NULL) AND (image_licence_id IS NOT NULL) AND (image_source_url IS NOT NULL)))),
+    CONSTRAINT promoter_instagram_url_http CHECK ((instagram_url ~ '^https?://'::text))
 );
 
 --

@@ -2037,6 +2037,11 @@ export interface components {
             name?: string;
             /** @description URL of the promoter's website or social page */
             websiteUrl?: string | null;
+            /**
+             * @description URL of the promoter's Instagram profile. A plain outbound link: nothing is embedded and nothing reaches Instagram before a click.
+             * @example https://www.instagram.com/36concerts/
+             */
+            instagramUrl?: string | null;
             /** @description URL of the promoter's logo image */
             imageUrl?: string | null;
             /**

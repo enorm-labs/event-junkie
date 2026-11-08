@@ -17,7 +17,8 @@ German is the site's authoritative language (ADR-013); a row with one language a
 other stores that one as the description.
 
 An empty `website` keeps the stored link. `none` means the promoter has no site, and clears the
-link: the PUT sends `websiteUrl: null` (#2601). Replacing or clearing a link needs `--force`.
+link: the PUT sends `websiteUrl: null` (#2601). The `instagram` column works the same way on
+`instagramUrl`. Replacing or clearing a link needs `--force`.
 
 Every row in the table is a review, so every row the target holds under a matching name gets
 `reviewed_at` stamped with the time of the run, whether or not another field changes (#1336).
@@ -102,10 +103,11 @@ def changes(promoter, row, stamp, restamp=False):
     """The fields the row would change on [promoter], as {field: (current, wanted)}."""
     wanted = dict(described(promoter_as_row(promoter)))
     wanted.update(described(row))
-    if row["website"] == NO_WEBSITE:
-        wanted["websiteUrl"] = None
-    elif row["website"]:
-        wanted["websiteUrl"] = row["website"]
+    for column, field in (("website", "websiteUrl"), ("instagram", "instagramUrl")):
+        if row.get(column) == NO_WEBSITE:
+            wanted[field] = None
+        elif row.get(column):
+            wanted[field] = row[column]
     changed = {field: (promoter.get(field), value) for field, value in wanted.items() if promoter.get(field) != value}
     if changed or restamp or not promoter.get("reviewedAt"):
         changed["reviewedAt"] = (promoter.get("reviewedAt"), stamp)
@@ -138,7 +140,11 @@ def main():
     described_rows = sum(1 for r in rows if r["description_de"] or r["description_en"])
     with_site = sum(1 for r in rows if r["website"] and r["website"] != NO_WEBSITE)
     without_site = sum(1 for r in rows if r["website"] == NO_WEBSITE)
-    print(f"{len(rows)} reviewed, {with_site} with a website, {without_site} with none, {described_rows} described\n")
+    with_instagram = sum(1 for r in rows if r.get("instagram") and r["instagram"] != NO_WEBSITE)
+    print(
+        f"{len(rows)} reviewed, {with_site} with a website, {without_site} with none, "
+        f"{with_instagram} with Instagram, {described_rows} described\n"
+    )
 
     try:
         promoters = fetch_promoters(args.host)
@@ -174,6 +180,7 @@ def main():
         body = {
             "name": promoter["name"],
             "websiteUrl": promoter.get("websiteUrl"),
+            "instagramUrl": promoter.get("instagramUrl"),
             "imageUrl": promoter.get("imageUrl"),
             "imageAttribution": promoter.get("imageAttribution"),
             "imageLicenceId": promoter.get("imageLicenceId"),

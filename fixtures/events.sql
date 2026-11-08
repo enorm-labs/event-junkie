@@ -68,8 +68,8 @@ VALUES ('fixture-metzer-str', 'Metzer Str.', 52.531700, 13.419000, '{M2}', '2026
        ('fixture-danziger-str', 'Prenzlauer Allee/Danziger Str.', 52.539000, 13.423500, '{M2,M10}', '2026-10-02 04:45:00+00'),
        ('fixture-schoenhauser-allee', 'S+U Schönhauser Allee', 52.549100, 13.413400, '{S8,S41,S42,U2,M1,12}', '2026-10-02 04:45:00+00');
 
-INSERT INTO events.promoter (name, slug, website_url)
-VALUES ('Nachtschicht Kollektiv', 'nachtschicht-kollektiv', 'https://nachtschicht.example');
+INSERT INTO events.promoter (name, slug, website_url, instagram_url)
+VALUES ('Nachtschicht Kollektiv', 'nachtschicht-kollektiv', 'https://nachtschicht.example', 'https://instagram.example/nachtschicht/');
 
 INSERT INTO events.artist (name, slug, website_url)
 VALUES

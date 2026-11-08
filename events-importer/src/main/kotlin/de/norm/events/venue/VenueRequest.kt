@@ -10,6 +10,7 @@ import de.norm.events.common.IMAGE_LICENCE_ID_EXAMPLE
 import de.norm.events.common.IMAGE_LICENCE_ID_MAX_LENGTH
 import de.norm.events.common.IMAGE_SOURCE_URL_DESCRIPTION
 import de.norm.events.common.IMAGE_SOURCE_URL_EXAMPLE
+import de.norm.events.common.INSTAGRAM_URL
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
@@ -184,9 +185,6 @@ data class VenueRequest(
             closedOn = closedOn
         )
 }
-
-/** `https://instagram.com/…` or `https://www.instagram.com/…`, with a path. */
-private const val INSTAGRAM_URL = "https://(www\\.)?instagram\\.com/.+"
 
 /** `https://facebook.com/…`, or a subdomain of it such as `www.` or `m.`, with a path. */
 private const val FACEBOOK_URL = "https://([a-z0-9-]+\\.)?facebook\\.com/.+"

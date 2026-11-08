@@ -4,6 +4,7 @@ import de.norm.events.BaseControllerTest
 import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.springframework.r2dbc.core.await
 import java.time.LocalDate
 
 class PromoterControllerTest : BaseControllerTest() {
@@ -258,6 +259,9 @@ class PromoterControllerTest : BaseControllerTest() {
                 descriptionAlt = "Die Hausagentur von Lido, Astra und Bi Nuu.",
                 descriptionAltLanguage = "de"
             )
+            databaseClient
+                .sql("UPDATE events.promoter SET instagram_url = 'https://www.instagram.com/36concerts/' WHERE slug = '36-concerts'")
+                .await()
 
             webTestClient
                 .get()
@@ -278,6 +282,8 @@ class PromoterControllerTest : BaseControllerTest() {
                 .isEqualTo("Die Hausagentur von Lido, Astra und Bi Nuu.")
                 .jsonPath("$.descriptionAltLanguage")
                 .isEqualTo("de")
+                .jsonPath("$.instagramUrl")
+                .isEqualTo("https://www.instagram.com/36concerts/")
         }
 
     @Test

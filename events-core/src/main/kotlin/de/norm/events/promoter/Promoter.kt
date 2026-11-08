@@ -16,6 +16,8 @@ data class Promoter(
     /** URL-friendly identifier, derived from the name. Example: `"36-concerts"` */
     val slug: String,
     val websiteUrl: String? = null,
+    /** The promoter's Instagram profile, entered by a person and never fetched. */
+    val instagramUrl: String? = null,
     /** URL of the promoter's logo image. */
     val imageUrl: String? = null,
     /** Who to credit for [imageUrl], worded as the archive publishes it. Null exactly when [imageUrl] is. */

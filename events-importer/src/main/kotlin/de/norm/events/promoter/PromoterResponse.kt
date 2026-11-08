@@ -25,6 +25,8 @@ data class PromoterResponse(
     val slug: String,
     @Schema(description = "URL of the promoter's website or social page", example = "https://www.facebook.com/36Concerts/")
     val websiteUrl: String?,
+    @Schema(description = "URL of the promoter's Instagram profile; a plain link, never fetched", example = "https://www.instagram.com/36concerts/")
+    val instagramUrl: String?,
     @Schema(description = "URL of the promoter's logo image", example = "https://example.com/36-concerts-logo.jpg")
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
@@ -55,6 +57,7 @@ data class PromoterResponse(
                 name = promoter.name,
                 slug = promoter.slug,
                 websiteUrl = promoter.websiteUrl,
+                instagramUrl = promoter.instagramUrl,
                 imageUrl = promoter.imageUrl,
                 imageAttribution = promoter.imageAttribution,
                 imageLicenceId = promoter.imageLicenceId,
