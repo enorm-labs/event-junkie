@@ -2,17 +2,15 @@ package de.norm.events.scraper.clubdervisionaere
 
 import de.norm.events.common.BERLIN
 import de.norm.events.common.rethrowIfCancelled
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ListingPages
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.importEntryPage
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.net.URI
 import java.time.Clock
@@ -22,10 +20,10 @@ import java.time.Clock
  * page (see [ClubDerVisionaereRoom]).
  *
  * Two requests per cycle: [HtmlFetcher] fetches the programme page and
- * [ClubDerVisionaereProgrammePageScraper] returns only this importer's [room]; then the
- * homepage, whose NEXT box is the one place the venue prints a start time, joined onto the
- * nights by WordPress post id via [ClubDerVisionaereHomePageScraper]. No detail pages — the
- * listing is the whole programme. An unfetchable homepage costs the nights their time, not the
+ * [ClubDerVisionaereProgrammePageScraper] returns only this importer's [room]; then, in
+ * [afterListing], the homepage, whose NEXT box is the one place the venue prints a start time,
+ * joined onto the nights by WordPress post id via [ClubDerVisionaereHomePageScraper]. No detail
+ * pages — the listing is the whole programme. An unfetchable homepage costs the nights their time, not the
  * import.
  *
  * The WordPress REST API is no option despite ADR-007's JSON-first preference: upcoming nights
@@ -50,26 +48,30 @@ abstract class AbstractClubDerVisionaereRoomImporter(
     /** The room whose nights this importer keeps from the shared listing. */
     private val room: ClubDerVisionaereRoom,
     clock: Clock
-) : EventImporter {
+) : AbstractSinglePageWebsiteImporter(
+        htmlFetcher,
+        room.eventSource.name,
+        ClubDerVisionaereProgrammePageScraper(clock).let { scraper -> { document, url -> scraper.scrape(document, url, room) } }
+    ) {
     private val logger = KotlinLogging.logger {}
 
-    private val programmePageScraper = ClubDerVisionaereProgrammePageScraper(clock)
     private val homePageScraper = ClubDerVisionaereHomePageScraper()
 
     override val eventSource: EventSource get() = room.eventSource
     override val listsWholeProgramme: Boolean = true
     override val fetchesBeyondEntryPage: Boolean = true
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        htmlFetcher.importEntryPage(url, etag, lastModified) { document ->
-            val events = programmePageScraper.scrape(document, url, room)
-            logger.info { "Scraped ${events.size} event(s) for ${room.eventSource.name}" }
-            ListingPages(if (events.isEmpty()) events else withStartTimes(events, url), complete = true)
-        }
+    // Logged in afterListing: the base's logger names the room's subclass, this one names this class.
+    override val listedLine: ((Int) -> String)? = null
+
+    override suspend fun afterListing(
+        events: List<ScrapedEvent>,
+        document: Document,
+        url: String
+    ): List<ScrapedEvent> {
+        logger.info { "Scraped ${events.size} event(s) for ${room.eventSource.name}" }
+        return if (events.isEmpty()) events else withStartTimes(events, url)
+    }
 
     /**
      * Joins the homepage's start times onto [events] by post id. A night the homepage does not

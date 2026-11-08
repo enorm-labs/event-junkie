@@ -11,9 +11,9 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * The one fetch orchestration behind [AbstractSinglePageWebsiteImporter], [AbstractTwoPageWebsiteImporter]
  * and [AbstractMonthPagesWebsiteImporter] (#4643). Each base describes its run as an [HtmlImport]; this
- * runs the steps in one order: entry page, listing, second-language listing, event pages, shared pages,
- * fold, undated drop. A step a base leaves out is skipped. Every base gets the dateless-row retry and
- * the undated drop.
+ * runs the steps in one order: entry page, listing, after-listing pass, second-language listing,
+ * event pages, shared pages, fold, undated drop. A step a base leaves out is skipped. Every base gets
+ * the dateless-row retry and the undated drop.
  *
  * [logger] is the base's own, so every line still names the concrete importer.
  */
@@ -42,9 +42,10 @@ internal class HtmlImportPipeline(
             }
         val listing = import.readListing(entry.document, url)
         import.listedLine?.let { line -> logger.info { line(listing.events.size) } }
+        val listed = import.afterListing(listing.events, entry.document, url)
 
         val translated =
-            import.secondLanguageListing?.let { withSecondLanguageListing(htmlFetcher::fetchDocument, listing.events, entry.document, it) } ?: listing.events
+            import.secondLanguageListing?.let { withSecondLanguageListing(htmlFetcher::fetchDocument, listed, entry.document, it) } ?: listed
         val enriched = import.eventPages?.let { readEventPages(translated, it) } ?: translated
         val folded = import.foldRuns(withSharedPages(htmlFetcher::fetchDocument, enriched, import.sharedPages))
         val events = dropUnresolvedDates(folded)
@@ -209,6 +210,8 @@ internal class HtmlImport(
     val readListing: suspend (Document, String) -> Listing,
     /** Logged with the listing's event count, before any event page is read. */
     val listedLine: ((Int) -> String)? = null,
+    /** The listing's events, the entry page and its URL, to the events the later steps read: a venue's own extra request. */
+    val afterListing: suspend (List<ScrapedEvent>, Document, String) -> List<ScrapedEvent> = { events, _, _ -> events },
     val secondLanguageListing: SecondLanguageListing? = null,
     val eventPages: EventPages? = null,
     val sharedPages: SharedPages<*>? = null,
