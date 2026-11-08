@@ -62,11 +62,22 @@ class AnthropicEventClassifierTest {
         }
 
     @Test
-    fun `an answer that is no JSON is rejected, not failed`() =
+    fun `an answer that is no JSON is rejected, not failed, and logged by its shape`() =
         runTest {
-            server.enqueue(textResponse("I think this is a reading."))
+            val log = LoggerFactory.getLogger(AnthropicEventClassifier::class.java) as Logger
+            val appender = ListAppender<ILoggingEvent>().apply { start() }
+            log.addAppender(appender)
+            try {
+                server.enqueue(textResponse("I think this is a reading."))
 
-            classifier().classify(INPUT) shouldBe ClassifierResult.Rejected(TokenUsage(input = 10, output = 20))
+                classifier().classify(INPUT) shouldBe ClassifierResult.Rejected(TokenUsage(input = 10, output = 20), notJson = true)
+
+                val line = appender.list.single { it.level == Level.WARN }.formattedMessage
+                line shouldBe "The classification answer is not JSON: 26 character(s), stopped at 0: ⟨here⟩a aaaaa aaaa aa a aaaaaaa."
+            } finally {
+                log.detachAppender(appender)
+                appender.stop()
+            }
         }
 
     @Test

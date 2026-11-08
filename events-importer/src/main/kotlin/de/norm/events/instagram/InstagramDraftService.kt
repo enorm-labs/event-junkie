@@ -20,7 +20,9 @@ sealed interface VenueDraftResult {
         val calls: Int,
         val tokens: Long,
         /** Drafts of a night a person rejected before, stored as rejected. */
-        val ofRejectedNights: Int = 0
+        val ofRejectedNights: Int = 0,
+        /** The [rejected] answers that were no JSON at all (#4108). */
+        val notJson: Int = 0
     ) : VenueDraftResult
 
     /** The venue's `instagram_url` names no profile. */
@@ -107,9 +109,10 @@ class InstagramDraftService(
             }
 
             is ExtractionResult.Rejected -> {
-                logger.warn { "Instagram venue '${venue.slug}': the answer for ${post.permalink} was refused" }
+                val why = if (result.notJson) "was not JSON" else "was refused"
+                logger.warn { "Instagram venue '${venue.slug}': the answer for ${post.permalink} $why" }
                 repository.insert(listOf(NewDraft(venue.id, post, DraftStatus.NOT_AN_EVENT, model = extractor.model)))
-                tally.copy(rejected = tally.rejected + 1)
+                tally.copy(rejected = tally.rejected + 1, notJson = tally.notJson + if (result.notJson) 1 else 0)
             }
 
             is ExtractionResult.Events -> {

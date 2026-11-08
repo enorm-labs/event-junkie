@@ -1,7 +1,9 @@
 package de.norm.events.dataquality.classification
 
+import de.norm.events.ai.UnparseableAnswer
 import de.norm.events.event.EventFeature
 import de.norm.events.event.EventType
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -57,8 +59,8 @@ class ClassificationValidatorTest {
     }
 
     @Test
-    fun `text that is no JSON object is no answer`() {
-        ClassificationValidator.parse("Sure! This is a concert.", input).shouldBeNull()
+    fun `text that is no JSON object is no answer, and text that is no JSON at all is an error to count`() {
+        shouldThrow<UnparseableAnswer> { ClassificationValidator.parse("Sure! This is a concert.", input) }
         ClassificationValidator.parse("[1, 2]", input).shouldBeNull()
     }
 

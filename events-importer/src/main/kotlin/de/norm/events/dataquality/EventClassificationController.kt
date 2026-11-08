@@ -98,7 +98,11 @@ data class ClassificationRunResponse(
     @Schema(description = "Candidates left unsent because the month's tokens reached the budget", example = "0")
     val overBudget: Int,
     @Schema(description = "Suggestion rows written, per field", example = """{"startTime": 2, "eventType": 1}""")
-    val suggested: Map<String, Int>
+    val suggested: Map<String, Int>,
+    @Schema(description = "Answers that were a refusal or no JSON object. Their events count as checked", example = "1")
+    val rejected: Int,
+    @Schema(description = "The rejected answers that were no JSON at all", example = "1")
+    val notJson: Int
 ) {
     companion object {
         fun from(result: ClassificationRunResult) =
@@ -109,7 +113,9 @@ data class ClassificationRunResponse(
                 result.failed,
                 result.overCap,
                 result.overBudget,
-                result.suggested
+                result.suggested,
+                result.rejected,
+                result.notJson
             )
     }
 }

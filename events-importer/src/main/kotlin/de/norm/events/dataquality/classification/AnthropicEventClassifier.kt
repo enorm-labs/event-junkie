@@ -1,7 +1,9 @@
 package de.norm.events.dataquality.classification
 
 import de.norm.events.ai.AnthropicClient
+import de.norm.events.ai.AnthropicReply
 import de.norm.events.ai.AnthropicSettings
+import de.norm.events.ai.UnparseableAnswer
 import de.norm.events.common.runCatchingCancellable
 import de.norm.events.event.EventFeature
 import de.norm.events.event.EventType
@@ -36,7 +38,9 @@ sealed interface ClassifierResult {
 
     /** The model answered, and the answer was no JSON object or a refusal. Asking again gives the same answer. */
     data class Rejected(
-        override val usage: TokenUsage
+        override val usage: TokenUsage,
+        /** The answer was no JSON at all (#4108), rather than a refusal or another kind of value. */
+        val notJson: Boolean = false
     ) : ClassifierResult
 
     /** No answer came back: the call failed, or there is no key. The event stays a candidate. */
@@ -84,19 +88,28 @@ class AnthropicEventClassifier(
     suspend fun classify(input: ClassificationInput): ClassifierResult {
         if (properties.apiKey.isEmpty()) return ClassifierResult.Failed
         return runCatchingCancellable { client.call(SYSTEM_PROMPT, userMessage(input)) }.fold(
-            onSuccess = { reply ->
-                val usage = TokenUsage(reply.promptTokens, reply.completionTokens)
-                if (reply.refused) logger.warn { "The model declined to classify an event" }
-                reply.text
-                    ?.let { ClassificationValidator.parse(it, input) }
-                    ?.let { ClassifierResult.Answered(it, usage) }
-                    ?: ClassifierResult.Rejected(usage)
-            },
+            onSuccess = { reply -> answer(reply, input) },
             onFailure = { error ->
                 logger.warn(error) { "The classification call failed" }
                 ClassifierResult.Failed
             }
         )
+    }
+
+    private fun answer(
+        reply: AnthropicReply,
+        input: ClassificationInput
+    ): ClassifierResult {
+        val usage = TokenUsage(reply.promptTokens, reply.completionTokens)
+        if (reply.refused) logger.warn { "The model declined to classify an event" }
+        val text = reply.text ?: return ClassifierResult.Rejected(usage)
+        return try {
+            ClassificationValidator.parse(text, input)?.let { ClassifierResult.Answered(it, usage) } ?: ClassifierResult.Rejected(usage)
+        } catch (e: UnparseableAnswer) {
+            // The caller runs this inside the event's log context, so the line carries its id.
+            logger.warn(e) { "The classification answer is not JSON: ${e.unparseable}" }
+            ClassifierResult.Rejected(usage, notJson = true)
+        }
     }
 
     /** The event as a JSON document, so no venue text can pose as part of the instructions. */

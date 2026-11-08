@@ -82,7 +82,7 @@ class ClassificationRunnerTest {
                 listOf(
                     "Nightly event classification started: 2 source(s) with candidates, 1 with a data-quality regression first, " +
                         "at most 50 model call(s)",
-                    "Nightly event classification finished: 2 of 2 source(s), 5 model call(s)"
+                    "Nightly event classification finished: 2 of 2 source(s), 5 model call(s), 0 answer(s) not JSON"
                 )
         }
 
@@ -98,7 +98,8 @@ class ClassificationRunnerTest {
             coVerify { check.checkSource("b", false, 5) }
             coVerify { check.checkSource("a", false, 1) }
             coVerify(exactly = 0) { check.checkSource("c", any(), any()) }
-            info().last() shouldBe "Nightly event classification reached max-per-run: 2 of 3 source(s), 5 model call(s); the rest wait for the next night"
+            info().last() shouldBe
+                "Nightly event classification reached max-per-run: 2 of 3 source(s), 5 model call(s), 0 answer(s) not JSON; the rest wait for the next night"
         }
 
     @Test
@@ -112,7 +113,7 @@ class ClassificationRunnerTest {
             result shouldBe NightlyPassResult(listOf("a"), calls = 3, stoppedBy = PassStop.TOKEN_BUDGET)
             coVerify(exactly = 0) { check.checkSource("b", any(), any()) }
             warnings() shouldContainExactly
-                listOf("Nightly event classification stopped at the monthly token budget of $BUDGET: 1 of 2 source(s), 3 model call(s)")
+                listOf("Nightly event classification stopped at the monthly token budget of $BUDGET: 1 of 2 source(s), 3 model call(s), 0 answer(s) not JSON")
         }
 
     @Test
@@ -143,7 +144,7 @@ class ClassificationRunnerTest {
             runner.nightly()
 
             coVerify(exactly = 2) { check.checkSource("a", false, any()) }
-            info().last() shouldBe "Nightly event classification finished: 1 of 1 source(s), 1 model call(s)"
+            info().last() shouldBe "Nightly event classification finished: 1 of 1 source(s), 1 model call(s), 0 answer(s) not JSON"
         }
 
     @Test

@@ -2,6 +2,7 @@ package de.norm.events.instagram
 
 import de.norm.events.ai.AnthropicClient
 import de.norm.events.ai.AnthropicSettings
+import de.norm.events.ai.UnparseableAnswer
 import de.norm.events.common.runCatchingCancellable
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
@@ -54,17 +55,29 @@ class AnthropicPostExtractor(
     suspend fun extract(input: PostInput): ExtractionResult {
         if (properties.apiKey.isEmpty()) return ExtractionResult.Failed
         return runCatchingCancellable { call(input) }.fold(
-            onSuccess = { (text, tokens) ->
-                text
-                    ?.let { PostExtractionValidator.parse(it, input, properties.minConfidence) }
-                    ?.let { ExtractionResult.Events(it.events, tokens, it.dropped) }
-                    ?: ExtractionResult.Rejected(tokens)
-            },
+            onSuccess = { (text, tokens) -> answer(text, tokens, input) },
             onFailure = { error ->
                 logger.warn(error) { "The extraction call failed" }
                 ExtractionResult.Failed
             }
         )
+    }
+
+    private fun answer(
+        text: String?,
+        tokens: Long,
+        input: PostInput
+    ): ExtractionResult {
+        if (text == null) return ExtractionResult.Rejected(tokens)
+        return try {
+            PostExtractionValidator
+                .parse(text, input, properties.minConfidence)
+                ?.let { ExtractionResult.Events(it.events, tokens, it.dropped) }
+                ?: ExtractionResult.Rejected(tokens)
+        } catch (e: UnparseableAnswer) {
+            logger.warn(e) { "The extraction answer is not JSON: ${e.unparseable}" }
+            ExtractionResult.Rejected(tokens, notJson = true)
+        }
     }
 
     private suspend fun call(input: PostInput): Pair<String?, Long> {

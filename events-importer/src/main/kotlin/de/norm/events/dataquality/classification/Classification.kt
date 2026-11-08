@@ -5,7 +5,6 @@ import de.norm.events.common.QuotedText
 import de.norm.events.event.EventFeature
 import de.norm.events.event.EventType
 import io.github.oshai.kotlinlogging.KotlinLogging
-import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import java.math.BigDecimal
 import java.time.LocalTime
@@ -63,12 +62,16 @@ data class ClassificationAnswer(
 object ClassificationValidator {
     private val logger = KotlinLogging.logger {}
 
-    /** The validated answer, or null when the text is no JSON object at all. */
+    /**
+     * The validated answer, or null when the text parses as no JSON object.
+     *
+     * @throws de.norm.events.ai.UnparseableAnswer for text that is no JSON at all.
+     */
     fun parse(
         raw: String,
         input: ClassificationInput
     ): ClassificationAnswer? {
-        val root = readObject(raw) ?: return null
+        val root = ModelAnswer.jsonObject(raw) ?: return null
         val source = QuotedText.normalise(input.text)
         val dropped = mutableListOf<String>()
 
@@ -132,15 +135,6 @@ object ClassificationValidator {
             }
         }
     }
-
-    /** The object the model answered, or null for text that is no JSON object. */
-    private fun readObject(raw: String): JsonNode? =
-        try {
-            ModelAnswer.jsonObject(raw)
-        } catch (e: JacksonException) {
-            logger.warn(e) { "The classification answer is not JSON" }
-            null
-        }
 
     private fun evidenceOf(node: JsonNode): String =
         node

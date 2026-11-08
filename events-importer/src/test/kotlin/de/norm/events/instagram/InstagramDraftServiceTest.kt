@@ -61,12 +61,13 @@ class InstagramDraftServiceTest {
             coEvery { client.recentPosts(any()) } returns DiscoveryResult.Posts(listOf(post("a", caption = null), post("b"), post("c")))
             coEvery { repository.knownMediaIds(any()) } returns emptySet()
             coEvery { extractor.extract(match { it.caption == "caption b" }) } returns ExtractionResult.Events(listOf(event("2026-10-14")), 40)
-            coEvery { extractor.extract(match { it.caption == "caption c" }) } returns ExtractionResult.Rejected(30)
+            coEvery { extractor.extract(match { it.caption == "caption c" }) } returns ExtractionResult.Rejected(30, notJson = true)
 
             val result = service.draftFrom(RSO, maxCalls = 10) as VenueDraftResult.Read
 
             result.notEvents shouldBe 2
             result.rejected shouldBe 1
+            result.notJson shouldBe 1
             result.calls shouldBe 2
             coVerify(exactly = 3) { repository.insert(match { it.single().status == DraftStatus.NOT_AN_EVENT }) }
         }

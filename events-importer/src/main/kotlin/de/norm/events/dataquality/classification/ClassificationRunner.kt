@@ -28,7 +28,9 @@ enum class PassStop { NIGHT_CAP, TOKEN_BUDGET }
 data class NightlyPassResult(
     val sources: List<String>,
     val calls: Int,
-    val stoppedBy: PassStop?
+    val stoppedBy: PassStop?,
+    /** Answers that were no JSON at all (#4108). */
+    val notJson: Int = 0
 )
 
 /**
@@ -137,6 +139,7 @@ class ClassificationRunner(
         }
         val ran = mutableListOf<String>()
         var calls = 0
+        var notJson = 0
         var stop: PassStop? = null
         val pending = ArrayDeque(order)
         while (stop == null && pending.isNotEmpty()) {
@@ -148,17 +151,18 @@ class ClassificationRunner(
                 val result = check.checkSource(slug, maxCalls = left)
                 ran += slug
                 calls += result.checked
+                notJson += result.notJson
                 if (result.overBudget > 0) stop = PassStop.TOKEN_BUDGET
             }
         }
-        return NightlyPassResult(ran, calls, stop).also { report(it, order.size) }
+        return NightlyPassResult(ran, calls, stop, notJson).also { report(it, order.size) }
     }
 
     private fun report(
         result: NightlyPassResult,
         total: Int
     ) {
-        val summary = "${result.sources.size} of $total source(s), ${result.calls} model call(s)"
+        val summary = "${result.sources.size} of $total source(s), ${result.calls} model call(s), ${result.notJson} answer(s) not JSON"
         when (result.stoppedBy) {
             null -> {
                 logger.info { "Nightly event classification finished: $summary" }

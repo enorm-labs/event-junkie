@@ -33,7 +33,11 @@ data class ClassificationRunResult(
     val failed: Int,
     val overCap: Int,
     val suggested: Map<String, Int>,
-    val overBudget: Int = 0
+    val overBudget: Int = 0,
+    /** Answers that were a refusal or no JSON object. Their events count as checked. */
+    val rejected: Int = 0,
+    /** The [rejected] answers that were no JSON at all (#4108). */
+    val notJson: Int = 0
 )
 
 /**
@@ -115,11 +119,14 @@ class EventClassificationCheck(
                 tally.failed,
                 tally.overCap,
                 tally.suggested.toSortedMap(),
-                tally.overBudget
+                tally.overBudget,
+                tally.rejected,
+                tally.notJson
             )
         logger.at(Level.INFO) {
             message =
                 "Event classification of $scope finished: ${result.checked} checked, ${result.unchanged} unchanged, ${result.failed} failed, " +
+                "${result.rejected} rejected (${result.notJson} not JSON), " +
                 "${result.overCap} over the cap, ${result.overBudget} over the token budget; suggested ${result.suggested}; " +
                 "skipped ${tally.comedyShowSkipped} COMEDY/SHOW type(s), ${tally.dismissedForShow} dismissed on another date " +
                 "and ${tally.openForShow} open on another date"
@@ -167,6 +174,8 @@ class EventClassificationCheck(
         var comedyShowSkipped = 0
         var dismissedForShow = 0
         var openForShow = 0
+        var rejected = 0
+        var notJson = 0
     }
 
     private suspend fun classify(
@@ -200,6 +209,8 @@ class EventClassificationCheck(
             }
 
             is ClassifierResult.Rejected -> {
+                tally.rejected++
+                if (result.notJson) tally.notJson++
                 repository.recordChecked(target.id, target.contentHash, classifier.model)
                 outcome(OUTCOME_REJECTED)
             }

@@ -92,7 +92,7 @@ class AnthropicPostExtractorTest {
             server.enqueue(textResponse("Two events, I think."))
 
             extractor().extract(INPUT) shouldBe ExtractionResult.Rejected(30)
-            extractor().extract(INPUT) shouldBe ExtractionResult.Rejected(30)
+            extractor().extract(INPUT) shouldBe ExtractionResult.Rejected(30, notJson = true)
         }
 
     @Test

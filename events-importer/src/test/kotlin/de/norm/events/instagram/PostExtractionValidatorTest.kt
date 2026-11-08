@@ -1,5 +1,7 @@
 package de.norm.events.instagram
 
+import de.norm.events.ai.UnparseableAnswer
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -226,9 +228,10 @@ class PostExtractionValidatorTest {
     }
 
     @Test
-    fun `a post that announces nothing is an empty list, and no JSON is null`() {
+    fun `a post that announces nothing is an empty list, an array is null, and no JSON is an error to count`() {
         parse("""{"isEvent": false, "events": []}""")?.shouldBeEmpty()
-        parse("These are two events.").shouldBeNull()
+        parse("[1, 2]").shouldBeNull()
+        shouldThrow<UnparseableAnswer> { parse("These are two events.") }
     }
 
     private companion object {
