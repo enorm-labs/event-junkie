@@ -145,6 +145,44 @@ kubectl -n kube-system rollout status deploy/traefik --timeout=180s
 
 An `Error` that is still there after these commands time out is a real failure. Read the job's log.
 
+## Crossing a minor
+
+**A new minor changes the Kubernetes API server, so it needs three more checks before step 4.**
+
+**1. Read the Kubernetes upgrade notes.** The k3s notes link `CHANGELOG-1.NN.md`. Read its _Urgent Upgrade Notes_ section, and check each
+`ACTION REQUIRED` item against the nodes. The nodes run Ubuntu without SELinux, the datastore is SQLite through kine, and no workload uses an alpha API.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/kubernetes/kubernetes/master/CHANGELOG/CHANGELOG-1.37.md \
+  | awk '/## Urgent Upgrade Notes/{f=1} f&&/^## Changes by Kind/{exit} f'
+```
+
+**2. Render the new Traefik chart when its `+up` major changes.** A major can rename values keys. Render the upstream chart with the values k3s packages
+and with `traefik-host-ports.yaml`. Then check that the Service is `ClusterIP`, the strategy is `Recreate`, and the container ports carry `hostPort` 80 and 443. The chart refuses an image newer than it supports. So render the target chart, not the old one.
+
+```sh
+T=v1.37.2+k3s1; C=41.6.1                                   # C: the part after +up
+curl -fsSL "https://raw.githubusercontent.com/k3s-io/k3s/${T//+/%2B}/manifests/traefik.yaml" \
+  | sed -n '/valuesContent: |-/,$p' | tail -n +2 | sed 's/^    //' > /tmp/k3s-values.yaml
+sed -n '/valuesContent: |-/,$p' deploy/clusters/production/traefik-host-ports.yaml | tail -n +2 | sed 's/^    //' > /tmp/ours.yaml
+helm repo add traefik https://traefik.github.io/charts && helm repo update traefik
+helm template traefik traefik/traefik --version "$C" -n kube-system -f /tmp/k3s-values.yaml -f /tmp/ours.yaml \
+  | grep -nE '  type: (ClusterIP|LoadBalancer|Recreate|RollingUpdate)|hostPort:'
+```
+
+**3. Copy the datastore, then upgrade.** A downgrade across a minor is not likely to work. So copy the SQLite datastore before the installer runs.
+PostgreSQL is outside k3s, so this copy keeps the cluster objects only.
+
+The nodes have no `sqlite3`, and a copy of a live `state.db` and its WAL can be inconsistent. So stop k3s first, copy the directory, and run the
+installer, which starts k3s again. The containers continue to run while k3s is stopped. This command replaces the installer call in step 4:
+
+```sh
+ssh -i ~/.ssh/id_ed25519_hetzner -o IdentitiesOnly=yes ops@10.10.1.1 \
+  "sudo systemctl stop k3s && sudo cp -a /var/lib/rancher/k3s/server/db /root/k3s-db-<pin> && sudo sh -c 'curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=<target> INSTALL_K3S_EXEC=server sh -s -'"
+```
+
+`<pin>` is the version the node runs now. The directory is about 60 MB. Delete it when the new version runs without a fault for a day.
+
 ## Why not `system-upgrade-controller`
 
 It is k3s's other documented method, and it installs a controller, a CRD and a plan to drain and
