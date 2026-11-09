@@ -178,8 +178,8 @@ fun JsonNode.tecDescription(): String? =
                 .parseBodyFragment(html)
                 .body()
                 .apply { select(TEC_TEMPLATE_BLOCKS).remove() }
-                .text()
-        }.blankToNull()
+                .descriptionText()
+        }
 
 /** The featured image's full-size URL. */
 fun JsonNode.tecImageUrl(): String? = path("image").stringOrNull("url")

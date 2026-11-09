@@ -6,11 +6,11 @@ import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.collapseWhitespace
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.splitPromoterCredit
@@ -201,11 +201,13 @@ class BerghainDetailPageScraper {
         return Tickets(ticketUrl = ticketUrl, presale = presale, boxOffice = boxOffice.takeUnless { doorUnset }, soldOut = soldOut)
     }
 
-    /** The `.rich-text` description paragraphs joined, or `null`. */
+    /** The `.rich-text` description blocks, each with its own lines, or `null`. */
     private fun parseDescription(content: Element): String? =
         content
             .select(".rich-text")
-            .paragraphText()
+            .mapNotNull { it.descriptionText() }
+            .joinToString("\n")
+            .ifEmpty { null }
 
     /** Parsed contents of the "Tickets" block. */
     private data class Tickets(

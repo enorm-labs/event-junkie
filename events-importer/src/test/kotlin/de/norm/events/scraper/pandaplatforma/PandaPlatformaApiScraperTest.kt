@@ -8,8 +8,8 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ObjectNode
@@ -178,13 +178,15 @@ class PandaPlatformaApiScraperTest {
         scraper.scrapePage("<html>maintenance</html>").events.shouldBeEmpty()
     }
 
-    // Russian is neither of the two languages the schema stores, so the text stays as published (#330).
+    // The `[EN]` heading on a line of its own cuts the German text from the venue's English (#4778).
     @Test
-    fun `stores a Russian and English description whole`() {
+    fun `stores the German half as the description and the English half as the venue's own second language`() {
         val sine = event("god-is-a-perfect-sine-d-arcangelo").toEventEntity(venueId = 1L, venueSlug = "panda-platforma", eventSourceId = 1L)
 
-        sine.descriptionAlt.shouldBeNull()
-        sine.description.shouldNotBeNull() shouldContain "[EN]"
+        sine.description.shouldNotBeNull() shouldStartWith "God Is A Perfect Sine – das Duo"
+        sine.description.shouldNotBeNull() shouldNotContain "[EN]"
+        sine.descriptionAlt.shouldNotBeNull() shouldStartWith "God Is A Perfect Sine — the duo"
+        sine.descriptionAltLanguage shouldBe "en"
     }
 
     @Test

@@ -44,7 +44,9 @@ class TheCloudApiScraper {
             return null
         }
         val description = event.tecDescription()
-        val doors = labelledClock(description, DOORS_LABELS)?.takeIf { it == start.toLocalTime() }
+        // The flat text, as before the stored description kept its lines (#4778).
+        val flat = description?.replace('\n', ' ')
+        val doors = labelledClock(flat, DOORS_LABELS)?.takeIf { it == start.toLocalTime() }
         val end = event.tecDateTime("end_date")?.takeIf { it.isAfter(start) }
         val liveAct = if (LIVE_SHOW.containsMatchIn(title)) liveAct(title) else null
 
@@ -55,7 +57,7 @@ class TheCloudApiScraper {
             eventType = if (liveAct != null) EventType.CONCERT.name else partyUnlessTitled(title),
             eventDate = start.toLocalDate(),
             doorsTime = doors,
-            startTime = if (doors != null) labelledClock(description, EVENT_START_LABELS) else start.toLocalTime(),
+            startTime = if (doors != null) labelledClock(flat, EVENT_START_LABELS) else start.toLocalTime(),
             endDate = end?.toLocalDate(),
             endTime = end?.toLocalTime(),
             imageUrl = event.tecImageUrl(),

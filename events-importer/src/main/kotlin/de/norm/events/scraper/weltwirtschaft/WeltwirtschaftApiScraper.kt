@@ -57,8 +57,10 @@ class WeltwirtschaftApiScraper {
         val title = lines.firstOrNull() ?: return null
         val subtitle = lines.drop(1).joinToString(" – ").blankToNull()
         val description = event.tecDescription()
-        val clock = if (allDay) labelledClock(lines.joinToString(" "), FROM) ?: labelledClock(description, FROM) else start.toLocalTime()
-        (closure(event, slug, rawTitle, description) ?: notANight(start, end, allDay, clock))?.let { reason ->
+        // The flat text, as before the stored description kept its lines (#4778).
+        val flat = description?.replace('\n', ' ')
+        val clock = if (allDay) labelledClock(lines.joinToString(" "), FROM) ?: labelledClock(flat, FROM) else start.toLocalTime()
+        (closure(event, slug, rawTitle, flat) ?: notANight(start, end, allDay, clock))?.let { reason ->
             logger.debug { "Skipping Weltwirtschaft entry '$slug': $reason" }
             return null
         }

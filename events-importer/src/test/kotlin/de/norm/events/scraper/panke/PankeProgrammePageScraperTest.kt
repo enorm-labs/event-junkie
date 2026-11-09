@@ -9,6 +9,7 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -54,6 +55,8 @@ class PankeProgrammePageScraperTest {
         openMic.sourceUrl shouldBe sourceUrl
         openMic.imageUrl!! shouldStartWith "https://www.pankeculture.com/wp-content/uploads/"
         openMic.description!! shouldContain "Sketch Corner"
+        // Each paragraph and line of the description is a line of its own (#4778).
+        openMic.description.lines().size shouldBeGreaterThan 1
     }
 
     @Test
