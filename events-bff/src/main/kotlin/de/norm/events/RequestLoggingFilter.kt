@@ -6,6 +6,7 @@ import io.github.oshai.kotlinlogging.Level
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
+import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
 import org.springframework.web.server.ServerWebExchange
 import org.springframework.web.server.WebFilter
@@ -26,6 +27,8 @@ private val logger = KotlinLogging.logger {}
  * The id is the exchange's own, not one minted here (#1527): Boot's `DefaultErrorAttributes`
  * puts `request.id` into every error body as `requestId`, so the id a reporter quotes has to be
  * the one the column carries.
+ *
+ * The line names the client's kind, never its address or full agent: see [ClientKind].
  *
  * Actuator requests are handled and not logged: measured on production over six hours, 1,437
  * lines an hour, every one an actuator request, against one that was not. The base path is read
@@ -62,7 +65,8 @@ class RequestLoggingFilter(
                             mapOf(
                                 LogContextConfiguration.HTTP_METHOD to request.method.name(),
                                 LogContextConfiguration.PATH to request.path.value(),
-                                LogContextConfiguration.HTTP_STATUS to status
+                                LogContextConfiguration.HTTP_STATUS to status,
+                                LogContextConfiguration.CLIENT_KIND to ClientKind.of(request.headers.getFirst(HttpHeaders.USER_AGENT))
                             )
                     }
                 }

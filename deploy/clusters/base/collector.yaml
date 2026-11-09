@@ -598,6 +598,7 @@ spec:
                 - set(log.attributes["path"], log.cache["path"]) where log.cache["path"] != nil
                 # **One name, both directions**: a venue's status to us, and ours to a browser; `service_name` separates them.
                 - set(log.attributes["httpStatus"], log.cache["httpStatus"]) where log.cache["httpStatus"] != nil
+                - set(log.attributes["clientKind"], log.cache["clientKind"]) where log.cache["clientKind"] != nil
                 # High cardinality, safe only because the two lines that write it are rare (#980).
                 - set(log.attributes["storageKey"], log.cache["storageKey"]) where log.cache["storageKey"] != nil
                 # The stack trace as one field rather than forty unparented lines.

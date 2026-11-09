@@ -637,7 +637,8 @@ row changes.
 What is settled and must not drift:
 
 - **The Spring applications log no IP addresses.** `RequestLoggingFilter` logs `METHOD /path -> status (Nms)` — confirmed by observation on 2026-08-19, not
-  only by reading the code. **Never add the client IP to it.**
+  only by reading the code. **Never add the client IP to it.** The line also carries `clientKind` (#4783): `browser`, `none`, or a crawler's own name
+  without its version. It is read from the user agent, which the notice already declares as browser and OS. The full user agent is not logged.
 - **nginx's access log must never regain an address field.** `ej_no_ip` exists to be the thing that is edited, and
   the base image's `main` format is what it overrides. A future base-image bump that changed `main` would now be inert
   here, which is the point of defining our own.

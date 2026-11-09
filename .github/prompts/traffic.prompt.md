@@ -61,6 +61,12 @@ A row with a high `share`, `subtracted: false` and more than about 100 `detail_p
 it for `RENDERERS` with its `delay` as the window, written `Name:low:high`. Check the result: rerun Step 1 with the entry added locally. `night_sessions`
 must fall, and daytime sessions must stay above `page_loads`' level on a normal day. Do not commit or open a PR unless the operator asks.
 
+A night count that stays high while `named_crawler_meta` is low is a crawler with a browser agent. Name the crawlers that do name themselves:
+
+```sh
+scripts/o2-query.sh <env> sql "SELECT clientkind, COUNT(*) AS n FROM default WHERE k8s_app_component = 'bff' AND path = '/api/meta' GROUP BY clientkind ORDER BY n DESC" --hours 24
+```
+
 A row whose `agent` is a browser user agent is a crawler that hides its name. It cannot go into `RENDERERS`, because the list matches by name. Report it.
 
 ## Step 3 — Accounts

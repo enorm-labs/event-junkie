@@ -207,6 +207,7 @@ scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .fr
 | `frontend.crawlers`             | Search and AI crawlers that name themselves                                                                          |
 | `frontend.rendered_by_crawlers` | Pages that a crawler in `RENDERERS` fetched. It runs the SPA on them, so they also call the BFF                      |
 | `bff.meta`                      | `/api/meta` calls. The SPA calls it once when it starts                                                              |
+| `bff.named_crawler_meta`        | `/api/meta` calls whose `clientkind` is not `browser`. They are not in `bff.sessions`                                |
 | `bff.sessions`                  | `bff.meta` less the calls in a renderer's window, scaled up for the seconds the windows cover                        |
 | `bff.night_sessions`            | `bff.sessions` from 00:00 to 04:00 UTC. A steady count here is a renderer not yet in the list                        |
 | `bff.lists`                     | List and search calls. Only the SPA makes them                                                                       |
@@ -216,7 +217,8 @@ scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .fr
 **nginx sees only the first page of a visit.** The SPA changes pages in the browser, so later pages reach only the BFF. That is why `bff.sessions` and
 `bff.lists` are the better signal of use.
 
-**Crawlers that run the SPA are subtracted from `bff.sessions`.** The BFF log names no agent, so the script matches by time. Each crawler in
+**Crawlers that run the SPA are subtracted from `bff.sessions`.** A crawler that names itself is left out by the BFF line's `clientkind` (#4783).
+A crawler that sends a browser agent reads `browser`, and rows before #4783 read null, so for those the script matches by time. Each crawler in
 `RENDERERS` has a window: the seconds after its page load in which its SPA calls the BFF. A `/api/meta` call inside a window is the crawler's. A
 person's call inside a window is lost too, so each hour's remainder is divided by the share of the hour that no window covers.
 

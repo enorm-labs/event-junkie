@@ -183,19 +183,28 @@ case "$VERB" in
         # The SPA calls /api/meta once when it starts, so it counts sessions in a browser that runs
         # JavaScript. Only the SPA calls a list endpoint. The injector calls a detail endpoint for
         # every detail page nginx serves, and the SPA calls it again.
+        # Since #4783 the BFF line names a crawler in `clientkind`; a row before it reads null. A
+        # stream that never had the column refuses the query, hence the probe in a subshell.
+        if (search "SELECT clientkind FROM default WHERE k8s_app_component = 'bff' LIMIT 1") >/dev/null 2>&1; then
+            BY_BROWSER="(clientkind IS NULL OR clientkind = 'browser')"
+        else
+            BY_BROWSER="true"
+        fi
         BFF=$(search "SELECT date_trunc('hour', to_timestamp_micros(_timestamp)) AS h, COUNT(*) AS total,
             sum(CASE WHEN path = '/api/meta' THEN 1 ELSE 0 END) AS meta,
+            sum(CASE WHEN path = '/api/meta' AND NOT $BY_BROWSER THEN 1 ELSE 0 END) AS named_meta,
             sum(CASE WHEN regexp_like(path, '^/api/(events|events/today|venues|artists|genres|promoters)$') THEN 1 ELSE 0 END) AS lists,
             sum(CASE WHEN regexp_like(path, '$DETAIL_CALL') AND path <> '/api/events/today' THEN 1 ELSE 0 END) AS details,
             sum(CASE WHEN str_match(path, '/api/images/') THEN 1 ELSE 0 END) AS images
             FROM default WHERE k8s_app_component = 'bff' AND logger = 'de.norm.events.RequestLoggingFilter' GROUP BY h ORDER BY h")
-        # A renderer calls /api/meta as well, and the BFF log names no agent. So a call in the seconds
+        # A renderer that names itself is left out by `clientkind`. One that sends a browser agent calls
+        # /api/meta as well, unnamed. So a call in the seconds
         # after a renderer's page load counts as the renderer's. A person's call in such a second is
         # lost too, so each hour's remainder is scaled up by the share of the hour left uncovered.
         search "SELECT _timestamp, body FROM default WHERE k8s_app_component = 'frontend'
             AND regexp_like(body, '$RENDERER') AND regexp_like(body, '$PAGE_LOAD') LIMIT 1000000" >"$WORK/renders.json"
         search "SELECT _timestamp FROM default WHERE k8s_app_component = 'bff'
-            AND logger = 'de.norm.events.RequestLoggingFilter' AND path = '/api/meta' LIMIT 1000000" >"$WORK/meta.json"
+            AND logger = 'de.norm.events.RequestLoggingFilter' AND path = '/api/meta' AND $BY_BROWSER LIMIT 1000000" >"$WORK/meta.json"
         # Details leave out one call per detail page a renderer runs and one per detail page any
         # non-person agent fetches, for the injector. `night_sessions` covers 00:00-04:00 UTC: a
         # steady count there is a renderer that `renderers` has not found yet, not people.
@@ -229,7 +238,7 @@ case "$VERB" in
                               own_monitoring: ($f | total(.ours)), crawlers: ($f | total(.crawlers)),
                               page_loads: ($fq | total(.pages)), rendered_by_crawlers: ($fq | total(.renders))},
                    bff: {requests: ($b | total(.total)), in_burst: ($b | map(select(quiet | not)) | total(.total)),
-                         meta: ($bq | total(.meta)),
+                         meta: ($bq | total(.meta)), named_crawler_meta: ($bq | total(.named_meta)),
                          sessions: ($bq | total(sessions) | round),
                          night_sessions: ($bq | map(select(night)) | total(sessions) | round),
                          lists: ($bq | total(.lists)), details: ($bq | total(.details)),

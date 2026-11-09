@@ -59,6 +59,19 @@ class RequestLoggingFilterTest {
         loggedPaths() shouldBe listOf("/venues")
     }
 
+    @Test
+    fun `names the client kind and not the agent`() {
+        val request = MockServerHttpRequest.get("/api/meta").header("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
+        RequestLoggingFilter("/actuator").filter(MockServerWebExchange.from(request)) { Mono.empty() }.block()
+        get("/api/meta")
+
+        val kinds =
+            appender.list.mapNotNull { event ->
+                event.keyValuePairs?.firstOrNull { it.key == LogContextConfiguration.CLIENT_KIND }?.value
+            }
+        kinds shouldBe listOf("Googlebot", ClientKind.NONE)
+    }
+
     @ParameterizedTest
     @ValueSource(
         strings = [
