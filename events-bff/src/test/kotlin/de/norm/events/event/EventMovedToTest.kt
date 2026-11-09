@@ -11,6 +11,7 @@ import java.time.LocalDate
 /** `GET /events/{slug}`: a relocated event names the house it moved to, and links that house's night when it lists one. */
 class EventMovedToTest : BaseControllerTest() {
     private val day: LocalDate = LocalDate.now(BERLIN).plusDays(5)
+    private val later: LocalDate = day.plusMonths(10)
 
     @Test
     fun `links the same night at another venue that bills the same act`(): Unit =
@@ -110,6 +111,39 @@ class EventMovedToTest : BaseControllerTest() {
         }
 
     @Test
+    fun `links the night at the named house on the date the note moved the show to`(): Unit =
+        runBlocking {
+            val huxleys = insertVenue("Huxleys Neue Welt", "huxleys-neue-welt")
+            val hole = insertVenue("Hole44", "hole-44")
+            relocated(huxleys, "CKay", "old", note = "Hole44", relocatedOn = later)
+            insertEvent(hole, "CKay", "new", later)
+
+            expectMovedTo("old", "Hole44", "hole-44", "new")
+        }
+
+    @Test
+    fun `links only the same night when the note names no date`(): Unit =
+        runBlocking {
+            val huxleys = insertVenue("Huxleys Neue Welt", "huxleys-neue-welt")
+            val hole = insertVenue("Hole44", "hole-44")
+            relocated(huxleys, "CKay", "old", note = "Hole44")
+            insertEvent(hole, "CKay", "new", later)
+
+            expectMovedTo("old", "Hole44", "hole-44", eventSlug = null)
+        }
+
+    @Test
+    fun `names the house alone when it lists nothing on the date the note moved the show to`(): Unit =
+        runBlocking {
+            val huxleys = insertVenue("Huxleys Neue Welt", "huxleys-neue-welt")
+            val hole = insertVenue("Hole44", "hole-44")
+            relocated(huxleys, "CKay", "old", note = "Hole44", relocatedOn = later)
+            insertEvent(hole, "CKay", "same-night", day)
+
+            expectMovedTo("old", "Hole44", "hole-44", eventSlug = null)
+        }
+
+    @Test
     fun `names nothing for an unknown house, an ambiguous name or a night that does not match`(): Unit =
         runBlocking {
             val heimathafen = insertVenue("Heimathafen Neukölln", "heimathafen-neukolln")
@@ -139,13 +173,15 @@ class EventMovedToTest : BaseControllerTest() {
         venueId: Long,
         title: String,
         slug: String,
-        note: String?
+        note: String?,
+        relocatedOn: LocalDate? = null
     ): Long =
         insertEvent(venueId, title, slug, day).also {
             databaseClient
-                .sql("UPDATE events.event SET status = 'RELOCATED', relocated_to = :note WHERE id = :id")
+                .sql("UPDATE events.event SET status = 'RELOCATED', relocated_to = :note, relocated_on = :on WHERE id = :id")
                 .bind("id", it)
                 .let { spec -> if (note == null) spec.bindNull("note", String::class.java) else spec.bind("note", note) }
+                .let { spec -> if (relocatedOn == null) spec.bindNull("on", LocalDate::class.java) else spec.bind("on", relocatedOn) }
                 .await()
         }
 

@@ -18,8 +18,9 @@ class RelocationRepository(
     private val databaseClient: DatabaseClient
 ) {
     /**
-     * The one `SCHEDULED` row on the same date at another venue that shares an act with [event] or
-     * has its title, else the venue its note names. Among several matching rows, the one at the
+     * The one `SCHEDULED` row at another venue that shares an act with [event] or has its title, else
+     * the venue its note names. The row is on the date the note moved the show to (`relocated_on`,
+     * ADR-056), else on the same night. Among several matching rows, the one at the
      * named venue wins; a row there whose title only contains the other links too. Null for every
      * other status, and when neither a row nor a venue is certain.
      */
@@ -52,7 +53,7 @@ class RelocationRepository(
                 ORDER BY e.id
                 """.trimIndent()
             ).bind("eventId", eventId)
-            .bind("date", event.eventDate)
+            .bind("date", event.relocatedOn ?: event.eventDate)
             .bind("venueId", event.venueId)
             .map { row: Readable -> row.toCandidate() }
             .all()
