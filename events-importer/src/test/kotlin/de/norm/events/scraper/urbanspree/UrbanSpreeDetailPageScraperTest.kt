@@ -6,6 +6,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -126,6 +127,11 @@ class UrbanSpreeDetailPageScraperTest {
         event.ticketUrl.shouldNotBeNull() shouldStartWith "https://shotgun.live/en/events/twin-noir-hinfort-cassiopeia-berlin"
         event.promoters shouldContainExactly listOf("Aufnahme + wiedergabe")
         event.description.shouldNotBeNull() shouldContain "Berlin-based project TWIN NOIR transforms analog rawness"
+        // Each paragraph and line of the description is a line of its own (#4778).
+        event.description
+            .shouldNotBeNull()
+            .lines()
+            .size shouldBeGreaterThan 1
         event.sourceUrl shouldBe concertUrl
         event.sourceId shouldBe "urban_spree:concerts/twin-noir-hinfort-urban-spree,-berlin"
         // Root-relative image path resolved through the page's <base> tag.
