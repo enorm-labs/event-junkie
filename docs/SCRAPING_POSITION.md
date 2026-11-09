@@ -122,7 +122,7 @@ counts. The standard German copyright boilerplate is `UNCLEAR` rather than `PROH
 decides most of the corpus.
 
 **So this stays the weakest point in the document, and it stays live.** The mechanism does not close the gap. It gives
-the gap a shape, an owner per source, and a same-day remedy (§5). Until a source is reviewed we display a text we
+the gap a shape, an owner per source, and a remedy within seven days (§5). Until a source is reviewed we display a text we
 cannot justify displaying for that source.
 
 **What we do about it:** §5 is the answer for a venue that objects, and it is per field. A venue that minds only its photographs keeps its listing.
@@ -132,7 +132,7 @@ translation is an adaptation under § 23 UrhG, which needs the author's consent,
 publishing one. So it is a third act on top of the two above, and it rests on the same reading of silence.
 [ADR-026](adr/ADR-026_MULTILINGUAL_EVENT_TEXT.md) sets out the case against it in full.
 [ADR-027](adr/ADR-027_TRANSLATION_FOLLOWS_THE_DISPLAY_RULE.md) is the decision to accept the risk. Two reasons:
-consistency with the display rule above, and §5 answering an objection the same day. Every translation is labelled as machine
+consistency with the display rule above, and §5 answering an objection within seven days. Every translation is labelled as machine
 output and links to the source. `PROHIBITED` on either field removes it. Serving a second language the publisher wrote
 is a different matter: that is the same act as serving the first.
 
