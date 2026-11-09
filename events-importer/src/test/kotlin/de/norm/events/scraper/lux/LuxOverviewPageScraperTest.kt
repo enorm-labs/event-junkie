@@ -119,6 +119,18 @@ class LuxOverviewPageScraperTest {
     }
 
     @Test
+    fun `a bold billing that opens with the word with bills the DJ without it`() {
+        // Event 13214.
+        parse(
+            """
+            <section><div class="when">Sa<br>14.11.</div>
+            <div class="details"><h2>Pop!DIng!!BANg!!!CRACkle!!!! KABOOOOOOOOOOM...</h2>
+            <p><strong>with DJ RIGO</strong></p><p>passionate n raw music from the 1940s to the 1990s</p></div></section>
+            """.trimIndent()
+        ).single().artists.map { it.name } shouldContainExactly listOf("DJ RIGO")
+    }
+
+    @Test
     fun `a night without a readable date or title is skipped`() {
         parse(
             """

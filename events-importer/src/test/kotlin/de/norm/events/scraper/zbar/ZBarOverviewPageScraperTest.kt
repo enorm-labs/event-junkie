@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zbar
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -127,6 +128,21 @@ class ZBarOverviewPageScraperTest {
         val event = scraper.scrape(page, baseUrl).single()
         event.eventDate shouldBe LocalDate.of(2026, 11, 2)
         event.eventType shouldBe "COMEDY"
+    }
+
+    @Test
+    fun `a title that ends w slash a name bills that comedian, and a title without one bills nobody`() {
+        // Event 13240.
+        val page =
+            page(
+                dateLine("Fr. 05.02.2027, 20:30 Uhr"),
+                "<h6>English Stand Up Comedy – w/ Žana Fejzić</h6>",
+                dateLine("Sa. 06.02.2027, 20:00 Uhr"),
+                "<h6>Live Impro Comedy (jedes Mal anders)</h6>"
+            )
+
+        scraper.scrape(page, baseUrl).map { event -> event.artists.map { it.name to it.role } } shouldContainExactly
+            listOf(listOf("Žana Fejzić" to ArtistRole.HEADLINER), emptyList())
     }
 
     @Test

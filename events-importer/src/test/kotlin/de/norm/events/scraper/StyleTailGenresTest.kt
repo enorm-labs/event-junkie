@@ -15,7 +15,7 @@ class StyleTailGenresTest {
                 "EthnoBluesJazzAfroLatinFolkSession" to "Blues, Jazz, Afrobeats, Latin, Folk",
                 "RockPopFunkBlues" to "Rock, Pop, Funk, Blues",
                 "HardRockPunk" to "Rock, Punk",
-                "CountryBluesRock" to "Blues, Rock"
+                "CountryBluesRock" to "Country, Blues, Rock"
             ).forEach { (tail, genres) -> withClue(tail) { knownGenresInStyleTail(tail) shouldBe genres } }
         }
     }

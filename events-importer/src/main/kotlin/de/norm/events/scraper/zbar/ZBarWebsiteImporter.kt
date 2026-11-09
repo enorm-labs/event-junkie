@@ -29,7 +29,10 @@ val Z_BAR_LIMITATIONS =
     VenueLimitations(
         EventSource.Z_BAR,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the nights have no page of their own, so each points at the programme page"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a night is billed by its title, and its comedians appear only in prose"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a night is billed by its title, a comedian only by a title that ends `w/ <name>`, and the others only in prose"
+        ),
         AcceptedLimitation(LimitedAspect.GENRE, "the bar names no genre"),
         AcceptedLimitation(LimitedAspect.PRICE, "the page prints no price; a night links to an outside ticket shop or says entry is free"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the page prints one time per night"),

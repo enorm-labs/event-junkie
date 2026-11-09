@@ -154,6 +154,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         // Folk
         "folk" to "Folk",
         "americana" to "Americana",
+        "country" to "Country",
+        "bluegrass" to "Bluegrass",
         "singersongwriter" to "Singer-Songwriter",
         "singersongwriterin" to "Singer-Songwriter",
         // "Liedermaching" is the German Liedermacher scene. "Acoustic-Guitar-Hasen-Liedermaching" is a
@@ -339,7 +341,7 @@ private val DRUM_AND_BASS_REGEX =
  * a hard delimiter, so it would become "Singer-" + "Songwriter". Collapsed to the hyphen-only
  * spelling before the split ("singersongwriter").
  */
-private val SINGER_SONGWRITER_REGEX = Regex("""\bsinger[\s/-]*songwriter(in)?\b""", RegexOption.IGNORE_CASE)
+private val SINGER_SONGWRITER_REGEX = Regex("""\bsinger[\s/-]*songwrit+er(in)?\b""", RegexOption.IGNORE_CASE)
 
 /**
  * Two-word genre names collapsed to one word, so "Instrumental Trip Hop" and "Down Tempo Beats"

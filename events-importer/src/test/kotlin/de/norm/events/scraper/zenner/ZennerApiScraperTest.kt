@@ -236,13 +236,15 @@ class ZennerApiScraperTest {
     }
 
     @Test
-    fun `scrape skips a flea market and an ice-skating slot, and keeps the ice disco`() {
-        // Events 3894 and 11807.
+    fun `scrape skips a flea market, an ice-skating slot and a dinner, and keeps the ice disco`() {
+        // Events 3894, 11807 and 13259.
         val payload =
             """
             {"result":{"data":{"queryKultur":{"nodes":[
               {"id":"-m","title":"Indoor Flohmarkt - Freier Eintritt","typeOfEvent":"Event","place":"Saal","eventDate":"2026-11-08T10:00:00.000Z"},
               {"id":"-s","title":"Eislaufen","typeOfEvent":"Event","place":"Biergarten","eventDate":"2026-11-14T10:00:00.000Z"},
+              {"id":"-g","title":"Martins Gans Dinner","typeOfEvent":"Event","place":"Biergarten","eventDate":"2026-11-13T18:00:00.000Z"},
+              {"id":"-e","title":"Martinsgansessen im Zenner","typeOfEvent":"Event","place":"Saal","eventDate":"2026-11-13T18:00:00.000Z"},
               {"id":"-d","title":"Eisdisko","typeOfEvent":"Open Air","place":"Biergarten","eventDate":"2026-11-14T18:00:00.000Z"}
             ]}}}}
             """.trimIndent()
@@ -260,18 +262,18 @@ class ZennerApiScraperTest {
 
     @Test
     fun `scrape ignores a mailto enquiry address rather than storing it as a ticket link`() {
-        // The venue links its dinners and room bookings to a `mailto:` address.
+        // The venue links its dinners and room bookings to a `mailto:` address, and a party can carry one too.
         val payload =
             """
             {"result":{"data":{"queryKultur":{"nodes":[
-              {"id":"-g","title":"Martinsgansessen im Zenner","typeOfEvent":"Event","place":"Saal","eventDate":"2026-11-13T18:00:00.000Z","linkEvent":"mailto:info@example.de"},
+              {"id":"-g","title":"Silvester im Zenner","typeOfEvent":"Party","place":"Saal","eventDate":"2026-12-31T20:00:00.000Z","linkEvent":"mailto:info@example.de"},
               {"id":"-y","title":"Yeule","typeOfEvent":"Konzert","place":"Saal","eventDate":"2026-11-14T19:00:00.000Z","linkEvent":"https://dice.fm/event/yeule"}
             ]}}}}
             """.trimIndent()
 
         val byTitle = scraper.scrape(payload, SOURCE_URL).associateBy { it.title }
 
-        byTitle.getValue("Martinsgansessen im Zenner").ticketUrl.shouldBeNull()
+        byTitle.getValue("Silvester im Zenner").ticketUrl.shouldBeNull()
         byTitle.getValue("Yeule").ticketUrl shouldBe "https://dice.fm/event/yeule"
     }
 

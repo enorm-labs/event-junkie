@@ -111,7 +111,7 @@ class BadehausOverviewPageScraperTest {
 
     @Test
     fun `reads the genre from the subtitle line, skipping a tour name and the support part`() {
-        // Six teaser lines from the listing on 2026-09-30.
+        // Teaser lines from the listing on 2026-09-30, and events 13245 and 13249 with the venue's own typo.
         val lines =
             listOf(
                 "Metalcore",
@@ -121,7 +121,9 @@ class BadehausOverviewPageScraperTest {
                 "Licht am Horizont Tour | Rap",
                 "Kein Plan B-Tour 2026 | Deutschrock",
                 "EVERYBODY’S HOME NOBODY’S HAPPY WORLD TOUR | Rock, Alternative",
-                "dicker Groove, glänzende Disco-Vibes, fette Bläsersätze und Beats"
+                "dicker Groove, glänzende Disco-Vibes, fette Bläsersätze und Beats",
+                "American Singer-Songwritter | Support: Zander Hawley",
+                "Trash Country and Bluegrass"
             )
         val cards =
             lines.withIndex().joinToString("") { (i, line) ->
@@ -131,7 +133,7 @@ class BadehausOverviewPageScraperTest {
         val genres = scraper.scrape(Jsoup.parse("<html><body>$cards</body></html>", baseUrl), baseUrl).map { it.genre }
 
         genres shouldBe
-            listOf("Metalcore", "Rock", "Indie", "Metal", "Hip Hop", "Rock", "Rock, Alternative", null)
+            listOf("Metalcore", "Rock", "Indie", "Metal", "Hip Hop", "Rock", "Rock, Alternative", null, "Singer-Songwriter", "Country, Bluegrass")
     }
 
     @Test

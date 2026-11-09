@@ -204,6 +204,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "country" to FOLK,
         "country-blues" to FOLK,
         "country-bluegrass" to FOLK,
+        "bluegrass" to FOLK,
         "poetic-country-rock" to FOLK,
         "chanson" to FOLK,
         "country-trash" to FOLK,
