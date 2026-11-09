@@ -324,6 +324,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "purple" to "Purple Events",
         // Kantine am Berghain prints "Eine Veranstaltung von Beyond Booking", and the strip leaves "Beyond" (#4516).
         "beyond" to "Beyond Booking",
+        // Admiralspalast credits "Soul Events", and the strip leaves "Soul" (#4757).
+        "soul" to "Soul Events",
         // "FluxFM" (Columbia Theater, Frannz), "fluxfm" (Heimathafen) and "Flux FM" (Zitadelle, which
         // de-shouts to "Flux Fm") share this key.
         "fluxfm" to "FluxFM",

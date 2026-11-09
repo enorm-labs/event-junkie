@@ -413,6 +413,19 @@ class PromoterNormalizerTest {
         }
     }
 
+    // #4757: Admiralspalast credits "Soul Events". "Events" still comes off any other credit.
+    @Test
+    fun `keeps Soul Events whole and restores the row the strip had reduced`() {
+        assertSoftly {
+            canonicalPromoterName("Soul Events") shouldBe "Soul Events"
+            canonicalPromoterName("SOUL EVENTS") shouldBe "Soul Events"
+            canonicalPromoterName("Soul") shouldBe "Soul Events"
+            canonicalPromoterName("Soulgigs") shouldBe "Soulgigs"
+            canonicalPromoterName("Lime Events") shouldBe "Lime"
+            SlugGenerator.slugify(canonicalPromoterName("Soul Events")) shouldBe "soul-events"
+        }
+    }
+
     // #4587: "management" is not a stripped descriptor, so the company credit keyed a second promoter.
     @Test
     fun `folds the Tränenpalast management company onto Tränenpalast`() {
