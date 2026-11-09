@@ -13,6 +13,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateCheckedAgainstWeekday
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
@@ -83,7 +84,7 @@ class HuxleysDetailPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            description = article.textAt(".event-content"),
+            description = article.selectFirst(".event-content")?.descriptionText(),
             eventType = eventType,
             eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: parseLabelledDate(details) ?: UNRESOLVED_EVENT_DATE,
             doorsTime = huxleysClock(details, DOORS_LABELS),

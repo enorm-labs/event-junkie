@@ -16,6 +16,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.descriptionTextOf
 import de.norm.events.scraper.flatMapSkippingFailures
 import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.labelledClock
@@ -120,7 +121,7 @@ class HeimathafenApiScraper(
                 title = title,
                 titleSoldOut = cleanedTitle.soldOut,
                 subtitle = subtitle,
-                description = post.wpRendered("content")?.let(::htmlToText),
+                description = post.wpRendered("content")?.let(::descriptionTextOf),
                 eventType = eventType,
                 imageUrl = post.path("featured_images").path("large").asString(null),
                 sourceUrl = post.path("link").asString(""),
