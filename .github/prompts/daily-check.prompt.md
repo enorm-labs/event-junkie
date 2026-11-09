@@ -69,6 +69,15 @@ scripts/daily-check.sh --hours "$HOURS" > temp/daily-check-$(date +%F).json
 
 A key that holds `{"error": …}` is an API that refused. Report it as not checked, never as clean.
 
+**The issues that wait for a date** (#4713). An issue that cannot start before a day carries one line `Due: YYYY-MM-DD` in its body. List the open
+ones whose day has come:
+
+```sh
+gh issue list --state open --limit 500 --json number,title,body \
+  | jq -r --arg today "$(date +%F)" '.[] | (.body | capture("(?m)^Due: (?<d>[0-9]{4}-[0-9]{2}-[0-9]{2})")?.d) as $d
+       | select($d != null and $d <= $today) | "#\(.number)\t\($d)\t\(.title)"'
+```
+
 ## Step 3 — Sort every signal
 
 One verdict each, in this order: **BLOCKER** (a red publish, a cluster not whole, a new high or critical alert), **ACT** (something only the operator can do:
@@ -95,6 +104,8 @@ an approval, a decision, a dispatch), **DRAFTED** (a new defect, with an issue d
   rollout, an incident — from `scripts/ej.sh status`, the sources' `lastError`, or `/log-check` when it runs. A rule an open issue explains is KNOWN,
   naming the issue. An `ej-site-down` whose site still does not answer is a BLOCKER. A firing with no cause is DRAFTED: a false alarm teaches the reader
   of `alerts@` to ignore mail (#1807, #1810).
+- **An issue due today or earlier**: ACT, with the first step of its "What needs doing". A step that only the operator can do, such as a browser
+  outside the company proxy, says so. Once the step is done, the issue's `Due:` line moves to the next date or goes.
 - **An unclosed issue**: ACT. Confirm the pull request did the work, then `gh issue close <n> --reason completed` with a comment naming it.
 - **An `after_deploy` entry**: `released: true` with a step whose `due` is `now`, a past date, a `deploy+<N>d` already passed, or a dark day is ACT, "run `/post-release`", with those
   steps; production already runs the change. A step dated later is waiting until that date, a `when:<text>` step is waiting with that text, and

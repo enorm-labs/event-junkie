@@ -53,6 +53,7 @@ scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .fr
 2. **Failed workflows.** A red `release.yml` on `main` blocks every release. See [RELEASING.md § Publishing is blocked](RELEASING.md#publishing-is-blocked).
    A scheduled workflow starts 4.5 to 7 hours after its cron time. A nightly run that is missing before midday UTC is late, not failed.
 3. **Issues that a workflow opened.** These are the reminders, a publish failure and seed drift. Each issue names its action.
+   **Issues that are due.** An issue that waits for a date carries a `Due: YYYY-MM-DD` line in its body. Do the first step of each one dated today or earlier.
 4. **The reports.** Read the newest plausibility comment on the monthly issue and the weekly OWASP comment. Answer each with the issues you filed.
 5. **Security.** Look at new code-scanning alerts, Dependabot alerts and Code Quality findings. `/security-report` gives the detail.
 6. **Bot pull requests.** Read each diff. Merge the green ones with `gh pr merge <n> --rebase`. A `claude[bot]` pull request needs your approval first.

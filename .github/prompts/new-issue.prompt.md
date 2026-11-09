@@ -44,6 +44,8 @@ milestone and board fields.
     - **Say what it costs and what it is blocked on**, not just what it is.
     - **Record what was decided against, and why.** A choice that isn't written down gets rediscovered as an oversight and "fixed".
     - Add a **Done when** checklist where the finish line isn't obvious.
+    - **An issue that cannot start before a day** gets one line `Due: YYYY-MM-DD` at the top of the body. [`/daily-check`](daily-check.prompt.md)
+      lists it as ACT from that day. A date only in prose reaches nobody (#4713).
 
 4. **Choose type, labels and milestone.** All three vocabularies are closed:
     - **Type** (a GitHub issue type, _not_ a label): `Task` · `Bug` · `Feature`. Never add a `type:` label.
