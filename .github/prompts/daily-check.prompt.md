@@ -112,7 +112,7 @@ lines into the report: yesterday's sessions and page loads (a full day, never to
 yesterday's sign-ins and follows, and anything its Step 2 or Step 3 flags. A crawler counted as sessions, a `mail_unavailable`, a `mail_failed` or a
 cleanup `failed` is ACT. Everything else is a State line.
 
-## Step 5 — The data: new artists and promoters, the admin review pages, the manual venues and the disabled sources
+## Step 5 — The data: new artists and promoters, the admin review pages, the manual venues and the failed sources
 
 Production only, because staging holds a copy of the same imports. Unless the tunnel is down, run all of them, even with `--no-logs`.
 
@@ -164,18 +164,29 @@ curl -sf 'http://localhost:28081/api/admin/reports' | jq -r 'if type == "array" 
 `-f` and the type check matter: without them a 404 or an error body counts its fields, and reads as reports. "Not readable" goes under Not checked
 in the report, with the reason: the forward is down, or the release with the route (#4399) has not reached production.
 
-**The disabled sources waiting for their site** (#4175). A source disabled while its site was down publishes no gauge, so no alert
-reports the site's return. List each source that is disabled and `FAILED`. A source disabled on purpose, such as a takedown, keeps its last status and
-does not appear.
+**The failed sources: disable or re-enable** (#4175, #4751). List each source that is `FAILED` and has succeeded before, with the days since its
+last success. A source that never succeeded has its own alert, `ej-source-never-succeeded`.
 
 ```sh
 for p in 0 1 2; do curl -s "http://localhost:28081/api/admin/event-sources?size=100&page=$p"; done \
-  | jq -r '.content[]? | select(.enabled == false and .status == "FAILED") | [.slug, .url, .lastSuccessAt, .lastError] | @tsv'
+  | jq -r '.content[]? | select(.status == "FAILED" and .lastSuccessAt != null)
+      | [.slug, (if .enabled then "enabled" else "disabled" end),
+         ((now - (.lastSuccessAt | sub("\\.[0-9]+"; "") | fromdateiso8601)) / 86400 | floor | "\(.)d"), .url, .lastError] | @tsv'
 ```
 
-Fetch each `url` once, with the `USER_AGENT` of `scripts/musicbrainz-match.py`, and read the page against `lastError`. A page that still matches the
-error is KNOWN, naming the source's issue. A page where the cause is gone, such as the `#events` section back for MAAYA, is ACT: "re-enable `<slug>`
-and force an import", with the commands from its issue. A page that changed, but not to a programme, is one line under Data.
+Fetch each `url` once, with the `USER_AGENT` of `scripts/musicbrainz-match.py`, and read the page against `lastError`. Then one verdict per source:
+
+- **Enabled, more than 4 days since its last success, and the site is still down**: ACT, "disable `<slug>` on both clusters and restart each
+  importer", as #4175 did. `ej-importer-stale` fires on it every day until then. Name the source's issue, or draft one in the form of #4751.
+- **Enabled, and the site answers**: the parser is the cause, not the site. DRAFTED, a 🔍 Importer / data defect. A source in
+  `KnownBlockedSource.kt` is KNOWN: `ej-importer-stale-blocked` covers it.
+- **Enabled, 4 days or fewer**: KNOWN, naming its issue. It can still recover on its own.
+- **Disabled, and the page still matches the error**: KNOWN, naming its issue. A disabled source publishes no gauge, so this line is the only
+  watch on its site.
+- **Disabled, and the cause is gone**, such as the `#events` section back for MAAYA: ACT, "re-enable `<slug>` and force an import", with the
+  commands from its issue. A page that changed, but not to a programme, is one line under Data.
+
+A source disabled on purpose, such as a takedown, keeps its last status and does not appear.
 
 **The enrichment coverage.** Print its two lines as they come: the share of the promoters and of the venues with upcoming events that have a website, an
 Instagram link and a description. No line is a finding by itself. The number moves only when [`/enrich`](enrich.prompt.md) runs, and
@@ -207,7 +218,7 @@ Write `temp/daily-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/
    the `/traffic` lines.
 3. **Merged**: each pull request merged in Step 6, with its subject.
 4. **Data**: the flagged new artists and promoters with their verdicts, the `/admin-review` lines with the link to its report, the manual venues: the overdue
-   line, the open problem reports line, one line per disabled source with its verdict, and the two coverage lines.
+   line, the open problem reports line, one line per failed source with its verdict, and the two coverage lines.
 5. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone, and the `afk-ok` verdict
    by `/new-issue` step 4 — `afk-ok: yes`, or `afk-ok: no — <the condition that fails>`. Each draft's heading ends in its state, `(unfiled)`; filing
    one rewrites it to `(filed #N)`. [`/maintain`](maintain.prompt.md) reads that marker.
