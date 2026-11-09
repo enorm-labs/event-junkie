@@ -128,7 +128,7 @@ schema change.
 | Kulturhaus Insel Berlin          | https://www.inselberlin.de/                                              | Concert Hall | Gatsby static-query JSON; times in the blurb              |
 | Kulturhaus Peter Edel            | https://www.peteredel.de/events/                                         | Concert Hall | Umbraco grid; month heading carries the year              |
 | Kulturhaus Spandau               | https://kulturhaus-spandau.de/programm/                                  | Other        | Theme REST API; house rooms only, not the Zitadelle       |
-| LabSaal                          | https://labsaal.de/events/                                               | Other        | MEC iCal feed; groups, courses, workshops dropped         |
+| LabSaal                          | https://labsaal.de/events/                                               | Other        | MEC iCal + event pages; no groups, courses or workshops   |
 | LARK                             | https://larkberlin.com/events/                                           | Club         | WP REST + ACF; post date is the event date                |
 | Lido                             | https://www.lido-berlin.de/                                              | Concert Hall | Clean slugs; doors + start; "Ausverkauft" badge           |
 | Liquidrom                        | https://www.liquidrom-berlin.de/de/events.php                            | Other        | DJ Sound Sessions + DOME 36 specials; one per show        |
