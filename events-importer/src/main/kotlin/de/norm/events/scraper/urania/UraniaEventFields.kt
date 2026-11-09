@@ -26,6 +26,10 @@ import java.math.BigDecimal
  * guide rather than speak to an audience, so they are `OTHER` (#1906, #1927), and the calendar
  * drops them. A [title] that names an in-scope format types the row instead: the venue files
  * `Das philosophische Pubquiz` as a `Workshop`, and it is a quiz (#2831).
+ *
+ * A label that opens with a film (`Film und Podium`, `Filmpremiere und Podium`) is a screening,
+ * its panel an add-on (#4759). Only the opening word counts: a `Vortrag mit Filmausschnitten` is
+ * still a talk.
  */
 internal fun uraniaEventType(
     format: String?,
@@ -33,6 +37,7 @@ internal fun uraniaEventType(
 ): String =
     mapEventType(format, URANIA_FORMAT_SYNONYMS)
         ?: refineConcertVenueType(EventType.OTHER.name, title).takeIf { isParticipationFormat(format) }
+        ?: EventType.SCREENING.name.takeIf { format.orEmpty().trim().contains(SCREENING_FORMAT_PREFIX) }
         ?: EventType.READING.name
 
 /**
@@ -89,6 +94,9 @@ private val URANIA_FORMAT_SYNONYMS =
         "filmvorführung" to EventType.SCREENING.name,
         "ausstellungseröffnung" to EventType.EXHIBITION.name
     )
+
+/** A format label that opens with a film or a cinema night. */
+private val SCREENING_FORMAT_PREFIX = Regex("""^(?:film|kino)""", RegexOption.IGNORE_CASE)
 
 /**
  * Words that mark a workshop or a guided walk in any of the venue's format labels. `führung` is

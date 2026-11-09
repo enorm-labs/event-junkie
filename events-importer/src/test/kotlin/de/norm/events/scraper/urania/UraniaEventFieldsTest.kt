@@ -61,6 +61,27 @@ class UraniaEventFieldsTest {
     }
 
     @Test
+    fun `types a film night with a panel as a screening`() {
+        // The live formats as of #4759.
+        listOf("Film und Podium", "Filmpremiere und Podium", "Kinoabend mit Gespräch")
+            .map { uraniaEventType(it) }
+            .toSet() shouldBe setOf(EventType.SCREENING.name)
+    }
+
+    @Test
+    fun `keeps a talk that only mentions a film after its opening word`() {
+        uraniaEventType("Vortrag mit Filmausschnitten") shouldBe EventType.READING.name
+        uraniaEventType("Podiumsgespräch") shouldBe EventType.READING.name
+        uraniaEventType("Film und Workshop für Schulklassen") shouldBe EventType.OTHER.name
+    }
+
+    @Test
+    fun `bills a film night's panel`() {
+        uraniaSpeakers("Ada Beispiel, Max Muster", EventType.SCREENING.name).map { it.name } shouldBe
+            listOf("Ada Beispiel", "Max Muster")
+    }
+
+    @Test
     fun `bills a talk's speakers and nobody at a workshop`() {
         val billing = "Léna Kútvölgyi, Sara Stenczer"
         uraniaSpeakers(billing, EventType.READING.name).map { it.name } shouldBe listOf("Léna Kútvölgyi", "Sara Stenczer")
