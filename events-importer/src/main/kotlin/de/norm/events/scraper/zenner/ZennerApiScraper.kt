@@ -45,7 +45,7 @@ import java.time.Clock
  * 3. A sibling `queryShowHidePlaces` block carries per-room publish flags
  * ([ZennerPlaceVisibility]), honoured so an unpublished programme is not imported.
  *
- * A flea market or an ice-skating slot is skipped ([isOutOfScope]).
+ * A flea market, an ice-skating slot or a dinner is skipped ([isOutOfScope]).
  *
  * `place` (Saal / Klub / Biergarten / Weingarten) is a room with no field in the model, not
  * stored, but read for the visibility filter and to disambiguate "Open Air", a DJ day party in
@@ -143,7 +143,7 @@ class ZennerApiScraper(
             return null
         }
         if (isOutOfScope(title)) {
-            logger.info { "Zenner: '$title' is a flea market or an ice-skating slot, skipping" }
+            logger.info { "Zenner: '$title' is a flea market, an ice-skating slot or a dinner, skipping" }
             return null
         }
 
@@ -268,7 +268,7 @@ class ZennerApiScraper(
  */
 internal fun isOutOfScope(title: String): Boolean = OUT_OF_SCOPE.containsMatchIn(title)
 
-private val OUT_OF_SCOPE = Regex("""flohmarkt|\beislaufen\b""", RegexOption.IGNORE_CASE)
+private val OUT_OF_SCOPE = Regex("""flohmarkt|\beislaufen\b|\bdinner\b|gans\s*essen""", RegexOption.IGNORE_CASE)
 
 /** The venue's "Open Air" format label. */
 private const val OPEN_AIR_LABEL = "open air"

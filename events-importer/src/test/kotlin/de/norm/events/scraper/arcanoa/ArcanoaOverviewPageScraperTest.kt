@@ -56,7 +56,7 @@ class ArcanoaOverviewPageScraperTest {
             event.title shouldBe "Jesse Cotton Stone"
             // The style tail stays the subtitle; only the genre words it runs together become the genre (#2397).
             event.subtitle shouldBe "HellCountryBlues"
-            event.genre shouldBe "Blues"
+            event.genre shouldBe "Country, Blues"
             event.eventType shouldBe EventType.CONCERT.name
             // The page publishes one time for the whole month block ("Veranstaltungsbeginn: 20 Uhr").
             event.startTime shouldBe LocalTime.of(20, 0)

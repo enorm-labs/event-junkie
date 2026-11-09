@@ -368,6 +368,8 @@ class GenreNormalizerTest {
         normalizeGenre("Singer-/Songwriter").shouldContainExactly("Singer-Songwriter")
         normalizeGenre("Singer/Songwriter").shouldContainExactly("Singer-Songwriter")
         normalizeGenre("Singer-Songwriterin").shouldContainExactly("Singer-Songwriter")
+        // Badehaus's typo on event 13245.
+        normalizeGenre("Singer-Songwritter").shouldContainExactly("Singer-Songwriter")
         normalizeGenre("Singer-/Songwriter, Latin, Folk")
             .shouldContainExactlyInAnyOrder("Singer-Songwriter", "Latin", "Folk")
     }

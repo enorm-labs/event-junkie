@@ -140,6 +140,9 @@ class SchokoladenOverviewPageScraperTest {
                 "15 Jahre Gut Drauf – Jubiläum der Jubiläen mit mOck (math-rock, comeback!) &amp; Petula (lofi-indie-pop, 25 years!)"
             ) shouldContainExactly listOf("mOck", "Petula")
             artistsOf("halloween special w/ Nothing Works (post-hc, bln) &amp; more") shouldContainExactly listOf("Nothing Works")
+            // Event 13219: "members of" a band bills the band.
+            artistsOf("°new years eve° soli cover night w/ members of Big Eater + Van Urst + Fevering + Milemarker [so far]") shouldContainExactly
+                listOf("Big Eater", "Van Urst", "Fevering", "Milemarker")
             // 25 December 2026: "mit:" frames the bill like "mit", and "& more live acts" is a placeholder like "& more" (#4183).
             artistsOf("Weihnachtstrinken mit: Klinge Komplex (rap, le) &amp; more live acts") shouldContainExactly listOf("Klinge Komplex")
             artistsOf("Winterfest mit: Act One (punk, bln), Act Two &amp; Act Three + more acts") shouldContainExactly

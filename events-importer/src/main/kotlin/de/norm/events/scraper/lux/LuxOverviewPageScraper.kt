@@ -111,11 +111,12 @@ class LuxOverviewPageScraper(
         }
     }
 
-    /** Every bold line in the night's text that is not a clock, once each. */
+    /** Every bold line in the night's text that is not a clock, once each, without a leading `with`. */
     private fun djs(night: Element): List<String> =
         night
             .select(".details > p strong")
             .flatMap { it.brLines() }
+            .map { it.replace(WITH_LEAD, "") }
             .filterNot { TIME_LINE.matches(it) || GENRE_NOTE.matches(it) || isNonArtistName(it) }
             .distinct()
 
@@ -137,6 +138,9 @@ class LuxOverviewPageScraper(
 
         /** A line of lower-case genre words joined by dashes under a DJ: `electropop - weird tunes`. */
         val GENRE_NOTE = Regex("""\p{Ll}[\p{Ll}\s]*(?:\s-\s\p{Ll}[\p{Ll}\s]*)+""")
+
+        /** `with DJ RIGO`: the house bills a night's one DJ as a phrase. */
+        val WITH_LEAD = Regex("""^(?:with|w/|mit)\s+""", RegexOption.IGNORE_CASE)
 
         const val DOORS_GROUP = 1
         const val HOUR_GROUP = 2

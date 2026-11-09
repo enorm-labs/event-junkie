@@ -238,6 +238,7 @@ class SchokoladenOverviewPageScraper {
                 .replace(WHITESPACE, " ")
                 .replace(MORE_ACTS_TAIL, "")
                 .replace(MIT_COLON, " mit ")
+                .replace(MEMBERS_OF, "")
                 .replace(RELEASE_SHOW_OF, "")
                 .replace(QUOTED_WORK, "")
                 .replace(QUOTED_TOUR, "")
@@ -290,6 +291,9 @@ class SchokoladenOverviewPageScraper {
 
         /** The colon after a night's `mit`, which the shared with-frame reads only bare: `Weihnachtstrinken mit: Klinge Komplex` (#4183). */
         private val MIT_COLON = Regex("""\s+mit:\s+""", RegexOption.IGNORE_CASE)
+
+        /** `w/ members of Big Eater`: the band's members play, so the band is the act. */
+        private val MEMBERS_OF = Regex("""\b(?:members|mitglieder)\s+(?:of|von)\s+""", RegexOption.IGNORE_CASE)
 
         /** The night's name before its act: "Berlin Release Show von Angela Aux" bills Angela Aux (#2099). */
         private val RELEASE_SHOW_OF =

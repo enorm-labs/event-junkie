@@ -1,11 +1,14 @@
 package de.norm.events.scraper.zbar
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.detectFree
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -27,6 +30,7 @@ import java.time.LocalDate
  * one with neither is skipped, since its name is only on the flyer. An Arabic line beside the
  * Latin one repeats the date and has no Latin letter, so it opens no night. A night whose heading opens
  * with `Private Veranstaltung` or `Geschlossene Gesellschaft` is a private booking, and is skipped.
+ * A title that ends `w/ <name>` bills that comedian ([performerIn]); every other night names its acts only in prose.
  */
 class ZBarOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -80,7 +84,8 @@ class ZBarOverviewPageScraper {
                 sourceId = EventSource.Z_BAR.dateTitleId(date, title),
                 ticketUrl = ticketUrl,
                 free = detectFree(priceNote = description),
-                promoters = blocks.firstNotNullOfOrNull(::promotersIn).orEmpty()
+                promoters = blocks.firstNotNullOfOrNull(::promotersIn).orEmpty(),
+                artists = performerIn(title)
             )
         }
     }
@@ -134,6 +139,17 @@ class ZBarOverviewPageScraper {
             ?.filterNot { it.equals("Berlin", ignoreCase = true) }
             ?.takeIf { it.isNotEmpty() }
 
+    /** `English Stand Up Comedy – w/ Žana Fejzić` bills Žana Fejzić. */
+    private fun performerIn(title: String): List<ScrapedArtist> =
+        listOfNotNull(
+            WITH_PERFORMER
+                .find(title)
+                ?.groupValues
+                ?.get(1)
+                ?.trim()
+                ?.takeUnless { it.isBlank() || isNonArtistName(it) }
+        ).map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+
     private fun eventType(title: String): String =
         when {
             READING_TITLE.containsMatchIn(title) -> EventType.READING
@@ -164,6 +180,8 @@ class ZBarOverviewPageScraper {
         val LINK_TEXT = Regex("""https?://|www\.""")
 
         val PRIVATE_BOOKING = Regex("""^(?:Private Veranstaltung|Privatveranstaltung|Geschlossene Gesellschaft)\b""", RegexOption.IGNORE_CASE)
+
+        val WITH_PERFORMER = Regex("""\sw/\s*(.+)$""", RegexOption.IGNORE_CASE)
 
         val READING_TITLE = Regex("""lesebühne|lesung|\bslam\b""", RegexOption.IGNORE_CASE)
         val SCREENING_TITLE = Regex("""kurzfilm|\bfilm""", RegexOption.IGNORE_CASE)
