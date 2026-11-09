@@ -641,7 +641,7 @@ conflict, a model sides with the vibe.
   `src/components/BrandLogo.vue` (the header lockup — badge below `sm`, wordmark from `sm`).
 - **Fonts** → self-hosted `@fontsource-variable/geist`, imported in `src/main.ts`; `--font-*` tokens in
   `main.css`.
-- **Stickers** → `docs/branding/stickers/`, built by `scripts/build-stickers.sh` (#481). Six designs on four Flyeralarm products, each sized to its datasheet. Flyeralarm
+- **Stickers** → `docs/branding/stickers/`, built by `scripts/build-stickers.sh` (#481). Eleven designs on four Flyeralarm products, each sized to its datasheet. [ORDERING.md](branding/stickers/ORDERING.md) says how to order them. Flyeralarm
   sells fixed formats only, so a size change means a different format, not a different number:
     - **Main, four motifs** — _Outdoor-Aufkleber_, rectangle 85 × 55 mm, white film, 4/0, 3 mm bleed, 3 mm safe zone. English and German, each in
       _ink_ (black on white) and _night_ (white on black). QR codes `sei`, `sen`, `sdi`, `sdn`.
@@ -660,10 +660,29 @@ conflict, a model sides with the vibe.
     - **Die-cut sheet** — _Selbstklebefolie Freiform_, one DIN A3 sheet with fifteen 80 mm stamps, five per colourway (black, violet, night). The caption
       is the URL, so there is no QR code. Each cut sits 2.5 mm outside the tilted outer frame, in the spot colour `CutContour`, 100 % magenta, overprinting,
       1 pt. The datasheet's other limits hold: 10 mm between cuts, 4 mm of artwork past each cut, at most fifteen cuts.
+    - **The stamp figure.** The club stamp, drawn as a character: knob, body with a face, rubber base, arms and legs. It is a grumpy-looking
+      bouncer who lets everyone in. Its copy is the stamp's job (_Gestempelt._) or the door's (_Gästeliste: alle._), never a feature list.
+      `stamp_figure()` draws it in five poses: stand, cross, dance, sleep and wave. It is a sketch. Have an illustrator redraw it before a large run.
+    - **Wochenkarte, two motifs** — _Outdoor-Aufkleber_, 85 × 55 mm, white film, 4/0. A stamp card with seven fields, most of them stamped, and
+      the figure about to stamp the next. _Jeden Abend ein Stempel._ / _One stamp a night._ QR code to `/week`, which always opens the current
+      week. QR codes `kd`, `ke`.
+    - **Beipackzettel, two motifs** — _Outdoor-Aufkleber_, 85 × 55 mm, white film, 4/0. A medicine-leaflet parody: _Wirkstoff: Berlin_, the dose,
+      the side effects, and _fragen Sie den Türsteher_. QR codes `bd`, `be`.
+    - **Without the figure.** The Wochenkarte, the Beipackzettel and the pins also come without the stamp figure, as `-plain-` files. The
+      layout stays the same, and on the pins _Du bist hier_ moves up into the free space. QR codes `kd2`, `ke2`, `bd2`, `be2`, `pd2`, `pe2`.
+    - **Night series, six motifs** — _Outdoor-Aufkleber_, square 50 × 50 mm, white film, 4/0. The figure at 20:00 (arms crossed, _Noch zu früh._),
+      02:00 (dancing, _Gästeliste: alle._) and 08:00 (asleep, _Gestempelt._), in German and English. The three are funnier side by side.
+      QR codes `n20d`, `n02d`, `n08d`, `n20e`, `n02e`, `n08e`.
+    - **Map pins, two sheets** — _Selbstklebefolie Freiform_, one DIN A3 sheet per language with twelve pins, each cut along its outline in
+      `CutContour`. _Du bist hier. Die Party nicht._ with the figure waving from the head. QR code to `/map`. QR codes `pd`, `pe`.
+    - **72 hours, one motif** — _Outdoor-Aufkleber_, 85 × 55 mm, white film, 4/0, English only. _It's actually good for you to party for 72
+      hours.\*_ with the footnote _\*I didn't say it's fun. Someone has to do it. To keep the club culture alive._ Both lines come from a Berlin club
+      meme. The sticker has no stamp figure. It shows a two-tone stencil of a raver in a balaclava, in the manner of the Che poster. `balaclava()` draws
+      the stencil. It is not traced from the video. QR code `h72`.
     - **Colour.** The PDFs are DeviceCMYK with set values, not converted ones. Text, stamp and QR code are pure K, so small type does not depend on register.
       The night ground is a rich black, 40/30/30/100. The violet is 65/80/0/0 on white and clear, 40/60/0/0 on black. It is outside the CMYK gamut, so
       expect it duller than on screen.
-    - **Counting.** Every QR code points at `https://event-junkie.de/?s=<code>`. The nginx access log keeps the query string, so the #1126 traffic panel
+    - **Counting.** Every QR code points at `https://event-junkie.de/?s=<code>`, or at `/week?s=<code>` and `/map?s=<code>` for the Wochenkarte and the pins. The nginx access log keeps the query string, so the #1126 traffic panel
       can count scans per design without a cookie or an identifier.
     - **Transparency.** The stamp's frame wear is live transparency. If the print shop's file check rejects it, flatten the file to PDF/X-4.
 
