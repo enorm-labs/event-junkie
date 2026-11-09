@@ -54,6 +54,9 @@ class LogContextConfiguration {
          */
         const val HTTP_STATUS = "httpStatus"
 
+        /** A short value read from the `User-Agent`, never the header itself. See [ClientKind]. */
+        const val CLIENT_KIND = "clientKind"
+
         /**
          * The object a storage warning is about, written only when one cannot be read (#980). High
          * cardinality, acceptable because the lines are rare.

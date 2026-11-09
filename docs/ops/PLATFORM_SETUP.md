@@ -734,6 +734,7 @@ code writes — see the warning below the table:
 | `url`                        | `url`                       | the page being fetched or parsed — `HtmlFetcher`, the importers |
 | `httpstatus`                 | `httpStatus`                | **both directions** — see the warning below the next paragraph  |
 | `httpmethod`, `path`         | `httpMethod`, `path`        | the BFF's access line, one per request                          |
+| `clientkind`                 | `clientKind`                | the BFF's access line: `browser`, `none` or a crawler's name    |
 | `eventid`                    | `eventId`                   | our id — a removal, or the event a translation line is about    |
 | `eventsourceid`              | `eventSourceId`             | the venue's id — a duplicate skipped, and a stale removal       |
 | `dateheading`                | `dateHeading`               | a date heading whose weekday disagrees with its date            |
