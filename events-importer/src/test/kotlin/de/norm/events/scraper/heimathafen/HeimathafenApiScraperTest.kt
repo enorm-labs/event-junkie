@@ -8,6 +8,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -221,7 +222,12 @@ class HeimathafenApiScraperTest {
         seyda.sourceUrl shouldBe "https://heimathafen-neukoelln.de/events/seyda-kurt-und-maria-popov/"
         seyda.ticketUrl.shouldNotBeNull() shouldStartWith "https://heimathafen-neukoelln.reservix.de/"
         seyda.imageUrl.shouldNotBeNull() shouldStartWith "https://heimathafen-neukoelln.de/wp-content/uploads/"
-        seyda.description.shouldNotBeNull()
+        // Each paragraph of the post's content is a line of its own (#4778).
+        seyda.description
+            .shouldNotBeNull()
+            .lines()
+            .first() shouldStartWith "Endlich erscheint der erste Roman"
+        seyda.description.lines().size shouldBeGreaterThan 1
         seyda.pricePresale shouldBe BigDecimal("18.00")
     }
 

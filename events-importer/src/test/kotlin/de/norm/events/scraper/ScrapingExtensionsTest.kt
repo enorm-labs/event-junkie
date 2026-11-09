@@ -318,6 +318,46 @@ class ScrapingExtensionsTest {
     }
 
     @Nested
+    inner class DescriptionText {
+        @Test
+        fun `a paragraph, a br at any depth and a list item each end a line`() {
+            val content =
+                html(
+                    """
+                    <div><p><strong>Support:</strong> Zander Hawley<br>Noah Gundersen ist ein <em>Singer-Songwriter</em>.</p>
+                    <p>Line-up:<br><span>Act One<br>Act Two</span></p><ul><li>Einlass 19:00</li><li>Beginn 20:00</li></ul></div>
+                    """.trimIndent()
+                )
+
+            content.descriptionText() shouldBe
+                listOf(
+                    "Support: Zander Hawley",
+                    "Noah Gundersen ist ein Singer-Songwriter.",
+                    "Line-up:",
+                    "Act One",
+                    "Act Two",
+                    "Einlass 19:00",
+                    "Beginn 20:00"
+                ).joinToString("\n")
+        }
+
+        @Test
+        fun `inline text around a block stays on its own lines, and blank lines go`() {
+            html("intro<div>block</div>tail<p> </p><br><br>end").descriptionText() shouldBe "intro\nblock\ntail\nend"
+        }
+
+        @Test
+        fun `an element with no text is null`() {
+            html("<p> </p><br>").descriptionText() shouldBe null
+        }
+
+        @Test
+        fun `a fragment is read the same way`() {
+            descriptionTextOf("<p>One</p><p>Two &amp; three</p>") shouldBe "One\nTwo & three"
+        }
+    }
+
+    @Nested
     inner class ExtractEventSlug {
         @Test
         fun `extractEventSlug strips the path prefix and any trailing slash`() {

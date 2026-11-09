@@ -6,6 +6,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -49,6 +50,8 @@ class HuxleysDetailPageScraperTest {
         thievery.soldOut shouldBe true
         thievery.sourceId shouldBe "huxleys:2026-08-02-thievery-corporation"
         thievery.description.shouldNotBeNull() shouldStartWith "Zeitgeistige Clubkultur"
+        // Each paragraph of `.event-content` is a line of its own (#4778).
+        thievery.description.lines().size shouldBeGreaterThan 1
         thievery.imageUrl.shouldNotBeNull() shouldStartWith "https://huxleysneuewelt.de/wp-content/uploads/"
         thievery.ticketUrl.shouldNotBeNull() shouldStartWith "https://www.eventim.de/"
     }

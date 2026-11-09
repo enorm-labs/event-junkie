@@ -2,6 +2,7 @@
 
 package de.norm.events.scraper
 
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
 import java.net.URI
@@ -153,6 +154,38 @@ fun Element.textLines(keepBlankLines: Boolean = false): List<String> {
     lines.add(current.toString())
     return lines.map { it.trim() }.filter { keepBlankLines || it.isNotBlank() }
 }
+
+/**
+ * This element's text with the source's line structure kept: a block element and a `<br>` at any
+ * depth each end a line. Lines are trimmed, blank ones dropped, and joined with `\n`; `null` when none is left.
+ *
+ * The shape of a description, which the event page renders line by line. [textLines] breaks only at
+ * a direct-child `<br>`, and [paragraphText] not inside a paragraph (#4778).
+ */
+fun Element.descriptionText(): String? {
+    val copy = clone()
+    copy.select("br").forEach { it.replaceWith(TextNode(LINE_MARK)) }
+    copy.select(DESCRIPTION_BLOCKS).filter { it !== copy }.forEach { block ->
+        block.before(TextNode(LINE_MARK))
+        block.after(TextNode(LINE_MARK))
+    }
+    return copy
+        .text()
+        .split(LINE_MARK)
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .joinToString("\n")
+        .ifEmpty { null }
+}
+
+/** [descriptionText] of an HTML fragment, such as a WordPress `content.rendered` field. */
+fun descriptionTextOf(html: String): String? = Jsoup.parseBodyFragment(html).body().descriptionText()
+
+/** The elements that end a line in [descriptionText]. */
+private const val DESCRIPTION_BLOCKS = "p, div, li, h1, h2, h3, h4, h5, h6, blockquote, tr, section, article, ul, ol, table"
+
+/** A private-use character, so the whitespace collapsing in `text()` keeps it. */
+private const val LINE_MARK = "\uE000"
 
 /**
  * These elements' texts, trimmed, blank ones dropped, one per line; `null` when none is left.
