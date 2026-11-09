@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
@@ -55,7 +56,7 @@ class AegDetailPageScraper {
         return ScrapedEvent(
             // The listing owns the title: this heading carries an "in der <venue>" tail.
             title = heading,
-            description = document.textAt(".event_body"),
+            description = document.selectFirst(".event_body")?.descriptionText(),
             // The listing owns the date; the sentinel lets it fill this in at the merge.
             eventDate = UNRESOLVED_EVENT_DATE,
             doorsTime = parseDoorsTime(document.textAt(".doors")),

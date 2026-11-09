@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
@@ -56,14 +57,15 @@ class ModusDetailPageScraper {
         val title = cleanedTitle.text
         val eventType = modusEventType(title)
         val dateLine = document.textAt(".event-view-right h2")
-        val description = document.textAt(".event-description")?.replace(INVISIBLE_FORMAT_CHARS, "")
+        val description = document.selectFirst(".event-description")?.descriptionText()?.replace(INVISIBLE_FORMAT_CHARS, "")
 
         return ScrapedEvent(
             title = title,
             description = description,
             eventType = eventType,
             eventDate = parseGermanDate(dateLine?.substringBefore(DATE_TIME_SEPARATOR)) ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = parseDoorsFromDescription(description),
+            // The flat text, as before the stored description kept its lines (#4778).
+            doorsTime = parseDoorsFromDescription(description?.replace('\n', ' ')),
             startTime = parseTime(dateLine?.substringAfter(DATE_TIME_SEPARATOR, "")?.trim()),
             imageUrl = document.imgSrcAt("img.event-view-image"),
             sourceUrl = sourceUrl,

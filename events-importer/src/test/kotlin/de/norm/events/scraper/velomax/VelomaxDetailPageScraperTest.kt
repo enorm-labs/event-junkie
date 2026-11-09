@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -52,6 +53,11 @@ class VelomaxDetailPageScraperTest {
         joji.sourceId shouldBe "velodrom:joji-velodrom-2026-08-29"
         joji.promoters shouldContainExactly listOf("Live Nation GmbH")
         joji.description.shouldNotBeNull() shouldStartWith "Der gefeierte Sänger und Produzent Joji"
+        // Each paragraph and line of the description is a line of its own (#4778).
+        joji.description
+            .shouldNotBeNull()
+            .lines()
+            .size shouldBeGreaterThan 1
         joji.ticketUrl.shouldNotBeNull() shouldStartWith "https://www.eventim.de/"
         joji.imageUrl.shouldNotBeNull() shouldStartWith "https://www.velodrom.de/fileadmin/"
     }

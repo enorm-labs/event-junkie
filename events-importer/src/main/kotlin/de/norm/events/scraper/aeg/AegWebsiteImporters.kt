@@ -54,7 +54,7 @@ abstract class AbstractAegVenueImporter(
     ): ScrapedEvent =
         primary.withGapsFrom(fallback).copy(
             title = fallback.title,
-            status = statusAfterNotice(fallback.status, primary.description),
+            status = statusAfterNotice(fallback.status, primary.description?.replace('\n', ' ')),
             artists = billedActs(primary, fallback)
         )
 
@@ -75,7 +75,8 @@ abstract class AbstractAegVenueImporter(
     ): List<ScrapedArtist> {
         val pageBilled = primary.artists.isNotEmpty()
         val roster = primary.artists.ifEmpty { fallback.artists }
-        val description = primary.description
+        // The flat text, as before the stored description kept its lines (#4778).
+        val description = primary.description?.replace('\n', ' ')
         if (pageBilled || roster.size > 1 || description.isNullOrBlank()) return roster
         val corroborated =
             buildArtistsForEventType(

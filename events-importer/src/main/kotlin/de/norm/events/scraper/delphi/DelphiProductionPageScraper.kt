@@ -1,6 +1,7 @@
 package de.norm.events.scraper.delphi
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.textAt
 import org.jsoup.nodes.Document
@@ -47,7 +48,7 @@ class DelphiProductionPageScraper {
         document.textAt(".single_event h2.title") ?: return null
 
         return DelphiProduction(
-            description = document.textAt(".productionText"),
+            description = document.selectFirst(".productionText")?.descriptionText(),
             imageUrl = document.imgSrcAt(".profile_img img")
         )
     }
