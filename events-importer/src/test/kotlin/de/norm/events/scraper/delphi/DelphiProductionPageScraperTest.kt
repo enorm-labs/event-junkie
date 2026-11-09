@@ -3,6 +3,7 @@ package de.norm.events.scraper.delphi
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.alternateLanguageUrl
 import de.norm.events.scraper.fixtureDocument
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -39,6 +40,8 @@ class DelphiProductionPageScraperTest {
     fun `reads the full blurb and the full-width photo`() {
         val swanLake = scrape("488")
         swanLake.description!! shouldContain "Live-Streichquartett"
+        // Each paragraph and line of the description is a line of its own (#4778).
+        swanLake.description.lines().size shouldBeGreaterThan 1
         swanLake.imageUrl!! shouldStartWith "https://theater-im-delphi.de/wp-content/uploads/programm/"
     }
 

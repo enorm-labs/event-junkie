@@ -7,6 +7,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.parseIsoDate
@@ -77,7 +78,7 @@ class VelomaxDetailPageScraper {
             soldOut = cleanedTitle.soldOut,
             subtitle = subtitle,
             // Scoped to the single-event block: the teaser strip carries other events' prose.
-            description = document.textAt(".eventSingle .event-content"),
+            description = document.selectFirst(".eventSingle .event-content")?.descriptionText(),
             eventType = eventType,
             // `datetime` is a machine-readable "yyyy-MM-dd HH:mm:ss"; the rendered text is only "20:00 Uhr".
             eventDate = startedAt?.let { parseIsoDate(it.substringBefore(' ')) } ?: UNRESOLVED_EVENT_DATE,

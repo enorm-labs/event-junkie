@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -49,6 +50,15 @@ class AegDetailPageScraperTest {
     fun `reads the prose description`() {
         arenaEvent.description!! shouldContain "Punjabi"
         musicHallEvent.description!! shouldContain "Aserbaidschan"
+        // Each paragraph and line of the description is a line of its own (#4778).
+        arenaEvent.description
+            .orEmpty()
+            .lines()
+            .size shouldBeGreaterThan 1
+        musicHallEvent.description
+            .orEmpty()
+            .lines()
+            .size shouldBeGreaterThan 1
     }
 
     @Test

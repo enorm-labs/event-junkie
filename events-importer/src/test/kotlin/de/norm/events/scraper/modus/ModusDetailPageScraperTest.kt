@@ -6,6 +6,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -43,6 +44,8 @@ class ModusDetailPageScraperTest {
         c4rl.imageUrl shouldBe "https://modus-berlin.de/img/6a3e6c11430088.95263972.jpg"
         c4rl.ticketUrl shouldBe "https://landstreicher-konzerte.de/konzerte/c4rl-b-26"
         c4rl.description!! shouldContain "c4rl ist ein deutscher"
+        // Each paragraph and line of the description is a line of its own (#4778).
+        c4rl.description.lines().size shouldBeGreaterThan 1
         c4rl.artists.map { it.name } shouldBe listOf("c4rl")
     }
 
