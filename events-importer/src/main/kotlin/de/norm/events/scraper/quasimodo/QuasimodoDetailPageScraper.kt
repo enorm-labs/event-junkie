@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.detailTableCell
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
@@ -65,7 +66,7 @@ class QuasimodoDetailPageScraper {
 
         return ScrapedEvent(
             title = title,
-            description = document.textAt(".panel-collapse.description"),
+            description = document.selectFirst(".panel-collapse.description")?.descriptionText(),
             eventType = eventType,
             status = document.textAt(".alert-danger")?.let(::parseEventStatus) ?: EventStatus.SCHEDULED.name,
             // The listing's mobile block is the date source; the sentinel lets it backstop this page.

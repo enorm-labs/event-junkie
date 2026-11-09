@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parsePriceValue
@@ -89,7 +90,10 @@ class UrbanSpreeDetailPageScraper {
         val price = parsePriceValue(priceText)
         // The blurb opens with the night's own billing — one act per line under `Live:`, each with
         // its genres and origin — which is what corroborates a comma the title alone cannot (#1832).
-        val description = document.textAt(".rte.tv-content")
+        // The readers below take the flat text, whose sentences run on across a line break; the stored
+        // description keeps the lines (#4778).
+        val blurb = document.selectFirst(".rte.tv-content")
+        val description = blurb?.text().blankToNull()
         val eventDate = parseHeroDate(hero) ?: UNRESOLVED_EVENT_DATE
         val heroStart = parseTime(hero.dateInfo(index = 1))
         val doorsAndStart = urbanSpreeDoorsAndStart(description, heroStart)
@@ -110,7 +114,7 @@ class UrbanSpreeDetailPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = supportNote,
-            description = description,
+            description = blurb?.descriptionText(),
             eventType = if (billsDjSets && eventType == EventType.CONCERT.name) EventType.PARTY.name else eventType,
             // The overview card's data-dateStart wins during the merge; this is the standalone value.
             eventDate = eventDate,
