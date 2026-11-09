@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.extractSupportFromSubtitle
@@ -75,7 +76,7 @@ class MikropolDetailPageScraper {
         val support = content.textAt("h2.support")
         val details = content.textAt("div.event-details").orEmpty()
         val statusBadge = content.textAt("div.canceledsoldout").orEmpty()
-        val description = content.textAt("div.eventnotes")
+        val description = content.selectFirst("div.eventnotes")?.descriptionText()
         val boxOffice = parseLabelledPrices(details).boxOffice
 
         val eventType = inferConcertVenueType(title)
