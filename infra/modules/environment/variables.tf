@@ -196,7 +196,7 @@ variable "postgres_version" {
 
 variable "k3s_version" {
   description = <<-EOT
-    Pinned k3s version, e.g. `v1.36.5+k3s1`.
+    Pinned k3s version, e.g. `v1.37.2+k3s1`.
 
     Pinned deliberately: `get.k3s.io` without `INSTALL_K3S_VERSION` installs whatever is current at
     boot, which would mean a destroy/apply cycle silently produces a different cluster than the one
@@ -208,7 +208,7 @@ variable "k3s_version" {
     upgrade itself is by hand (K3S_UPGRADE.md).
   EOT
   type        = string
-  default     = "v1.36.5+k3s1"
+  default     = "v1.37.2+k3s1"
   nullable    = false
 }
 
