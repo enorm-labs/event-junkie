@@ -58,6 +58,18 @@ class NameCasingTest {
     }
 
     @Test
+    fun `keeps a word that styles Latin letters with another script or a symbol`() {
+        // Ritter Butzke bills KABΛNI and VOID Club NΞØN BL△CK (event 13207); lowered, Λ and Ξ become λ and ξ.
+        assertSoftly {
+            deshout("KABΛNI") shouldBe "KABΛNI"
+            deshout("NΞØN BL△CK") shouldBe "NΞØN BL△CK"
+            deshout("MEDUΣA LIVE") shouldBe "MEDUΣA Live"
+            deshout("ØRKESTER") shouldBe "Ørkester"
+            deshout("ДРУГА РІКА") shouldBe "Друга Ріка"
+        }
+    }
+
+    @Test
     fun `leaves a mixed-case token as it is`() {
         "O'neill".deshoutWord() shouldBe "O'neill"
     }

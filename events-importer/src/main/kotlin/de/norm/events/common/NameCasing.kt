@@ -28,11 +28,13 @@ package de.norm.events.common
  * joins words, so each part is de-shouted on its own: "K-POP" to "K-Pop", "DJ-SLOT" to "DJ-Slot"
  * (#1846). A `*` joins words too when each side has two letters or more: "BIGA*RANX" to "Biga*Ranx".
  * A star beside one letter censors a word, which stays whole ("F*CK" to "F*ck"). A token with a
- * digit or a stylising character stays whole, as before ("BLINK-182").
+ * digit or a stylising character stays whole, as before ("BLINK-182"). So does a token that styles
+ * Latin letters with a letter of another script or a symbol ("KABΛNI", "BL△CK"): its lowercase is a
+ * different letter, not the same name in small print.
  */
 fun String.deshoutWord(): String =
     when {
-        any { it.isDigit() || it in STYLISED_CHARS } -> this
+        any { it.isDigit() || it in STYLISED_CHARS } || OTHER_SCRIPT_STYLING.containsMatchIn(this) -> this
         '-' in this -> split('-').joinToString("-") { it.deshoutPart() }
         else -> deshoutPart()
     }
@@ -85,6 +87,9 @@ private const val SHORT_INITIALISM_MAX_LEN = 2
 
 /** Max length of a vowelless all-caps token kept as an initialism ("TMBM"). */
 private const val VOWELLESS_INITIALISM_MAX_LEN = 5
+
+/** A Latin letter beside a letter of another script or a symbol, in either order ("KABΛNI", "BL△CK"). */
+private val OTHER_SCRIPT_STYLING = Regex("""^(?=.*\p{IsLatin})(?=.*(?:[\p{L}&&[^\p{IsLatin}]]|[\p{Sm}\p{So}]))""")
 
 /** The capitals that make a token pronounceable, `Y` among them ("SHY", "LYNX"). */
 private val VOWELS = "AEIOUYÄÖÜÅØÆŒÉÈÊÁÀÂÍÌÎÓÒÔÚÙÛÝ".toSet()

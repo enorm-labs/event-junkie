@@ -233,12 +233,38 @@ class VoidClubOverviewPageScraperTest {
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
 
-    /** One card in the live markup, dated by [label] and by the three rendered spans. */
+    @Test
+    fun `splits a face2face pair and drops an origin tag cut off by a comma`() {
+        // Event 13207, HUMAN_MADE 007 on 2026-11-27, and the 2026-12-19 SPLIT SIGNAL night, as the live page billed them.
+        val lineup =
+            "Billain (BIH), Erotic Cafe&rsquo;, (ITA), IHOPEIEXIST b2b NΞØN BL△CK, Upzet x Soniq, " +
+                "Lay.Dee Strange x Mr.Lafont, Alex Pastore &amp; Krushak\n as Intervention, Primal Rhapsody (DAHRAXT), more TBA"
+        val card = card(label = "Friday, November 27", day = "FRI", number = "27", month = "NOV", lineup = lineup)
+
+        val artists = scraper.scrape(Jsoup.parse(card, baseUrl), baseUrl).single().artists
+
+        artists.map { it.name } shouldContainExactly
+            listOf(
+                "Billain",
+                "Erotic Cafe’",
+                "IHOPEIEXIST",
+                "NΞØN BL△CK",
+                "Upzet",
+                "Soniq",
+                "Lay.Dee Strange",
+                "Mr.Lafont",
+                "Intervention",
+                "Primal Rhapsody (DAHRAXT)"
+            )
+    }
+
+    /** One card in the live markup, dated by [label] and by the three rendered spans, with an optional DJ [lineup]. */
     private fun card(
         label: String,
         day: String,
         number: String,
-        month: String
+        month: String,
+        lineup: String? = null
     ): String =
         """
         <article class="void-event-card">
@@ -250,6 +276,7 @@ class VoidClubOverviewPageScraperTest {
           <div class="void-event-content">
             <div class="void-event-meta"><span class="void-event-venue">VOID HALL</span></div>
             <h3 class="void-event-title">INFECTED DNB PRES. ZIGI SC ALBUM TOUR</h3>
+            ${lineup?.let { "<p class=\"void-event-lineup\"><span class=\"void-event-label\">LINEUP</span> $it</p>" }.orEmpty()}
           </div>
         </article>
         """.trimIndent()

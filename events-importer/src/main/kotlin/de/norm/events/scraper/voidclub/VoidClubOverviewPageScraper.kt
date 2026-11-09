@@ -15,6 +15,7 @@ import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -176,7 +177,7 @@ class VoidClubOverviewPageScraper(
      * Acts are comma-separated, so a comma is the only boundary honoured — a `&` inside one
      * segment belongs to the act's name ("Skulder & Mully", billed alone elsewhere in the same
      * programme), which is why this does not split on conjunctions the way Kater's and Renate's
-     * per-floor lines do. A `b2b` *within* a segment does open a second slot, unless the segment
+     * per-floor lines do. A `b2b` or ` x ` *within* a segment does open a second slot, unless the segment
      * is parenthesised — the brackets hold a duo's members, Kater's guard.
      *
      * An act billed twice would produce two `event_artist` rows for one (event, artist) pair and
@@ -214,10 +215,22 @@ class VoidClubOverviewPageScraper(
      * off, leaving nothing when the segment was only the placeholder. Each act then goes through
      * [stripArtistSuffix] for the spellings the shared rule knows and this one does not: the live
      * page closed a billing with `Seimen Dexter — more TBA` and the placeholder rode along (#1564).
+     *
+     * A face2face pair `Upzet x Soniq` is two DJs, like a `b2b` pair. A segment that is only an origin tag,
+     * `Erotic Cafe’, (ITA)`, is the previous act's tag cut off by a stray comma. Members billed under a
+     * duo name, `Alex Pastore & Krushak as Intervention`, are the act `Intervention`.
      */
     private fun splitActs(segment: String): List<String> {
         val act = segment.replace(UNANNOUNCED_TAIL, "").trim()
-        return (if ('(' in act) listOf(act) else act.split(B2B_SEPARATOR))
+        if (STRAY_ORIGIN_TAG.matches(act)) return emptyList()
+        val alias = MEMBERS_AS_ALIAS.matchEntire(act)?.groupValues?.get(1)
+        val acts =
+            when {
+                '(' in act -> listOf(act)
+                alias != null -> listOf(alias)
+                else -> act.split(B2B_SEPARATOR).flatMap(::splitCrossBilled)
+            }
+        return acts
             .map { stripArtistSuffix(it) }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
     }
@@ -271,5 +284,11 @@ class VoidClubOverviewPageScraper(
                 """\s*[—–-]*\s*\b(?:and\s+more|more\s+to\s+be\s+announced|to\s+be\s+announced)\b.*$""",
                 RegexOption.IGNORE_CASE
             )
+
+        /** A comma segment that is only a country code in brackets: `(ITA)`, `(UK/DE)`. */
+        val STRAY_ORIGIN_TAG = Regex("""\(\s*[A-Z]{2,3}(?:\s*[/,+&-]\s*[A-Z]{2,3})*\s*\)""")
+
+        /** Two or more members joined by `&`, `and`, `b2b` or ` x `, then `as` and the name they play under. */
+        val MEMBERS_AS_ALIAS = Regex("""\S.*?\s(?:&|and|und|b2b|x)\s.*?\S\s+as\s+(\S.*)""", RegexOption.IGNORE_CASE)
     }
 }
