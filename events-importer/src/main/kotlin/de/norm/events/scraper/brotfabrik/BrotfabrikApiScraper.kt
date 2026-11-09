@@ -68,7 +68,7 @@ class BrotfabrikApiScraper {
             priceNote = event.tecText("cost")?.takeIf { prices.size != 1 },
             free = prices.singleOrNull()?.compareTo(BigDecimal.ZERO) == 0,
             soldOut = cleanedTitle.soldOut
-        ).forChildrenIf(childrensPhrase(title, description))
+        ).forChildrenIf(childrensPhrase(title, description?.replace('\n', ' ')))
     }
 
     /** A reading is a reading wherever it sits; a stage night is theatre unless its title names another format. */

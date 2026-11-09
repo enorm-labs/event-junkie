@@ -5,6 +5,7 @@ import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -101,6 +102,8 @@ class BerghainDetailPageScraperTest {
         event.soldOut shouldBe false
         event.sourceId shouldBe "berghain:80835"
         event.description!!.shouldContain("Butoh Batorū")
+        // Each paragraph and line of the description is a line of its own (#4778).
+        event.description.lines().size shouldBeGreaterThan 1
         // No running order published yet: no set times, and the overview's lineup stands alone.
         event.artists.shouldBeEmpty()
     }

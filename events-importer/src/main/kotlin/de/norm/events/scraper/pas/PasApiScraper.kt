@@ -67,7 +67,9 @@ class PasApiScraper {
         val title = cleanedTitle.text.removeSuffix(":").trimEnd()
         val eventType = typeOf(categories)
         val description = event.tecDescription()
-        val doors = labelledClock(description, DOORS_LABELS)
+        // The flat text, as before the stored description kept its lines (#4778).
+        val flat = description?.replace('\n', ' ')
+        val doors = labelledClock(flat, DOORS_LABELS)
         val end = event.tecDateTime("end_date")?.takeIf { it.isAfter(start) }
         val prices = event.tecCostAmounts()
 
@@ -78,7 +80,7 @@ class PasApiScraper {
             typeIsFallback = eventType == null,
             eventDate = start.toLocalDate(),
             doorsTime = doors,
-            startTime = labelledClock(description, START_LABELS) ?: start.toLocalTime().takeUnless { it == doors },
+            startTime = labelledClock(flat, START_LABELS) ?: start.toLocalTime().takeUnless { it == doors },
             endDate = end?.toLocalDate(),
             endTime = end?.toLocalTime(),
             imageUrl = event.tecImageUrl(),

@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapEventType
@@ -18,7 +19,6 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import org.jsoup.nodes.TextNode
 import java.time.LocalDate
 
 /**
@@ -112,22 +112,10 @@ class BadehausDetailPageScraper {
             .select(".em-event-single-content p, .em-event-single > p, .single-event-content p")
             .ifEmpty { event.select("p") }
             .filter { paragraph -> paragraph.text().let { it.isNotBlank() && !DOORS_LINE.containsMatchIn(it) && !START_LINE.containsMatchIn(it) } }
-            .map { it.brLines() }
+            .mapNotNull { it.descriptionText() }
             .distinct()
-            .flatten()
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
-
-    /** The paragraph's text split at every `<br>`, each line trimmed, blank ones dropped. */
-    private fun Element.brLines(): List<String> {
-        val copy = clone()
-        copy.select("br").forEach { it.replaceWith(TextNode(LINE_BREAK)) }
-        return copy
-            .text()
-            .split(LINE_BREAK)
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-    }
 
     /**
      * The opening sentence of the description when it announces a status change, else `null`.
@@ -205,9 +193,6 @@ class BadehausDetailPageScraper {
 
         /** The date a notice moves the show to: "auf den 27.02.2027" or "auf den 22.09.26". */
         private val NOTICE_TARGET_DATE = Regex("""auf\s+den\s+(\d{1,2}\.\d{1,2}\.\d{2,4})""", RegexOption.IGNORE_CASE)
-
-        /** A private-use character, so the whitespace collapsing in `text()` keeps it. */
-        private const val LINE_BREAK = "\uE000"
 
         /** A sentence boundary; a date's dots are followed by digits, so "27.02.2027" survives. */
         private val SENTENCE_END = Regex("""(?<=[.!?;])\s+""")

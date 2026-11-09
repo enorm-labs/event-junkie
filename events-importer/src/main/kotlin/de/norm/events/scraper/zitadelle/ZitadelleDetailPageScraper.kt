@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
@@ -76,7 +77,7 @@ class ZitadelleDetailPageScraper {
         return ScrapedEvent(
             title = heading,
             subtitle = subtitle,
-            description = joinChangeNoteAndDescription(changeNote, document.textAt(".eventnotes")),
+            description = joinChangeNoteAndDescription(changeNote, document.selectFirst(".eventnotes")?.descriptionText()),
             eventType = eventType,
             // The listing owns the date; the sentinel lets it fill this in at the merge.
             eventDate = UNRESOLVED_EVENT_DATE,

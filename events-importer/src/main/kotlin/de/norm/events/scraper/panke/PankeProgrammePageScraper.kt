@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.cssUrlValue
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
@@ -157,7 +158,8 @@ class PankeProgrammePageScraper {
         start: LocalTime?
     ): String {
         val fromTitle = inferUnmarkedTitleType(title)
-        val body = description.orEmpty()
+        // The flat text, as before the stored description kept its lines (#4778).
+        val body = description.orEmpty().replace('\n', ' ')
         return when {
             fromTitle != EventType.OTHER.name -> fromTitle
             lineup.isNotEmpty() -> EventType.PARTY.name
@@ -175,8 +177,8 @@ class PankeProgrammePageScraper {
      * full block repeats date and clock in its first column, so only the second is taken.
      */
     private fun descriptionOf(article: Element): String? =
-        article.textAt(BODY_COLUMN)
-            ?: article.textAt(".post-content-excerpt")
+        article.selectFirst(BODY_COLUMN)?.descriptionText()
+            ?: article.selectFirst(".post-content-excerpt")?.descriptionText()
 
     /**
      * The DJs an event links to on Resident Advisor, in the venue's order. Deduplicated on the
