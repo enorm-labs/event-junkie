@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -48,6 +49,11 @@ class ColumbiaTheaterDetailPageScraperTest {
         soulfly.sourceId shouldBe "columbia_theater:20260803-soulfly"
         soulfly.imageUrl shouldBe "https://columbia-theater.de/wp-content/uploads/2026/05/image-1024x683.webp"
         soulfly.description.shouldNotBeNull() shouldStartWith "Mit der Tribal Technology Tour 2026"
+        // Each paragraph of the description is a line of its own (#4778).
+        soulfly.description
+            .shouldNotBeNull()
+            .lines()
+            .size shouldBeGreaterThan 1
         soulfly.artists shouldContainExactly
             listOf(
                 ScrapedArtist("Soulfly", ArtistRole.HEADLINER, titleDerived = true),

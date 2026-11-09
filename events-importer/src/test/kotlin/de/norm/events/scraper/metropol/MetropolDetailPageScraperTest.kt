@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -44,6 +45,8 @@ class MetropolDetailPageScraperTest {
         event.ticketUrl!! shouldStartWith "https://www.eventim.de/noapp/event/thy-art-is-murder-metropol-"
         event.promoters shouldBe listOf("Trinity Music")
         event.description!! shouldContain "Thy Art Is Murder"
+        // Each paragraph of the description is a line of its own (#4778).
+        event.description.lines().size shouldBeGreaterThan 1
     }
 
     @Test

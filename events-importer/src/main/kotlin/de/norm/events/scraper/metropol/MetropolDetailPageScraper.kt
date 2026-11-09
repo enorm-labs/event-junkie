@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.labelledClock
@@ -58,7 +59,7 @@ class MetropolDetailPageScraper {
         }
         val slug = extractEventSlug(sourceUrl, "/event/")
         val timeLine = document.textAt(".event-details .time")
-        val description = document.textAt(".event-text")
+        val description = document.selectFirst(".event-text")?.descriptionText()
         val relocationNote = parseRelocationNote(document)
 
         return ScrapedEvent(

@@ -7,6 +7,7 @@ import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -67,6 +68,11 @@ class ColumbiahalleOverviewPageScraperTest {
         juju.ticketUrl shouldBe "https://store.juju44.net/products/album-2026-releaseshow-berlin-stehplatz-bundle"
         juju.promoters shouldContainExactly listOf("Boldt Berlin Konzertagentur GmbH")
         juju.description.shouldNotBeNull() shouldStartWith "Juju ist eine der prägendsten Stimmen im Deutschrap"
+        // Each paragraph of the description is a line of its own (#4778).
+        juju.description
+            .shouldNotBeNull()
+            .lines()
+            .size shouldBeGreaterThan 1
         juju.artists shouldContainExactly listOf(ScrapedArtist("Juju", ArtistRole.HEADLINER, titleDerived = true))
     }
 

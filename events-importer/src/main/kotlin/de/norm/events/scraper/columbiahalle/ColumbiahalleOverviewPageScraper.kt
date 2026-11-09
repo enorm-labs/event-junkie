@@ -10,6 +10,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
@@ -90,7 +91,7 @@ class ColumbiahalleOverviewPageScraper {
     fun descriptions(document: Document): Map<String, String?> =
         document
             .select(".mod_eventlist .eventlist_event")
-            .mapNotNull { card -> eventId(card)?.let { "${EventSource.COLUMBIAHALLE.sourceIdPrefix}$it" to card.textAt(".bandinfo") } }
+            .mapNotNull { card -> eventId(card)?.let { "${EventSource.COLUMBIAHALLE.sourceIdPrefix}$it" to card.selectFirst(".bandinfo")?.descriptionText() } }
             .toMap()
 
     private fun eventId(card: Element): String? = EVENT_ID_PATTERN.find(card.selectFirst("div.event_inhalt")?.id().orEmpty())?.groupValues?.get(1)
@@ -124,7 +125,7 @@ class ColumbiahalleOverviewPageScraper {
         val subtitle = subtitleLines.firstOrNull()
         val times = card.textAt(".zeit").orEmpty()
         val sticker = card.textAt(".stoerer").orEmpty()
-        val description = card.textAt(".bandinfo")
+        val description = card.selectFirst(".bandinfo")?.descriptionText()
         val titleType = inferConcertVenueType(title)
         val eventType = if (titleType == EventType.CONCERT.name && description.orEmpty().contains(COMEDIAN_CUE)) EventType.COMEDY.name else titleType
         val (presale, boxOffice, priceNote) = parsePrices(card)

@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.hrefAt
@@ -71,7 +72,7 @@ class ColumbiaTheaterDetailPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = columbiaTheaterSubtitle(content.textAt(".header-tour-text"), supportRows),
-            description = content.textAt("div.event-text"),
+            description = content.selectFirst("div.event-text")?.descriptionText(),
             eventType = eventType,
             eventDate = parseBasicIsoDatePrefix(slug) ?: UNRESOLVED_EVENT_DATE,
             doorsTime = labelledClock(dateLine, DOORS_LABELS),

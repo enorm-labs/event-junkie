@@ -5,6 +5,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.fixtureText
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
@@ -46,6 +47,11 @@ class MikropolDetailPageScraperTest {
         event.sourceId shouldBe "mikropol:2026-07-14-house-of-protection"
         event.subtitle shouldBe "support: noise of the voiceless"
         event.description.shouldNotBeNull() shouldStartWith "House of Protection"
+        // Each paragraph of the description is a line of its own (#4778).
+        event.description
+            .shouldNotBeNull()
+            .lines()
+            .size shouldBeGreaterThan 1
         event.imageUrl shouldBe "https://mikropol-berlin.de/wp-content/uploads/2026/04/house-of-protection-berlin-333x500-1.webp"
         event.ticketUrl.shouldNotBeNull() shouldStartWith "https://www.eventim.de/"
         event.artists shouldBe
