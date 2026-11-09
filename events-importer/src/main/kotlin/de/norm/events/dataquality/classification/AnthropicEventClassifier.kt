@@ -36,7 +36,7 @@ sealed interface ClassifierResult {
         override val usage: TokenUsage
     ) : ClassifierResult
 
-    /** The model answered, and the answer was no JSON object or a refusal. Asking again gives the same answer. */
+    /** The model answered, and the answer was no JSON object or a refusal. Asking again gives the same answer, unless it was [notJson]. */
     data class Rejected(
         override val usage: TokenUsage,
         /** The answer was no JSON at all (#4108), rather than a refusal or another kind of value. */

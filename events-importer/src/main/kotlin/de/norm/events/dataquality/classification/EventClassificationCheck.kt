@@ -34,9 +34,9 @@ data class ClassificationRunResult(
     val overCap: Int,
     val suggested: Map<String, Int>,
     val overBudget: Int = 0,
-    /** Answers that were a refusal or no JSON object. Their events count as checked. */
+    /** Answers that were a refusal or no JSON object. Their events count as checked, unless the answer was [notJson]. */
     val rejected: Int = 0,
-    /** The [rejected] answers that were no JSON at all (#4108). */
+    /** The [rejected] answers that were no JSON at all (#4108). Their events stay candidates (#4758). */
     val notJson: Int = 0
 )
 
@@ -210,8 +210,8 @@ class EventClassificationCheck(
 
             is ClassifierResult.Rejected -> {
                 tally.rejected++
-                if (result.notJson) tally.notJson++
-                repository.recordChecked(target.id, target.contentHash, classifier.model)
+                // A broken answer says nothing about the event, so the next pass asks again (#4758).
+                if (result.notJson) tally.notJson++ else repository.recordChecked(target.id, target.contentHash, classifier.model)
                 outcome(OUTCOME_REJECTED)
             }
 

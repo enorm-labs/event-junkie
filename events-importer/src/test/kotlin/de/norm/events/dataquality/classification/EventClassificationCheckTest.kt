@@ -202,16 +202,41 @@ class EventClassificationCheckTest : BaseControllerTest() {
         }
 
     @Test
-    fun `an answer that is no JSON counts as rejected and not JSON, and its event as checked`(): Unit =
+    fun `an answer that is no JSON counts as rejected and not JSON, and its event stays unchecked so the next pass asks again`(): Unit =
         runBlocking {
             val event = insertEvent("Spaeti-Ritter", type = "OTHER")
+            server.enqueue(textResponse("""{"eventType": {"value": "SHOW", "evidence": "Die "Show"", "confidence": 0.9}}"""))
             server.enqueue(textResponse("""{"eventType": {"value": "SHOW", "evidence": "Die "Show"", "confidence": 0.9}}"""))
 
             val lines = captureLogs { check().checkSource(SOURCE) }
 
             suggestions(event).shouldBeEmpty()
-            withClue("the same text is not sent again") { check().checkEvent(event).unchanged shouldBe 1 }
             lines.single { it.formattedMessage.contains("finished") }.formattedMessage shouldContain "0 failed, 1 rejected (1 not JSON)"
+            withClue("the same text is sent again") { check().checkEvent(event).unchanged shouldBe 0 }
+            server.requestCount shouldBe 2
+        }
+
+    @Test
+    fun `an answer that is JSON but no object counts as rejected, and its event as checked`(): Unit =
+        runBlocking {
+            val event = insertEvent("Spaeti-Ritter", type = "OTHER")
+            server.enqueue(textResponse("[1, 2]"))
+
+            check().checkSource(SOURCE).rejected shouldBe 1
+
+            withClue("the same text is not sent again") { check().checkEvent(event).unchanged shouldBe 1 }
+            server.requestCount shouldBe 1
+        }
+
+    @Test
+    fun `an answer that quotes German text with a low-9 quote and a straight closing quote is read, and its evidence proposed`(): Unit =
+        runBlocking {
+            val event = insertEvent("Neue Welt", type = "OTHER", description = "Die Revue „Neue Welt“ im Huxleys.", startTime = null)
+            server.enqueue(textResponse("""{"eventType": {"value": "SHOW", "evidence": "Die Revue „Neue Welt" im Huxleys", "confidence": 0.9}}"""))
+
+            check().checkEvent(event).notJson shouldBe 0
+
+            suggestions(event).map { it.field to it.evidence } shouldContainExactly listOf("eventType" to "Die Revue „Neue Welt“ im Huxleys")
         }
 
     @Test
