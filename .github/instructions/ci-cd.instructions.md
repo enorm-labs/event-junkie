@@ -227,6 +227,11 @@ no `dry_run` because every run is one, no `issues: write` on the agent's job, AD
   on a fork; the invariant is "no PR _depends_ on a secret". **`pull_request_target` is safe only because the workflow checks out and runs nothing** —
   `label-pr.yml`, `milestone-dependabot.yml`, `merge-gate.yml` each open with that banner; one innocuous `actions/checkout` makes it arbitrary code execution
   with write scopes.
+- **`pull_request_target` runs only because a repository Actions event policy allows it** (#4772). From 2026-12-02 GitHub blocks the event on a public
+  repository without one. The policy is scoped by `workflow_path` to the three files above and lists each file's triggers in `allowed_events`. A new
+  `pull_request_target` workflow joins that list, or it never starts. Read it with `gh api repos/{owner}/{repo}/actions/policies`. **A blocked event looks
+  like nothing else**: `startup_failure`, no message on the run page, and `gh run rerun` refuses. Only the organization audit log names it, as
+  `workflows.actions_policy_violation` with `allowed: false`. A blocked `Merge gate` holds every pull request, auto-merge included.
 - **Secret scanning, push protection and validity checks are on; `non_provider_patterns` and `ai_detection` are off, decided** (#443, #385, #1427). Read them:
   `gh api repos/{owner}/{repo} --jq '.security_and_analysis | map_values(.status)'`. gitleaks in pre-commit is the local half.
 - **Commits are deliberately not signed** (#443): with one maintainer a signature proves authorship to the person who holds the only merging account, at the
