@@ -75,13 +75,15 @@ fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?
  * Act`, `The Act [ABGESAGT!]`, `MOLIY - *Abgesagt*`, `POSTPONED: Nina`, `Wird verlegt: Deep Purple`, `VENUE ÄNDERUNG: Jazeek`)
  * with its separator and its brackets, stars or dashes, one or a run (#2985, Zig-Zag's
  * `----ABGESAGT----- Jeff Lorber Fusion`, #4219). Whole
- * words only: "Abgesagte Lesung" is a title, not a marker. A
- * "verschoben"/"verlegt" tail is [TITLE_STATUS_TAIL]'s, and a sentence that is the notice (Wild
- * at Heart) stays the title.
+ * words only: "Abgesagte Lesung" is a title, not a marker. A leading "verschoben" counts only
+ * with a separator after it (Uber Eats Music Hall's `VERSCHOBEN: Omah Lay`, #4762), because the
+ * word also opens a sentence. A "verschoben"/"verlegt" tail is [TITLE_STATUS_TAIL]'s, and a
+ * sentence that is the notice (Wild at Heart) stays the title.
  */
 private val TITLE_STATUS_MARKER =
     Regex(
-        """^\s*[(\[*-]*\s*(?:abgesagt|absage|cancell?ed|postponed|wird\s+verlegt|venue\s?(?:ä|ae)nderung)\b!?\s*[)\]*-]*\s*[-–—:|]*\s*""" +
+        """^\s*[(\[*-]*\s*(?:abgesagt|absage|cancell?ed|postponed|wird\s+verlegt|venue\s?(?:ä|ae)nderung""" +
+            """|verschoben(?=!?\s*[)\]*:|–—-]))\b!?\s*[)\]*-]*\s*[-–—:|]*\s*""" +
             """|\s*[-–—:|]*\s*[(\[*-]*\s*\b(?:abgesagt|absage|cancell?ed|postponed|venue\s?(?:ä|ae)nderung)!?\s*[)\]*-]*\s*$""",
         RegexOption.IGNORE_CASE
     )
@@ -172,15 +174,17 @@ fun stripRelocationPrefix(title: String): String {
 /**
  * A scheduling note a venue appends to a title: a "Nachholtermin vom <date>" / "(verschoben aus
  * <year>)" / "wird verschoben" / "Hochverlegung" note, or a "-verlegt ins <venue>-" / "-ins
- * <venue> verlegt-" suffix (Frannz's spellings of Metropol's prefix), anchored on "ins"/"nach"
- * after the word or on a leading dash before "ins". It carries the row's status, so only
+ * <venue> verlegt-" / "-in den <venue> verschoben-" suffix (Frannz's spellings of Metropol's
+ * prefix, #4762), anchored on "ins"/"nach" after the word or on a leading dash before "ins"/"in".
+ * The word may open a bracket: Kulturhaus Peter Edel's "[VERSCHOBEN!]".
+ * It carries the row's status, so only
  * [stripTitleStatusMarker] removes it, after [parseTitleStatus] has read it (#2008). The
  * title-level counterpart of [ARTIST_SUFFIX_PATTERN].
  */
 private val TITLE_STATUS_TAIL =
     Regex(
-        """\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|(?:wird\s+)?verschoben|verlegt\s+(?:ins|nach))\b.*$""" +
-            """|\s+[-–—(]+\s*ins?\s+\S.*?\s+verlegt!?\s*[-–—)]*\s*$""",
+        """\s+[-–—(\[]*\s*(?:nachholtermin|hochverlegung|(?:wird\s+)?verschoben|verlegt\s+(?:ins|nach))\b.*$""" +
+            """|\s+[-–—(]+\s*ins?\s+\S.*?\s+(?:verlegt|verschoben)!?\s*[-–—)]*\s*$""",
         RegexOption.IGNORE_CASE
     )
 

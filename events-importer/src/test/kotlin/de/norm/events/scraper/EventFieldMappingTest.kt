@@ -85,6 +85,45 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `stripTitleStatusMarker strips a relocation note written with verschoben`() {
+        // Frannz's "-in den Festsaal verschoben-" (#4762): the whole note goes, not only " verschoben-".
+        stripTitleStatusMarker("Kontrollverlust -in den Festsaal verschoben-") shouldBe "Kontrollverlust"
+        stripTitleStatusMarker("X -ins Gretchen verschoben-") shouldBe "X"
+        stripTitleStatusMarker("X (ins Gretchen verschoben)") shouldBe "X"
+        // Without a leading dash the place is part of the title; only the trailing word is the note.
+        stripTitleStatusMarker("Reise in den Süden verschoben") shouldBe "Reise in den Süden"
+        // Kulturhaus Peter Edel brackets the word.
+        stripTitleStatusMarker("Neu-Zeit: Ein Abend [VERSCHOBEN!]") shouldBe "Neu-Zeit: Ein Abend"
+        parseTitleStatus("Neu-Zeit: Ein Abend [VERSCHOBEN!]") shouldBe "POSTPONED"
+    }
+
+    @Test
+    fun `stripTitleStatusMarker strips a leading verschoben only with a separator after it`() {
+        stripTitleStatusMarker("VERSCHOBEN: Omah Lay") shouldBe "Omah Lay"
+        stripTitleStatusMarker("Verschoben - Omah Lay") shouldBe "Omah Lay"
+        stripTitleStatusMarker("(verschoben) Omah Lay") shouldBe "Omah Lay"
+        stripTitleStatusMarker("*VERSCHOBEN!* Omah Lay") shouldBe "Omah Lay"
+        // The word opens a sentence too, and an adjective is no marker.
+        stripTitleStatusMarker("Verschoben ist nicht aufgehoben") shouldBe "Verschoben ist nicht aufgehoben"
+        stripTitleStatusMarker("Verschobene Welten") shouldBe "Verschobene Welten"
+        stripTitleStatusMarker("Die verschobene Zeit") shouldBe "Die verschobene Zeit"
+        stripTitleStatusMarker("VERSCHOBEN:") shouldBe "VERSCHOBEN:"
+    }
+
+    @Test
+    fun `a leading verschoben is read as the status before the stored title loses it`() {
+        val row =
+            ScrapedEvent(
+                title = "VERSCHOBEN: Omah Lay",
+                eventDate = LocalDate.of(2026, 11, 8),
+                sourceUrl = "https://example.de/event",
+                sourceId = "probe:1"
+            ).toEventEntity(venueId = 1L, venueSlug = "probe", eventSourceId = 1L)
+        row.title shouldBe "Omah Lay"
+        row.status shouldBe EventStatus.POSTPONED.name
+    }
+
+    @Test
     fun `cleanEventTitle leaves a clean title and mid-title dash untouched`() {
         cleanEventTitle("Freshlyground").text shouldBe "Freshlyground"
         cleanEventTitle("Tannz im Frannz -auf 2 Floors").text shouldBe "Tannz im Frannz -auf 2 Floors"
@@ -376,6 +415,7 @@ class EventFieldMappingTest {
         parseTitleStatus("The Act (verschoben)") shouldBe "POSTPONED"
         parseTitleStatus("Verlegt ins Bi Nuu – BRKN") shouldBe "RELOCATED"
         parseTitleStatus("POSTPONED: Nina – Hallo hallo hallo Tour") shouldBe "POSTPONED"
+        parseTitleStatus("VERSCHOBEN: Omah Lay") shouldBe "POSTPONED"
     }
 
     @Test
