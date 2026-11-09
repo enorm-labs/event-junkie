@@ -8,6 +8,9 @@ it. A `RELOCATED` row whose note names a new date and no house is stored `POSTPO
 **Amended by [ADR-056](ADR-056_A_POSTPONED_SHOW_KEEPS_ITS_NEW_DATE.md)**, which fills `relocated_on` on a `POSTPONED` row too. The Decision's sentence "A
 `POSTPONED` row needs no column" no longer holds.
 
+**Amended by [#4761](https://github.com/enorm-labs/event-junkie/issues/4761)**, which links the row on the new date at another house through `relocated_on`.
+The Consequence "The row on the new date at another house stays unlinked" no longer holds.
+
 **Amends [ADR-030](ADR-030_RELOCATED_IS_THE_ORIGIN.md).** ADR-030 stores where a show went. This decision stores when, under the same rule: the text and the
 date as the venue wrote them, and no match against another row. It does not change which end of a move is `RELOCATED`.
 
