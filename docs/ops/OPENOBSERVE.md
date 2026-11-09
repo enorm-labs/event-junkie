@@ -224,14 +224,15 @@ person's call inside a window is lost too, so each hour's remainder is divided b
 same slug within 60 seconds comes from the SPA. `renderers` counts these per agent and gives the 5th to 90th percentile `delay`. An agent with a high
 `share` and `subtracted: false` goes into `RENDERERS`, with `delay` as its window. Use `--hours 24`: a short window misses slow crawlers.
 
-| Renderer      | Pages a day | Share rendered | Window (s) |
-| ------------- | ----------- | -------------- | ---------- |
-| AhrefsBot     | 5,700       | 99%            | 0–1        |
-| ShapBot       | 3,800       | 97%            | 1–5        |
-| Reflectionbot | 1,000       | 93%            | 1–6        |
-| Baiduspider   | 700         | 87%            | 3–23       |
-| Googlebot     | 230         | 67%            | 2–12       |
-| ExaSearchBot  | 200         | 89%            | 1–5        |
+| Renderer          | Pages a day | Share rendered | Window (s) |
+| ----------------- | ----------- | -------------- | ---------- |
+| AhrefsBot         | 5,700       | 99%            | 0–1        |
+| ShapBot           | 3,800       | 97%            | 1–5        |
+| ElevenlabsCrawler | 3,000       | 60%            | 0–3        |
+| Reflectionbot     | 1,000       | 93%            | 1–6        |
+| Baiduspider       | 700         | 87%            | 3–23       |
+| Googlebot         | 230         | 67%            | 2–12       |
+| ExaSearchBot      | 200         | 89%            | 1–5        |
 
 **A crawler that fetches every few seconds covers most of the hour.** AhrefsBot loads a page every 15 seconds, so its window alone covers 13% of the
 time. The scaling keeps the estimate unbiased, but its noise grows with the share covered. Read `frontend.page_loads` beside it.
