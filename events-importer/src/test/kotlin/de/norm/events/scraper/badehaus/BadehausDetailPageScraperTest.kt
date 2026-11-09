@@ -6,8 +6,10 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.genretag.descriptionGenres
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -223,6 +225,51 @@ class BadehausDetailPageScraperTest {
         val url = "https://badehaus-berlin.com/events/whatever/"
         val html = "<html><body><div class='content'><p>Not an event</p></div></body></html>"
         scraper.scrape(Jsoup.parse(html, url), url) shouldBe null
+    }
+
+    @Test
+    fun `keeps a support line apart from the blurb, so the blurb's genre is read`() {
+        // Event 13245.
+        val url = "https://badehaus-berlin.com/events/noah-gundersen/"
+        val html =
+            """
+            <div class="em-event-single"><h3>So. 31.01.2027 | 19:00 UHR</h3><h1>Noah Gundersen</h1>
+            <p>31.01.2027<br />Badehaus Berlin<br />Einlass 19:00<br />Beginn 20:00</p>
+            <p>Support: ZANDER HAWLEY<br />
+            Noah Gundersen ist ein für den Emmy nominierter amerikanischer Singer-Songwriter aus dem pazifischen Nordwesten.<br />
+            Seit seinem Durchbruch im Jahr 2014 hat sich Gundersen eine treue weltweite Fangemeinde aufgebaut.</p></div>
+            """.trimIndent()
+
+        val description =
+            scraper
+                .scrape(Jsoup.parse(html, url), url)
+                .shouldNotBeNull()
+                .description
+                .shouldNotBeNull()
+
+        description.lines() shouldBe
+            listOf(
+                "Support: ZANDER HAWLEY",
+                "Noah Gundersen ist ein für den Emmy nominierter amerikanischer Singer-Songwriter aus dem pazifischen Nordwesten.",
+                "Seit seinem Durchbruch im Jahr 2014 hat sich Gundersen eine treue weltweite Fangemeinde aufgebaut."
+            )
+        descriptionGenres(description) shouldContain "Singer-Songwriter"
+    }
+
+    @Test
+    fun `drops the meta paragraph whole, its date and venue lines too`() {
+        val url = "https://badehaus-berlin.com/events/show/"
+        val html =
+            """
+            <div class="em-event-single"><h3>Fr. 20.11.2026 | 19:00 UHR</h3><h1>Show</h1>
+            <p>20.11.2026<br />Badehaus Berlin<br />Doors: 19:00h<br />Start: 20:00h</p></div>
+            """.trimIndent()
+
+        scraper
+            .scrape(Jsoup.parse(html, url), url)
+            .shouldNotBeNull()
+            .description
+            .shouldBeNull()
     }
 
     @Test
