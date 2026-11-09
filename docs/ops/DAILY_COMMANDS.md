@@ -66,6 +66,8 @@ scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .fr
    File it, and do not accept each one.
    `python3 scripts/enrichment-coverage.py` prints how many promoters and venues with upcoming events have a website, an Instagram link and a
    description. `/enrich` raises the numbers, and `/maintain` runs it once a week.
+   Open the site of each source that is disabled and `FAILED`. No alert tells you when such a site is back. When the cause in its `lastError` is gone,
+   enable the source again and force an import. Its issue has the commands.
 9. **The two places no command reads.** Look at the `alerts@` mailbox and the healthchecks.io dashboard ([HEALTHCHECKS.md](HEALTHCHECKS.md)).
 10. **A release.** If `main` has product commits since the last release, cut one. See [RELEASING.md](RELEASING.md).
 
