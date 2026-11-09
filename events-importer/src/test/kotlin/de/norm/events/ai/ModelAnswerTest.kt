@@ -27,6 +27,40 @@ class ModelAnswerTest {
     }
 
     @Test
+    fun `a German quote closed with a straight quote inside a value is closed with a German one, in each shape seen on production`() {
+        val answers =
+            mapOf(
+                """{"eventType": {"value": "SHOW", "evidence": "Die „Neue Welt Show" im Dezember 2026/2027 mit Ensemble", "confidence": 0.9}}"""
+                    to "Die „Neue Welt Show“ im Dezember 2026/2027 mit Ensemble",
+                """{"titleActs": {"value": [], "evidence": "Eine Revue unter „8 Brücken" mit Band",     "confidence": 0.9}}"""
+                    to "Eine Revue unter „8 Brücken“ mit Band",
+                """{"eventType": {"value": "SHOW", "evidence": "Das ist die „Kosmos 3 Live"-Tournee der Band 2026 in Berlin",
+                |"confidence": 0.9}}
+                """.trimMargin() to "Das ist die „Kosmos 3 Live“-Tournee der Band 2026 in Berlin"
+            )
+
+        answers.forEach { (raw, evidence) -> ModelAnswer.jsonObject(raw)?.findValue("evidence")?.asString() shouldBe evidence }
+    }
+
+    @Test
+    fun `valid JSON with a German quote is left as it is`() {
+        val valid =
+            listOf(
+                """{"evidence": "Die „Show“ heute"}""",
+                """{"evidence": "Die „Show", "confidence": 0.9}""",
+                """{"evidence": "Die „Show"}""",
+                """{"evidence": "Die „Show\" heute"}"""
+            )
+
+        valid.forEach { ModelAnswer.closeLowNineQuotes(it) shouldBe it }
+    }
+
+    @Test
+    fun `an answer still broken after the repair is no JSON`() {
+        shouldThrow<UnparseableAnswer> { ModelAnswer.jsonObject("""{"evidence": "Die „Show", sagt sie", "confidence": 0.9}""") }
+    }
+
+    @Test
     fun `text that parses as no object is null, not an error`() {
         ModelAnswer.jsonObject("[1, 2]") shouldBe null
     }

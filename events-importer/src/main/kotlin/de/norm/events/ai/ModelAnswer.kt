@@ -45,6 +45,9 @@ object ModelAnswer {
 
     private const val HALF_DAY = 12
 
+    /** What follows a `"` that ends a JSON string. */
+    private const val STRING_END_FOLLOWERS = ",:}]"
+
     /** Enough of the shape on each side to show an unescaped quote and the key it sits in. */
     const val SHAPE_RADIUS = 30
 
@@ -62,13 +65,58 @@ object ModelAnswer {
      *   name of the answer is the part worth reading.
      */
     fun jsonObject(raw: String): JsonNode? {
-        val text = raw.trim().replace(CODE_FENCE, "")
+        val text = closeLowNineQuotes(raw.trim().replace(CODE_FENCE, ""))
         return try {
             mapper.readTree(text).takeIf { it.isObject }
         } catch (e: JacksonException) {
             throw UnparseableAnswer(unparseable(text, e), e)
         }
     }
+
+    /**
+     * [json] with each `„` that a straight `"` closes inside a string value closed with `“` instead (#4758).
+     *
+     * The model quotes German text as `„…"`, as it does in a translation (`QuotePairs`), and the unescaped `"` ends the
+     * string early. A `"` that a `,`, `:`, `}`, `]` or the end of the text follows ends the string and stays, so valid
+     * JSON never changes. A `„` with another quote mark before its `"` stays too.
+     */
+    internal fun closeLowNineQuotes(json: String): String {
+        if ('„' !in json) return json
+        val out = StringBuilder(json)
+        var inString = false
+        var i = 0
+        while (i < out.length) {
+            when (out[i]) {
+                '\\' -> if (inString) i++
+                '"' -> inString = !inString
+                '„' -> if (inString) quoteCloser(out, i)?.let { out.setCharAt(it, '“') }
+            }
+            i++
+        }
+        return out.toString()
+    }
+
+    /** The index of the straight `"` that closes the `„` at [opener] and not its string, or null. */
+    private fun quoteCloser(
+        text: CharSequence,
+        opener: Int
+    ): Int? {
+        var j = opener + 1
+        while (j < text.length) {
+            when (text[j]) {
+                '„', '“', '”' -> return null
+                '\\' -> j++
+                '"' -> return j.takeUnless { endsString(text, it) }
+            }
+            j++
+        }
+        return null
+    }
+
+    private fun endsString(
+        text: CharSequence,
+        quote: Int
+    ): Boolean = text.drop(quote + 1).firstOrNull { !it.isWhitespace() }.let { it == null || it in STRING_END_FOLLOWERS }
 
     private fun unparseable(
         text: String,
