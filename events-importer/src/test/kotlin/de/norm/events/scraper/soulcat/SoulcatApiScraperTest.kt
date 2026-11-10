@@ -104,6 +104,28 @@ class SoulcatApiScraperTest {
         page.events.single().artists shouldContainExactly listOf(ScrapedArtist(name = "DJ Kassettendeck", role = ArtistRole.DJ))
     }
 
+    // Events 13268 and 13266: asterisk runs in the title, and VINYL-SESSION read as a genre.
+    @Test
+    fun `cuts asterisk runs from the title and keeps VINYL-SESSION out of the genre`() {
+        fun night(
+            slug: String,
+            title: String
+        ) = """{ "slug": "$slug", "title": "$title", "start_date": "2026-11-20 18:30:00", "url": "https://soulcat-berlin.com/events/$slug/" }"""
+
+        val page =
+            SoulcatApiScraper().scrapePage(
+                """{ "events": [${night("lobotomy", "DJ LOBOTOMY – VINYL-SESSION – Rocksteady Got Soul **60s **")},
+                    ${night("cat", "DJ CAT – 50’s Heartbreakers, Soul & Popcorn *** ***")}] }"""
+            )
+        val (lobotomy, cat) = page.events
+
+        lobotomy.title shouldBe "DJ LOBOTOMY – VINYL-SESSION – Rocksteady Got Soul 60s"
+        lobotomy.genre shouldBe "Rocksteady Got Soul 60s"
+        lobotomy.artists.map { it.name } shouldContainExactly listOf("LOBOTOMY")
+        cat.title shouldBe "DJ CAT – 50’s Heartbreakers, Soul & Popcorn"
+        cat.genre shouldBe "50’s Heartbreakers, Soul & Popcorn"
+    }
+
     @Test
     fun `keeps apart two dates of a recurring night that share one slug`() {
         val recurring =

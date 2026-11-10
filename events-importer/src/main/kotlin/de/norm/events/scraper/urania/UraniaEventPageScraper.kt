@@ -51,7 +51,9 @@ class UraniaEventPageScraper {
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/event/")
-        val format = document.textAt("h6.c-event-article_content_format")
+        val billing = document.textAt("p.c-event-article_content_artist")
+        // A school-class screening has no format label and names its audience in the billing line instead.
+        val format = document.textAt("h6.c-event-article_content_format") ?: billing?.takeIf { isSchoolClassAudience(it) }
         val body = document.textAt(".c-text-box")
         val admissionLine = admissionLineOf(body)
         val price = uraniaPrice(admissionLine)
@@ -73,7 +75,7 @@ class UraniaEventPageScraper {
             priceNote = admissionLine,
             free = detectFree(pricePresale = price, priceNote = admissionLine, title = title),
             soldOut = cleanedTitle.soldOut,
-            artists = uraniaSpeakers(document.textAt("p.c-event-article_content_artist"), eventType)
+            artists = uraniaSpeakers(billing, eventType)
         )
     }
 

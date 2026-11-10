@@ -1,11 +1,13 @@
 package de.norm.events.scraper.maxxim
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -76,10 +78,43 @@ class MaxximOverviewPageScraperTest {
     }
 
     @Test
-    fun `types every night as a party and derives no artists`() {
+    fun `types every night as a party`() {
         events.map { it.eventType }.toSet() shouldBe setOf(EventType.PARTY.name)
-        // "Queens Night - SHERY M live" names a guest inside free text only; nothing is extracted.
-        event("maxxim:queens-night-shery-m-live").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills the DJs of the prose as DJs and the guest named without the prefix as nobody`() {
+        val queensNight = event("maxxim:queens-night-shery-m-live")
+        queensNight.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
+        // The line-up repeats `DJ ONE F` in capitals; the special guest Shery M has no `DJ` prefix.
+        queensNight.artists.map { it.name } shouldBe listOf("DJ One F", "DJ TC", "DJ FERO", "DJ YG")
+        event("maxxim:replay-back-to-the-90s-2000s-2010s-party-6").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills every name the prose prefixes DJ or DJane, and no unprefixed partner or host`() {
+        mapOf(
+            13027 to (
+                "DJ Tiefton, DJ DeeNoRee und DJ Punjesh sorgen für den Sound, der den Abend unvergesslich macht." to
+                    listOf("DJ Tiefton", "DJ DeeNoRee", "DJ Punjesh")
+            ),
+            13028 to
+                (
+                    "DJ Denny D plays Classics and House from 10:30 PM — and turns the night before Friday into the best night of the week." to
+                        listOf("DJ Denny D")
+                ),
+            13029 to ("DJ Denny D, Party Classics, Disco House and Hip Hop from 10 PM." to listOf("DJ Denny D")),
+            13030 to ("Hosted by Nico Muolo with DJ Denny D on the decks — the dancefloor fills up like it's Friday." to listOf("DJ Denny D")),
+            12341 to ("DJ SIZMO & Laura Blue – Willkommen im wilden Westen." to listOf("DJ SIZMO")),
+            10829 to ("DJane Hanna Kirsanova & DJ SIZMO – The Sound of Maxxim." to listOf("DJane Hanna Kirsanova", "DJ SIZMO")),
+            12508 to ("Nach der Bescherung – DJ Storm mit Feel-Good Sounds & Christmas Classics." to listOf("DJ Storm")),
+            10932 to ("La Nuit en Rose – Glamour, Glitzer und die besten Disco Classics mit DJ Isamel Nagera!" to listOf("DJ Isamel Nagera")),
+            12211 to ("Vorher MAMA GEHT TANZEN (20–23 Uhr), ab 23 Uhr PURE DISCO mit DJ SIZMO & Laura Blue." to listOf("DJ SIZMO")),
+            11791 to ("Das MAXXIM wird zum Disco-Zirkus – DJ SIZMO & Laura Blue live!" to listOf("DJ SIZMO"))
+        ).forEach { (id, case) ->
+            val (description, djs) = case
+            withClue("event $id") { djsIn(description) shouldBe djs }
+        }
     }
 
     @Test

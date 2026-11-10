@@ -42,7 +42,10 @@ import java.time.MonthDay
  * brackets ("DJ Hanzel (Efetto Notte)"); two DJs are joined with `&`, never a colon, so the colon
  * tail and the bracket are cut as the set name.
  *
- * Every night is a DJ dance party, so all events are [EventType.PARTY]. Dates render as German
+ * Every night is a DJ dance party, so an event is a [EventType.PARTY], unless the name adds a concert:
+ * `Independent Tanzmusik Special * + Konzert Ludi & The Lads` is a [EventType.CONCERT] that bills the band as one headliner
+ * beside the DJs (event 13323). A market is out of scope (EVENT_SCOPE.md §3.2) and skipped: the `Dark Market`, a design and
+ * flea market by day (event 13324). Dates render as German
  * `DD.MM.` with **no year**, but the row carries a German two-letter weekday (Mo–So); the year
  * comes from it via [inferYearForWeekday]. Recently-passed nights stay on the page and are
  * dropped centrally at persistence (`EventUpsertService`), so every dated row is returned as-is.
@@ -86,6 +89,11 @@ class DunckerOverviewPageScraper(
 
         // Banner rows (flyer images) carry no event name — skip them.
         val title = parseTitle(cell) ?: return null
+        val styleLine = parseStyleLine(cell)
+        if (MARKET.containsMatchIn(title) || MARKET.containsMatchIn(styleLine.orEmpty())) {
+            logger.info { "Skipping Duncker market '$title': out of scope" }
+            return null
+        }
 
         val eventDate =
             parseDate(row) ?: run {
@@ -95,15 +103,19 @@ class DunckerOverviewPageScraper(
 
         val fbEventUrl = cell.select("a[href]").map { it.attr("href") }.firstOrNull { it.contains(FB_EVENT_PATH) }
         val fbEventId = fbEventUrl?.let { FB_EVENT_ID_PATTERN.find(it)?.groupValues?.get(1) }
-        val styleLine = parseStyleLine(cell)
         val (startTime, endTime) = parseOpeningHours(row)
+        val concertAct =
+            KONZERT_BILL
+                .find(title)
+                ?.groupValues
+                ?.get(1)
+                ?.trim()
 
         return ScrapedEvent(
             title = title,
             subtitle = styleLine,
             genre = parseGenre(styleLine),
-            // Every listing is a resident DJ dance night.
-            eventType = EventType.PARTY.name,
+            eventType = if (concertAct != null) EventType.CONCERT.name else EventType.PARTY.name,
             eventDate = eventDate,
             startTime = startTime,
             endDate = endTime?.let { endOn(eventDate, startTime, it) },
@@ -117,7 +129,7 @@ class DunckerOverviewPageScraper(
                     ?.let { "${EventSource.DUNCKER.sourceIdPrefix}$it" }
                     ?: EventSource.DUNCKER.dateTitleId(eventDate, title),
             ticketUrl = fbEventUrl,
-            artists = parseDjs(cell),
+            artists = listOfNotNull(concertAct?.let { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }) + parseDjs(cell),
             promoters = parsePromoters(cell)
         )
     }
@@ -201,21 +213,23 @@ class DunckerOverviewPageScraper(
      * (a profile, or inside the Facebook-event link) or as a trailing text node, always prefixed
      * with "DJ"/"Djs". The label and a set-name tail ("DJ Hanzel: Efetto Notte", "DJ Hanzel (Efetto
      * Notte)") are stripped, and multi-DJ lines split: "Djs Neue K & Lichene", and "DJ Smoboda & DJ
-     * Gomez", whose second label comes off too.
+     * Gomez", whose second label comes off too. The bracket comes off each DJ after the split, so it goes in "DJ Hanzel (Efetto
+     * Notte) & DJ Zanardi" too (event 13322).
      */
     private fun parseDjs(cell: Element): List<ScrapedArtist> {
         val candidates = cell.select("a").map { it.text() } + cell.textNodes().map { it.text() }
         return candidates
             .map { it.trim() }
             .mapNotNull { DJ_PATTERN.find(it)?.groupValues?.get(1) }
-            .map { it.substringBefore(SET_NAME_SEPARATOR).replace(SET_NAME_BRACKET, "").trim() }
+            .map { it.substringBefore(SET_NAME_SEPARATOR).trim() }
             .flatMap { splitSupportActs(it) }
             .map {
-                DJ_PATTERN
-                    .find(it)
-                    ?.groupValues
-                    ?.get(1)
-                    ?.trim() ?: it
+                (
+                    DJ_PATTERN
+                        .find(it)
+                        ?.groupValues
+                        ?.get(1) ?: it
+                ).replace(SET_NAME_BRACKET, "").trim()
             }.filterNot { isNonArtistName(it) }
             .distinct()
             .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
@@ -247,6 +261,12 @@ class DunckerOverviewPageScraper(
 
         /** A set name in a trailing bracket after a space; a bracket inside a styled name (`ALL(H)OURS`) has none. */
         private val SET_NAME_BRACKET = Regex("""\s+\([^()]*\p{L}[^()]*\)\s*$""")
+
+        /** A concert the night's name adds: `+ Konzert Ludi & The Lads`. The band's `&` is part of its name. */
+        private val KONZERT_BILL = Regex("""\+\s*Konzert\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+        /** A market in the name or the style line: `Dark Market`, `Der Gotische Design- und Trödelmarkt`. */
+        private val MARKET = Regex("""markt\b|\bmarket\b""", RegexOption.IGNORE_CASE)
 
         /** A "DJ"/"Djs" label followed by the act name(s), captured to end of line. */
         private val DJ_PATTERN = Regex("""^djs?\b\.?\s+(.+)$""", RegexOption.IGNORE_CASE)

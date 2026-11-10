@@ -25,8 +25,8 @@ import tools.jackson.databind.JsonNode
  * carries it ([DJ_IN_ALIAS]).
  * - **`60s RnB & Soul & Blues & RocknRoll – Bartenders Choice`**: a head without `DJ` names no act, and
  * is itself the genre, unless it is the whole title (`60s RnB & Soul`). The house genre `Soul` covers that.
- * - **The tail markers** `VINYL ONLY!`, `FREE ENTRY!` and `Dancers Welcome :)` are cut from the title.
- * `FREE ENTRY` marks the night free.
+ * - **The tail markers** `VINYL ONLY!`, `FREE ENTRY!` and `Dancers Welcome :)` are cut from the title, and so is a run of
+ * asterisks (`**60s **`). `FREE ENTRY` marks the night free. A `VINYL-SESSION` segment stays in the title and is no genre.
  * - **The bar also shows Werder Bremen matches**, filed under the `Fussball` category. Those are skipped.
  *
  * The `slug` identifies an event, with the date [tecSourceId] adds for a recurring one. Every night is a DJ night, so a [EventType.PARTY].
@@ -73,12 +73,18 @@ class SoulcatApiScraper {
         title: String,
         parts: List<String>,
         namesDjs: Boolean
-    ): String? = (if (namesDjs) parts.drop(1) else parts.take(1)).joinToString(", ").takeIf { it.isNotBlank() && it != title }
+    ): String? =
+        (if (namesDjs) parts.drop(1) else parts.take(1))
+            .map { it.replace(VINYL_SESSION, "").trim() }
+            .filter { it.isNotBlank() }
+            .joinToString(", ")
+            .takeIf { it.isNotBlank() && it != title }
 
     /** [title] without the tail markers, and without the dashes and dots they leave at its end. */
     private fun withoutMarkers(title: String): String =
         MARKER
             .replace(title, " ")
+            .replace(ASTERISKS, " ")
             .replace(SPACES, " ")
             .trimEnd { it.isWhitespace() || it in TRAILING_LEFTOVERS }
 }
@@ -88,6 +94,12 @@ private const val FOOTBALL_CATEGORY = "Fussball"
 
 /** The notes a title ends on, none of which belongs in it: `VINYL ONLY!`, `FREE ENTRY!`, `Dancers Welcome :)`. */
 private val MARKER = Regex("""(?i)(?:vinyl only|free entry|dancers welcome)\s*[!.]*\s*(?:[:;]\))?""")
+
+/** A run of asterisks the venue decorates a title with: `**60s **`, `*** ***`. */
+private val ASTERISKS = Regex("""\*+""")
+
+/** `VINYL-SESSION` names the format of the night, not a style. */
+private val VINYL_SESSION = Regex("""(?i)\bvinyl[\s-]?session\b""")
 
 private val FREE_ENTRY = Regex("""(?i)free entry""")
 

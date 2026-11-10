@@ -3,6 +3,7 @@ package de.norm.events.scraper
 import de.norm.events.event.DescriptionLanguage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import java.text.Normalizer
 
 private val logger = KotlinLogging.logger {}
 
@@ -101,6 +102,26 @@ fun trimEdgeRules(text: String): String {
     val end = if (lines.subList(last + 1, lines.size).any { RULE.matches(it) }) last + 1 else lines.size
     return if (start == 0 && end == lines.size) text else lines.subList(start, end).joinToString("\n")
 }
+
+/**
+ * [text] with the Mathematical Alphanumeric Symbols (U+1D400–U+1D7FF) that a venue pastes as fake bold or
+ * italic (`𝗲𝘃𝗲𝗿𝘆`) turned into the letters and digits they stand for. Each such code point is folded on its
+ * own, so a `²`, a ligature or a full-width letter elsewhere in the text stays.
+ */
+fun plainMathAlphanumerics(text: String): String {
+    if (text.codePoints().noneMatch { it in MATH_ALPHANUMERICS }) return text
+    return buildString {
+        text.codePoints().forEach { codePoint ->
+            if (codePoint in MATH_ALPHANUMERICS) {
+                append(Normalizer.normalize(Character.toString(codePoint), Normalizer.Form.NFKC))
+            } else {
+                appendCodePoint(codePoint)
+            }
+        }
+    }
+}
+
+private val MATH_ALPHANUMERICS = 0x1D400..0x1D7FF
 
 /** The cut at headings and separators, or null when the text has none. */
 private fun byHeadings(lines: List<String>): Cut? {

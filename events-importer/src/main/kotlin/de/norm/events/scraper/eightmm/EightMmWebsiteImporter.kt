@@ -43,7 +43,8 @@ val EIGHT_MM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "nothing on the calendar or the event pages names a style"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "a DJ night bills nobody but a Name (Band) … DJ Residency; a concert bills only from the house frame, else from a blurb's `Line up -` list"
+            "a DJ night bills nobody but a Name (Band) … DJ Residency or a Name DJ Set; a concert bills only from the house frame, " +
+                "else from a blurb's `Line up -` list"
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; bands keep the door money"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "a blurb points to the venue's Instagram for tickets, never to a shop"),

@@ -159,7 +159,8 @@ class AdmiralspalastDetailPageScraper {
      * carries the reschedule note, which would be minted as a performer.
      *
      * A concert title bills its act before the dash, without the house's act tails, and a tribute
-     * or score frame bills none but an ensemble named after it. A ballet names its work before the
+     * or score frame bills none but an ensemble named after it. A programme part that ends `mit der <ensemble>` bills only the
+     * ensemble. A ballet names its work before the
      * dash and bills only a company named after it: `Der Nussknacker - Imperial Ballet & Live Orchestra`.
      * These rules stay here and out of the shared lists, which other venues read (#3150).
      */
@@ -170,6 +171,7 @@ class AdmiralspalastDetailPageScraper {
         if (SLAM.containsMatchIn(title)) return emptyList()
         if (BALLET_AFTER_WORK.containsMatchIn(title)) return balletCompany(title)
         if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+        ensembleAfterMit(title)?.let { return listOf(it) }
         TRIBUTE_FRAME.find(title)?.let { frame -> return ensembleAfter(title.substring(frame.range.last + 1)) }
         // The shared builder still decides on the whole title whether it bills anyone: `Top Gun: Maverick – in Concert`.
         val asWritten = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
@@ -191,6 +193,19 @@ class AdmiralspalastDetailPageScraper {
             .map { it.substringBefore(" & ").substringBefore(" mit ").trim() }
             .filter { BALLET_COMPANY.matches(it) }
             .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
+
+    /**
+     * The ensemble a concert's last programme part names after `mit der`, `mit dem` or `mit den`: `Deutschland von oben - Vivaldi:
+     * Die Vier Jahreszeiten - Live Konzert mit der Philharmonie Leipzig` (event 13320). The part before the first dash is a film.
+     */
+    private fun ensembleAfterMit(title: String): ScrapedArtist? =
+        ENSEMBLE_AFTER_MIT
+            .find(title)
+            ?.groupValues
+            ?.get(1)
+            ?.trim()
+            ?.takeIf { ENSEMBLE.containsMatchIn(it) }
+            ?.let { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
 
     /** The ensemble a tribute frame names after a closing `&`: `… to Billy Joel & St. Konrad Gospelchor Berlin`. */
     private fun ensembleAfter(rest: String): List<ScrapedArtist> =
@@ -277,6 +292,9 @@ class AdmiralspalastDetailPageScraper {
 
         /** A word that names a performing group, so the name after a tribute frame's `&` is an act. */
         val ENSEMBLE = Regex("""chor\b|choir|orchest|ensemble|philharmon|\bband\b""", RegexOption.IGNORE_CASE)
+
+        /** A programme part after a dash that ends `mit der <ensemble>`, with no dash after it. */
+        val ENSEMBLE_AFTER_MIT = Regex("""\s[-–—]\s.*\bmit\s+(?:der|dem|den)\s+([^-–—]+)$""", RegexOption.IGNORE_CASE)
 
         /** The dash between the act and its programme: `Soweto Gospel Choir - JOY!`. */
         val PROGRAMME_DASH = Regex("""\s+[-–—]\s+""")

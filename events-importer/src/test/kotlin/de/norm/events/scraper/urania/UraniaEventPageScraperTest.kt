@@ -99,6 +99,35 @@ class UraniaEventPageScraperTest {
         opening.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
+    // Events 13274 and 13275: the billing line names the audience; 13274 has no format label and was typed a talk.
+    @Test
+    fun `bills nobody at a school-class screening and types it from the audience line`() {
+        val checker = schoolClassScreening("Checker Tobi 3 – Die heimliche Herrscherin der Erde", format = null)
+        checker.artists shouldBe emptyList()
+        checker.eventType shouldBe EventType.SCREENING.name
+
+        val muppets = schoolClassScreening("Die Muppets Weihnachtsgeschichte", format = "Kino im Humboldtsaal")
+        muppets.artists shouldBe emptyList()
+        muppets.eventType shouldBe EventType.SCREENING.name
+    }
+
+    private fun schoolClassScreening(
+        title: String,
+        format: String?
+    ): ScrapedEvent {
+        val sourceUrl = "https://www.urania.de/event/school-class/"
+        val html =
+            """
+            <span class="c-event-article_content_group">HOMO LUDENS</span>
+            ${format?.let { "<h6 class=\"c-event-article_content_format\">$it</h6>" }.orEmpty()}
+            <h1 class="c-event-article_content_title o-h1">$title</h1>
+            <p class="c-event-article_content_artist"><strong>Weihnachtskino für Schulklassen</strong></p>
+            <h4 class="c-event-article_content_date-time"><strong>Di, 15.12.2026</strong> | 10:00 Uhr</h4>
+            <div class="c-text-box"><p><strong>Kostenfreie Tickets für Schulklassen:</strong> anmeldung@example.de</p></div>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+    }
+
     @Test
     fun `reads the date and clock out of the page's one date line`() {
         // "Do, 03.09.2026 | 19:30 Uhr"
