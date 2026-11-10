@@ -35,6 +35,8 @@ flowchart LR
         meta["Meta Graph API · Instagram CDN"]
         ext["healthchecks.io · Better Stack"]
         tem["Scaleway TEM"]
+        dwd["opendata.dwd.de"]
+        vbb["VBB GTFS"]
     end
 
     subgraph github["GitHub"]
@@ -72,10 +74,12 @@ flowchart LR
     bff --> pg
     bff -->|"read"| s3
     bff -->|"587 · sign-in mail"| tem
+    bff -->|"443 · weather forecast"| dwd
     importer -->|"80 · 443 · public addresses only"| venue
     importer --> claude
     importer -->|"names and ids only"| wiki
     importer -->|"venue handles · image fetch"| meta
+    importer -->|"stops · once a quarter"| vbb
     importer --> pg
     importer -->|"write"| s3
     certmgr --> le
@@ -126,6 +130,7 @@ Every namespace under the chart starts from default deny. Each arrow below is a 
 | importer     | Object Storage, 443                                                                                                                | `allow-scraping` covers it, since the bucket is a public address                                                                                                                    |
 | importer     | MusicBrainz, Wikidata, Commons, Wikipedia                                                                                          | `allow-scraping` covers them, since they are public addresses. B5 lists what is sent                                                                                                |
 | importer     | Discogs                                                                                                                            | `allow-scraping` covers it, since it is a public address. B5 lists what is sent                                                                                                     |
+| importer     | VBB's GTFS feed, for the stops, once a quarter (#2724)                                                                             | `allow-scraping` covers it, since it is a public address                                                                                                                            |
 | importer     | `graph.facebook.com` and Instagram's CDN, for the Instagram drafts                                                                 | `allow-scraping` covers them, since they are public addresses. B11 lists what is sent                                                                                               |
 | importer     | Enrichment sources, such as promoter and fan sites ([ADR-043](../adr/ADR-043_ONE_MAIN_SOURCE_PER_VENUE_AND_ENRICHMENT_SOURCES.md)) | `allow-scraping`. The scraper client applies `RobotsTxtFilter.kt` and `PerHostThrottlingFilter.kt`, as for a venue. B4 lists what a source can write                                |
 | importer     | The sites of venues with no importer, once a month (`venuecheck/`)                                                                 | `allow-scraping`. `VenueSiteProber.kt` uses the scraper client, so the robots and throttling filters apply. `ForbiddenHosts.kt` skips some hosts, B4                                |
@@ -333,7 +338,7 @@ On production the BFF also reads the month's mail count from the Scaleway API ev
 | The per-client limit counts in one pod only                               | D      | low        | low    | Accepted. Each BFF pod keeps the count in memory for an hour. Production runs two replicas, so one client can get up to 40 links an hour. A restart sets the count to zero. The per-address limit is in the database and holds. `scripts/sign-in-limits.sh` checks on k3d every night that both per-client limits engage. It also checks that a forged `X-Forwarded-For` does not reset them (#4107) |
 | An attacker plants a session cookie before the sign-in (session fixation) | S      | low        | high   | Mitigated. `SessionSecurityContextRepository.kt` makes a new random token at each sign-in and never adopts the cookie the request carries. The `__Host-` prefix makes the browser refuse a cookie from another host or without `Secure`                                                                                                                                                              |
 | Another site makes a signed-in browser send a POST (CSRF)                 | T      | low        | medium | Mitigated. `AccountSecurityConfiguration.kt` requires `X-XSRF-TOKEN` to match the `XSRF-TOKEN` cookie on each POST under `/api/auth/**` and `/api/me/**`. The session cookie is `SameSite=Lax`, the CSRF cookie `Strict`. CORS allows `GET` only (`WebFluxConfiguration.kt`)                                                                                                                         |
-| A signed-in visitor reads or changes another account's rows               | T, I   | low        | high   | Mitigated. Each store query under `account/` has the session's account id in its `WHERE`. `scripts/account-isolation.sh` runs nightly on k3d (`dast.yml`). It aims one account's session at the other's search, passkey, push endpoint, follows and RSVPs, then checks that the rows did not change. The ZAP API scan fuzzes `/api/me` signed in (#4105)                                             |
+| A signed-in visitor reads or changes another account's rows               | T, I   | low        | high   | Mitigated. Each store query under `account/` has the session's account id in its `WHERE`. `scripts/account-isolation.sh` runs nightly on k3d (`dast.yml`). It aims one account's session at the other's search, passkey, push endpoint, follows, RSVPs, problem reports and notifications, then checks that the rows did not change. The ZAP API scan fuzzes `/api/me` signed in (#4105)             |
 | A script or a database read takes a live session                          | S, I   | low        | high   | Mitigated. `SessionSecurityContextRepository.kt` sets the cookie `HttpOnly` and `Secure`, and stores only the SHA-256 of its token. The CSP allows one script hash (B2)                                                                                                                                                                                                                              |
 | A link in the mail sends the visitor to another site                      | S      | low        | medium | Mitigated. `AuthController.kt` accepts `next` only as a path on this site (#3889)                                                                                                                                                                                                                                                                                                                    |
 | A passkey answer is replayed                                              | S      | low        | medium | Mitigated. `PasskeyStore.kt` deletes a challenge at its first use, and a challenge lives five minutes. `PasskeyFlowTest.kt` replays an answer and gets a 401                                                                                                                                                                                                                                         |
