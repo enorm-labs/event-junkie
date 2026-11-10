@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zimmer16
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -7,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.lastPathSegment
@@ -27,12 +29,10 @@ import java.time.LocalDate
  * (EVENT_SCOPE.md §3.5) and is a show unless its title says `Konzert`. The site names no category, so an adult night is
  * a concert unless its title names the house's other formats, the reading stage or a revue.
  *
- * There is no line-up field either. A title is billed as its act only when it is a bare name, a `+` or `, ` co-bill,
- * `<programme> mit <act>`, or a name before a colon and a list of styles (`Jörg Bobrik: Folk – Blues – Americana`).
- * A `<record> Release Tour` part names the record, not the act (#3164). Any other tagline,
- * a programme name or an `&` (`Calum Baird – Scottish Singer-Songwriter Live`, `Kaléko - Friederike
- * Ziegler`, `Bossa Nova Duo Kommerell & Komoll`) puts the act in a different place each time, so it names nobody.
- * Nor does the weekly `Offene Bühne`, whose stage is open to anyone.
+ * There is no line-up field either, and a title puts the act in a different place each time, so a concert card bills
+ * only its `(support: …)` act. [Zimmer16EventPageScraper] bills the headliner from the event page's text
+ * ([billedFromPage]). An improv night is comedy and a night that calls itself a `show` is a show. Another format's
+ * card, a reading, a revue or a children's show, bills a bare name or a `+` co-bill, and nobody for a tagline or an `&`.
  */
 class Zimmer16OverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -65,7 +65,8 @@ class Zimmer16OverviewPageScraper {
             if (childrens != null) {
                 if (CONCERT_WORD.containsMatchIn(title)) EventType.CONCERT.name else EventType.SHOW.name
             } else {
-                HOUSE_FORMATS.entries.firstOrNull { (word, _) -> word in title.lowercase() }?.value ?: inferConcertVenueType(title)
+                HOUSE_FORMATS.entries.firstOrNull { (word, _) -> word in title.lowercase() }?.value
+                    ?: inferConcertVenueType(title, null, HOUSE_KEYWORDS)
             }
         return ScrapedEvent(
             title = title,
@@ -79,21 +80,19 @@ class Zimmer16OverviewPageScraper {
             sourceId = "${EventSource.ZIMMER_16.sourceIdPrefix}${lastPathSegment(url)}",
             artists =
                 when {
-                    OPEN_STAGE in title.lowercase() -> emptyList()
-                    STYLE_TAGLINE.matches(title) -> artistsOf(title.substringBefore(':'), subtitle, eventType)
-                    TAGLINE.containsMatchIn(title) -> emptyList()
-                    else -> artistsOf(title, subtitle, eventType)
+                    eventType == EventType.CONCERT.name -> {
+                        extractSupportFromSubtitle(subtitle).map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
+                    }
+
+                    TAGLINE.containsMatchIn(title) -> {
+                        emptyList()
+                    }
+
+                    else -> {
+                        buildArtistsForEventType(title, subtitle, eventType, unpackWithFrame = true)
+                    }
                 }
         ).forChildrenIf(childrens)
-    }
-
-    private fun artistsOf(
-        title: String,
-        subtitle: String?,
-        eventType: String
-    ): List<ScrapedArtist> {
-        val billing = title.split(", ").filterNot { RELEASE_TOUR.containsMatchIn(it) }.joinToString(" + ")
-        return if (billing.isBlank()) emptyList() else buildArtistsForEventType(billing, subtitle, eventType, unpackWithFrame = true)
     }
 
     private fun cardDate(card: Element): LocalDate? {
@@ -111,10 +110,6 @@ class Zimmer16OverviewPageScraper {
         val SUPPORT = Regex("""\s*\(support:\s*([^)]+)\)""", RegexOption.IGNORE_CASE)
         val TAGLINE = Regex("""[–—:"„“”]| - |&|\+\+""")
 
-        /** `<act>: <style> – <style> – …`, a name before a colon and a dashed list of one-word styles. */
-        val STYLE_TAGLINE = Regex("""[^:–—"„“”&+]+:\s+\p{L}[\p{L}-]*(?:\s+[–—/,]\s+\p{L}[\p{L}-]*)+""")
-        val RELEASE_TOUR = Regex("""\sRelease[- ]Tour$""", RegexOption.IGNORE_CASE)
-
         /** The open stage: live music with no billed act, so a concert that names nobody (#2992). */
         const val OPEN_STAGE = "offene bühne"
 
@@ -125,5 +120,8 @@ class Zimmer16OverviewPageScraper {
                 "revue" to EventType.SHOW.name,
                 OPEN_STAGE to EventType.CONCERT.name
             )
+
+        /** Whole words for the formats a substring would over-match: `show` is not `Showcase`. Improv is comedy, as at BKA. */
+        val HOUSE_KEYWORDS = mapOf("improtheater" to EventType.COMEDY.name, "show" to EventType.SHOW.name)
     }
 }

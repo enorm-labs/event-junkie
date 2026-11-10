@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component
  *
  * The homepage holds the date and the title; the event page adds the time, the price and the text. The children's
  * programme (Mikado e.V.) has its own page with the same cards, marked `for-children` (EVENT_SCOPE.md §3.5).
+ * The event page's text also names a concert's act, so a page that fails keeps the stored lineup.
  * The picture comes from the card, which serves it from the venue's own host; YesTicket's copy is robots-disallowed.
  *
  * @see Zimmer16OverviewPageScraper for the cards.
@@ -28,7 +29,8 @@ class Zimmer16WebsiteImporter(
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "ZIMMER 16", Zimmer16OverviewPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.ZIMMER_16
     override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = Zimmer16EventPageScraper()::enrich
-    override val eventPageOwns: Set<ScrapedField> = setOf(ScrapedField.DESCRIPTION, ScrapedField.START_TIME, ScrapedField.PRICES)
+    override val eventPageOwns: Set<ScrapedField> =
+        setOf(ScrapedField.DESCRIPTION, ScrapedField.START_TIME, ScrapedField.PRICES, ScrapedField.ARTISTS)
 
     override val maxListingPages: Int = 2
 
@@ -54,8 +56,9 @@ val ZIMMER_16_LIMITATIONS =
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "the site has no line-up field; a title with a tagline, an & or a bare programme name names nobody",
-            verified = "2026-10-13"
+            "the site has no line-up field; a concert bills only a name from its title that the event page's text repeats verbatim, " +
+                "so an act the text names differently or not at all is billed as nobody",
+            verified = "2026-11-10"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "nothing on the cards or the event pages names a style", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "each event states its start and end, no doors time", verified = "2026-10-08"),

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zimmer16
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.PAY_WHAT_YOU_WANT
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.endOn
@@ -18,6 +19,7 @@ import org.jsoup.nodes.Document
  * A €0 night whose text says "Eintritt frei, pay what you want" is not free ([PAY_WHAT_YOU_WANT]), and that
  * sentence becomes the price note. The €0 is not stored, because the site would show it as a price of 0 €.
  * Its `image` is not read: `cdn.yesticket.org/robots.txt` disallows the picture script it points to (#2905).
+ * A concert's headliner is the act this text names ([billedFromPage]), ahead of the card's support act.
  */
 class Zimmer16EventPageScraper {
     fun enrich(
@@ -47,7 +49,8 @@ class Zimmer16EventPageScraper {
             priceNote = payWhatYouWant ?: event.priceNote,
             free = price?.signum() == 0 && payWhatYouWant == null,
             soldOut = node.schemaSoldOut(),
-            status = node.schemaStatus()
+            status = node.schemaStatus(),
+            artists = if (event.eventType == EventType.CONCERT.name) billedFromPage(event.title, description) + event.artists else event.artists
         )
     }
 }
