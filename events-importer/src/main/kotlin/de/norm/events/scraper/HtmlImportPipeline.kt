@@ -48,7 +48,7 @@ internal class HtmlImportPipeline(
             import.secondLanguageListing?.let { withSecondLanguageListing(htmlFetcher::fetchDocument, listed, entry.document, it) } ?: listed
         val enriched = import.eventPages?.let { readEventPages(translated, it) } ?: translated
         val folded = import.foldRuns(withSharedPages(htmlFetcher::fetchDocument, enriched, import.sharedPages))
-        val events = dropUnresolvedDates(folded)
+        val (events, spared) = dropUnresolvedDates(folded)
         import.doneLine?.let { line -> logger.info { line(events, listing) } }
 
         return ImportResult.Success(
@@ -56,7 +56,8 @@ internal class HtmlImportPipeline(
             etag = entry.etag,
             lastModified = entry.lastModified,
             droppedUnresolvedDate = folded.size - events.size,
-            complete = listing.complete
+            complete = listing.complete,
+            spared = spared
         )
     }
 
@@ -121,16 +122,24 @@ internal class HtmlImportPipeline(
      * the listing nor the event page supplied a real date (a dateless featured teaser whose detail page
      * was unavailable). Persisting these would produce a garbage slug and date, so they are discarded
      * with a warning rather than stored.
+     *
+     * Returns the kept events and the `sourceId`s of the dropped rows whose page did not load: the
+     * listing still names those, so the stale cleanup must not read them as gone (#4793).
      */
-    private fun dropUnresolvedDates(events: List<ScrapedEvent>): List<ScrapedEvent> {
+    private fun dropUnresolvedDates(events: List<ScrapedEvent>): Pair<List<ScrapedEvent>, Set<String>> {
         val (resolved, unresolved) = events.partition { it.eventDate != UNRESOLVED_EVENT_DATE }
         unresolved.forEach { event ->
             logger.at(Level.WARN) {
-                message = "Dropping '${event.title}': no event date resolved from overview or detail page"
+                message =
+                    if (event.detailUnavailable) {
+                        "Dropping '${event.title}': its page did not load and the overview has no date; sparing its stored event"
+                    } else {
+                        "Dropping '${event.title}': no event date resolved from overview or detail page"
+                    }
                 payload = mapOf(LogFields.URL to event.sourceUrl, LogFields.EVENT_SOURCE_ID to event.sourceId)
             }
         }
-        return resolved
+        return resolved to unresolved.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
     }
 
     /**
@@ -138,7 +147,7 @@ internal class HtmlImportPipeline(
      * no date without it (a Kulturhäuser featured teaser, #312), which is dropped rather than
      * degraded, so that one gets a second fetch after [RETRY_PAUSE] before the run gives up on it.
      * A degraded row is marked [ScrapedEvent.detailUnavailable], so the upsert keeps the fields the
-     * detail page stored last time.
+     * detail page stored last time, and a dropped one is spared from the stale cleanup (#4793).
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: degrade to overview data if detail page is unavailable
     private suspend fun parseDetailOrFallback(
@@ -155,10 +164,19 @@ internal class HtmlImportPipeline(
                 val last = attempt == attempts - 1
                 logger.at(Level.WARN) {
                     message =
-                        if (last) {
-                            "Failed to fetch detail page for '${overview.title}', using overview data"
-                        } else {
-                            "Failed to fetch detail page for '${overview.title}', which has no date without it; retrying once"
+                        when {
+                            !last -> {
+                                "Failed to fetch detail page for '${overview.title}', which has no date without it; retrying once"
+                            }
+
+                            attempts == DATELESS_ATTEMPTS -> {
+                                "Failed to fetch detail page for '${overview.title}' again, which has no date without it; " +
+                                    "dropping it and sparing its stored event from the stale cleanup"
+                            }
+
+                            else -> {
+                                "Failed to fetch detail page for '${overview.title}', using overview data"
+                            }
                         }
                     cause = e
                     payload = mapOf(LogFields.URL to overview.sourceUrl, LogFields.EVENT_SOURCE_ID to overview.sourceId)

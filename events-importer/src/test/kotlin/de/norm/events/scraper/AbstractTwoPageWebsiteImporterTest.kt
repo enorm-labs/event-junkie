@@ -1,5 +1,9 @@
 package de.norm.events.scraper
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -12,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
 
 /** Pins [AbstractTwoPageWebsiteImporter]'s orchestration on synthetic pages, before #4643 moves it. */
@@ -172,6 +177,31 @@ class AbstractTwoPageWebsiteImporterTest {
         }
 
     @Test
+    fun `spares a dateless row whose detail page failed from the stale cleanup, and logs its sourceId with the exception`() =
+        runTest {
+            stubEntry(overview(entryUrl, "a", "dateless"))
+            stubDetail("a")
+            stubDetail("dateless", document = null)
+            val appender = ListAppender<ILoggingEvent>().apply { start() }
+            val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
+            root.addAppender(appender)
+
+            val result =
+                try {
+                    TwoPage().importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+                } finally {
+                    root.detachAppender(appender)
+                }
+
+            result.spared shouldContainExactly setOf("dateless")
+            // Only that row: the run stays complete, so the cleanup still removes what the venue took down.
+            result.complete shouldBe true
+            val spared = appender.list.single { it.level == Level.WARN && it.formattedMessage.contains("sparing its stored event from the stale cleanup") }
+            spared.throwableProxy.className shouldBe HttpFetchException::class.java.name
+            spared.keyValuePairs.associate { it.key to it.value }[LogFields.EVENT_SOURCE_ID] shouldBe "dateless"
+        }
+
+    @Test
     fun `keeps a dateless row whose detail page supplies the date`() =
         runTest {
             stubEntry(overview(entryUrl, "dateless"))
@@ -181,6 +211,7 @@ class AbstractTwoPageWebsiteImporterTest {
 
             result.events.single().eventDate shouldBe detailDate
             result.droppedUnresolvedDate shouldBe 0
+            result.spared.shouldBeEmpty()
         }
 
     @Test

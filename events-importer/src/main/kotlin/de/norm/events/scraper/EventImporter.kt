@@ -62,6 +62,11 @@ sealed interface ImportResult {
         /** Discarded for want of a date (#982). Zero means "not measured", not "none dropped". */
         val droppedUnresolvedDate: Int = 0,
         /** False when a page that holds events failed to load, which skips the stale cleanup (#1980). */
-        val complete: Boolean = true
+        val complete: Boolean = true,
+        /**
+         * The `sourceId`s of rows the listing named but the run dropped for want of a date, because
+         * their own page did not load. The stale cleanup keeps their stored events (#4793).
+         */
+        val spared: Set<String> = emptySet()
     ) : ImportResult
 }

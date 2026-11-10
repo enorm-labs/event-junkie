@@ -63,6 +63,7 @@ class EventUpsertService(
      *
      * @param scrapedEvents the raw events from the scraper; may contain duplicates.
      * @param staleCleanup how far [removeStaleEvents] reaches, or whether it runs at all.
+     * @param spared the `sourceId`s [removeStaleEvents] keeps although the scrape lacks them: rows whose own page failed (#4793).
      * @return what the upsert did, split by operation. [UpsertOutcome.total] is what the source's
      * `lastEventCount` records.
      */
@@ -73,14 +74,15 @@ class EventUpsertService(
         venueSlug: String,
         eventSourceId: Long,
         licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE,
-        staleCleanup: StaleCleanup = StaleCleanup.WINDOWED
+        staleCleanup: StaleCleanup = StaleCleanup.WINDOWED,
+        spared: Set<String> = emptySet()
     ): UpsertOutcome {
         // Before the stale cleanup, or the stored run is not in this scrape and is deleted.
         val foldedEvents = foldIntoStoredRuns(scrapedEvents, eventSourceId).map { it.withoutVenueAsPromoter(venueSlug) }
         val upcomingEvents = dropPastEvents(foldedEvents, eventSourceId)
         val uniqueEvents = deduplicateScrapedEvents(upcomingEvents)
         // Cleanup BEFORE the upsert; the order is load-bearing (KDoc).
-        val removed = removeStaleEvents(uniqueEvents, eventSourceId, staleCleanup)
+        val removed = removeStaleEvents(uniqueEvents, eventSourceId, staleCleanup, spared)
         return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId, licences, removed)
             // Counted here rather than where they are dropped, because the tag needs the source slug and
             // this service holds only the numeric id (#982).
@@ -474,7 +476,8 @@ class EventUpsertService(
      * [StaleCleanup.OPEN_ENDED] scrape has no such pages, and its window has no end: a far-future
      * date the venue dropped would otherwise stay until it passed (#1974). A
      * [StaleCleanup.SKIPPED] scrape lost a page that holds events, so an absence proves nothing
-     * (#1980).
+     * (#1980). A [spared] row is listed but was dropped because its own page failed, so only that
+     * row is kept (#4793).
      *
      * @param scrapedEvents the current scrape, for the date range and the set of known sourceIds.
      * @param eventSourceId the owning [EventSourceEntity]'s id, to query by FK.
@@ -483,7 +486,8 @@ class EventUpsertService(
     private suspend fun removeStaleEvents(
         scrapedEvents: List<ScrapedEvent>,
         eventSourceId: Long,
-        staleCleanup: StaleCleanup
+        staleCleanup: StaleCleanup,
+        spared: Set<String>
     ): List<EventEntity> {
         if (scrapedEvents.isEmpty()) return emptyList()
         if (staleCleanup == StaleCleanup.SKIPPED) {
@@ -503,7 +507,10 @@ class EventUpsertService(
                 eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, fromDate = tomorrow, toDate = maxScrapedDate)
             }.toList()
 
-        val staleEvents = existingEvents.filter { it.sourceId !in scrapedSourceIds }
+        val (kept, staleEvents) = existingEvents.filter { it.sourceId !in scrapedSourceIds }.partition { it.sourceId in spared }
+        if (kept.isNotEmpty()) {
+            logger.info { "Kept ${kept.size} event(s) on event source $eventSourceId out of the stale cleanup: their pages failed to load" }
+        }
 
         if (staleEvents.isNotEmpty()) {
             val staleIds = staleEvents.mapNotNull { it.id }
