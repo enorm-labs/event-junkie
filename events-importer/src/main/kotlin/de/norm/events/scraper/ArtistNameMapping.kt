@@ -98,7 +98,7 @@ fun headlinersFromTitle(
     if (isLedByNonArtistLabel(title)) return emptyList()
     if (isCoBrandedSeriesTitle(title)) return emptyList()
     // Before the split, which would cut `Romeo + Juliet Film in Concert` into two acts.
-    if (isScoreConcertTitle(title)) return emptyList()
+    if (isScoreConcertTitle(title) || isTributeShowTitle(title)) return emptyList()
     // Same conclusion, reached structurally: the subtitle credits the label and the title repeats it.
     if (isPresenterOwnEventTitle(title, subtitle)) return emptyList()
     anniversaryQuotedAct(title)?.let { return it }
