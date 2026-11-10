@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.hasFreeEntryPhrase
@@ -87,7 +88,7 @@ class KulturhausSpandauApiScraper {
                 node
                     .path("artists")
                     .toList()
-                    .mapNotNull { it.stringOrNull("title")?.let(::decodeHtmlEntities)?.blankToNull() }
+                    .mapNotNull { it.stringOrNull("title")?.let(::artistName)?.blankToNull() }
                     .map { ScrapedArtist(companyBeforeDirector(it)) }
         ).forChildrenIf(childrensPhrase(categories, rawTitle, subtitle, node.path("maximum_age").asInt(0)))
     }
@@ -155,6 +156,11 @@ private val NOT_A_SHOW = Regex("""auktion""", RegexOption.IGNORE_CASE)
 
 /** An editor's hidden `<p hidden …>` tag, or a `<br>`, inside a title. */
 private val EDITOR_TAG = Regex("""<p[\s_-]+hidden[^>]*>|<br\s*/?>""", RegexOption.IGNORE_CASE)
+
+private fun artistName(title: String): String = decodeHtmlEntities(title.replace(MARKUP, " ")).collapseWhitespace()
+
+/** Any tag in an artist's name, and a trailing one the editor left unclosed: `Schalala <p hidden Bonse>`. */
+private val MARKUP = Regex("""<[^>]*(?:>|$)""")
 
 /**
  * A company and the person who leads it, which the API bills as one artist: `TheaterGeist / Annegret Geist`. The company
