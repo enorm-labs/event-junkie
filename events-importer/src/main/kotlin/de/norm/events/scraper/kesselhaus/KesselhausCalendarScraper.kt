@@ -153,12 +153,7 @@ class KesselhausCalendarScraper(
             ticketUrl = tickets.firstNotNullOfOrNull { ticket -> ticket.stringOrNull("url")?.takeIf { it.startsWith("http") } },
             pricePresale = TicketPrices.presale(tickets),
             priceBoxOffice = TicketPrices.boxOffice(tickets),
-            genre =
-                topics
-                    .mapNotNull { GENRE_TOPICS[it] }
-                    .distinct()
-                    .joinToString(", ")
-                    .ifBlank { null },
+            genre = genreOf(topics, eventType),
             soldOut = SOLD_OUT in notes,
             status = statusOf(notes),
             statusNote = subtitle?.takeIf { RELOCATED in notes },
@@ -364,17 +359,6 @@ class KesselhausCalendarScraper(
                 "theater" to EventType.SHOW.name,
                 "weitere" to EventType.OTHER.name
             )
-
-        /** The topics that name a style; the others name a format or a highlight. */
-        private val GENRE_TOPICS =
-            mapOf(
-                "blues" to "Blues",
-                "world" to "World",
-                "hip-hop" to "Hip Hop",
-                "rock-and-pop" to "Rock, Pop",
-                "metal" to "Metal",
-                "jazz" to "Jazz"
-            )
     }
 }
 
@@ -393,3 +377,32 @@ private fun ceilidhBand(subtitle: String?): List<ScrapedArtist> =
         .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
 
 private val CEILIDH_BAND = Regex("""^(?:feat\.?|featuring|mit)\s+(.+)""", RegexOption.IGNORE_CASE)
+
+/**
+ * The styles a concert's or a festival's topics name. The venue tags other formats loosely: a book premiere carries
+ * `world` beside `international` (event 13352, #4832), so a reading takes no genre from its topics.
+ */
+private fun genreOf(
+    topics: Set<String>,
+    eventType: String
+): String? =
+    topics
+        .takeIf { eventType in MUSIC_TYPES }
+        .orEmpty()
+        .mapNotNull { GENRE_TOPICS[it] }
+        .distinct()
+        .joinToString(", ")
+        .ifBlank { null }
+
+private val MUSIC_TYPES = setOf(EventType.CONCERT.name, EventType.FESTIVAL.name)
+
+/** The topics that name a style; the others name a format or a highlight. */
+private val GENRE_TOPICS =
+    mapOf(
+        "blues" to "Blues",
+        "world" to "World",
+        "hip-hop" to "Hip Hop",
+        "rock-and-pop" to "Rock, Pop",
+        "metal" to "Metal",
+        "jazz" to "Jazz"
+    )
