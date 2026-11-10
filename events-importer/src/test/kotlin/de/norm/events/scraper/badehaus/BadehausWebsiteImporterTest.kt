@@ -176,6 +176,23 @@ class BadehausWebsiteImporterTest {
             events(importNight("Sollowege", "Butterwegge Solo feat Max Kupke")).single().artists.map { it.name } shouldBe listOf("Sollowege")
         }
 
+    // Event 13315: the subtitle lists the night's acts after "Live:"; the title is the night's name.
+    @Test
+    fun `bills the acts a concert's subtitle lists after Live`() =
+        runTest {
+            events(importNight("Unholy Alliance Vol. IX", "Live: Prophets of the Rising Dead, My Sundown"))
+                .single()
+                .artists
+                .map { it.name } shouldBe listOf("Prophets of the Rising Dead", "My Sundown")
+        }
+
+    // Event 13319: the page files the night under Concert, which billed the night's name as the act.
+    @Test
+    fun `bills nobody for a concert titled as a night whose subtitle lists no acts`() =
+        runTest {
+            events(importNight("Berlin Rap Night &amp; Friends", "Berlins beste Rap newcomer:innen")).single().artists shouldHaveSize 0
+        }
+
     /** Imports one card with [title] and [subtitle] whose page is categorised Concert. */
     private suspend fun importNight(
         title: String,

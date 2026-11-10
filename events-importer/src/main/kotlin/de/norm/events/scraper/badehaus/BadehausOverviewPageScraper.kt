@@ -41,6 +41,9 @@ import java.time.LocalTime
  * detail page's notice decides and the class is the fallback (#1578). It also supplies fallback
  * title / date / doors / image. [BadehausWebsiteImporter] merges.
  *
+ * A card whose title names a `Workshop` is out of scope (EVENT_SCOPE.md §3.2) and is skipped. A subtitle that names one is
+ * not enough: `Café com Samba` mentions its dance workshop there and is a concert night (#3100).
+ *
  * @see BadehausWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://badehaus-berlin.com/events/">Badehaus Berlin programme</a>
  */
@@ -72,6 +75,10 @@ class BadehausOverviewPageScraper {
     ): ScrapedEvent? {
         val titleLink = card.selectFirst(".nomargin h2 a") ?: return null
         val title = titleLink.text().blankToNull() ?: return null
+        if (WORKSHOP_TITLE.containsMatchIn(title)) {
+            logger.info { "Skipping Badehaus workshop '$title': out of scope" }
+            return null
+        }
 
         val href = titleLink.attr("href").takeIf { it.isNotBlank() } ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)
@@ -174,6 +181,9 @@ class BadehausOverviewPageScraper {
 
         /** A part of the subtitle line that names a tour: "Wolkenjäger-Tour 2026", "BLOCK BLADI GANGSTER TOUR". */
         private val TOUR_PART = Regex("""\btour\b""", RegexOption.IGNORE_CASE)
+
+        /** A title that names a workshop, a format the visitor takes part in (EVENT_SCOPE.md §3.2). */
+        private val WORKSHOP_TITLE = Regex("""\bworkshop\b""", RegexOption.IGNORE_CASE)
 
         /** What separates the parts of the subtitle line. */
         private val PART_SEPARATOR = Regex("""\s*(?:\||//)\s*""")

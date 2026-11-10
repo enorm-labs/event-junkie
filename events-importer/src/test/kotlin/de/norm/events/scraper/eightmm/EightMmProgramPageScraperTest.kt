@@ -87,7 +87,7 @@ class EightMmProgramPageScraperTest {
     @Test
     fun `any other DJ night bills nobody`() {
         scrape(now = "2026-09-01T10:00:00Z")
-            .filter { it.eventType == "PARTY" && !it.sourceId.contains("jeff-clark") }
+            .filter { it.eventType == "PARTY" && !it.sourceId.contains("jeff-clark") && !it.sourceId.contains("sexverbot") }
             .flatMap { it.artists }
             .shouldBeEmpty()
     }
@@ -103,8 +103,25 @@ class EightMmProgramPageScraperTest {
 
         billed("ANNA LOU (THE CRAMPS) FRIDAYS IN MAY DJ RESIDENCY") shouldContainExactly listOf("Anna Lou" to ArtistRole.DJ)
         billed("ANNA LOU SUNDAY DJ RESIDENCY").shouldBeEmpty()
-        billed("ANNA LOU (THE CRAMPS) DJ SET").shouldBeEmpty()
+        billed("ANNA LOU (THE CRAMPS) DJ SET") shouldContainExactly listOf("Anna Lou" to ArtistRole.DJ)
         billed("SOUL NIGHT WITH DJ ANNA LOU (THE CRAMPS)").shouldBeEmpty()
+    }
+
+    // Events 13328 and 13327: a DJ set named after its DJ, with the DJ's crew in a bracket; it billed nobody (#3717).
+    @Test
+    fun `bills the DJ a DJ set title names`() {
+        fun billed(title: String) =
+            EightMmProgramPageScraper(Clock.fixed(Instant.parse("2026-10-01T10:00:00Z"), ZoneId.of("Europe/Berlin")))
+                .scrape(Jsoup.parse(listing(title), sourceUrl), sourceUrl)
+                .single()
+                .artists
+                .map { it.name to it.role }
+
+        billed("Camisa Dj set") shouldContainExactly listOf("Camisa" to ArtistRole.DJ)
+        billed("Wedding (CPN) DJ SET") shouldContainExactly listOf("Wedding" to ArtistRole.DJ)
+        billed("SEXVERBOT DJ SET") shouldContainExactly listOf("Sexverbot" to ArtistRole.DJ)
+        billed("Manny and Jakob from Die Anstalt DJ SET").shouldBeEmpty()
+        billed("N.O DJ SET (Noah + Olga)").shouldBeEmpty()
     }
 
     @Test

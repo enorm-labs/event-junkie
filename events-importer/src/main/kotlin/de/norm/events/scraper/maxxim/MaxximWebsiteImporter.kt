@@ -41,6 +41,9 @@ val MAXXIM_LIMITATIONS =
             LimitedAspect.TICKET_URL,
             "the site sells tickets in a Wix in-page checkout with no link of its own (the shape `A_TRANE` uses)"
         ),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the DJ is named only in the event prose"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "only a name the prose prefixes `DJ` or `DJane` is billed, not a partner or host named without it"
+        ),
         houseGenre = "Disco, Charts"
     )

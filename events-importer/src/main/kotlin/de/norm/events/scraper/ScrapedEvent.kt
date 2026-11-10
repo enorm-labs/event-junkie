@@ -231,10 +231,14 @@ data class ScrapedEvent(
         slugDiscriminator: String? = null,
         licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE
     ): EventEntity =
-        // Every source's description is cut before its language is detected, so the venue's own second
-        // language wins over a machine translation (#2986). A rule left at either edge goes (#3062), and so
-        // does an e-mail address (LEGAL.md §7.3a).
-        withBilingualDescriptionSplit()
+        // Fake bold letters become plain ones first, so the language detection reads words. Every source's
+        // description is cut before its language is detected, so the venue's own second language wins over a
+        // machine translation (#2986). A rule left at either edge goes (#3062), and so does an e-mail address
+        // (LEGAL.md §7.3a).
+        copy(
+            description = description?.let(::plainMathAlphanumerics),
+            descriptionAlt = descriptionAlt?.let(::plainMathAlphanumerics)
+        ).withBilingualDescriptionSplit()
             .let {
                 it.copy(
                     description = it.description?.let(::stripContactDetails)?.let(::trimEdgeRules),

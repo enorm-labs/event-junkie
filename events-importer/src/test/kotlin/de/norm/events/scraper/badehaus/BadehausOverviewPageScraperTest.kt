@@ -136,6 +136,21 @@ class BadehausOverviewPageScraperTest {
             listOf("Metalcore", "Rock", "Indie", "Metal", "Hip Hop", "Rock", "Rock, Alternative", null, "Singer-Songwriter", "Country, Bluegrass")
     }
 
+    // Event 13312: a workshop is out of scope (EVENT_SCOPE.md §3.2); Café com Samba names its workshop only in the subtitle and stays.
+    @Test
+    fun `skips a card whose title names a workshop, not one whose subtitle does`() {
+        val cards =
+            listOf(
+                "DIY Soundsystem Workshop" to "Lautsprecherbau, Technik &amp; praktische Grundlagen",
+                "Café com Samba Berlin" to "Samba de Gafieira Workshop &amp; free-dance Session"
+            ).withIndex().joinToString("") { (i, card) ->
+                """<div><div class="eventlistimg"></div><div class="nomargin"><h2><a href="/events/show-$i/">${card.first}</a></h2>""" +
+                    """<p class="eventinfo">Fr. 11.12.2026 | 19:00 UHR</p><p>${card.second}</p></div></div>"""
+            }
+
+        scraper.scrape(Jsoup.parse("<html><body>$cards</body></html>", baseUrl), baseUrl).map { it.title } shouldBe listOf("Café com Samba Berlin")
+    }
+
     @Test
     fun `moves a card whose weekday names the neighbouring month`() {
         // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.

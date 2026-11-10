@@ -124,6 +124,19 @@ class BilingualDescriptionTest {
     }
 
     @Test
+    fun `plainMathAlphanumerics turns Crack Bellmer's fake bold into plain letters (event 10636)`() {
+        plainMathAlphanumerics(
+            "𝗲𝘃𝗲𝗿𝘆 𝗪𝗲𝗱𝗻𝗲𝘀𝗱𝗮𝘆 𝗳𝗿𝗼𝗺 𝟳𝗣𝗠 𝗘𝘃𝗲𝗿𝘆𝗼𝗻𝗲 𝗶𝘀 𝘄𝗲𝗹𝗰𝗼𝗺𝗲 𝗯𝘂𝘁 𝗙𝗟𝗜𝗡𝗧𝗔* 𝘁𝗼 𝘁𝗵𝗲 𝗱𝗲𝗰𝗸𝘀"
+        ) shouldBe
+            "every Wednesday from 7PM Everyone is welcome but FLINTA* to the decks"
+    }
+
+    @Test
+    fun `plainMathAlphanumerics leaves every other compatibility character alone`() {
+        plainMathAlphanumerics("2 m² ﬁnest Ｂerlin") shouldBe "2 m² ﬁnest Ｂerlin"
+    }
+
+    @Test
     fun `withBilingualDescriptionSplit fills the alt text and leaves a scraper's own alone`() {
         val event =
             ScrapedEvent(

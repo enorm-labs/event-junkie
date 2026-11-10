@@ -27,9 +27,9 @@ import java.math.BigDecimal
  * drops them. A [title] that names an in-scope format types the row instead: the venue files
  * `Das philosophische Pubquiz` as a `Workshop`, and it is a quiz (#2831).
  *
- * A label that opens with a film (`Film und Podium`, `Filmpremiere und Podium`) is a screening,
- * its panel an add-on (#4759). Only the opening word counts: a `Vortrag mit Filmausschnitten` is
- * still a talk.
+ * A label that opens with a film (`Film und Podium`, `Filmpremiere und Podium`) or a cinema
+ * (`Weihnachtskino für Schulklassen`) is a screening, its panel an add-on (#4759). Only the opening
+ * word counts: a `Vortrag mit Filmausschnitten` is still a talk.
  */
 internal fun uraniaEventType(
     format: String?,
@@ -53,13 +53,14 @@ internal fun isParticipationFormat(format: String?): Boolean = PARTICIPATION_MAR
  * Two appended tails are removed rather than stored as people: a space-padded dash introducing
  * a note about the evening (`"Yoshua Yaffa - in englischer Sprache"`), and `"et al."` standing
  * in for unnamed panellists. An `OTHER` event bills nobody: a workshop leader or a walk's guide is not a performer.
+ * Nor does a line that names the audience instead ([isSchoolClassAudience]).
  */
 internal fun uraniaSpeakers(
     billing: String?,
     eventType: String
 ): List<ScrapedArtist> =
     billing
-        ?.takeIf { eventType != EventType.OTHER.name }
+        ?.takeIf { eventType != EventType.OTHER.name && !isSchoolClassAudience(it) }
         ?.let { splitSupportActs(it) }
         ?.map {
             it
@@ -71,6 +72,12 @@ internal fun uraniaSpeakers(
         ?.distinct()
         ?.map { ScrapedArtist(name = it) }
         .orEmpty()
+
+/**
+ * Whether a billing line names the audience, not a speaker: `Weihnachtskino für Schulklassen` stands where a talk names its
+ * speakers (events 13274, 13275). The event page passes it as the format when it has no format label.
+ */
+internal fun isSchoolClassAudience(line: String?): Boolean = SCHOOL_CLASS_AUDIENCE.containsMatchIn(line.orEmpty())
 
 /**
  * The cheapest published admission, from the `"Eintritt: 8 €, ermäßigt: 5 €, Mitglieder: 3 €"`
@@ -95,8 +102,11 @@ private val URANIA_FORMAT_SYNONYMS =
         "ausstellungseröffnung" to EventType.EXHIBITION.name
     )
 
-/** A format label that opens with a film or a cinema night. */
-private val SCREENING_FORMAT_PREFIX = Regex("""^(?:film|kino)""", RegexOption.IGNORE_CASE)
+/** A format label that opens with a film or a cinema night, or a word that ends in one: `Weihnachtskino für Schulklassen`. */
+private val SCREENING_FORMAT_PREFIX = Regex("""^(?:film|\p{L}*kino)""", RegexOption.IGNORE_CASE)
+
+/** An audience of school classes, which the venue names where a talk names its speakers. */
+private val SCHOOL_CLASS_AUDIENCE = Regex("""\bf(?:ü|ue)r\s+Schulklassen\b""", RegexOption.IGNORE_CASE)
 
 /**
  * Words that mark a workshop or a guided walk in any of the venue's format labels. `führung` is

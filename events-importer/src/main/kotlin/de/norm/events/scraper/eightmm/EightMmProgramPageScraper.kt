@@ -36,6 +36,9 @@ import java.util.Locale
  *   `8MM X UNKNOWN CALLERS HALLOWEEN`, and bills nobody. The acts of such a night are only in the blurb's prose.
  *   The house's own `8MM` is never an act.
  * - **A `<name> (<act>) … DJ RESIDENCY` title bills its DJ**; the bracketed band names where the DJ comes from and does not play.
+ * - **A `<name> [(<act>)] DJ SET` title bills its DJ** the same way: `Camisa Dj set`, `Wedding (CPN) DJ SET`. A name with a dash,
+ *   a colon or a plus is a night's frame and bills nobody: `Halloween Weekend - Prayforevilspirit DJ SET`, and so does one that
+ *   describes several people: `Manny and Jakob from Die Anstalt DJ SET`. This narrows #3717, which billed nobody for any DJ set.
  *   Every other DJ title is free-form and bills nobody.
  */
 class EightMmProgramPageScraper(
@@ -82,7 +85,7 @@ class EightMmProgramPageScraper(
             sourceUrl = url,
             sourceId = "${EventSource.EIGHT_MM.sourceIdPrefix}${extractEventSlug(url, "/program/").replace('/', '-')}",
             soldOut = cleanedTitle.soldOut,
-            artists = residencyDj(title, eventType)?.let { listOf(it) } ?: concertBill(title, eventType)
+            artists = namedDj(title, eventType)?.let { listOf(it) } ?: concertBill(title, eventType)
         )
     }
 
@@ -105,17 +108,17 @@ class EightMmProgramPageScraper(
         return buildArtistsForEventType(acts, null, eventType).filterNot { it.name.equals(HOUSE, ignoreCase = true) }
     }
 
-    /** `JEFF CLARK (BLACK LIPS) SUNDAY'S IN OCTOBER DJ RESIDENCY` bills `Jeff Clark`. */
-    private fun residencyDj(
+    /** `JEFF CLARK (BLACK LIPS) SUNDAY'S IN OCTOBER DJ RESIDENCY` and `WEDDING (CPN) DJ SET` bill `Jeff Clark` and `Wedding`. */
+    private fun namedDj(
         title: String,
         eventType: String
     ): ScrapedArtist? =
-        RESIDENCY
+        listOf(RESIDENCY, DJ_SET)
             .takeIf { eventType == EventType.PARTY.name }
-            ?.find(title)
+            ?.firstNotNullOfOrNull { it.find(title) }
             ?.groups
             ?.get("name")
-            ?.let { ScrapedArtist(name = deshout(it.value), role = ArtistRole.DJ) }
+            ?.let { ScrapedArtist(name = deshout(it.value.trim()), role = ArtistRole.DJ) }
 
     private companion object {
         /** Squarespace puts U+202F before the meridiem, which `\s` does not match. */
@@ -128,6 +131,13 @@ class EightMmProgramPageScraper(
         val DJ = Regex("""\bDJ\b""", RegexOption.IGNORE_CASE)
 
         val RESIDENCY = Regex("""^(?<name>[^()]+?)\s*\([^)]+\)\s+.*\bDJ\s+RESIDENCY\b""", RegexOption.IGNORE_CASE)
+
+        /**
+         * `<name> DJ SET`, with an optional bracket after the name. A dash, colon or plus marks a night's frame instead, and an
+         * `and`, `&`, `from` or `with` a description of several people: `Manny and Jakob from Die Anstalt DJ SET`.
+         */
+        val DJ_SET =
+            Regex("""^(?!.*\b(?:and|from|with)\s)(?<name>[^()\-–—:+&]+?)\s*(?:\([^)]+\))?\s+DJ[\s-]*SET\s*$""", RegexOption.IGNORE_CASE)
 
         const val HOUSE = "8MM"
 

@@ -278,6 +278,12 @@ class AdmiralspalastDetailPageScraperTest {
                 ),
                 Arguments.of("Lacrimosa mit Orchester - Einzige und Exklusive Orchester-Show in Europa!", "Konzert", listOf("Lacrimosa")),
                 Arguments.of("Top Gun: Maverick – in Concert", "Konzert", emptyList<String>()),
+                // Event 13320: the part before the first dash is a film; the ensemble follows `mit der`.
+                Arguments.of(
+                    "Deutschland von oben - Vivaldi: Die Vier Jahreszeiten - Live Konzert mit der Philharmonie Leipzig",
+                    "Konzert",
+                    listOf("Philharmonie Leipzig")
+                ),
                 Arguments.of("Bodo Wartke - Antigone", "Comedy", listOf("Bodo Wartke")),
                 // A ballet bills the company after its work, or nobody.
                 Arguments.of(

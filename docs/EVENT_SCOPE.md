@@ -166,6 +166,8 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Frannz Club         | `PARTICIPATION_FORMAT` (`FrannzOverviewPageScraper.kt`)  | A title that opens `Learn to … Dance`, or names a `Tanzkurs`: the Swing Patrol class                                                 |
 | Panke Culture       | `MARKET_TITLE` (`PankeProgrammePageScraper.kt`)          | A title that names a `Markt` or a `Market`: the Code Green market on Sunday afternoons                                               |
 | Colosseum           | `MARKET_TITLE` (`ColosseumOverviewPageScraper.kt`)       | A title word that ends in `markt`, or the word `market`: the `Weihnachtsrodeo` design market                                         |
+| Badehaus            | `WORKSHOP_TITLE` (`BadehausOverviewPageScraper.kt`)      | A title that names a `Workshop`. A subtitle that names one is not enough: `Café com Samba` is a dance night                          |
+| Duncker Club        | `MARKET` (`DunckerOverviewPageScraper.kt`)               | A name or style line that names a `Market` or ends in `markt`: the `Dark Market` design and flea market                              |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.

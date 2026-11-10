@@ -129,17 +129,64 @@ class DunckerOverviewPageScraperTest {
         artistsOf("DJ ALL(H)OURS") shouldContainExactly listOf(ScrapedArtist(name = "ALL(H)OURS", role = ArtistRole.DJ))
     }
 
-    private fun artistsOf(djLine: String): List<ScrapedArtist> {
-        val row =
-            """
-            <table class="bodytable"><tr class="tablereihe">
-              <td class="tableweekday">Mo</td><td class="tabledate">16.11.</td>
-              <td class="tableevent"><span class="eventname">Dark Mønday</span><br>darkwave<br>$djLine</td>
-              <td class="tabletime">21h-04h</td>
-            </tr></table>
-            """.trimIndent()
-        return scraper.scrape(Jsoup.parse(row, baseUrl), baseUrl).single().artists
+    // Event 13322: the bracketed set name sits before a second DJ, so it was not the end of the line.
+    @Test
+    fun `cuts a bracketed set name in front of a second DJ`() {
+        artistsOf("DJ Hanzel (Efetto Notte) &amp; DJ Zanardi") shouldContainExactly
+            listOf(ScrapedArtist(name = "Hanzel", role = ArtistRole.DJ), ScrapedArtist(name = "Zanardi", role = ArtistRole.DJ))
     }
+
+    // Event 13323: the night's name adds a concert; it was a party that billed only the DJs.
+    @Test
+    fun `types a night that adds a concert as a concert and bills the band whole`() {
+        val event =
+            scrapeRow(
+                "Sa",
+                "05.12.",
+                "Independent Tanzmusik Special *<br>+ Konzert Ludi &amp; The Lads",
+                "Alternative Rock &amp; Pop",
+                "DJ Calle &amp; DJ Töff"
+            )
+
+        event.eventType shouldBe EventType.CONCERT.name
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "Ludi & The Lads", role = ArtistRole.HEADLINER),
+                ScrapedArtist(name = "Calle", role = ArtistRole.DJ),
+                ScrapedArtist(name = "Töff", role = ArtistRole.DJ)
+            )
+    }
+
+    // Event 13324: a design and flea market by day is out of scope (EVENT_SCOPE.md §3.2).
+    @Test
+    fun `skips a market`() {
+        val row = rowHtml("So", "06.12.", "Dark Market", "Der Gotische Design- und Trödelmarkt", "")
+        scraper.scrape(Jsoup.parse(row, baseUrl), baseUrl).shouldBeEmpty()
+    }
+
+    private fun artistsOf(djLine: String): List<ScrapedArtist> = scrapeRow("Mo", "16.11.", "Dark Mønday", "darkwave", djLine).artists
+
+    private fun scrapeRow(
+        weekday: String,
+        date: String,
+        name: String,
+        style: String,
+        djLine: String
+    ) = scraper.scrape(Jsoup.parse(rowHtml(weekday, date, name, style, djLine), baseUrl), baseUrl).single()
+
+    private fun rowHtml(
+        weekday: String,
+        date: String,
+        name: String,
+        style: String,
+        djLine: String
+    ) = """
+        <table class="bodytable"><tr class="tablereihe">
+          <td class="tableweekday">$weekday</td><td class="tabledate">$date</td>
+          <td class="tableevent"><span class="eventname">$name</span><br>$style<br>$djLine</td>
+          <td class="tabletime">21h-04h</td>
+        </tr></table>
+        """.trimIndent()
 
     @Test
     fun `returns no events for a page without the programme table`() {
