@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component
  * carries no events server-side (a Finsweet CMS-nest list injects them client-side). The entry
  * page links to per-month `/month/<name>` pages, each fully server-rendered; this importer
  * discovers those links, fetches each, and parses its events via [AmtOverviewPageScraper]. Each
- * night's own page adds its prose and its poster ([addAmtEventPageFields]).
+ * night's own page adds its prose, its poster and, on the few nights whose prose states one, a
+ * start time ([addAmtEventPageFields]).
  *
  * Conditional requests are intentionally **not** used: the entry-page ETag changes only when a
  * month is added, not when a night is edited within one, so relying on it would miss mid-month
@@ -50,7 +51,10 @@ val AMT_LIMITATIONS =
     VenueLimitations(
         EventSource.AMT,
         AcceptedLimitation(LimitedAspect.ARTISTS, "the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "the month and event pages print a date but no clock time"),
+        AcceptedLimitation(
+            LimitedAspect.START_TIME,
+            "most nights print no time, and a few state `Start:` or a running order in the event page prose"
+        ),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the month and event pages print a date but no clock time"),
         AcceptedLimitation(LimitedAspect.GENRE, "the event pages name no style"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
