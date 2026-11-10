@@ -94,6 +94,16 @@ class HouseOfMusicOverviewPageScraperTest {
     }
 
     @Test
+    fun `types a networking meetup as other and bills no act for it`() {
+        // Event 13350: a get-together for FLINTA* people from the music industry.
+        val meetup = retitled("FLINTA* Connect (Xmas Edition)")
+
+        meetup.eventType shouldBe EventType.OTHER.name
+        meetup.artists.shouldBeEmpty()
+        retitled("Connected Hearts | Album Pre Event").eventType shouldBe EventType.CONCERT.name
+    }
+
+    @Test
     fun `reads the acts after a series name and w-slash as a lineup`() {
         val night = titledLater("jazzexzess w/ Luise Volkmann’s Punk-Jazz-Projekt + Vehicle/Passenger")
 

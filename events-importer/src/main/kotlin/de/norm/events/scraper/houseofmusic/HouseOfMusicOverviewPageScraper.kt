@@ -34,8 +34,8 @@ import java.net.URI
  * (`Listen To Berlin: Youth Showcase (Mw:m)`), which is a format. The three list shapes are a lineup, not a title
  * read as an act, so they are not title-derived: a festival title keeps them.
  *
- * The house also lets its room to a meetup (`Ableton User Group Berlin: Track Feedback Session`) and a film night
- * (`Free DrinkWatchTalk short movie evening`). Its own words type these, and they bill no act. A title that names a
+ * The house also lets its room to a meetup (`Ableton User Group Berlin: Track Feedback Session`, `FLINTA* Connect
+ * (Xmas Edition)`) and a film night (`Free DrinkWatchTalk short movie evening`). Its own words type these, and they bill no act. A title that names a
  * concert stays one, so a soundtrack concert is not read as a film night.
  */
 class HouseOfMusicOverviewPageScraper {
@@ -130,6 +130,7 @@ class HouseOfMusicOverviewPageScraper {
             mapOf(
                 "user group" to EventType.OTHER.name,
                 "feedback session" to EventType.OTHER.name,
+                "connect" to EventType.OTHER.name,
                 "movie" to EventType.SCREENING.name,
                 "film" to EventType.SCREENING.name
             )
