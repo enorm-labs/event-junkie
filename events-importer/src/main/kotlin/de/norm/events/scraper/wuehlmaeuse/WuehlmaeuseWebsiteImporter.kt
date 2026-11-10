@@ -71,9 +71,17 @@ class WuehlmaeuseWebsiteImporter(
 val WUEHLMAEUSE_LIMITATIONS =
     VenueLimitations(
         EventSource.WUEHLMAEUSE,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the shop files every show under its act and names no format; Kabarett, comedy and music share one stage"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the shop names no genre"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the shop sells one price per seat category and states no box-office price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the shop names no promoter"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the shop files every show under its act and names no format; Kabarett, comedy and music share one stage",
+            verified = "2026-10-03"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the shop names no genre", verified = "2026-10-03"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE_BOX_OFFICE,
+            "the shop sells one price per seat category and states no box-office price",
+            verified = "2026-10-03"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the shop names no promoter", verified = "2026-10-04"),
         houseLanguage = SpokenLanguage.GERMAN
     )

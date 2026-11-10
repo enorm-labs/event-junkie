@@ -142,20 +142,28 @@ val BADEHAUS_LIMITATIONS =
         EventSource.BADEHAUS,
         AcceptedLimitation(
             LimitedAspect.START_TIME,
-            "some pages print only the doors, `19:00 UHR` beside the date and at most an `Einlass` or `Doors` line below it, and no start"
+            "some pages print only the doors, `19:00 UHR` beside the date and at most an `Einlass` or `Doors` line below it, and no start",
+            verified = "2026-10-20"
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
             "the venue publishes no roster; a concert bills its title and a Support: subtitle, or the acts a subtitle lists after feat or Live:, " +
-                "and a concert titled as a night bills nobody when its subtitle lists no acts"
+                "and a concert titled as a night bills nobody when its subtitle lists no acts",
+            verified = "2026-11-10"
         ),
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note"
+            "the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note",
+            verified = "2026-09-23"
         ),
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the subtitle names a style on some nights and is prose or a tour name on others, so about four in ten nights carry no genre"
+            "the subtitle names a style on some nights and is prose or a tour name on others, so about four in ten nights carry no genre",
+            verified = "2026-10-08"
         ),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue credits itself as the promoter on its own nights, so the stored promoter is the venue")
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "the venue credits itself as the promoter on its own nights, so the stored promoter is the venue",
+            verified = "2026-10-08"
+        )
     )

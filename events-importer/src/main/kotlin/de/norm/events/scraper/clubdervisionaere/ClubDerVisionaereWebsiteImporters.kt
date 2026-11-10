@@ -138,12 +138,17 @@ val CLUB_DER_VISIONAERE_LIMITATIONS =
                 AcceptedLimitation(
                     LimitedAspect.START_TIME,
                     "the listing prints one only where an act line carries a slot time; the homepage's NEXT box prints the rest, " +
-                        "for the ten nights it shows"
+                        "for the ten nights it shows",
+                    verified = "2026-09-22"
                 ),
-                AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category of its own; every listing is a club night"),
-                AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme page is the source for every night"),
-                AcceptedLimitation(LimitedAspect.PRICE, "the programme lists times and the line-up only, never an admission price"),
-                AcceptedLimitation(LimitedAspect.IMAGE, "the programme is text only; the site's only images are its logos"),
-                AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+                AcceptedLimitation(
+                    LimitedAspect.EVENT_TYPE,
+                    "the venue publishes no category of its own; every listing is a club night",
+                    verified = "2026-08-25"
+                ),
+                AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme page is the source for every night", verified = "2026-09-30"),
+                AcceptedLimitation(LimitedAspect.PRICE, "the programme lists times and the line-up only, never an admission price", verified = "2026-09-30"),
+                AcceptedLimitation(LimitedAspect.IMAGE, "the programme is text only; the site's only images are its logos", verified = "2026-10-13"),
+                AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
             )
     )

@@ -37,5 +37,9 @@ class LidoWebsiteImporter(
 val LIDO_LIMITATIONS =
     VenueLimitations(
         EventSource.LIDO,
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue labels each event only Concert or Party; style is described only in the prose")
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the venue labels each event only Concert or Party; style is described only in the prose",
+            verified = "2026-09-30"
+        )
     )

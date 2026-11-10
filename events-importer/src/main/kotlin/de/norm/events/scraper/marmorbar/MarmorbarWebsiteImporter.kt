@@ -31,10 +31,14 @@ class MarmorbarWebsiteImporter(
 val MARMORBAR_LIMITATIONS =
     VenueLimitations(
         EventSource.MARMORBAR,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the bar publishes no categories; a night without a title cue is a DJ night"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "each night is billed by its name or its collective, and the DJs appear only in free prose"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the bar names no musical style except in free prose"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective that hosts a night is named only in its title or its prose"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives a start and an end time, no doors time"),
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "the calendar gives each event a title and one text")
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the bar publishes no categories; a night without a title cue is a DJ night", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "each night is billed by its name or its collective, and the DJs appear only in free prose",
+            verified = "2026-10-17"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the bar names no musical style except in free prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective that hosts a night is named only in its title or its prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives a start and an end time, no doors time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "the calendar gives each event a title and one text", verified = "2026-10-17")
     )

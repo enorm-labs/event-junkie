@@ -35,9 +35,17 @@ class BrotfabrikWebsiteImporter(
 val BROTFABRIK_LIMITATIONS =
     VenueLimitations(
         EventSource.BROTFABRIK,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the api carries one start time per event and no doors time"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "every event ends two hours after it starts, the calendar's default rather than the show's"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the house files its nights by room, not by style"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the stage bills productions, and the readings name their authors only in the title and the prose"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a visiting company is named as presenter only in the prose")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the api carries one start time per event and no doors time", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.END_TIME,
+            "every event ends two hours after it starts, the calendar's default rather than the show's",
+            verified = "2026-10-17"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the house files its nights by room, not by style", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the stage bills productions, and the readings name their authors only in the title and the prose",
+            verified = "2026-10-19"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a visiting company is named as presenter only in the prose", verified = "2026-10-19")
     )

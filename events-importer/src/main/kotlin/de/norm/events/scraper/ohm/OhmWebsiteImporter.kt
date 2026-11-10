@@ -34,10 +34,10 @@ class OhmWebsiteImporter(
 val OHM_LIMITATIONS =
     VenueLimitations(
         EventSource.OHM,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue's whole programme is one page"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the programme page carries no price"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the programme page links no ticket shop"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no categories; every night is a DJ programme"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue's whole programme is one page", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the programme page carries no price", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the programme page links no ticket shop", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no categories; every night is a DJ programme", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
         houseGenre = "Techno"
     )

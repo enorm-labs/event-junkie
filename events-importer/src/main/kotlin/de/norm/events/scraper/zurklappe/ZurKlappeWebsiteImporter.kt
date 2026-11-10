@@ -28,12 +28,16 @@ class ZurKlappeWebsiteImporter(
 val ZUR_KLAPPE_LIMITATIONS =
     VenueLimitations(
         EventSource.ZUR_KLAPPE,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "the site states one title per night and no second line"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes an opening time, not a separate doors time"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no price for a night"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the party name"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no cancelled marker for a night"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the venue sets no cover image; its only image is a generated title card for link previews")
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "the site states one title per night and no second line", verified = "2026-09-28"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes an opening time, not a separate doors time", verified = "2026-09-28"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night", verified = "2026-10-27"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no price for a night", verified = "2026-09-28"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the party name", verified = "2026-09-28"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-09-28"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no cancelled marker for a night", verified = "2026-09-30"),
+        AcceptedLimitation(
+            LimitedAspect.IMAGE,
+            "the venue sets no cover image; its only image is a generated title card for link previews",
+            verified = "2026-09-30"
+        )
     )

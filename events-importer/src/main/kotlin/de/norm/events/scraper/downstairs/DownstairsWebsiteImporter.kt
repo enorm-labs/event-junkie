@@ -98,10 +98,11 @@ val DOWNSTAIRS_LIMITATIONS =
         EventSource.DOWNSTAIRS,
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "a show the club sells through another ticket shop links there, and that shop's page gives only the text, so the night keeps no price"
+            "a show the club sells through another ticket shop links there, and that shop's page gives only the text, so the night keeps no price",
+            verified = "2026-10-26"
         ),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the shop gives every performance the same 6 a.m. end"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the club's own nights bill a format, and the comedians appear only in prose"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the shop names no genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the club presents every show itself")
+        AcceptedLimitation(LimitedAspect.END_TIME, "the shop gives every performance the same 6 a.m. end", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the club's own nights bill a format, and the comedians appear only in prose", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the shop names no genre", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the club presents every show itself", verified = "2026-10-03")
     )

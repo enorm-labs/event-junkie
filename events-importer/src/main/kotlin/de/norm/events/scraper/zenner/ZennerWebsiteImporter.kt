@@ -34,10 +34,10 @@ class ZennerWebsiteImporter(
 val ZENNER_LIMITATIONS =
     VenueLimitations(
         EventSource.ZENNER,
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors times"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue publishes no sold-out state"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue publishes no per-event pages"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-27"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors times", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue publishes no sold-out state", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue publishes no per-event pages", verified = "2026-10-02"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
         houseGenre = "Electronic"
     )

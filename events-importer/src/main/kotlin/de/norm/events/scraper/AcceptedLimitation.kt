@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.event.SpokenLanguage
+import java.time.LocalDate
 
 /**
  * Something a venue does not publish, declared where its parser lives, so `/data-quality-audit` can
@@ -22,8 +23,15 @@ data class AcceptedLimitation(
      */
     val reason: String,
     /** The issue tracking a possible repair, when one exists. An accepted limitation usually has none. */
-    val issue: Int? = null
-)
+    val issue: Int? = null,
+    /**
+     * The last day someone saw the source still silent, as an ISO date (#4828). Not the day the row
+     * was written: `/plausibility-check` re-checks the oldest rows, and a confirmed row gets a new date.
+     */
+    val verified: String
+) {
+    val verifiedOn: LocalDate = LocalDate.parse(verified)
+}
 
 /**
  * One venue package's declaration: which sources it serves, what those sources withhold, and the

@@ -50,12 +50,17 @@ class AmtWebsiteImporter(
 val AMT_LIMITATIONS =
     VenueLimitations(
         EventSource.AMT,
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably",
+            verified = "2026-10-08"
+        ),
         AcceptedLimitation(
             LimitedAspect.START_TIME,
-            "most nights print no time, and a few state `Start:` or a running order in the event page prose"
+            "most nights print no time, and a few state `Start:` or a running order in the event page prose",
+            verified = "2026-11-10"
         ),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the month and event pages print a date but no clock time"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the event pages name no style"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the month and event pages print a date but no clock time", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the event pages name no style", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

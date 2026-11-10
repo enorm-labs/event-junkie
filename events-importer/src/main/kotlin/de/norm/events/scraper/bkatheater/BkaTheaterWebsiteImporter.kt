@@ -45,9 +45,9 @@ class BkaTheaterWebsiteImporter(
 val BKA_THEATER_LIMITATIONS =
     VenueLimitations(
         EventSource.BKA_THEATER,
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the listing carries the shop price for its next 30 performances only"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site states no box-office price"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a production billed without an act names its cast only in prose"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per performance"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site has one page per production, shared by all its performances")
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the listing carries the shop price for its next 30 performances only", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site states no box-office price", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a production billed without an act names its cast only in prose", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per performance", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site has one page per production, shared by all its performances", verified = "2026-10-16")
     )

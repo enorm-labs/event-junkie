@@ -68,12 +68,17 @@ class PfefferbergTheaterWebsiteImporter(
 val PFEFFERBERG_THEATER_LIMITATIONS =
     VenueLimitations(
         EventSource.PFEFFERBERG_THEATER,
-        AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; the ticket shop holds it"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes only the start time"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a production names its cast only in prose; the ensemble line is a company or a series"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per performance"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; the ticket shop holds it", verified = "2026-10-24"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes only the start time", verified = "2026-10-24"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a production names its cast only in prose; the ensemble line is a company or a series",
+            verified = "2026-10-24"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per performance", verified = "2026-10-25"),
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the fairy-tale season page has no categories, and the calendar's categories name a format, not a music genre"
+            "the fairy-tale season page has no categories, and the calendar's categories name a format, not a music genre",
+            verified = "2026-11-04"
         )
     )

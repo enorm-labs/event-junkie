@@ -72,11 +72,12 @@ internal fun astraEventType(
 val ASTRA_LIMITATIONS =
     VenueLimitations(
         EventSource.ASTRA,
-        AcceptedLimitation(LimitedAspect.START_TIME, "some nights print only their doors, `Einlass 21:00`"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "some nights print only their doors, `Einlass 21:00`", verified = "2026-10-17"),
         AcceptedLimitation(
             LimitedAspect.IMAGE,
-            "a night an outside presenter books can carry only the presenter's logo, and no poster"
+            "a night an outside presenter books can carry only the presenter's logo, and no poster",
+            verified = "2026-10-19"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the event page carries no genre field"),
-        AcceptedLimitation(LimitedAspect.PRICE, "some nights print no figure and only link the promoter's outside ticket shop")
+        AcceptedLimitation(LimitedAspect.GENRE, "the event page carries no genre field", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE, "some nights print no figure and only link the promoter's outside ticket shop", verified = "2026-10-08")
     )

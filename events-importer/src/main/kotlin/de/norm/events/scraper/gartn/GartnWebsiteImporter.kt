@@ -32,13 +32,17 @@ class GartnWebsiteImporter(
 val GARTN_LIMITATIONS =
     VenueLimitations(
         EventSource.GARTN,
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every night takes the club's Techno default"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the venue publishes no per-event image"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the Carrd page emits no per-event URL, and removes an event once it has passed"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per night and no separate doors time"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue states no category; every night here is a DJ party"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-27"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every night takes the club's Techno default", verified = "2026-09-26"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the venue publishes no per-event image", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "the Carrd page emits no per-event URL, and removes an event once it has passed",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per night and no separate doors time", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue states no category; every night here is a DJ party", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Techno"
     )

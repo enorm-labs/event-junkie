@@ -31,10 +31,18 @@ class ArtStalkerWebsiteImporter(
 val ART_STALKER_LIMITATIONS =
     VenueLimitations(
         EventSource.ART_STALKER,
-        AcceptedLimitation(LimitedAspect.PAGINATION, "robots.txt disallows the shop's paged listing, so only the first 25 events are read"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the style is only a free-text tagline after the act's name, so only the genre words in it become the genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the weekly open session is a concert that bills no act")
+        AcceptedLimitation(
+            LimitedAspect.PAGINATION,
+            "robots.txt disallows the shop's paged listing, so only the first 25 events are read",
+            verified = "2026-10-01"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the style is only a free-text tagline after the act's name, so only the genre words in it become the genre",
+            verified = "2026-10-03"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-14"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the weekly open session is a concert that bills no act", verified = "2026-10-14")
     )
 
 private val OVERVIEW_SCRAPER = ArtStalkerOverviewPageScraper()

@@ -52,16 +52,17 @@ class HafenbarWebsiteImporter(
 val HAFENBAR_LIMITATIONS =
     VenueLimitations(
         EventSource.HAFENBAR,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "each page prints one opening time per night"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the pages print no end time"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the announcement carries no poster, only the page's decoration and gallery"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the pages link no ticket shop"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the pages print no entry price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the pages credit no promoter beside the Hafenbar team"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the pages state no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the pages have no status, so a cancelled night can only disappear"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "each page prints one opening time per night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the pages print no end time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the announcement carries no poster, only the page's decoration and gallery", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the pages link no ticket shop", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the pages print no entry price", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the pages credit no promoter beside the Hafenbar team", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the pages state no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the pages have no status, so a cancelled night can only disappear", verified = "2026-10-17"),
         AcceptedLimitation(
             LimitedAspect.PER_EVENT_PAGE,
-            "each weekly party has one page that shows only its next night, so every night of a series points at that page"
+            "each weekly party has one page that shows only its next night, so every night of a series points at that page",
+            verified = "2026-10-17"
         )
     )

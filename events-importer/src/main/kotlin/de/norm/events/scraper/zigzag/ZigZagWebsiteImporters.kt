@@ -105,10 +105,10 @@ val ZIG_ZAG_LIMITATIONS =
         sources = setOf(EventSource.ZIG_ZAG_HALL, EventSource.ZIG_ZAG_JAZZ_CLUB),
         limitations =
             listOf(
-                AcceptedLimitation(LimitedAspect.END_TIME, "the end time is a calendar default, 23:59 on most nights"),
-                AcceptedLimitation(LimitedAspect.PROMOTERS, "the club presents every night itself, in both houses"),
-                AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-                AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no cancelled marker for a night")
+                AcceptedLimitation(LimitedAspect.END_TIME, "the end time is a calendar default, 23:59 on most nights", verified = "2026-10-01"),
+                AcceptedLimitation(LimitedAspect.PROMOTERS, "the club presents every night itself, in both houses", verified = "2026-10-01"),
+                AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-01"),
+                AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no cancelled marker for a night", verified = "2026-10-01")
             )
     )
 

@@ -49,11 +49,15 @@ class OraniaWebsiteImporter(
 val ORANIA_LIMITATIONS =
     VenueLimitations(
         EventSource.ORANIA,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per concert, which is taken as the start"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "every concert is billed open end"),
-        AcceptedLimitation(LimitedAspect.PRICE, "entry is free to every concert"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "entry is free and the venue sells no tickets"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue tags a series such as piano or grooves, never a genre; every concert takes the house's jazz"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per concert, which is taken as the start", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "every concert is billed open end", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PRICE, "entry is free to every concert", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "entry is free and the venue sells no tickets", verified = "2026-10-03"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the venue tags a series such as piano or grooves, never a genre; every concert takes the house's jazz",
+            verified = "2026-10-03"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Jazz"
     )

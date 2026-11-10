@@ -71,9 +71,13 @@ class OlympiastadionWebsiteImporter(
 val OLYMPIASTADION_LIMITATIONS =
     VenueLimitations(
         EventSource.OLYMPIASTADION,
-        AcceptedLimitation(LimitedAspect.GENRE, "the stadium names no style for a concert"),
-        AcceptedLimitation(LimitedAspect.PRICE, "tickets are sold only through the promoter's outside shop, so the page prints no price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the page names the ticket shop, not the promoter"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page states no ticket status"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the page gives no end time")
+        AcceptedLimitation(LimitedAspect.GENRE, "the stadium names no style for a concert", verified = "2026-11-02"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "tickets are sold only through the promoter's outside shop, so the page prints no price",
+            verified = "2026-11-02"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the page names the ticket shop, not the promoter", verified = "2026-11-02"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page states no ticket status", verified = "2026-11-02"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the page gives no end time", verified = "2026-11-02")
     )

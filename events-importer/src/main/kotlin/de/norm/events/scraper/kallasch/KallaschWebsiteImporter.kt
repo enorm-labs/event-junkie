@@ -40,12 +40,12 @@ class KallaschWebsiteImporter(
 val KALLASCH_LIMITATIONS =
     VenueLimitations(
         EventSource.KALLASCH,
-        AcceptedLimitation(LimitedAspect.GENRE, "the feed files a night by format only, never by style"),
-        AcceptedLimitation(LimitedAspect.PRICE, "most nights are free, and a price appears only in the prose"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the feed carries one time per night"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the feed links no ticket shop"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a series names only itself, and its guests appear only in the prose"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the bar programmes its own nights and names no promoter"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the feed marks no night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled date leaves the feed instead of being marked")
+        AcceptedLimitation(LimitedAspect.GENRE, "the feed files a night by format only, never by style", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "most nights are free, and a price appears only in the prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the feed carries one time per night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the feed links no ticket shop", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a series names only itself, and its guests appear only in the prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the bar programmes its own nights and names no promoter", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the feed marks no night sold out", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled date leaves the feed instead of being marked", verified = "2026-10-17")
     )

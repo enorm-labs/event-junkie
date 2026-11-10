@@ -33,10 +33,14 @@ class GalilaeakircheWebsiteImporter(
 val GALILAEAKIRCHE_LIMITATIONS =
     VenueLimitations(
         EventSource.GALILAEAKIRCHE,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "the programme has a title per event and no second title line"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site files events only as concert, reading, film, theatre or other, and names no musical style"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the site states a start and a doors time, not an end"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the band fields hold prose or a video, so the act comes from the title"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names an organiser only in the event text"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status")
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "the programme has a title per event and no second title line", verified = "2026-10-16"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the site files events only as concert, reading, film, theatre or other, and names no musical style",
+            verified = "2026-10-16"
+        ),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the site states a start and a doors time, not an end", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the band fields hold prose or a video, so the act comes from the title", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names an organiser only in the event text", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-16")
     )

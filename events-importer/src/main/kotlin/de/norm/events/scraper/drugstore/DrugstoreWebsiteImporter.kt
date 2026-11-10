@@ -29,9 +29,9 @@ class DrugstoreWebsiteImporter(
 val DRUGSTORE_LIMITATIONS =
     VenueLimitations(
         EventSource.DRUGSTORE,
-        AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the youth centre sells no tickets online"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night, and only some descriptions label the doors"),
-        AcceptedLimitation(LimitedAspect.PRICE, "radar lists no price on most nights"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter")
+        AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the youth centre sells no tickets online", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night, and only some descriptions label the doors", verified = "2026-11-04"),
+        AcceptedLimitation(LimitedAspect.PRICE, "radar lists no price on most nights", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter", verified = "2026-10-13")
     )

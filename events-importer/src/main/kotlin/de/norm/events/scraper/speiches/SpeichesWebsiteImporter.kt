@@ -32,11 +32,11 @@ class SpeichesWebsiteImporter(
 val SPEICHES_LIMITATIONS =
     VenueLimitations(
         EventSource.SPEICHES,
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "each night has one line of text, read as title and subtitle"),
-        AcceptedLimitation(LimitedAspect.PRICE, "entry is always free and no price is printed"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "a pub with free entry sells no tickets"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the table prints one time per night"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the open stage and the radio broadcasts name no act in a form that can be read"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "each night has one line of text, read as title and subtitle", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE, "entry is always free and no price is printed", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "a pub with free entry sells no tickets", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the table prints one time per night", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the open stage and the radio broadcasts name no act in a form that can be read", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Blues"
     )

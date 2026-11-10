@@ -47,10 +47,10 @@ class HumboldthainWebsiteImporter(
 val HUMBOLDTHAIN_LIMITATIONS =
     VenueLimitations(
         EventSource.HUMBOLDTHAIN,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs"),
-        AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the prose, in too many spellings to parse"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing in the payload marks a night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing in the payload marks a night cancelled or moved"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the prose, in too many spellings to parse", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing in the payload marks a night sold out", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing in the payload marks a night cancelled or moved", verified = "2026-10-02"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
         houseGenre = "Techno, House"
     )

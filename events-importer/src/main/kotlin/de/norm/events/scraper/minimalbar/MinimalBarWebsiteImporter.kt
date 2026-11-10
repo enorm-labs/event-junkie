@@ -29,15 +29,15 @@ class MinimalBarWebsiteImporter(
 val MINIMAL_BAR_LIMITATIONS =
     VenueLimitations(
         EventSource.MINIMAL_BAR,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "the site names the night's series and its lineup, no second line"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "every night carries the same text about the bar, never one about the night"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the bar opens at 18:00 every day and the site gives only the night's start"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the site gives the bar's closing hours, not an end per night"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site states one sound for every night; each night takes it"),
-        AcceptedLimitation(LimitedAspect.PRICE, "entrance is free every night, so the site prints no price"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "entrance is free and the venue sells no tickets"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the series name"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the payload has no status field, so a cancelled night can only disappear"),
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "the site names the night's series and its lineup, no second line", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "every night carries the same text about the bar, never one about the night", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the bar opens at 18:00 every day and the site gives only the night's start", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the site gives the bar's closing hours, not an end per night", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site states one sound for every night; each night takes it", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PRICE, "entrance is free every night, so the site prints no price", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "entrance is free and the venue sells no tickets", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the series name", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the payload has no status field, so a cancelled night can only disappear", verified = "2026-10-16"),
         houseGenre = "Minimal, House, Tech House"
     )

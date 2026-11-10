@@ -38,13 +38,17 @@ class Donau115WebsiteImporter(
 val DONAU115_LIMITATIONS =
     VenueLimitations(
         EventSource.DONAU115,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme is one page that expands each night in place"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "most nights carry only the bar's opening time, and a set time appears only in the prose"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no price"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the bar sells no tickets, and a night's links go to the acts"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the weekly open stage and jam name no act"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the bar books its own nights and names no promoter"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site marks no night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is unpublished instead of being marked"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme is one page that expands each night in place", verified = "2026-10-26"),
+        AcceptedLimitation(
+            LimitedAspect.START_TIME,
+            "most nights carry only the bar's opening time, and a set time appears only in the prose",
+            verified = "2026-10-26"
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no price", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the bar sells no tickets, and a night's links go to the acts", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the weekly open stage and jam name no act", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the bar books its own nights and names no promoter", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site marks no night sold out", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is unpublished instead of being marked", verified = "2026-10-26"),
         houseGenre = "Jazz"
     )

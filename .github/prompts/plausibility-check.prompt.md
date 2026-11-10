@@ -170,6 +170,24 @@ purpose ([SCRAPING_POSITION.md](../../docs/SCRAPING_POSITION.md) §3). A poster 
 **The page is the reference, and not always right** (last year's date on a recurring event is a known pattern). The finding is the disagreement; say when
 the page looks wrong too.
 
+### Re-check the oldest limitations
+
+A declared limitation stays true only while the venue stays silent, and nothing else notices when a venue starts to publish (#4828). So up to **5** of the
+`--sample` fetches go to the rows of [`ACCEPTED_LIMITATIONS.md`](../../docs/data-quality/ACCEPTED_LIMITATIONS.md) with the oldest _Verified_ date:
+
+1. Sort the table by _Verified_, oldest first, then by source. Skip the aspects that one event page cannot show: `SOLD_OUT`, `CANCELLATION`,
+   `PAGINATION` and `PER_EVENT_PAGE`.
+2. Take a row only when its source has an event in the window. Use a page this run already fetched for that source before you fetch a new one. A reused page
+   costs nothing against `--sample`.
+3. The robots.txt and politeness rules above apply unchanged.
+4. Read the page for that one aspect, and give one verdict:
+    - **STILL SILENT** — the page withholds the aspect, as the reason says.
+    - **NOW PUBLISHED** — the page prints it. Quote the text. The row is now a defect, so it gets a draft in the 🔍 Importer / data defect form's shape.
+    - **UNCHECKED** — robots.txt, a `403`/`429`, a JavaScript page, or a page that cannot decide the aspect. Say which.
+
+When the reason says the parser derives a value anyway, judge the source, not the stored row. A row is never re-dated by this prompt. A person bumps
+`verified` on the STILL SILENT rows in one pull request a month, from the month's report issue.
+
 ## Step 5 — Write the report
 
 Locally, `temp/plausibility-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh` on it by name. Unattended, the final message is the report and the
@@ -226,6 +244,10 @@ Venues with no rows in the window: <list, with whether that is usual for the wee
 ## Source comparison — the sample
 <One row per fetched page: venue, event, status code, verdict, one line of evidence.>
 
+## Limitation re-check
+<One row per re-checked limitation: source, aspect, Verified date, the page URL, STILL SILENT / NOW PUBLISHED / UNCHECKED, one line of evidence.
+Then the STILL SILENT rows once more as `SOURCE/ASPECT`, one per line, for the monthly date bump.>
+
 ## Drafts for issues — not filed
 <One draft per underlying defect, grouped by scraper rather than per event, in the 🔍 Importer / data defect form's shape: scraper, the source text, what we
 store, the likely code path, whether the fix needs a --full re-seed. Only for NEW findings. Name the aspect. When the finding is a limitation to declare rather than
@@ -240,6 +262,6 @@ window did not cover.>
 
 - **#474** builds the same comparison inside the importer and is blocked on #473; what this produces over weeks is the measurement #474 asks for first.
 - **A finding that recurs every night is a scraper defect**, whatever the limitations table says — a venue that started publishing start times after its row
-  was declared is the case the table cannot see.
+  was declared. The limitation re-check in Step 4 looks for that case on purpose, oldest row first.
 - **The sample is small on purpose**: twenty fetches across up to 180 hosts is a rounding error next to the importer's traffic; two hundred is the venues'
   bandwidth. Raise `--sample` for one run, not in the workflow.

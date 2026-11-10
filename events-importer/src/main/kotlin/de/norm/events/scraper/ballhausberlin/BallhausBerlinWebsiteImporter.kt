@@ -27,10 +27,10 @@ class BallhausBerlinWebsiteImporter(
 val BALLHAUS_BERLIN_LIMITATIONS =
     VenueLimitations(
         EventSource.BALLHAUS_BERLIN,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the list has no category, so the house's own words type a night"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the list names no music style"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the title names the night or the company, and the text bills the acts in prose"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a date has no page of its own"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the list carries no sold-out mark"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the list names no organiser")
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the list has no category, so the house's own words type a night", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the list names no music style", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the title names the night or the company, and the text bills the acts in prose", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a date has no page of its own", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the list carries no sold-out mark", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the list names no organiser", verified = "2026-10-23")
     )

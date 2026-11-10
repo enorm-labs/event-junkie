@@ -73,12 +73,16 @@ class MonsterRonsonsWebsiteImporter(
 val MONSTER_RONSONS_LIMITATIONS =
     VenueLimitations(
         EventSource.MONSTER_RONSONS,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per night, which is taken as the start"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the price lives in prose and is often a time-banded tariff, which the model has no field for"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every night takes the house's Karaoke"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the venue bills no lineup beyond the host named in the title"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "entry is paid at the door; a night rarely links a ticket shop"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the BOXHOPPING poster is a GIF whose black first frame is rejected as blank (#2669)"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per night, which is taken as the start", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the price lives in prose and is often a time-banded tariff, which the model has no field for",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every night takes the house's Karaoke", verified = "2026-10-02"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the venue bills no lineup beyond the host named in the title", verified = "2026-10-02"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "entry is paid at the door; a night rarely links a ticket shop", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the BOXHOPPING poster is a GIF whose black first frame is rejected as blank (#2669)", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Karaoke"
     )

@@ -40,15 +40,20 @@ class OrwohausWebsiteImporter(
 val ORWOHAUS_LIMITATIONS =
     VenueLimitations(
         EventSource.ORWOHAUS,
-        AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the prose, and a house night often names none"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "a doors time appears only in the prose of a few nights"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "a night names no shop of its own; the page's ticket links belong to other nights"),
+        AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the prose, and a house night often names none", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "a doors time appears only in the prose of a few nights", verified = "2026-10-16"),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "a night names no shop of its own; the page's ticket links belong to other nights",
+            verified = "2026-11-07"
+        ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "only a line-up list in the prose is read; other nights name acts in running text or run them together on one line, and a series title names none"
+            "only a line-up list in the prose is read; other nights name acts in running text or run them together on one line, and a series title names none",
+            verified = "2026-10-30"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the feed files most nights by room or series and names a style on few"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "an outside promoter is named only in the prose"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the feed marks no night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the feed marks no night cancelled or moved")
+        AcceptedLimitation(LimitedAspect.GENRE, "the feed files most nights by room or series and names a style on few", verified = "2026-10-19"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "an outside promoter is named only in the prose", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the feed marks no night sold out", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the feed marks no night cancelled or moved", verified = "2026-10-16")
     )

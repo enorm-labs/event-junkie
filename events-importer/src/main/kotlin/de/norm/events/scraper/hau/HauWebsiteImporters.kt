@@ -74,13 +74,22 @@ val HAU_LIMITATIONS =
             listOf(
                 AcceptedLimitation(
                     LimitedAspect.ARTISTS,
-                    "a staged work's line names an artist, a company or a series alike, so only concerts and DJ sets bill acts"
+                    "a staged work's line names an artist, a company or a series alike, so only concerts and DJ sets bill acts",
+                    verified = "2026-10-17"
                 ),
-                AcceptedLimitation(LimitedAspect.DOORS_TIME, "only a few concerts print a doors time"),
-                AcceptedLimitation(LimitedAspect.GENRE, "the venue names a format such as music or dance, never a style"),
-                AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "some production pages print no price"),
-                AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "one price per production, sold alike online and at the box office"),
-                AcceptedLimitation(LimitedAspect.TICKET_URL, "the ticket buttons load by script for each date and are not in the page"),
-                AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents or co-produces every production itself")
+                AcceptedLimitation(LimitedAspect.DOORS_TIME, "only a few concerts print a doors time", verified = "2026-10-17"),
+                AcceptedLimitation(LimitedAspect.GENRE, "the venue names a format such as music or dance, never a style", verified = "2026-10-17"),
+                AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "some production pages print no price", verified = "2026-10-19"),
+                AcceptedLimitation(
+                    LimitedAspect.PRICE_BOX_OFFICE,
+                    "one price per production, sold alike online and at the box office",
+                    verified = "2026-10-17"
+                ),
+                AcceptedLimitation(
+                    LimitedAspect.TICKET_URL,
+                    "the ticket buttons load by script for each date and are not in the page",
+                    verified = "2026-10-17"
+                ),
+                AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents or co-produces every production itself", verified = "2026-10-17")
             )
     )

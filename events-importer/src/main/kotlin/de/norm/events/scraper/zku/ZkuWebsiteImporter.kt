@@ -41,12 +41,24 @@ class ZkuWebsiteImporter(
 val ZKU_LIMITATIONS =
     VenueLimitations(
         EventSource.ZKU,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category, so the type comes from the entry's own words and an untyped one stays other"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one time range per entry"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled entry can only disappear"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a concert page bills its acts in free prose blocks, so only a `Line up` list or the title names them"),
-        AcceptedLimitation(LimitedAspect.PRICE, "most pages print no entry line, and a ticket button links an outside shop without a price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "only some pages carry a `hosted by` credit")
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the site names no category, so the type comes from the entry's own words and an untyped one stays other",
+            verified = "2026-10-17"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one time range per entry", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled entry can only disappear", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a concert page bills its acts in free prose blocks, so only a `Line up` list or the title names them",
+            verified = "2026-10-17"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "most pages print no entry line, and a ticket button links an outside shop without a price",
+            verified = "2026-10-19"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "only some pages carry a `hosted by` credit", verified = "2026-10-19")
     )

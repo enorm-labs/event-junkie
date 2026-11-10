@@ -25,9 +25,13 @@ class KulturhausSpandauWebsiteImporter(
 val KULTURHAUS_SPANDAU_LIMITATIONS =
     VenueLimitations(
         EventSource.KULTURHAUS_SPANDAU,
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the API carries no event text, and the event page is a teaser"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the categories name a format, not a music style"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the API gives one start time per event"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the API gives one admission price and the concessions, no box-office price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the `organizer_id` is empty on every event")
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the API carries no event text, and the event page is a teaser", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the categories name a format, not a music style", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the API gives one start time per event", verified = "2026-10-23"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE_BOX_OFFICE,
+            "the API gives one admission price and the concessions, no box-office price",
+            verified = "2026-10-23"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the `organizer_id` is empty on every event", verified = "2026-10-23")
     )

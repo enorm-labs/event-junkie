@@ -60,11 +60,12 @@ val TRESOR_LIMITATIONS =
         EventSource.TRESOR,
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,
-            "the venue states no doors or start time; the night's opening set is the only clock it gives, and that is stored as the start"
+            "the venue states no doors or start time; the night's opening set is the only clock it gives, and that is stored as the start",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.START_TIME, "a night without set times names no clock at all"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; every listing is a club night"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "a night without set times names no clock at all", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; every listing is a club night", verified = "2026-09-20"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
         houseGenre = "Techno"
     )

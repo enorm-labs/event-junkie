@@ -31,13 +31,13 @@ class JonnyKnuppelWebsiteImporter(
 val JONNY_KNUPPEL_LIMITATIONS =
     VenueLimitations(
         EventSource.JONNY_KNUPPEL,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night is an overlay on the homepage"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the calendar shows no flyer"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the site links no ticket shop"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one opening time per night"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no style"),
-        AcceptedLimitation(LimitedAspect.PRICE, "only a few nights print an entry price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "about half the nights list no line-up"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "about half the nights carry no blurb")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night is an overlay on the homepage", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the calendar shows no flyer", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the site links no ticket shop", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one opening time per night", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no style", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE, "only a few nights print an entry price", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "about half the nights list no line-up", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "about half the nights carry no blurb", verified = "2026-10-08")
     )

@@ -28,11 +28,23 @@ class ClaerchensBallhausWebsiteImporter(
 val CLAERCHENS_BALLHAUS_LIMITATIONS =
     VenueLimitations(
         EventSource.CLAERCHENS_BALLHAUS,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the calendar names no category, so the type comes from the words under the title"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the dance nights and the house's concert series name nobody; only a guest concert's title bills its act"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the calendar prints a price for the dance classes only, and the concerts sell through outside shops"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the calendar names a dance, not a music style"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "only the Sunday concerts print an `Einlass`, as free text"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the calendar's end is midnight of the first occurrence, not the night's end"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the calendar names no promoter")
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the calendar names no category, so the type comes from the words under the title",
+            verified = "2026-10-23"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the dance nights and the house's concert series name nobody; only a guest concert's title bills its act",
+            verified = "2026-10-23"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the calendar prints a price for the dance classes only, and the concerts sell through outside shops",
+            verified = "2026-10-23"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the calendar names a dance, not a music style", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "only the Sunday concerts print an `Einlass`, as free text", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the calendar's end is midnight of the first occurrence, not the night's end", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the calendar names no promoter", verified = "2026-10-23")
     )

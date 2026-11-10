@@ -41,16 +41,25 @@ class MaayaWebsiteImporter(
 val MAAYA_LIMITATIONS =
     VenueLimitations(
         EventSource.MAAYA,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme is one hand-built section of the WordPress home page"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the programme is one hand-built section of the home page and carries no detail text"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes an entry note in words and no numeric price"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "there is no lineup field, and the titles are series and party names rather than acts"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors time"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme is one hand-built section of the WordPress home page", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "the programme is one hand-built section of the home page and carries no detail text",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes an entry note in words and no numeric price", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "there is no lineup field, and the titles are series and party names rather than acts",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors time", verified = "2026-08-25"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the programme carries a name, a date and a time and no category; the type comes from a title keyword or a late start, else OTHER"
+            "the programme carries a name, a date and a time and no category; the type comes from a title keyword or a late start, else OTHER",
+            verified = "2026-10-14"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every music night takes the house's Afrobeats, Latin"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every music night takes the house's Afrobeats, Latin", verified = "2026-10-02"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Afrobeats, Latin"
     )

@@ -96,8 +96,20 @@ class SilentGreenWebsiteImporter(
 val SILENT_GREEN_LIMITATIONS =
     VenueLimitations(
         EventSource.SILENT_GREEN,
-        AcceptedLimitation(LimitedAspect.PRICE, "most nights link a ticket shop or name no figure; a `Tickets:` line in the blurb is read"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "a multi-day festival entry without daily hours in its blurb prints its date span only and names no time"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue credits itself as the organiser on its own nights, so the stored promoter is the venue")
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "most nights link a ticket shop or name no figure; a `Tickets:` line in the blurb is read",
+            verified = "2026-10-18"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre", verified = "2026-09-20"),
+        AcceptedLimitation(
+            LimitedAspect.START_TIME,
+            "a multi-day festival entry without daily hours in its blurb prints its date span only and names no time",
+            verified = "2026-10-09"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "the venue credits itself as the organiser on its own nights, so the stored promoter is the venue",
+            verified = "2026-09-20"
+        )
     )

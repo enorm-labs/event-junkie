@@ -39,17 +39,19 @@ val GOLDEN_GATE_LIMITATIONS =
         EventSource.GOLDEN_GATE,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the club emits no category at all and programmes nothing but DJ nights, so the type is fixed rather than inferred"
+            "the club emits no category at all and programmes nothing but DJ nights, so the type is fixed rather than inferred",
+            verified = "2026-08-25"
         ),
         AcceptedLimitation(
             LimitedAspect.PER_EVENT_PAGE,
-            "there is no custom `event` post type in the WordPress REST API and no structured data; the single rendered page is the source"
+            "there is no custom `event` post type in the WordPress REST API and no structured data; the single rendered page is the source",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the programme page is one block per night with no ticket link"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the programme page carries no flyer"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the programme page carries no text beyond the date, the title and the DJs"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the page prints one time per night (23:59) and no doors"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the programme page is one block per night with no ticket link", verified = "2026-10-22"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the programme page carries no flyer", verified = "2026-10-22"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the programme page carries no text beyond the date, the title and the DJs", verified = "2026-10-22"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the page prints one time per night (23:59) and no doors", verified = "2026-10-22"),
         houseGenre = "Techno, House"
     )

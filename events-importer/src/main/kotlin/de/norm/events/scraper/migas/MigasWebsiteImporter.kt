@@ -113,11 +113,11 @@ class MigasWebsiteImporter(
 val MIGAS_LIMITATIONS =
     VenueLimitations(
         EventSource.MIGAS,
-        AcceptedLimitation(LimitedAspect.PRICE, "most events state no entry arrangements; a stated free entry is read"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the site links no ticket shop"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries no door time"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the listing carries no sold-out badge"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the listing carries no cancellation badge"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the two categories are formats; the style is only in the text"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.PRICE, "most events state no entry arrangements; a stated free entry is read", verified = "2026-10-12"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the site links no ticket shop", verified = "2026-10-12"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries no door time", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the listing carries no sold-out badge", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the listing carries no cancellation badge", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the two categories are formats; the style is only in the text", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

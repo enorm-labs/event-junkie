@@ -24,12 +24,12 @@ class HouseOfMusicWebsiteImporter(
 val HOUSE_OF_MUSIC_LIMITATIONS =
     VenueLimitations(
         EventSource.HOUSE_OF_MUSIC,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme names one time per event"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the venue hides the end on most events"),
-        AcceptedLimitation(LimitedAspect.PRICE, "every event sells its tickets elsewhere, and the payload carries no price"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the widget shows no images, and the events carry none"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the events carry no text"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the payload carries no category, and the titles name no style"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue hides each event's own page"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme names one time per event", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the venue hides the end on most events", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE, "every event sells its tickets elsewhere, and the payload carries no price", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the widget shows no images, and the events carry none", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the events carry no text", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the payload carries no category, and the titles name no style", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue hides each event's own page", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

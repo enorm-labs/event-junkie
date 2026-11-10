@@ -58,8 +58,8 @@ class PfefferbergHaus13WebsiteImporter(
 val PFEFFERBERG_HAUS_13_LIMITATIONS =
     VenueLimitations(
         EventSource.PFEFFERBERG_HAUS_13,
-        AcceptedLimitation(LimitedAspect.START_TIME, "some nights print only their doors, `Einlass: 19:00`"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the pages name doors and a start, no end"),
-        AcceptedLimitation(LimitedAspect.GENRE, "no event names a style"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.START_TIME, "some nights print only their doors, `Einlass: 19:00`", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the pages name doors and a start, no end", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.GENRE, "no event names a style", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

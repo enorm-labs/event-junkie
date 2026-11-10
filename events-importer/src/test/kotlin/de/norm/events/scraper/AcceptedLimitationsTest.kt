@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate
+import java.time.ZoneId
 
 private val COMMITTED_TABLE = File("../docs/data-quality/ACCEPTED_LIMITATIONS.md")
 private val REGENERATED_TABLE = File("build/accepted-limitations.md")
@@ -97,6 +98,16 @@ class AcceptedLimitationsTest {
         malformed.shouldBeEmpty()
     }
 
+    @Test
+    fun `no limitation is verified on a day still to come`() {
+        val today = LocalDate.now(ZoneId.of("Europe/Berlin"))
+        AcceptedLimitations.declarations
+            .flatMap { it.limitations }
+            .filter { it.verifiedOn.isAfter(today) }
+            .map { "${it.aspect}: ${it.verified}" }
+            .shouldBeEmpty()
+    }
+
     /**
      * A coverage series with no aspect is a series the audit cannot explain: it would read 0% for a
      * venue forever with nothing anywhere saying why that is fine.
@@ -145,7 +156,7 @@ private fun renderMarkdown(): String {
             .flatMap { source -> AcceptedLimitations.forSource(source).map { source to it } }
             .map { (source, limitation) ->
                 val issue = limitation.issue?.let { "#$it" } ?: "—"
-                "| `$source` | `${limitation.aspect}` | ${limitation.reason} | $issue |"
+                "| `$source` | `${limitation.aspect}` | ${limitation.reason} | ${limitation.verified} | $issue |"
             }
     val silent = EventSource.entries.filter { AcceptedLimitations.forSource(it).isEmpty() }
     val header =
@@ -160,8 +171,10 @@ private fun renderMarkdown(): String {
             "A declaration says the source is silent, not that the column is always null: where the parser derives a value anyway, the reason",
             "says so.",
             "",
-            "| Source | Aspect | Why the source is silent | Issue |",
-            "| --- | --- | --- | --- |"
+            "_Verified_ is the last day someone saw the source still silent (#4828). `/plausibility-check` re-checks the oldest rows first.",
+            "",
+            "| Source | Aspect | Why the source is silent | Verified | Issue |",
+            "| --- | --- | --- | --- | --- |"
         )
     val footer =
         listOf(

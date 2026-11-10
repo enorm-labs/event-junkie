@@ -213,29 +213,42 @@ val SISYPHOS_LIMITATIONS =
         EventSource.SISYPHOS,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the calendar files nights with no category; each is stored as a party, the market and the open day included"
+            "the calendar files nights with no category; each is stored as a party, the market and the open day included",
+            verified = "2026-10-01"
         ),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives the opening, stored as the start, and no separate doors time"),
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "the calendar gives the opening, stored as the start, and no separate doors time",
+            verified = "2026-10-01"
+        ),
         AcceptedLimitation(
             LimitedAspect.START_TIME,
-            "a night the calendar does not list yet comes from the shop alone, whose product names a day and never a time"
+            "a night the calendar does not list yet comes from the shop alone, whose product names a day and never a time",
+            verified = "2026-10-01"
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "the calendar and the shop name no DJ; the line-up comes from sisy.fan, which posts a weekend on Friday night or Saturday and is read only then"
+            "the calendar and the shop name no DJ; the line-up comes from sisy.fan, which posts a weekend on Friday night or Saturday and is read only then",
+            verified = "2026-10-01"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "neither the calendar nor the shop names a musical style; every night takes the club's Techno, House default"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "neither the calendar nor the shop states a door price"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "neither the calendar nor the shop names a musical style; every night takes the club's Techno, House default",
+            verified = "2026-10-01"
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "neither the calendar nor the shop states a door price", verified = "2026-10-01"),
         AcceptedLimitation(
             LimitedAspect.TICKET_URL,
-            "the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client"
+            "the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client",
+            verified = "2026-10-01"
         ),
         AcceptedLimitation(
             LimitedAspect.PRICE_PRESALE,
             "the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client, " +
-                "and a refused read keeps the stored price, so a new or changed price waits for the next good read"
+                "and a refused read keeps the stored price, so a new or changed price waits for the next good read",
+            verified = "2026-11-08"
         ),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "neither the calendar nor the shop marks a cancelled night"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "neither the calendar nor the shop marks a cancelled night", verified = "2026-10-01"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Techno, House"
     )

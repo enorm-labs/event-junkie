@@ -26,13 +26,17 @@ class MbiaWebsiteImporter(
 val M_BIA_LIMITATIONS =
     VenueLimitations(
         EventSource.M_BIA,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "a night carries only its name"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; every night is a club night"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "most nights state no time"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "a start time appears only in prose; every record carries the same unshown 22:00"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the site prints no end time"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price; tickets link to RA, Eventbrite or ticket.io"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the night's name"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the collection has no status field, so a cancelled night can only disappear")
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "a night carries only its name", verified = "2026-10-29"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; every night is a club night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "most nights state no time", verified = "2026-10-30"),
+        AcceptedLimitation(
+            LimitedAspect.START_TIME,
+            "a start time appears only in prose; every record carries the same unshown 22:00",
+            verified = "2026-10-30"
+        ),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the site prints no end time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price; tickets link to RA, Eventbrite or ticket.io", verified = "2026-10-29"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the night's name", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the collection has no status field, so a cancelled night can only disappear", verified = "2026-10-29")
     )

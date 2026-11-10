@@ -30,11 +30,11 @@ class SoulcatWebsiteImporter(
 val SOULCAT_LIMITATIONS =
     VenueLimitations(
         EventSource.SOULCAT,
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "every event carries a title and times only"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "no event has an image"),
-        AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on every event; only `FREE ENTRY` in a title says anything"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "a bar with no tickets; `website` is empty"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the house nights (`Bartenders Choice`) name no DJ"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "every event carries a title and times only", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "no event has an image", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on every event; only `FREE ENTRY` in a title says anything", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "a bar with no tickets; `website` is empty", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the house nights (`Bartenders Choice`) name no DJ", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Soul"
     )

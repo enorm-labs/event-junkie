@@ -44,16 +44,22 @@ class NeueZukunftWebsiteImporter(
 val NEUE_ZUKUNFT_LIMITATIONS =
     VenueLimitations(
         EventSource.NEUE_ZUKUNFT,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the calendar widget prints no figure; each show links out to an external ticket shop"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs", verified = "2026-09-30"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the calendar widget prints no figure; each show links out to an external ticket shop",
+            verified = "2026-09-30"
+        ),
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank; a night takes its genre from its acts or its text, or none"
+            "the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank; a night takes its genre from its acts or its text, or none",
+            verified = "2026-11-02"
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "a series night (Jazz After Dark, Future Bash Reloaded) names no act, and a fest bills its line-up only in prose"
+            "a series night (Jazz After Dark, Future Bash Reloaded) names no act, and a fest bills its line-up only in prose",
+            verified = "2026-10-17"
         ),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the calendar widget sets no cover image on upcoming shows"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.IMAGE, "the calendar widget sets no cover image on upcoming shows", verified = "2026-10-02"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-11-02")
     )

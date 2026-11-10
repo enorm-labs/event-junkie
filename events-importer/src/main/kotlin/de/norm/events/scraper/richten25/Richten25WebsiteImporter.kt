@@ -24,12 +24,12 @@ class Richten25WebsiteImporter(
 val RICHTEN25_LIMITATIONS =
     VenueLimitations(
         EventSource.RICHTEN25,
-        AcceptedLimitation(LimitedAspect.START_TIME, "the programme names a date and a lineup, no time"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme names a date and a lineup, no time"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the page names no entry price"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the programme is a text list with no posters"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "each night is one lineup line, with no text"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the space is for experimental music, and no night names a style"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a night has no page of its own"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.START_TIME, "the programme names a date and a lineup, no time", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme names a date and a lineup, no time", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the page names no entry price", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the programme is a text list with no posters", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "each night is one lineup line, with no text", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the space is for experimental music, and no night names a style", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a night has no page of its own", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

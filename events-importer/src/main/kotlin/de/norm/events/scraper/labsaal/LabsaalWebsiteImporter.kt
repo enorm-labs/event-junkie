@@ -61,15 +61,28 @@ val LABSAAL_LIMITATIONS =
         EventSource.LABSAAL,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the venue names no format, so the type comes from words in the title and description, and a night without one is typed other"
+            "the venue names no format, so the type comes from words in the title and description, and a night without one is typed other",
+            verified = "2026-10-17"
         ),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the feed has no line-up field, and a title mixes an act's name with the programme's"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the feed names no style"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the event page prints price tiers with no label, kept as the note"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "a doors time appears only in the prose of a few nights"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the feed fills an end for every night, also where the site hides it, so no end is taken"),
-        AcceptedLimitation(LimitedAspect.END_DATE, "the feed fills an end for every night, also where the site hides it, so no end is taken"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "an outside organiser is named only in the prose"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the feed marks no night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the feed marks no night cancelled or moved")
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the feed has no line-up field, and a title mixes an act's name with the programme's",
+            verified = "2026-10-17"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the feed names no style", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the event page prints price tiers with no label, kept as the note", verified = "2026-11-09"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "a doors time appears only in the prose of a few nights", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.END_TIME,
+            "the feed fills an end for every night, also where the site hides it, so no end is taken",
+            verified = "2026-10-17"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.END_DATE,
+            "the feed fills an end for every night, also where the site hides it, so no end is taken",
+            verified = "2026-10-17"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "an outside organiser is named only in the prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the feed marks no night sold out", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the feed marks no night cancelled or moved", verified = "2026-10-17")
     )

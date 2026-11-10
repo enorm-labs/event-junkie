@@ -48,11 +48,11 @@ class GiriWebsiteImporter(
 val GIRI_LIMITATIONS =
     VenueLimitations(
         EventSource.GIRI,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "the line under the title is a list of styles, stored as the genre"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "the site prints one doors time per night"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "nights run open-ended, printed as `From 18:00-end`"),
-        AcceptedLimitation(LimitedAspect.PRICE, "entry is by donation, and a suggested figure appears only in some descriptions"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a collaborating crew appears only in the title, as `GIRI x CURRENTS`"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "entry is by RSVP and donation, with no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear")
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "the line under the title is a list of styles, stored as the genre", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "the site prints one doors time per night", verified = "2026-11-07"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "nights run open-ended, printed as `From 18:00-end`", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "entry is by donation, and a suggested figure appears only in some descriptions", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a collaborating crew appears only in the title, as `GIRI x CURRENTS`", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "entry is by RSVP and donation, with no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear", verified = "2026-11-07")
     )

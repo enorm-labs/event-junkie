@@ -38,11 +38,12 @@ class RitterButzkeWebsiteImporter(
 val RITTER_BUTZKE_LIMITATIONS =
     VenueLimitations(
         EventSource.RITTER_BUTZKE,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ programme"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ programme", verified = "2026-09-20"),
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "the club sells through a third party and prints no figure; a night is flagged free only when its title says so"
+            "the club sells through a third party and prints no figure; a night is flagged free only when its title says so",
+            verified = "2026-09-20"
         ),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Techno, House"
     )

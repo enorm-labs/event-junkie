@@ -30,9 +30,10 @@ class PrivatclubWebsiteImporter(
 val PRIVATCLUB_LIMITATIONS =
     VenueLimitations(
         EventSource.PRIVATCLUB,
-        AcceptedLimitation(LimitedAspect.PRICE, "about half the nights print a genre line and a start time but no price"),
+        AcceptedLimitation(LimitedAspect.PRICE, "about half the nights print a genre line and a start time but no price", verified = "2026-10-14"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "the song slam and Emergenza's band contest name none of their contestants, and a party names its DJs only in a `DJs:` paragraph"
+            "the song slam and Emergenza's band contest name none of their contestants, and a party names its DJs only in a `DJs:` paragraph",
+            verified = "2026-11-03"
         )
     )

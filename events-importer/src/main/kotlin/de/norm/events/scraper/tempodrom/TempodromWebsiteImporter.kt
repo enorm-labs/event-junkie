@@ -40,17 +40,24 @@ val TEMPODROM_LIMITATIONS =
         EventSource.TEMPODROM,
         AcceptedLimitation(
             LimitedAspect.START_TIME,
-            "some concerts and congresses print no clock, and a run's start comes from its schedule only when the page lists one"
+            "some concerts and congresses print no clock, and a run's start comes from its schedule only when the page lists one",
+            verified = "2026-11-10"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the JSON-LD and the event pages carry no genre field"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line",
+            verified = "2026-10-06"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the JSON-LD and the event pages carry no genre field", verified = "2026-10-22"),
         AcceptedLimitation(
             LimitedAspect.TICKET_URL,
-            "a house-sold event's offer links its own event page, and a promoter's shop appears only as a link in the prose"
+            "a house-sold event's offer links its own event page, and a promoter's shop appears only as a link in the prose",
+            verified = "2026-11-07"
         ),
         AcceptedLimitation(
             LimitedAspect.DESCRIPTION,
             "the detail page's `Beschreibung` region is read only to classify a comedy night, name a tribute band and find a run's first show, " +
-                "and is never stored"
+                "and is never stored",
+            verified = "2026-11-10"
         )
     )

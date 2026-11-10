@@ -29,11 +29,11 @@ class ErreichbarWebsiteImporter(
 val ERREICHBAR_LIMITATIONS =
     VenueLimitations(
         EventSource.ERREICHBAR,
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the punk bar night plays records and bills no one"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the bar posts no image to radar"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the bar sells no tickets"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the bar names no entry price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the punk bar night plays records and bills no one", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the bar posts no image to radar", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the bar sells no tickets", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the bar names no entry price", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter", verified = "2026-10-13"),
         houseGenre = "Punk"
     )

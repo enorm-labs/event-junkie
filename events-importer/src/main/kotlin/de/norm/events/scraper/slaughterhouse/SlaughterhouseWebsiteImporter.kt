@@ -24,11 +24,11 @@ class SlaughterhouseWebsiteImporter(
 val SLAUGHTERHOUSE_LIMITATIONS =
     VenueLimitations(
         EventSource.SLAUGHTERHOUSE,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "an entry names one time, mostly the start"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "a party entry may name only doors, and a festival no time"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the page names a start or doors, no end"),
-        AcceptedLimitation(LimitedAspect.PRICE, "most entries name no price, and none a presale price"),
-        AcceptedLimitation(LimitedAspect.GENRE, "only a party's style line names one"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night is one entry on the programme page"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "an entry names one time, mostly the start", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "a party entry may name only doors, and a festival no time", verified = "2026-10-29"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the page names a start or doors, no end", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE, "most entries name no price, and none a presale price", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.GENRE, "only a party's style line names one", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night is one entry on the programme page", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

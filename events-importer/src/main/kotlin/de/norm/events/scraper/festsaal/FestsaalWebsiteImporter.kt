@@ -58,8 +58,9 @@ val FESTSAAL_LIMITATIONS =
         EventSource.FESTSAAL,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the API exposes no category field; its `genre` node is a musical genre unless it names an event kind (Festival, Markt, Party, Show)"
+            "the API exposes no category field; its `genre` node is a musical genre unless it names an event kind (Festival, Markt, Party, Show)",
+            verified = "2026-10-12"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "the API names no figure; tickets are sold through a vvk.link shop"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the API's `genre.title` is empty on readings, shows, markets and some concerts")
+        AcceptedLimitation(LimitedAspect.PRICE, "the API names no figure; tickets are sold through a vvk.link shop", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the API's `genre.title` is empty on readings, shows, markets and some concerts", verified = "2026-10-13")
     )

@@ -56,10 +56,14 @@ class CrackBellmerWebsiteImporter(
 val CRACK_BELLMER_LIMITATIONS =
     VenueLimitations(
         EventSource.CRACK_BELLMER,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue emits no category at all; the type is read from the title and then the genre line"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors time"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue links no ticket shop"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "a night without a CMS poster renders the Webflow placeholder, so it has no image"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the venue emits no category at all; the type is read from the title and then the genre line",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors time", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-27"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue links no ticket shop", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "a night without a CMS poster renders the Webflow placeholder, so it has no image", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

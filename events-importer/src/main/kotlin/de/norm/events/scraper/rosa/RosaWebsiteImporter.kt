@@ -38,14 +38,18 @@ class RosaWebsiteImporter(
 val ROSA_LIMITATIONS =
     VenueLimitations(
         EventSource.ROSA,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "the site states one title per night and no second line"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes an opening range, not a doors time"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue names no musical style anywhere; every night takes the club's Techno default"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue sells through Resident Advisor and prints no price"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the site names the party series, never who plays it"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the party name"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site links to the ticket shop rather than stating a status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site drops a cancelled night instead of marking it"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one page with an anchor per night"),
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "the site states one title per night and no second line", verified = "2026-09-13"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes an opening range, not a doors time", verified = "2026-09-13"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the venue names no musical style anywhere; every night takes the club's Techno default",
+            verified = "2026-09-26"
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue sells through Resident Advisor and prints no price", verified = "2026-09-13"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the site names the party series, never who plays it", verified = "2026-09-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the party name", verified = "2026-09-13"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site links to the ticket shop rather than stating a status", verified = "2026-09-13"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site drops a cancelled night instead of marking it", verified = "2026-09-13"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one page with an anchor per night", verified = "2026-09-30"),
         houseGenre = "Techno"
     )

@@ -82,24 +82,28 @@ val KLUNKERKRANICH_LIMITATIONS =
         EventSource.KLUNKERKRANICH,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the venue publishes no category, so every night is stored as a party — which mislabels the occasional concert"
+            "the venue publishes no category, so every night is stored as a party — which mislabels the occasional concert",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states when the roof opens, not when a show starts"),
-        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the site names a genre; every night takes the house's House"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states when the roof opens, not when a show starts", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the site names a genre; every night takes the house's House", verified = "2026-10-02"),
         AcceptedLimitation(
             LimitedAspect.TICKET_URL,
-            "entry is paid at the door; an occasional advance-RSVP link is written into a blurb rather than published as a field"
+            "entry is paid at the door; an occasional advance-RSVP link is written into a blurb rather than published as a field",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing flags a night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing flags a night cancelled"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing flags a night sold out", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing flags a night cancelled", verified = "2026-09-20"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "a billing joined by `&` is split into two acts, the venue billing a duo and a pair of separate acts the same way"
+            "a billing joined by `&` is split into two acts, the venue billing a duo and a pair of separate acts the same way",
+            verified = "2026-09-23"
         ),
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored"
+            "entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored",
+            verified = "2026-09-20"
         ),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "House"
     )

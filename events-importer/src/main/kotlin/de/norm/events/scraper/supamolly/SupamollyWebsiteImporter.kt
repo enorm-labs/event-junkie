@@ -33,7 +33,7 @@ class SupamollyWebsiteImporter(
 val SUPAMOLLY_LIMITATIONS =
     VenueLimitations(
         EventSource.SUPAMOLLY,
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue runs no ticket shop"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-27"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue runs no ticket shop", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

@@ -38,8 +38,8 @@ class AlteMuenzeWebsiteImporter(
 val ALTE_MUENZE_LIMITATIONS =
     VenueLimitations(
         EventSource.ALTE_MUENZE,
-        AcceptedLimitation(LimitedAspect.PRICE, "most events set no cost"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the event link is often an artist's site or a social profile, not a shop"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the calendar bills no lineup; the acts are in the prose"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the tags mix styles with formats and topics")
+        AcceptedLimitation(LimitedAspect.PRICE, "most events set no cost", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the event link is often an artist's site or a social profile, not a shop", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the calendar bills no lineup; the acts are in the prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the tags mix styles with formats and topics", verified = "2026-10-17")
     )

@@ -65,5 +65,5 @@ class CassiopeiaWebsiteImporter(
 val CASSIOPEIA_LIMITATIONS =
     VenueLimitations(
         EventSource.CASSIOPEIA,
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure on its listing or its event pages")
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure on its listing or its event pages", verified = "2026-09-30")
     )

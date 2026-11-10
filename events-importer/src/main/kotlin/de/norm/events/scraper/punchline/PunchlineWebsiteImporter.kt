@@ -25,9 +25,9 @@ class PunchlineWebsiteImporter(
 val PUNCHLINE_LIMITATIONS =
     VenueLimitations(
         EventSource.PUNCHLINE,
-        AcceptedLimitation(LimitedAspect.IMAGE, "the date list carries no image"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the date list links no ticket shop; tickets sell on Ticketmaster"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the club publishes no price; Ticketmaster states it"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the date list names no genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the date list names no promoter")
+        AcceptedLimitation(LimitedAspect.IMAGE, "the date list carries no image", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the date list links no ticket shop; tickets sell on Ticketmaster", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the club publishes no price; Ticketmaster states it", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the date list names no genre", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the date list names no promoter", verified = "2026-10-03")
     )

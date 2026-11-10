@@ -44,10 +44,22 @@ class TheWallWebsiteImporter(
 val THE_WALL_LIMITATIONS =
     VenueLimitations(
         EventSource.THE_WALL,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "each producer states one time per show, doors for some and the start for others"),
-        AcceptedLimitation(LimitedAspect.PRICE, "most shows are pay-what-you-want, and a fixed price appears only in the prose"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "reservations run through the club's own Spotagig pages, which the event page is"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the showcases name no comedians, and a headliner appears only in the title"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the club produces most shows itself, and only a guest producer is named apart from it"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the club names no genre")
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "each producer states one time per show, doors for some and the start for others",
+            verified = "2026-10-03"
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "most shows are pay-what-you-want, and a fixed price appears only in the prose", verified = "2026-10-03"),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "reservations run through the club's own Spotagig pages, which the event page is",
+            verified = "2026-10-03"
+        ),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the showcases name no comedians, and a headliner appears only in the title", verified = "2026-10-13"),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "the club produces most shows itself, and only a guest producer is named apart from it",
+            verified = "2026-10-14"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the club names no genre", verified = "2026-10-13")
     )

@@ -29,15 +29,15 @@ class BeateUweWebsiteImporter(
 val BEATE_UWE_LIMITATIONS =
     VenueLimitations(
         EventSource.BEATE_UWE,
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the list prints a title and a lineup per night, no text about it"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; every night is a DJ night"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the site prints no end time"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the list carries no pictures"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a hosting collective is named only in the title"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site publishes no page per night, so every night points at the homepage")
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the list prints a title and a lineup per night, no text about it", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; every night is a DJ night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the site prints no end time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the list carries no pictures", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a hosting collective is named only in the title", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site publishes no page per night, so every night points at the homepage", verified = "2026-10-17")
     )

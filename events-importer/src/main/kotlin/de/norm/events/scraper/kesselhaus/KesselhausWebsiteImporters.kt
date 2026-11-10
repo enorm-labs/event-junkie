@@ -59,9 +59,17 @@ val KESSELHAUS_LIMITATIONS =
         sources = setOf(EventSource.KESSELHAUS, EventSource.MASCHINENHAUS),
         limitations =
             listOf(
-                AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar states one time per event; only a few event texts add an Einlass time"),
-                AcceptedLimitation(LimitedAspect.GENRE, "only some events carry a style topic; the others name a format such as festival or highlight"),
-                AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "most events list an online price and no box-office price"),
-                AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+                AcceptedLimitation(
+                    LimitedAspect.DOORS_TIME,
+                    "the calendar states one time per event; only a few event texts add an Einlass time",
+                    verified = "2026-10-08"
+                ),
+                AcceptedLimitation(
+                    LimitedAspect.GENRE,
+                    "only some events carry a style topic; the others name a format such as festival or highlight",
+                    verified = "2026-10-08"
+                ),
+                AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "most events list an online price and no box-office price", verified = "2026-10-13"),
+                AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
             )
     )

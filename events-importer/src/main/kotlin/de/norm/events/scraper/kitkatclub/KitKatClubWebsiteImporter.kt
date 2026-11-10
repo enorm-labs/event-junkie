@@ -28,11 +28,15 @@ class KitKatClubWebsiteImporter(
 val KITKATCLUB_LIMITATIONS =
     VenueLimitations(
         EventSource.KITKATCLUB,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme prints one opening time per night; only the weekend notes add a start after a warm-up"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the club prints no admission and refers to each night's organiser"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the programme rows carry no flyer"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the programme names each series but not the collective behind it"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "a night links tickets only where its notes carry a Resident Advisor URL"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page", verified = "2026-10-04"),
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "the programme prints one opening time per night; only the weekend notes add a start after a warm-up",
+            verified = "2026-10-04"
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "the club prints no admission and refers to each night's organiser", verified = "2026-10-04"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the programme rows carry no flyer", verified = "2026-10-04"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the programme names each series but not the collective behind it", verified = "2026-10-04"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "a night links tickets only where its notes carry a Resident Advisor URL", verified = "2026-10-04"),
         houseGenre = "Techno, House"
     )

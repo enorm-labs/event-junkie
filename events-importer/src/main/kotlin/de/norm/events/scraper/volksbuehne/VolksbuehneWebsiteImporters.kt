@@ -56,13 +56,14 @@ val VOLKSBUEHNE_LIMITATIONS =
             listOf(
                 AcceptedLimitation(
                     LimitedAspect.ARTISTS,
-                    "a staged work's lines name a director, an author or a cast alike, so only concerts and parties bill acts"
+                    "a staged work's lines name a director, an author or a cast alike, so only concerts and parties bill acts",
+                    verified = "2026-10-18"
                 ),
-                AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme gives one start time per performance"),
-                AcceptedLimitation(LimitedAspect.END_TIME, "the performance page's end time is a 23:00 placeholder on many pages"),
-                AcceptedLimitation(LimitedAspect.IMAGE, "many performance pages show no picture"),
-                AcceptedLimitation(LimitedAspect.GENRE, "the venue names a format such as concert or dance, never a style"),
-                AcceptedLimitation(LimitedAspect.PRICE, "neither the programme nor the performance page prints a price"),
-                AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue produces or presents every performance itself")
+                AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme gives one start time per performance", verified = "2026-10-18"),
+                AcceptedLimitation(LimitedAspect.END_TIME, "the performance page's end time is a 23:00 placeholder on many pages", verified = "2026-10-18"),
+                AcceptedLimitation(LimitedAspect.IMAGE, "many performance pages show no picture", verified = "2026-10-18"),
+                AcceptedLimitation(LimitedAspect.GENRE, "the venue names a format such as concert or dance, never a style", verified = "2026-10-18"),
+                AcceptedLimitation(LimitedAspect.PRICE, "neither the programme nor the performance page prints a price", verified = "2026-10-18"),
+                AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue produces or presents every performance itself", verified = "2026-10-18")
             )
     )

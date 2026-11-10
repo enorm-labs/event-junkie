@@ -46,9 +46,13 @@ class ScheinbarWebsiteImporter(
 val SCHEINBAR_LIMITATIONS =
     VenueLimitations(
         EventSource.SCHEINBAR,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme states one time per evening"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "tickets are reserved online and paid at the box office, at one price"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the house names no genre; an Open Stage night mixes comedy, magic, music and artistry"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house presents every evening itself"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme states one time per evening", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "tickets are reserved online and paid at the box office, at one price", verified = "2026-10-03"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the house names no genre; an Open Stage night mixes comedy, magic, music and artistry",
+            verified = "2026-10-03"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house presents every evening itself", verified = "2026-10-04"),
         houseLanguage = SpokenLanguage.GERMAN
     )

@@ -29,9 +29,21 @@ class ClashWebsiteImporter(
 val CLASH_LIMITATIONS =
     VenueLimitations(
         EventSource.CLASH,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404"),
-        AcceptedLimitation(LimitedAspect.GENRE, "only an occasional DJ night names its styles in the prose; every other music night takes the house's Punk"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the homepage listing is the whole source and names no promoter"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site has no category field; the type is inferred from the title, defaulting to a concert"),
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "only an occasional DJ night names its styles in the prose; every other music night takes the house's Punk",
+            verified = "2026-10-02"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the homepage listing is the whole source and names no promoter", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the site has no category field; the type is inferred from the title, defaulting to a concert",
+            verified = "2026-10-02"
+        ),
         houseGenre = "Punk"
     )

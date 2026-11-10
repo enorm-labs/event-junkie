@@ -66,11 +66,12 @@ parsed document` — #393 deleted it from 106 files). A defect we could repair i
 val <VENUE>_LIMITATIONS =
     VenueLimitations(
         EventSource.<VENUE>,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes only one time per night"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes only one time per night", verified = "<today>"),
     )
 ```
 
-One `AcceptedLimitation` per withheld thing, the reason a property of the _site_, lowercase, one sentence, no full stop. A venue that publishes everything
+One `AcceptedLimitation` per withheld thing, the reason a property of the _site_, lowercase, one sentence, no full stop. `verified` is the ISO date you saw
+the site withhold it — today, for a new importer. A venue that publishes everything
 declares `VenueLimitations(EventSource.<VENUE>)` — a statement, not an omission. `/data-quality-audit` reads these; a limitation left in prose is re-reported
 every run. A single-sound club that names no style declares it here as `houseGenre = "Techno"`, never as a `genre` constant in the scraper: the import fills
 it into every music event that names no genre of its own.

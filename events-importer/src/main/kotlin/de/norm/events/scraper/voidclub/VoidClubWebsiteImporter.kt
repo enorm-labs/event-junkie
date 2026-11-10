@@ -30,15 +30,20 @@ class VoidClubWebsiteImporter(
 val VOID_CLUB_LIMITATIONS =
     VenueLimitations(
         EventSource.VOID_CLUB,
-        AcceptedLimitation(LimitedAspect.START_TIME, "the venue publishes no times; every night stores a bare date"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no times; every night stores a bare date"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "the venue publishes no times; every night stores a bare date", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no times; every night stores a bare date", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-27"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page", verified = "2026-08-25"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the club states no category; `.void-event-genre` names the music and `.void-event-venue` the rooms in use, neither of which is a kind of event"
+            "the club states no category; `.void-event-genre` names the music and `.void-event-venue` the rooms in use, neither of which is a kind of event",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.IMAGE, "event cards carry no image; the hero slider shows other events than the listed nights"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title")
+        AcceptedLimitation(
+            LimitedAspect.IMAGE,
+            "event cards carry no image; the hero slider shows other events than the listed nights",
+            verified = "2026-10-13"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13")
     )

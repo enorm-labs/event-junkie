@@ -56,8 +56,8 @@ class ZebranoTheaterWebsiteImporter(
 val ZEBRANO_THEATER_LIMITATIONS =
     VenueLimitations(
         EventSource.ZEBRANO_THEATER,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme prints one time per evening"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the house sells one price, by e-mail reservation or through its ticket shop"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the programme names a category per evening, not a musical style"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house presents every evening itself")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme prints one time per evening", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the house sells one price, by e-mail reservation or through its ticket shop", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the programme names a category per evening, not a musical style", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house presents every evening itself", verified = "2026-10-16")
     )

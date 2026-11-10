@@ -46,14 +46,19 @@ class Zimmer16WebsiteImporter(
 val ZIMMER_16_LIMITATIONS =
     VenueLimitations(
         EventSource.ZIMMER_16,
-        AcceptedLimitation(LimitedAspect.PAGINATION, "the homepage shows the next 20 adult events, about four weeks"),
+        AcceptedLimitation(LimitedAspect.PAGINATION, "the homepage shows the next 20 adult events, about four weeks", verified = "2026-10-08"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the venue names no category, so a night without a format word is a concert, which mislabels a talk or a film night"
+            "the venue names no category, so a night without a format word is a concert, which mislabels a talk or a film night",
+            verified = "2026-10-08"
         ),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the site has no line-up field; a title with a tagline, an & or a bare programme name names nobody"),
-        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the cards or the event pages names a style"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "each event states its start and end, no doors time"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "tickets are reserved on YesTicket and paid at the door"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the site has no line-up field; a title with a tagline, an & or a bare programme name names nobody",
+            verified = "2026-10-13"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the cards or the event pages names a style", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "each event states its start and end, no doors time", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "tickets are reserved on YesTicket and paid at the door", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

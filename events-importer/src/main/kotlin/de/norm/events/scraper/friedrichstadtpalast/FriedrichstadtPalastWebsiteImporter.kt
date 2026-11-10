@@ -34,12 +34,12 @@ class FriedrichstadtPalastWebsiteImporter(
 val FRIEDRICHSTADTPALAST_LIMITATIONS =
     VenueLimitations(
         EventSource.FRIEDRICHSTADTPALAST,
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a tribute evening is billed by its genre and names none of its performers"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "each ticket button prints one start time"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the page prints no end time"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the page names no style per show"),
-        AcceptedLimitation(LimitedAspect.PRICE, "prices sit with each outside promoter's ticket shop, not on the page"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the page has no status field, so a cancelled show can only disappear"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a guest show has no page of its own, only an anchor on the list")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a tribute evening is billed by its genre and names none of its performers", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "each ticket button prints one start time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the page prints no end time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the page names no style per show", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "prices sit with each outside promoter's ticket shop, not on the page", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page states no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the page has no status field, so a cancelled show can only disappear", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a guest show has no page of its own, only an anchor on the list", verified = "2026-10-17")
     )
