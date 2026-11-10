@@ -11,11 +11,11 @@ import java.time.LocalDate
  * the median of its own share over the [BASELINE_DAYS] days before today. Nobody maintains a
  * baseline, and a fix that lowers a share lowers the baseline a week later on its own.
  *
- * **A median, not a mean or yesterday's value.** One bad day in the window does not move a median,
- * so a regression that is fixed the next morning does not also flag the day after the fix as normal.
+ * **A median, not a mean or yesterday's value.** One bad day in the window does not move a median.
  *
- * Three guards keep the gate from firing on noise:
+ * Four guards keep the gate from firing on noise:
  * - [MIN_EVENTS]: a source with five events moves twenty points when one event changes.
+ * - [MIN_EXCESS_EVENTS]: at 13 events two new gaps pass the points gate, and nothing was lost (#4794).
  * - [MIN_BASELINE_DAYS]: the median of one or two days is that day, not a baseline. A new source
  *   is therefore not judged in its first three days.
  * - [MAX_WORSENING_POINTS]: a share measured in percentage points, so the gate reads the same for a
@@ -47,6 +47,12 @@ object DataQualityRegressionCheck {
     /** A rise of more than this many percentage points over the baseline is a regression. */
     const val MAX_WORSENING_POINTS = 10.0
 
+    /**
+     * The least number of affected events above what the median share implies for today's event count.
+     * A share must pass this and [MAX_WORSENING_POINTS] both to regress.
+     */
+    const val MIN_EXCESS_EVENTS = 3.0
+
     /** The snapshot series of `flaggedAtImport` without the events flagged only for review. */
     const val FLAGGED_AT_IMPORT_KEPT_OUT = "flaggedAtImportKeptOut"
 
@@ -65,6 +71,9 @@ object DataQualityRegressionCheck {
     const val PRICE_WINDOW_DAYS = 30L
 
     private const val PERCENT = 100.0
+
+    /** Absorbs the rounding of a share times a count, so exactly [MIN_EXCESS_EVENTS] passes. */
+    private const val EPSILON = 1e-9
 
     /**
      * The declared aspect that takes a metric out of the gate. Only the whole `PRICE` aspect counts:
@@ -108,7 +117,8 @@ object DataQualityRegressionCheck {
      *
      * [baselinePct] is `null` when the source had too few days of history or too few events today to
      * be judged; [regressed] is then false. [limitationAccepted] is true when the source declares the
-     * metric's aspect; the share can then get [worse] without being [regressed]. [windowDays] is set
+     * metric's aspect; the share can then get [worse] without being [regressed]. A share that is [worse]
+     * by fewer than [MIN_EXCESS_EVENTS] [excessEvents] is not [regressed] either. [windowDays] is set
      * when the share counts only the events of that many days ahead, and [totalEvents] then counts them alone.
      */
     data class Verdict(
@@ -123,8 +133,16 @@ object DataQualityRegressionCheck {
         val worse: Boolean
             get() = baselinePct != null && todayPct - baselinePct > MAX_WORSENING_POINTS
 
+        /** Today's affected events less the number the baseline share implies for [totalEvents]; `null` when not judged. */
+        val excessEvents: Double?
+            get() = baselinePct?.let { (todayPct - it) * totalEvents / PERCENT }
+
+        /** True when the share is [worse] by at least [MIN_EXCESS_EVENTS] events. */
+        val enoughEvents: Boolean
+            get() = (excessEvents ?: 0.0) >= MIN_EXCESS_EVENTS - EPSILON
+
         val regressed: Boolean
-            get() = worse && !limitationAccepted
+            get() = worse && enoughEvents && !limitationAccepted
     }
 
     /** The first day of the baseline window for [today]. The last day is the day before [today]. */

@@ -712,7 +712,8 @@ rule(
 # Pillar 2 of `docs/DATA_QUALITY_STRATEGY.md`. The importer's 03:00 snapshot compares
 # each source's `QualityIssue` shares with their median over the seven days before, in
 # `data_quality_snapshot`, and sets `data_quality_regression{source,metric}` to 1 for a
-# share more than ten points worse on a source with at least ten events
+# share more than ten points worse on a source with at least ten events, when the
+# share also counts at least three more events than the median implies (#4794)
 # (`DataQualityRegressionCheck`). `missingPrice` is judged over the events of the next
 # 30 days only, and its ten-event minimum counts those (#4420). The comparison happens in the importer because the
 # baseline is the table; PromQL would need a week of gauge history, which a restart
@@ -729,7 +730,8 @@ rule(
 rule(
     "ej-data-quality-regression",
     "A source's data quality got worse overnight: one of its `QualityIssue` shares is more than "
-    "ten points above its own 7-day median, on a source with at least ten events. A scraper "
+    "ten points above its own 7-day median, and at least three events more than that median "
+    "implies, on a source with at least ten events. A scraper "
     "that lost a field or a normalizer change is the usual cause. `flaggedAtImport` counts "
     "only the flags that kept a value out of an event (SLUGLESS_ARTIST, NON_ARTIST_NAME, "
     "HELD_BACK_PROMOTER_NAME, GENRE_EQUALS_TITLE, NON_GENRE_TOKEN), not the review flag "

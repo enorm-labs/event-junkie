@@ -361,6 +361,25 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
         }
 
     @Test
+    fun `two newly unpriced nights at a small venue get an INFO line and no alert`(): Unit =
+        runBlocking {
+            // Orangerie Neukölln on 2026-11-10: two of 13 nights in the next 30 days printed no price (#4794).
+            seedSisyphos()
+            seedSisyphosEvents("near", firstDay = 1, count = 11, priced = true)
+            seedSisyphosPriceHistory()
+            seedSisyphosEvents("unpriced", firstDay = 12, count = 2, priced = false)
+            val registry = SimpleMeterRegistry()
+
+            val lines = captureLogs { logger(DataQualityMetrics(registry)).snapshot() }
+
+            regressionGauge(registry, "sisyphos", QualityIssue.MISSING_PRICE.key) shouldBe 0.0
+            lines.none { it.level == ch.qos.logback.classic.Level.WARN } shouldBe true
+            lines.single { it.formattedMessage.contains("not a regression") }.formattedMessage shouldBe
+                "Data quality got worse by 2.0 events over the median, fewer than 3, not a regression: " +
+                "missingPrice of sisyphos is at 15.4% against a 7-day median of 0.0% (13 events in the next 30 days)"
+        }
+
+    @Test
     fun `the window takes today to the 29th day ahead, by start date, whatever the status`(): Unit =
         runBlocking {
             seedSisyphos()

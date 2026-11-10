@@ -228,7 +228,9 @@ they are excluded rather than counted as unreviewed.
 - **Regression gate** ([#2604](https://github.com/enorm-labs/event-junkie/issues/2604)). After the 03:00 snapshot,
   `DataQualityRegressionCheck` compares the share of each `QualityIssue` per source with its median over the seven
   days before, from `data_quality_snapshot`. The check needs at least ten events and three days of history. A share more
-  than ten points worse logs a WARN and sets `data_quality_regression{source,metric}` to 1. The
+  than ten points worse logs a WARN and sets `data_quality_regression{source,metric}` to 1. The share must also count
+  at least three more events than the median share gives for today's events. At 13 events, two new gaps pass the ten
+  points, so the check writes an INFO line for them and no WARN (#4794). The
   `ej-data-quality-regression` alert fires on it. At start, the importer sets the gauge again from today's stored rows and
   logs no WARN (#3223). Before the 03:00 snapshot, a restart leaves the gauge empty until 03:00. For `flaggedAtImport`, the check counts only the flags that kept a
   value out of an event. A review flag such as `UNCERTAIN_PARTY_FEATURE` removes nothing, so the check ignores it. The

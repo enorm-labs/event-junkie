@@ -3,11 +3,12 @@ package de.norm.events.dataquality
 import de.norm.events.importing.QualityFlagKind
 import de.norm.events.scraper.LimitedAspect
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-/** The Pillar 2 gate's arithmetic (#2604), without a database: shares, the median, and the three guards. */
+/** The Pillar 2 gate's arithmetic (#2604), without a database: shares, the median, and the four guards. */
 class DataQualityRegressionCheckTest {
     private val today = LocalDate.of(2026, 10, 9)
     private val genre = QualityIssue.MISSING_GENRE.key
@@ -86,6 +87,52 @@ class DataQualityRegressionCheckTest {
     @Test
     fun `a source with exactly ten events is judged`() {
         DataQualityRegressionCheck.check(listOf(row(0, count = 5, total = 10)), week(0, 0, 0)).single().regressed shouldBe true
+    }
+
+    @Test
+    fun `two newly unpriced nights of thirteen are not a regression`() {
+        // Orangerie Neukölln on 2026-11-10: 15.4 % against a median of 0 %, but only two events (#4794).
+        val today = listOf(row(0, count = 2, total = 13, metric = priceUpcoming))
+        val history = (1L..7L).map { row(it, count = 0, total = 13, metric = priceUpcoming) }
+
+        val verdict = DataQualityRegressionCheck.check(today, history).single()
+
+        verdict.worse shouldBe true
+        verdict.excessEvents shouldBe (2.0 plusOrMinus 1e-9)
+        verdict.regressed shouldBe false
+    }
+
+    @Test
+    fun `two more unpriced nights against a median above zero are not a regression either`() {
+        // The same night on staging: a median of 3.8 % implies half an event of 13.
+        val today = listOf(row(0, count = 2, total = 13, metric = priceUpcoming))
+        val history = (1L..7L).map { row(it, count = 1, total = 26, metric = priceUpcoming) }
+
+        val verdict = DataQualityRegressionCheck.check(today, history).single()
+
+        verdict.worse shouldBe true
+        verdict.regressed shouldBe false
+    }
+
+    @Test
+    fun `a scraper that loses most prices of a small venue still regresses`() {
+        val today = listOf(row(0, count = 10, total = 13, metric = priceUpcoming))
+        val history = (1L..7L).map { row(it, count = 0, total = 13, metric = priceUpcoming) }
+
+        DataQualityRegressionCheck.check(today, history).single().regressed shouldBe true
+    }
+
+    @Test
+    fun `exactly three events over the median share is a regression`() {
+        // 1 of 20 implies one event today; four is three more and fifteen points.
+        DataQualityRegressionCheck.check(listOf(row(0, count = 4, total = 20)), (1L..3L).map { row(it, 1, total = 20) }).single().regressed shouldBe
+            true
+        // Three of 25 against none: twelve points and exactly three events.
+        DataQualityRegressionCheck.check(listOf(row(0, count = 3, total = 25)), (1L..3L).map { row(it, 0, total = 25) }).single().regressed shouldBe
+            true
+        // Two of 15 against none: thirteen points but two events.
+        DataQualityRegressionCheck.check(listOf(row(0, count = 2, total = 15)), (1L..3L).map { row(it, 0, total = 15) }).single().regressed shouldBe
+            false
     }
 
     @Test
