@@ -5,6 +5,7 @@ import type {
   EventClickInfo,
   EventDisplayInfo,
   EventInput,
+  EventTextInfo,
   MoreLinkInfo,
   MountInfo,
 } from '@fullcalendar/vue3'
@@ -80,16 +81,25 @@ function handleEventClick(arg: EventClickInfo) {
  * FullCalendar's own recommendation; shared with EventCard via {@link eventLabel}.
  */
 function handleEventDidMount(arg: MountInfo<EventDisplayInfo>) {
-  arg.el.title = eventLabel(arg.event.title, arg.event.extendedProps.venue as string | undefined)
+  const label = eventLabel(arg.event.title, arg.event.extendedProps.venue as string | undefined)
+  // The `~` and the italics are drawn in CSS; the hint says it in words, as EventCard's `title` does.
+  const estimated = arg.event.extendedProps.estimated === true
+  arg.el.title = estimated ? `${label}\n${t('events.card.assumedHint')}` : label
+  if (estimated) appendSrOnly(arg.el, t('events.card.assumedHint'))
   // The pulse below is colour and motion only; the same words EventCard puts behind its dot make
   // the mark exist for a screen reader (WCAG 1.4.1) and give the e2e suite a handle.
-  if (arg.el.classList.contains('fc-event-live')) {
-    const label = document.createElement('span')
-    label.className = 'sr-only'
-    label.textContent = t('events.card.onNow')
-    arg.el.append(label)
-  }
+  if (arg.el.classList.contains('fc-event-live')) appendSrOnly(arg.el, t('events.card.onNow'))
 }
+
+function appendSrOnly(el: HTMLElement, text: string) {
+  const span = document.createElement('span')
+  span.className = 'sr-only'
+  span.textContent = text
+  el.append(span)
+}
+
+const estimatedTimeClass = (info: EventTextInfo) =>
+  info.event.extendedProps.estimated === true ? 'ej-estimated' : undefined
 
 /** Tab reaches "+48 more" without its cell, so the name carries the day too (#4746). */
 function handleMoreLinkDidMount(arg: MountInfo<MoreLinkInfo>) {
@@ -184,7 +194,11 @@ const options = computed<CalendarOptions>(() => ({
   eventOrder: 'multiDay,start,title',
   // Hooks for the type-scale overrides below; v7 hashes its own class names.
   eventClass: 'ej-event',
+  eventTimeClass: estimatedTimeClass,
+  listItemEventTimeClass: estimatedTimeClass,
   moreLinkClass: 'ej-event',
+  // Every event of one day has a time, stated or estimated, so an untimed row is a run's day, timed or not.
+  allDayText: t('calendar.ongoing'),
   toolbarTitleClass: 'ej-title',
   // A club night ending 06:00 is one day's entry, not a two-day bar; a run still on at 09:00 spans.
   nextDayThreshold: '09:00',
@@ -275,6 +289,15 @@ const options = computed<CalendarOptions>(() => ({
 .event-calendar :deep(.ej-title) {
   font-size: var(--text-section);
   line-height: var(--text-section--line-height);
+}
+
+/* An estimated start, written as the cards write it: `~20:00`, in italics. */
+.event-calendar :deep(.ej-estimated) {
+  font-style: italic;
+}
+
+.event-calendar :deep(.ej-estimated)::before {
+  content: '~';
 }
 
 /*
