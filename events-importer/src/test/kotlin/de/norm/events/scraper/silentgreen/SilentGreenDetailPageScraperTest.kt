@@ -128,6 +128,98 @@ class SilentGreenDetailPageScraperTest {
     }
 
     @Test
+    fun `scrape reads daily hours written with a weekday and a numeric date`() {
+        // "Sa, 5.12.: 12:00–20:00" and "So, 6.12.: 12:00–18:00", no "Uhr" (#4819).
+        val expected =
+            mapOf(
+                LocalDate.of(2026, 12, 5) to SilentGreenOpeningHours(LocalTime.NOON, LocalTime.of(20, 0)),
+                LocalDate.of(2026, 12, 6) to SilentGreenOpeningHours(LocalTime.NOON, LocalTime.of(18, 0))
+            )
+
+        parse("silentgreen-detail-winterfest.html").shouldNotBeNull().dailyHours shouldBe expected
+        parse("silentgreen-detail-sonic-matters.html").shouldNotBeNull().dailyHours shouldBe expected
+    }
+
+    @Test
+    fun `scrape reads a day's Beginn as its start and Einlass as its doors time`() {
+        val details = parse("silentgreen-detail-frohes-festival.html").shouldNotBeNull()
+
+        details.startTime.shouldBeNull()
+        details.dailyHours shouldBe
+            mapOf(
+                LocalDate.of(2026, 11, 27) to SilentGreenOpeningHours(LocalTime.of(15, 0), end = null, doors = LocalTime.of(14, 30)),
+                LocalDate.of(2026, 11, 28) to SilentGreenOpeningHours(LocalTime.of(14, 0), end = null, doors = LocalTime.of(13, 30))
+            )
+    }
+
+    @Test
+    fun `scrape reads numeric daily hours over midnight and over the year end`() {
+        val document =
+            Jsoup.parse(
+                """<div class="news-detail">
+                  <span class="event-detail-date-begin">Do. 31.12.2026 -</span>
+                  <div class="ce-bodytext"><p><strong>Do, 31.12.: 22:00–06:00</strong><br>
+                  <strong>Freitag, 1.1.: 14-24 Uhr</strong><br>
+                  <strong>2. Januar Einlass: 19 Uhr / Beginn: 20:15 Uhr</strong></p></div></div>""",
+                "https://www.silent-green.net/programm/detail/x"
+            )
+
+        scraper.scrape(document).shouldNotBeNull().dailyHours shouldBe
+            mapOf(
+                LocalDate.of(2026, 12, 31) to SilentGreenOpeningHours(LocalTime.of(22, 0), LocalTime.of(6, 0)),
+                LocalDate.of(2027, 1, 1) to SilentGreenOpeningHours(LocalTime.of(14, 0), LocalTime.MIDNIGHT),
+                LocalDate.of(2027, 1, 2) to SilentGreenOpeningHours(LocalTime.of(20, 15), end = null, doors = LocalTime.of(19, 0))
+            )
+    }
+
+    @Test
+    fun `scrape reads no daily hours from a date without a colon or an Einlass line`() {
+        val document =
+            Jsoup.parse(
+                """<div class="news-detail">
+                  <span class="event-detail-date-begin">Sa. 05.12.2026 -</span>
+                  <div class="ce-bodytext"><p>Am Sa, 5.12. 12–20 Uhr öffnet der Markt.</p>
+                  <p><strong>5. Dezember</strong><br><strong>Beginn: 15 Uhr</strong></p></div></div>""",
+                "https://www.silent-green.net/programm/detail/x"
+            )
+
+        scraper.scrape(document).shouldNotBeNull().dailyHours shouldBe emptyMap()
+    }
+
+    @Test
+    fun `applyTo fills a day's start and doors from an Einlass line and stores no end`() {
+        val details =
+            SilentGreenEventDetails(
+                dailyHours =
+                    mapOf(LocalDate.of(2026, 11, 27) to SilentGreenOpeningHours(LocalTime.of(15, 0), end = null, doors = LocalTime.of(14, 30)))
+            )
+        val title = "Frohes Festival – das Festival für Literatur & Politik, mit Lesungen, Paneltalks und Podcasts live in der Betonhalle"
+        val day =
+            ScrapedEvent(
+                title = title,
+                eventType = "FESTIVAL",
+                eventDate = LocalDate.of(2026, 11, 27),
+                sourceUrl = "https://www.silent-green.net/programm/detail/frohes-festival-das-festival-fuer-literatur-politik-1",
+                sourceId = "silent_green:2026-11-27-frohes-festival-das-festival-fuer-literatur-politik-1"
+            )
+
+        listOf("SCHEDULED", "CANCELLED", "POSTPONED", "RELOCATED").forEach { status ->
+            val merged = details.applyTo(day.copy(status = status))
+            withClue(status) {
+                merged.title shouldBe title
+                merged.status shouldBe status
+                merged.startTime shouldBe LocalTime.of(15, 0)
+                merged.doorsTime shouldBe LocalTime.of(14, 30)
+                merged.endDate.shouldBeNull()
+                merged.endTime.shouldBeNull()
+            }
+        }
+
+        // The page's own doors time wins over the day's.
+        details.copy(doorsTime = LocalTime.of(14, 0)).applyTo(day).doorsTime shouldBe LocalTime.of(14, 0)
+    }
+
+    @Test
     fun `applyTo fills a festival day from its daily hours, ending past midnight on the next day`() {
         val details =
             SilentGreenEventDetails(
