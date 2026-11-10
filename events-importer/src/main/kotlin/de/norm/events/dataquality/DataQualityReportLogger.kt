@@ -194,7 +194,8 @@ class DataQualityReportLogger(
      * Runs after the write and the summary line, so a failure here still leaves today's rows in the
      * table, and inside the same catch, so it cannot stop the scheduler either. One WARN per regressed source and metric:
      * the alert says that something regressed, and this line says which source, which metric and by
-     * how much. A share that got worse on a declared limitation gets an INFO line and no alert (#3195).
+     * how much. A share that got worse on a declared limitation gets an INFO line and no alert (#3195), and so
+     * does one that got worse by fewer than [DataQualityRegressionCheck.MIN_EXCESS_EVENTS] events (#4794).
      * The `missingPrice` line counts only the events of the next [DataQualityRegressionCheck.PRICE_WINDOW_DAYS] days, and says so (#4420).
      */
     private suspend fun checkForRegressions(
@@ -208,10 +209,19 @@ class DataQualityReportLogger(
                     "against a 7-day median of ${pct(verdict.baselinePct ?: 0.0)}% ($events)"
             logger.at(if (verdict.regressed) Level.WARN else Level.INFO) {
                 message =
-                    if (verdict.regressed) {
-                        "Data quality regressed: $numbers"
-                    } else {
-                        "Data quality got worse on an accepted limitation, not a regression: $numbers"
+                    when {
+                        verdict.regressed -> {
+                            "Data quality regressed: $numbers"
+                        }
+
+                        verdict.limitationAccepted -> {
+                            "Data quality got worse on an accepted limitation, not a regression: $numbers"
+                        }
+
+                        else -> {
+                            "Data quality got worse by ${pct(verdict.excessEvents ?: 0.0)} events over the median, " +
+                                "fewer than ${DataQualityRegressionCheck.MIN_EXCESS_EVENTS.toInt()}, not a regression: $numbers"
+                        }
                     }
                 payload = mapOf(LogContext.SOURCE_SLUG to verdict.source)
             }
