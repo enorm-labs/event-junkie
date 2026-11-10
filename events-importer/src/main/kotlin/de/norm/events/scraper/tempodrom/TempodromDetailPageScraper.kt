@@ -8,6 +8,8 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.isNonArtistName
 import org.jsoup.nodes.Document
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Pure HTML parser for a Tempodrom `/event/<slug>/` page, read for what the listing's JSON-LD
@@ -29,21 +31,46 @@ import org.jsoup.nodes.Document
  * ("NIGHTS ON BROADWAY: Anniversary Tour '27" / "60 Jahre BEE GEES - 20 Jahre BEE GEES Tribute"). The blurb then names the band:
  * "NIGHT FEVER gilt als die erfolgreichste … BEE GEES Tribute-Band", so that band is billed instead ([addTributeBand], #3828).
  *
- * A show moved to another house carries `<a class="btn big-btn relocated">Veranstaltung wurde
- * verlegt</a>` where the ticket button would be. Its JSON-LD says `EventCancelled` beside "verlegt ins
- * Huxley's neue Welt", so the listing reads it `CANCELLED`. The badge is the venue's own word for this
- * page, so it outranks the JSON-LD: the row becomes `RELOCATED`, and the subtitle names where it went
- * ([addRelocation], #3576).
+ * A show moved to another house carries `<a class="btn big-btn relocated">Veranstaltung wurde verlegt</a>` where the ticket button would be.
+ * Its JSON-LD says `EventCancelled` beside "verlegt ins Huxley's neue Welt", so the listing reads it `CANCELLED`. The badge is the venue's own
+ * word for this page, so it outranks the JSON-LD: the row becomes `RELOCATED`, and the subtitle names where it went ([addRelocation], #3576).
+ *
+ * A run (Roncalli, Holiday on Ice) prints a date range and no clock in the JSON-LD, and its Beschreibung lists every show in a table,
+ * `Do. | 17.12.2026 | 18:00 Uhr`. The row starts at the first show on its first day ([addScheduleStart], #4821).
  *
  * @see TempodromOverviewPageScraper for the listing parser, which supplies every other field.
  * @see <a href="https://www.tempodrom.de/event/jill_scott_2026-10-06_20/">A Tempodrom event page</a>
  */
 class TempodromDetailPageScraper {
-    /** [event] with every field the page adds: the promoter, the comedy type, a tribute band, then a move. */
+    /** [event] with every field the page adds: the promoter, the comedy type, a tribute band, a run's start, then a move. */
     fun enrich(
         event: ScrapedEvent,
         document: Document
-    ): ScrapedEvent = addRelocation(addTributeBand(addComedyType(addPromoter(event, document), document), document), document)
+    ): ScrapedEvent =
+        listOf(::addPromoter, ::addComedyType, ::addTributeBand, ::addScheduleStart, ::addRelocation)
+            .fold(event) { enriched, step -> step(enriched, document) }
+
+    /**
+     * [event] starting at the first show the Beschreibung's schedule lists on its [ScrapedEvent.eventDate], when the listing
+     * gave no clock. A day with two shows, `15:00 + 19:00 Uhr`, starts at the first. [event] unchanged when it has a start,
+     * or when the schedule lists no show on that day.
+     */
+    fun addScheduleStart(
+        event: ScrapedEvent,
+        document: Document
+    ): ScrapedEvent {
+        if (event.startTime != null) return event
+        val day = event.eventDate.format(SCHEDULE_DATE)
+        val clock =
+            description(document)
+                ?.let(SCHEDULE_ENTRY::findAll)
+                ?.firstOrNull { it.groups["day"]?.value == day }
+                ?.groups
+                ?.get("clock")
+                ?.value
+                ?: return event
+        return event.copy(startTime = LocalTime.parse(clock, CLOCK))
+    }
 
     /**
      * [event] billing the band the Beschreibung names, when the format line bills a tribute or a show of another artist's
@@ -152,6 +179,18 @@ class TempodromDetailPageScraper {
          * Capitals only, so a sentence's opening words are never part of the name.
          */
         val TRIBUTE_BAND = Regex("""\b(\p{Lu}[\p{Lu}\p{N}&'’-]*(?:\s+[\p{Lu}\p{N}&'’-]+)*)\s+gilt\s+als\b[^.]*?\b(?i:tribute[\s-]?band)\b""")
+
+        /** How the schedule prints a day: `17.12.2026`. */
+        val SCHEDULE_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+
+        /** A schedule clock: `18:00`, `9:30`. */
+        val CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
+
+        /**
+         * A schedule day and its first clock, as a table row reads in text: `Do. 17.12.2026 18:00 Uhr`, `Freitag 26.02.2027 16:00 Uhr + 19:30 Uhr`.
+         * The clock must be followed by `Uhr` or `+`, so a date in running prose that a number follows is no show.
+         */
+        val SCHEDULE_ENTRY = Regex("""\b(?<day>\d{2}\.\d{2}\.\d{4})[\s\u00A0]+(?<clock>(?:[01]?\d|2[0-3]):[0-5]\d)[\s\u00A0]*(?:Uhr\b|\+)""")
 
         /** The label in front of the promoter's name. */
         val PROMOTER_LABEL = Regex("""^\s*Veranstalter(?:\*in)?\s*:?\s*""", RegexOption.IGNORE_CASE)

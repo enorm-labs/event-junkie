@@ -9,6 +9,7 @@ import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalTime
 
 /** Unit tests for [TempodromDetailPageScraper], against saved event pages. */
 class TempodromDetailPageScraperTest {
@@ -47,6 +48,26 @@ class TempodromDetailPageScraperTest {
     private val comedyPromoterHtml = "tempodrom/tempodrom-detail-comedy-promoter-no-cue.html"
     private val carrackHtml = "tempodrom/tempodrom-detail-paul-carrack-relocated.html"
     private val tributeHtml = "tempodrom/tempodrom-detail-tribute-band-in-blurb.html"
+    private val roncalliHtml = "tempodrom/tempodrom-detail-roncalli-schedule-table.html"
+    private val holidayOnIceHtml = "tempodrom/tempodrom-detail-holiday-on-ice-schedule.html"
+
+    private val roncalliRow =
+        listingRow.copy(
+            title = "Roncalli Weihnachtscircus 2026/2027 - 22. Original Roncalli Weihnachtscircus im Tempodrom Berlin",
+            eventDate = LocalDate.of(2026, 12, 17),
+            endDate = LocalDate.of(2027, 1, 3),
+            sourceUrl = "https://www.tempodrom.de/event/roncalli_weihnachtscircus_2026_2027_2026-12-17_2027-01-03_00/",
+            sourceId = "tempodrom:roncalli_weihnachtscircus_2026_2027_2026-12-17_2027-01-03_00"
+        )
+
+    private val holidayOnIceRow =
+        listingRow.copy(
+            title = "Holiday on Ice",
+            eventDate = LocalDate.of(2027, 2, 26),
+            endDate = LocalDate.of(2027, 3, 14),
+            sourceUrl = "https://www.tempodrom.de/event/holiday_on_ice_2027-02-26_2027-03-14_00/",
+            sourceId = "tempodrom:holiday_on_ice_2027-02-26_2027-03-14_00"
+        )
 
     @Test
     fun `reads the promoter and its website from the Veranstalter credit`() {
@@ -288,6 +309,82 @@ class TempodromDetailPageScraperTest {
             )
 
         event.artists.map { it.name } shouldBe listOf("The 4 Brothers & Sister's Special Guest Band")
+    }
+
+    @Test
+    fun `starts a run at the first show its schedule table lists on the run's first day`() {
+        // Roncalli's table: `Do. | 17.12.2026 | 18:00 Uhr` (#4821).
+        val event = scraper.enrich(roncalliRow, fixtureDocument(roncalliHtml, roncalliRow.sourceUrl))
+
+        event.startTime shouldBe LocalTime.of(18, 0)
+        event.eventDate shouldBe LocalDate.of(2026, 12, 17)
+        event.endDate shouldBe LocalDate.of(2027, 1, 3)
+        event.title shouldBe roncalliRow.title
+        event.status shouldBe "SCHEDULED"
+    }
+
+    @Test
+    fun `starts a run at the first of the shows on its first day`() {
+        // Holiday on Ice: `Freitag | 26.02.2027 | 16:00 Uhr + 19:30 Uhr`.
+        val event = scraper.enrich(holidayOnIceRow, fixtureDocument(holidayOnIceHtml, holidayOnIceRow.sourceUrl))
+
+        event.startTime shouldBe LocalTime.of(16, 0)
+    }
+
+    @Test
+    fun `reads the first clock of a two-show day and a day after the year end`() {
+        val page = fixtureDocument(roncalliHtml, roncalliRow.sourceUrl)
+
+        mapOf(
+            LocalDate.of(2026, 12, 18) to LocalTime.of(15, 0),
+            LocalDate.of(2026, 12, 22) to LocalTime.of(15, 0),
+            LocalDate.of(2027, 1, 1) to LocalTime.of(13, 0)
+        ).forEach { (day, start) ->
+            scraper.addScheduleStart(roncalliRow.copy(eventDate = day), page).startTime shouldBe start
+        }
+    }
+
+    @Test
+    fun `reads the schedule as prose`() {
+        val page = descriptionPage("Spielplan 2027 mit Beginnzeiten Freitag 26.02.2027 16:00 Uhr + 19:30 Uhr Samstag 27.02.2027 13:00 Uhr + 16:30 Uhr")
+
+        scraper.addScheduleStart(holidayOnIceRow, page).startTime shouldBe LocalTime.of(16, 0)
+        scraper.addScheduleStart(holidayOnIceRow.copy(eventDate = LocalDate.of(2027, 2, 27)), page).startTime shouldBe LocalTime.of(13, 0)
+    }
+
+    @Test
+    fun `stores no start when the Beschreibung lists no show on the event's day`() {
+        val dayBefore = roncalliRow.copy(eventDate = LocalDate.of(2026, 12, 16))
+        scraper.addScheduleStart(dayBefore, fixtureDocument(roncalliHtml, roncalliRow.sourceUrl)) shouldBeSameInstanceAs dayBefore
+        listOf(
+            fixtureDocument(trinityHtml, pageUrl),
+            descriptionPage("Vorverkauf ab 17.12.2026, 10 Uhr. Einlass am 17.12.2026 ab 2 Stunden vorher."),
+            Jsoup.parse("<div class=copy>Event teilen</div><table><tr><td>Do.<td>17.12.2026<td>18:00 Uhr</table>")
+        ).forEach { page ->
+            scraper.addScheduleStart(roncalliRow, page) shouldBeSameInstanceAs roncalliRow
+        }
+        scraper.enrich(listingRow, fixtureDocument(trinityHtml, pageUrl)).startTime shouldBe null
+    }
+
+    @Test
+    fun `keeps a start the listing stated`() {
+        val row = roncalliRow.copy(startTime = LocalTime.of(19, 30))
+
+        scraper.addScheduleStart(row, fixtureDocument(roncalliHtml, roncalliRow.sourceUrl)) shouldBeSameInstanceAs row
+    }
+
+    @Test
+    fun `keeps every status beside a run's start, and a move outranks the listing's`() {
+        val schedule = """<button class="acc-button" aria-controls="event-txt-1">Beschreibung</button><div id="event-txt-1">Do. 17.12.2026 18:00 Uhr</div>"""
+        listOf("SCHEDULED", "CANCELLED", "POSTPONED", "RELOCATED").forEach { status ->
+            val event = scraper.enrich(roncalliRow.copy(status = status), Jsoup.parse(schedule))
+
+            event.status shouldBe status
+            event.startTime shouldBe LocalTime.of(18, 0)
+        }
+        val moved = scraper.enrich(roncalliRow.copy(status = "CANCELLED"), Jsoup.parse("""$schedule<a class="btn big-btn relocated">verlegt</a>"""))
+        moved.status shouldBe "RELOCATED"
+        moved.startTime shouldBe LocalTime.of(18, 0)
     }
 
     @Test
