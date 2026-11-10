@@ -12,12 +12,10 @@ import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.splitSegmentOnConjunctions
-import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -34,10 +32,10 @@ import java.time.MonthDay
  * blocks (`t001`). Each block holds a year-less `FRI 23 OCTOBER 9PM` line, a title of one or two
  * lines and a line-up text. The year comes from the English weekday, or the nearest date without one.
  *
- * Line-up lines are split into DJs, without a leading `LINE UP:` label. A line with "by" credits an installation or a curator, and a
- * ticket line is a notice: both become the description. A credit line still bills the names after
- * `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`, up to the end of that sentence, and the names between
- * `JOINED BY` and `ON THE DECKS`. A title line `INVITES <act>` bills that act first. A night with
+ * Line-up lines are split into DJs, without a leading `LINE UP:` label or the prose before `… AND DJS`. A line
+ * with "by" credits an installation or a curator, and a ticket line is a notice: both become the description.
+ * A credit line still bills the names after `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`, up to the end of that
+ * sentence, and the names between `JOINED BY` and `ON THE DECKS`. A title line `INVITES <act>` bills that act first. A night with
  * only credits is an exhibition. A note the page's editor forgot in the line-up bills nobody.
  *
  * Accepted limitation: `and` always splits a set list, so an act named with one (`Sun and Moon`)
@@ -89,7 +87,7 @@ class StudioIiiiOverviewPageScraper(
                 .filterNot { SAVE_THE_DATE.matches(it) }
         val (notes, lineup) = text.partition { CREDIT.containsMatchIn(it) || NOTICE.containsMatchIn(it) }
         val invited = lineupActs(titleLines.mapNotNull { INVITES.matchEntire(it.trim())?.groupValues?.get(1) })
-        val djs = (invited + lineupActs(lineup) + notes.flatMap(::setActs)).distinctBy { it.name.lowercase() }
+        val djs = (invited + lineupActs(lineup.map(::afterProse)) + notes.flatMap(::setActs)).distinctBy { it.name.lowercase() }
         val cuedType = cuedType(title, notes, djs)
         return ScrapedEvent(
             title = title,
@@ -133,29 +131,26 @@ class StudioIiiiOverviewPageScraper(
         return parseClock("$startHour:${startMinute.ifEmpty { "00" }}", inherited.ifEmpty { null }) to end
     }
 
-    /** The acts of the line-up lines, which may break a comma list across lines; a `(CLUBROOM)` tail is the act's room, and `(PERFORMANCE)` is its format. */
+    /**
+     * The acts of the line-up lines, which may break a comma list across lines. A `(CLUBROOM)` tail is the act's room,
+     * a `CLUBROOM:` label is the room of the acts after it, `(LIVE)` is a live set and `(PERFORMANCE)` is the act's format.
+     */
     private fun lineupActs(
         lines: List<String>,
         role: ArtistRole = ArtistRole.DJ
     ): List<ScrapedArtist> =
-        lines
-            .map { unwrapLine(it.trim().replace(LINE_UP_LABEL, "").trimEnd(',', '/')) }
-            .filterNot(::isEditorNote)
-            .joinToString(" / ")
-            .split(ACT_SEPARATOR)
-            .map { it.replace(MORE_TBA, "").trim() }
-            .flatMap(::splitSegmentOnConjunctions)
-            .mapNotNull { part ->
-                val room = ROOM.find(part)
-                val name = stripArtistSuffix(part.removeRange(room?.range ?: IntRange.EMPTY).replace(PERFORMANCE_TAIL, "")).blankToNull()
-                val stage =
-                    room
-                        ?.groupValues
-                        ?.get(1)
-                        ?.lowercase()
-                        ?.replaceFirstChar { it.titlecase() }
-                name?.takeUnless(::isNonArtistName)?.let { ScrapedArtist(name = it, role = role, stage = stage) }
-            }.distinctBy { it.name }
+        roomSections(
+            lines
+                .map { unwrapLine(it.trim().replace(LINE_UP_LABEL, "").trimEnd(',', '/')) }
+                .filterNot(::isEditorNote)
+                .joinToString(" / ")
+        ).flatMap { (labelRoom, text) ->
+            text
+                .split(ACT_SEPARATOR)
+                .map { it.replace(MORE_TBA, "").trim() }
+                .flatMap(::splitSegmentOnConjunctions)
+                .mapNotNull { part -> lineupAct(part, role, labelRoom) }
+        }.distinctBy { it.name }
 
     /**
      * The acts a credit line names after `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`: `… AND DJ SETS BY
@@ -244,8 +239,6 @@ class StudioIiiiOverviewPageScraper(
         val LOWERCASE_WORD = Regex("""\p{Ll}{2,}""")
         const val MIN_NOTE_LOWERCASE_WORDS = 2
         val MORE_TBA = Regex("""\s*(?:&|\+|and)\s*more(?:\s+tba)?\.*$""", RegexOption.IGNORE_CASE)
-        val ROOM = Regex("""\s*\((\p{L}*room)\)""", RegexOption.IGNORE_CASE)
         val LINE_UP_LABEL = Regex("""^line[\s-]?up\s*:\s*""", RegexOption.IGNORE_CASE)
-        val PERFORMANCE_TAIL = Regex("""\s*\(performance\)\s*$""", RegexOption.IGNORE_CASE)
     }
 }
