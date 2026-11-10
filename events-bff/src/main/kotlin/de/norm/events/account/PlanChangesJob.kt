@@ -1,7 +1,6 @@
 package de.norm.events.account
 
 import de.norm.events.common.BERLIN
-import de.norm.events.push.PushResult
 import de.norm.events.push.PushSender
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
@@ -54,35 +53,12 @@ class PlanChangesJob(
             val due = if (push == null) emptyList() else store.due(fresh)
             logger.info { "Plan changes: ${fresh.size} new today from $from up to $upTo, ${due.size} to push" }
             if (push == null || due.isEmpty()) return
-            val outcomes =
-                due
-                    .groupBy { it.accountId }
-                    .values
-                    .flatMap { send(push, it) }
-                    .groupingBy { it }
-                    .eachCount()
-            logger.info { "Plan changes push finished: ${outcomes.entries.joinToString { "${it.key.tag} ${it.value}" }}" }
+            val outcomes = subscriptions.fanOut(push, due.groupBy { it.accountId }, clock) { PlanChangePush.message(it) }
+            logger.info { "Plan changes push finished: ${outcomes.summary()}" }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             logger.warn(e) { "Plan changes failed" }
-        }
-    }
-
-    /** Sends one account's changes to each of its browsers, and forgets a browser whose subscription is gone. */
-    private suspend fun send(
-        push: PushSender,
-        changes: List<PlanChangeDue>
-    ): List<PushResult> {
-        val message = PlanChangePush.message(changes)
-        return subscriptions.targets(changes.first().accountId).map { target ->
-            push.send(target, message).also { result ->
-                when (result) {
-                    PushResult.SENT -> subscriptions.sent(target.endpoint, clock.instant())
-                    PushResult.GONE -> subscriptions.delete(target.endpoint)
-                    PushResult.REJECTED, PushResult.FAILED -> Unit
-                }
-            }
         }
     }
 }
