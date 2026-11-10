@@ -1130,6 +1130,30 @@ class EventImportServiceTest {
             }
 
         @Test
+        fun `keeps a stored event whose dateless row was dropped for a failed page, and still removes one the venue took down`() =
+            runTest {
+                val src = source()
+                val eventDate = LocalDate.of(2026, 6, 15)
+                val scrapedEvents = listOf(scrapedEvent(title = "Active Event", sourceId = "cassiopeia:active", eventDate = eventDate))
+
+                fun stored(
+                    id: Long,
+                    sourceId: String
+                ) = EventEntity(id = id, venueId = 10L, title = sourceId, slug = sourceId, eventDate = eventDate, sourceId = sourceId, eventSourceId = 1L)
+
+                coEvery { cassiopeiaImporter.listsWholeProgramme } returns true
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = scrapedEvents, etag = null, lastModified = null, spared = setOf("cassiopeia:dateless"))
+                coEvery { eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(any(), any()) } returns
+                    listOf(stored(1L, "cassiopeia:active"), stored(2L, "cassiopeia:dateless"), stored(3L, "cassiopeia:removed")).asFlow()
+
+                service.importFromSource(src)
+
+                coVerify(exactly = 1) { eventRepository.deleteByIdIn(listOf(3L)) }
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(match { 2L in it }) }
+            }
+
+        @Test
         fun `does not delete events when scraped list is empty`() =
             runTest {
                 val src = source()

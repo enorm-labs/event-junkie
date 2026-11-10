@@ -9,7 +9,6 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LogContext
 import de.norm.events.scraper.RobotsCheck
 import de.norm.events.scraper.RobotsRulesCache
-import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.describeFailure
 import de.norm.events.scraper.scrapeFailureReason
 import de.norm.events.venue.VenueProgrammeStore
@@ -265,7 +264,7 @@ class EventImportService(
             val kept = if (keepValidators) scraped else scraped.copy(etag = null, lastModified = null)
             return enrichFrom(runningSource, venue.slug, kept, licences) to ImporterMetrics.RunOutcome.SUCCESS
         }
-        val upsert = upsertInTransaction(runningSource, venue.slug, scraped.events, licences, staleCleanup(importer, scraped))
+        val upsert = upsertInTransaction(runningSource, venue.slug, scraped, licences, staleCleanup(importer, scraped))
 
         afterCommit(runningSource, venue.name, scraped, upsert, licences)
 
@@ -296,19 +295,19 @@ class EventImportService(
     }
 
     /**
-     * Upserts and cleans up [events] in one transaction, via [TransactionalOperator] so the status
-     * updates stay outside it and always commit.
+     * Upserts and cleans up [scraped]'s events in one transaction, via [TransactionalOperator] so the
+     * status updates stay outside it and always commit.
      */
     private suspend fun upsertInTransaction(
         source: EventSourceEntity,
         venueSlug: String,
-        events: List<ScrapedEvent>,
+        scraped: ImportResult.Success,
         licences: SourceLicences,
         staleCleanup: StaleCleanup
     ): UpsertOutcome =
         transactionalOperator.executeAndAwait {
             val sourceId = source.requiredId()
-            eventUpsertService.upsertAndCleanup(events, source.venueId, venueSlug, sourceId, licences, staleCleanup)
+            eventUpsertService.upsertAndCleanup(scraped.events, source.venueId, venueSlug, sourceId, licences, staleCleanup, scraped.spared)
         }
 
     /**
