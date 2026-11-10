@@ -5,6 +5,7 @@ import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -44,6 +45,24 @@ class ScheinbarProgrammPageScraperTest {
         show.title shouldBe "Gisa Bergmann & Horst Blue"
         show.subtitle shouldBe "Hoffentlich hält sich die Bräune"
         show.artists.map { it.name } shouldContainExactly listOf("Gisa Bergmann", "Horst Blue")
+    }
+
+    @Test
+    fun `bills the presenter of a show whose first line ends in praesentiert and a colon`() {
+        // Event 13351 (#4833): the detail page names no other act.
+        val html =
+            """
+            <h2 class="month">März 2027</h2><ul class="programm_uebersicht"><li><a href="/programm/der-dicke-dirk/">
+            <div class="date_time"><div class="date">07</div><div class="time">20:00</div></div>
+            <div class="prog_desc"><span class="h3 rot">Der dicke Dirk präsentiert:</span> <span class="h2 gruen">Das Programm</span></div>
+            <div class="preis">16,00 &euro;</div></a></li></ul>
+            """.trimIndent()
+
+        val show = scraper.scrape(Jsoup.parse(html, url), url).single()
+
+        show.title shouldBe "Der dicke Dirk präsentiert:"
+        show.subtitle shouldBe "Das Programm"
+        show.artists shouldContainExactly listOf(ScrapedArtist(name = "Der dicke Dirk"))
     }
 
     @Test
