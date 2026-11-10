@@ -80,9 +80,10 @@ val HEIDEGLUEHEN_LIMITATIONS =
         EventSource.HEIDEGLUEHEN,
         AcceptedLimitation(
             LimitedAspect.PER_EVENT_PAGE,
-            "the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale"
+            "the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Techno, House"
     )

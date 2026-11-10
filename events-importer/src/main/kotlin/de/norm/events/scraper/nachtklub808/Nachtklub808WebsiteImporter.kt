@@ -24,11 +24,11 @@ class Nachtklub808WebsiteImporter(
 val NACHTKLUB_808_LIMITATIONS =
     VenueLimitations(
         EventSource.NACHTKLUB_808,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the club names one opening hour per weekday, which is read as the start"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the page names no entry price per night"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the programme is a text list with no posters"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "each night is a name and a DJ list, with no text"),
-        AcceptedLimitation(LimitedAspect.GENRE, "no night names a style"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a night has no page of its own"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the club names one opening hour per weekday, which is read as the start", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the page names no entry price per night", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the programme is a text list with no posters", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "each night is a name and a DJ list, with no text", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.GENRE, "no night names a style", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a night has no page of its own", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13")
     )

@@ -35,12 +35,21 @@ class WildAtHeartWebsiteImporter(
 val WILD_AT_HEART_LIMITATIONS =
     VenueLimitations(
         EventSource.WILD_AT_HEART,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert",
+            verified = "2026-09-05"
+        ),
         AcceptedLimitation(
             LimitedAspect.START_TIME,
-            "a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start"
+            "a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start",
+            verified = "2026-09-14"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no ticket price; it marks only free-entry nights and links a few shows to a shop"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a presenter is named only on a rare night")
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the venue prints no ticket price; it marks only free-entry nights and links a few shows to a shop",
+            verified = "2026-10-13"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a presenter is named only on a rare night", verified = "2026-10-13")
     )

@@ -63,11 +63,11 @@ class BaizWebsiteImporter(
 val BAIZ_LIMITATIONS =
     VenueLimitations(
         EventSource.BAIZ,
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the acts and readers are named only in free prose of no fixed shape"),
-        AcceptedLimitation(LimitedAspect.GENRE, "radar files the nights under concert or no category, and the style is in prose"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the pub sells no tickets"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night"),
-        AcceptedLimitation(LimitedAspect.PRICE, "radar lists no price for the pub's nights"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the acts and readers are named only in free prose of no fixed shape", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.GENRE, "radar files the nights under concert or no category, and the style is in prose", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the pub sells no tickets", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PRICE, "radar lists no price for the pub's nights", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter", verified = "2026-10-16")
     )

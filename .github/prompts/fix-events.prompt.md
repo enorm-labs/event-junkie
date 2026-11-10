@@ -125,7 +125,7 @@ PR said so.
    any contact in the inline text.
 3. Change the parser. Keep its KDoc true: a KDoc that lists the shapes the parser reads gets the new shape.
 4. Correct the documents the change makes wrong, in the same branch:
-    - a changed `AcceptedLimitation` text regenerates `docs/data-quality/ACCEPTED_LIMITATIONS.md` — `AcceptedLimitationsTest` fails with the `cp`
+    - a new or changed `AcceptedLimitation` carries `verified = "<today>"`, the day you read the venue's page, and regenerates `docs/data-quality/ACCEPTED_LIMITATIONS.md` — `AcceptedLimitationsTest` fails with the `cp`
       command, then `scripts/format-markdown.sh`;
     - a scope rule changes its row in `docs/EVENT_SCOPE.md`.
 5. **A migration only for stored rows the next import cannot reach.** An import re-syncs an upcoming event's fields and line-up, so a future event needs

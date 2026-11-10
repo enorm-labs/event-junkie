@@ -30,9 +30,9 @@ class WeltwirtschaftWebsiteImporter(
 val WELTWIRTSCHAFT_LIMITATIONS =
     VenueLimitations(
         EventSource.WELTWIRTSCHAFT,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives one time per event"),
-        AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on nearly every event, and the description rarely names a price"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the resident DJ of the monthly night is named only in the description prose"),
-        AcceptedLimitation(LimitedAspect.GENRE, "no event names a style; the DJ nights run across genres"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house presents its nights itself and names no organizer")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives one time per event", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on nearly every event, and the description rarely names a price", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the resident DJ of the monthly night is named only in the description prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "no event names a style; the DJ nights run across genres", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house presents its nights itself and names no organizer", verified = "2026-10-17")
     )

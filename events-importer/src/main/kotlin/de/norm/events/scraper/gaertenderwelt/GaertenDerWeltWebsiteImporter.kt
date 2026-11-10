@@ -120,11 +120,13 @@ val GAERTEN_DER_WELT_LIMITATIONS =
         EventSource.GAERTEN_DER_WELT,
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose"
+            "the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "an event sold through an outside ticket shop prints no figure on its page"),
+        AcceptedLimitation(LimitedAspect.PRICE, "an event sold through an outside ticket shop prints no figure on its page", verified = "2026-10-15"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "the park names acts only in prose; a drone show, a flashlight Christmas concert or a score concert names no act at all"
+            "the park names acts only in prose; a drone show, a flashlight Christmas concert or a score concert names no act at all",
+            verified = "2026-10-15"
         )
     )

@@ -42,12 +42,16 @@ val ABSTAND_LIMITATIONS =
     VenueLimitations(
         setOf(EventSource.ABSTAND),
         listOf(
-            AcceptedLimitation(LimitedAspect.ARTISTS, "the bands are named only in prose, and a name without a bracket after it is not read"),
-            AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass"),
-            AcceptedLimitation(LimitedAspect.TICKET_URL, "the bar sells no tickets online"),
-            AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night"),
-            AcceptedLimitation(LimitedAspect.PRICE, "radar lists no price on most nights"),
-            AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter")
+            AcceptedLimitation(
+                LimitedAspect.ARTISTS,
+                "the bands are named only in prose, and a name without a bracket after it is not read",
+                verified = "2026-10-30"
+            ),
+            AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass", verified = "2026-09-30"),
+            AcceptedLimitation(LimitedAspect.TICKET_URL, "the bar sells no tickets online", verified = "2026-09-30"),
+            AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night", verified = "2026-10-13"),
+            AcceptedLimitation(LimitedAspect.PRICE, "radar lists no price on most nights", verified = "2026-10-13"),
+            AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter", verified = "2026-10-13")
         ),
         houseGenre = "Punk"
     )

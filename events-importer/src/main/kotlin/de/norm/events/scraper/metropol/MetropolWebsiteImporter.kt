@@ -52,9 +52,10 @@ class MetropolWebsiteImporter(
 val METROPOL_LIMITATIONS =
     VenueLimitations(
         EventSource.METROPOL,
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets are sold through an Eventim link"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets are sold through an Eventim link", verified = "2026-10-02"),
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the detail page's TAGS field is empty, and its one category names the event type (Konzert, Party), not a style"
+            "the detail page's TAGS field is empty, and its one category names the event type (Konzert, Party), not a style",
+            verified = "2026-10-02"
         )
     )

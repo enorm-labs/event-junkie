@@ -44,11 +44,15 @@ class TiffanyClubWebsiteImporter(
 val TIFFANY_CLUB_LIMITATIONS =
     VenueLimitations(
         EventSource.TIFFANY_CLUB,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; the type is read from the title and defaults to a party"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no ticket price, only a guest-list discount inside a form"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the night's name"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no cancelled marker for a night")
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the site names no category; the type is read from the title and defaults to a party",
+            verified = "2026-10-01"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night", verified = "2026-10-01"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night", verified = "2026-10-27"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no ticket price, only a guest-list discount inside a form", verified = "2026-10-01"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the night's name", verified = "2026-10-01"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-01"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no cancelled marker for a night", verified = "2026-10-01")
     )

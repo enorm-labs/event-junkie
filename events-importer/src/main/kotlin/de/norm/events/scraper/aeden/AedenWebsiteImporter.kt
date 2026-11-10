@@ -46,7 +46,7 @@ class AedenWebsiteImporter(
 val AEDEN_LIMITATIONS =
     VenueLimitations(
         EventSource.AEDEN,
-        AcceptedLimitation(LimitedAspect.PRICE, "the month page carries no prices"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the month page links no page per night"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.PRICE, "the month page carries no prices", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the month page links no page per night", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

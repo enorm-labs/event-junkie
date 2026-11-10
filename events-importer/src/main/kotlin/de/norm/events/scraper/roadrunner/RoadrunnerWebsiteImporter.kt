@@ -34,16 +34,18 @@ class RoadrunnerWebsiteImporter(
 val ROADRUNNER_LIMITATIONS =
     VenueLimitations(
         EventSource.ROADRUNNER,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme lives on one hand-coded page"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "a night prints only its doors, `Einlass: 20:00`"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme lives on one hand-coded page", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "a night prints only its doors, `Einlass: 20:00`", verified = "2026-10-17"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the retro programme carries no category field; a live-music venue, so an unmarked title defaults to a concert"
+            "the retro programme carries no category field; a live-music venue, so an unmarked title defaults to a concert",
+            verified = "2026-08-25"
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "a night with no line-up label names only its title, which is as often a band battle as an act with its tour run on"
+            "a night with no line-up label names only its title, which is as often a band battle as an act with its tour run on",
+            verified = "2026-10-02"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "the programme names the presale shop, never a figure"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the programme names the presale shop, never a figure", verified = "2026-10-08"),
         houseGenre = "Rock"
     )

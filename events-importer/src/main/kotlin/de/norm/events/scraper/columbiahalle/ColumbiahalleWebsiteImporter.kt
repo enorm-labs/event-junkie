@@ -40,7 +40,8 @@ val COLUMBIAHALLE_LIMITATIONS =
         EventSource.COLUMBIAHALLE,
         AcceptedLimitation(
             LimitedAspect.PER_EVENT_PAGE,
-            "the venue's own iCal export keys the event on the same Contao id and points back at the listing anchor"
+            "the venue's own iCal export keys the event on the same Contao id and points back at the listing anchor",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the listing names support, promoter, times and prices, and no musical style")
+        AcceptedLimitation(LimitedAspect.GENRE, "the listing names support, promoter, times and prices, and no musical style", verified = "2026-10-01")
     )

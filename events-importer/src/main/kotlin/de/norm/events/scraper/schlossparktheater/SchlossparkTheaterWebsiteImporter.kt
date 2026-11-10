@@ -41,14 +41,15 @@ class SchlossparkTheaterWebsiteImporter(
 val SCHLOSSPARK_THEATER_LIMITATIONS =
     VenueLimitations(
         EventSource.SCHLOSSPARK_THEATER,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site states one start time per performance"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site states one price range per performance, not a box-office price"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a production or a themed concert names its cast only in prose or a subtitle line"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site states one start time per performance", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site states one price range per performance, not a box-office price", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a production or a themed concert names its cast only in prose or a subtitle line", verified = "2026-10-17"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the site names no category, so the type comes from words in the billing, and a night without one is typed a show"
+            "the site names no category, so the type comes from words in the billing, and a night without one is typed a show",
+            verified = "2026-10-17"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per performance"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site has one page per production, shared by all its performances")
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no genre", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per performance", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site has one page per production, shared by all its performances", verified = "2026-10-17")
     )

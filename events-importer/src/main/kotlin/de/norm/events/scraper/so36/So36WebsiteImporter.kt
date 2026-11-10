@@ -62,11 +62,13 @@ val SO36_LIMITATIONS =
         EventSource.SO36,
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "the shop exposes prices only as ticket categories, so a door-only event without an Abendkasse category carries no figure"
+            "the shop exposes prices only as ticket categories, so a door-only event without an Abendkasse category carries no figure",
+            verified = "2026-09-30"
         ),
         AcceptedLimitation(
             LimitedAspect.SOLD_OUT,
-            "the JSON-LD offer reports `SoldOut` for the external shops most events sell through, even when those shops still have tickets, so it is not read"
+            "the JSON-LD offer reports `SoldOut` for the external shops most events sell through, even when those shops still have tickets, so it is not read",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the shop tags each event only as Konzert, Party or Event, never a genre")
+        AcceptedLimitation(LimitedAspect.GENRE, "the shop tags each event only as Konzert, Party or Event, never a genre", verified = "2026-09-30")
     )

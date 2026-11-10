@@ -33,15 +33,20 @@ class EschschloraqueWebsiteImporter(
 val ESCHSCHLORAQUE_LIMITATIONS =
     VenueLimitations(
         EventSource.ESCHSCHLORAQUE,
-        AcceptedLimitation(LimitedAspect.PRICE, "entry is settled at the door and the venue names no figure"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue runs no ticket shop"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue flags nothing sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the venue flags nothing cancelled, so every event stays scheduled"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the programme mixes DJ nights, live sets, bingo and theatre with no kind field anywhere"),
+        AcceptedLimitation(LimitedAspect.PRICE, "entry is settled at the door and the venue names no figure", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue runs no ticket shop", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue flags nothing sold out", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the venue flags nothing cancelled, so every event stays scheduled", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the programme mixes DJ nights, live sets, bingo and theatre with no kind field anywhere",
+            verified = "2026-08-25"
+        ),
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,
-            "the date field carries one ab-HH-Uhr time; a doors time exists only where the prose labels a pair, which is read"
+            "the date field carries one ab-HH-Uhr time; a doors time exists only where the prose labels a pair, which is read",
+            verified = "2026-09-21"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field; the style is only in the text"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title")
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field; the style is only in the text", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13")
     )

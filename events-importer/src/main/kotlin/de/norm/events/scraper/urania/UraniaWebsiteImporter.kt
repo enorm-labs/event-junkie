@@ -57,7 +57,7 @@ class UraniaWebsiteImporter(
 val URANIA_LIMITATIONS =
     VenueLimitations(
         EventSource.URANIA,
-        AcceptedLimitation(LimitedAspect.GENRE, "the house is a lecture hall, and its labels name formats, never a style"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the house is a lecture hall, and its labels name formats, never a style", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseLanguage = SpokenLanguage.GERMAN
     )

@@ -33,8 +33,8 @@ class SpeakeazyWebsiteImporter(
 val SPEAKEAZY_LIMITATIONS =
     VenueLimitations(
         EventSource.SPEAKEAZY,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing prints a start and an end time and no doors time"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the venue prints only the box-office price"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the listing names no style, only the blurb describes one"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing prints a start and an end time and no doors time", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the venue prints only the box-office price", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the listing names no style, only the blurb describes one", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-03")
     )

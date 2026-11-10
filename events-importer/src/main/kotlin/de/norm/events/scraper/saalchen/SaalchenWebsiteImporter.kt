@@ -31,6 +31,6 @@ class SaalchenWebsiteImporter(
 val SAALCHEN_LIMITATIONS =
     VenueLimitations(
         EventSource.SAALCHEN,
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field of its own"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field of its own", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

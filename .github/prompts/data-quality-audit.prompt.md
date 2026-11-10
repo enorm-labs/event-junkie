@@ -170,7 +170,7 @@ Write the report to `temp/data-quality-<YYYY-MM-DD>.md`, then run `scripts/forma
 3. **Recommended actions** — for NEW findings, point at the specific normalizer or scraper to fix (`canonicalArtistName`, `canonicalPromoterName`,
    `GenreNormalizer`, `isNonArtistName`,
    `stripArtistSuffix`, per-venue parser). If it is an accepted limitation to document rather than fix, suggest the `AcceptedLimitation` to add to that
-   venue's `*_LIMITATIONS` declaration — the `LimitedAspect` and a one-sentence reason — rather than a paragraph of KDoc; if it is repairable, suggest an issue using the
+   venue's `*_LIMITATIONS` declaration — the `LimitedAspect`, a one-sentence reason and the `verified` date you saw the source silent — rather than a paragraph of KDoc; if it is repairable, suggest an issue using the
    🔍 Importer / data defect form.
 
 Keep the report skimmable and every claim backed by a query result. Do not apply fixes, edit importer code, or modify the database as part of the audit —

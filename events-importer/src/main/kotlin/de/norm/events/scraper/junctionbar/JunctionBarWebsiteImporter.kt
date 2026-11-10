@@ -174,9 +174,14 @@ val JUNCTION_BAR_LIMITATIONS =
         EventSource.JUNCTION_BAR,
         AcceptedLimitation(
             LimitedAspect.PER_EVENT_PAGE,
-            "the programme is one page per month; a live night's only page of its own is its ticket-shop entry, kept as the ticket link"
+            "the programme is one page per month; a live night's only page of its own is its ticket-shop entry, kept as the ticket link",
+            verified = "2026-09-24"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "the DJ programme page prints no figure, and a DJ night has no shop page; a live night carries one"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the DJ programme page carries no picture per night; a live night carries one"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the DJ programme page prints no figure, and a DJ night has no shop page; a live night carries one",
+            verified = "2026-10-08"
+        ),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the DJ programme page carries no picture per night; a live night carries one", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

@@ -60,6 +60,10 @@ class DelphiWebsiteImporter(
 val THEATER_IM_DELPHI_LIMITATIONS =
     VenueLimitations(
         EventSource.THEATER_IM_DELPHI,
-        AcceptedLimitation(LimitedAspect.GENRE, "the labels are formats; only Kammermusik, Klassik and Elektronische Musik name a style"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the labels are formats; only Kammermusik, Klassik and Elektronische Musik name a style",
+            verified = "2026-11-10"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

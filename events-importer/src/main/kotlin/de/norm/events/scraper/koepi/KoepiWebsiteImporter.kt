@@ -27,9 +27,9 @@ class KoepiWebsiteImporter(
 val KOEPI_LIMITATIONS =
     VenueLimitations(
         EventSource.KOEPI,
-        AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue sells no tickets online"),
-        AcceptedLimitation(LimitedAspect.PRICE, "radar carries no price for its concerts"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter")
+        AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue sells no tickets online", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PRICE, "radar carries no price for its concerts", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter", verified = "2026-10-13")
     )

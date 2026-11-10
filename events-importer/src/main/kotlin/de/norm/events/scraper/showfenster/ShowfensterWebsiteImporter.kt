@@ -27,13 +27,14 @@ class ShowfensterWebsiteImporter(
 val SHOWFENSTER_LIMITATIONS =
     VenueLimitations(
         EventSource.SHOWFENSTER,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "the calendar gives each event a title and one short text"),
-        AcceptedLimitation(LimitedAspect.PRICE, "prices are on the Eventfrog ticket shop, not on the venue's site"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives a start and an end time, no doors time"),
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "the calendar gives each event a title and one short text", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.PRICE, "prices are on the Eventfrog ticket shop, not on the venue's site", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives a start and an end time, no doors time", verified = "2026-10-08"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "only a concert or comedy title names its act; a reading bills a duo by surnames, and shows, quizzes and the open stage name none"
+            "only a concert or comedy title names its act; a reading bills a duo by surnames, and shows, quizzes and the open stage name none",
+            verified = "2026-10-14"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "only a concert's category names a style; comedy, readings and shows carry none"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.GENRE, "only a concert's category names a style; comedy, readings and shows carry none", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

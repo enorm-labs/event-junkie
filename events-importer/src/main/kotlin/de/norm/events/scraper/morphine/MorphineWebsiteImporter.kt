@@ -41,15 +41,17 @@ class MorphineWebsiteImporter(
 val MORPHINE_LIMITATIONS =
     VenueLimitations(
         EventSource.MORPHINE,
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue flags nothing sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "a dropped night is removed from the listing rather than flagged"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue flags nothing sold out", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "a dropped night is removed from the listing rather than flagged", verified = "2026-08-25"),
         AcceptedLimitation(
             LimitedAspect.TICKET_URL,
-            "most nights publish no ticket link, and the advance-sale button posts to PayPal rather than linking anywhere"
+            "most nights publish no ticket link, and the advance-sale button posts to PayPal rather than linking anywhere",
+            verified = "2026-11-06"
         ),
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "nearly every night is priced as a sliding scale or donation range, which the model has no field for, so the wording is kept verbatim as the note"
+            "nearly every night is priced as a sliding scale or donation range, which the model has no field for, so the wording is kept verbatim as the note",
+            verified = "2026-08-25"
         )
     )

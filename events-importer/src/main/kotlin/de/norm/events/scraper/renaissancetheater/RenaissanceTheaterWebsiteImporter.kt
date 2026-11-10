@@ -41,19 +41,21 @@ class RenaissanceTheaterWebsiteImporter(
 val RENAISSANCE_THEATER_LIMITATIONS =
     VenueLimitations(
         EventSource.RENAISSANCE_THEATER,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site states one start time per performance"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "a production page shows a picture only for some productions"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the site states prices only in its ticket shop"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site states prices only in its ticket shop"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site states one start time per performance", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "a production page shows a picture only for some productions", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the site states prices only in its ticket shop", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site states prices only in its ticket shop", verified = "2026-10-18"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "the listing names performers only in its billing prose, and a production lists its cast on its own page"
+            "the listing names performers only in its billing prose, and a production lists its cast on its own page",
+            verified = "2026-10-18"
         ),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the site names a format only for some nights, so the type comes from words in the billing, and a night without one is typed a play"
+            "the site names a format only for some nights, so the type comes from words in the billing, and a night without one is typed a play",
+            verified = "2026-10-18"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names a presenter only in a production's prose"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site has one page per production, shared by all its performances")
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no genre", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names a presenter only in a production's prose", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site has one page per production, shared by all its performances", verified = "2026-10-18")
     )

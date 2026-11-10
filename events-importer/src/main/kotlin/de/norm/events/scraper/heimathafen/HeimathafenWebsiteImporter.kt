@@ -97,5 +97,5 @@ class HeimathafenWebsiteImporter(
 val HEIMATHAFEN_LIMITATIONS =
     VenueLimitations(
         EventSource.HEIMATHAFEN,
-        AcceptedLimitation(LimitedAspect.GENRE, "only a few `events_tag-*` slugs name a style, so shows and readings carry none")
+        AcceptedLimitation(LimitedAspect.GENRE, "only a few `events_tag-*` slugs name a style, so shows and readings carry none", verified = "2026-10-13")
     )

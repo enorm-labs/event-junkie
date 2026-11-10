@@ -39,16 +39,18 @@ val DER_WEISSE_HASE_LIMITATIONS =
         EventSource.DER_WEISSE_HASE,
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "the club publishes no price figure; some nights carry a conditional free-entry line, stored as the price note"
+            "the club publishes no price figure; some nights carry a conditional free-entry line, stored as the price note",
+            verified = "2026-09-30"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the club publishes no genre; every night takes the club's Techno default"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the club publishes no doors time"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the club publishes no genre; every night takes the club's Techno default", verified = "2026-09-26"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the club publishes no doors time", verified = "2026-08-25"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the club states no category anywhere and programmes nothing but DJ nights, so the type is fixed rather than inferred"
+            "the club states no category anywhere and programmes nothing but DJ nights, so the type is fixed rather than inferred",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the club sells through Resident Advisor and the listing links off-site"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is taken off the page rather than labelled"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the club sells through Resident Advisor and the listing links off-site", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is taken off the page rather than labelled", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Techno"
     )

@@ -37,9 +37,9 @@ class PasWebsiteImporter(
 val PAS_LIMITATIONS =
     VenueLimitations(
         EventSource.PAS,
-        AcceptedLimitation(LimitedAspect.START_TIME, "most concerts print the doors and `music a bit later`, no start"),
-        AcceptedLimitation(LimitedAspect.PRICE, "most events set no cost"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "most events set no ticket link of their own"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a series night bills only its name, and its acts are in the prose"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "most events set no organizer, and the house's own record is the venue")
+        AcceptedLimitation(LimitedAspect.START_TIME, "most concerts print the doors and `music a bit later`, no start", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PRICE, "most events set no cost", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "most events set no ticket link of their own", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a series night bills only its name, and its acts are in the prose", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "most events set no organizer, and the house's own record is the venue", verified = "2026-10-23")
     )

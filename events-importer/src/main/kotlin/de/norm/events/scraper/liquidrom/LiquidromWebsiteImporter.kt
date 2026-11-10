@@ -31,13 +31,13 @@ class LiquidromWebsiteImporter(
 val LIQUIDROM_LIMITATIONS =
     VenueLimitations(
         EventSource.LIQUIDROM,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme is one page, and a special is an anchor on it"),
-        AcceptedLimitation(LimitedAspect.PRICE, "entry is a bath time slot, and the page prints no price"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "every night links the bath's general time-slot booking"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the nights run inside the bath's opening hours"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "a Sound Session row has only its DJ and a genre line"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "a Sound Session row has no image"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a special names its show, not its performers"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page marks no night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night leaves the page instead of being marked")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme is one page, and a special is an anchor on it", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.PRICE, "entry is a bath time slot, and the page prints no price", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "every night links the bath's general time-slot booking", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the nights run inside the bath's opening hours", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "a Sound Session row has only its DJ and a genre line", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "a Sound Session row has no image", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a special names its show, not its performers", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page marks no night sold out", verified = "2026-10-26"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night leaves the page instead of being marked", verified = "2026-10-26")
     )

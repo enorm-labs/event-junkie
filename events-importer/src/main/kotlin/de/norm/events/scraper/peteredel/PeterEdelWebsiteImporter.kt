@@ -38,12 +38,14 @@ val PETER_EDEL_LIMITATIONS =
         EventSource.PETER_EDEL,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the venue publishes no event category at all, across a programme spanning concerts, comedy, readings and dance teas"
+            "the venue publishes no event category at all, across a programme spanning concerts, comedy, readings and dance teas",
+            verified = "2026-08-25"
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "without a category nothing confirms that a title is a performer rather than a format, so an act needs a support billing or a quoted show"
+            "without a category nothing confirms that a title is a performer rather than a format, so an act needs a support billing or a quoted show",
+            verified = "2026-10-22"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the title links straight to the ticket shop")
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the title links straight to the ticket shop", verified = "2026-08-25")
     )

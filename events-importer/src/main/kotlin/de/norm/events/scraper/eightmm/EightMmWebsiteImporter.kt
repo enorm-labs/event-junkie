@@ -36,19 +36,28 @@ class EightMmWebsiteImporter(
 val EIGHT_MM_LIMITATIONS =
     VenueLimitations(
         EventSource.EIGHT_MM,
-        AcceptedLimitation(LimitedAspect.PAGINATION, "the calendar lists only the month it shows, and robots.txt bars the other months"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "every calendar entry ends one hour after it starts, a placeholder rather than a real end"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "only a concert blurb states a doors time; a DJ night has none"),
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "an event carries a title and a blurb, no second title line"),
-        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the calendar or the event pages names a style"),
+        AcceptedLimitation(
+            LimitedAspect.PAGINATION,
+            "the calendar lists only the month it shows, and robots.txt bars the other months",
+            verified = "2026-10-18"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.END_TIME,
+            "every calendar entry ends one hour after it starts, a placeholder rather than a real end",
+            verified = "2026-10-18"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "only a concert blurb states a doors time; a DJ night has none", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "an event carries a title and a blurb, no second title line", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the calendar or the event pages names a style", verified = "2026-10-18"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
             "a DJ night bills nobody but a Name (Band) … DJ Residency or a Name DJ Set; a concert bills only from the house frame, " +
-                "else from a blurb's `Line up -` list"
+                "else from a blurb's `Line up -` list",
+            verified = "2026-11-10"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; bands keep the door money"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "a blurb points to the venue's Instagram for tickets, never to a shop"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing flags an event sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing flags an event cancelled"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a guest promoter is named only inside the title or the blurb")
+        AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; bands keep the door money", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "a blurb points to the venue's Instagram for tickets, never to a shop", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing flags an event sold out", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing flags an event cancelled", verified = "2026-10-18"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a guest promoter is named only inside the title or the blurb", verified = "2026-10-18")
     )

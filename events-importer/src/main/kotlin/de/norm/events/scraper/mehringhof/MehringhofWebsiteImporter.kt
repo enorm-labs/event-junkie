@@ -71,14 +71,34 @@ class MehringhofWebsiteImporter(
 val MEHRINGHOF_LIMITATIONS =
     VenueLimitations(
         EventSource.MEHRINGHOF,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme states one time per performance"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the ticket shop gives every performance the same 6 a.m. end"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the programme names no format; Kabarett, comedy, readings and song evenings share one table"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the programme names no genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the theatre presents every performance itself"),
-        AcceptedLimitation(LimitedAspect.PRICE, "a show linking the theatre's own page, not the shop, has its price only there, and robots.txt closes it"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "a show linking the theatre's own page, not the shop, has its text only there, and robots.txt closes it"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "a show linking the theatre's own page, not the shop, has its poster only there, and robots.txt closes it"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a show linking the theatre's own page, not the shop, points at the programme: robots.txt closes it"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme states one time per performance", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the ticket shop gives every performance the same 6 a.m. end", verified = "2026-10-03"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the programme names no format; Kabarett, comedy, readings and song evenings share one table",
+            verified = "2026-10-03"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the programme names no genre", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the theatre presents every performance itself", verified = "2026-10-04"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "a show linking the theatre's own page, not the shop, has its price only there, and robots.txt closes it",
+            verified = "2026-10-13"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "a show linking the theatre's own page, not the shop, has its text only there, and robots.txt closes it",
+            verified = "2026-10-13"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.IMAGE,
+            "a show linking the theatre's own page, not the shop, has its poster only there, and robots.txt closes it",
+            verified = "2026-10-13"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "a show linking the theatre's own page, not the shop, points at the programme: robots.txt closes it",
+            verified = "2026-10-13"
+        ),
         houseLanguage = SpokenLanguage.GERMAN
     )

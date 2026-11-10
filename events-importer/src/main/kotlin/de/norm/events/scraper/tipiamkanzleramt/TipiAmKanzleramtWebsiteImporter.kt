@@ -66,7 +66,7 @@ class TipiAmKanzleramtWebsiteImporter(
 val TIPI_AM_KANZLERAMT_LIMITATIONS =
     VenueLimitations(
         EventSource.TIPI_AM_KANZLERAMT,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar and the show pages state one start time and never an Einlass"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar and the show pages state one start time and never an Einlass", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-16"),
         houseLanguage = SpokenLanguage.GERMAN
     )

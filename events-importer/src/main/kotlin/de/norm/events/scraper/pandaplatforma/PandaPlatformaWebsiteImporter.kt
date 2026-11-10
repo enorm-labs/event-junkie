@@ -38,8 +38,16 @@ class PandaPlatformaWebsiteImporter(
 val PANDA_PLATFORMA_LIMITATIONS =
     VenueLimitations(
         EventSource.PANDA_PLATFORMA,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the api carries one start time per event and no doors time"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "most events set no ticket link of their own"),
-        AcceptedLimitation(LimitedAspect.PRICE, "some events print no price, and their ticket block reads `No tickets available for this event`"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the categories name house series, and only the jazz, experimental and global ones name a style")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the api carries one start time per event and no doors time", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "most events set no ticket link of their own", verified = "2026-10-03"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "some events print no price, and their ticket block reads `No tickets available for this event`",
+            verified = "2026-11-07"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the categories name house series, and only the jazz, experimental and global ones name a style",
+            verified = "2026-10-03"
+        )
     )

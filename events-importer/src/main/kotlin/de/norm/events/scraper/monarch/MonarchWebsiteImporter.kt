@@ -29,14 +29,19 @@ class MonarchWebsiteImporter(
 val MONARCH_LIMITATIONS =
     VenueLimitations(
         EventSource.MONARCH,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site is hand-coded PHP with no per-event URLs"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "some nights print a date with no clock, `Samstag 24/10/2026-`"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the page prints a Ticket Vorverkauf link, never an amount"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the page lists only date, title and ticket link; a \"(KONZERT)\" marker is its only classification"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the venue prints no image per night, only one monthly programme poster"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a presenter is named only on a rare night"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site is hand-coded PHP with no per-event URLs", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "some nights print a date with no clock, `Samstag 24/10/2026-`", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the page prints a Ticket Vorverkauf link, never an amount", verified = "2026-09-30"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the page lists only date, title and ticket link; a \"(KONZERT)\" marker is its only classification",
+            verified = "2026-09-30"
+        ),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the venue prints no image per night, only one monthly programme poster", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a presenter is named only on a rare night", verified = "2026-10-27"),
         AcceptedLimitation(
             LimitedAspect.DESCRIPTION,
-            "a blurb shares the `td.tom` cell with support acts and door notes, with no separator, so none is read"
+            "a blurb shares the `td.tom` cell with support acts and door notes, with no separator, so none is read",
+            verified = "2026-10-27"
         )
     )

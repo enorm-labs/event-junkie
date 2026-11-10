@@ -31,14 +31,14 @@ class StudioIiiiWebsiteImporter(
 val STUDIO_IIII_LIMITATIONS =
     VenueLimitations(
         EventSource.STUDIO_IIII,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "each night has a date line, a title and a line-up, no second title line"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category per night"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the homepage links no ticket shop"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the night's name"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site publishes no page per night, so every night points at the homepage")
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "each night has a date line, a title and a line-up, no second title line", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category per night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the homepage links no ticket shop", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the night's name", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site publishes no page per night, so every night points at the homepage", verified = "2026-10-17")
     )

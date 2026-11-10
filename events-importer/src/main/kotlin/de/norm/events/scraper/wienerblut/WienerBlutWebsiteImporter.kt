@@ -24,9 +24,13 @@ class WienerBlutWebsiteImporter(
 val WIENER_BLUT_LIMITATIONS =
     VenueLimitations(
         EventSource.WIENER_BLUT,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the list has no category, so a night is a concert unless its title says otherwise"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the Wix registration sells no ticket and the site prints no price"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the site sells no tickets and links no shop"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the list gives one start time per night"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the list names no promoter")
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the list has no category, so a night is a concert unless its title says otherwise",
+            verified = "2026-10-23"
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "the Wix registration sells no ticket and the site prints no price", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the site sells no tickets and links no shop", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the list gives one start time per night", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the list names no promoter", verified = "2026-10-23")
     )

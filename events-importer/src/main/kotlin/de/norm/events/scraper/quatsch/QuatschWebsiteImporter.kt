@@ -82,10 +82,10 @@ class QuatschWebsiteImporter(
 val QUATSCH_LIMITATIONS =
     VenueLimitations(
         EventSource.QUATSCH,
-        AcceptedLimitation(LimitedAspect.END_TIME, "the calendar states no end"),
-        AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the box-office shop, per seat category"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the calendar names no producer of a guest show"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the calendar marks no show as sold out"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the calendar states no end", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the box-office shop, per seat category", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no genre", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the calendar names no producer of a guest show", verified = "2026-10-03"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the calendar marks no show as sold out", verified = "2026-10-04"),
         houseLanguage = SpokenLanguage.GERMAN
     )

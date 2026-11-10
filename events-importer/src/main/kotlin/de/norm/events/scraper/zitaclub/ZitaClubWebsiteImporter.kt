@@ -55,12 +55,16 @@ class ZitaClubWebsiteImporter(
 val ZITA_CLUB_LIMITATIONS =
     VenueLimitations(
         EventSource.ZITA_CLUB,
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the DJs appear only in the prose, and a house night names none"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes one time per night"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category, so every night is a party unless its title says otherwise"),
-        AcceptedLimitation(LimitedAspect.GENRE, "a night whose page carries no tags names no style"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the price field is left empty on some nights"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "an outside promoter is named only in the prose"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site marks no night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site marks no night cancelled or moved")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the DJs appear only in the prose, and a house night names none", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes one time per night", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the site names no category, so every night is a party unless its title says otherwise",
+            verified = "2026-10-17"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "a night whose page carries no tags names no style", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the price field is left empty on some nights", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "an outside promoter is named only in the prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site marks no night sold out", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site marks no night cancelled or moved", verified = "2026-10-17")
     )

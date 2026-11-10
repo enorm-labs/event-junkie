@@ -65,11 +65,11 @@ class PassionskircheWebsiteImporter(
 val PASSIONSKIRCHE_LIMITATIONS =
     VenueLimitations(
         EventSource.PASSIONSKIRCHE,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "the site prints one title line per concert"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site files no category and names no style"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the site states a doors and a start time, not an end"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the event pages name a price only rarely, as prose"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled concert can only disappear")
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "the site prints one title line per concert", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site files no category and names no style", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the site states a doors and a start time, not an end", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the event pages name a price only rarely, as prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled concert can only disappear", verified = "2026-10-17")
     )

@@ -80,14 +80,22 @@ class KarakasWebsiteImporter(
 val KARAKAS_LIMITATIONS =
     VenueLimitations(
         EventSource.KARAKAS,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the shows have no page of their own, so each points at its programme page"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a show is billed by its title, and its comedians appear only in prose"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no producer beside a show's title"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the bar names no genre"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no price; each show links to an outside ticket shop"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar prints a start and an end, no doors time"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "a tour card or a quiz announcement prints only the date; the time is on the outside ticket shop"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the calendar sets no image; only the tour cards and the quiz announcements carry one"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status, so a cancelled show can only disappear")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the shows have no page of their own, so each points at its programme page", verified = "2026-10-21"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a show is billed by its title, and its comedians appear only in prose", verified = "2026-10-21"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no producer beside a show's title", verified = "2026-10-21"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the bar names no genre", verified = "2026-10-21"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no price; each show links to an outside ticket shop", verified = "2026-10-21"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar prints a start and an end, no doors time", verified = "2026-10-21"),
+        AcceptedLimitation(
+            LimitedAspect.START_TIME,
+            "a tour card or a quiz announcement prints only the date; the time is on the outside ticket shop",
+            verified = "2026-10-21"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.IMAGE,
+            "the calendar sets no image; only the tour cards and the quiz announcements carry one",
+            verified = "2026-10-21"
+        ),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-21"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status, so a cancelled show can only disappear", verified = "2026-10-21")
     )

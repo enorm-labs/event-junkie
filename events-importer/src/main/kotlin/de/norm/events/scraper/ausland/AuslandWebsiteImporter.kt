@@ -46,14 +46,27 @@ val AUSLAND_LIMITATIONS =
         EventSource.AUSLAND,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the venue names no category, so a night without a format word in its title is a concert, which mislabels a performance or a talk"
+            "the venue names no category, so a night without a format word in its title is a concert, which mislabels a performance or a talk",
+            verified = "2026-10-16"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "only concert nights state a doors time; the other formats give one clock"),
-        AcceptedLimitation(LimitedAspect.END_DATE, "a residency, workshop or installation over several days is listed once, on its first day"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the listing gives one clock per event, and an end only appears in some texts"),
-        AcceptedLimitation(LimitedAspect.PRICE, "a price appears only as prose in some event texts, kept as a note; the rest state none"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "most nights sell only at the door; a ticket shop is linked only from a phrase in the text"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits partners only as logos"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status")
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night", verified = "2026-10-27"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "only concert nights state a doors time; the other formats give one clock", verified = "2026-10-16"),
+        AcceptedLimitation(
+            LimitedAspect.END_DATE,
+            "a residency, workshop or installation over several days is listed once, on its first day",
+            verified = "2026-10-16"
+        ),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the listing gives one clock per event, and an end only appears in some texts", verified = "2026-10-16"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "a price appears only as prose in some event texts, kept as a note; the rest state none",
+            verified = "2026-10-16"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "most nights sell only at the door; a ticket shop is linked only from a phrase in the text",
+            verified = "2026-10-16"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits partners only as logos", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-16")
     )

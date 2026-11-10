@@ -74,14 +74,20 @@ val COLOSSEUM_LIMITATIONS =
         EventSource.COLOSSEUM,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "`categories` is empty on every event, so the type is inferred from the title, the subtitle and the event's own text"
+            "`categories` is empty on every event, so the type is inferred from the title, the subtitle and the event's own text",
+            verified = "2026-10-14"
         ),
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,
-            "an event whose own page states no Einlass line keeps the listing's single time as the start, and gets no doors"
+            "an event whose own page states no Einlass line keeps the listing's single time as the start, and gets no doors",
+            verified = "2026-09-22"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the house names no musical style anywhere"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "no support-act convention exists in the subtitles, and a title is as often an event name as a performer's"),
-        AcceptedLimitation(LimitedAspect.PRICE, "an event sold through Eventim, Dice or its promoter prints no figure"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.GENRE, "the house names no musical style anywhere", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "no support-act convention exists in the subtitles, and a title is as often an event name as a performer's",
+            verified = "2026-09-30"
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "an event sold through Eventim, Dice or its promoter prints no figure", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

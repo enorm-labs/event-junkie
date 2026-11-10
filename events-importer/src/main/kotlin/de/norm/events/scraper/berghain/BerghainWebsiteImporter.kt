@@ -159,7 +159,8 @@ val BERGHAIN_LIMITATIONS =
         EventSource.BERGHAIN,
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights"
+            "the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights",
+            verified = "2026-10-13"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "some Kantine concert pages print no figure in their tickets block")
+        AcceptedLimitation(LimitedAspect.PRICE, "some Kantine concert pages print no figure in their tickets block", verified = "2026-10-06")
     )

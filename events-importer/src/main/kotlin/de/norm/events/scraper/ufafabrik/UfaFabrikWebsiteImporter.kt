@@ -57,10 +57,14 @@ class UfaFabrikWebsiteImporter(
 val UFA_FABRIK_LIMITATIONS =
     VenueLimitations(
         EventSource.UFA_FABRIK,
-        AcceptedLimitation(LimitedAspect.PAGINATION, "the calendar is one page per month, and only this month and the next two are read"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the house publishes one time per show"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house names no promoter"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the genre label names a format (Comedy, Kabarett, Varieté) on most shows")
+        AcceptedLimitation(
+            LimitedAspect.PAGINATION,
+            "the calendar is one page per month, and only this month and the next two are read",
+            verified = "2026-10-22"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the house publishes one time per show", verified = "2026-10-01"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house names no promoter", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the genre label names a format (Comedy, Kabarett, Varieté) on most shows", verified = "2026-10-13")
     )
 
 private val MONTH_PAGE_SCRAPER = UfaFabrikMonthPageScraper()

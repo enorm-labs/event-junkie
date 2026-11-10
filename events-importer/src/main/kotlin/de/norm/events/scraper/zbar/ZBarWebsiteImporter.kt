@@ -28,15 +28,20 @@ class ZBarWebsiteImporter(
 val Z_BAR_LIMITATIONS =
     VenueLimitations(
         EventSource.Z_BAR,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the nights have no page of their own, so each points at the programme page"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the nights have no page of their own, so each points at the programme page", verified = "2026-10-21"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "a night is billed by its title, a comedian only by a title that ends `w/ <name>`, and the others only in prose"
+            "a night is billed by its title, a comedian only by a title that ends `w/ <name>`, and the others only in prose",
+            verified = "2026-11-09"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the bar names no genre"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the page prints no price; a night links to an outside ticket shop or says entry is free"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the page prints one time per night"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the page prints no end time"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the page has no status, so a cancelled night can only disappear")
+        AcceptedLimitation(LimitedAspect.GENRE, "the bar names no genre", verified = "2026-10-21"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the page prints no price; a night links to an outside ticket shop or says entry is free",
+            verified = "2026-10-21"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the page prints one time per night", verified = "2026-10-21"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the page prints no end time", verified = "2026-10-21"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page states no ticket status", verified = "2026-10-21"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the page has no status, so a cancelled night can only disappear", verified = "2026-10-21")
     )

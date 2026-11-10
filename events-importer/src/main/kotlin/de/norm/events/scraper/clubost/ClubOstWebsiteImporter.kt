@@ -52,12 +52,24 @@ class ClubOstWebsiteImporter(
 val CLUB_OST_LIMITATIONS =
     VenueLimitations(
         EventSource.CLUB_OST,
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue programmes through Resident Advisor and leaves the CMS description empty on every event"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the listing carries no category; every card is a flyer, a title, a start time and a ticket link"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the listing carries no genre; every night takes the club's Techno default"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the listing carries no price; tickets are sold on Resident Advisor"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the listing carries no lineup, though the CMS holds an empty div where one would go"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries one time per night and no doors time"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "the venue programmes through Resident Advisor and leaves the CMS description empty on every event",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the listing carries no category; every card is a flyer, a title, a start time and a ticket link",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the listing carries no genre; every night takes the club's Techno default", verified = "2026-09-26"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the listing carries no price; tickets are sold on Resident Advisor", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the listing carries no lineup, though the CMS holds an empty div where one would go",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries one time per night and no doors time", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseGenre = "Techno"
     )

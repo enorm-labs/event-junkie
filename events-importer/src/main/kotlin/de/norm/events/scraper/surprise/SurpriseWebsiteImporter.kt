@@ -27,15 +27,19 @@ class SurpriseWebsiteImporter(
 val SURPRISE_LIMITATIONS =
     VenueLimitations(
         EventSource.SURPRISE,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "each night has one title line"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; every night is a party"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the events page prints no time"),
-        AcceptedLimitation(LimitedAspect.START_TIME, "the events page prints no time"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the site prints no end of a night"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the club sells entry at the door and links no ticket shop"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the club sells entry at the door only"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site publishes no page per night, so every night points at the events page")
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "each night has one title line", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; every night is a party", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the events page prints no time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "the events page prints no time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the site prints no end of a night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the club sells entry at the door and links no ticket shop", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the club sells entry at the door only", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "the site publishes no page per night, so every night points at the events page",
+            verified = "2026-10-17"
+        )
     )

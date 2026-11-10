@@ -33,8 +33,8 @@ class KaosBerlinWebsiteImporter(
 val KAOS_BERLIN_LIMITATIONS =
     VenueLimitations(
         EventSource.KAOS_BERLIN,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the API holds one time per event, and the prose rarely names doors"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "most events set no featured image"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the categories name formats, and the styles are only in the prose"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a party or a series night bills its name, and its acts are in the prose")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the API holds one time per event, and the prose rarely names doors", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "most events set no featured image", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the categories name formats, and the styles are only in the prose", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a party or a series night bills its name, and its acts are in the prose", verified = "2026-10-17")
     )

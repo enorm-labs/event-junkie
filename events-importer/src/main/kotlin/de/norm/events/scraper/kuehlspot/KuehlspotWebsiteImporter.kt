@@ -28,16 +28,20 @@ class KuehlspotWebsiteImporter(
 val KUEHLSPOT_LIMITATIONS =
     VenueLimitations(
         EventSource.KUEHLSPOT,
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "each night has a date line, a title and a line-up, no second title line"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the site states a curfew for musicians, not an end per night"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the events section carries no pictures"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "admission is a donation at the door and nothing is sold online"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
-        AcceptedLimitation(LimitedAspect.PRICE, "entry is a donation range with no single figure, so the wording is kept as the note"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "admission is a donation at the door and nothing is sold in advance"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "admission is a sliding-scale donation, kept as a price note"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a night names its host only when a guest association runs it"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site publishes no page per night, so every night points at the home page")
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "each night has a date line, a title and a line-up, no second title line", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the site states a curfew for musicians, not an end per night", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the events section carries no pictures", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "admission is a donation at the door and nothing is sold online", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PRICE, "entry is a donation range with no single figure, so the wording is kept as the note", verified = "2026-10-23"),
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "admission is a donation at the door and nothing is sold in advance", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "admission is a sliding-scale donation, kept as a price note", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a night names its host only when a guest association runs it", verified = "2026-10-19"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear", verified = "2026-10-16"),
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "the site publishes no page per night, so every night points at the home page",
+            verified = "2026-10-16"
+        )
     )

@@ -75,7 +75,8 @@ val HAVANNA_LIMITATIONS =
         EventSource.HAVANNA,
         AcceptedLimitation(
             LimitedAspect.EVENT_DATE,
-            "the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule"
+            "the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule",
+            verified = "2026-08-25"
         ),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

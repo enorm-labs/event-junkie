@@ -64,14 +64,23 @@ val BALLHAUS_WEDDING_LIMITATIONS =
         EventSource.BALLHAUS_WEDDING,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the venue names no category, so the type comes from words in the title, and a night without one is typed other"
+            "the venue names no category, so the type comes from words in the title, and a night without one is typed other",
+            verified = "2026-10-08"
         ),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the programme has no line-up field; only a bare `<name> - Konzert` entry bills its act"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "only the entries with a Wix Events page have a poster; the programme has none"),
-        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the programme names a style"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme states one house rule, doors 45 minutes before a seated show, and no doors time per event"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "only the Wix Events pages state an end"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "an entry without a Wix Events page exists only on the programme page"),
-        AcceptedLimitation(LimitedAspect.PRICE, "a concert prints a price line; a dance social or a hired night prints none"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the programme has no line-up field; only a bare `<name> - Konzert` entry bills its act",
+            verified = "2026-10-08"
+        ),
+        AcceptedLimitation(LimitedAspect.IMAGE, "only the entries with a Wix Events page have a poster; the programme has none", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the programme names a style", verified = "2026-10-08"),
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "the programme states one house rule, doors 45 minutes before a seated show, and no doors time per event",
+            verified = "2026-10-08"
+        ),
+        AcceptedLimitation(LimitedAspect.END_TIME, "only the Wix Events pages state an end", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "an entry without a Wix Events page exists only on the programme page", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PRICE, "a concert prints a price line; a dance social or a hired night prints none", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )

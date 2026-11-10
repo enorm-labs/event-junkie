@@ -38,12 +38,17 @@ class KreuzwerkWebsiteImporter(
 val KREUZWERK_LIMITATIONS =
     VenueLimitations(
         EventSource.KREUZWERK,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ programme"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "each event page prints one opening time, `ab HH:mm`, which is stored as the start"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ programme", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "each event page prints one opening time, `ab HH:mm`, which is stored as the start",
+            verified = "2026-10-17"
+        ),
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "the club sells through a third party and prints no figure; a night is flagged free only when its title says so"
+            "the club sells through a third party and prints no figure; a night is flagged free only when its title says so",
+            verified = "2026-10-17"
         ),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the listing names no collective apart from the night's title"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the listing names no collective apart from the night's title", verified = "2026-10-17"),
         houseGenre = "Techno, House"
     )

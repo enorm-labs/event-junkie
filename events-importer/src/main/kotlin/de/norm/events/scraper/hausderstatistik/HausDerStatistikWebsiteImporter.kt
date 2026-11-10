@@ -72,13 +72,13 @@ class HausDerStatistikWebsiteImporter(
 val HAUS_DER_STATISTIK_LIMITATIONS =
     VenueLimitations(
         EventSource.HAUS_DER_STATISTIK,
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the monthly performance jam is an open stage, which names no act"),
-        AcceptedLimitation(LimitedAspect.SUBTITLE, "each row has a title and a teaser, no second title line"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the event pages link no ticket shop"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site tags a format such as Musik, never a style"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the site prints one free-text price line, read as the note"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site prints one free-text price line, read as the note"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the organiser line often names a private person with an e-mail address"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled event can only disappear")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the monthly performance jam is an open stage, which names no act", verified = "2026-11-06"),
+        AcceptedLimitation(LimitedAspect.SUBTITLE, "each row has a title and a teaser, no second title line", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the event pages link no ticket shop", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site tags a format such as Musik, never a style", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the site prints one free-text price line, read as the note", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site prints one free-text price line, read as the note", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the organiser line often names a private person with an e-mail address", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled event can only disappear", verified = "2026-10-17")
     )

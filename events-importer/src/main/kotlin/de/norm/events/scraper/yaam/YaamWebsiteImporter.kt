@@ -30,10 +30,10 @@ class YaamWebsiteImporter(
 val YAAM_LIMITATIONS =
     VenueLimitations(
         EventSource.YAAM,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "an event carries one start time only"),
-        AcceptedLimitation(LimitedAspect.GENRE, "no event sets a category; the style is only in the prose"),
-        AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on every event"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "`website` is empty on every event"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a jam session names only its host series, and no act"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "every event names the venue itself as organizer")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "an event carries one start time only", verified = "2026-10-15"),
+        AcceptedLimitation(LimitedAspect.GENRE, "no event sets a category; the style is only in the prose", verified = "2026-10-15"),
+        AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on every event", verified = "2026-10-15"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "`website` is empty on every event", verified = "2026-10-15"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a jam session names only its host series, and no act", verified = "2026-10-15"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "every event names the venue itself as organizer", verified = "2026-10-15")
     )

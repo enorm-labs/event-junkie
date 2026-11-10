@@ -28,15 +28,15 @@ class CafeKoepenickWebsiteImporter(
 val CAFE_KOEPENICK_LIMITATIONS =
     VenueLimitations(
         EventSource.CAFE_KOEPENICK,
-        AcceptedLimitation(LimitedAspect.START_TIME, "most band nights are all-day calendar entries with no time"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives at most one time per night"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the calendar notes are the staff's own, not a text for visitors"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no style"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the calendar carries no poster"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the calendar names no entry price"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the calendar links no ticket shop"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the calendar names no promoter"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "an all-day calendar entry has no end time"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a band night bills its acts only in the title, and some titles say only bands"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar has no page per event, so every event links the calendar")
+        AcceptedLimitation(LimitedAspect.START_TIME, "most band nights are all-day calendar entries with no time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives at most one time per night", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the calendar notes are the staff's own, not a text for visitors", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no style", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the calendar carries no poster", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the calendar names no entry price", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the calendar links no ticket shop", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the calendar names no promoter", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "an all-day calendar entry has no end time", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a band night bills its acts only in the title, and some titles say only bands", verified = "2026-10-17"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar has no page per event, so every event links the calendar", verified = "2026-10-17")
     )

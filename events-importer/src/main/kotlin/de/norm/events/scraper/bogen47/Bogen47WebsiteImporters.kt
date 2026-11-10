@@ -154,17 +154,29 @@ internal val LARK_EVENT_TYPES: Map<String, String> =
 val LARK_LIMITATIONS =
     VenueLimitations(
         EventSource.LARK,
-        AcceptedLimitation(LimitedAspect.START_TIME, "the venue renders its one time as Doors and publishes no separate start time"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets link to hum-berlin.com"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue leaves its genre fields empty on every event; style appears only in the description")
+        AcceptedLimitation(LimitedAspect.START_TIME, "the venue renders its one time as Doors and publishes no separate start time", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets link to hum-berlin.com", verified = "2026-09-30"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the venue leaves its genre fields empty on every event; style appears only in the description",
+            verified = "2026-09-30"
+        )
     )
 
 val FITZROY_LIMITATIONS =
     VenueLimitations(
         EventSource.FITZROY,
-        AcceptedLimitation(LimitedAspect.START_TIME, "the venue renders its one time as Doors and publishes no separate start time"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets link to Resident Advisor"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue leaves its genre fields empty on every event; style appears only in the description"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue types every event Party, a live show included"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the organiser field is empty on every event; a collective is named only in the title")
+        AcceptedLimitation(LimitedAspect.START_TIME, "the venue renders its one time as Doors and publishes no separate start time", verified = "2026-10-01"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets link to Resident Advisor", verified = "2026-10-01"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the venue leaves its genre fields empty on every event; style appears only in the description",
+            verified = "2026-10-01"
+        ),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue types every event Party, a live show included", verified = "2026-10-01"),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "the organiser field is empty on every event; a collective is named only in the title",
+            verified = "2026-10-01"
+        )
     )

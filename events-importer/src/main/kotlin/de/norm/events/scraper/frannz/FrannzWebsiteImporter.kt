@@ -29,11 +29,12 @@ class FrannzWebsiteImporter(
 val FRANNZ_LIMITATIONS =
     VenueLimitations(
         EventSource.FRANNZ,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "nothing on the site links a `/events/<slug>/` page"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the programme page lists some nights with their times and billing and no poster"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "nothing on the site links a `/events/<slug>/` page", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the programme page lists some nights with their times and billing and no poster", verified = "2026-10-19"),
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read"
+            "most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read",
+            verified = "2026-09-23"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue tags each event only with a type (Konzert, Party, Lesung), never a genre")
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue tags each event only with a type (Konzert, Party, Lesung), never a genre", verified = "2026-09-30")
     )

@@ -28,11 +28,15 @@ class MadMonkeyRoomWebsiteImporter(
 val MAD_MONKEY_ROOM_LIMITATIONS =
     VenueLimitations(
         EventSource.MAD_MONKEY_ROOM,
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the shop list carries no text; each date's shop page repeats its series' text"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the shop list prints only the start; doors appear only in each date's page text"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the shop list prints only the start"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the club names a night's comedians only on social media, shortly before"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the shop list marks no date as sold out"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the shop names no genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "every show is the club's own")
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the shop list carries no text; each date's shop page repeats its series' text", verified = "2026-10-16"),
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "the shop list prints only the start; doors appear only in each date's page text",
+            verified = "2026-10-16"
+        ),
+        AcceptedLimitation(LimitedAspect.END_TIME, "the shop list prints only the start", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the club names a night's comedians only on social media, shortly before", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the shop list marks no date as sold out", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the shop names no genre", verified = "2026-10-16"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "every show is the club's own", verified = "2026-10-16")
     )

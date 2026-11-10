@@ -33,8 +33,20 @@ class TheCloudWebsiteImporter(
 val THE_CLOUD_LIMITATIONS =
     VenueLimitations(
         EventSource.THE_CLOUD,
-        AcceptedLimitation(LimitedAspect.GENRE, "every event is filed under one `Night Club` category; the style is only in the prose"),
-        AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on every event; ticket tiers appear only in the promoters' prose"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a club night names its DJs only in free prose; only a live show bills its act in the title"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the Events Calendar organizer field is empty; a promoter appears only in the title or the prose")
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "every event is filed under one `Night Club` category; the style is only in the prose",
+            verified = "2026-10-17"
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on every event; ticket tiers appear only in the promoters' prose", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a club night names its DJs only in free prose; only a live show bills its act in the title",
+            verified = "2026-10-19"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "the Events Calendar organizer field is empty; a promoter appears only in the title or the prose",
+            verified = "2026-10-19"
+        )
     )

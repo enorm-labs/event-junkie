@@ -32,11 +32,12 @@ class DunckerWebsiteImporter(
 val DUNCKER_LIMITATIONS =
     VenueLimitations(
         EventSource.DUNCKER,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page", verified = "2026-09-30"),
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,
-            "the time cell is the night's opening hours, stored as start and end, and no doors time is printed"
+            "the time cell is the night's opening hours, stored as start and end, and no doors time is printed",
+            verified = "2026-10-01"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "the listing gives a night, a genre string and an hour range, never a figure"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the listing gives a night, a genre string and the DJ, never prose")
+        AcceptedLimitation(LimitedAspect.PRICE, "the listing gives a night, a genre string and an hour range, never a figure", verified = "2026-10-27"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the listing gives a night, a genre string and the DJ, never prose", verified = "2026-10-27")
     )

@@ -35,15 +35,17 @@ class MaxximWebsiteImporter(
 val MAXXIM_LIMITATIONS =
     VenueLimitations(
         EventSource.MAXXIM,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ dance party"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ dance party", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         AcceptedLimitation(
             LimitedAspect.TICKET_URL,
-            "the site sells tickets in a Wix in-page checkout with no link of its own (the shape `A_TRANE` uses)"
+            "the site sells tickets in a Wix in-page checkout with no link of its own (the shape `A_TRANE` uses)",
+            verified = "2026-10-22"
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "only a name the prose prefixes `DJ` or `DJane` is billed, not a partner or host named without it"
+            "only a name the prose prefixes `DJ` or `DJane` is billed, not a partner or host named without it",
+            verified = "2026-11-10"
         ),
         houseGenre = "Disco, Charts"
     )

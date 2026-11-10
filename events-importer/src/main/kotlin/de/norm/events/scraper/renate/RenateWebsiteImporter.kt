@@ -30,17 +30,23 @@ class RenateWebsiteImporter(
 val RENATE_LIMITATIONS =
     VenueLimitations(
         EventSource.RENATE,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; its `.cat-btn` names the spaces in use, not a kind of event"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the club states no category; its `.cat-btn` names the spaces in use, not a kind of event",
+            verified = "2026-08-25"
+        ),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page", verified = "2026-09-20"),
         AcceptedLimitation(
             LimitedAspect.START_TIME,
-            "a night that prints no time in a floor heading, its info block or a running order has no start time"
+            "a night that prints no time in a floor heading, its info block or a running order has no start time",
+            verified = "2026-11-10"
         ),
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "the club sells through Resident Advisor and prints no figure; a night is flagged free only when its blurb says so"
+            "the club sells through Resident Advisor and prints no figure; a night is flagged free only when its blurb says so",
+            verified = "2026-09-20"
         ),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the programme rows carry no flyer, only icons and a Resident Advisor ticket link"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the programme rows carry no flyer, only icons and a Resident Advisor ticket link", verified = "2026-09-30"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
         houseGenre = "Techno, House"
     )
