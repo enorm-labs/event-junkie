@@ -107,8 +107,67 @@ class TausendOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a closed private night and keeps the public night beside it`() {
+        val nights =
+            scraper.scrape(
+                Jsoup.parse(
+                    night("Closed Event · Bar Tausend", "2026-11-13", CLOSED_TEXT) +
+                        night("Carla Valenti · Tausend House", "2026-11-14", "Ab 21 Uhr legt sie auf."),
+                    baseUrl
+                ),
+                baseUrl
+            )
+
+        nights.map { it.title } shouldContainExactly listOf("Carla Valenti")
+    }
+
+    @Test
+    fun `keeps a public night whose text names the closed booking before it`() {
+        val night =
+            scraper
+                .scrape(
+                    Jsoup.parse(
+                        night("Le Salon Privé", "2026-11-20", "Zunächst findet eine geschlossene Veranstaltung statt. Ab 24 Uhr öffnet die Bar."),
+                        baseUrl
+                    ),
+                    baseUrl
+                ).single()
+
+        night.title shouldBe "Le Salon Privé"
+    }
+
+    @Test
+    fun `drops a night named Closed Event even without its text`() {
+        scraper
+            .scrape(Jsoup.parse(night("Closed Event · Bar Tausend", "2026-11-13", null), baseUrl), baseUrl)
+            .shouldBeEmpty()
+    }
+
+    @Test
     fun `returns nothing for a page without a lineup`() {
         scraper.scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
+    }
+
+    /** Event 13348's shape: a graph entry and the `.bt-lu-body` block that carries the full text. */
+    private fun night(
+        name: String,
+        date: String,
+        text: String?
+    ): String {
+        val act = name.substringBefore(" · ")
+        val body =
+            text
+                ?.let {
+                    "<div class=\"bt-lu-body\"><div class=\"bt-lu-date\"><time datetime=\"${date}T21:00:00+01:00\"></time></div>" +
+                        "<h3 class=\"bt-lu-name\">$act</h3><div class=\"bt-lu-text\"><p>$it</p></div></div>"
+                }.orEmpty()
+        return """
+            <script type="application/ld+json">
+            {"@context":"https://schema.org","@type":"MusicEvent","name":"$name",
+             "startDate":"${date}T21:00:00+01:00","performer":{"@type":"PerformingGroup","name":"$act"}}
+            </script>
+            $body
+            """.trimIndent()
     }
 
     /** Event 11778's graph entry, cut to the fields the parser reads. */
@@ -119,4 +178,9 @@ class TausendOverviewPageScraperTest {
          "startDate":"2026-12-09T21:00:00+01:00","url":"https://tausendberlin.com/lineup/#act-desney-bailey-dj-jauche-20261209"}
         </script>
         """.trimIndent()
+
+    private companion object {
+        const val CLOSED_TEXT =
+            "Ab 21 Uhr findet in der Bar Tausend eine geschlossene Veranstaltung statt. Ab 00:00 Uhr öffnet die Bar für alle."
+    }
 }
