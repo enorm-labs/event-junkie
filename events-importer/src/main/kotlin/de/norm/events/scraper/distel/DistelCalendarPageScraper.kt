@@ -34,8 +34,8 @@ import java.time.Month
  * pages; the calendar lists the home stage only, and a row with that marker is skipped.
  *
  * Ensemble Kabarett and guest nights share the calendar. A guest night names its act before a colon
- * (`Wenzel: Lieder & Texte`) or as the guest and host of a talk series; [distelEventType] and
- * [distelActs] read both.
+ * (`Wenzel: Lieder & Texte`), as the guest and host of a talk series, or as a whole title ending in
+ * a band word (`Reinhold Beckmann Trio`); [distelEventType] and [distelActs] read all three.
  */
 class DistelCalendarPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -112,8 +112,8 @@ class DistelCalendarPageScraper {
 
 /**
  * The format of a calendar row: a talk or a reading the title names, then a concert the subtitle
- * names, then a reading or a talk the subtitle names, then a `<name> liest:` reading. Anything
- * else is the house's Kabarett.
+ * names, then a reading or a talk the subtitle names, then a `<name> liest:` reading, then a band
+ * the title names. Anything else is the house's Kabarett.
  */
 internal fun distelEventType(
     title: String,
@@ -124,13 +124,15 @@ internal fun distelEventType(
             subtitle?.contains("konzert", ignoreCase = true) == true -> EventType.CONCERT.name
             subtitle?.let(SUBTITLE_READING::containsMatchIn) == true -> EventType.READING.name
             READS.containsMatchIn(title.substringBefore(": ")) -> EventType.READING.name
+            isBandTitle(title) -> EventType.CONCERT.name
             else -> EventType.COMEDY.name
         }
 
 /**
  * The acts a calendar title bills: the guest and the host of a `<series> – <A> zu Gast bei <B>`
- * talk, else the names before the first colon. A performance marker before the colon
- * (`PREMIERE: Gut im Abgang`) bills nobody, and nor does a title with no colon: the ensemble's shows.
+ * talk, else a band's whole title, else the names before the first colon. A performance marker
+ * before the colon (`PREMIERE: Gut im Abgang`) bills nobody, and nor does any other title with no
+ * colon: the ensemble's shows.
  */
 internal fun distelActs(title: String): List<ScrapedArtist> {
     GUEST_AT_HOST.find(title)?.let { match ->
@@ -140,6 +142,7 @@ internal fun distelActs(title: String): List<ScrapedArtist> {
             .filter { it.isNotBlank() }
             .map(::titleAct)
     }
+    if (isBandTitle(title)) return listOf(titleAct(title.trim()))
     val names = title.substringBefore(": ", "").trim()
     if (names.isEmpty() || PERFORMANCE_MARKER.matches(names)) return emptyList()
     return names
@@ -149,6 +152,9 @@ internal fun distelActs(title: String): List<ScrapedArtist> {
         .filterNot(::isNonArtistName)
         .map(::titleAct)
 }
+
+/** `Reinhold Beckmann Trio`: a title with no colon is the act's name only when it ends in a band word. */
+private fun isBandTitle(title: String): Boolean = ": " !in title && BAND_SUFFIX.containsMatchIn(title.trim())
 
 private fun titleAct(name: String) = ScrapedArtist(name = name, role = ArtistRole.HEADLINER, titleDerived = true)
 
@@ -160,6 +166,8 @@ private val GUEST_AT_HOST = Regex("""^[^:–]+?(?::|\s+[–-])\s+(.+?)\s+zu Gast
 /** A prefix that marks one performance of an ensemble show, not an act. */
 private val PERFORMANCE_MARKER =
     Regex("""premiere|voraufführung|generalprobe|dernière|derniere|matinee|bunter weihnachtsteller""", RegexOption.IGNORE_CASE)
+
+private val BAND_SUFFIX = Regex("""\b(?:trio|quartett|band)$""", RegexOption.IGNORE_CASE)
 
 private val ACADEMIC_TITLE = Regex("""^(?:(?:prof|dr)\.\s*)+""", RegexOption.IGNORE_CASE)
 
