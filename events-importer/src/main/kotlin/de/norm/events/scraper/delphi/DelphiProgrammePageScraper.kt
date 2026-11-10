@@ -43,7 +43,7 @@ import java.time.LocalDateTime
  * events simply lose their prices.
  *
  * The venue's labels are **formats**, not musical genres — `Tanz`, `Theater`, `Dialog & Lesung`
- * — so they drive the event type. Only the two naming a genre ([MUSIC_GENRE_LABELS]) are also
+ * — so they drive the event type. Only the three naming a genre ([MUSIC_GENRE_LABELS]) are also
  * stored as one. A row without a label is typed from its title and teaser ([unlabelledRowType]).
  *
  * Only a concert bills acts. Its line-up comes from its `p.stabText` credit line, where the row has
@@ -154,7 +154,7 @@ class DelphiProgrammePageScraper {
             artists =
                 if (eventType == EventType.CONCERT.name) {
                     creditedActs(row, teaser).ifEmpty {
-                        if (isCandlelightProgramme(title)) {
+                        if (isCandlelightProgramme(title) || isFilmConcert(teaser)) {
                             emptyList()
                         } else {
                             buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType) + guestActOf(title)
@@ -218,7 +218,7 @@ class DelphiProgrammePageScraper {
  * The format labels mapped onto the model's types. No dance or theatre type exists, so a
  * staged performance of either kind is a [EventType.SHOW] — the call the AEG venues make for
  * their ballet — and so are `Varieté`, `Revue` and `Performance`. `Dialog & Lesung` is a talk or
- * reading; `Comedy & Kabarett` is comedy; the two music labels are concerts.
+ * reading; `Comedy & Kabarett` is comedy; the three music labels are concerts.
  */
 private val DELPHI_CATEGORY_SYNONYMS =
     mapOf(
@@ -232,6 +232,7 @@ private val DELPHI_CATEGORY_SYNONYMS =
         "dialog & lesung" to EventType.READING.name,
         "comedy & kabarett" to EventType.COMEDY.name,
         "kammermusik" to EventType.CONCERT.name,
+        "klassik" to EventType.CONCERT.name,
         "elektronische musik" to EventType.CONCERT.name
     )
 
@@ -285,7 +286,7 @@ private const val AUTHOR_CUE = """(?:\bvon|\bby|\b\d{4},)\s+"""
  * The labels naming a musical genre rather than a staging format. Only these become genre
  * tags; filing `Tanz` or `Theater` as a genre would put formats into a vocabulary of styles.
  */
-private val MUSIC_GENRE_LABELS = setOf("Kammermusik", "Elektronische Musik")
+private val MUSIC_GENRE_LABELS = setOf("Kammermusik", "Klassik", "Elektronische Musik")
 
 /**
  * The part of [title] that bills an act: `"Delphis Orakel – Stroum"` is the house's bar series presenting
@@ -321,6 +322,14 @@ private val GUEST_BRACKET = Regex("""\s*\(\+\s*([^)]+)\)\s*$""")
 internal fun isCandlelightProgramme(title: String): Boolean = CANDLELIGHT.containsMatchIn(title)
 
 private val CANDLELIGHT = Regex("""^\s*candlelight\b""", RegexOption.IGNORE_CASE)
+
+/**
+ * A film concert's title names the film: `100 Jahre Stan & Ollie` billed "Ollie" (#4795). Its players stand in the
+ * credit line where the row has one, and the house's teaser is the only other place that calls the row one.
+ */
+private fun isFilmConcert(teaser: String?): Boolean = teaser != null && FILM_CONCERT.containsMatchIn(teaser)
+
+private val FILM_CONCERT = Regex("""\bfilmkonzert""", RegexOption.IGNORE_CASE)
 
 /** The hyphen is spaced, and only a hyphen: the house's en dash marks a series or a line-up label above. */
 private val WORK_TAIL = Regex("""\s+-\s+.+$""")
