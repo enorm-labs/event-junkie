@@ -24,7 +24,8 @@ import java.time.Month
  *
  * The two lines take two shapes. The Open Stage nights read `Open Stage Varieté präsentiert von` /
  * `<host>`: the host is the one constant act of the night and is billed. A guest show reads
- * `<performers>` / `<programme>`, and the performers are split from the first line.
+ * `<performers>` / `<programme>`, and the performers are split from the first line. A first line
+ * `<presenter> präsentiert:` bills the presenter alone.
  */
 class ScheinbarProgrammPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -72,8 +73,21 @@ class ScheinbarProgrammPageScraper {
             // `18,00 / 15,00 €` is the full and the reduced price.
             priceNote = priceText?.takeIf { prices.size > 1 },
             soldOut = item.selectFirst(".ausverkauft") != null,
-            artists = if (host != null) listOf(ScrapedArtist(name = host)) else headlinersFromTitle(first)
+            artists = billedActs(first, host)
         )
+    }
+
+    /** The host of an Open Stage night, the presenter of `<presenter> präsentiert:`, or the performers of a guest show. */
+    private fun billedActs(
+        first: String,
+        host: String?
+    ): List<ScrapedArtist> {
+        val presenter = PRESENTER.matchEntire(first)?.groupValues?.get(1)
+        return when {
+            host != null -> listOf(ScrapedArtist(name = host))
+            presenter != null -> listOf(ScrapedArtist(name = presenter))
+            else -> headlinersFromTitle(first)
+        }
     }
 
     /** `Oktober 2026` as month and year. */
@@ -86,6 +100,7 @@ class ScheinbarProgrammPageScraper {
 
     private companion object {
         const val PRESENTED_BY = "präsentiert von"
+        val PRESENTER = Regex("""(.+?)\s+präsentiert:""")
         val AMOUNT = Regex("""\d+,\d{2}""")
         val GERMAN_MONTHS = GERMAN_MONTH_NAMES.map { it.lowercase() }
     }
