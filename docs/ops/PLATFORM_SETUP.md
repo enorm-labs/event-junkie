@@ -931,7 +931,8 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
   three days, well past its 36 hours. A second rule would fire beside that one on the same condition, and be the one that gets muted.
 - **`field_coverage` must never be alerted on with a threshold.** A venue that never published a price sits at `0` forever without anything being wrong. The
   signal is a **drop against that source's own history**. That is why the flagging lives in the importer, where the history is, rather than in an alert rule.
-  `event_source.flagged_at` is the alertable thing. Alerting on `field_coverage < 0.5` would page on half the corpus on day one.
+  `event_source.flagged_at` is the alertable thing. Alerting on `field_coverage < 0.5` would page on half the corpus on day one. A field that the source
+  declares in its `VenueLimitations` keeps its gauge, but it never sets the flag or logs the drop (#4797).
 - **A counter that never incremented is not in the exposition, and an absent series cannot fire a rule** (#880). This is `has_succeeded`'s failure one
   layer down. It bites hardest on the outcome a rule is written for: `bff_images_served_total{outcome="missing"}` counts a row promising an object the
   bucket does not have. On a healthy origin it never increments, so the series never appears. Every counter under `images.` and `bff.images.` is therefore

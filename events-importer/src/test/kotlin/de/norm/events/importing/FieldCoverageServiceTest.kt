@@ -1,8 +1,13 @@
 package de.norm.events.importing
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TrackedField
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
@@ -12,8 +17,10 @@ import io.mockk.slot
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -33,24 +40,37 @@ class FieldCoverageServiceTest {
     private val clock = Clock.fixed(Instant.parse("2026-08-19T04:00:00Z"), ZoneOffset.UTC)
     private lateinit var registry: SimpleMeterRegistry
     private lateinit var service: FieldCoverageService
+    private val appender = ListAppender<ILoggingEvent>()
+    private val logger = LoggerFactory.getLogger(FieldCoverageService::class.java) as Logger
 
     @BeforeEach
     fun setUp() {
         registry = SimpleMeterRegistry()
         service = FieldCoverageService(stats, sources, ImporterMetrics(registry), BASELINE_RUNS, MIN_SAMPLE, clock)
         coEvery { stats.findRecent(any(), any(), any()) } returns emptyFlow()
+        appender.start()
+        logger.addAppender(appender)
     }
 
-    private fun source(flagged: Instant? = null) =
-        EventSourceEntity(
-            id = 1L,
-            venueId = 1L,
-            name = "alpha",
-            slug = "alpha",
-            url = "https://alpha.example/events",
-            sourceType = "CASSIOPEIA",
-            flaggedAt = flagged
-        )
+    @AfterEach
+    fun tearDown() {
+        logger.detachAppender(appender)
+    }
+
+    private fun source(
+        flagged: Instant? = null,
+        sourceType: String = "CASSIOPEIA"
+    ) = EventSourceEntity(
+        id = 1L,
+        venueId = 1L,
+        name = "alpha",
+        slug = "alpha",
+        url = "https://alpha.example/events",
+        sourceType = sourceType,
+        flaggedAt = flagged
+    )
+
+    private fun warnings() = appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage }
 
     /** [withGenre] of [count] events carry a genre; all of them carry everything else. */
     private fun events(
@@ -110,6 +130,39 @@ class FieldCoverageServiceTest {
             val reason = slot<String>()
             coVerify { sources.setFlag(eq(1L), any(), capture(reason)) }
             reason.captured shouldBe "genre 0% of 40 events, baseline 100%"
+        }
+
+    /**
+     * A field the source declares in its `VenueLimitations` is measured and never flagged (#4797).
+     * Panda Platforma declares `TICKET_URL`, and without the skip it warned on every run until its
+     * median caught up.
+     */
+    @Test
+    fun `a field the source declares as limited is recorded but logs no drop`() =
+        runTest {
+            coEvery { stats.findRecent(1L, TrackedField.TICKET_URL.key, any()) } returns
+                (history(1, ratio = 0.0) + history(BASELINE_RUNS, ratio = 1.0)).asFlow()
+
+            service.record(source(sourceType = "PANDA_PLATFORMA"), events(count = 40)) shouldBe emptyList()
+
+            coVerify(exactly = TrackedField.entries.size) { stats.save(any()) }
+            coVerify(exactly = 0) { sources.setFlag(any(), any(), any()) }
+            warnings().shouldBeEmpty()
+        }
+
+    /** The same source still flags a field it does not declare, and the line names only that field. */
+    @Test
+    fun `a field the source does not declare still logs the drop`() =
+        runTest {
+            for (field in listOf(TrackedField.TICKET_URL, TrackedField.IMAGE_URL)) {
+                coEvery { stats.findRecent(1L, field.key, any()) } returns
+                    (history(1, ratio = 0.0) + history(BASELINE_RUNS, ratio = 1.0)).asFlow()
+            }
+
+            service.record(source(sourceType = "PANDA_PLATFORMA"), events(count = 40)).map { it.field } shouldBe
+                listOf(TrackedField.IMAGE_URL)
+
+            warnings() shouldBe listOf("Field coverage dropped for source 'alpha': imageUrl 0% of 40 events, baseline 100%")
         }
 
     /**

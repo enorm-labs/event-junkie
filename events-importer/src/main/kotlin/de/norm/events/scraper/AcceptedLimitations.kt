@@ -446,4 +446,14 @@ object AcceptedLimitations {
         source: EventSource,
         aspect: LimitedAspect
     ): Boolean = forSource(source).any { it.aspect == aspect }
+
+    /**
+     * The aspects a stored source declares, by its `event_source.source_type`. Empty for a type no
+     * [EventSource] names. The data-quality gate (#3195) and the field-coverage check (#4797) skip these.
+     */
+    fun declaredAspects(sourceType: String): Set<LimitedAspect> =
+        EventSource.entries
+            .firstOrNull { it.name == sourceType }
+            ?.let { source -> forSource(source).map { it.aspect }.toSet() }
+            .orEmpty()
 }
