@@ -32,6 +32,9 @@ import java.time.format.DateTimeParseException
  * so the year-less `Do | 08.10. | 21 H` line is never read. The graph's `description` is cut at about
  * 300 characters, so the full text comes from each night's `.bt-lu-body` block, matched on the same
  * [sourceId]. The `endDate` is a fixed 3 am on every night and is not stored.
+ *
+ * A private booking is listed as the act `Closed Event` and is dropped (13348). The words `geschlossene Veranstaltung` alone
+ * do not decide it: a public night that opens at 24 H after a booking says them too, as Le Salon Privé's does.
  */
 class TausendOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -72,6 +75,10 @@ class TausendOverviewPageScraper {
         val start = node.stringOrNull("startDate")?.let(::nightStart)
         if (start == null) {
             logger.warn { "Tausend night '$act' has no parseable startDate, skipping" }
+            return null
+        }
+        if (act.equals(CLOSED_EVENT_ACT, ignoreCase = true)) {
+            logger.info { "Tausend night '$act' on ${start.date} is a private booking, skipping" }
             return null
         }
         val id = sourceId(start.date, act)
@@ -152,6 +159,7 @@ class TausendOverviewPageScraper {
     companion object {
         private const val NAME_SEPARATOR = "·"
         private const val LIVE_SERIES = "Live"
+        private const val CLOSED_EVENT_ACT = "Closed Event"
         private val LIVE_WITH_DJ = Regex("""(.+?)\s+&\s+(DJ\s+.+)""")
         private const val LOCAL_DATE_TIME_LENGTH = 19
         private val END_OF_NIGHT: LocalTime = LocalTime.of(23, 59)
