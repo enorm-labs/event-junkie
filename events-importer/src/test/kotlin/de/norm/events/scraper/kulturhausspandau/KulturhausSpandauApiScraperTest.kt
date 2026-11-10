@@ -110,6 +110,20 @@ class KulturhausSpandauApiScraperTest {
         event(14214).subtitle shouldBe "Live-Gesang | Tanz | Artistik"
     }
 
+    @Test
+    fun `strips a tag from an artist's name, closed or not, and keeps an unmarked name`() {
+        val json =
+            """
+            [{"ID":14195,"title":"Das Mitsingding","start":"2026-12-04 20:00:00",
+              "permalink":"https://kulturhaus-spandau.de/ev_event/14195/","place":{"street":"Mauerstr. 6"},"categories":[{"name":"Konzert"}],
+              "artists":[{"title":"Schalala <p hidden Bonse>"},{"title":"Nicolette <p hidden"},{"title":"<br>"},{"title":"Sascha Grammel"}]}]
+            """.trimIndent()
+
+        val parsed = KulturhausSpandauApiScraper().scrape(json, SOURCE_URL).single()
+
+        parsed.artists.map { it.name } shouldContainExactly listOf("Schalala", "Nicolette", "Sascha Grammel")
+    }
+
     private companion object {
         const val SOURCE_URL = "https://kulturhaus-spandau.de/wp-json/eventmanager/v1/events"
     }
