@@ -25,6 +25,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
@@ -52,8 +53,9 @@ import java.time.MonthDay
  *
  * **The start time is the earliest floor's.** A floor heading can carry its opening time —
  * `GARDEN (from 14:00, FREE until 20:00)`, `RED hosted by Fluid Vision (from 01:00)` (#2627),
- * `BLACK- OPENS @ 00:00` — and the night starts when its first floor opens. A night whose
- * headings print no time, as a CLUB-only night, has no start time.
+ * `BLACK- OPENS @ 00:00` — and the night starts when its first floor opens. Most headings print
+ * none, and then the row's own text decides ([fallbackStartTimeOf], #4818). A night that prints
+ * no time anywhere, as a CLUB-only night, has no start time.
  *
  * @see RenateWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.renate.cc/">Renate Berlin</a>
@@ -110,7 +112,7 @@ class RenateOverviewPageScraper(
             eventType = EventType.PARTY.name,
             // The venue names no style but programmes techno and house, so the venue is the default, as at Tresor.
             eventDate = eventDate,
-            startTime = startTimeOf(lines),
+            startTime = startTimeOf(lines) ?: fallbackStartTimeOf(row, eventDate, lines),
             // No per-event page, so every night points at the programme and takes its identity from date
             // plus slugified title.
             sourceUrl = baseUrl,
@@ -179,9 +181,8 @@ class RenateOverviewPageScraper(
     private fun startTimeOf(lines: List<String>): LocalTime? =
         lines
             .filter { floorNameOf(it) != null }
-            .mapNotNull { line ->
-                FLOOR_OPENS.find(line)?.let { runCatching { LocalTime.of(it.groupValues[1].toInt(), it.groupValues[2].toInt()) }.getOrNull() }
-            }.minByOrNull { if (it < LocalTime.NOON) it.toSecondOfDay() + SECONDS_PER_DAY else it.toSecondOfDay() }
+            .mapNotNull { line -> FLOOR_OPENS.find(line)?.let(::timeOf) }
+            .minByOrNull(::nightOrder)
 
     /**
      * The stage for a block with no floor heading: the night's only space badge, when the block is
@@ -284,8 +285,6 @@ class RenateOverviewPageScraper(
         /** A floor heading's opening time: `(from 14:00, FREE until 20:00)` or `OPENS @ 00:00`. */
         val FLOOR_OPENS = Regex("""(?:\(from|\bopens\s*@)\s*(\d{1,2}):(\d{2})\b""", RegexOption.IGNORE_CASE)
 
-        const val SECONDS_PER_DAY = 86_400
-
         /** A clock time, which marks a schedule line rather than a performer. */
         val CLOCK_TIME = Regex("""\d{1,2}:\d{2}""")
 
@@ -299,3 +298,46 @@ class RenateOverviewPageScraper(
         const val MONTH_GROUP = 2
     }
 }
+
+private const val SECONDS_PER_DAY = 86_400
+
+/** The info block's `Renate Klubnacht opens from 22:00`; `We open from` is the Hot Tip and stays out. */
+private val OPENS_FROM = Regex("""\bopens\s+from\s+(\d{1,2}):(\d{2})\b""", RegexOption.IGNORE_CASE)
+
+/** One half of `Friday 18:00 – 22:00 / Saturday 16:00 – 22:00`: the weekday and its opening time. */
+private val WEEKDAY_HOURS =
+    Regex("""\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+(\d{1,2}):(\d{2})\s*[-–—]""", RegexOption.IGNORE_CASE)
+
+/** A running-order line opens with its slot's time: `16:00 - 19:00: Open Decks`, `19:00 DJ Sets`. */
+private val RUNNING_ORDER_SLOT = Regex("""^(\d{1,2}):(\d{2})\b""")
+
+/**
+ * The start time of a row whose floor headings print none, from the most specific statement
+ * to the least:
+ * 1. the `.info-text`'s `Renate Klubnacht opens from 22:00`. Only `opens from` counts: the
+ * `Hot Tip: We open from 18:00 Fridays` beside it is the early Green floor, not the Klubnacht;
+ * 2. its `Friday 18:00 – 22:00 / Saturday 16:00 – 22:00` hours, the half for the night's weekday;
+ * 3. the earliest slot of a running order (`16:00 - 19:00: Open Decks w/ …`).
+ */
+private fun fallbackStartTimeOf(
+    row: Element,
+    eventDate: LocalDate,
+    lines: List<String>
+): LocalTime? {
+    val info = row.select(".info-text").text()
+    return OPENS_FROM.find(info)?.let(::timeOf)
+        ?: WEEKDAY_HOURS
+            .findAll(info)
+            .firstOrNull { DayOfWeek.valueOf(it.groupValues[1].uppercase()) == eventDate.dayOfWeek }
+            ?.let { timeOf(it, firstGroup = 2) }
+        ?: lines.mapNotNull { RUNNING_ORDER_SLOT.find(it)?.let(::timeOf) }.minByOrNull(::nightOrder)
+}
+
+/** The `HH`/`MM` pair starting at [firstGroup] as a time, or `null` for an impossible one such as `25:00`. */
+private fun timeOf(
+    match: MatchResult,
+    firstGroup: Int = 1
+): LocalTime? = runCatching { LocalTime.of(match.groupValues[firstGroup].toInt(), match.groupValues[firstGroup + 1].toInt()) }.getOrNull()
+
+/** Sort key for a night's times: one before noon is past midnight, so `01:00` sorts after `22:00`. */
+private fun nightOrder(time: LocalTime): Int = if (time < LocalTime.NOON) time.toSecondOfDay() + SECONDS_PER_DAY else time.toSecondOfDay()
