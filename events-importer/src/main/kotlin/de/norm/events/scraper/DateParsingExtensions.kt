@@ -26,7 +26,7 @@ import java.util.Locale
 val UNRESOLVED_EVENT_DATE: LocalDate = LocalDate.MIN
 
 /** `17. Oktober`: a German day and month name without a year, as several programmes print it. */
-val GERMAN_DAY_MONTH: DateTimeFormatter =
+private val GERMAN_DAY_MONTH: DateTimeFormatter =
     DateTimeFormatterBuilder()
         .parseCaseInsensitive()
         .appendPattern("d. MMMM")
