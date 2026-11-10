@@ -1,7 +1,7 @@
 package de.norm.events.account
 
+import de.norm.events.mail.MailBody
 import de.norm.events.mail.MailMessage
-import org.springframework.web.util.HtmlUtils
 
 /**
  * The sign-in mail, in German or English. The token travels in the fragment, so neither nginx's
@@ -29,8 +29,13 @@ internal object SignInMail {
             kind = KIND,
             to = to,
             subject = if (locale == "de") "Dein Anmeldelink für Event Junkie" else "Your sign-in link for Event Junkie",
-            text = text.joinToString("\n\n") + "\n\nEvent Junkie\n$origin\n",
-            html = html(text, link, if (locale == "de") "Anmelden" else "Sign in", origin)
+            text = MailBody.text(text, origin),
+            html =
+                MailBody.html(text, link, origin) { escapedLink ->
+                    "<p><a href=\"$escapedLink\" style=\"display:inline-block;padding:10px 18px;background:#111;color:#fff;text-decoration:none\">" +
+                        "${MailBody.escape(if (locale == "de") "Anmelden" else "Sign in")}</a></p>" +
+                        "<p style=\"font-size:12px;color:#555\">$escapedLink</p>"
+                }
         )
     }
 
@@ -53,26 +58,6 @@ internal object SignInMail {
         link,
         "If you did not ask for it, ignore this mail. Nobody signs in without the link, and no account is created."
     )
-
-    private fun html(
-        paragraphs: List<String>,
-        link: String,
-        button: String,
-        origin: String
-    ): String {
-        val escapedLink = HtmlUtils.htmlEscape(link)
-        val body =
-            paragraphs.joinToString("\n") { paragraph ->
-                if (paragraph == link) {
-                    "<p><a href=\"$escapedLink\" style=\"display:inline-block;padding:10px 18px;background:#111;color:#fff;text-decoration:none\">" +
-                        "${HtmlUtils.htmlEscape(button)}</a></p><p style=\"font-size:12px;color:#555\">$escapedLink</p>"
-                } else {
-                    "<p>${HtmlUtils.htmlEscape(paragraph)}</p>"
-                }
-            }
-        return "<!doctype html><html><body style=\"font-family:sans-serif;line-height:1.5\">$body" +
-            "<p>Event Junkie<br>${HtmlUtils.htmlEscape(origin)}</p></body></html>"
-    }
 
     const val KIND = "sign-in"
 }
