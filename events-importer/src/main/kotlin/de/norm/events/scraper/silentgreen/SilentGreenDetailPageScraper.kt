@@ -30,9 +30,11 @@ import java.time.LocalTime
  * one absolute URL.
  *
  * A multi-day festival leaves the time cell empty and prints its daily hours as bold lines at the
- * end of the blurb (`8. Oktober: 19–22 Uhr`, `10.+11. Oktober: 11–24 Uhr`). [dailyHours] reads
- * them as a per-day fallback. A programme highlight in the same blurb (`10. Oktober / 11 bis 18
- * Uhr`) has no colon after the month, so it does not match: it is one screening, not the opening.
+ * end of the blurb, in three shapes: `8. Oktober: 19–22 Uhr` and `10.+11. Oktober: 11–24 Uhr`;
+ * `Sa, 5.12.: 12:00–20:00`; and a `27. November` heading over `Einlass: 14:30 Uhr / Beginn: 15 Uhr`,
+ * which gives a start and a doors time but no end (#4819). [dailyHours] reads them as a per-day
+ * fallback. A programme highlight in the same blurb (`10. Oktober / 11 bis 18 Uhr`) has no colon
+ * after the month, so it does not match: it is one screening, not the opening.
  * The same bold block may name the price (`Tickets: 10€ vor Ort`), which [ticketPrice] reads.
  *
  * @see SilentGreenWebsiteImporter for the HTTP fetch orchestrator.
@@ -108,30 +110,30 @@ class SilentGreenDetailPageScraper {
         }
 
     /**
-     * The opening hours per day from the blurb's `<days> <Monat>: HH[:mm]–HH[:mm] Uhr` lines. The
-     * year is the date block's, plus one for a month before the block's first month. `24` is
-     * midnight, so the end falls on the next day.
+     * The opening hours per day from the blurb's `<days> <Monat>: HH[:mm]–HH[:mm] Uhr` lines, with
+     * the [numericDailyHours] and [admissionDailyHours] shapes below them. The year is the date
+     * block's, plus one for a month before the block's first month. `24` is midnight, so the end
+     * falls on the next day.
      */
     private fun dailyHours(
         document: Document,
         runStart: LocalDate
     ): Map<LocalDate, SilentGreenOpeningHours> {
         val text = document.select(BODY_SELECTOR).text()
-        return DAILY_HOURS
-            .findAll(text)
-            .toList()
-            .flatMap { match ->
-                val (days, monthName) = match.destructured
-                val month = parseGermanMonthAbbreviation(monthName.take(MONTH_ABBREVIATION_LENGTH))
-                val clocks = match.groupValues.drop(FIRST_CLOCK_GROUP)
-                val start = clock(clocks[0], clocks[1])
-                val end = clock(clocks[2], clocks[3])
-                if (month == null || start == null || end == null) return@flatMap emptyList()
-                val year = if (month < runStart.month) runStart.year + 1 else runStart.year
-                dayNumbers(days).mapNotNull { day ->
-                    runCatching { LocalDate.of(year, month, day) }.getOrNull()?.let { it to SilentGreenOpeningHours(start, end) }
-                }
-            }.toMap()
+        val named =
+            DAILY_HOURS
+                .findAll(text)
+                .toList()
+                .flatMap { match ->
+                    val (days, monthName) = match.destructured
+                    val month = parseGermanMonthAbbreviation(monthName.take(MONTH_ABBREVIATION_LENGTH))
+                    val clocks = match.groupValues.drop(FIRST_CLOCK_GROUP)
+                    val start = clock(clocks[0], clocks[1])
+                    val end = clock(clocks[2], clocks[3])
+                    if (month == null || start == null || end == null) return@flatMap emptyList()
+                    dayNumbers(days).mapNotNull { day -> runDay(runStart, month.value, day)?.let { it to SilentGreenOpeningHours(start, end) } }
+                }.toMap()
+        return numericDailyHours(text, runStart) + admissionDailyHours(text, runStart) + named
     }
 
     /** Expands `10.+11.` to both days and `10.–12.` to the range. */
@@ -145,12 +147,6 @@ class SilentGreenDetailPageScraper {
             (from..day).toList()
         }
     }
-
-    /** `HH[:mm]` as a clock, with `24` as midnight. */
-    private fun clock(
-        hour: String,
-        minute: String
-    ): LocalTime? = runCatching { LocalTime.of(hour.toInt() % HOURS_PER_DAY, minute.ifEmpty { "0" }.toInt()) }.getOrNull()
 
     /**
      * Joins the prose paragraphs into the description, dropping the `"… präsentiert"` credit line
@@ -169,14 +165,6 @@ class SilentGreenDetailPageScraper {
         /** The detail article's prose, scoped so the page's navigation and footer stay out. */
         const val BODY_SELECTOR = ".news-detail .ce-bodytext"
         const val BODY_TEXT_SELECTOR = "$BODY_SELECTOR p"
-
-        const val HOURS_PER_DAY = 24
-
-        /** The group in [DAILY_HOURS] that holds the start hour; the start minute, end hour and end minute follow. */
-        const val FIRST_CLOCK_GROUP = 3
-
-        /** `Oktober` → `okt`, the key [parseGermanMonthAbbreviation] reads. */
-        const val MONTH_ABBREVIATION_LENGTH = 3
 
         /** `8. Oktober: 19–22 Uhr`, `10.+11. Oktober: 11–24 Uhr`; the colon after the month is required. */
         val DAILY_HOURS =
@@ -205,6 +193,86 @@ class SilentGreenDetailPageScraper {
         val BLOCK_DATE = Regex("""\d{2}\.\d{2}\.\d{4}""")
     }
 }
+
+/**
+ * The `Sa, 5.12.: 12:00–20:00` lines: a weekday, the day and month as numbers, a colon, then the
+ * range, with or without `Uhr`.
+ */
+private fun numericDailyHours(
+    text: String,
+    runStart: LocalDate
+): Map<LocalDate, SilentGreenOpeningHours> =
+    NUMERIC_DAILY_HOURS
+        .findAll(text)
+        .mapNotNull { match ->
+            val (day, month) = match.destructured
+            val clocks = match.groupValues.drop(FIRST_CLOCK_GROUP)
+            val date = runDay(runStart, month.toInt(), day.toInt()) ?: return@mapNotNull null
+            val start = clock(clocks[0], clocks[1]) ?: return@mapNotNull null
+            val end = clock(clocks[2], clocks[3]) ?: return@mapNotNull null
+            date to SilentGreenOpeningHours(start, end)
+        }.toMap()
+
+/**
+ * The `27. November` heading over an `Einlass: 14:30 Uhr / Beginn: 15 Uhr` line: `Beginn` is the
+ * day's start and `Einlass` its doors time. These lines name no end, so the day stores none.
+ */
+private fun admissionDailyHours(
+    text: String,
+    runStart: LocalDate
+): Map<LocalDate, SilentGreenOpeningHours> =
+    ADMISSION_DAILY_HOURS
+        .findAll(text)
+        .mapNotNull { match ->
+            val (day, monthName) = match.destructured
+            val clocks = match.groupValues.drop(FIRST_CLOCK_GROUP)
+            val month = parseGermanMonthAbbreviation(monthName.take(MONTH_ABBREVIATION_LENGTH)) ?: return@mapNotNull null
+            val date = runDay(runStart, month.value, day.toInt()) ?: return@mapNotNull null
+            val start = clock(clocks[2], clocks[3]) ?: return@mapNotNull null
+            date to SilentGreenOpeningHours(start, end = null, doors = clock(clocks[0], clocks[1]))
+        }.toMap()
+
+/** The [day] of [month] in the run's year, or the next year's for a month before the run's first. */
+private fun runDay(
+    runStart: LocalDate,
+    month: Int,
+    day: Int
+): LocalDate? {
+    val year = if (month < runStart.monthValue) runStart.year + 1 else runStart.year
+    return runCatching { LocalDate.of(year, month, day) }.getOrNull()
+}
+
+/** `HH[:mm]` as a clock, with `24` as midnight. */
+private fun clock(
+    hour: String,
+    minute: String
+): LocalTime? = runCatching { LocalTime.of(hour.toInt() % HOURS_PER_DAY, minute.ifEmpty { "0" }.toInt()) }.getOrNull()
+
+private const val HOURS_PER_DAY = 24
+
+/**
+ * The group that holds the first hour in every daily-hours pattern, after the day and the month;
+ * the minute, the second hour and its minute follow.
+ */
+private const val FIRST_CLOCK_GROUP = 3
+
+/** `Oktober` → `okt`, the key [parseGermanMonthAbbreviation] reads. */
+private const val MONTH_ABBREVIATION_LENGTH = 3
+
+/** `Sa, 5.12.: 12:00–20:00`; the weekday in front and the colon after the date are required. */
+private val NUMERIC_DAILY_HOURS =
+    Regex(
+        """(?<!\p{L})\p{L}{2,10}\.?,?\s*(\d{1,2})\.(\d{1,2})\.\s*:\s*""" +
+            """(\d{1,2})(?::(\d{2}))?\s*[–-]\s*(\d{1,2})(?::(\d{2}))?(?!\d)"""
+    )
+
+/** `27. November Einlass: 14:30 Uhr / Beginn: 15 Uhr`, the heading and the line run together by [Document.text]. */
+private val ADMISSION_DAILY_HOURS =
+    Regex(
+        """(?<![\d.+–-])(\d{1,2})\.\s*(\p{L}+)\s+Einlass\s*:\s*(\d{1,2})(?::(\d{2}))?\s*(?:Uhr)?\s*/\s*""" +
+            """Beginn\s*:\s*(\d{1,2})(?::(\d{2}))?\s*Uhr""",
+        RegexOption.IGNORE_CASE
+    )
 
 /**
  * The run-level fields shared by every day of one entry, applied by [applyTo]. Every field is a
@@ -247,7 +315,7 @@ data class SilentGreenEventDetails(
         val merged =
             event.copy(
                 free = isFree(event),
-                doorsTime = event.doorsTime ?: doorsTime,
+                doorsTime = doorsOf(event, hours),
                 startTime = event.startTime ?: startTime ?: hours?.start,
                 eventDate = if (run) runStart else event.eventDate,
                 endDate = if (run) runEnd else event.endDate ?: hours?.endDate(event.eventDate),
@@ -258,6 +326,12 @@ data class SilentGreenEventDetails(
             )
         return withPrices(merged)
     }
+
+    /** The row's doors time, else the page's, else the day's from an `Einlass / Beginn` line. */
+    private fun doorsOf(
+        event: ScrapedEvent,
+        hours: SilentGreenOpeningHours?
+    ): LocalTime? = event.doorsTime ?: doorsTime ?: hours?.doors
 
     /** The `Tickets:` line's price, where the row names none. */
     private fun withPrices(event: ScrapedEvent): ScrapedEvent =
@@ -298,11 +372,15 @@ data class SilentGreenEventDetails(
     }
 }
 
-/** One day's opening hours; an [end] at or before [start] falls on the next day. */
+/**
+ * One day's opening hours; an [end] at or before [start] falls on the next day. An `Einlass / Beginn`
+ * line gives [doors] and no [end].
+ */
 data class SilentGreenOpeningHours(
     val start: LocalTime,
-    val end: LocalTime
+    val end: LocalTime?,
+    val doors: LocalTime? = null
 ) {
-    /** The day the hours that open on [day] end. */
-    fun endDate(day: LocalDate): LocalDate = endOn(day, start, end)
+    /** The day the hours that open on [day] end, or `null` without an [end]. */
+    fun endDate(day: LocalDate): LocalDate? = end?.let { endOn(day, start, it) }
 }
