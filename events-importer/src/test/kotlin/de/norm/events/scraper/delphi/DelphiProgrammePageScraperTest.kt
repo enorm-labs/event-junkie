@@ -41,6 +41,10 @@ class DelphiProgrammePageScraperTest {
         scraper.scrape(fixtureDocument("delphi/delphi-programm-variete.html", baseUrl), baseUrl)
     }
 
+    private val klassik: List<ScrapedEvent> by lazy {
+        scraper.scrape(fixtureDocument("delphi/delphi-programm-klassik.html", baseUrl), baseUrl)
+    }
+
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
     /** One row on a one-month page, with the markup the venue renders. An empty [label] leaves the cell empty, as on the page. */
@@ -242,6 +246,18 @@ class DelphiProgrammePageScraperTest {
         val drag = events.filter { it.title == "König Theater – Drag King Theater Show" }
         drag shouldHaveSize 2
         drag.forEach { it.artists.shouldBeEmpty() }
+    }
+
+    @Test
+    fun `types the Klassik label as a concert`() {
+        // A film concert with the Metropolis Orchester Berlin, on two dates (#4795).
+        val stanAndOllie = klassik.filter { it.title == "100 Jahre Stan & Ollie" }
+        stanAndOllie.map { it.sourceId } shouldBe
+            listOf("theater_im_delphi:570/2027-01-02-19:30", "theater_im_delphi:570/2027-01-03-16:00")
+        stanAndOllie.map { it.eventType }.distinct() shouldBe listOf(EventType.CONCERT.name)
+        stanAndOllie.map { it.genre }.distinct() shouldBe listOf("Klassik")
+        // The title names the film, not an act, and the row has no credit line.
+        stanAndOllie.forEach { it.artists.shouldBeEmpty() }
     }
 
     @Test
