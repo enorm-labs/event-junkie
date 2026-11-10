@@ -9,5 +9,6 @@
   },
   "viewHint": "{view} view",
   "more": "more",
-  "moreOn": "{more} on {day}"
+  "moreOn": "{more} on {day}",
+  "ongoing": "Ongoing"
 }

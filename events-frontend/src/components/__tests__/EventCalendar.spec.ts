@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/vue3'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import EventCalendar from '@/components/EventCalendar.vue'
 import { i18n } from '@/i18n'
-import { formatLongDate, todayIso } from '@/lib/format'
+import { addDays, formatLongDate, todayIso } from '@/lib/format'
 
 /** The calendar's chrome follows the page locale, and its times use the 24-hour clock (#2658). */
 
@@ -90,6 +90,49 @@ describe('EventCalendar', () => {
 
     expect(status.text()).toBe(wrapper.findComponent(FullCalendar).vm.getApi().view.title)
     expect(status.text()).not.toBe('')
+  })
+
+  it('draws an estimated start apart from a stated one, and says why', async () => {
+    const day = todayIso()
+    const events = [
+      { title: 'Stated', start: `${day}T19:00:00`, extendedProps: { slug: 'stated' } },
+      {
+        title: 'Guessed',
+        start: `${day}T20:00:00`,
+        extendedProps: { slug: 'guessed', estimated: true },
+      },
+    ]
+    const wrapper = mount(EventCalendar, { props: { events }, attachTo: document.body })
+    await flushPromises()
+
+    const marked = wrapper.findAll('.ej-estimated')
+    expect(marked.map((time) => time.text())).toEqual(['20:00'])
+    const guessed = wrapper.findAll('.ej-event').find((el) => el.text().includes('Guessed'))
+    expect(guessed?.attributes('title')).toContain('Not announced, estimated from the event type')
+    expect(guessed?.find('.sr-only').text()).toBe('Not announced, estimated from the event type')
+  })
+
+  it.each([
+    ['en', 'Ongoing'],
+    ['de', 'Läuft'],
+  ] as const)('labels a %s list day of a run as ongoing, not all-day', async (locale, words) => {
+    i18n.global.locale.value = locale
+    const events = [
+      {
+        title: 'Run',
+        start: addDays(todayIso(), -3),
+        end: addDays(todayIso(), 4),
+        extendedProps: { slug: 'run' },
+      },
+    ]
+    const wrapper = mount(EventCalendar, {
+      props: { events, initialView: 'listWeek' },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain(words)
+    expect(wrapper.text()).not.toMatch(/all-day|ganztägig/i)
   })
 
   it('uses the 24-hour clock on an English page too', async () => {

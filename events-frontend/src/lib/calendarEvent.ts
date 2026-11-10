@@ -6,8 +6,9 @@ import { isLiveNow } from '@/lib/longRuns'
 
 /**
  * The calendar's entry for an event. A span with both times is a timed block from start to end;
- * the start falls back to the doors time, as the list does, but not to the assumed slot (#2927);
- * a span without is an all-day bar from the opening day through the closing day (#1405). Past
+ * the start falls back to the doors time, then to the assumed slot, which is marked `estimated`
+ * so the cell shows it as an estimate, never as a fact (#2927). A span without a time is an
+ * all-day bar from the opening day through the closing day (#1405). Past
  * and live are the same classes EventCard uses, off the same Berlin clock. `localePath` is
  * `useLocalePath()`'s: the link is a real `href` a crawler follows, and an unprefixed path is a 404.
  */
@@ -28,7 +29,10 @@ export function toCalendarInput(
   event: EventSummary,
   localePath: (path: string) => string,
 ): EventInput {
-  const startTime = event.startTime ?? event.doorsTime
+  const statedStart = event.startTime ?? event.doorsTime
+  // A run's bar keeps no guessed hour: "~09:00" across six weeks of an exhibition says nothing.
+  const estimated = !statedStart && !!event.assumedStartTime && !spansDays(event)
+  const startTime = statedStart ?? (estimated ? event.assumedStartTime : undefined)
   const timed = !!startTime && !!event.endTime
   const end = timed
     ? `${event.endDate ?? event.eventDate}T${event.endTime}`
@@ -50,10 +54,12 @@ export function toCalendarInput(
         : undefined,
     // `venue` backs the calendar's hover tooltip, where the clipped title is spelled out.
     // `multiDay` orders a bar after the day's own events (`eventOrder` in EventCalendar, #4655).
+    // `estimated` draws the time as the cards do, `~20:00`, with the hint behind it.
     extendedProps: {
       slug: event.slug,
       venue: event.venue?.name,
       multiDay: spansDays(event) ? 1 : 0,
+      ...(estimated ? { estimated: true } : {}),
     },
   }
 }

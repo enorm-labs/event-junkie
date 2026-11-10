@@ -30,7 +30,7 @@ describe('toCalendarInput', () => {
     expect(input.extendedProps).toEqual({ slug: 'astra-night', venue: 'Astra', multiDay: 0 })
   })
 
-  it('starts at the doors time when the venue publishes no start, but not at the assumed slot', () => {
+  it('starts at the doors time when the venue publishes no start', () => {
     expect(toInput(summary({ doorsTime: '20:00:00' })).start).toBe('2026-09-18T20:00:00')
     const block = toInput(
       summary({ doorsTime: '20:00:00', endDate: '2026-09-18', endTime: '23:00:00' }),
@@ -40,7 +40,29 @@ describe('toCalendarInput', () => {
     expect(toInput(summary({ startTime: '21:00:00', doorsTime: '20:00:00' })).start).toBe(
       '2026-09-18T21:00:00',
     )
-    expect(toInput(summary({ assumedStartTime: '20:00:00' })).start).toBe('2026-09-18')
+  })
+
+  it('falls back to the assumed slot last, and marks only that start as estimated', () => {
+    const assumed = toInput(summary({ assumedStartTime: '20:00:00' }))
+    expect(assumed.start).toBe('2026-09-18T20:00:00')
+    expect(assumed.extendedProps).toEqual({
+      slug: 'astra-night',
+      venue: 'Astra',
+      multiDay: 0,
+      estimated: true,
+    })
+    const doors = toInput(summary({ doorsTime: '19:00:00', assumedStartTime: '20:00:00' }))
+    expect(doors.start).toBe('2026-09-18T19:00:00')
+    expect(doors.extendedProps).not.toHaveProperty('estimated')
+  })
+
+  it('keeps a run without times all-day, with no guessed hour on its bar', () => {
+    const run = toInput(
+      summary({ eventType: 'EXHIBITION', endDate: '2026-10-31', assumedStartTime: '09:00:00' }),
+    )
+    expect(run.start).toBe('2026-09-18')
+    expect(run.end).toBe('2026-11-01')
+    expect(run.extendedProps).not.toHaveProperty('estimated')
   })
 
   it('maps a timeless single day to an all-day entry', () => {
