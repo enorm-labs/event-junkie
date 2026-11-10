@@ -21,7 +21,7 @@ import java.time.LocalTime
 
 /**
  * Pure parser for the calendar on ZK/U's TYPO3 homepage. Each day is a hidden popup,
- * `div.calendar-events#d-2026-10-24`, holding one `.list-item` per entry: an `h2` title, a
+ * `div.calendar-events#d-2026-10-24`, holding one `.list-item` per entry: an `h2` or `h3.h2` title, a
  * `p.date` line (`24 OCTOBER 2026 / 21:00 – 03:00`), an optional subtitle and the link to
  * `/timeline/<slug>/`. The popup's id gives the day, so an entry over two days is one row a day.
  *
@@ -51,7 +51,7 @@ class ZkuCalendarScraper {
         val date = parseIsoDate(dayId.removePrefix("d-")) ?: return null
         val title =
             item
-                .selectFirst("h2")
+                .selectFirst(TITLE)
                 ?.text()
                 ?.collapseWhitespace()
                 .blankToNull() ?: return null
@@ -113,6 +113,9 @@ class ZkuCalendarScraper {
             .orEmpty()
 
     private companion object {
+        /** The entry's title: an `h2` until November 2026, an `h3.h2` since (#4812). */
+        const val TITLE = "h2, h3.h2"
+
         val CLOCK_RANGE = Regex("""(\d{1,2}[:.]\d{2})(?:\s*[–-]\s*(\d{1,2}[:.]\d{2}))?""")
         const val CLOCK_LENGTH = 5
 
