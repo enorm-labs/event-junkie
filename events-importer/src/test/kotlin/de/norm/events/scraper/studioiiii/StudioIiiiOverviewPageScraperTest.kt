@@ -254,6 +254,39 @@ class StudioIiiiOverviewPageScraperTest {
     }
 
     @Test
+    fun `prose before the djs bills nobody, a room label bills the acts after it, and a live tail is a live set`() {
+        val line =
+            "FAMILY, FRIENDS, FREAKS AND FANS - COME ALONG AND CELEBRATE OUR BIRTHDAY WITH US AND DJS CHICO BLANCO, PERRA INMUNDA, " +
+                "DJ KILLING, CLUB LIZZY (LIVE) &amp; TOK TOK VS. SOFFY O. CLUBROOM: PENCASONICS"
+        val event = scrapeOne(cover("SAT 14 NOVEMBER 10PM", title = "STUDIO 1111<br>BIRTHDAY SMASH", descr = line))
+
+        event.artists.map { Triple(it.name, it.role, it.stage) } shouldContainExactly
+            listOf(
+                Triple("CHICO BLANCO", ArtistRole.DJ, null),
+                Triple("PERRA INMUNDA", ArtistRole.DJ, null),
+                Triple("DJ KILLING", ArtistRole.DJ, null),
+                Triple("CLUB LIZZY", ArtistRole.LIVE, null),
+                Triple("TOK TOK VS. SOFFY O.", ArtistRole.DJ, null),
+                Triple("PENCASONICS", ArtistRole.DJ, "Clubroom")
+            )
+        event.eventType shouldBe "PARTY"
+    }
+
+    @Test
+    fun `a djs or with that opens a name or follows a separator stays part of the act`() {
+        lineup("DJS FROM MARS", "ANA, BEN, CARL, DJS FROM MARS", "TOK TOK WITH SOFFY O") shouldContainExactly
+            listOf("DJS FROM MARS", "ANA", "BEN", "CARL", "TOK TOK WITH SOFFY O")
+    }
+
+    @Test
+    fun `a room label at the start of a line puts every act after it in that room`() {
+        val event = scrapeOne(cover("FRI 23 OCTOBER 9PM", descr = "ANA, BEN<br>CLUBROOM: CARA, DANI (MAINROOM)"))
+
+        event.artists.map { it.name to it.stage } shouldContainExactly
+            listOf("ANA" to null, "BEN" to null, "CARA" to "Clubroom", "DANI" to "Mainroom")
+    }
+
+    @Test
     fun `the year comes from the weekday across new year`() {
         scrapeOne(cover("FRI 1 JANUARY 11PM")).eventDate shouldBe LocalDate.of(2027, 1, 1)
     }
