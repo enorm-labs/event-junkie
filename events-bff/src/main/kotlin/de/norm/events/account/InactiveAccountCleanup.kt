@@ -1,9 +1,9 @@
 package de.norm.events.account
 
 import de.norm.events.common.BERLIN
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.mail.Mailer
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
@@ -105,7 +105,7 @@ class InactiveAccountCleanup(
      * Runs one step, counts its rows under [outcome] and logs them. A failure is logged and counted, and the next step
      * still runs. Answers whether the step held.
      */
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     private suspend fun step(
         outcome: CleanupOutcome,
         block: suspend () -> Long
@@ -115,9 +115,8 @@ class InactiveAccountCleanup(
             metrics.record(outcome, count)
             logger.info { "Account cleanup: ${outcome.tag} $count" }
             true
-        } catch (e: CancellationException) {
-            throw e
         } catch (e: Exception) {
+            rethrowIfCancelled()
             metrics.record(CleanupOutcome.FAILED)
             logger.warn(e) { "Account cleanup: the ${outcome.tag} step failed" }
             false

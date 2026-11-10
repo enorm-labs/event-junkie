@@ -1,7 +1,8 @@
 package de.norm.events.mail
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -36,16 +37,16 @@ class MailQuotaRefresh(
     private val client = webClients.baseUrl(baseUrl).build()
 
     @Scheduled(initialDelayString = "\${app.mail.quota.initial-delay}", fixedDelayString = "\${app.mail.quota.refresh}")
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     suspend fun refresh() {
         try {
             val count = get("project-consumption").path("monthly_emails_count").asLong()
             val free = get("offer-subscriptions").path("offer_subscriptions").maxOfOrNull { it.path("included_monthly_emails").asLong() } ?: 0
             metrics.publish(count, free, clock.instant())
             logger.info { "Mail quota: $count mails this month, $free included" }
-        } catch (e: CancellationException) {
-            throw e
         } catch (e: Exception) {
+            // common.rethrowIfCancelled, inlined: mail depends on no module.
+            currentCoroutineContext().ensureActive()
             logger.warn(e) { "Mail quota: reading the Scaleway count failed, the gauges keep their last values" }
         }
     }
