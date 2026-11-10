@@ -315,6 +315,26 @@ class KesselhausCalendarScraperTest {
         kesselhaus.scrape(Jsoup.parse(page, url), url).map { it.subtitle } shouldBe listOf("von Jean-Paul Sartre")
     }
 
+    @Test
+    fun `takes a genre from the topics of a concert or a festival, never of a reading`() {
+        // Event 13352, a book premiere at Maschinenhaus tagged `spoken-word, world, international, highlights` (#4832).
+        val topics = listOf("spoken-word", "world", "international", "highlights")
+        val page =
+            calendarPage(
+                Card("reading", "Christina von Braun", "Buchpremiere", category = "Lesung", topics = topics),
+                Card("concert", "17 Hippies", "", topics = listOf("concerts", "world", "international")),
+                Card("festival", "Global Sounds Festival", "", category = "Festival", topics = listOf("world", "blues"))
+            )
+
+        val events = kesselhaus.scrape(Jsoup.parse(page, url), url).associateBy { it.title }
+
+        events.getValue("Christina von Braun").eventType shouldBe EventType.READING.name
+        events.getValue("Christina von Braun").genre.shouldBeNull()
+        events.getValue("17 Hippies").genre shouldBe "World"
+        events.getValue("Global Sounds Festival").eventType shouldBe EventType.FESTIVAL.name
+        events.getValue("Global Sounds Festival").genre shouldBe "World, Blues"
+    }
+
     /** One concert card on a calendar page of its own, with the transfer state the CMS writes, `&`-escaped as `&a;`. */
     private fun scrapeOne(
         title: String,
@@ -329,13 +349,15 @@ class KesselhausCalendarScraperTest {
         val title: String,
         val subtitle: String,
         val tickets: String = "[]",
-        val venue: String = "kesselhaus"
+        val venue: String = "kesselhaus",
+        val category: String = "Konzert",
+        val topics: List<String> = listOf("concerts")
     )
 
     private fun calendarPage(vararg cards: Card): String {
         val documents =
             cards.joinToString(",") { card ->
-                val topics = """["/categories//event-topics//subs//concerts"]"""
+                val topics = card.topics.joinToString(",", "[", "]") { "\"/categories//event-topics//subs//$it\"" }
                 val base = """{"venue":"/venues//${card.venue}","start":"2027-01-09T19:00:00.000Z","topics":$topics,"tickets":${card.tickets}}"""
                 val text = """{"title":"${card.title}","subtitle":"${card.subtitle}"}"""
                 """"store.x.doc:/events//${card.id}/meta:base/1":$base,"store.x.doc:/events//${card.id}/meta:de/1":$text"""
@@ -343,7 +365,7 @@ class KesselhausCalendarScraperTest {
         val escaped = "{$documents}".replace("&", "&a;").replace("\"", "&q;")
         val items =
             cards.joinToString("\n") {
-                """<div class="item" data-id="${it.id}" data-use="default" data-part="2027-01"><span class="category">Konzert</span></div>"""
+                """<div class="item" data-id="${it.id}" data-use="default" data-part="2027-01"><span class="category">${it.category}</span></div>"""
             }
         return """
             |$items
