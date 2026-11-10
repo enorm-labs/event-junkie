@@ -106,7 +106,12 @@ class DistelCalendarPageScraperTest {
             "Dernière: Gut im Abgang | Der DISTEL-Jahresrückblick 2026 | COMEDY |",
             "Matinee: Mit aller Kraft liegen lassen | Dauerbaustelle Deutschland | COMEDY |",
             "Bunter Weihnachtsteller: Die Rückkehr der Späti-Ritter | Kiosk. Krise. Kanzlerschaft. | COMEDY |",
-            "FIL – Lieder of the world | Lieder of the world | COMEDY |"
+            "FIL – Lieder of the world | Lieder of the world | COMEDY |",
+            "Reinhold Beckmann Trio | Tour 2026/2027 | CONCERT | Reinhold Beckmann Trio",
+            "Anna Muster Quartett |  | CONCERT | Anna Muster Quartett",
+            "Anna Muster Band | Eine musikalische Lesung | READING | Anna Muster Band",
+            "The Real Comedian Harmonists |  | COMEDY |",
+            "Die Showband |  | COMEDY |"
         ]
     )
     fun `types and bills a calendar row from its title and subtitle`(
