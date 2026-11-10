@@ -182,6 +182,13 @@ class AstraOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills no act for a tribute show production that names no performer`() {
+        // Event 13385 (#4835).
+        artistsOf("K-Pop Showdown – The Ultimate Tribute Show", emptyList(), "CONCERT").shouldBeEmpty()
+        artistsOf("NIRVANA TRIBUTE", emptyList(), "CONCERT").map { it.name } shouldContainExactly listOf("NIRVANA TRIBUTE")
+    }
+
+    @Test
     fun `flags a sold-out event`() {
         val chapo = event("Chapo")
         chapo.soldOut shouldBe true

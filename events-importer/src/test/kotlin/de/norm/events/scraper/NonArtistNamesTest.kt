@@ -210,8 +210,27 @@ class NonArtistNamesTest {
             "Sing Sing",
             "Rolling Stones Tribute Band \"Dirty Work\"",
             "Heroes - David Bowie Tribute",
-            "A Tribute to Lemmy"
+            "A Tribute to Lemmy",
+            "Nirvana Tribute",
+            "Luke Combs UK Tribute",
+            "Tribute Showband"
         ).forEach { isNonArtistEvent(it) shouldBe false }
+    }
+
+    @Test
+    fun `isNonArtistEvent returns true for a tribute show production`() {
+        // Astra event 13385 (#4835): a touring production that names no performer.
+        listOf(
+            "K-Pop Showdown – The Ultimate Tribute Show",
+            "ABBA Tribute-Show",
+            "The Queen Tributeshow 2027",
+            "Tribute Show: The Best of Motown"
+        ).forEach {
+            isNonArtistEvent(it) shouldBe true
+            isTributeShowTitle(it) shouldBe true
+        }
+        isTributeShowTitle("Nirvana Tribute") shouldBe false
+        isTributeShowTitle("Tribute Showband") shouldBe false
     }
 
     @Test

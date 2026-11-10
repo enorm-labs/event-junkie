@@ -116,7 +116,7 @@ fun isEventSegmentLabel(name: String): Boolean {
  * A programme names its edition or its occasion, not its acts (#2851): a leading ordinal
  * (`41. Berliner Jazztreff`), a `Vol. <n>` anywhere (`Anime Rap Revolution Vol. I`), and a
  * `Tribute concert:` prefix. The ordinal needs its dot and a space, so `65daysofstatic` and
- * `808 State` stay acts.
+ * `808 State` stay acts. A `Tribute Show` names a production, not its cast ([isTributeShowTitle]).
  *
  * A gala named for its night is no act either (#3160): `Die Nacht der Musicals`, `Lange Nacht der
  * …` and `Die Schlagernacht des Jahres`. Both forms are anchored to the title start.
@@ -134,6 +134,7 @@ private val NON_ARTIST_EVENT_PATTERN =
             """|.*\bhoffest\b.*""" +
             """|.*\bsing[\s-]?along\b.*|.*\bmitsing.*|.*\p{L}singen(?!\p{L}).*""" +
             """|\d+\.\s+\S.*|.*\bvol\.\s*(?:\d+|[ivx]+)\b.*|tribute[\s-]?(?:concert|konzert)\s*:.*""" +
+            """|.*$TRIBUTE_SHOW.*""" +
             """|(?:\d+\.?\s+(?:jahre|jahr|years)|1\.?\s+year)\b.*""" +
             """|(?:eine\s+veranstaltung|in\s+kooperation\s+mit|in\s+zusammenarbeit\s+mit)\b.*""" +
             """|(?:die\s+)?(?:lange\s+)?nacht\s+der\s+\S.*|(?:die\s+)?\S*nacht\s+des\s+jahres\b.*""" +
@@ -149,6 +150,17 @@ fun isNonArtistEvent(name: String): Boolean {
     val normalized = name.trim().replace(WHITESPACE, " ")
     return normalized.isNotEmpty() && NON_ARTIST_EVENT_PATTERN.matches(normalized)
 }
+
+/** A tribute production's format word, shared by [NON_ARTIST_EVENT_PATTERN] and [isTributeShowTitle]. */
+private const val TRIBUTE_SHOW = """\btribute[\s-]?show\b"""
+
+private val TRIBUTE_SHOW_PATTERN = Regex(TRIBUTE_SHOW, RegexOption.IGNORE_CASE)
+
+/**
+ * Whether [title] bills a tribute show (#4835): `K-Pop Showdown – The Ultimate Tribute Show`. The name
+ * in front is the production's brand, not a performer. A tribute band (`Nirvana Tribute`) stays an act.
+ */
+fun isTributeShowTitle(title: String): Boolean = TRIBUTE_SHOW_PATTERN.containsMatchIn(title.replace(WHITESPACE, " "))
 
 /**
  * Film and game score concerts: `in Concert`, `Live to Film`, or `Symphony` / `Symphonie` as the
