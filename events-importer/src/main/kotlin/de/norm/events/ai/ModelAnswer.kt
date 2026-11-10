@@ -46,7 +46,9 @@ object ModelAnswer {
     private const val HALF_DAY = 12
 
     /** What follows a `"` that ends a JSON string. */
-    private const val STRING_END_FOLLOWERS = ",:}]"
+    private const val STRING_END_FOLLOWERS = ":}]"
+    private const val VALUE_STARTERS = "\"{[-0123456789"
+    private val JSON_LITERAL = Regex("""(?:true|false|null)\b""")
 
     /** Enough of the shape on each side to show an unescaped quote and the key it sits in. */
     const val SHAPE_RADIUS = 30
@@ -77,8 +79,9 @@ object ModelAnswer {
      * [json] with each `„` that a straight `"` closes inside a string value closed with `“` instead (#4758).
      *
      * The model quotes German text as `„…"`, as it does in a translation (`QuotePairs`), and the unescaped `"` ends the
-     * string early. A `"` that a `,`, `:`, `}`, `]` or the end of the text follows ends the string and stays, so valid
-     * JSON never changes. A `„` with another quote mark before its `"` stays too.
+     * string early. A `"` that a `:`, `}`, `]` or the end of the text follows ends the string and stays, so valid JSON
+     * never changes. So does one that a `,` and the start of a JSON value follow. A `„` with another quote mark before its
+     * `"` stays too.
      */
     internal fun closeLowNineQuotes(json: String): String {
         if ('„' !in json) return json
@@ -116,7 +119,17 @@ object ModelAnswer {
     private fun endsString(
         text: CharSequence,
         quote: Int
-    ): Boolean = text.drop(quote + 1).firstOrNull { !it.isWhitespace() }.let { it == null || it in STRING_END_FOLLOWERS }
+    ): Boolean {
+        val rest = text.drop(quote + 1).trimStart()
+        return when (rest.firstOrNull()) {
+            null -> true
+
+            // After a `,` valid JSON goes on with a value; plain text means the `"` closed a German quote (#4787).
+            ',' -> rest.drop(1).trimStart().let { it.isEmpty() || it.first() in VALUE_STARTERS || JSON_LITERAL.matchesAt(it, 0) }
+
+            else -> rest.first() in STRING_END_FOLLOWERS
+        }
+    }
 
     private fun unparseable(
         text: String,

@@ -36,7 +36,8 @@ class ModelAnswerTest {
                     to "Eine Revue unter „8 Brücken“ mit Band",
                 """{"eventType": {"value": "SHOW", "evidence": "Das ist die „Kosmos 3 Live"-Tournee der Band 2026 in Berlin",
                 |"confidence": 0.9}}
-                """.trimMargin() to "Das ist die „Kosmos 3 Live“-Tournee der Band 2026 in Berlin"
+                """.trimMargin() to "Das ist die „Kosmos 3 Live“-Tournee der Band 2026 in Berlin",
+                """{"eventType": {"value": "SHOW", "evidence": "Die „Show", sagt sie", "confidence": 0.9}}""" to "Die „Show“, sagt sie"
             )
 
         answers.forEach { (raw, evidence) -> ModelAnswer.jsonObject(raw)?.findValue("evidence")?.asString() shouldBe evidence }
@@ -48,6 +49,7 @@ class ModelAnswerTest {
             listOf(
                 """{"evidence": "Die „Show“ heute"}""",
                 """{"evidence": "Die „Show", "confidence": 0.9}""",
+                """{"evidence": ["Die „Show", 2, {"a": 1}, [3], -4, true, null]}""",
                 """{"evidence": "Die „Show"}""",
                 """{"evidence": "Die „Show\" heute"}"""
             )
@@ -57,7 +59,7 @@ class ModelAnswerTest {
 
     @Test
     fun `an answer still broken after the repair is no JSON`() {
-        shouldThrow<UnparseableAnswer> { ModelAnswer.jsonObject("""{"evidence": "Die „Show", sagt sie", "confidence": 0.9}""") }
+        shouldThrow<UnparseableAnswer> { ModelAnswer.jsonObject("""{"evidence": "Die „Show", true story", "confidence": 0.9}""") }
     }
 
     @Test
