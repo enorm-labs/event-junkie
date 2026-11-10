@@ -127,7 +127,6 @@
     "thanks": "Gemeldet – danke.",
     "failed": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
     "forbidden": "Dieses Konto kann keine Probleme melden.",
-    "tooMany": "Du hast 30 offene Meldungen. Warte, bis einige erledigt sind.",
     "problems": {
       "ARTISTS": "Falsche oder fehlende Künstler",
       "TITLE": "Titel ist verstümmelt",

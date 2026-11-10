@@ -30,7 +30,6 @@ const canSend = computed(() => problems.value.length > 0 && !needsNote.value && 
 
 function message(e: unknown): string {
   if (e instanceof ApiError && e.status === 403) return t('account.report.forbidden')
-  if (e instanceof ApiError && e.status === 429) return t('account.report.tooMany')
   return t('account.report.failed')
 }
 
