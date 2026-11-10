@@ -40,11 +40,13 @@ or that a future reader would otherwise "fix" back.
    no authentication of its own, and what keeps it private is that nothing outside the cluster can address it — one word changed to `NodePort` undoes that. It
    is kept on all three Services so the three do not differ in shape for reasons a reader has to reconstruct.
 
-**Pod Security Standards: the chart satisfies `restricted` in full**, today, without the namespace label that would enforce it. `runAsNonRoot`,
+**Pod Security Standards: the chart satisfies `restricted` in full, and admission enforces it.** `runAsNonRoot`,
 `allowPrivilegeEscalation: false`, `readOnlyRootFilesystem`, `capabilities.drop: [ALL]`, `seccompProfile: RuntimeDefault`, no host namespaces, no host ports, no
-privileged containers, and only `emptyDir`/`configMap`/`secret` volumes. `tests/invariants_test.yaml` and `tests/hardening_test.yaml` assert each of those, which is what keeps compliance
-deliberate rather than incidental — **until #416 adds the label, nothing rejects a violation at admission**, so a workload could drift and only fail on the day
-the label lands.
+privileged containers, and only `emptyDir`/`configMap`/`secret` volumes. `tests/invariants_test.yaml` and `tests/hardening_test.yaml` assert each of those, so a
+violation fails the chart tests before it reaches a cluster. **The `pod-security.kubernetes.io/enforce` labels live in `deploy/clusters/base/namespace*.yaml`**,
+which both clusters apply through `../base`: `restricted` everywhere but `observability-agent`, which is `privileged` by decision (#709).
+`scripts/cluster-assertions.sh` fails a HelmRelease with `createNamespace: true` whose namespace no labelled manifest declares, so a new namespace arrives
+with its level or not at all.
 
 **A NetworkPolicy sees the destination after the node's DNAT, not the address the client dialled.** A rule on the dialled
 address matches nothing, and the pod reports `connection refused`, which reads like a dead server. It has cost three
