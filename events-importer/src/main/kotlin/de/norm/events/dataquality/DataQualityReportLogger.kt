@@ -3,7 +3,6 @@ package de.norm.events.dataquality
 import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.importing.EventSourceRepository
 import de.norm.events.scraper.AcceptedLimitations
-import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.LogContext
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -243,15 +242,8 @@ class DataQualityReportLogger(
     }
 
     /** The aspects each source's `VenueLimitations` declare, keyed by slug, for the gate to skip (#3195). */
-    private suspend fun declaredAspectsBySlug(): Map<String, Set<LimitedAspect>> {
-        val sourcesByName = EventSource.entries.associateBy { it.name }
-        return eventSources.findAll().toList().associate { source ->
-            source.slug to
-                sourcesByName[source.sourceType]
-                    ?.let { type -> AcceptedLimitations.forSource(type).map { it.aspect }.toSet() }
-                    .orEmpty()
-        }
-    }
+    private suspend fun declaredAspectsBySlug(): Map<String, Set<LimitedAspect>> =
+        eventSources.findAll().toList().associate { it.slug to AcceptedLimitations.declaredAspects(it.sourceType) }
 
     private fun pct(value: Double): String = "%.1f".format(java.util.Locale.ROOT, value)
 

@@ -65,6 +65,13 @@ class AcceptedLimitationsTest {
     }
 
     @Test
+    fun `declared aspects are looked up by the stored source type, and an unknown type declares nothing`() {
+        AcceptedLimitations.declaredAspects("PANDA_PLATFORMA") shouldBe
+            setOf(LimitedAspect.DOORS_TIME, LimitedAspect.TICKET_URL, LimitedAspect.PRICE, LimitedAspect.GENRE)
+        AcceptedLimitations.declaredAspects("NO_SUCH_SOURCE").shouldBeEmpty()
+    }
+
+    @Test
     fun `no source declares the same aspect twice`() {
         val duplicates =
             EventSource.entries.flatMap { source ->

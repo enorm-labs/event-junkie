@@ -1,5 +1,6 @@
 package de.norm.events.importing
 
+import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TrackedField
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -23,6 +24,10 @@ import java.util.UUID
  * arriving raises its own baseline. Two guards, or this is a noise generator: a sample of at
  * least [minSampleSize], and persistence, flagging on the second consecutive run below baseline,
  * since a week of club nights legitimately has no lineup.
+ *
+ * A field whose aspect the source declares in its `VenueLimitations` is measured but never flagged
+ * (#4797), as the data-quality gate does since #3195: the venue does not publish it reliably, so a
+ * drop is the venue and not a selector.
  */
 @Service
 class FieldCoverageService(
@@ -70,6 +75,7 @@ class FieldCoverageService(
         val runId = UUID.randomUUID()
         val observedAt = Instant.now(clock)
         val findings = mutableListOf<CoverageFinding>()
+        val declared = AcceptedLimitations.declaredAspects(source.sourceType).mapNotNull { it.trackedField }.toSet()
 
         for (field in TrackedField.entries) {
             val withValue = field.countIn(events)
@@ -90,7 +96,7 @@ class FieldCoverageService(
                 )
             )
 
-            evaluate(field, ratio, events.size, history)?.let(findings::add)
+            if (field !in declared) evaluate(field, ratio, events.size, history)?.let(findings::add)
         }
 
         applyFlag(source, findings)
