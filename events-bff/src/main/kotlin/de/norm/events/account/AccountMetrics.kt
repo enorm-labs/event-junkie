@@ -229,10 +229,7 @@ enum class ReportAction(
 ) {
     STORE("stored"),
     REPLACE("replaced"),
-    WITHDRAW("withdrawn"),
-
-    /** Refused at the limit of open reports. */
-    REFUSED("refused")
+    WITHDRAW("withdrawn")
 }
 
 enum class PushAction(

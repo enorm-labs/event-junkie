@@ -68,25 +68,6 @@ class ReportStore(
             .map { row -> row.required("replaced", Boolean::class.javaObjectType) }
             .awaitOne()
 
-    /** Whether the account already reported this event, so a replacement is not held to the limit. */
-    suspend fun exists(
-        accountId: UUID,
-        eventId: Long
-    ): Boolean =
-        db
-            .sql("SELECT EXISTS (SELECT 1 FROM accounts.event_report WHERE account_id = :account AND event_id = :event) AS found")
-            .bind("account", accountId)
-            .bind("event", eventId)
-            .map { row -> row.required("found", Boolean::class.javaObjectType) }
-            .awaitOne()
-
-    suspend fun count(accountId: UUID): Long =
-        db
-            .sql("SELECT count(*) AS n FROM accounts.event_report WHERE account_id = :account")
-            .bind("account", accountId)
-            .map { row -> row.required("n", Long::class.javaObjectType) }
-            .awaitOne()
-
     /** Answers whether there was one to withdraw. */
     suspend fun withdraw(
         accountId: UUID,

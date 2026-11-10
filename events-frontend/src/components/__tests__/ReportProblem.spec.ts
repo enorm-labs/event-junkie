@@ -132,7 +132,6 @@ describe('ReportProblemForm', () => {
 
   it.each([
     [403, 'This account cannot report problems.'],
-    [429, 'You have 30 open reports. Wait until some are resolved.'],
     [500, 'That did not work. Please try again.'],
   ])('a %i says why, and keeps the form open', async (status, text) => {
     setSession({ ...me, canReport: true } as never)

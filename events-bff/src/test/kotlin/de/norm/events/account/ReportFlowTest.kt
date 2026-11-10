@@ -147,16 +147,15 @@ class ReportFlowTest : BaseControllerTest() {
     }
 
     @Test
-    fun `the thirty-first open report is a 429, but replacing one is not`() {
+    fun `an account can hold any number of open reports`() {
         runBlocking {
             val club = insertVenue("Hall", "hall")
-            (1..29).forEach { insertEvent(club, "Night $it", "night-$it", today.plusDays(it.toLong())) }
+            (1..40).forEach { insertEvent(club, "Night $it", "night-$it", today.plusDays(it.toLong())) }
         }
-        (1..29).forEach { put("night-$it", listOf("TITLE")).expectStatus().isNoContent }
-        put("tonight", listOf("TITLE")).expectStatus().isNoContent
+        (1..40).forEach { put("night-$it", listOf("TITLE")).expectStatus().isNoContent }
 
-        put("next-week", listOf("TITLE")).expectStatus().isEqualTo(429)
-        put("tonight", listOf("ARTISTS")).expectStatus().isNoContent
+        put("tonight", listOf("TITLE")).expectStatus().isNoContent
+        get("/me/reports").expectBody().jsonPath("$.length()").isEqualTo(41)
     }
 
     @Test

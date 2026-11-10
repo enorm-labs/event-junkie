@@ -127,7 +127,6 @@
     "thanks": "Reported — thanks.",
     "failed": "That did not work. Please try again.",
     "forbidden": "This account cannot report problems.",
-    "tooMany": "You have 30 open reports. Wait until some are resolved.",
     "problems": {
       "ARTISTS": "Wrong or missing artists",
       "TITLE": "Title is garbled",

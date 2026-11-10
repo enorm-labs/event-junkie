@@ -54,10 +54,6 @@ class ReportController(
         if (note != null && note.length > MAX_NOTE) refuse(HttpStatus.BAD_REQUEST, "A note of at most $MAX_NOTE characters")
         if (ReportProblem.OTHER in problems && note == null) refuse(HttpStatus.BAD_REQUEST, "OTHER needs a note")
         val eventId = rsvps.eventId(slug) ?: refuse(HttpStatus.NOT_FOUND, "No such event")
-        if (!reports.exists(account.id, eventId) && reports.count(account.id) >= MAX_OPEN) {
-            record(ReportAction.REFUSED, problems)
-            refuse(HttpStatus.TOO_MANY_REQUESTS, "At most $MAX_OPEN open reports")
-        }
         val replaced = reports.save(account.id, eventId, problems, note, clock.instant())
         record(if (replaced) ReportAction.REPLACE else ReportAction.STORE, problems)
         return ResponseEntity.noContent().build()
@@ -89,7 +85,6 @@ class ReportController(
 
     private companion object {
         const val MAX_NOTE = 500
-        const val MAX_OPEN = 30L
 
         fun problems(raw: List<String>): List<ReportProblem> {
             val problems = raw.map { ReportProblem.ofOrNull(it) ?: refuse(HttpStatus.BAD_REQUEST, "Unknown problem $it") }.distinct()
