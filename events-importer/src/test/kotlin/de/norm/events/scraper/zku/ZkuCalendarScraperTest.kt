@@ -92,6 +92,42 @@ class ZkuCalendarScraperTest {
     }
 
     @Test
+    fun `reads a title the site renders as an h3 styled h2`() {
+        // Verbatim from the live homepage on 2026-11-10 (#4812).
+        val html =
+            """
+            <div class="calendar-events" style="display: none;" id="d-2026-11-13">
+              <div class="grid-x block list-item list-item--yellow">
+                <div class="auto cell list-item__content">
+                  <h3 class="h2">
+                    Sarah Buser: Participatory Theater in Hybrid Spaces
+                  </h3>
+                  <p class="date">
+                    13 NOVEMBER 2026 / 17:00
+                  </p>
+                  <p class="list-item__description list-item__description--no-padding">
+                    Talks on Curatorial Practice
+                  </p>
+                </div>
+                <a class="list-item__link" href="/timeline/sarah-buser-participatory-theater-in-hybrid-spaces">
+                  <span class="show-for-sr">Sarah Buser: Participatory Theater in Hybrid Spaces</span>
+                </a>
+              </div>
+            </div>
+            """.trimIndent()
+
+        val talk = ZkuCalendarScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        talk.title shouldBe "Sarah Buser: Participatory Theater in Hybrid Spaces"
+        talk.eventDate shouldBe LocalDate.of(2026, 11, 13)
+        talk.startTime shouldBe LocalTime.of(17, 0)
+        talk.subtitle shouldBe "Talks on Curatorial Practice"
+        talk.sourceUrl shouldBe "https://www.zku-berlin.org/timeline/sarah-buser-participatory-theater-in-hybrid-spaces"
+        talk.eventType shouldBe EventType.READING.name
+        talk.artists.map { it.name } shouldContainExactly listOf("Sarah Buser")
+    }
+
+    @Test
     fun `an empty page gives no events`() {
         ZkuCalendarScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
