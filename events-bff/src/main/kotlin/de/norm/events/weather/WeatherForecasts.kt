@@ -1,8 +1,8 @@
 package de.norm.events.weather
 
 import de.norm.events.common.BERLIN
+import de.norm.events.common.rethrowIfCancelled
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
@@ -38,7 +38,7 @@ class WeatherForecasts(
     private val current = AtomicReference<MosmixForecast?>()
 
     @Scheduled(initialDelayString = "\${app.weather.initial-delay}", fixedDelayString = "\${app.weather.refresh}")
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     suspend fun refresh() {
         try {
             val kmz =
@@ -52,9 +52,8 @@ class WeatherForecasts(
             val forecast = MosmixForecast.fromKmz(ByteArrayInputStream(kmz))
             current.set(forecast)
             logger.info { "Weather: DWD MOSMIX issued ${forecast.issuedAt} read, ${forecast.hours.size} hours" }
-        } catch (e: CancellationException) {
-            throw e
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.warn(e) { "Weather: reading the DWD MOSMIX forecast failed, keeping the one issued ${current.get()?.issuedAt ?: "never"}" }
         }
     }

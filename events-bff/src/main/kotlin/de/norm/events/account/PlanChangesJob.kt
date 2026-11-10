@@ -1,9 +1,9 @@
 package de.norm.events.account
 
 import de.norm.events.common.BERLIN
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.push.PushSender
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CancellationException
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
@@ -33,7 +33,7 @@ class PlanChangesJob(
     @Value("\${app.push.changes-lag}") private val lag: Duration
 ) {
     @Scheduled(fixedDelayString = "\${app.push.changes-delay}", initialDelayString = "\${app.push.changes-initial-delay}")
-    @Suppress("TooGenericExceptionCaught") // Any failure ends this run with a WARN; the next run claims the next window.
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Any failure ends this run with a WARN; the next run claims the next window.
     suspend fun run() {
         try {
             val upTo = clock.instant().minus(lag)
@@ -55,9 +55,8 @@ class PlanChangesJob(
             if (push == null || due.isEmpty()) return
             val outcomes = subscriptions.fanOut(push, due.groupBy { it.accountId }, clock) { PlanChangePush.message(it) }
             logger.info { "Plan changes push finished: ${outcomes.summary()}" }
-        } catch (e: CancellationException) {
-            throw e
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.warn(e) { "Plan changes failed" }
         }
     }

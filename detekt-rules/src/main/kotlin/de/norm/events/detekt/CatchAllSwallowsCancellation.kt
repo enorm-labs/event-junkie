@@ -66,7 +66,7 @@ class CatchAllSwallowsCancellation(
     private companion object {
         const val CANCELLATION = "CancellationException"
 
-        // `rethrowIfCancelled` is common/RunCatchingCancellable.kt's wrapper of `ensureActive`.
+        // `rethrowIfCancelled` is each app's wrapper of `ensureActive`, in its `common` package.
         val RETHROWING_CALLS = setOf("rethrowIfCancelled", "ensureActive")
 
         // CancellationException is an IllegalStateException, so each of these catches it.

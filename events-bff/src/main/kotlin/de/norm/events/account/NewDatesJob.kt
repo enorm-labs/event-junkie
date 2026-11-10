@@ -1,6 +1,7 @@
 package de.norm.events.account
 
 import de.norm.events.common.BERLIN
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.push.PushSender
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
@@ -39,7 +40,7 @@ class NewDatesJob(
     @Value("\${app.push.new-dates-lag}") private val lag: Duration
 ) {
     @Scheduled(fixedDelayString = "\${app.push.new-dates-delay}", initialDelayString = "\${app.push.new-dates-initial-delay}")
-    @Suppress("TooGenericExceptionCaught") // Any failure ends this run with a WARN; the next run claims the next window.
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Any failure ends this run with a WARN; the next run claims the next window.
     suspend fun run() {
         try {
             val upTo = clock.instant().minus(lag)
@@ -60,9 +61,8 @@ class NewDatesJob(
             logger.info { "New-dates push started: ${dates.size} dates for ${byAccount.size} accounts" }
             val outcomes = store.fanOut(push, byAccount, clock) { NewDatesPush.message(it) }
             logger.info { "New-dates push finished: ${outcomes.summary()}" }
-        } catch (e: CancellationException) {
-            throw e
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.warn(e) { "New-dates push failed" }
         }
     }
