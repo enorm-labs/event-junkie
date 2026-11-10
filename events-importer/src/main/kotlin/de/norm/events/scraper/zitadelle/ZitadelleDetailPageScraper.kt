@@ -1,8 +1,10 @@
 package de.norm.events.scraper.zitadelle
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -11,9 +13,11 @@ import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -30,7 +34,7 @@ import java.time.LocalTime
  * 15. August 2026") where the listing carries a machine-readable `time[datetime]`, so the date
  * is left to [ZitadelleWebsiteImporter.fillGapsFromOverview].
  *
- * Three venue specifics:
+ * Three venue specifics, besides the support line of [withSupportLine]:
  * - **A changed date is stated twice.** An `.abgesagtausverkauft` badge reads `Abgesagt`, and a
  * separate `.aenderungen` line explains what happened ("Wird in die Columbiahalle verlegt.
  * Tickets behalten ihre Gültigkeit!"). Where that line says *verlegt*, the truthful status is
@@ -91,7 +95,7 @@ class ZitadelleDetailPageScraper {
             soldOut =
                 document.textAt(".abgesagtausverkauft")?.equals(SOLD_OUT_BADGE, ignoreCase = true) == true ||
                     cleanedHeading.soldOut,
-            artists = buildArtistsForEventType(heading, subtitle, eventType),
+            artists = buildArtistsForEventType(heading, subtitle, eventType).withSupportLine(document),
             promoters = document.select(".event-presenters li a").mapNotNull { it.text().takeIf(String::isNotBlank) }
         )
     }
@@ -140,6 +144,25 @@ class ZitadelleDetailPageScraper {
         return parseTime(row?.ownText()?.trim())
     }
 }
+
+/**
+ * The headliners followed by the acts of the `h2.support` line under the heading, each billed as
+ * support: `+ A DAY TO REMEMBER + NECK DEEP`. A line without the leading `+` (`BLOOD ORANGE + MORE
+ * ACTS` under `OFF DAYS`) names the night's own line-up and is not read. A night that bills no
+ * headliner, such as a festival, gets no support acts either.
+ */
+private fun List<ScrapedArtist>.withSupportLine(document: Document): List<ScrapedArtist> {
+    val line = document.textAt(".event-hero h2.support")?.trim()
+    if (isEmpty() || line == null || !line.startsWith(SUPPORT_LINE_LEAD)) return this
+    val supports =
+        splitSupportActs(line.removePrefix(SUPPORT_LINE_LEAD))
+            .filterNot { isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
+    return this + supports
+}
+
+/** The mark that opens a support line: `+ A DAY TO REMEMBER + NECK DEEP`. */
+private const val SUPPORT_LINE_LEAD = "+"
 
 /**
  * Puts the change notice ahead of the event prose, so a relocated show says where it went.
