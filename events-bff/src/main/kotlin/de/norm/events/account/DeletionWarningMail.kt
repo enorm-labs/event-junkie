@@ -1,7 +1,7 @@
 package de.norm.events.account
 
+import de.norm.events.mail.MailBody
 import de.norm.events.mail.MailMessage
-import org.springframework.web.util.HtmlUtils
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -31,8 +31,8 @@ internal object DeletionWarningMail {
             kind = KIND,
             to = account.email,
             subject = if (german) "Dein Konto bei Event Junkie wird gelöscht" else "Your Event Junkie account will be deleted",
-            text = text.joinToString("\n\n") + "\n\nEvent Junkie\n$origin\n",
-            html = html(text, link, origin)
+            text = MailBody.text(text, origin),
+            html = MailBody.html(text, link, origin) { escapedLink -> "<p><a href=\"$escapedLink\">$escapedLink</a></p>" }
         )
     }
 
@@ -61,24 +61,6 @@ internal object DeletionWarningMail {
         link,
         "If you no longer need it, you do not have to do anything."
     )
-
-    private fun html(
-        paragraphs: List<String>,
-        link: String,
-        origin: String
-    ): String {
-        val escapedLink = HtmlUtils.htmlEscape(link)
-        val body =
-            paragraphs.joinToString("\n") { paragraph ->
-                if (paragraph == link) {
-                    "<p><a href=\"$escapedLink\">$escapedLink</a></p>"
-                } else {
-                    "<p>${HtmlUtils.htmlEscape(paragraph)}</p>"
-                }
-            }
-        return "<!doctype html><html><body style=\"font-family:sans-serif;line-height:1.5\">$body" +
-            "<p>Event Junkie<br>${HtmlUtils.htmlEscape(origin)}</p></body></html>"
-    }
 
     const val KIND = "deletion-warning"
 }
