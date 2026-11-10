@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zitadelle
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
@@ -12,6 +13,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
 import java.time.LocalTime
 
@@ -35,6 +37,21 @@ class ZitadelleDetailPageScraperTest {
     private val antilopen: ScrapedEvent by lazy { scrape("antilopen-gang", "2026-08-15-antilopen-gang") }
     private val offDays: ScrapedEvent by lazy { scrape("off-days", "2026-08-19-off-days") }
     private val alexanderMarcus: ScrapedEvent by lazy { scrape("alexander-marcus", "2027-08-13-alexander-marcus") }
+    private val fallOutBoy: ScrapedEvent by lazy { scrape("fall-out-boy", "2027-06-12-fall-out-boy") }
+    private val jackJohnson: ScrapedEvent by lazy { scrape("jack-johnson", "2027-06-24-jack-johnson") }
+
+    private fun billing(event: ScrapedEvent) = event.artists.map { it.name to it.role }
+
+    private fun heroPage(
+        heading: String,
+        support: String,
+        category: String = "konzerte"
+    ): Document =
+        Jsoup.parse(
+            "<html><body><div class='event-hero'><h1>$heading</h1><h2 class='support'>$support</h2></div>" +
+                "<article class='event type-event event-categories-$category'></article></body></html>",
+            "https://citadel-music-festival.de/event/2027-06-12-x"
+        )
 
     @Test
     fun `maps a fully populated detail page`() {
@@ -105,6 +122,48 @@ class ZitadelleDetailPageScraperTest {
         antilopen.eventType shouldBe EventType.CONCERT.name
         alexanderMarcus.eventType shouldBe EventType.CONCERT.name
         alexanderMarcus.artists.map { it.name } shouldBe listOf("Alexander Marcus")
+    }
+
+    @Test
+    fun `bills each act of the plus-led support line as support after the headliner`() {
+        // <h1>FALL OUT BOY</h1><h2 class="support"> + A DAY TO REMEMBER + NECK DEEP</h2>
+        billing(fallOutBoy) shouldBe
+            listOf(
+                "FALL OUT BOY" to ArtistRole.HEADLINER,
+                "A DAY TO REMEMBER" to ArtistRole.SUPPORT,
+                "NECK DEEP" to ArtistRole.SUPPORT
+            )
+        // The tour title beside it is not an act.
+        fallOutBoy.subtitle shouldBe "TWILIGHT OF THE PUNKS UK EUROPE TOUR 2027"
+    }
+
+    @Test
+    fun `splits a support line on and as well as on plus`() {
+        // "+ Donavon Frankenreiter and G. Love"
+        billing(jackJohnson) shouldBe
+            listOf(
+                "Jack Johnson" to ArtistRole.HEADLINER,
+                "Donavon Frankenreiter" to ArtistRole.SUPPORT,
+                "G. Love" to ArtistRole.SUPPORT
+            )
+    }
+
+    @Test
+    fun `does not read a support line without the leading plus`() {
+        // "BLOOD ORANGE + MORE ACTS" under "OFF DAYS" names the night's line-up, not its support.
+        offDays.artists.map { it.role } shouldBe listOf(ArtistRole.HEADLINER)
+    }
+
+    @Test
+    fun `drops a placeholder from the support line`() {
+        val event = scraper.scrape(heroPage("FALL OUT BOY", " + NECK DEEP + TBA"), "https://citadel-music-festival.de/event/2027-06-12-x")!!
+        billing(event) shouldBe listOf("FALL OUT BOY" to ArtistRole.HEADLINER, "NECK DEEP" to ArtistRole.SUPPORT)
+    }
+
+    @Test
+    fun `adds no support acts to a night that bills no headliner`() {
+        val event = scraper.scrape(heroPage("SUMMER CLOSING", " + NECK DEEP", category = "festival"), "https://citadel-music-festival.de/event/2027-06-12-x")!!
+        event.artists.shouldBeEmpty()
     }
 
     @Test
