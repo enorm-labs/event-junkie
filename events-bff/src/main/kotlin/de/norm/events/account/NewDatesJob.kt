@@ -1,7 +1,6 @@
 package de.norm.events.account
 
 import de.norm.events.common.BERLIN
-import de.norm.events.push.PushResult
 import de.norm.events.push.PushSender
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
@@ -59,12 +58,8 @@ class NewDatesJob(
             }
             val byAccount = dates.groupBy { it.accountId }
             logger.info { "New-dates push started: ${dates.size} dates for ${byAccount.size} accounts" }
-            val outcomes =
-                byAccount.values
-                    .flatMap { send(push, it) }
-                    .groupingBy { it }
-                    .eachCount()
-            logger.info { "New-dates push finished: ${outcomes.entries.joinToString { "${it.key.tag} ${it.value}" }}" }
+            val outcomes = store.fanOut(push, byAccount, clock) { NewDatesPush.message(it) }
+            logger.info { "New-dates push finished: ${outcomes.summary()}" }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -87,23 +82,6 @@ class NewDatesJob(
             throw e
         } catch (e: Exception) {
             logger.warn(e) { "New-dates notifications failed, from $from up to $upTo" }
-        }
-    }
-
-    /** Sends one account's dates to each of its browsers, and forgets a browser whose subscription is gone. */
-    private suspend fun send(
-        push: PushSender,
-        dates: List<NewDate>
-    ): List<PushResult> {
-        val message = NewDatesPush.message(dates)
-        return store.targets(dates.first().accountId).map { target ->
-            push.send(target, message).also { result ->
-                when (result) {
-                    PushResult.SENT -> store.sent(target.endpoint, clock.instant())
-                    PushResult.GONE -> store.delete(target.endpoint)
-                    PushResult.REJECTED, PushResult.FAILED -> Unit
-                }
-            }
         }
     }
 }

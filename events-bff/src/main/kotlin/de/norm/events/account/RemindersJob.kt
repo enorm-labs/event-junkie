@@ -1,7 +1,6 @@
 package de.norm.events.account
 
 import de.norm.events.common.BERLIN
-import de.norm.events.push.PushResult
 import de.norm.events.push.PushSender
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
@@ -46,33 +45,12 @@ class RemindersJob(
             val byAccount = due.groupBy { it.accountId }
             logger.info { "Reminders: ${byAccount.size} accounts, ${due.size} events for $today" }
             if (push == null || due.isEmpty()) return
-            val outcomes =
-                byAccount.values
-                    .flatMap { send(push, it) }
-                    .groupingBy { it }
-                    .eachCount()
-            logger.info { "Reminders push finished: ${outcomes.entries.joinToString { "${it.key.tag} ${it.value}" }}" }
+            val outcomes = subscriptions.fanOut(push, byAccount, clock) { ReminderPush.message(it) }
+            logger.info { "Reminders push finished: ${outcomes.summary()}" }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             logger.warn(e) { "Reminders failed" }
-        }
-    }
-
-    /** Sends one account's reminder to each of its browsers, and forgets a browser whose subscription is gone. */
-    private suspend fun send(
-        push: PushSender,
-        events: List<ReminderDue>
-    ): List<PushResult> {
-        val message = ReminderPush.message(events)
-        return subscriptions.targets(events.first().accountId).map { target ->
-            push.send(target, message).also { result ->
-                when (result) {
-                    PushResult.SENT -> subscriptions.sent(target.endpoint, clock.instant())
-                    PushResult.GONE -> subscriptions.delete(target.endpoint)
-                    PushResult.REJECTED, PushResult.FAILED -> Unit
-                }
-            }
         }
     }
 
