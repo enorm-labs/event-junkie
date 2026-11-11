@@ -186,6 +186,25 @@ class WildAtHeartOverviewPageScraperTest {
     }
 
     @Test
+    fun `an alias billing names the act once, by its first name`() {
+        // Event 13417: the act's own site is andrew-james-sdg.de; Ski-King is its other name.
+        val html =
+            """
+            <html><body><table>
+              <tr>
+                <td><span class="datum">Sa<br>20.03.</span></td>
+                <td><span class="band">&quot; Andrew James SDG alias Ski-King &quot;</span><br>
+                  <span class="stil-country">(Country - D)</span></td>
+              </tr>
+            </table></body></html>
+            """.trimIndent()
+
+        val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        event.title shouldBe "Andrew James SDG alias Ski-King"
+        event.artists.map { it.name } shouldBe listOf("Andrew James SDG")
+    }
+
+    @Test
     fun `returns no events when the page has no dated rows`() {
         val html = "<html><body><table><tr><td>No events yet</td></tr></table></body></html>"
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl) shouldHaveSize 0

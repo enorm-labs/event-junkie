@@ -136,6 +136,19 @@ class BadehausOverviewPageScraperTest {
             listOf("Metalcore", "Rock", "Indie", "Metal", "Hip Hop", "Rock", "Rock, Alternative", null, "Singer-Songwriter", "Country, Bluegrass")
     }
 
+    // Event 13442: the band's Christmas show bills the band, not the show.
+    @Test
+    fun `bills the act of a seasonal show title without the show tail`() {
+        val card =
+            """<div><div class="eventlistimg"></div><div class="nomargin">""" +
+                """<h2><a href="/events/20tokens-special-xmas-show/">20TOKENS – SPECIAL XMAS SHOW</a></h2>""" +
+                """<p class="eventinfo">Sa. 26.12.2026 | 19:00 UHR</p><p>Alternative Metal, Metalcore</p></div></div>"""
+
+        val event = scraper.scrape(Jsoup.parse("<html><body>$card</body></html>", baseUrl), baseUrl).single()
+        event.title shouldBe "20TOKENS – SPECIAL XMAS SHOW"
+        event.artists.map { it.name } shouldBe listOf("20TOKENS")
+    }
+
     // Event 13312: a workshop is out of scope (EVENT_SCOPE.md §3.2); Café com Samba names its workshop only in the subtitle and stays.
     @Test
     fun `skips a card whose title names a workshop, not one whose subtitle does`() {

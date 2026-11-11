@@ -84,6 +84,13 @@ class ArtStalkerOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills the band after Tribute mit, not the tribute`() {
+        // Event 13448.
+        cardArtists("Beatles Tribute mit Big Tom and the Bogsnorklers") shouldBe
+            listOf("Big Tom and the Bogsnorklers" to ArtistRole.HEADLINER)
+    }
+
+    @Test
     fun `cuts a trailing backing band from the act`() {
         cardArtists("Alessandro Tarshahani and the Band - Ein Mix aus Jazz, Blues, Soul") shouldBe
             listOf("Alessandro Tarshahani" to ArtistRole.HEADLINER)
