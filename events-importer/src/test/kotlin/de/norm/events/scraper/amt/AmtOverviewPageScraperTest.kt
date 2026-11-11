@@ -146,6 +146,34 @@ class AmtOverviewPageScraperTest {
         event.artists.forEach { it.role shouldBe ArtistRole.DJ }
     }
 
+    private fun djLineNight(djLine: String) =
+        scraper
+            .scrape(
+                Jsoup.parse(
+                    """<div class="div-grid-dan" data-date="November 11, 2026">
+                      <a href="/event/loone-x-arcane-xiii"><div class="events-txt name">Loone x Arcane XIII</div></a>
+                      <a href="/event/loone-x-arcane-xiii"><div class="events-txt light perf ev">$djLine</div></a>
+                    </div>""",
+                    juneUrl
+                ),
+                juneUrl
+            ).single()
+
+    @Test
+    fun `splits the DJ line on a slash with spaces on both sides`() {
+        // Events 13152 and 13153 on production, the November month page's shape.
+        djLineNight("Pamela Svart / Nanzhen Yang / Neri J").artists shouldContainExactly
+            listOf("Pamela Svart", "Nanzhen Yang", "Neri J").map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+        djLineNight("Molly Lollen / DSC7 / Clarisse").artists.map { it.name } shouldContainExactly
+            listOf("Molly Lollen", "DSC7", "Clarisse")
+    }
+
+    @Test
+    fun `keeps a slash without spaces inside a name`() {
+        djLineNight("AC/DC Tribute").artists.shouldBeEmpty()
+        djLineNight("AC/DC Tribute / Neri J").artists.map { it.name } shouldContainExactly listOf("AC/DC Tribute", "Neri J")
+    }
+
     private fun titleOnlyNight(title: String) =
         scraper
             .scrape(
