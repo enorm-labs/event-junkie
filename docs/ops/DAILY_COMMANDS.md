@@ -40,6 +40,7 @@ scripts/new-artists.sh production                  # artists created in the last
 scripts/new-artists.sh production --kind promoters # promoters created in the last day; `near` names an older one it may duplicate
 scripts/worklist.sh production --summary           # the data-quality worklist, one line per issue and venue
 curl -s 'http://localhost:28081/api/admin/data-quality/suggestions?status=OPEN&size=100' | jq '.totalElements'  # open suggested fixes
+curl -s 'http://localhost:28081/api/admin/venues/manual' | jq -r 'sort_by(.programmeCheckedAt // "", .name) | .[:8][] | [.name, (.programmeUrl // "-")] | @tsv'  # the 8 manual venues most due: read each programme, enter its events on the "Manual venues" page, press Checked
 scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .frontend.page_loads, .bff.sessions, .bff.night_sessions] | @tsv'  # sessions per day
 ```
 
