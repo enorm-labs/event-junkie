@@ -323,7 +323,7 @@ class RoadrunnerOverviewPageScraperTest {
             <html><body>
               <p>Welcome to Roadrunner's Paradise</p>
               <p>. . . . . . . . . .</p>
-              <p>Kartenreservierungen: info@roadrunners-paradise.de</p>
+              <p>Kartenreservierungen: i-masked@example.de</p>
             </body></html>
             """.trimIndent()
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl) shouldHaveSize 0

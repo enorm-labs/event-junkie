@@ -88,7 +88,7 @@ class ClashOverviewPageScraperTest {
         quiz.pricePresale.shouldBeNull()
         quiz.priceBoxOffice.shouldBeNull()
         quiz.priceNote shouldBe "Mitmachspende: 3 Euro / Person"
-        quiz.description shouldContain "Teamanmeldung unter: clashquiz@systemli.org"
+        quiz.description shouldContain "Teamanmeldung unter: c-masked@example.de"
     }
 
     @Test

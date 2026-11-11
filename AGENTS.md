@@ -153,8 +153,10 @@ plus the privacy page in the same PR.**
 **Commercial changes** — ads, affiliate links, sponsorships, donations, paid features — also change the § 5 DDG imprint analysis.
 
 **What this repository publishes is public too.** A venue's text can carry a person's e-mail address, phone number or full name with a contact. Never copy
-one into an issue, a pull request, a commit message, a fixture or a test: name the event by its id, and mask the contact (`w***@…`, digits as `#`). A test
-uses `example.de` and `030 12345678`. A local sweep that reads stored text prints its matches masked too, because its output ends up in a report.
+one into an issue, a pull request, a commit message, a fixture or a test: name the event by its id, and mask the contact (`w***@…`, digits as `#`). A
+fixture or a test keeps a valid address instead, `w-masked@example.de`, because a parser can treat an address specially: after saving a page, run
+`scripts/mask-fixture-contacts.py`, and its `check` lists what is left. A test uses `example.de` and `030 12345678`. A local sweep that reads stored text
+prints its matches masked too, because its output ends up in a report.
 
 **A request to an outside API names the project, never a person.** A hand-written `curl` to MusicBrainz, Discogs or a venue site sends the `USER_AGENT` of
 `scripts/musicbrainz-match.py`, never an operator's e-mail address or name.

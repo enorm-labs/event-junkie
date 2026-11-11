@@ -143,7 +143,7 @@ class GaertenDerWeltDetailPageScraperTest {
     fun `drops the contact mailbox from the description`() {
         val event = scraper.scrape(fixtureDocument("gaertenderwelt/gaertenderwelt-detail-quiz.html", QUIZ_URL), QUIZ_URL).shouldNotBeNull()
 
-        event.description.shouldNotBeNull() shouldNotContain "besucherzentrum@gaertenderwelt.de"
+        event.description.shouldNotBeNull() shouldNotContain "b-masked@example.de"
     }
 
     @Test

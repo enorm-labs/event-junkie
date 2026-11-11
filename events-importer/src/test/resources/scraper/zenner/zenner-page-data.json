@@ -3208,7 +3208,7 @@
                                         "_key": "3388664b42002",
                                         "_type": "span",
                                         "marks": [],
-                                        "text": "reservierung@zenner.berlin. "
+                                        "text": "r-masked@example.de. "
                                     }
                                 ],
                                 "markDefs": [],
@@ -4200,7 +4200,7 @@
                         "place": "Klub",
                         "id": "-1cd22e49-4853-51a4-8780-c8d26bf67d35",
                         "eventDate": "2025-11-13T18:00:00.000Z",
-                        "linkEvent": "mailto:martinsgans@zenner.berlin",
+                        "linkEvent": "mailto:m-masked@example.de",
                         "image": {
                             "asset": {
                                 "fluid": {
@@ -4245,7 +4245,7 @@
                                         "marks": [
                                             "a35b401b0365"
                                         ],
-                                        "text": "martinsgans@zenner.berlin"
+                                        "text": "m-masked@example.de"
                                     },
                                     {
                                         "_key": "0672cf378e32",
@@ -4258,7 +4258,7 @@
                                     {
                                         "_key": "a35b401b0365",
                                         "_type": "link",
-                                        "href": "mailto:martinsgans@zenner.berlin"
+                                        "href": "mailto:m-masked@example.de"
                                     },
                                     {
                                         "_key": "97e415fa6df2",
@@ -4462,7 +4462,7 @@
                         "place": "Saal",
                         "id": "-2dee6445-41d7-558e-87c3-96cd989a2094",
                         "eventDate": "2025-11-23T10:00:00.000Z",
-                        "linkEvent": "mailto:gastro@zenner.berlin",
+                        "linkEvent": "mailto:g-masked@example.de",
                         "image": {
                             "asset": {
                                 "fluid": {
@@ -4585,7 +4585,7 @@
                                         "_key": "f3583dd6e5f20",
                                         "_type": "span",
                                         "marks": [],
-                                        "text": "Dann sei schnell und bewerbe dich unter gastro@zenner.berlin und sicher Dir einen der letzten noch freien Stände!"
+                                        "text": "Dann sei schnell und bewerbe dich unter g-masked@example.de und sicher Dir einen der letzten noch freien Stände!"
                                     }
                                 ],
                                 "markDefs": [],
@@ -4650,7 +4650,7 @@
                         "place": "Saal",
                         "id": "-2fd5c4de-a3c5-5cfa-a744-ddceebeba2e1",
                         "eventDate": "2025-12-14T10:00:00.000Z",
-                        "linkEvent": "mailto:gastro@zenner.berlin",
+                        "linkEvent": "mailto:g-masked@example.de",
                         "image": {
                             "asset": {
                                 "fluid": {
@@ -4829,7 +4829,7 @@
                                         "marks": [
                                             "9637f4078169"
                                         ],
-                                        "text": "gastro@zenner.berlin"
+                                        "text": "g-masked@example.de"
                                     },
                                     {
                                         "_key": "b6f46201160b2",
@@ -4842,7 +4842,7 @@
                                     {
                                         "_key": "9637f4078169",
                                         "_type": "link",
-                                        "href": "mailto:gastro@zenner.berlin"
+                                        "href": "mailto:g-masked@example.de"
                                     }
                                 ],
                                 "style": "normal"
@@ -4855,7 +4855,7 @@
                         "place": "Klub",
                         "id": "-46bbd48c-9239-53d6-83b5-7c22bd9ac000",
                         "eventDate": "2025-12-21T18:00:00.000Z",
-                        "linkEvent": "mailto:reservierung@zenner.berlin",
+                        "linkEvent": "mailto:r-masked@example.de",
                         "image": {
                             "asset": {
                                 "fluid": {
@@ -4914,7 +4914,7 @@
                                         "marks": [
                                             "85f90d420b87"
                                         ],
-                                        "text": "reservierung@zenner.berlin"
+                                        "text": "r-masked@example.de"
                                     },
                                     {
                                         "_key": "7949b3817c9e",
@@ -4927,7 +4927,7 @@
                                     {
                                         "_key": "85f90d420b87",
                                         "_type": "link",
-                                        "href": "mailto:reservierung@zenner.berlin"
+                                        "href": "mailto:r-masked@example.de"
                                     }
                                 ],
                                 "style": "normal"

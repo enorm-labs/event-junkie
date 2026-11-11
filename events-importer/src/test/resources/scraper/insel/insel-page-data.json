@@ -8,7 +8,7 @@
                 "aboutHeader": "Kulturveranstaltungen, Biergarten & Eventlocation",
                 "culture": "<p>Kultur findet bei uns ganzjährig drin und draußen statt. Folgt uns auf Instagram, Facebook und direkt hier für aktuelle Infos über kommende Veranstaltungen!</p>",
                 "cultureHeader": "Kultur auf der Insel",
-                "kuenstler": "<p>Anfragen von Veranstalter:innen bitte an <a href=\"mailto:kontakt@kulturalarm.com\">kontakt@kulturalarm.com!</a></p>",
+                "kuenstler": "<p>Anfragen von Veranstalter:innen bitte an <a href=\"mailto:k-masked@example.de\">k-masked@example.de!</a></p>",
                 "kuenstlerHeader": "Kultur Booking",
                 "winterMode": false,
                 "winterSlideshow": [
@@ -149,7 +149,7 @@
                     },
                     {
                         "header": "Jobs",
-                        "description": "Wir suchen ab sofort Barkräfte und Abend-Dienstleitung! Bewerbungen bitte an job@inselberlin.de!",
+                        "description": "Wir suchen ab sofort Barkräfte und Abend-Dienstleitung! Bewerbungen bitte an j-masked@example.de!",
                         "primaryColor": {
                             "hex": "#0b78a2"
                         },

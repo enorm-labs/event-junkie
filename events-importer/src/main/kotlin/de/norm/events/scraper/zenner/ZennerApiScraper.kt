@@ -177,7 +177,7 @@ class ZennerApiScraper(
                     ?.takeIf { it.startsWith("http") },
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.ZENNER.sourceIdPrefix}${id.trimStart('-')}",
-            // A room-booking enquiry (`mailto:reservierung@zenner.berlin`) is not a ticket shop.
+            // A room-booking enquiry (`mailto:r-masked@example.de`) is not a ticket shop.
             ticketUrl = node.linkEvent.blankToNull()?.takeIf { it.startsWith("http") },
             // The venue announces a cancellation only in the blurb ("Wegen schlechten Wetters abgesagt!").
             status = description?.let { parseEventStatus(it) } ?: EventStatus.SCHEDULED.name,

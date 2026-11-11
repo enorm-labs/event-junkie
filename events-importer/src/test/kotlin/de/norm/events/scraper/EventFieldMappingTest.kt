@@ -178,7 +178,7 @@ class EventFieldMappingTest {
             "Freier Eintritt für Alle",
             "bei freiem Eintritt",
             "kostenloser Eintritt",
-            "Kostenfreie Tickets: anmeldung@urania-berlin.de",
+            "Kostenfreie Tickets: a-masked@example.de",
             "kostenfreier Eintritt",
             "FREE ENTRY",
             "Eintritt frei / Admission free!",
