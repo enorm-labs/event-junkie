@@ -168,4 +168,28 @@ class JunctionBarMusicOverviewPageScraperTest {
         night.title shouldBe "Ra'as ul-Assad"
         night.artists shouldContainExactly listOf(ScrapedArtist(name = "Ra'as ul-Assad", role = ArtistRole.HEADLINER))
     }
+
+    @Test
+    fun `drops an unnamed-guests tail from the act and keeps the billing as the title`() {
+        val url = "https://www.junction-bar.de/program/12_2026/12_26.html"
+        val page =
+            Jsoup.parse(
+                """
+                <div class="gridContainer">
+                  <div><table><tr><td><strong class="datum">2.12. WEDNESDAY</strong></td></tr></table></div>
+                  <div><p class="Stil12221">KARL RICH &amp; special guests</p><p class="text">Das neue Tape von KARL RICH.</p></div>
+                  <div><table><tr><td><strong class="datum">3.12. THURSDAY</strong></td></tr></table></div>
+                  <div><p class="Stil1222">Mia und Gäste</p></div>
+                  <div><table><tr><td><strong class="datum">4.12. FRIDAY</strong></td></tr></table></div>
+                  <div><p class="Stil1222">The Guests</p></div>
+                </div>
+                """.trimIndent(),
+                url
+            )
+        val nights = scraper.scrape(page, url)
+
+        // The guests are not named, so the night bills one act (#4885).
+        nights[0].title shouldBe "KARL RICH & special guests"
+        nights.map { it.artists.single().name } shouldContainExactly listOf("KARL RICH", "Mia", "The Guests")
+    }
 }

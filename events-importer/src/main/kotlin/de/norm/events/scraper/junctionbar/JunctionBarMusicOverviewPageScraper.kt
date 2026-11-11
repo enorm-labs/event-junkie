@@ -111,11 +111,17 @@ class JunctionBarMusicOverviewPageScraper {
             genre = parseGenre(night.dateBar, night.content),
             artists =
                 photographedBands(bands, night.content)
-                    .map { stripArtistSuffix(it) }
+                    .map { stripGuestsTail(stripArtistSuffix(it)) }
                     .filterNot { isNonArtistName(it) }
                     .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
         )
     }
+
+    /**
+     * The act without an unnamed-guests tail: `KARL RICH & special guests` bills Karl Rich (#4885). Local to this venue,
+     * because a band elsewhere can carry such a tail in its name.
+     */
+    private fun stripGuestsTail(name: String): String = name.replace(GUESTS_TAIL, "").trim().ifBlank { name }
 
     /** The `DD.MM.` date from the date bar, combined with the [year] from the page URL. */
     private fun parseDate(
@@ -264,6 +270,9 @@ class JunctionBarMusicOverviewPageScraper {
         /** Filename fragments identifying non-content images (logo, decorative bars, ticket button, scroll arrow). */
         private val DECORATIVE_IMAGE_MARKERS =
             listOf("tickets-button", "balken_lang", "scrollup", "junction-bar-logo")
+
+        /** A trailing `& special guests`, `& guests` or `und Gäste`, after a name that does not end in a bracket. */
+        private val GUESTS_TAIL = Regex("""(?<=[^\s)])\s+(?:&|and|und)\s+(?:special\s+)?(?:guests?|gäste)\s*$""", RegexOption.IGNORE_CASE)
 
         /** Any letter of the Latin script, accented ones included. */
         private val LATIN_LETTER = Regex("""\p{IsLatin}""")
