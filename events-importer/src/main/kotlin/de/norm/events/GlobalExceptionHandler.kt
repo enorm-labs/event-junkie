@@ -73,13 +73,10 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * Handles duplicate slug violations from the service-layer pre-check — these provide
-     * a more descriptive error message than the generic DB constraint handler above,
-     * identifying the entity type, conflicting slug, and the name that produced it.
+     * Every request that conflicts with what is stored, and whose exception says what.
      *
-     * A dismissal of an accepted suggestion, or the reverse, is a 409 for the same reason, and shares the handler:
-     * the request conflicts with what is stored, and its message says what. So does a check route
-     * called while its check is switched off, or while a run of it is going.
+     * A duplicate slug comes here, not to [handleDataIntegrityViolation]. The service-layer
+     * pre-check names the entity, the conflicting slug and the name that produced it.
      */
     @ExceptionHandler(
         DuplicateArtistSlugException::class,
@@ -95,7 +92,7 @@ class GlobalExceptionHandler {
         InstagramDraftAlreadyJudgedException::class,
         StaleWorklistRowException::class
     )
-    fun handleDuplicateSlug(ex: RuntimeException): ProblemDetail {
+    fun handleConflict(ex: RuntimeException): ProblemDetail {
         logger.debug { "Duplicate slug or conflicting state: ${ex.message}" }
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "A record with the same slug already exists.")
     }
