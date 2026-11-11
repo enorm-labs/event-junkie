@@ -46,6 +46,10 @@ val PETER_EDEL_LIMITATIONS =
             "without a category nothing confirms that a title is a performer rather than a format, so an act needs a support billing or a quoted show",
             verified = "2026-10-22"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the venue names styles only for its dance café (`Indie & Wave Tanzcafé`); every other event has no genre",
+            verified = "2026-11-11"
+        ),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the title links straight to the ticket shop", verified = "2026-08-25")
     )

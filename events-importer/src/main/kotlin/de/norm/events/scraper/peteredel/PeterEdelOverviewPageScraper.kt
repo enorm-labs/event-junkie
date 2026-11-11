@@ -19,6 +19,7 @@ import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferVenueFormatType
+import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.knownSoloPerformer
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanMonthAbbreviation
@@ -75,7 +76,8 @@ import java.time.LocalTime
  * the two numeric fields cannot express.
  * - **A cancelled event is marked twice** — `[Abgesagt!]` on the title and `Leider abgesagt!` in
  * the ticket column. Either sets `CANCELLED`; the marker is stripped from the stored title so it
- * stays out of the `sourceId` and the event keeps its identity if reinstated.
+ * stays out of the `sourceId` and the event keeps its identity if reinstated. A postponed one carries
+ * `[Achtung: Terminverschiebung!]` on the date it left, which sets `POSTPONED` and is stripped the same way.
  * - **Doors and start are a labelled pair**, separate ("Einlass: 19:00 Uhr Beginn: 20:00 Uhr") or
  * collapsed ("Beginn & Einlass: 18:00 Uhr"), occasionally transposed — `orderDoorsBeforeStart`
  * corrects that at the persistence boundary.
@@ -205,7 +207,7 @@ class PeterEdelOverviewPageScraper {
 
         val heading = main.selectFirst("h3") ?: return null
         val rawTitle = heading.text().trim()
-        val cleanedTitle = cleanEventTitle(rawTitle.replace(CANCELLED_TITLE_MARKER, ""))
+        val cleanedTitle = cleanEventTitle(rawTitle.replace(CANCELLED_TITLE_MARKER, "").replace(POSTPONED_TITLE_MARKER, ""))
         val title = cleanedTitle.text
         if (title.isBlank()) {
             logger.warn { "No title in Peter Edel event box, skipping" }
@@ -230,6 +232,7 @@ class PeterEdelOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
+            genre = danceCafeGenre(subtitle),
             description = description,
             eventType = eventType,
             // A comedian headliner can still type an untyped night: FIL (#4007).
@@ -253,14 +256,7 @@ class PeterEdelOverviewPageScraper {
                     cleanedTitle.soldOut,
             status = resolveStatus(rawTitle, ticketColumn),
             statusNote = extraShowNote,
-            promoters =
-                listOfNotNull(
-                    PROMOTER
-                        .find(info)
-                        ?.groupValues
-                        ?.get(1)
-                        ?.blankToNull()
-                ),
+            promoters = listOfNotNull(promoterOf(info)),
             artists = actsOf(title, support, eventType)
         ).forChildrenIf(childrensShowPhrase(title, subtitle))
     }
@@ -322,11 +318,15 @@ class PeterEdelOverviewPageScraper {
             ?.trim()
             ?.takeIf { it.startsWith(TICKETS_LABEL, ignoreCase = true) }
 
-    /** The status the title marker or the ticket column states ([parseTitleStatus]), otherwise `SCHEDULED`. */
+    /** `POSTPONED` for a [POSTPONED_TITLE_MARKER], else the status the title or the ticket column states ([parseTitleStatus]), else `SCHEDULED`. */
     private fun resolveStatus(
         rawTitle: String,
         ticketColumn: Element?
-    ): String = parseTitleStatus(rawTitle) ?: ticketColumn?.text()?.let(::parseTitleStatus) ?: EventStatus.SCHEDULED.name
+    ): String =
+        EventStatus.POSTPONED.name.takeIf { POSTPONED_TITLE_MARKER.containsMatchIn(rawTitle) }
+            ?: parseTitleStatus(rawTitle)
+            ?: ticketColumn?.text()?.let(::parseTitleStatus)
+            ?: EventStatus.SCHEDULED.name
 
     private companion object {
         /** The Umbraco grid class wrapping exactly one event. */
@@ -367,6 +367,15 @@ class PeterEdelOverviewPageScraper {
 
         /** The `[Abgesagt!]` marker on a cancelled event's title, stripped from the stored title. */
         private val CANCELLED_TITLE_MARKER = Regex("""\s*\[\s*Abgesagt!?\s*]""", RegexOption.IGNORE_CASE)
+
+        /**
+         * The `[Achtung: Terminverschiebung!]` marker on the date a show left (event 13421). The new date is a box of its own, so
+         * this row is `POSTPONED`; the marker is stripped from the stored title like the cancelled one.
+         */
+        private val POSTPONED_TITLE_MARKER = Regex("""\s*\[\s*(?:Achtung\s*:\s*)?Terminverschiebung!?\s*]""", RegexOption.IGNORE_CASE)
+
+        /** The styles a dance café names before the word: `Indie & Wave Tanzcafé - mit DJ Iron Henning` (events 13421, 13422). */
+        private val TANZCAFE_STYLE = Regex("""([\p{L}&/,\s-]+?)\s+Tanzcaf(?:é|e)(?!\p{L})""", RegexOption.IGNORE_CASE)
 
         /**
          * A subtitle line that announces an extra date (`ZUSATZSHOW!`, `Zusatzshow am 20.02.2027 - Tickets jetzt
@@ -411,6 +420,17 @@ class PeterEdelOverviewPageScraper {
                 Regex("""varieté|variete|musical""", RegexOption.IGNORE_CASE) to EventType.SHOW.name,
                 Regex("""album|alben|konzert|concerts?|orchest(?:er|ra)|duett(?:e|s)?""", RegexOption.IGNORE_CASE) to EventType.CONCERT.name
             )
+
+        /** The promoter a `Präsentiert von:` credit in the info line names ([PROMOTER]), or `null`. */
+        fun promoterOf(info: String): String? =
+            PROMOTER
+                .find(info)
+                ?.groupValues
+                ?.get(1)
+                ?.blankToNull()
+
+        /** The known genres among the styles before `Tanzcafé` ([TANZCAFE_STYLE]), or `null`. */
+        fun danceCafeGenre(subtitle: String?): String? = knownGenresInStyleTail(subtitle?.let { TANZCAFE_STYLE.find(it) }?.groupValues?.get(1))
 
         /** The type from the title and subtitle, else a support billing, else the blurb; `OTHER` without any. */
         fun typeOf(

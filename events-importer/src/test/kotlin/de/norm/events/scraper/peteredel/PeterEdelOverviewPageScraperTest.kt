@@ -183,6 +183,33 @@ class PeterEdelOverviewPageScraperTest {
     }
 
     @Test
+    fun `marks the date a show left as postponed and strips the marker`() {
+        // Event 13421: the venue keeps the 22.11. box beside the new 29.11. one (event 13422).
+        val main =
+            "<h3>SONNTAGSSCHÖN [Achtung: Terminverschiebung!]</h3><p>Terminverschiebung auf 29.11.2026! Indie &amp; Wave Tanzcafé - mit DJ Iron Henning</p>" +
+                "<div class=\"text-block\"><div class=\"text-container\">Es ist wieder soweit!</div></div><p>Beginn &amp; Einlass: 16:00 Uhr</p>"
+        val left = scraper.scrape(grid("November 2026", "SO | 22.11.", main), baseUrl).single()
+        left.status shouldBe "POSTPONED"
+        left.title shouldBe "SONNTAGSSCHÖN"
+        left.sourceId shouldBe "peter_edel:2026-11-22-sonntagsschon"
+        val entity = left.toEventEntity(venueId = 1, venueSlug = "kulturhaus-peter-edel", eventSourceId = 1)
+        entity.status shouldBe "POSTPONED"
+        entity.eventType shouldBe "PARTY"
+    }
+
+    @Test
+    fun `reads the styles a dance café names`() {
+        // Events 13421 and 13422.
+        val main =
+            "<h3>SONNTAGSSCHÖN</h3><p>Terminverschiebung vom 22.11.2026 auf den 29.11.2026! Indie &amp; Wave Tanzcafé - mit DJ Iron Henning</p>" +
+                "<div class=\"text-block\"><div class=\"text-container\">Es ist wieder soweit!</div></div><p>Beginn &amp; Einlass: 16:00 Uhr</p>"
+        val event = scraper.scrape(grid("November 2026", "SO | 29.11.", main), baseUrl).single()
+        event.status shouldBe "SCHEDULED"
+        event.eventType shouldBe "PARTY"
+        event.genre shouldBe "Indie, Wave"
+    }
+
+    @Test
     fun `marks the children's shows`() {
         events.filter { it.isForChildren }.map { it.forChildrenPhrase } shouldBe listOf("Kindertheater", "Kinder-Halloween", "Kindertheater")
     }

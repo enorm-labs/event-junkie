@@ -277,6 +277,24 @@ class ArtistNameCleanupTest {
     }
 
     @Test
+    fun `stripArtistSuffix recovers the act from a seasonal show tail`() {
+        // Badehaus, event 13442.
+        stripArtistSuffix("20TOKENS - Special Xmas Show") shouldBe "20TOKENS"
+        stripArtistSuffix("Some Band – Christmas Show") shouldBe "Some Band"
+        // No dash: the show can be the act's name.
+        stripArtistSuffix("The Christmas Show") shouldBe "The Christmas Show"
+        stripArtistSuffix("Some Band - Show") shouldBe "Some Band - Show"
+    }
+
+    @Test
+    fun `stripArtistSuffix keeps the first name of an alias billing`() {
+        // Wild at Heart, event 13417.
+        stripArtistSuffix("Andrew James SDG alias Ski-King") shouldBe "Andrew James SDG"
+        stripArtistSuffix("Alias") shouldBe "Alias"
+        stripArtistSuffix("Alias Grace") shouldBe "Alias Grace"
+    }
+
+    @Test
     fun `stripArtistSuffix recovers the act from a bare Releaseshow tail`() {
         // Urban Spree, production 2026-11-13 (#3161).
         stripArtistSuffix("FRIBERTY Releaseshow") shouldBe "FRIBERTY"

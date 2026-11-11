@@ -33,7 +33,7 @@ internal const val DASHED_QUOTED_SHOW = """\s+[-–—]\s+"[^"\s][^"]*\s[^"]*[^"
  * a `– Zusatzshow` dash tail, and a work title in German quotes (`KARAT „45 Jahre Der blaue
  * Planet“`); straight quotes stay, because `Voodoo Jürgens und die "Ansa Panier"` names the band.
  *
- * A tribute act's `– A tribute to <X>` or `Tribute Band` tail goes (#2882), and so do `- Weihnachtskonzert` and `- … Live at <venue>`.
+ * A tribute act's `– A tribute to <X>` or `Tribute Band` tail goes (#2882), as do `- Weihnachtskonzert`, `- … Live at <venue>`, `– Xmas Show`, `alias <name>`.
  *
  * The boundaries keep real names intact: hyphen tails need `<space>-<space>` and a marker
  * ("BAD COMPANY LEGACY - Dave Colwell" is left alone); the year is anchored at the end ("Blink -
@@ -56,6 +56,8 @@ internal val ARTIST_SUFFIX_PATTERN =
             """|\s+(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""" +
             """|(?<=\S)(?<!\bmore)(?<!\bmehr)\s+(?:(?:w/|with|feat\.?|[+&])\s*)?(?:tba|tbc|tbd)\.*$""" +
             """|\s+[-–—]\s*release\s?show\s*$""" +
+            """|\s+[-–—]\s+(?:(?:special|xmas|christmas|holiday)\s+){1,2}show\s*$""" +
+            """|(?<=\S)\s+alias\s+\S.*$""" +
             """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band|on\s+stage))?(?:\s*&\s*dj[\s-]?set)?""" +
             """(?:\s+in\s+\S.*|\s+(?:19|20)\d{2})?$""" +
             """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|drag""" +
