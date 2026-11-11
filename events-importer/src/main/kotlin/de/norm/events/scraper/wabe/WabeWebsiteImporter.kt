@@ -30,7 +30,7 @@ class WabeWebsiteImporter(
 
     private companion object {
         /** A month page's link, `/okt-2026/`, in the site navigation. */
-        const val MONTH_LINK_SELECTOR = "a[href~=^(https://www\\.wabe-berlin\\.info)?/[a-z]{3}-\\d{4}/?$]"
+        const val MONTH_LINK_SELECTOR = "a:matchesAttr(href, ^(https://www\\.wabe-berlin\\.info)?/[a-z]{3}-\\d{4}/?$)"
 
         /** A night's own page, `/okt-2026/3/`, under its month page. */
         val EVENT_PAGE = Regex("""/[a-z]{3}-\d{4}/\d+/?$""")

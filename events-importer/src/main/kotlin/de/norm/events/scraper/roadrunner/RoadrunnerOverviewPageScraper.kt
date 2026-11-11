@@ -23,6 +23,7 @@ import de.norm.events.scraper.parseGermanDayMonth
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.selectFirstOrSelf
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textLines
@@ -381,7 +382,7 @@ class RoadrunnerOverviewPageScraper(
      * The `Stil11` title styling: on the `<p>` itself ("BLUT & EISEN 30 JAHRE"), or on a `<span>`
      * or `<strong>` inside it ("SCIENCE SLAM", November 2026).
      */
-    private fun titleElement(p: Element): Element? = p.selectFirst(".$TITLE_CLASS")
+    private fun titleElement(p: Element): Element? = p.selectFirstOrSelf(".$TITLE_CLASS")
 
     private fun isDateLine(p: Element): Boolean = DATE_PATTERN.containsMatchIn(p.text())
 

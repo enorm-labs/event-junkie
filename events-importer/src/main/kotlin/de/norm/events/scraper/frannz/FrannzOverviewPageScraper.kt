@@ -18,6 +18,7 @@ import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.selectWithSelf
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -276,7 +277,7 @@ class FrannzOverviewPageScraper(
 
                 node is Element -> {
                     current.append(node.text())
-                    node.select("a[href]").mapTo(hrefs) { it.attr("href").trim() }
+                    node.selectWithSelf("a[href]").mapTo(hrefs) { it.attr("href").trim() }
                 }
 
                 node is TextNode -> {

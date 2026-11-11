@@ -5,6 +5,7 @@ import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.selfAndDescendants
 import de.norm.events.scraper.splitSupportActs
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -26,7 +27,7 @@ internal fun descriptionRoster(
     val description = document.selectFirst(".product_description") ?: return emptyList()
     val sections = linkedMapOf<Int, MutableList<String>>()
     var section = 0
-    description.allElements.forEach { element ->
+    description.selfAndDescendants().forEach { element ->
         DAY_LABEL.find(element.ownText())?.let { section = it.groupValues[1].toInt() }
         if (element.isBold() && element.parents().none { it.isBold() }) {
             originTaggedName(element)?.let { sections.getOrPut(section) { mutableListOf() } += it }
@@ -72,7 +73,7 @@ internal fun descriptionSupport(document: Document): List<String> {
     val bold =
         document
             .selectFirst(".product_description")
-            ?.allElements
+            ?.selfAndDescendants()
             ?.filter { it.isBold() && it.parents().none { parent -> parent.isBold() } }
             ?.map { it.text().replace(NBSP, ' ').trim() }
             .orEmpty()

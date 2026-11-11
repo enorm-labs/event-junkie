@@ -88,6 +88,9 @@ goes into the extension file and ADR-007's utility table, not the venue package.
 
 Selectors in ADR-007's order: JSON-LD > semantic HTML5 (`article`, `time[datetime]`, headings) > ARIA > `data-*` > meaningful classes > **never** positional
 (`div:nth-child(3)`, `.col-md-4`). Scope to the narrowest container; `:has()` for context.
+**Write each selector for jsoup's web query mode**, the default from 1.25.1: a query matches below the element only, and `[a~=x]` is a token, not a regex.
+`selectFirstOrSelf` or `selectWithSelf` when the element itself can match, `:matchesAttr(a, regex)` for a regex. `webQueryModeTest` runs every scraper test
+in that mode (#4871).
 
 `ScrapedEvent` (`scraper/ScrapedEvent.kt`): required `title`, `eventDate`, `sourceUrl`, `sourceId` = `"${EventSource.<VENUE>.sourceIdPrefix}$slug"` derived
 from the canonical URL, never from mutable text. **Validate before returning**: skip a blank title or an unparseable date with a warning, and parse the rows

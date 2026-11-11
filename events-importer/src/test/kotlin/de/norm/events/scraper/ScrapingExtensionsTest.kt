@@ -1,7 +1,9 @@
 package de.norm.events.scraper
 
+import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Comment
 import org.jsoup.nodes.Element
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -16,6 +18,58 @@ import java.time.LocalTime
 class ScrapingExtensionsTest {
     /** Helper to parse an HTML snippet into a root [Element]. */
     private fun html(snippet: String): Element = Jsoup.parseBodyFragment(snippet).body()
+
+    /** Runs [block] under jsoup's legacy and web query modes, restoring the property after (#4871). */
+    private fun inBothQueryModes(block: () -> Unit) {
+        val before = System.getProperty(QUERY_MODE)
+        try {
+            listOf("legacy", "web").forEach { mode ->
+                System.setProperty(QUERY_MODE, mode)
+                withClue("jsoup.queryMode=$mode") { block() }
+            }
+        } finally {
+            if (before == null) System.clearProperty(QUERY_MODE) else System.setProperty(QUERY_MODE, before)
+        }
+    }
+
+    @Nested
+    inner class QueryModeIndependentSelection {
+        @Test
+        fun `selectFirstOrSelf returns the element itself when it matches, else its first match below`() =
+            inBothQueryModes {
+                val p = html("""<p class="t">A <span class="t">B</span></p>""").child(0)
+                p.selectFirstOrSelf(".t") shouldBe p
+                html("""<div><span class="t">B</span></div>""").child(0).selectFirstOrSelf(".t")?.text() shouldBe "B"
+                p.selectFirstOrSelf("h1, h2") shouldBe null
+            }
+
+        @Test
+        fun `selectWithSelf lists the element itself first, then its matches below`() =
+            inBothQueryModes {
+                val body = html("""<a href="/x">x</a><b><a href="/z">z</a></b><div id="o" class="k"><div id="i" class="k"></div></div>""")
+                body.child(0).selectWithSelf("a[href]").map { it.attr("href") } shouldBe listOf("/x")
+                body.child(1).selectWithSelf("a[href]").map { it.attr("href") } shouldBe listOf("/z")
+                body.child(2).selectWithSelf(".k").map { it.id() } shouldBe listOf("o", "i")
+                html("""<i>no link</i>""").child(0).selectWithSelf("a[href]") shouldBe emptyList()
+            }
+
+        @Test
+        fun `selectWithSelf over a list keeps the listed elements and drops duplicates`() =
+            inBothQueryModes {
+                val body = html("""<img id="a" alt="x"><div id="d"><img id="b" alt="y"></div>""")
+                val content = body.children() + body.children()
+                content.selectWithSelf("img[alt]").map { it.id() } shouldBe listOf("a", "b")
+            }
+
+        @Test
+        fun `selfAndDescendants starts at the document, so a comment above html is found`() =
+            inBothQueryModes {
+                val document = Jsoup.parse("<!-- top --><html><body><!-- inner --><p>x</p></body></html>")
+                val elements = document.selfAndDescendants()
+                elements.first() shouldBe document
+                elements.flatMap { it.childNodes().filterIsInstance<Comment>() }.map { it.data.trim() } shouldBe listOf("top", "inner")
+            }
+    }
 
     @Nested
     inner class TextAt {
@@ -443,3 +497,5 @@ class ScrapingExtensionsTest {
         Jsoup.parse("<p>no meta</p>").ogImageUrl() shouldBe null
     }
 }
+
+private const val QUERY_MODE = "jsoup.queryMode"

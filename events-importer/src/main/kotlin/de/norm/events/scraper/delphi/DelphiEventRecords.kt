@@ -2,6 +2,7 @@ package de.norm.events.scraper.delphi
 
 import de.norm.events.common.BERLIN
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.selfAndDescendants
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Comment
 import org.jsoup.nodes.Document
@@ -40,7 +41,7 @@ internal data class DelphiEventRecord(
  */
 internal fun parseDelphiEventRecords(document: Document): Map<String, DelphiEventRecord> =
     document
-        .select("*")
+        .selfAndDescendants()
         .flatMap { element -> element.childNodes().filterIsInstance<Comment>() }
         .mapNotNull { comment -> parseRecord(comment.data) }
         .toMap()

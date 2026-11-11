@@ -50,7 +50,7 @@ class PfefferbergTheaterCalendarPageScraper {
 
     private fun filterLabels(document: Document): Map<String, String> =
         document
-            .select("option[value~=^(?:kategorie|genre-zusatz)-]")
+            .select("option:matchesAttr(value, ^(?:kategorie|genre-zusatz)-)")
             .mapNotNull { option -> option.text().blankToNull()?.let { option.attr("value") to it } }
             .toMap()
 

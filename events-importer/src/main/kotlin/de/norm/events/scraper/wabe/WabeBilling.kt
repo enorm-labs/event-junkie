@@ -69,7 +69,7 @@ internal fun parseWabeBilling(column: Element): WabeBilling? {
 internal fun jimdoLines(element: Element): List<String> {
     val copy = element.clone()
     copy.select("br").forEach { it.after(LINE_MARK) }
-    copy.select("p, div").forEach { it.appendText(LINE_MARK) }
+    copy.select(":scope :is(p, div)").forEach { it.appendText(LINE_MARK) }
     return copy
         .text()
         .split(LINE_MARK)
