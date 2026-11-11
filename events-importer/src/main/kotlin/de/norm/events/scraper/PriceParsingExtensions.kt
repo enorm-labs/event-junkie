@@ -56,9 +56,17 @@ fun euroAmounts(text: String?): List<BigDecimal> =
                 .drop(1)
                 .first { it.isNotEmpty() }
                 .removeSuffix(",-")
-                .replace(',', '.')
-                .toBigDecimalOrNull()
+                .germanDecimalOrNull()
         }.toList()
+
+/** A number with an optional German comma or a dot and one or two decimals, no currency: `18`, `15,00`, `9.5`. */
+val GERMAN_DECIMAL = Regex("""\d+(?:[.,]\d{1,2})?""")
+
+/** Every [GERMAN_DECIMAL] in [text], in reading order, for a cell that prices without a `€` ([euroAmounts] needs one). */
+fun germanDecimals(text: String): List<BigDecimal> = GERMAN_DECIMAL.findAll(text).mapNotNull { it.value.germanDecimalOrNull() }.toList()
+
+/** This number with a German decimal comma read as a point (`15,90`), or `null` when it is not a number. */
+fun String.germanDecimalOrNull(): BigDecimal? = replace(',', '.').toBigDecimalOrNull()
 
 /** Whether [label] names the box office: `Abendkasse`, `Tageskasse`, `AK`, `at the door`, `box office`. */
 fun isBoxOfficeLabel(label: String?): Boolean = label != null && BOX_OFFICE_LABEL.containsMatchIn(label)

@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.germanDecimals
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanMonthAbbreviation
@@ -71,8 +72,7 @@ class PfefferbergHaus13DetailPageScraper {
     }
 
     /** The lower bound of `7-10€`, which [parsePriceValue] alone reads as 10, the amount beside the sign. */
-    private fun lowestPrice(price: String?): BigDecimal? =
-        price?.let { text -> AMOUNT.findAll(text).mapNotNull { parsePriceValue("${it.value} €") }.minOrNull() }
+    private fun lowestPrice(price: String?): BigDecimal? = price?.let { text -> germanDecimals(text).minOrNull() }
 
     private fun dateOf(cover: Element): LocalDate? {
         val day = cover.textAt(".event-single-day")?.toIntOrNull()
@@ -132,7 +132,6 @@ class PfefferbergHaus13DetailPageScraper {
 
     private companion object {
         val RANGE_OR_FROM = Regex("""^ab\s|\d\s*[-–]\s*\d""", RegexOption.IGNORE_CASE)
-        val AMOUNT = Regex("""\d+(?:[.,]\d{1,2})?""")
     }
 }
 

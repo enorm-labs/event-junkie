@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.classifyByGenreKeyword
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
@@ -131,7 +132,7 @@ class ZebranoTheaterProgrammPageScraper {
     /** A `15*` beside `20 €`: the starred figure is the reduced price, so the other is the box-office one. */
     private fun parsePrice(text: String): Pair<BigDecimal?, String?> {
         val amounts = AMOUNT.findAll(text).map { it.groupValues[1] to (it.groupValues[2] == "*") }.toList()
-        val full = amounts.filterNot { it.second }.map { BigDecimal(it.first.replace(',', '.')) }
+        val full = amounts.filterNot { it.second }.mapNotNull { it.first.germanDecimalOrNull() }
         val reduced = amounts.filter { it.second }.map { it.first }
         val note =
             when {

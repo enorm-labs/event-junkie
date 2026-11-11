@@ -11,6 +11,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isFestivalTitle
@@ -287,14 +288,7 @@ class FestsaalApiScraper {
      * Parses the plain decimal price string (`"51,80"`, German comma, no currency symbol) into a
      * positive [BigDecimal], or null when absent/unparseable.
      */
-    private fun parsePrice(raw: String?): BigDecimal? {
-        val cleaned = raw?.trim()?.replace(",", ".")?.takeIf { it.isNotBlank() } ?: return null
-        return try {
-            BigDecimal(cleaned).takeIf { it.signum() > 0 }
-        } catch (_: NumberFormatException) {
-            null
-        }
-    }
+    private fun parsePrice(raw: String?): BigDecimal? = raw?.trim()?.germanDecimalOrNull()?.takeIf { it.signum() > 0 }
 
     private companion object {
         const val STATUS_SOLD_OUT = "sold_out"

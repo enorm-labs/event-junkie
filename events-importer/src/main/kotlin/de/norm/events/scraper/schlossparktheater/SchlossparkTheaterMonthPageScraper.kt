@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -17,7 +18,6 @@ import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -57,7 +57,7 @@ class SchlossparkTheaterMonthPageScraper {
         val badge = row.textAt("div.type span")
         val eventType = schlossparkEventType(billing.title, subtitle)
         val priceText = row.textAt("p.price a.euro")
-        val prices = AMOUNT.findAll(priceText.orEmpty()).map { BigDecimal(it.value.replace(',', '.')) }.toList()
+        val prices = AMOUNT.findAll(priceText.orEmpty()).mapNotNull { it.value.germanDecimalOrNull() }.toList()
         return ScrapedEvent(
             title = billing.title,
             subtitle = subtitle,

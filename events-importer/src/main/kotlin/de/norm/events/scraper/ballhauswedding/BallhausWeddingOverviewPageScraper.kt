@@ -10,6 +10,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -221,8 +222,7 @@ private fun amount(
         .find(text)
         ?.groupValues
         ?.get(1)
-        ?.replace(',', '.')
-        ?.toBigDecimalOrNull()
+        ?.germanDecimalOrNull()
 
 /** A line the description leaves out: a price, the `Tickets` link, a bare web address, or a contact line with an e-mail address. */
 private fun isNoise(line: String): Boolean =

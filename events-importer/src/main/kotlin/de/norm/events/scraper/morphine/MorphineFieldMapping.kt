@@ -2,6 +2,7 @@ package de.norm.events.scraper.morphine
 
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.dateCheckedAgainstWeekday
+import de.norm.events.scraper.germanDecimals
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEnglishWeekday
@@ -155,9 +156,6 @@ private val PRICE_MARKER =
  */
 internal fun readPriceNote(text: String?): String? = text?.trim()?.takeIf { it.isNotBlank() && PRICE_MARKER.containsMatchIn(it) }
 
-/** Any amount in a pricing line — an integer with an optional two-digit decimal part. */
-private val PRICE_AMOUNT = Regex("""\d+(?:[.,]\d{1,2})?""")
-
 /**
  * A single door price from a pricing [note], or `null` unless stated unambiguously.
  *
@@ -172,10 +170,7 @@ private val PRICE_AMOUNT = Regex("""\d+(?:[.,]\d{1,2})?""")
 internal fun parseDoorPrice(note: String?): BigDecimal? {
     if (note.isNullOrBlank()) return null
     val amounts =
-        PRICE_AMOUNT
-            .findAll(note)
-            .map { it.value.replace(',', '.') }
-            .mapNotNull { it.toBigDecimalOrNull() }
+        germanDecimals(note)
             .distinct()
             .toList()
     return amounts.singleOrNull()

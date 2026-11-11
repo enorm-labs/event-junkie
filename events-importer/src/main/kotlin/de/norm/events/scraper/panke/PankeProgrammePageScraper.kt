@@ -12,6 +12,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.euroAmounts
+import de.norm.events.scraper.germanDecimals
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
@@ -371,11 +372,7 @@ internal data class PankePrice(
 )
 
 /** Every figure of a `10/15 euro` tier, where only the last one carries the currency. */
-private fun tierFigures(line: String): List<BigDecimal> =
-    TIER_FIGURE
-        .findAll(line)
-        .mapNotNull { it.value.replace(',', '.').toBigDecimalOrNull() }
-        .toList()
+private fun tierFigures(line: String): List<BigDecimal> = germanDecimals(line)
 
 /**
  * The poster out of an article's inline `background-image: url(…)`, the only place the listing
@@ -476,9 +473,6 @@ private const val TICKETS_LABEL = "ticket"
 
 /** Two figures joined by a slash, `15€/18€` or `10/15 euro`: a tiered price. */
 private val TIER = Regex("""\d\s*€?\s*/\s*\d""")
-
-/** One figure in a [TIER] line. */
-private val TIER_FIGURE = Regex("""\d+(?:[.,]\d{1,2})?""")
 
 /** A suggested amount rather than a price. */
 private val DONATION = Regex("""\bdonation\b""", RegexOption.IGNORE_CASE)

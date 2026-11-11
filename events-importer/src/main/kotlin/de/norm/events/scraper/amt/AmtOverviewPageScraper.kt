@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.germanDecimals
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isBoxOfficeLabel
@@ -152,7 +153,7 @@ class AmtOverviewPageScraper {
      */
     private fun parsePrices(text: String?): Pair<BigDecimal?, BigDecimal?> {
         if (text.isNullOrBlank()) return null to null
-        val values = PRICE_NUMBER.findAll(text).map { BigDecimal(it.value.replace(",", ".")) }.toList()
+        val values = germanDecimals(text)
         val doorOnly = values.size == 1 && (DOOR.containsMatchIn(text) || isBoxOfficeLabel(text))
         return if (doorOnly) null to values.single() else values.getOrNull(0) to values.getOrNull(1)
     }
@@ -166,9 +167,6 @@ class AmtOverviewPageScraper {
 
         /** The separators a title bill puts between DJs. */
         private val BILL_SEPARATOR = Regex("""\s*(?:/|,|&)\s*""")
-
-        /** A single monetary value in a tiered price cell, German (`, `) or dot decimal separator. */
-        private val PRICE_NUMBER = Regex("""\d+(?:[.,]\d{1,2})?""")
 
         // The shared label set leaves a bare `door` out because `Doors 19:00` is a time; this cell holds no time.
         private val DOOR = Regex("""(?<!\p{L})door(?!\p{L})""", RegexOption.IGNORE_CASE)

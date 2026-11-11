@@ -1,7 +1,9 @@
 package de.norm.events.scraper.hau
 
+import de.norm.events.scraper.GERMAN_DECIMAL
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.germanDecimals
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.ogImageUrl
@@ -47,22 +49,18 @@ class HauProductionPageScraper {
             description = description(document),
             imageUrl = document.ogImageUrl(),
             pricePresale = priceLine?.let(::lowestFullPrice),
-            priceNote = priceLine?.takeIf { AMOUNT.findAll(it).count() != 1 } ?: lines.firstOrNull { hasFreeEntryPhrase(it) }.takeIf { priceLine == null }
+            priceNote =
+                priceLine?.takeIf { GERMAN_DECIMAL.findAll(it).count() != 1 } ?: lines.firstOrNull { hasFreeEntryPhrase(it) }.takeIf { priceLine == null }
         )
     }
 
     /** The production text; also read from the German page for the second language. */
     fun description(document: Document): String? = htmlParagraphText(document.selectFirst("#prodDetail .realContent")?.html())
 
-    private fun lowestFullPrice(line: String): BigDecimal? =
-        AMOUNT
-            .findAll(line.substringBefore("reduced").substringBefore("ermäßigt"))
-            .mapNotNull { it.value.replace(',', '.').toBigDecimalOrNull() }
-            .minOrNull()
+    private fun lowestFullPrice(line: String): BigDecimal? = germanDecimals(line.substringBefore("reduced").substringBefore("ermäßigt")).minOrNull()
 
     private companion object {
         val PRICE_LABEL = Regex("""^(?:Price|Preis):\s*""", RegexOption.IGNORE_CASE)
         val EURO_FIGURE = Regex("""\d\s*€|€\s*\d""")
-        val AMOUNT = Regex("""\d+(?:[.,]\d{1,2})?""")
     }
 }

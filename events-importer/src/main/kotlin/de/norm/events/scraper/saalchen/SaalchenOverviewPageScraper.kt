@@ -15,6 +15,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
@@ -284,7 +285,7 @@ internal fun parseSinglePrice(text: String?): BigDecimal? {
     val amount =
         DAY_TICKET_PATTERN.find(value)?.groupValues?.get(1)
             ?: BARE_AMOUNT_PATTERN.matchEntire(value)?.groupValues?.get(1)
-    return amount?.replace(',', '.')?.toBigDecimalOrNull() ?: euroAmounts(value).singleOrNull() ?: salePhaseFromPrice(value)
+    return amount?.germanDecimalOrNull() ?: euroAmounts(value).singleOrNull() ?: salePhaseFromPrice(value)
 }
 
 /** The lowest tier of a tariff whose every amount follows a [SALE_PHASE_TIER] label; `null` beside a [CONCESSION] word. */
