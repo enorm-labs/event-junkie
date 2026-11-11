@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.NUMERIC_DAY_MONTH
 import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -24,6 +25,7 @@ import de.norm.events.scraper.knownSoloPerformer
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.parseNumericDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.parseTitleStatus
@@ -157,7 +159,7 @@ class PeterEdelOverviewPageScraper {
             box
                 .select(".row > .column")
                 .getOrNull(DATE_COLUMN)
-                ?.let { DAY_MONTH.find(it.textAt("h3").orEmpty()) }
+                ?.let { NUMERIC_DAY_MONTH.find(it.textAt("h3").orEmpty()) }
                 ?.groupValues
                 ?.get(2)
                 ?.toInt()
@@ -270,8 +272,7 @@ class PeterEdelOverviewPageScraper {
         year: Int?
     ): LocalDate? {
         if (year == null) return null
-        val match = DAY_MONTH.find(dateColumn.textAt("h3").orEmpty()) ?: return null
-        return runCatching { LocalDate.of(year, match.groupValues[2].toInt(), match.groupValues[1].toInt()) }.getOrNull()
+        return parseNumericDate(dateColumn.textAt("h3").orEmpty(), year)
     }
 
     /**
@@ -342,9 +343,6 @@ class PeterEdelOverviewPageScraper {
 
         /** How much of a spelled-out `SEPTEMBER` heading [parseGermanMonthAbbreviation] needs. */
         private const val GERMAN_MONTH_PREFIX = 3
-
-        /** The `DO | 20.08.` row date: day (group 1), month (group 2); the weekday is redundant. */
-        private val DAY_MONTH = Regex("""(\d{1,2})\.(\d{1,2})\.""")
 
         /** A label that identifies the info paragraph among the box's paragraphs. */
         private val INFO_LABEL = Regex("""Einlass|Beginn|Tickets""", RegexOption.IGNORE_CASE)

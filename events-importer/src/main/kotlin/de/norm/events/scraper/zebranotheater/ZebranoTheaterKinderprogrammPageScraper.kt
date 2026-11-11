@@ -11,6 +11,7 @@ import de.norm.events.scraper.forChildren
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -18,7 +19,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.MonthDay
 import java.time.format.DateTimeFormatter
 
 /**
@@ -52,8 +52,7 @@ class ZebranoTheaterKinderprogrammPageScraper(
     ): ScrapedEvent? {
         val cells = row.select("> td")
         if (cells.size < MIN_CELLS) return null
-        val dayMonth = DAY_MONTH.find(cells[DATE_CELL].text()) ?: return null
-        val monthDay = runCatching { MonthDay.of(dayMonth.groupValues[2].toInt(), dayMonth.groupValues[1].toInt()) }.getOrNull() ?: return null
+        val monthDay = parseNumericDayMonth(cells[DATE_CELL].text()) ?: return null
         val eventDate = inferYearForWeekday(monthDay, parseGermanWeekdayAbbreviation(cells[WEEKDAY_CELL].text()), clock)
         val startTime = parseTime(cells[TIME_CELL].text().removeSuffix(TIME_SUFFIX).trim())
         val billing = cells[BILLING_CELL]
@@ -101,7 +100,6 @@ class ZebranoTheaterKinderprogrammPageScraper(
         const val CHILDRENS_PROGRAMME = "Kinderprogramm"
 
         val PUBLIC_PERFORMANCES = Regex("""öffentliche\s+vorstellungen""", RegexOption.IGNORE_CASE)
-        val DAY_MONTH = Regex("""(\d{1,2})\.(\d{1,2})\.""")
         val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
     }
 }

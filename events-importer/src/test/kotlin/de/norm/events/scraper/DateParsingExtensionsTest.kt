@@ -123,6 +123,34 @@ class DateParsingExtensionsTest {
         parseGermanDayMonth("", "Mai").shouldBeNull()
     }
 
+    // --- parseNumericDayMonth / parseNumericDate ---
+
+    @Test
+    fun `parseNumericDayMonth reads the first dotted day and month, padded or not, anywhere in the text`() {
+        parseNumericDayMonth("05.08.") shouldBe MonthDay.of(8, 5)
+        parseNumericDayMonth("Fr 5.8. 21:00") shouldBe MonthDay.of(8, 5)
+        parseNumericDayMonth("DO | 20.08. und 21.08.") shouldBe MonthDay.of(8, 20)
+        parseNumericDayMonth("29.02.") shouldBe MonthDay.of(2, 29)
+    }
+
+    @Test
+    fun `parseNumericDayMonth returns null without a trailing dot or for an impossible day`() {
+        parseNumericDayMonth("05.08").shouldBeNull()
+        parseNumericDayMonth("20:30").shouldBeNull()
+        parseNumericDayMonth("31.02.").shouldBeNull()
+        parseNumericDayMonth("05.13.").shouldBeNull()
+        parseNumericDayMonth("").shouldBeNull()
+    }
+
+    @Test
+    fun `parseNumericDate puts the day and month in the year, and 29 February only in a leap year`() {
+        parseNumericDate("Sa 01.08.", 2026) shouldBe LocalDate.of(2026, 8, 1)
+        parseNumericDate("29.02.", 2028) shouldBe LocalDate.of(2028, 2, 29)
+        parseNumericDate("29.02.", 2027).shouldBeNull()
+        parseNumericDate("31.04.", 2026).shouldBeNull()
+        parseNumericDate("no date", 2026).shouldBeNull()
+    }
+
     // --- parseGermanDate ---
 
     @Test

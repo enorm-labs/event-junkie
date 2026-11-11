@@ -17,6 +17,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
@@ -28,7 +29,6 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.MonthDay
 
 /**
  * Pure HTML parser for Renate's homepage programme.
@@ -127,10 +127,7 @@ class RenateOverviewPageScraper(
      * and runs across the turn of the year ([inferYearForWeekday]).
      */
     private fun parseRowDate(row: Element): LocalDate? {
-        val match = DATE_PATTERN.find(row.textAt(".prog-date").orEmpty()) ?: return null
-        val monthDay =
-            runCatching { MonthDay.of(match.groupValues[MONTH_GROUP].toInt(), match.groupValues[DAY_GROUP].toInt()) }
-                .getOrNull() ?: return null
+        val monthDay = parseNumericDayMonth(row.textAt(".prog-date").orEmpty()) ?: return null
         // The weekday is English on this page and German on some rows.
         val day = row.textAt(".prog-day")?.trim(' ', '.')
         val weekday = parseEnglishWeekdayAbbreviation(day) ?: parseGermanWeekdayAbbreviation(day)
@@ -290,12 +287,6 @@ class RenateOverviewPageScraper(
 
         /** The venue's "more acts to come" prefix, stripped before the shared placeholder check. */
         val MORE_PREFIX = Regex("""^\+?\s*more\s+""", RegexOption.IGNORE_CASE)
-
-        /** The `06.08.` day/month pair; the programme prints no year. */
-        val DATE_PATTERN = Regex("""(\d{1,2})\.(\d{1,2})\.""")
-
-        const val DAY_GROUP = 1
-        const val MONTH_GROUP = 2
     }
 }
 

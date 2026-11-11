@@ -115,6 +115,30 @@ fun parseGermanDayMonth(
     month: String
 ): MonthDay? = runCatching { MonthDay.parse("$day. $month", GERMAN_DAY_MONTH) }.getOrNull()
 
+/** A numeric day and month with their trailing dots (`5.8.`, `05.08.`): day in group 1, month in group 2. */
+val NUMERIC_DAY_MONTH = Regex("""(\d{1,2})\.(\d{1,2})\.""")
+
+/**
+ * The first numeric day and month in [text] (`Fr 05.08.`), or `null` when there is none or it names no calendar day
+ * (`31.02.`). The caller infers the year, often with [inferYearForWeekday].
+ */
+fun parseNumericDayMonth(text: String): MonthDay? =
+    NUMERIC_DAY_MONTH.find(text)?.let { match ->
+        runCatching { MonthDay.of(match.groupValues[2].toInt(), match.groupValues[1].toInt()) }.getOrNull()
+    }
+
+/**
+ * The first numeric day and month in [text], in [year], or `null` when there is none or the year has no such day.
+ * Unlike [MonthDay.atYear], `29.02.` in a common year is `null`, not the 28th.
+ */
+fun parseNumericDate(
+    text: String,
+    year: Int
+): LocalDate? =
+    NUMERIC_DAY_MONTH.find(text)?.let { match ->
+        runCatching { LocalDate.of(year, match.groupValues[2].toInt(), match.groupValues[1].toInt()) }.getOrNull()
+    }
+
 /**
  * Maps a German month abbreviation onto its [Month], case- and punctuation-insensitively. Spelled
  * out rather than parsed with a [Locale.GERMAN][java.util.Locale.GERMAN] formatter: the JDK's

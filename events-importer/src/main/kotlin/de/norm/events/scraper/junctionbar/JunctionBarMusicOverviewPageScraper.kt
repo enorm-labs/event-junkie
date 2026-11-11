@@ -3,11 +3,13 @@ package de.norm.events.scraper.junctionbar
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.NUMERIC_DAY_MONTH
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseNumericDate
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.slug.SlugGenerator
@@ -15,7 +17,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import java.time.DateTimeException
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -76,7 +77,7 @@ class JunctionBarMusicOverviewPageScraper {
     }
 
     /** A date-bar child carries a `strong.datum` whose text holds a `DD.MM.` date. */
-    internal fun isDateBar(child: Element): Boolean = child.selectFirst("strong.datum") != null && DATE_PATTERN.containsMatchIn(child.text())
+    internal fun isDateBar(child: Element): Boolean = child.selectFirst("strong.datum") != null && NUMERIC_DAY_MONTH.containsMatchIn(child.text())
 
     private fun parseNight(
         night: Night,
@@ -119,15 +120,7 @@ class JunctionBarMusicOverviewPageScraper {
     private fun parseDate(
         dateBar: Element,
         year: Int
-    ): LocalDate? {
-        val match = DATE_PATTERN.find(dateBar.text()) ?: return null
-        val (day, month) = match.destructured
-        return try {
-            LocalDate.of(year, month.toInt(), day.toInt())
-        } catch (_: DateTimeException) {
-            null
-        }
-    }
+    ): LocalDate? = parseNumericDate(dateBar.text(), year)
 
     /**
      * Band name(s) for the night. Each `.Stil1222` holds one act name, and a second or third act's
@@ -257,9 +250,6 @@ class JunctionBarMusicOverviewPageScraper {
     }
 
     companion object {
-        /** The `DD.MM.` date opening a date bar (the trailing dot after the month distinguishes it from a time). */
-        private val DATE_PATTERN = Regex("""(\d{1,2})\.(\d{1,2})\.""")
-
         /** An explicit `HH:mm` show time in a date bar (e.g. the "---- 20:30 ----" override). */
         private val TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")
 
