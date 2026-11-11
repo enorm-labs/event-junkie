@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerWebExchange
 import java.util.UUID
 
@@ -109,11 +108,6 @@ class PasskeyController(
         const val DEFAULT_NAME = "Passkey"
 
         fun passkeyName(name: String?) = name?.trim()?.take(MAX_NAME_LENGTH)?.takeIf { it.isNotEmpty() } ?: DEFAULT_NAME
-
-        fun refuse(
-            status: HttpStatus,
-            reason: String
-        ): Nothing = throw ResponseStatusException(status, reason)
     }
 }
 

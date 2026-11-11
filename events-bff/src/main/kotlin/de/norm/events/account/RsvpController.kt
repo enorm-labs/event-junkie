@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -118,11 +117,6 @@ class RsvpController(
 
     private companion object {
         const val PAGE_SIZE = 20
-
-        fun refuse(
-            status: HttpStatus,
-            reason: String
-        ): Nothing = throw ResponseStatusException(status, reason)
     }
 }
 

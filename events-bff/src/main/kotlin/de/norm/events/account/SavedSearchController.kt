@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.Clock
 import java.util.UUID
 
@@ -84,10 +83,5 @@ class SavedSearchController(
 
         fun name(raw: String): String =
             raw.trim().takeIf { it.isNotEmpty() && it.length <= MAX_NAME } ?: refuse(HttpStatus.BAD_REQUEST, "A name of 1 to $MAX_NAME characters")
-
-        fun refuse(
-            status: HttpStatus,
-            reason: String
-        ): Nothing = throw ResponseStatusException(status, reason)
     }
 }

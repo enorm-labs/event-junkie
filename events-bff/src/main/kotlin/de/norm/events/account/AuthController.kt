@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 
@@ -93,10 +92,5 @@ class AuthController(
         val NEXT = Regex("^/(de|en)/[a-z0-9/-]{0,200}$")
 
         fun isAddress(email: String) = email.length <= MAX_ADDRESS_LENGTH && ADDRESS.matches(email)
-
-        fun refuse(
-            status: HttpStatus,
-            reason: String
-        ): Nothing = throw ResponseStatusException(status, reason)
     }
 }
