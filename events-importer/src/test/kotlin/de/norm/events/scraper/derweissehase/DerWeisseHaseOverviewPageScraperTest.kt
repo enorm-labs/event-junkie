@@ -129,6 +129,26 @@ class DerWeisseHaseOverviewPageScraperTest {
         femAll.artists.first() shouldBe ScrapedArtist("Nat SuPrise", ArtistRole.DJ)
     }
 
+    // Production lost the Thursday line `5€ until 1 AM ( with Ticket )` to the withheld description (#4883).
+    @Test
+    fun `stores a conditional euro entry line as the price note, not as a price`() {
+        val night =
+            block(
+                """<p class="dater">Donnerstag 12.11.2026 23:00</p><h1>straff / thursday techno</h1><p>&nbsp;</p>
+                   |<p class="text"><p>5€ until 1 AM ( with Ticket )</p><h4>LINE UP</h4>
+                   |<p>Fran-Cee, DAV3</p></p>
+                """.trimMargin()
+            )
+
+        val parsed = scraper.scrape(night, baseUrl).single()
+        parsed.priceNote shouldBe "5€ until 1 AM ( with Ticket )"
+        parsed.description.shouldBeNull()
+        parsed.pricePresale.shouldBeNull()
+        parsed.priceBoxOffice.shouldBeNull()
+        parsed.free shouldBe false
+        parsed.toEventEntity(venueId = 1L, venueSlug = "der-weisse-hase", eventSourceId = 1L).free shouldBe false
+    }
+
     @Test
     fun `drops the more-to-come and contest-winner placeholders`() {
         val socialRave = events.single { it.title == "ZUG DER LIEBE ° SOCIAL RAVE" }

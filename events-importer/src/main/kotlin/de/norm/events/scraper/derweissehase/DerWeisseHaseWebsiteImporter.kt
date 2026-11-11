@@ -39,8 +39,9 @@ val DER_WEISSE_HASE_LIMITATIONS =
         EventSource.DER_WEISSE_HASE,
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "the club publishes no price figure; some nights carry a conditional free-entry line, stored as the price note",
-            verified = "2026-09-30"
+            "the club prints no unconditional figure; some nights carry a conditional entry line (`5€ until 1 AM`, `free entry until midnight*`), " +
+                "stored as the price note",
+            verified = "2026-11-11"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "the club publishes no genre; every night takes the club's Techno default", verified = "2026-09-26"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the club publishes no doors time", verified = "2026-08-25"),
