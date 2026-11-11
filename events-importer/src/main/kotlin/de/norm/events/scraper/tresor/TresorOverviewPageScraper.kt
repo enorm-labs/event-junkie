@@ -76,6 +76,11 @@ class TresorOverviewPageScraper {
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
         val cleanedTitle = item.textAt(".event-title")?.let(::cleanEventTitle) ?: return null
         val title = cleanedTitle.text
+        val lineup = parseLineup(item)
+        if (lineup.isEmpty() && PROGRAMME_DATE_RANGE.containsMatchIn(title)) {
+            logger.info { "Tresor item '$title' announces a programme of nights listed on their own, skipping" }
+            return null
+        }
 
         return ScrapedEvent(
             title = title,
@@ -88,10 +93,16 @@ class TresorOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.TRESOR.sourceIdPrefix}$slug",
             // `Tresor New Faces hosted by <DJ>` with no line-up bills its host; `hosted by Tresor` is the house itself.
-            artists = parseLineup(item).ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ).filterNot { it.name.equals("Tresor", ignoreCase = true) } }
+            artists = lineup.ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ).filterNot { it.name.equals("Tresor", ignoreCase = true) } }
         )
     }
 }
+
+/**
+ * A title that spans days, `New Year's Week 28.12 - 02.01`: a teaser for nights the listing bills one by one (13482).
+ * Only an item with no line-up of its own is dropped, so a billed weekender stays.
+ */
+private val PROGRAMME_DATE_RANGE = Regex("""\b\d{1,2}\.\d{1,2}\.?\s*[-–]\s*\d{1,2}\.\d{1,2}\b""")
 
 /** Path prefix of an event permalink, stripped to obtain the `YYYYMMDD-<slug>` identity. */
 internal const val EVENT_PATH_PREFIX = "/event/"

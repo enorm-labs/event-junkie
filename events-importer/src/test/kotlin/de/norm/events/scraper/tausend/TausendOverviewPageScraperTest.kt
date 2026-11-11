@@ -80,6 +80,31 @@ class TausendOverviewPageScraperTest {
     }
 
     @Test
+    fun `splits a Tausend Live act whose credit line names a live act and a DJ set`() {
+        // Event 13490.
+        val night =
+            scraper
+                .scrape(Jsoup.parse(liveNight("Flashbaxx & Daniel Paul", FLASHBAXX_TEXT), baseUrl), baseUrl)
+                .single()
+
+        night.artists shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "Flashbaxx", role = ArtistRole.HEADLINER),
+                ScrapedArtist(name = "Daniel Paul", role = ArtistRole.DJ)
+            )
+    }
+
+    @Test
+    fun `keeps a Tausend Live band whole when the credit line names someone else`() {
+        val night =
+            scraper
+                .scrape(Jsoup.parse(liveNight("Olla & The Groove Markers", FLASHBAXX_TEXT), baseUrl), baseUrl)
+                .single()
+
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Olla & The Groove Markers", role = ArtistRole.HEADLINER))
+    }
+
+    @Test
     fun `splits a shared DJ bill`() {
         val night = events.first { it.subtitle == "Yacht Week Party" }
 
@@ -171,15 +196,20 @@ class TausendOverviewPageScraperTest {
     }
 
     /** Event 11778's graph entry, cut to the fields the parser reads. */
-    private fun liveNight(act: String): String =
+    private fun liveNight(
+        act: String,
+        description: String = ""
+    ): String =
         """
         <script type="application/ld+json">
-        {"@context":"https://schema.org","@type":"MusicEvent","name":"$act · Tausend Live",
+        {"@context":"https://schema.org","@type":"MusicEvent","name":"$act · Tausend Live","description":"$description",
          "startDate":"2026-12-09T21:00:00+01:00","url":"https://tausendberlin.com/lineup/#act-desney-bailey-dj-jauche-20261209"}
         </script>
         """.trimIndent()
 
     private companion object {
+        const val FLASHBAXX_TEXT =
+            "Für das DJ-Set kommt Daniel Paul dazu. Mittwoch, 2. Dezember 2026 · Flashbaxx live & Daniel Paul DJ-Set · 21 H"
         const val CLOSED_TEXT =
             "Ab 21 Uhr findet in der Bar Tausend eine geschlossene Veranstaltung statt. Ab 00:00 Uhr öffnet die Bar für alle."
     }

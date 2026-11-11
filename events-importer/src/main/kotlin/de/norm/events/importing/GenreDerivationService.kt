@@ -9,6 +9,7 @@ import de.norm.events.genretag.GenreTagOrigin
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.genretag.descriptionGenres
 import de.norm.events.genretag.genreFamily
+import de.norm.events.genretag.titleDecadeGenres
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
@@ -21,7 +22,8 @@ import org.springframework.stereotype.Service
  *
  * A music event takes the source tags its billed acts carry on their other events, past or upcoming. A support act does not count, and a
  * DJ billing and a live billing do not lend each other tags: one name can be a resident DJ and a band (#4411).
- * An event still untagged takes the genre words of its description ([descriptionGenres]). A derived tag never feeds another derivation.
+ * An event still untagged takes the decades its title bills as a party ([titleDecadeGenres]) and the genre words of its description
+ * ([descriptionGenres]). A derived tag never feeds another derivation.
  */
 @Service
 class GenreDerivationService(
@@ -46,7 +48,7 @@ class GenreDerivationService(
         val descriptionNames =
             untagged
                 .filter { it.id in music && byArtist[it.id].isNullOrEmpty() }
-                .mapNotNull { event -> descriptionGenres(event.description).takeIf { it.isNotEmpty() }?.let { event.requiredId() to it } }
+                .mapNotNull { event -> textGenres(event).takeIf { it.isNotEmpty() }?.let { event.requiredId() to it } }
                 .toMap()
         val tagIdByName = resolveTagIds(descriptionNames.values.flatten().toSet())
         val desired: Map<Long, Map<Long, GenreTagOrigin>> =
@@ -81,6 +83,10 @@ class GenreDerivationService(
         return outcome
     }
 
+    /** The genres the event's own text names: decades its title bills as a party, then the description's genre words. */
+    private fun textGenres(event: EventEntity): List<String> =
+        (titleDecadeGenres(event.title, event.subtitle) + descriptionGenres(event.description)).distinct().take(MAX_TEXT_GENRES)
+
     /** The source tags the billed acts of each event carry elsewhere, most frequent first, at most [MAX_ARTIST_GENRES] per event. */
     private suspend fun artistTagIds(eventIds: Set<Long>): Map<Long, List<Long>> {
         if (eventIds.isEmpty()) return emptyMap()
@@ -114,6 +120,7 @@ class GenreDerivationService(
     private companion object {
         val MUSIC_TYPES = setOf(EventType.CONCERT, EventType.PARTY, EventType.FESTIVAL)
         const val MAX_ARTIST_GENRES = 3
+        const val MAX_TEXT_GENRES = 3
 
         /** Ties break on the tag name, so a re-import derives the same tags. */
         val ARTIST_TAGS =

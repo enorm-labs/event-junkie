@@ -1,5 +1,6 @@
 package de.norm.events.scraper.soda
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
@@ -64,8 +65,18 @@ class SodaDetailPageScraperTest {
         // The full blurb comes from the markup, not the truncated JSON-LD description.
         event.description.shouldNotBeNull() shouldStartWith "🔥 Achtung Ladies & Gentlemen:"
         event.description.shouldNotBeNull() shouldContain "Booking"
-        // Soda bills no acts — the JSON-LD performer is the placeholder "Unbekannt".
-        event.artists.shouldBeEmpty()
+        // The JSON-LD performer is the placeholder "Unbekannt"; the blurb's Booking block names the DJs.
+        event.artists.map { Triple(it.name, it.role, it.stage) } shouldBe
+            listOf(
+                Triple("DJ SK99", ArtistRole.DJ, "Urban Dance"),
+                Triple("DJ R'n'P", ArtistRole.DJ, "Urban Dance"),
+                Triple("DJ Little a", ArtistRole.DJ, "R'n'B // live Videomixing"),
+                Triple("DJ Junior", ArtistRole.DJ, "R'n'B // live Videomixing"),
+                Triple("DJ Chris B", ArtistRole.DJ, "Crossover"),
+                Triple("Kai Breest", ArtistRole.DJ, "Crossover"),
+                Triple("DJ Guess", ArtistRole.DJ, "Millennium"),
+                Triple("DJ Track", ArtistRole.DJ, "Millennium")
+            )
         event.promoters.shouldBeEmpty()
     }
 
@@ -239,6 +250,45 @@ class SodaDetailPageScraperTest {
 
         show.eventType shouldBe EventType.CONCERT.name
         show.artists.map { it.name } shouldBe listOf("Loki", "Dr. H")
+    }
+
+    @Test
+    fun `reads a Social Club line-up up to the rule and keeps a one-word DJ name whole`() {
+        val event =
+            parse("soda-detail-social-club-span.html", "https://www.soda-berlin.de/de/events/soda-social-club").shouldNotBeNull()
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists.map { it.name to it.stage } shouldBe
+            listOf(
+                "El Puma DJ" to "Salsa",
+                "DJ Tarrixa" to "Kizomba / Urban Kiz",
+                "DJ Jimmy Goo" to "Bachata",
+                "DJ Niko" to "Mambo"
+            )
+    }
+
+    @Test
+    fun `puts each DJ on the room heading above, and bills a live band as the headliner`() {
+        // Event 2558, Silvester.
+        val night =
+            parseHtml(
+                """<html><body><h1 class="title">Silvester in der Kulturbrauerei</h1><p class="event-details">Booking<br>
+                KESSELHAUS<br>360° Sound<br>Live Band: Party-Liveband „JCB“ &amp; DJ Guess<br>
+                MASCHINENHAUS<br>Electro: Coon, Onkel Tom, GoaCamino<br>
+                CLUB23<br>Urban Dance: DJ R’n’P &amp; DJ Solo<br>***<br>Tickets: 30 €</p></body></html>"""
+            ).shouldNotBeNull()
+
+        night.eventType shouldBe EventType.PARTY.name
+        night.artists.map { Triple(it.name, it.role, it.stage) } shouldBe
+            listOf(
+                Triple("JCB", ArtistRole.HEADLINER, "KESSELHAUS"),
+                Triple("DJ Guess", ArtistRole.DJ, "KESSELHAUS"),
+                Triple("Coon", ArtistRole.DJ, "MASCHINENHAUS"),
+                Triple("Onkel Tom", ArtistRole.DJ, "MASCHINENHAUS"),
+                Triple("GoaCamino", ArtistRole.DJ, "MASCHINENHAUS"),
+                Triple("DJ R’n’P", ArtistRole.DJ, "CLUB23"),
+                Triple("DJ Solo", ArtistRole.DJ, "CLUB23")
+            )
     }
 
     @Test

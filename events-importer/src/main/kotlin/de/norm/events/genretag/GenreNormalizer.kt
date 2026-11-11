@@ -151,6 +151,7 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "latinjazz" to "Jazz",
         "blues" to "Blues",
         "swing" to "Swing",
+        "swingdance" to "Swing",
         // Folk
         "folk" to "Folk",
         "americana" to "Americana",
@@ -208,8 +209,13 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "karaoke" to "Karaoke",
         // Decades / party labels
         "80s" to "80s",
+        "80er" to "80s",
         "90s" to "90s",
+        "90er" to "90s",
         "2000s" to "2000s",
+        "2000er" to "2000s",
+        "00s" to "2000s",
+        "y2k" to "2000s",
         // Mod
         "mod" to "Mod",
         // Oldschool / Newschool
@@ -283,6 +289,9 @@ private val NON_GENRE_TOKENS: Set<String> =
         "tribute",
         // A city is a place, not a style; "Berlin Techno" still resolves to Techno.
         "berlin",
+        // A season is a theme, not a style; "Christmas Jazz" still resolves to Jazz.
+        "christmas",
+        "xmas",
         // A medium whose soundtrack spans every style.
         "anime",
         // Formats that reached genre_tag on staging (#1309). Whole-token keys: "Jam Session" is

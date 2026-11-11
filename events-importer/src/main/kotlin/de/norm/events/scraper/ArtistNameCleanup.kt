@@ -422,6 +422,9 @@ internal const val COUNTRY_NAMES =
 /** Minimum words in a shouted tail before it reads as a tour/album name rather than an act. */
 private const val MIN_SHOUTED_TAIL_WORDS = 2
 
+/** Minimum words in the head before a one-word shouted tail reads as a record: `Robinson Khoury - MŸA`. */
+private const val MIN_HEAD_WORDS_FOR_ONE_WORD_TAIL = 2
+
 /**
  * The space-padded dash between an act and its tour name. All three dashes count: LARK writes
  * an en dash (`Greg Mendez – BEAUTY LAND TOUR`), and the ASCII hyphen alone let that tail
@@ -435,15 +438,16 @@ internal val DASH_SEPARATOR = Regex("""\s[-–—]\s""")
  * fenced three ways: the tail must be fully shouted (`"BAD COMPANY LEGACY - Dave Colwell"`,
  * `"Sinem - Hatun"` keep their second half); the head must contain a lowercase letter (Urban
  * Spree's `"DZ - DEATHRAY"` is DZ Deathrays); the tail must be at least
- * [MIN_SHOUTED_TAIL_WORDS] words. Across a 29-venue seed of 1240 titles it fires on two, both
- * genuine tour tails.
+ * [MIN_SHOUTED_TAIL_WORDS] words, or one word after a head of [MIN_HEAD_WORDS_FOR_ONE_WORD_TAIL]
+ * (`"Robinson Khoury - MŸA"`). Of 11,191 stored artist names, the one-word form cuts only that one.
  */
 private fun stripShoutedTourTail(name: String): String {
     val separator = DASH_SEPARATOR.findAll(name).lastOrNull() ?: return name
     val head = name.substring(0, separator.range.first).trim()
     val tail = name.substring(separator.range.last + 1).trim()
+    val tailWords = tail.split(WHITESPACE).size
     val isShoutedTail =
-        tail.split(WHITESPACE).size >= MIN_SHOUTED_TAIL_WORDS &&
+        (tailWords >= MIN_SHOUTED_TAIL_WORDS || head.split(WHITESPACE).size >= MIN_HEAD_WORDS_FOR_ONE_WORD_TAIL) &&
             tail.any { it.isUpperCase() } &&
             tail.none { it.isLowerCase() }
     return if (isShoutedTail && head.any { it.isLowerCase() }) head else name

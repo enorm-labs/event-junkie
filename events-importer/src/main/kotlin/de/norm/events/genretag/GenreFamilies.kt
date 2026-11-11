@@ -242,7 +242,6 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "karaoke" to CHARTS,
         "80s" to CHARTS,
         "90s" to CHARTS,
-        "00s" to CHARTS,
         "2000s" to CHARTS
     )
 

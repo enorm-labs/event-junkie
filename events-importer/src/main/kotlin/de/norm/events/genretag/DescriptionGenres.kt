@@ -20,6 +20,18 @@ fun descriptionGenres(
         .take(limit)
 }
 
+/**
+ * The decades a title or subtitle bills as a party: `80er/90er Party`, `Die 80er Party`, `90s-Party` (ADR-058).
+ * A bare decade is prose ("since the 80s") and gives nothing, so the word `Party` must follow it.
+ */
+fun titleDecadeGenres(vararg texts: String?): List<String> =
+    texts
+        .filterNotNull()
+        .flatMap { text -> DECADE_PARTY.findAll(text).toList() }
+        .flatMap { match -> DECADE_TOKEN.findAll(match.groupValues[1]).map { GENRE_SYNONYMS[lookupKey(it.value)] } }
+        .filterNotNull()
+        .distinct()
+
 private fun proseGenres(line: String): List<String> =
     line
         .split(SENTENCE_BREAK)
@@ -38,13 +50,20 @@ private fun referenceListGenres(list: String): List<String> =
                 .all { it in GENRE_SYNONYMS || it in LIST_DESCRIPTORS || DECADE.matches(it) }
         }.flatMap { sentenceGenres(it) }
 
-/** Two adjacent words first, so "hip hop" is one genre and "punk rock" is not also Rock. */
+/**
+ * Two adjacent words first, so "hip hop" is one genre and "punk rock" is not also Rock.
+ * A pair with a function word is never a genre: "Reise in die Tausend" is not Indie.
+ */
 private fun sentenceGenres(sentence: String): List<String> {
     val words = sentence.split(WORD_BREAK).map(::lookupKey).filter { it.isNotEmpty() }
     val genres = mutableListOf<String>()
     var i = 0
     while (i < words.size) {
-        val pair = words.getOrNull(i + 1)?.let { vocabularyGenre(words[i] + it) }
+        val pair =
+            words
+                .getOrNull(i + 1)
+                ?.takeUnless { words[i] in PAIR_FUNCTION_WORDS || it in PAIR_FUNCTION_WORDS }
+                ?.let { vocabularyGenre(words[i] + it) }
         if (pair != null) {
             genres += pair
             i += 2
@@ -57,6 +76,9 @@ private fun sentenceGenres(sentence: String): List<String> {
 }
 
 private fun vocabularyGenre(key: String): String? = if (key in AMBIGUOUS_IN_PROSE) null else GENRE_SYNONYMS[key]
+
+/** Words that join into a key only by accident: `in` + `die` is `indie`, `go` + `a` is `goa`. */
+private val PAIR_FUNCTION_WORDS = setOf("in", "die", "go", "a")
 
 /** How many genres one description may give an event. */
 private const val MAX_DESCRIPTION_GENRES = 3
@@ -73,6 +95,18 @@ private val LIST_DESCRIPTORS = setOf("party", "hits", "classics", "klassiker", "
 
 /** A decade, `70s`, `80er` or `2000s`. */
 private val DECADE = Regex("""\d0(?:s|er)|\d{3}0(?:s|er)""")
+
+/** A decade with its suffix, `80er`, `90s`, `80's`, `2000er`; a bare year is not one. */
+private const val DECADE_PATTERN = """(?<![\p{L}\d])(?:\d0|\d{3}0)(?:er|s|['’]s)(?![\p{L}\d])"""
+
+private val DECADE_TOKEN = Regex(DECADE_PATTERN, RegexOption.IGNORE_CASE)
+
+/** One or more decades joined by `/`, `&`, `,`, `und` or `and`, then `Party`. */
+private val DECADE_PARTY =
+    Regex(
+        """((?:$DECADE_PATTERN\s*(?:/|&|,|\bund\b|\band\b)\s*)*$DECADE_PATTERN)[\s-]*part(?:y|ys|ies)\b""",
+        RegexOption.IGNORE_CASE
+    )
 
 private val SENTENCE_BREAK = Regex("""[.!?;\n]+""")
 
@@ -107,8 +141,13 @@ private val AMBIGUOUS_IN_PROSE =
         "gothic",
         "emo",
         "80s",
+        "80er",
         "90s",
+        "90er",
         "2000s",
+        "2000er",
+        "00s",
+        "y2k",
         "karaoke",
         "experimental",
         "oldschool",

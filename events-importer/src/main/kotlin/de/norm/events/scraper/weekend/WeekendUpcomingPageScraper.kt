@@ -29,7 +29,7 @@ import java.time.LocalTime
  *
  * - **Each upcoming `article` holds the whole record**: title, start and end with their dates, image and the blurb.
  * - **The times are 12-hour clocks** (`10:00 PM`) with a narrow no-break space before the meridiem.
- * - **The ticket link is an embedded Xceed iframe** in the blurb.
+ * - **The ticket link is an embedded Xceed iframe** in the blurb, whose `<p>` blocks are its paragraphs.
  * - **The DJs are a paragraph of their own**: a `🎶 LINE UP` or `🎶 CLUB – …` heading, or a `DJs:` line, names split at ` · `.
  *   A `Line-Up` that lists only styles (`Salsa · Bachata`) bills nobody.
  */
@@ -70,7 +70,7 @@ class WeekendUpcomingPageScraper {
 
         return ScrapedEvent(
             title = title,
-            description = htmlParagraphText(text?.html()),
+            description = text?.let(::paragraphs),
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
             startTime = startTime,
@@ -84,6 +84,14 @@ class WeekendUpcomingPageScraper {
             artists = text?.let(::lineup).orEmpty()
         )
     }
+
+    /** One block per paragraph with a blank line between, as the page spaces them; a `<br>` inside one stays a line break. */
+    private fun paragraphs(text: Element): String? =
+        text
+            .children()
+            .mapNotNull { htmlParagraphText(it.outerHtml()) }
+            .joinToString("\n\n")
+            .ifBlank { null }
 
     private fun clockOf(time: Element): LocalTime? = CLOCK.find(time.text())?.let { parseClock(it.groupValues[1], it.groupValues[2]) }
 

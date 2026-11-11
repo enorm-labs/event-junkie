@@ -149,6 +149,28 @@ class TresorOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a programme teaser whose title spans days and which bills no one`() {
+        // Event 13482: the six nights of the week are listed on their own.
+        val html =
+            """
+            <article class="event-item">
+            <div class="event-date"><a href="https://tresorberlin.com/event/20261228-tresor-new-years-week-28-12-02-01/">Mo 28.12</a></div>
+            <a class="event-title" href="https://tresorberlin.com/event/20261228-tresor-new-years-week-28-12-02-01/">
+            <span><span>Tresor New Year's Week 28.12 - 02.01</span></span></a>
+            <div class="event-lineup"></div>
+            </article>
+            <article class="event-item">
+            <div class="event-date"><a href="https://tresorberlin.com/event/20261229-weekender-29-12-30-12/">Di 29.12</a></div>
+            <a class="event-title" href="https://tresorberlin.com/event/20261229-weekender-29-12-30-12/"><span><span>Weekender 29.12 - 30.12</span></span></a>
+            <div class="event-lineup"><div class="event-floor"><div class="floor-name">Tresor</div>
+            <div class="floor-lineup"><div class="floor-artist"><span>Developer</span></div></div></div></div>
+            </article>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).map { it.title } shouldBe listOf("Weekender 29.12 - 30.12")
+    }
+
+    @Test
     fun `returns no events for a page without a listing`() {
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }

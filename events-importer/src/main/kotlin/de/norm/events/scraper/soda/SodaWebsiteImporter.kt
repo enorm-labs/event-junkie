@@ -39,7 +39,6 @@ val SODA_LIMITATIONS =
     VenueLimitations(
         EventSource.SODA,
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the Einlass info box states an age limit, not a doors time", verified = "2026-08-25"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the JSON-LD performer is the placeholder Unbekannt on every night", verified = "2026-08-25"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the JSON-LD `organizer` is the venue itself on every night", verified = "2026-09-30"),
         AcceptedLimitation(
             LimitedAspect.IMAGE,
