@@ -24,6 +24,7 @@ and the importers already there.
    (Astra, Privatclub). **A clean JSON source wins.**
 3. **Save the real listing** (and one or two detail pages for list+detail, including an edge case — cancelled, sold out, free, missing date) as the fixture:
    `curl -sSL -A 'EventJunkie/1.0 (+https://github.com/enorm-labs/event-junkie)' '<url>' -o events-importer/src/test/resources/scraper/<venue>/<venue>-overview.html`.
+   Then run `scripts/mask-fixture-contacts.py`: a saved page carries the venue's e-mail addresses, and a fixture never does (AGENTS.md § Privacy).
    **A 403 from `curl` is not a blocked source.** Cloudflare refuses curl by its fingerprint, whatever the User-Agent, and still serves the importer's JDK
    client (`maaya.de`: curl 403, JDK 200). Fetch once with `java.net.http.HttpClient` and the same User-Agent before calling a source blocked.
 4. **Classify**: JSON / API → `ApiClient.fetchJson` + a pure JSON scraper; JSON-LD → `HtmlFetcher`, read with `jsonLdEvents()` and the `schema*` readers;
@@ -159,7 +160,7 @@ Then `/verify`, then [`/importer-smoke`](importer-smoke.prompt.md) against the l
 - [ ] `<venue>/` package: scraper(s) + `@Component` importer; shared helpers reused; semantic selectors
 - [ ] `sourceId` stable and prefixed; events validated before return
 - [ ] `<VENUE>_LIMITATIONS` at the foot of the importer, registered in `AcceptedLimitations.declarations`; `ACCEPTED_LIMITATIONS.md` regenerated
-- [ ] Fixtures under `src/test/resources/scraper/<venue>/`; scraper + importer tests cover happy path, edge cases, NotModified, empty page
+- [ ] Fixtures under `src/test/resources/scraper/<venue>/`, masked (`scripts/mask-fixture-contacts.py check` is clean); scraper + importer tests cover happy path, edge cases, NotModified, empty page
 - [ ] The venue file under `http/importer/seed/venues/` holds the source; `scripts/dev-seed-parity.sh` run; a `docs/licence-review/RESULTS.tsv` row under the same name
 - [ ] Venue description read against the venue's own About page; opens with what sets it apart, no "the odd …" tail
 - [ ] `venueTypes` from the venue's own site, one or more; `capacity` only from a figure the venue or its operator publishes

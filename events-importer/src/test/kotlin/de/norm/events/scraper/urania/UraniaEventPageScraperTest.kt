@@ -77,12 +77,12 @@ class UraniaEventPageScraperTest {
 
     @Test
     fun `reads a school-class event's free tickets, booked by e-mail`() {
-        // "Kostenfreie Tickets: anmeldung@urania-berlin.de", with no "Eintritt" line and no ticket link.
+        // "Kostenfreie Tickets: a-masked@example.de", with no "Eintritt" line and no ticket link.
         schoolClass.free shouldBe true
         schoolClass.priceNote shouldBe "Kostenfreie Tickets"
         schoolClass.pricePresale.shouldBeNull()
         schoolClass.ticketUrl.shouldBeNull()
-        schoolClass.description!! shouldContain "Kostenfreie Tickets: anmeldung@urania-berlin.de"
+        schoolClass.description!! shouldContain "Kostenfreie Tickets: a-masked@example.de"
     }
 
     @Test
@@ -139,7 +139,7 @@ class UraniaEventPageScraperTest {
     fun `finds the admission line by its label, not by a euro sign`() {
         admissionLineOf("Foo bar. Eintritt: 8 €, ermäßigt: 5 €. Foto: X") shouldBe "Eintritt: 8 €, ermäßigt: 5 €"
         admissionLineOf("Eintritt frei: Tickets online buchbar") shouldBe "Eintritt frei: Tickets online buchbar"
-        admissionLineOf("Für Schulklassen ab Klassenstufe 9 Kostenfreie Tickets: anmeldung@urania-berlin.de Der Vortrag")
+        admissionLineOf("Für Schulklassen ab Klassenstufe 9 Kostenfreie Tickets: a-masked@example.de Der Vortrag")
             .shouldBe("Kostenfreie Tickets")
         admissionLineOf("Ein Abend über Geld.").shouldBeNull()
         admissionLineOf(null).shouldBeNull()

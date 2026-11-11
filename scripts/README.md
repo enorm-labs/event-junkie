@@ -111,6 +111,7 @@ Run by an agent or a developer. No cluster, no tunnel; `k3d-rehearsal.sh` makes 
 | `admin-screenshots.sh`                    | The same for `events-admin`, its admin API answered from `events-admin/screenshot-fixtures/`, never an importer                              | `/open-pr`, `/afk`                                      |
 | `pr-screenshots-account.mjs`              | The signed-in test account behind `pr-screenshots.sh --signed-in`: answers `/api/auth` and `/api/me` in the browser                          | `pr-screenshots.sh`                                     |
 | `admin-fixture-server.mjs`                | Serves an `events-admin` build and those fixtures on one port, for `admin-screenshots.sh`                                                    | `admin-screenshots.sh`                                  |
+| `mask-fixture-contacts.py`                | Mask the e-mail addresses in the scraper fixtures and the tests that quote them; `check` lists what is left, masked (#4855)                  | `/verify`                                               |
 | `limitation-verified.py`                  | Move the `verified` date of the accepted limitations the plausibility re-check saw still silent; dry run by default (#4841)                  | `.github/prompts/maintain.prompt.md`                    |
 
 ## Ops
