@@ -93,8 +93,8 @@ class GlobalExceptionHandler {
         StaleWorklistRowException::class
     )
     fun handleConflict(ex: RuntimeException): ProblemDetail {
-        logger.debug { "Duplicate slug or conflicting state: ${ex.message}" }
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "A record with the same slug already exists.")
+        logger.debug { "Conflict with the stored state: ${ex.message}" }
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "The request conflicts with the stored state.")
     }
 
     /**
