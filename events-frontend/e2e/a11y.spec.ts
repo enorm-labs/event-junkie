@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, test } from '@playwright/test'
 import { json, mockBff } from './bff-mocks'
 import { displaySetting } from './header-nav'
+import { skipWithoutWebGL } from './webgl'
 
 /**
  * Automated accessibility sweep, the runtime half of the WCAG 2.1 AA target (docs/LEGAL.md §12);
@@ -155,7 +156,9 @@ for (const route of dataRoutes) {
  * Past chips in light mode, where their token pair failed contrast (#2659). The clock sits on the mocked night, so the
  * mock's events on the grid's first day, 2026-07-27, are past whatever the real date is.
  */
-test('the calendar in light mode, with past events, has no detectable accessibility violations', async ({ page }) => {
+test('the calendar in light mode, with past events, has no detectable accessibility violations', async ({
+  page,
+}) => {
   await page.clock.setFixedTime(new Date('2026-08-15T16:00:00Z'))
   await mockBff(page)
   await page.goto('/en/calendar')
@@ -178,7 +181,9 @@ test('the calendar in light mode, with past events, has no detectable accessibil
 })
 
 /** The header search, open over the page with every kind of result: a dialog the static pass never opens. */
-test('the header search, open with results, has no detectable accessibility violations', async ({ page }) => {
+test('the header search, open with results, has no detectable accessibility violations', async ({
+  page,
+}) => {
   await mockBff(page)
   await page.goto('/en/events')
   await page.getByRole('button', { name: 'Search events, venues, artists and promoters' }).click()
@@ -198,9 +203,13 @@ test('the header search, open with results, has no detectable accessibility viol
 })
 
 /** The header's account menu, open and signed in (#3924): the static pass is signed out and never opens it. */
-test('the header account menu, open, has no detectable accessibility violations', async ({ page }) => {
+test('the header account menu, open, has no detectable accessibility violations', async ({
+  page,
+}) => {
   await page.route(/\/api\/auth\/session/, (route) =>
-    json(route, { account: { email: 'ada@example.com', locale: 'de', createdAt: '2026-10-24T10:00:00Z' } }),
+    json(route, {
+      account: { email: 'ada@example.com', locale: 'de', createdAt: '2026-10-24T10:00:00Z' },
+    }),
   )
   await page.route(/\/api\/me\/notifications\/unread-count/, (route) => json(route, { count: 0 }))
   await page.goto('/de/about')
@@ -245,7 +254,9 @@ test('the header notification menu, open, has no detectable accessibility violat
   )
   await page.goto('/de/about')
   await page.getByRole('button', { name: 'Benachrichtigungen, 1 ungelesen' }).click()
-  await expect(page.getByRole('link', { name: /Neuer Termin bei Mock Venue/ }).first()).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: /Neuer Termin bei Mock Venue/ }).first(),
+  ).toBeVisible()
   await transitionsSettled(page)
 
   const results = await buildScan(page).analyze()
@@ -261,7 +272,9 @@ test('the header notification menu, open, has no detectable accessibility violat
 })
 
 /** The header's language popover, open in German: the static pass never opens it. */
-test('the header language menu, open, has no detectable accessibility violations', async ({ page }) => {
+test('the header language menu, open, has no detectable accessibility violations', async ({
+  page,
+}) => {
   await page.goto('/de/about')
   await page.getByRole('button', { name: 'Sprache' }).click()
   await expect(page.getByRole('link', { name: 'English' }).first()).toBeVisible()
@@ -321,9 +334,7 @@ for (const route of mapRoutes) {
     await page.goto(route.path)
 
     const pin = page.getByRole('button', { name: route.pin, exact: true })
-    const unavailable = page.getByText(/cannot draw the map/)
-    await expect(pin.or(unavailable)).toBeVisible()
-    test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+    await skipWithoutWebGL(page, pin)
 
     await pin.click()
     await expect(page.getByRole('heading', { level: 2, name: 'Mock Venue' })).toBeVisible()
@@ -357,9 +368,7 @@ test('the events map near me, with a show on now, has no detectable accessibilit
   await page.goto('/en/map')
 
   const pin = page.getByRole('button', { name: 'Mock Venue: 1 event, 1 on now', exact: true })
-  const unavailable = page.getByText(/cannot draw the map/)
-  await expect(pin.or(unavailable)).toBeVisible()
-  test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+  await skipWithoutWebGL(page, pin)
 
   await page.getByRole('button', { name: 'Use my location' }).click()
   await expect(page.getByRole('heading', { level: 2, name: 'Within 2 km' })).toBeVisible()

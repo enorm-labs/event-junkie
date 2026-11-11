@@ -1,5 +1,6 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
 import { openMoreFilters } from './filter-bar'
+import { skipWithoutWebGL } from './webgl'
 
 /**
  * Venues overview e2e tests with a fully mocked BFF.
@@ -315,9 +316,7 @@ test('a pin opens its venue over the map, and closing returns to the pin', async
   await page.goto('/en/venues?view=map')
 
   const pin = page.getByRole('button', { name: 'Lido', exact: true })
-  const unavailable = page.getByText(/cannot draw the map/)
-  await expect(pin.or(unavailable)).toBeVisible()
-  test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+  await skipWithoutWebGL(page, pin)
   await expect(page.getByText('Pick a pin to see the venue.')).toBeVisible()
 
   await pin.click()
