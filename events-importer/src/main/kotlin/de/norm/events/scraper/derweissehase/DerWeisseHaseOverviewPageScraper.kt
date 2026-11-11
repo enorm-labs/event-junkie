@@ -57,9 +57,9 @@ import java.time.LocalTime
  * ([UNANNOUNCED_SLOT_PATTERN]), so a real act is never caught, and only a Resident Advisor
  * *event* link becomes the ticket URL ([RA_EVENT_URL]) — a night whose RA page is not up links
  * to the club's profile or a bare `#`. A note line about entry ([ENTRY_NOTE]) is the
- * `priceNote` and any other note line the description. The club prints no figure, and its entry
- * lines are conditional ("free entry until midnight*"), which `detectFree` does not read as a free
- * night. Every act is a `DJ`, the club billing no headliner.
+ * `priceNote` and any other note line the description. The club prints no unconditional figure, and
+ * its entry lines are conditional ("free entry until midnight*", "5€ until 1 AM ( with Ticket )"), so
+ * neither becomes a price or a free night. Every act is a `DJ`, the club billing no headliner.
  *
  * @see DER_WEISSE_HASE_LIMITATIONS for what the club does not publish.
  * @see DerWeisseHaseWebsiteImporter for the HTTP fetch orchestrator.
@@ -211,9 +211,10 @@ class DerWeisseHaseOverviewPageScraper {
 
         /**
          * A note line about entry: "free entry until midnight*", "Women & FLINTA free until 1 AM",
-         * "Geburtstagskinder … erhalten freien Eintritt!".
+         * "Geburtstagskinder … erhalten freien Eintritt!", or a euro figure, "5€ until 1 AM ( with Ticket )".
          */
-        private val ENTRY_NOTE = Regex("""\b(?:free|frei\w*|eintritt|entry|admission)\b""", RegexOption.IGNORE_CASE)
+        private val ENTRY_NOTE =
+            Regex("""\b(?:free|frei\w*|eintritt|entry|admission)\b|\d+(?:[.,]\d+)?\s*€|€\s*\d""", RegexOption.IGNORE_CASE)
 
         /**
          * Separators inside a roster line: comma, `+` and a dash with a space on each side (`Tragik - DefJam - Kenny`).
