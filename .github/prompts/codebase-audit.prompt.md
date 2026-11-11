@@ -101,7 +101,7 @@ comment there is long, the finding is at most "say it in fewer words", never "de
   `allowedDependencies`.
 - **Vue/TS**: `<script setup lang="ts">` only, no unjustified `any`, typed props/emits, computed for derived state, reusable logic in composables, multi-word
   component names, scoped styles, lazy-loaded routes.
-- **API/DTO discipline**: controllers return `*Response` DTOs (never domain/entity), request DTOs carry Bean Validation annotations, `events-core` stays free of
+- **API/DTO discipline**: controllers return `*Response` DTOs (never domain/entity), the importer's request DTOs carry Bean Validation annotations (the BFF validates by hand, on purpose), `events-core` stays free of
   web/Swagger annotations.
 
 ### 5. Simplification via libraries or tooling

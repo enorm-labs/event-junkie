@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.Clock
 import java.time.Instant
 
@@ -90,11 +89,6 @@ class ReportController(
             val problems = raw.map { ReportProblem.ofOrNull(it) ?: refuse(HttpStatus.BAD_REQUEST, "Unknown problem $it") }.distinct()
             return problems.ifEmpty { refuse(HttpStatus.BAD_REQUEST, "At least one problem") }
         }
-
-        fun refuse(
-            status: HttpStatus,
-            reason: String
-        ): Nothing = throw ResponseStatusException(status, reason)
     }
 }
 
