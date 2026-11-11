@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
@@ -28,7 +29,8 @@ import java.util.Locale
  * an `h2` title, and a text block that lists the musicians as `Name – instrument`. A block dated
  * with a range (`20 – 25 October 2026`) announces a series whose nights follow on their own, so
  * it is skipped. The intro states the house doors, start and admission, which a night's heading
- * may override.
+ * may override: a labelled `doors:`/`start:` clock, or a bare `(14:30)` that is the start. A
+ * matinée and an evening show can share a date, so a night is keyed by date and title.
  */
 class KuehlspotOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -66,6 +68,7 @@ class KuehlspotOverviewPageScraper {
             logger.debug { "Kühlspot block '$dateLine' names no single night, skipping" }
             return null
         }
+        val ownStart = labelledClock(dateLine, START_LABELS) ?: parseTime(BARE_CLOCK.find(dateLine)?.groupValues?.get(1))
         val lines = block.select(".elementor-widget-text-editor p").flatMap(::lines)
         val musicians = lines.mapNotNull(::musician)
         val promoter = lines.firstNotNullOfOrNull { PROMOTER.find(it)?.groupValues?.get(1) }
@@ -80,10 +83,10 @@ class KuehlspotOverviewPageScraper {
             eventType = inferConcertVenueType(title),
             typeIsFallback = true,
             eventDate = date,
-            doorsTime = labelledClock(dateLine, DOORS_LABELS) ?: house.doors,
-            startTime = labelledClock(dateLine, START_LABELS) ?: house.start,
+            doorsTime = labelledClock(dateLine, DOORS_LABELS) ?: house.doors.takeIf { ownStart == null },
+            startTime = ownStart ?: house.start,
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.KUEHLSPOT.sourceIdPrefix}$date",
+            sourceId = EventSource.KUEHLSPOT.dateTitleId(date, title),
             priceNote = house.admission,
             artists = if (musicians.isNotEmpty()) musicians.distinct().map { ScrapedArtist(name = it) } else headlinersFromTitle(title),
             promoters = listOfNotNull(promoter)
@@ -125,6 +128,9 @@ class KuehlspotOverviewPageScraper {
     private companion object {
         /** `Thursday, 8 October 2026`; a range such as `8–10 October 2026` has no weekday and does not match. */
         val DATE = Regex("""^\p{L}+day,\s+\d{1,2}\s+\p{L}+\s+\d{4}""")
+
+        /** `Saturday, 14 November 2026 (14:30)`: a clock alone in brackets, with no `doors`/`start` label. */
+        val BARE_CLOCK = Regex("""\(\s*(\d{1,2}:\d{2})\s*\)""")
         val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.ENGLISH)
 
         /** `Ingebrigt Håker Flaten – double bass`, `Nicola Hein -guitar`; the dash inside `Hui-Chun` has no space beside it. */

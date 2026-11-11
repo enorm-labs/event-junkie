@@ -42,7 +42,7 @@ class KuehlspotOverviewPageScraperTest {
         event.priceNote shouldBe "10 – 20 EUR donation / sliding scale"
         event.eventType shouldBe "CONCERT"
         event.sourceUrl shouldBe baseUrl
-        event.sourceId shouldBe "kuehlspot:2026-10-07"
+        event.sourceId shouldBe "kuehlspot:2026-10-07-webster-lisle-grigg-banner"
         event.description.shouldBeNull()
         acts("2026-10-07") shouldContainExactly listOf("Colin Webster", "Matthew Grigg", "James Banner", "Andrew Lisle")
     }
@@ -106,7 +106,44 @@ class KuehlspotOverviewPageScraperTest {
     }
 
     @Test
+    fun `a matinee and an evening show on one date are two nights with their own ids`() {
+        val nights = scraper.scrape(Jsoup.parse(twoNightsOnOneDate, baseUrl), baseUrl)
+
+        nights.map { it.title } shouldContainExactly listOf("DIE COOLEN 20 ER", "THEBOWIESTORIES")
+        nights.map { it.sourceId } shouldContainExactly
+            listOf("kuehlspot:2026-11-14-die-coolen-20-er", "kuehlspot:2026-11-14-thebowiestories")
+    }
+
+    @Test
+    fun `a bare clock in the date line is the start and the house doors do not apply`() {
+        val (matinee, evening) = scraper.scrape(Jsoup.parse(twoNightsOnOneDate, baseUrl), baseUrl)
+
+        matinee.startTime shouldBe LocalTime.of(14, 30)
+        matinee.doorsTime.shouldBeNull()
+        evening.doorsTime shouldBe LocalTime.of(20, 0)
+        evening.startTime shouldBe LocalTime.of(20, 30)
+    }
+
+    @Test
     fun `a page without an events section yields nothing`() {
         scraper.scrape(Jsoup.parse("<html><body><p>Closed</p></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    /** The shape of the 14 November 2026 page: a matinée with a bare clock, then an evening show on the same date. */
+    private val twoNightsOnOneDate =
+        """
+        <div id="events">
+          <div class="elementor-widget-text-editor"><p>Doors open at 20:00, music starts at 20:30.</p></div>
+          <div class="e-con e-child">
+            <h2 class="elementor-heading-title">Saturday, 14 November 2026 (14:30)</h2>
+            <h2 class="elementor-heading-title">DIE COOLEN 20 ER </h2>
+            <div class="elementor-widget-text-editor"><p>Featuring artist Rachel D Clarke &amp; artist Christoph Kühl</p></div>
+          </div>
+          <div class="e-con e-child">
+            <h2 class="elementor-heading-title">Saturday, 14 November 2026</h2>
+            <h2 class="elementor-heading-title">THEBOWIESTORIES </h2>
+            <div class="elementor-widget-text-editor"><p>Benjamin Kraatz – singing, narration<br>Samuel Jakubec – drums</p></div>
+          </div>
+        </div>
+        """.trimIndent()
 }
