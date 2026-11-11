@@ -43,7 +43,7 @@ was wrong. Every count in the summary carries the command that produced it.
   `reactor-kotlin-extensions`, `jackson-module-kotlin`, `flyway-*`, `postgresql` / `r2dbc-postgresql`, `testcontainers`, `junit`.
 - **Existing CVE-remediation overrides are the exception**, and they are temporary by design: a property named exactly as the Boot BOM names it
   (none today), plus `constraints` blocks in module scripts (`com.ongres.scram`) and in the root `buildscript` block, for the plugin classpath no BOM reaches (FreeMarker, Jackson 2; `jackson-buildscript-2.version`). The "Pins that are not ordinary project versions" block —
-  `log4j-api`, `scram`, `spring-framework-bom` — is not BOM-managed. Never bump these because a newer release exists; **do check on every run whether they
+  `log4j-api`, `scram` — is not BOM-managed. Never bump these because a newer release exists; **do check on every run whether they
   are obsolete** (Step 5).
 
 ## Step 3: Stable only

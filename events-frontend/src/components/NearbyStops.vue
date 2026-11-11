@@ -18,8 +18,7 @@ const { t, n } = useI18n()
     <li v-for="stop in stops" :key="stop.name">
       {{ stop.name
       }}<span class="text-muted-foreground"
-        ><template v-if="stop.lines?.length">{{ ` · ${stop.lines.join(', ')}` }}</template
-        >{{ ' · '
+        ><template v-if="stop.lines?.length">{{ ` · ${stop.lines.join(', ')}` }}</template>{{ ' · '
         }}<span class="whitespace-nowrap">{{
           t('detail.venue.walk', { metres: n(stop.walkingMetres ?? 0) })
         }}</span></span

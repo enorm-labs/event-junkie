@@ -89,10 +89,7 @@ async function remove(festival: Festival) {
       data-testid="confirm-delete"
       role="group"
     >
-      <p>
-        Delete <strong>{{ confirming.name }}</strong
-        >? The home page stops announcing it.
-      </p>
+      <p>Delete <strong>{{ confirming.name }}</strong>? The home page stops announcing it.</p>
       <p v-if="deleteError" class="text-destructive" role="alert">{{ deleteError }}</p>
       <div class="flex flex-wrap gap-2">
         <Button :disabled="deleting" size="sm" variant="destructive" @click="remove(confirming)">

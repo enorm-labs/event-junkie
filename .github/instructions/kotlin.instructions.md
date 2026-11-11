@@ -19,13 +19,14 @@ How code here is written, and where its versions and thresholds live. Comments h
 - **Versions live in two files, and nowhere in prose.** Plugin versions (Kotlin, ktlint, detekt, Kover) in `settings.gradle.kts` `pluginManagement`; library
   versions in `gradle.properties`, read with `property("…")` — not root `extra[...]`, which Gradle 10 stops resolving from a parent project.
     - **`gradle.properties` also holds "Pins that are not ordinary project versions"**, none BOM-managed and none bumped on sight. `scram` is a transitive of
-      `r2dbc-postgresql` raised by a `constraints` block in both Boot modules. `log4j-api` and `spring-framework-bom` exist because `events-core` applies
+      `r2dbc-postgresql` raised by a `constraints` block in both Boot modules. `log4j-api` exists because `events-core` applies
       `io.spring.dependency-management` **without** the Boot plugin, so no Boot BOM reaches it and Modulith's transitives choose; importing the Boot BOM there
-      fails `compileKotlin` on a null plugin classpath, and `spring-framework-bom` is the one BOM that can be imported because it manages `spring-*` only.
+      fails `compileKotlin` on a null plugin classpath. To lift a Spring Framework CVE there, import `spring-framework-bom`, the one BOM that can be
+      imported because it manages `spring-*` only.
     - **A CVE-remediation override is temporary by design.** Setting a BOM property name in `gradle.properties` overrides it for every Boot module, and an
       override kept past its purpose pins the project _behind_ the BOM invisibly. Delete it once a Boot release ships an equal or newer version;
       `/update-dependencies` checks on every run. None is set today.
-    - **`log4j-api.version` is deliberately not `log4j2.version`, and `spring-framework-bom.version` not `spring-framework.version`** — each is the BOM's own
+    - **`log4j-api.version` is deliberately not `log4j2.version`**, and a Framework pin would not be `spring-framework.version` — each is the BOM's own
       property, and a pin `events-core` needs would silently become an override every Boot module resolves. Check a new pin's name against the BOM properties;
       verifying only the Boot modules reports success either way.
 - **detekt: `settings.gradle.kts` is the only place a version is written.** `:detekt-rules` compiles against `the<DetektExtension>().toolVersion`

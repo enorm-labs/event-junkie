@@ -293,9 +293,9 @@ const { t } = useI18n()
       <p>
         <strong>Wenn du Künstler*in bist</strong> und möchtest, dass dein Name oder eine
         Beschreibung, die dich nennt, entfernt oder korrigiert wird, schreib an
-        <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a
-        >. Ich kümmere mich umgehend darum. Eine Begründung brauchst du nicht, und du musst das
-        Thema nicht öffentlich ansprechen.
+        <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>. Ich kümmere mich
+        umgehend darum. Eine Begründung brauchst du nicht, und du musst das Thema nicht öffentlich
+        ansprechen.
       </p>
     </section>
 

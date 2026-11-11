@@ -248,8 +248,8 @@ function time(value: string | null) {
       <p class="break-words">
         Store <strong>{{ chosen.name }}</strong>
         <template v-if="chosen.disambiguation"> ({{ chosen.disambiguation }})</template> as the
-        MusicBrainz match of <strong>{{ artist.name }}</strong
-        >? The artist becomes EXACT and leaves this list.
+        MusicBrainz match of <strong>{{ artist.name }}</strong>? The artist becomes EXACT and leaves
+        this list.
       </p>
       <p v-if="saveError" class="text-destructive" role="alert">{{ saveError }}</p>
       <div class="flex flex-wrap gap-2">

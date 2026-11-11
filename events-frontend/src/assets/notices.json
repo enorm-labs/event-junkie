@@ -1,5 +1,5 @@
 {
-  "componentCount": 373,
+  "componentCount": 376,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -163,7 +163,7 @@
         },
         {
           "name": "com.webauthn4j:webauthn4j-core",
-          "version": "0.31.11.RELEASE",
+          "version": "0.32.0.RELEASE",
           "url": "https://github.com/webauthn4j/webauthn4j",
           "ecosystem": "backend"
         },
@@ -187,7 +187,7 @@
         },
         {
           "name": "io.github.oshai:kotlin-logging-jvm",
-          "version": "8.0.4",
+          "version": "8.0.7",
           "url": "https://github.com/oshai/kotlin-logging",
           "ecosystem": "backend"
         },
@@ -369,6 +369,24 @@
           "name": "io.netty:netty-transport-native-unix-common",
           "version": "4.2.19.Final",
           "url": "https://netty.io/",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.opentelemetry:opentelemetry-api",
+          "version": "1.62.0",
+          "url": "https://github.com/open-telemetry/opentelemetry-java",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.opentelemetry:opentelemetry-common",
+          "version": "1.62.0",
+          "url": "https://github.com/open-telemetry/opentelemetry-java",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.opentelemetry:opentelemetry-context",
+          "version": "1.62.0",
+          "url": "https://github.com/open-telemetry/opentelemetry-java",
           "ecosystem": "backend"
         },
         {
@@ -739,25 +757,25 @@
         },
         {
           "name": "org.springframework.ai:spring-ai-anthropic",
-          "version": "2.0.1",
+          "version": "2.0.2",
           "url": "https://github.com/spring-projects/spring-ai",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.ai:spring-ai-commons",
-          "version": "2.0.1",
+          "version": "2.0.2",
           "url": "https://github.com/spring-projects/spring-ai",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.ai:spring-ai-model",
-          "version": "2.0.1",
+          "version": "2.0.2",
           "url": "https://github.com/spring-projects/spring-ai",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.ai:spring-ai-template-st",
-          "version": "2.0.1",
+          "version": "2.0.2",
           "url": "https://github.com/spring-projects/spring-ai",
           "ecosystem": "backend"
         },
@@ -1033,31 +1051,31 @@
         },
         {
           "name": "org.springframework.modulith:spring-modulith-api",
-          "version": "2.1.1",
+          "version": "2.1.2",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-api",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.modulith:spring-modulith-apt",
-          "version": "2.1.1",
+          "version": "2.1.2",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-apt",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.modulith:spring-modulith-core",
-          "version": "2.1.1",
+          "version": "2.1.2",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-core",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.modulith:spring-modulith-moments",
-          "version": "2.1.1",
+          "version": "2.1.2",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-moments",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.modulith:spring-modulith-starter-core",
-          "version": "2.1.1",
+          "version": "2.1.2",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-starters/spring-modulith-starter-core",
           "ecosystem": "backend"
         },
@@ -1093,188 +1111,188 @@
         },
         {
           "name": "software.amazon.awssdk:annotations",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:apache5-client",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:arns",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:auth",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:aws-core",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:aws-query-protocol",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:aws-xml-protocol",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:checksums",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:checksums-spi",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:crt-core",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:endpoints-spi",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
+          "name": "software.amazon.awssdk:eventstream",
+          "version": "2.57.13",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
           "name": "software.amazon.awssdk:http-auth",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:http-auth-aws",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:http-auth-aws-eventstream",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:http-auth-spi",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:http-client-spi",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:identity-spi",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:json-utils",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:metrics-spi",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:netty-nio-client",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:profiles",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:protocol-core",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:regions",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:retries",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:retries-spi",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:s3",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:sdk-core",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:third-party-jackson-core",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:utils",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:utils-lite",
-          "version": "2.55.10",
+          "version": "2.57.13",
           "url": "https://aws.amazon.com/sdkforjava",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "software.amazon.eventstream:eventstream",
-          "version": "1.0.1",
-          "url": "https://github.com/awslabs/aws-eventstream-java",
           "ecosystem": "backend"
         },
         {
@@ -1321,7 +1339,7 @@
       "components": [
         {
           "name": "@babel/helper-string-parser",
-          "version": "7.29.7",
+          "version": "7.29.13",
           "url": "https://github.com/babel/babel",
           "ecosystem": "frontend"
         },
@@ -1345,7 +1363,7 @@
         },
         {
           "name": "@babel/parser",
-          "version": "7.29.9",
+          "version": "7.29.13",
           "url": "https://github.com/babel/babel",
           "ecosystem": "frontend"
         },
@@ -1357,7 +1375,7 @@
         },
         {
           "name": "@babel/types",
-          "version": "7.29.8",
+          "version": "7.29.11",
           "url": "https://github.com/babel/babel",
           "ecosystem": "frontend"
         },
@@ -1393,19 +1411,19 @@
         },
         {
           "name": "@full-ui/headless-calendar",
-          "version": "7.1.3",
+          "version": "7.1.4",
           "url": "https://github.com/fullcalendar/fullcalendar",
           "ecosystem": "frontend"
         },
         {
           "name": "@fullcalendar/core",
-          "version": "7.1.3",
+          "version": "7.1.4",
           "url": "https://github.com/fullcalendar/fullcalendar",
           "ecosystem": "frontend"
         },
         {
           "name": "@fullcalendar/vue3",
-          "version": "7.1.3",
+          "version": "7.1.4",
           "url": "https://github.com/fullcalendar/fullcalendar-vue",
           "ecosystem": "frontend"
         },
@@ -1525,25 +1543,25 @@
         },
         {
           "name": "@vue/compiler-core",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/compiler-dom",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/compiler-sfc",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/compiler-ssr",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
@@ -1573,31 +1591,31 @@
         },
         {
           "name": "@vue/reactivity",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/runtime-core",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/runtime-dom",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/server-renderer",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/shared",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
@@ -1675,7 +1693,7 @@
         },
         {
           "name": "com.anthropic:anthropic-java-core",
-          "version": "2.52.0",
+          "version": "2.72.0",
           "url": "https://docs.anthropic.com/claude/reference/",
           "ecosystem": "backend"
         },
@@ -1687,7 +1705,7 @@
         },
         {
           "name": "com.standardwebhooks:standardwebhooks",
-          "version": "1.1.1",
+          "version": "1.2.0",
           "url": "https://github.com/standard-webhooks/standard-webhooks/tree/main/libraries/java",
           "ecosystem": "backend"
         },
@@ -1849,7 +1867,7 @@
         },
         {
           "name": "org.jsoup:jsoup",
-          "version": "1.23.2",
+          "version": "1.24.1",
           "url": "https://jsoup.org/",
           "ecosystem": "backend"
         },
@@ -1897,7 +1915,7 @@
         },
         {
           "name": "postcss",
-          "version": "8.5.30",
+          "version": "8.5.32",
           "url": "https://github.com/postcss/postcss",
           "ecosystem": "frontend"
         },
@@ -1957,19 +1975,19 @@
         },
         {
           "name": "tailwindcss",
-          "version": "4.3.4",
+          "version": "4.3.5",
           "url": "https://github.com/tailwindlabs/tailwindcss",
           "ecosystem": "frontend"
         },
         {
           "name": "temporal-polyfill",
-          "version": "1.0.6",
+          "version": "1.0.8",
           "url": "https://github.com/fullcalendar/temporal-polyfill",
           "ecosystem": "frontend"
         },
         {
           "name": "temporal-utils",
-          "version": "1.0.3",
+          "version": "1.0.4",
           "url": "https://github.com/fullcalendar/temporal-polyfill",
           "ecosystem": "frontend"
         },
@@ -1999,7 +2017,7 @@
         },
         {
           "name": "vue",
-          "version": "3.5.44",
+          "version": "3.5.45",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
@@ -2011,7 +2029,7 @@
         },
         {
           "name": "vue-router",
-          "version": "5.4.0",
+          "version": "5.5.0",
           "url": "https://github.com/vuejs/router",
           "ecosystem": "frontend"
         },
@@ -2065,7 +2083,7 @@
         },
         {
           "name": "maplibre-gl",
-          "version": "6.16.0",
+          "version": "6.17.0",
           "url": "https://github.com/maplibre/maplibre-gl-js",
           "ecosystem": "frontend"
         },
@@ -2113,7 +2131,7 @@
       "components": [
         {
           "name": "@lucide/vue",
-          "version": "1.62.0",
+          "version": "1.72.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
@@ -2131,7 +2149,7 @@
         },
         {
           "name": "@maplibre/maplibre-gl-style-spec",
-          "version": "26.4.4",
+          "version": "26.6.0",
           "url": "https://github.com/maplibre/maplibre-style-spec",
           "ecosystem": "frontend"
         },

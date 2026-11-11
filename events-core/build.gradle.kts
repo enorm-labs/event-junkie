@@ -27,13 +27,12 @@ repositories {
 //
 // Importing the Boot BOM here is NOT the fix. Without the Boot plugin nothing aligns the BOM's
 // `kotlin.version` with the Kotlin plugin's, so the BOM forces its own Kotlin onto the
-// compiler-plugin classpath and `compileKotlin` dies with a null plugin classpath.
-// `spring-framework-bom` carries no such risk: it manages `org.springframework:spring-*` and
-// nothing else, so it raises the whole Framework family without naming each artifact.
+// compiler-plugin classpath and `compileKotlin` dies with a null plugin classpath. To lift a
+// Spring Framework CVE here, import `org.springframework:spring-framework-bom` instead: it manages
+// `org.springframework:spring-*` and nothing else.
 dependencyManagement {
     imports {
         mavenBom("org.springframework.modulith:spring-modulith-bom:${property("spring-modulith.version")}")
-        mavenBom("org.springframework:spring-framework-bom:${property("spring-framework-bom.version")}")
     }
 }
 
