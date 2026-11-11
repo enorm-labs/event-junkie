@@ -10,6 +10,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.parseNumericDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -143,11 +144,7 @@ class SilentGreenMonthPageScraper {
     private fun parseRowDate(
         row: Element,
         month: YearMonth
-    ): LocalDate? {
-        val match = row.textAt(".eventList-event-date")?.let { DAY_MONTH_PATTERN.find(it) } ?: return null
-        val (day, monthOfYear) = match.destructured
-        return runCatching { LocalDate.of(month.year, monthOfYear.toInt(), day.toInt()) }.getOrNull()
-    }
+    ): LocalDate? = row.textAt(".eventList-event-date")?.let { parseNumericDate(it, month.year) }
 
     /**
      * The month from the calendar heading (`"August 2026"`), matched on its first three letters via
@@ -173,9 +170,6 @@ class SilentGreenMonthPageScraper {
 
         /** An `HH:mm` clock inside a time cell. */
         val CLOCK = Regex("""\d{1,2}:\d{2}""")
-
-        /** The day and month of a year-less `"Sa 01.08."` date block. */
-        val DAY_MONTH_PATTERN = Regex("""(\d{1,2})\.(\d{1,2})\.""")
 
         /** Letters of a German month name that identify it — see [parseMonthHeading]. */
         const val GERMAN_MONTH_PREFIX = 3

@@ -8,11 +8,11 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseNumericDate
 import de.norm.events.scraper.performersBilledWith
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.time.LocalDate
 import java.time.LocalTime
 
 /**
@@ -66,10 +66,8 @@ class MehringhofProgrammPageScraper {
                 .blankToNull() ?: return null
         val ticketUrl = cells[1].selectFirst("a[href*=/produkte/]")?.absUrl("href")
         val product = ticketUrl?.let { PRODUCT.find(it) }
-        val dayMonth = DAY_MONTH.find(cells[0].text())
-        val year = product?.groupValues?.get(YEAR)?.toInt() ?: pageYear
-        if (dayMonth == null || year == null) return null
-        val date = LocalDate.of(year, dayMonth.groupValues[2].toInt(), dayMonth.groupValues[1].toInt())
+        val year = product?.groupValues?.get(YEAR)?.toInt() ?: pageYear ?: return null
+        val date = parseNumericDate(cells[0].text(), year) ?: return null
         val start =
             CLOCK
                 .find(cells[0].text())
@@ -104,7 +102,6 @@ class MehringhofProgrammPageScraper {
         const val YEAR = 4
         const val SOLD_OUT_RED = "background-color:rgb(255,0,0)"
         val PRODUCT = Regex("""/produkte/(\d+)-[^?#]*-am-(\d{2})-(\d{2})-(\d{4})""")
-        val DAY_MONTH = Regex("""(\d{1,2})\.(\d{1,2})\.""")
         val CLOCK = Regex("""(\d{1,2})\s*Uhr""")
     }
 }

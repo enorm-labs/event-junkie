@@ -16,6 +16,7 @@ import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
@@ -23,10 +24,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.MonthDay
 
 /**
  * Pure HTML parser for Duncker Club Berlin's retro `start.html` programme page.
@@ -175,14 +174,7 @@ class DunckerOverviewPageScraper(
      */
     private fun parseDate(row: Element): LocalDate? {
         val dateText = row.textAt("td.tabledate") ?: return null
-        val match = DATE_PATTERN.find(dateText) ?: return null
-        val (day, month) = match.destructured
-        val monthDay =
-            try {
-                MonthDay.of(month.toInt(), day.toInt())
-            } catch (_: DateTimeException) {
-                return null
-            }
+        val monthDay = parseNumericDayMonth(dateText) ?: return null
         val weekday = parseGermanWeekdayAbbreviation(row.textAt("td.tableweekday"))
         return inferYearForWeekday(monthDay, weekday, clock)
     }
@@ -249,9 +241,6 @@ class DunckerOverviewPageScraper(
 
         /** The numeric event id from a Facebook event URL. */
         private val FB_EVENT_ID_PATTERN = Regex("""facebook\.com/events/(\d+)""")
-
-        /** Day and month from a "DD.MM." date cell. */
-        private val DATE_PATTERN = Regex("""(\d{1,2})\.(\d{1,2})\.""")
 
         /** Each hour of a "21h-05h" time range. */
         private val TIME_PATTERN = Regex("""(\d{1,2})h""")

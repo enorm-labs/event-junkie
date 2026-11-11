@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
+import de.norm.events.scraper.NUMERIC_DAY_MONTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
@@ -120,7 +121,7 @@ class ZebranoTheaterProgrammPageScraper {
         text: String,
         month: LocalDate
     ): LocalDate? {
-        val match = DAY_MONTH.find(text) ?: return null
+        val match = NUMERIC_DAY_MONTH.find(text) ?: return null
         val day = match.groupValues[1].toInt()
         val rowMonth = match.groupValues[2].toInt()
         val year = if (rowMonth < month.monthValue) month.year + 1 else month.year
@@ -180,7 +181,6 @@ class ZebranoTheaterProgrammPageScraper {
         val YEARS = 2000..2100
         val GERMAN_MONTHS = GERMAN_MONTH_NAMES.map { it.lowercase() }
         val SPACED_COLON = Regex("""\s+:\s*""")
-        val DAY_MONTH = Regex("""(\d{1,2})\.(\d{1,2})\.""")
         val AMOUNT = Regex("""(\d+(?:,\d{1,2})?)\s*(\*?)""")
         val SOLD_OUT = Regex("""ausverkauft""", RegexOption.IGNORE_CASE)
 

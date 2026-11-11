@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.NUMERIC_DAY_MONTH
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -11,15 +12,14 @@ import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
+import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.MonthDay
 
 /**
  * Pure HTML parser for Junction Bar Berlin's single-page DJ program (`DJ_html/DJ.html`).
@@ -66,7 +66,7 @@ class JunctionBarDjOverviewPageScraper(
     }
 
     /** A date-bar child holds a `<table>` whose text carries a `DD.MM.` date; content lines carry none. */
-    internal fun isDateBar(child: Element): Boolean = child.selectFirst("table") != null && DATE_PATTERN.containsMatchIn(child.text())
+    internal fun isDateBar(child: Element): Boolean = child.selectFirst("table") != null && NUMERIC_DAY_MONTH.containsMatchIn(child.text())
 
     private fun parseNight(
         night: Night,
@@ -116,14 +116,7 @@ class JunctionBarDjOverviewPageScraper(
      */
     private fun parseDate(dateBar: Element): LocalDate? {
         val text = dateBar.text()
-        val match = DATE_PATTERN.find(text) ?: return null
-        val (day, month) = match.destructured
-        val monthDay =
-            try {
-                MonthDay.of(month.toInt(), day.toInt())
-            } catch (_: DateTimeException) {
-                return null
-            }
+        val monthDay = parseNumericDayMonth(text) ?: return null
         val weekday = parseEnglishWeekdayAbbreviation(WEEKDAY_PATTERN.find(text)?.value)
         return inferYearForWeekday(monthDay, weekday, clock)
     }
@@ -145,9 +138,6 @@ class JunctionBarDjOverviewPageScraper(
     }
 
     companion object {
-        /** The `DD.MM.` date opening a date bar. */
-        private val DATE_PATTERN = Regex("""(\d{1,2})\.(\d{1,2})\.""")
-
         /** The `HH:mm` start time in a date bar (e.g. "24:00", "23:00"). */
         private val TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")
 
