@@ -190,6 +190,27 @@ tasks.test {
     maxParallelForks = 2
 }
 
+// The scraper tests once more under jsoup's web query mode, the default from jsoup 1.25.1, where a
+// query matches descendants only and `~=` matches a token, not a regex. A selector that leans on
+// the legacy mode fails here before the bump does it on the cluster (#4871). Delete this task once
+// jsoup's legacy mode is gone (1.26.1).
+val webQueryModeTest =
+    tasks.register<Test>("webQueryModeTest") {
+        group = "verification"
+        description = "Run the scraper tests under jsoup's web query mode."
+        testClassesDirs =
+            sourceSets.test
+                .get()
+                .output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+        filter { includeTestsMatching("de.norm.events.scraper.*") }
+        systemProperty("jsoup.queryMode", "web")
+        maxParallelForks = 2
+        mustRunAfter(tasks.test)
+    }
+
+tasks.check { dependsOn(webQueryModeTest) }
+
 // The one command that rewrites docs/architecture/schema.sql. It is the same test, told to write
 // instead of fail, so the output cannot disagree with what the build then asserts.
 tasks.register<Test>("updateSchemaDump") {

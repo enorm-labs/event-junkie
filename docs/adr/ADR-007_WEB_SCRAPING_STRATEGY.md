@@ -531,6 +531,10 @@ cohesive responsibility, keeping the codebase organized as the number of utiliti
 | `Element.attrAt(cssQuery, attr)`                | Select first match → attribute value → null if blank                  |
 | `Element.imgSrcAt(cssQuery)`                    | Select `<img>` → `src` attribute → null if not an absolute HTTP URL   |
 | `Element.hrefAt(cssQuery)`                      | Select `<a>` → `href` attribute → null if not an absolute HTTP URL    |
+| `Element.selectFirstOrSelf(cssQuery)`           | The element if it matches, else its first match below it              |
+| `Element.selectWithSelf(cssQuery)`              | The element if it matches, then each match below it                   |
+| `List<Element>.selectWithSelf(cssQuery)`        | `selectWithSelf` on each element, with no duplicates                  |
+| `Element.selfAndDescendants()`                  | The element and each element below it, with no query                  |
 | `Element.hasVisibleWebflowFlag(cssQuery, text)` | Webflow `w-condition-invisible` visibility check + text content match |
 | `resolveUrl(baseUrl, href)`                     | Resolve relative URLs against a base URL, pass-through absolute URLs  |
 | `extractEventSlug(url, prefix)`                 | Strip a detail-URL path prefix down to the event's stable slug        |

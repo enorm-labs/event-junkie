@@ -8,6 +8,26 @@ import org.jsoup.nodes.TextNode
 import java.net.URI
 
 /**
+ * The first element matching [cssQuery]: this element itself, or else its first descendant.
+ *
+ * jsoup's legacy query mode includes the element a query runs on. Its web mode, the default from
+ * jsoup 1.25.1, matches descendants only (#4871). This keeps the legacy result in both modes.
+ */
+fun Element.selectFirstOrSelf(cssQuery: String): Element? = if (`is`(cssQuery)) this else selectFirst(":scope :is($cssQuery)")
+
+/** Every element matching [cssQuery]: this element itself first, then its descendants, in both query modes (#4871). */
+fun Element.selectWithSelf(cssQuery: String): List<Element> = listOfNotNull(takeIf { it.`is`(cssQuery) }) + select(":scope :is($cssQuery)")
+
+/**
+ * [selectWithSelf] over each element, without duplicates. This is what `Elements.select` returns in
+ * the legacy query mode. The web mode drops the listed elements themselves (#4871).
+ */
+fun List<Element>.selectWithSelf(cssQuery: String): List<Element> = flatMap { it.selectWithSelf(cssQuery) }.distinct()
+
+/** This element and every element below it, in document order: legacy `select("*")`, without a query (#4871). */
+fun Element.selfAndDescendants(): List<Element> = buildList { traverse { node, _ -> if (node is Element) add(node) } }
+
+/**
  * Extracts trimmed text content from the first child element matching [cssQuery].
  *
  * Returns `null` if no element matches or the text is blank.
@@ -165,7 +185,7 @@ fun Element.textLines(keepBlankLines: Boolean = false): List<String> {
 fun Element.descriptionText(): String? {
     val copy = clone()
     copy.select("br").forEach { it.replaceWith(TextNode(LINE_MARK)) }
-    copy.select(DESCRIPTION_BLOCKS).filter { it !== copy }.forEach { block ->
+    copy.select(":scope :is($DESCRIPTION_BLOCKS)").forEach { block ->
         block.before(TextNode(LINE_MARK))
         block.after(TextNode(LINE_MARK))
     }

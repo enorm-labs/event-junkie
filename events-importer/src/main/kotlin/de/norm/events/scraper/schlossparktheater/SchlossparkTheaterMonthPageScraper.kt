@@ -80,8 +80,8 @@ class SchlossparkTheaterMonthPageScraper {
     /** The lines under the heading, without the `mehr` link and the note in `div.kursiv`. */
     private fun subtitleOf(details: Element): String? =
         details
-            .select("p, h3")
-            .filter { line -> line.selectFirst("a.mehrlink") == null && line.closest("div.kursiv") == null && line.select("p, h3").size == 1 }
+            .select(":scope :is(p, h3)")
+            .filter { line -> line.selectFirst("a.mehrlink") == null && line.closest("div.kursiv") == null && line.select(":scope :is(p, h3)").isEmpty() }
             .mapNotNull { it.text().blankToNull() }
             .joinToString(" · ")
             .blankToNull()

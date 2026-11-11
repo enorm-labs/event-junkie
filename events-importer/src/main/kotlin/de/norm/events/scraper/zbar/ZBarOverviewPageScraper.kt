@@ -11,6 +11,7 @@ import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
+import de.norm.events.scraper.selectFirstOrSelf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -56,7 +57,8 @@ class ZBarOverviewPageScraper {
         }
         val blocks = dateLine.nextElementSiblings().takeWhile { !it.opensSection() }
         val ticketUrl = blocks.firstNotNullOfOrNull(::ticketLink)
-        val title = blocks.firstNotNullOfOrNull { it.selectFirst("h1, h2, h3, h4, h5, h6")?.text()?.blankToNull() } ?: ticketUrl?.let(::titleFromEventbrite)
+        val title =
+            blocks.firstNotNullOfOrNull { it.selectFirstOrSelf("h1, h2, h3, h4, h5, h6")?.text()?.blankToNull() } ?: ticketUrl?.let(::titleFromEventbrite)
         if (title == null) {
             logger.warn { "Z Bar night '$line' has no title, skipping" }
             return null

@@ -11,6 +11,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseNumericDate
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.selectWithSelf
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -159,7 +160,8 @@ class JunctionBarMusicOverviewPageScraper {
         content: Elements
     ): List<String> {
         val pictured =
-            content.select("img[alt^=Bandfoto ]").map {
+            // Case-insensitive with a literal space, as legacy `[alt^=Bandfoto ]` was; web mode trims the space and would bill "Bandfoto: Why Me" (#4871).
+            content.selectWithSelf("img:matchesAttr(alt, (?i)^Bandfoto\\x20)").map {
                 it
                     .attr("alt")
                     .removePrefix("Bandfoto ")
