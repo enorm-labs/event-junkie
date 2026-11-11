@@ -292,6 +292,43 @@ private val TIME_LIMITED_FREE =
         RegexOption.IGNORE_CASE
     )
 
+private const val FREE_WORD = """(?:free|frei(?:e[mnr]?)?|gratis|kostenlos(?:e[mnr]?)?|umsonst)"""
+
+private const val FREE_WORD_PHRASE = """(?:eintritt\s*(?::|\s+ist)?\s*)?\b$FREE_WORD\b(?:\s+(?:eintritt|entry|admission))?"""
+
+private val CONCESSION_GROUP =
+    listOf(
+        """geburtstagskind(?:er)?|birthday\s+(?:kids?|children|guests|people)""",
+        """studierende[n]?|student(?:[*:_]?inn)?en|students|mitglieder[n]?|members""",
+        """senior(?:[*:_]?inn)?en|seniors|rentner(?:[*:_]?innen)?""",
+        """kinder[n]?|kids|children""",
+        """flinta(?:\*?q)?\*?"""
+    ).joinToString("|", prefix = "(?:", postfix = ")")
+
+// A word between a group and its offer. It ends in a full stop only as a date ("14.11."), so
+// "FLINTA* only. Eintritt frei" keeps its free night.
+private const val GAP_WORD = """(?:[\d.]+|[^\s,;:!?–—|]*[^\s,;:!?–—|.])"""
+
+// Not \b: "FLINTA*" ends on a non-word character, so \b after it fails before a space.
+private const val GROUP_END = """(?![\p{L}\d])"""
+
+/**
+ * A free-entry offer for one group of guests: "Geburtstagskinder vom 14.11. bis 29.11. erhalten
+ * freien Eintritt!", "Studierende freier Eintritt", "Kinder bis 12 Jahre frei", "FLINTA* free",
+ * "free entry for seniors". The others pay, so the night is not free (#2084), and [detectFree]
+ * removes such a span before it looks for a marker. The words between the group and the offer
+ * contain no comma, sentence end or dash, so "Studierende 5 €, sonst Eintritt frei" and a
+ * "FLINTA* Rave – Eintritt frei" for everyone who comes keep their free night.
+ */
+private val GROUP_CONCESSION_FREE =
+    Regex(
+        listOf(
+            """\b$CONCESSION_GROUP$GROUP_END:?(?:\s+(?![-/](?:\s|$))$GAP_WORD){0,5}?\s+$FREE_WORD_PHRASE""",
+            """$FREE_WORD_PHRASE\s+(?:for|für)\s+(?:[^\s,;.!?]+\s+){0,2}?$CONCESSION_GROUP$GROUP_END"""
+        ).joinToString("|"),
+        RegexOption.IGNORE_CASE
+    )
+
 /**
  * Entry against a donation or pay what you want: "Free Entry + Donation based", "Free entry with a
  * 2 € donation", "Eintritt frei, pay what you want". The operator decided that such a night is
@@ -312,18 +349,20 @@ val PAY_WHAT_YOU_WANT =
     )
 
 /**
- * Whether [text] states free entry ([FREE_ENTRY_PHRASE]) for the whole night. A
- * [TIME_LIMITED_FREE] offer ("free entry for ladies until 0 Uhr") is removed first: everyone
- * arriving later pays. A [PAY_WHAT_YOU_WANT] text is not free.
+ * Whether [text] states free entry ([FREE_ENTRY_PHRASE]) for the whole night and every guest. A
+ * [TIME_LIMITED_FREE] offer ("free entry for ladies until 0 Uhr") and a [GROUP_CONCESSION_FREE]
+ * offer ("free entry for members") are removed first: everyone else pays. A [PAY_WHAT_YOU_WANT]
+ * text is not free.
  */
 fun hasFreeEntryPhrase(text: String?): Boolean =
-    text != null && !PAY_WHAT_YOU_WANT.containsMatchIn(text) && FREE_ENTRY_PHRASE.containsMatchIn(text.replace(TIME_LIMITED_FREE, " "))
+    text != null && !PAY_WHAT_YOU_WANT.containsMatchIn(text) &&
+        FREE_ENTRY_PHRASE.containsMatchIn(text.replace(TIME_LIMITED_FREE, " ").replace(GROUP_CONCESSION_FREE, " "))
 
 /**
  * Whether an event is free. A positive signal is required, since an absent price is unknown,
  * not free: an explicit €0 price, a [hasFreeEntryPhrase] match in the title or price note, or a
- * [FREE_TOKENS] match in the price note. A [TIME_LIMITED_FREE] marker or a [PAY_WHAT_YOU_WANT]
- * note is not a signal. The price note counts only when no positive price was parsed: beside a
+ * [FREE_TOKENS] match in the price note. A [TIME_LIMITED_FREE] or [GROUP_CONCESSION_FREE] marker
+ * or a [PAY_WHAT_YOU_WANT] note is not a signal. The price note counts only when no positive price was parsed: beside a
  * price, "free for transgender women" or "Kinder frei" is a concession for one group, not free
  * entry (#2789).
  */
@@ -335,7 +374,7 @@ fun detectFree(
 ): Boolean {
     val hasZeroPrice = pricePresale?.signum() == 0 || priceBoxOffice?.signum() == 0
     val note = priceNote?.takeUnless { PAY_WHAT_YOU_WANT.containsMatchIn(it) }
-    val tokenInNote = note?.replace(TIME_LIMITED_FREE, " ")?.let { FREE_TOKEN_PATTERN.containsMatchIn(it) } ?: false
+    val tokenInNote = note?.replace(TIME_LIMITED_FREE, " ")?.replace(GROUP_CONCESSION_FREE, " ")?.let { FREE_TOKEN_PATTERN.containsMatchIn(it) } ?: false
     val hasPositivePrice = pricePresale?.signum() == 1 || priceBoxOffice?.signum() == 1
     return hasZeroPrice || hasFreeEntryPhrase(title) || (!hasPositivePrice && (hasFreeEntryPhrase(priceNote) || tokenInNote))
 }

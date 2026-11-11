@@ -149,6 +149,24 @@ class DerWeisseHaseOverviewPageScraperTest {
         parsed.toEventEntity(venueId = 1L, venueSlug = "der-weisse-hase", eventSourceId = 1L).free shouldBe false
     }
 
+    // Production stored `Tanzen Hilft` as free because birthday guests enter free (#4884).
+    @Test
+    fun `stores a birthday-guest entry line as the price note without flagging the night free`() {
+        val night =
+            block(
+                """<p class="dater">Samstag 28.11.2026 23:00</p><h1>Tanzen Hilft</h1><p>&nbsp;</p>
+                   |<p class="text"><p>🥳 Geburtstagskinder vom 14.11. bis 29.11. erhalten freien Eintritt! 🥳</p><h4>LINE UP</h4>
+                   |<p>Fran-Cee, DAV3</p></p>
+                """.trimMargin()
+            )
+
+        val parsed = scraper.scrape(night, baseUrl).single()
+        parsed.priceNote shouldBe "🥳 Geburtstagskinder vom 14.11. bis 29.11. erhalten freien Eintritt! 🥳"
+        parsed.description.shouldBeNull()
+        parsed.free shouldBe false
+        parsed.toEventEntity(venueId = 1L, venueSlug = "der-weisse-hase", eventSourceId = 1L).free shouldBe false
+    }
+
     @Test
     fun `drops the more-to-come and contest-winner placeholders`() {
         val socialRave = events.single { it.title == "ZUG DER LIEBE ° SOCIAL RAVE" }
