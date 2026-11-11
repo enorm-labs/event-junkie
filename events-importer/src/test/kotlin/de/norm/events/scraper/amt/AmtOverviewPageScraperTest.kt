@@ -182,6 +182,40 @@ class AmtOverviewPageScraperTest {
         ).forEach { titleOnlyNight(it).artists.shouldBeEmpty() }
     }
 
+    // The live shape: the shown price cell, then a hidden `€` cell that also carries `.text-block-4`.
+    private fun pricedNight(priceCell: String) =
+        scraper
+            .scrape(
+                Jsoup.parse(
+                    """<div class="div-grid-dan" data-date="November 11, 2026">
+                      <a href="/event/loone-x-arcane-xiii"><div class="events-txt name">Loone x Arcane XIII</div></a>
+                      <a href="/event/loone-x-arcane-xiii" class="div-block-16 w-inline-block">
+                        <div class="text-block-4">$priceCell</div><div class="text-block-4 hide">€</div>
+                      </a>
+                    </div>""",
+                    juneUrl
+                ),
+                juneUrl
+            ).single()
+
+    @Test
+    fun `flags a FREE ENTRY price cell as free with no price`() {
+        // Events 13152 and 13155 on production.
+        val event = pricedNight("FREE ENTRY")
+
+        event.free shouldBe true
+        event.pricePresale.shouldBeNull()
+        event.priceBoxOffice.shouldBeNull()
+        event.priceNote.shouldBeNull()
+    }
+
+    @Test
+    fun `does not flag a priced or time-limited free night as free`() {
+        pricedNight("10€-20€").free shouldBe false
+        pricedNight("FREE ENTRY TILL 00:00").free shouldBe false
+        (juneEvents + julyEvents + octoberEvents).none { it.free } shouldBe true
+    }
+
     @Test
     fun `returns no events for a page without event blocks`() {
         val emptyDoc = Jsoup.parse("<html><body><p>Baustelle</p></body></html>", juneUrl)

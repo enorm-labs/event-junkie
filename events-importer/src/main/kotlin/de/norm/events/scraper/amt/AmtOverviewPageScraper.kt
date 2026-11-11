@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.germanDecimals
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isBoxOfficeLabel
@@ -37,7 +38,7 @@ import java.time.LocalDate
  * when it is a `tba` placeholder;
  * - `a.div-strela` — the external ticket link (Resident Advisor / EventJet);
  * - `.text-block-4` — the price: a tiered `min – max` (presale / box-office), a single figure
- * (presale), or `Door sale only. 10` (box-office only); and
+ * (presale), `Door sale only. 10` (box-office only), or `FREE ENTRY`, which sets the free flag; and
  * - `a[href^="/event/"]` — the detail-page link, the stable per-event identity for `sourceId`.
  *
  * Every event is [EventType.PARTY]: a techno club whose nights are DJ dance parties, so the
@@ -93,7 +94,8 @@ class AmtOverviewPageScraper {
         val identity = slug ?: "$eventDate-${SlugGenerator.slugify(title)}"
 
         val lineup = item.textAt(".perf")?.takeUnless { isPlaceholderName(it) }
-        val (presale, boxOffice) = parsePrices(item.textAt(".text-block-4"))
+        val priceCell = item.textAt(".text-block-4")
+        val (presale, boxOffice) = parsePrices(priceCell)
 
         return ScrapedEvent(
             title = title,
@@ -106,6 +108,7 @@ class AmtOverviewPageScraper {
             ticketUrl = item.hrefAt("a.div-strela"),
             pricePresale = presale,
             priceBoxOffice = boxOffice,
+            free = hasFreeEntryPhrase(priceCell),
             artists =
                 parseDjs(lineup)
                     .ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
