@@ -2,7 +2,7 @@
  * Problem reports from the public event page (#4399), and their resolution. Hand-written like
  * `dataQuality.ts`: `ReportAdminController.kt` in the importer is the source of truth.
  */
-import { ensureOk } from '@/api/eventSources'
+import { ensureOk } from '@/api/http'
 
 /** The boxes of "Report a problem", labelled as the operator reads them. `ReportProblem` in the BFF. */
 export const PROBLEM_LABELS: Record<string, string> = {

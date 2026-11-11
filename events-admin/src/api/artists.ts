@@ -4,7 +4,8 @@
  * source of truth.
  */
 
-import { type AdminEvent, failOnError } from '@/api/events'
+import { type AdminEvent } from '@/api/events'
+import { failOnError, type Page } from '@/api/http'
 
 /** The fields of `ArtistResponse` the review reads. */
 export interface ReviewArtist {
@@ -14,11 +15,7 @@ export interface ReviewArtist {
   musicbrainzMatch: string
 }
 
-export interface ReviewPage {
-  content: ReviewArtist[]
-  totalElements: number
-  totalPages: number
-}
+export type ReviewPage = Page<ReviewArtist>
 
 /** The importer caps a page at 100. Twenty keeps the MusicBrainz look-ups of one page short. */
 export const REVIEW_PAGE_SIZE = 20

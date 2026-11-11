@@ -5,6 +5,7 @@ import { type Festival, type FestivalRequest, saveFestival } from '@/api/festiva
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { errorText } from '@/lib/errorText'
 
 /** The festival to edit, or null for a new one. */
 const props = defineProps<{ festival: Festival | null }>()
@@ -38,7 +39,7 @@ async function submit() {
   try {
     emit('saved', await saveFestival(props.festival?.id ?? null, { ...draft }))
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
   } finally {
     saving.value = false
   }

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Search } from '@lucide/vue'
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { type AdminEvent, type EventSearchPage, searchEvents } from '@/api/events'
-import { type AdminVenue, fetchAllVenues } from '@/api/venues'
-import { type Festival, fetchFestivals } from '@/api/festivals'
+import { fetchAllVenues } from '@/api/venues'
+import { fetchFestivals } from '@/api/festivals'
 import EventEditor from '@/components/EventEditor.vue'
 import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoad } from '@/composables/useLoad'
 import { berlinToday } from '@/lib/berlinTime'
 
 const route = useRoute()
@@ -41,12 +42,28 @@ const page = computed(() => Math.max(0, Number(route.query.page) || 0))
 const typedTitle = ref(title.value)
 watch(title, (value) => (typedTitle.value = value))
 
-const result = shallowRef<EventSearchPage | null>(null)
-const events = ref<AdminEvent[]>([])
-const venues = shallowRef<AdminVenue[]>([])
-const festivals = shallowRef<Festival[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const {
+  data: result,
+  loading,
+  error,
+  reload,
+} = useLoad<EventSearchPage | null>(
+  () =>
+    searchEvents({
+      title: title.value,
+      venueId: venueId.value,
+      // An event over midnight counts on the day it starts, so tonight's late show stays listed.
+      from: past.value ? null : berlinToday(),
+      festivalId: festivalId.value,
+      page: page.value,
+    }),
+  null,
+)
+const events = computed(() => result.value?.content ?? [])
+// The venue list fills the picker and the venue column. Without it the search still works.
+const { data: venues, reload: loadVenues } = useLoad(fetchAllVenues, [])
+// The festival list fills its picker. Without it a festival in the query still filters.
+const { data: festivals, reload: loadFestivals } = useLoad(fetchFestivals, [])
 const editing = ref<number | null>(null)
 
 const venueNames = computed(() => new Map(venues.value.map((v) => [v.id, v.name])))
@@ -84,50 +101,17 @@ function search(next: { venue?: number | null; festival?: number | null; past?: 
   return navigate({ q: typedTitle.value, ...next })
 }
 
-async function load() {
-  loading.value = true
-  error.value = null
-  try {
-    result.value = await searchEvents({
-      title: title.value,
-      venueId: venueId.value,
-      // An event over midnight counts on the day it starts, so tonight's late show stays listed.
-      from: past.value ? null : berlinToday(),
-      festivalId: festivalId.value,
-      page: page.value,
-    })
-    events.value = [...result.value.content]
-  } catch (e) {
-    result.value = null
-    events.value = []
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-}
-
-watch([title, venueId, festivalId, past, page], load, { immediate: true })
-
-onMounted(async () => {
-  // The venue list fills the picker and the venue column. Without it the search still works.
-  try {
-    venues.value = await fetchAllVenues()
-  } catch {
-    venues.value = []
-  }
-})
-
-onMounted(async () => {
-  // The festival list fills its picker. Without it a festival in the query still filters.
-  try {
-    festivals.value = await fetchFestivals()
-  } catch {
-    festivals.value = []
-  }
-})
+watch([title, venueId, festivalId, past, page], reload, { immediate: true })
+onMounted(loadVenues)
+onMounted(loadFestivals)
 
 function onSaved(saved: AdminEvent) {
-  events.value = events.value.map((event) => (event.id === saved.id ? saved : event))
+  const loaded = result.value
+  if (!loaded) return
+  result.value = {
+    ...loaded,
+    content: loaded.content.map((event) => (event.id === saved.id ? saved : event)),
+  }
 }
 
 function statusVariant(status: string) {

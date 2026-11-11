@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CalendarPlus, Check } from '@lucide/vue'
-import { computed, onMounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import {
@@ -21,13 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoad } from '@/composables/useLoad'
 import { berlinDay } from '@/lib/berlinTime'
 import { publicOrigin } from '@/lib/environments'
+import { errorText } from '@/lib/errorText'
 import { STICKY_CELL, STICKY_HEAD } from '@/lib/utils'
 
-const venues = shallowRef<ManualVenue[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const { data: venues, loading, error, reload: load } = useLoad(fetchManualVenues, [])
 const busy = ref<number | null>(null)
 const notice = ref<string | null>(null)
 
@@ -35,19 +35,6 @@ const origin = publicOrigin(import.meta.env.MODE)
 
 const rows = computed(() => sortManualVenues(venues.value))
 const overdue = computed(() => rows.value.filter((v) => isDue(v)).length)
-
-async function load() {
-  loading.value = true
-  error.value = null
-  try {
-    venues.value = await fetchManualVenues()
-  } catch (e) {
-    venues.value = []
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-}
 
 onMounted(load)
 
@@ -61,7 +48,7 @@ async function checked(venue: ManualVenue) {
     venues.value = venues.value.map((v) => (v.id === venue.id ? { ...v, programmeCheckedAt } : v))
     notice.value = `${venue.name} is checked. It is due again in ${PROGRAMME_CHECK_DAYS} days.`
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
   } finally {
     busy.value = null
   }

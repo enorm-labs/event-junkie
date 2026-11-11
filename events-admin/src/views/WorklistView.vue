@@ -14,7 +14,7 @@ import {
   type WorklistDismissal,
   type WorklistEntry,
 } from '@/api/dataQuality'
-import { type EventSource, fetchAllSources } from '@/api/eventSources'
+import { fetchAllSources } from '@/api/eventSources'
 import EventEditor from '@/components/EventEditor.vue'
 import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +27,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoad } from '@/composables/useLoad'
+import { errorText } from '@/lib/errorText'
 
 const route = useRoute()
 const router = useRouter()
@@ -40,10 +42,17 @@ const issue = computed<QualityIssueKey>(() => {
 const source = computed(() => String(route.query.source ?? ''))
 const offset = computed(() => Math.max(0, Number(route.query.offset) || 0))
 
-const worklist = shallowRef<Worklist | null>(null)
-const sources = shallowRef<EventSource[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const {
+  data: worklist,
+  loading,
+  error,
+  reload: load,
+} = useLoad<Worklist | null>(
+  () => fetchWorklist({ issue: issue.value, source: source.value, offset: offset.value }),
+  null,
+)
+// The source list only fills the filter. Without it the worklist still works for every source.
+const { data: sources, reload: loadSources } = useLoad(fetchAllSources, [])
 const editing = ref<number | null>(null)
 const busy = ref(false)
 const actionError = ref<string | null>(null)
@@ -64,23 +73,6 @@ function navigate(query: { issue?: string; source?: string; offset?: number }) {
   })
 }
 
-async function load() {
-  loading.value = true
-  error.value = null
-  try {
-    worklist.value = await fetchWorklist({
-      issue: issue.value,
-      source: source.value,
-      offset: offset.value,
-    })
-  } catch (e) {
-    worklist.value = null
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-}
-
 watch([issue, source, offset], load, { immediate: true })
 
 async function loadDismissals() {
@@ -90,7 +82,7 @@ async function loadDismissals() {
 watch([issue, showDismissed], () => loadDismissals().catch(failed))
 
 function failed(e: unknown) {
-  actionError.value = e instanceof Error ? e.message : String(e)
+  actionError.value = errorText(e)
 }
 
 // Each action reloads the page, so the row and the dismissed count stay what the importer says.
@@ -115,14 +107,7 @@ function undo(dismissal: WorklistDismissal) {
   return act(() => undoDismissal(dismissal.id))
 }
 
-onMounted(async () => {
-  // The source list only fills the filter. Without it the worklist still works for every source.
-  try {
-    sources.value = await fetchAllSources()
-  } catch {
-    sources.value = []
-  }
-})
+onMounted(loadSources)
 
 // The endpoint returns no total. A full page means there may be another one.
 const hasNext = computed(() => (worklist.value?.count ?? 0) >= WORKLIST_LIMIT)

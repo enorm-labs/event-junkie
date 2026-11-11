@@ -15,6 +15,7 @@ import { fetchNames } from '@/api/names'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { berlinToday } from '@/lib/berlinTime'
+import { errorText } from '@/lib/errorText'
 
 const props = defineProps<{
   artist: ReviewArtist
@@ -57,7 +58,7 @@ async function loadEvents() {
     }))
   } catch (e) {
     events.value = null
-    eventsError.value = e instanceof Error ? e.message : String(e)
+    eventsError.value = errorText(e)
   }
 }
 
@@ -67,7 +68,7 @@ async function loadCandidates() {
     candidates.value = await fetchCandidates(props.artist.id)
   } catch (e) {
     candidates.value = null
-    candidatesError.value = e instanceof Error ? e.message : String(e)
+    candidatesError.value = errorText(e)
   }
 }
 
@@ -88,7 +89,7 @@ async function confirm() {
   try {
     await setMusicBrainzId(props.artist.id, candidate.musicbrainzId)
   } catch (e) {
-    saveError.value = e instanceof Error ? e.message : String(e)
+    saveError.value = errorText(e)
     return
   } finally {
     saving.value = false

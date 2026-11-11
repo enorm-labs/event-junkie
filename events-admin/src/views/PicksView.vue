@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue'
-import { computed, onMounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
-import { type AdminEvent, clearPick, fetchPicks } from '@/api/events'
-import { type AdminVenue, fetchAllVenues } from '@/api/venues'
+import { type AdminEvent, clearPick, type EventSearchPage, fetchPicks } from '@/api/events'
+import { fetchAllVenues } from '@/api/venues'
 import EventEditor from '@/components/EventEditor.vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,53 +14,46 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoad } from '@/composables/useLoad'
 import { formatBerlin } from '@/lib/berlinTime'
+import { errorText } from '@/lib/errorText'
 
-const picks = ref<AdminEvent[]>([])
-const total = ref(0)
-const venues = shallowRef<AdminVenue[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const { data: result, loading, error, reload } = useLoad<EventSearchPage | null>(fetchPicks, null)
+// The venue list fills the venue column. Without it the picks still list.
+const { data: venues, reload: loadVenues } = useLoad(fetchAllVenues, [])
 const editing = ref<number | null>(null)
 /** The event whose Clear is in flight, and the last Clear that failed. */
 const clearing = ref<number | null>(null)
 const clearError = ref<string | null>(null)
 
+const picks = computed(() => result.value?.content ?? [])
+const total = computed(() => result.value?.totalElements ?? 0)
 const venueNames = computed(() => new Map(venues.value.map((v) => [v.id, v.name])))
 
 const isCurrent = (event: AdminEvent) =>
   !!event.featuredUntil && Date.parse(event.featuredUntil) > Date.now()
 
-onMounted(async () => {
-  try {
-    const page = await fetchPicks()
-    picks.value = [...page.content]
-    total.value = page.totalElements
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-})
-
-onMounted(async () => {
-  // The venue list fills the venue column. Without it the picks still list.
-  try {
-    venues.value = await fetchAllVenues()
-  } catch {
-    venues.value = []
-  }
-})
+onMounted(reload)
+onMounted(loadVenues)
 
 function drop(id: number) {
-  picks.value = picks.value.filter((event) => event.id !== id)
-  total.value -= 1
+  const page = result.value
+  if (!page) return
+  result.value = {
+    ...page,
+    content: page.content.filter((event) => event.id !== id),
+    totalElements: page.totalElements - 1,
+  }
 }
 
 /** A save that ends or moves the pick past now takes the row off the list. */
 function onSaved(saved: AdminEvent) {
-  if (isCurrent(saved)) {
-    picks.value = picks.value.map((event) => (event.id === saved.id ? saved : event))
+  const page = result.value
+  if (page && isCurrent(saved)) {
+    result.value = {
+      ...page,
+      content: page.content.map((event) => (event.id === saved.id ? saved : event)),
+    }
   } else {
     drop(saved.id)
   }
@@ -73,7 +66,7 @@ async function clear(event: AdminEvent) {
     await clearPick(event.id)
     drop(event.id)
   } catch (e) {
-    clearError.value = e instanceof Error ? e.message : String(e)
+    clearError.value = errorText(e)
   } finally {
     clearing.value = null
   }

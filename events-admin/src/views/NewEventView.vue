@@ -17,6 +17,7 @@ import { type AdminVenue, fetchAllVenues } from '@/api/venues'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { errorText } from '@/lib/errorText'
 
 const selectClass =
   'h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none'
@@ -62,7 +63,7 @@ async function checkSameDay(): Promise<void> {
   } catch (e) {
     if (run !== checkRun) return
     sameDay.value = []
-    sameDayError.value = e instanceof Error ? e.message : String(e)
+    sameDayError.value = errorText(e)
   }
 }
 
@@ -104,7 +105,7 @@ onMounted(async () => {
       draft.value = await fetchDraft(draftId)
       Object.assign(form, formFromDraft(draft.value, emptyNewEventForm()))
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e)
+      error.value = errorText(e)
     }
   }
   // "New event" on the Manual venues page opens the form with the venue chosen.
@@ -113,7 +114,7 @@ onMounted(async () => {
   try {
     venues.value = await fetchAllVenues()
   } catch (e) {
-    venuesError.value = e instanceof Error ? e.message : String(e)
+    venuesError.value = errorText(e)
   }
 })
 
@@ -125,7 +126,7 @@ async function approve(eventId: number) {
     await approveDraft(from.id, eventId)
     await router.push({ name: 'drafts' })
   } catch (e) {
-    error.value = `The event is saved, but approving the draft failed. ${e instanceof Error ? e.message : String(e)}`
+    error.value = `The event is saved, but approving the draft failed. ${errorText(e)}`
   }
 }
 
@@ -185,7 +186,7 @@ async function save(addAnother: boolean) {
     // The venue and the date did not change, so the watcher does not run: the saved event is new.
     await checkSameDay()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
   } finally {
     busy.value = false
   }

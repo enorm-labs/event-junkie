@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { type EventSource, type SourceUpdate, updateSource } from '@/api/eventSources'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { errorText } from '@/lib/errorText'
 
 const props = defineProps<{ source: EventSource }>()
 const emit = defineEmits<{ saved: [source: EventSource]; cancel: [] }>()
@@ -50,7 +51,7 @@ async function save() {
   try {
     emit('saved', await updateSource(props.source.slug, changes.value))
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
   } finally {
     saving.value = false
   }

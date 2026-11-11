@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ArrowDown, ArrowUp, ChevronDown, Columns3 } from '@lucide/vue'
 import { FlexRender, useTable } from '@tanstack/vue-table'
-import { computed, onMounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { type EventSource, fetchAllSources } from '@/api/eventSources'
 import SourceActions from '@/components/SourceActions.vue'
@@ -22,12 +22,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoad } from '@/composables/useLoad'
 import { INITIAL_VISIBILITY, columns, features } from '@/lib/sourceTable'
 import { STICKY_CELL, STICKY_HEAD } from '@/lib/utils'
 
-const sources = shallowRef<EventSource[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const { data: sources, loading, error, reload } = useLoad(fetchAllSources, [])
 const query = ref('')
 
 // The page holds every source, so the search filters in the browser.
@@ -82,15 +81,7 @@ function replaceSource(updated: EventSource) {
   sources.value = sources.value.map((s) => (s.slug === updated.slug ? updated : s))
 }
 
-onMounted(async () => {
-  try {
-    sources.value = await fetchAllSources()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-})
+onMounted(reload)
 </script>
 
 <template>

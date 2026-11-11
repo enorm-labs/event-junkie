@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Check, ExternalLink, X } from '@lucide/vue'
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import {
@@ -17,7 +17,9 @@ import EventEditor from '@/components/EventEditor.vue'
 import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useLoad } from '@/composables/useLoad'
 import { publicOrigin } from '@/lib/environments'
+import { errorText } from '@/lib/errorText'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,10 +28,7 @@ const router = useRouter()
 const checkName = computed(() => String(route.query.check ?? ''))
 const page = computed(() => Math.max(0, Number(route.query.page) || 0))
 
-const result = shallowRef<SuggestionPage | null>(null)
 const suggestions = ref<Suggestion[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
 /** The suggestion whose action runs. One at a time: Accept is a read and two writes. */
 const busy = ref<number | null>(null)
 /** The error of the last action, by suggestion id, shown in that suggestion's card. */
@@ -52,27 +51,24 @@ function navigate(query: { check?: string; page?: number }) {
   })
 }
 
-async function load() {
-  loading.value = true
-  error.value = null
+const {
+  data: result,
+  loading,
+  error,
+  reload: load,
+} = useLoad<SuggestionPage | null>(() => {
   failures.value = {}
-  try {
-    result.value = await fetchSuggestions({ page: page.value, checkName: checkName.value })
-    suggestions.value = [...result.value.content]
-  } catch (e) {
-    result.value = null
-    suggestions.value = []
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-}
+  return fetchSuggestions({ page: page.value, checkName: checkName.value })
+}, null)
 
 watch([checkName, page], load, { immediate: true })
 
 /** What is left open: the total the importer counted, less what this page decided since. */
 const decided = ref(0)
-watch(result, () => (decided.value = 0))
+watch(result, (loaded) => {
+  suggestions.value = loaded ? [...loaded.content] : []
+  decided.value = 0
+})
 const open = computed(() => Math.max(0, (result.value?.totalElements ?? 0) - decided.value))
 const hasNext = computed(() => page.value + 1 < (result.value?.totalPages ?? 0))
 
@@ -85,7 +81,7 @@ async function decide(suggestion: Suggestion, action: () => Promise<string>) {
   try {
     done = await action()
   } catch (e) {
-    failures.value[suggestion.id] = e instanceof Error ? e.message : String(e)
+    failures.value[suggestion.id] = errorText(e)
     return
   } finally {
     busy.value = null

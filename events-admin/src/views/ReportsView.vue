@@ -4,7 +4,7 @@
  * deletes its reports, as the privacy notice promises, so resolve once the fix is live or the
  * verdict is final. `/fix-events` works the same queue.
  */
-import { onMounted, ref, shallowRef } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import { fetchReports, PROBLEM_LABELS, type ReportedEvent, resolveReports } from '@/api/reports'
 import { Badge } from '@/components/ui/badge'
@@ -17,27 +17,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoad } from '@/composables/useLoad'
 import { publicOrigin } from '@/lib/environments'
+import { errorText } from '@/lib/errorText'
 
 const origin = publicOrigin(import.meta.env.MODE)
 
-const events = shallowRef<ReportedEvent[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const { data: events, loading, error, reload: load } = useLoad(fetchReports, [])
 const busy = ref(false)
-
-async function load() {
-  loading.value = true
-  error.value = null
-  try {
-    events.value = await fetchReports()
-  } catch (e) {
-    events.value = []
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-}
 
 async function resolve(event: ReportedEvent) {
   busy.value = true
@@ -46,7 +33,7 @@ async function resolve(event: ReportedEvent) {
     await resolveReports(event.eventId)
     await load()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
   } finally {
     busy.value = false
   }

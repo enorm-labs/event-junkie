@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Check, Pencil, Plus, Trash2, X } from '@lucide/vue'
-import { onMounted, ref, shallowRef } from 'vue'
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import { deleteFestival, type Festival, fetchFestivals } from '@/api/festivals'
@@ -21,10 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoad } from '@/composables/useLoad'
+import { errorText } from '@/lib/errorText'
 
-const festivals = shallowRef<Festival[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const { data: festivals, loading, error, reload } = useLoad(fetchFestivals, [])
 /** The festival the form edits: null for a new one, undefined while the form is closed. */
 const editing = ref<Festival | null | undefined>(undefined)
 /** The festival whose deletion waits for a confirmation. */
@@ -36,15 +36,7 @@ const deleteError = ref<string | null>(null)
 const byFirstDayDesc = (a: Festival, b: Festival) =>
   b.firstDay.localeCompare(a.firstDay) || b.id - a.id
 
-onMounted(async () => {
-  try {
-    festivals.value = await fetchFestivals()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-})
+onMounted(reload)
 
 function saved(festival: Festival) {
   festivals.value = [...festivals.value.filter((f) => f.id !== festival.id), festival].sort(
@@ -61,7 +53,7 @@ async function remove(festival: Festival) {
     festivals.value = festivals.value.filter((f) => f.id !== festival.id)
     confirming.value = null
   } catch (e) {
-    deleteError.value = e instanceof Error ? e.message : String(e)
+    deleteError.value = errorText(e)
   } finally {
     deleting.value = false
   }

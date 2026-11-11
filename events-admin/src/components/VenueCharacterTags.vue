@@ -12,6 +12,8 @@ import {
 } from '@/api/venues'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useLoad } from '@/composables/useLoad'
+import { errorText } from '@/lib/errorText'
 
 const props = defineProps<{ venue: AdminVenue }>()
 
@@ -21,27 +23,22 @@ const stored = reactive(new Map<string, string>())
 const drafts = reactive<Record<string, string>>({})
 /** A row's own message: a refused URL or the importer's answer. */
 const rowErrors = reactive<Record<string, string>>({})
-const loading = ref(true)
-const error = ref<string | null>(null)
 /** The tag whose request runs. One at a time. */
 const busy = ref<string | null>(null)
 /** The tag whose clearing waits for a confirmation. */
 const confirming = ref<string | null>(null)
 
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e))
-
-onMounted(async () => {
+const { loading, error, reload } = useLoad(async () => {
   try {
     for (const { tag, sourceUrl } of await fetchCharacterTags(props.venue.id)) {
       stored.set(tag, sourceUrl)
     }
-  } catch (e) {
-    error.value = message(e)
   } finally {
     for (const { slug } of VENUE_CHARACTER_TAGS) drafts[slug] = stored.get(slug) ?? ''
-    loading.value = false
   }
-})
+}, undefined)
+
+onMounted(reload)
 
 const changed = (slug: string) => drafts[slug]!.trim() !== (stored.get(slug) ?? '')
 
@@ -58,7 +55,7 @@ async function save(slug: string) {
     stored.set(slug, saved.sourceUrl)
     drafts[slug] = saved.sourceUrl
   } catch (e) {
-    rowErrors[slug] = message(e)
+    rowErrors[slug] = errorText(e)
   } finally {
     busy.value = null
   }
@@ -73,7 +70,7 @@ async function clear(slug: string) {
     drafts[slug] = ''
     confirming.value = null
   } catch (e) {
-    rowErrors[slug] = message(e)
+    rowErrors[slug] = errorText(e)
   } finally {
     busy.value = null
   }

@@ -1,4 +1,4 @@
-import { ensureOk } from './eventSources'
+import { ensureOk, type Page, PAGE_SIZE } from '@/api/http'
 
 /** `FestivalRequest.kt`: the body of a create and of the PUT, which replaces the whole festival. */
 export interface FestivalRequest {
@@ -22,14 +22,8 @@ export interface Festival extends FestivalRequest {
   eventCount: number
 }
 
-interface Page<T> {
-  content: T[]
-  totalElements: number
-}
-
 const FESTIVALS = '/api/admin/festivals'
 const JSON_HEADERS = { Accept: 'application/json', 'Content-Type': 'application/json' }
-const PAGE_SIZE = 100
 
 /**
  * Every festival, the latest first day first. One page holds a hundred, years of them, so a
