@@ -5,9 +5,9 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateOrNull
@@ -42,29 +42,9 @@ class MbiaOverviewPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val records = records(document) ?: return emptyList()
+        val records = WixEventsWarmupData.collectionRecords(document, COLLECTION, EventSource.M_BIA) ?: return emptyList()
         logger.info { "Found ${records.size()} record(s) in the M-BIA $COLLECTION collection" }
         return records.mapSkippingFailures(logger, "M-BIA event record") { parseRecord(it, baseUrl) }
-    }
-
-    private fun records(document: Document): JsonNode? {
-        val script = document.getElementById("wix-warmup-data")
-        if (script == null) {
-            logger.warn { "No 'wix-warmup-data' script on the M-BIA events page" }
-            return null
-        }
-        val records =
-            runCatching { SCRAPER_JSON.readTree(script.data()) }
-                .onFailure { logger.warn(it) { "Failed to parse the M-BIA wix-warmup-data JSON" } }
-                .getOrNull()
-                ?.path("appsWarmupData")
-                ?.path("dataBinding")
-                ?.path("dataStore")
-                ?.path("recordsByCollectionId")
-                ?.path(COLLECTION)
-                ?.takeIf { it.isObject }
-        if (records == null) logger.warn { "No $COLLECTION collection in the M-BIA warmup payload" }
-        return records
     }
 
     private fun parseRecord(

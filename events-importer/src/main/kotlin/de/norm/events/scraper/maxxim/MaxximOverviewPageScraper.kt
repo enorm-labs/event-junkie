@@ -5,7 +5,6 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WIX_REGISTRATION_TICKETS
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.isNonArtistName
@@ -16,6 +15,7 @@ import de.norm.events.scraper.parseWixTicketPrice
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.wixPriceRangeNote
+import de.norm.events.scraper.wixTicketing
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
@@ -83,7 +83,7 @@ class MaxximOverviewPageScraper {
         // Every night in the live programme is Wix-ticketed, but the guard costs nothing and keeps a
         // future externally ticketed night from being reported sold out — see [WIX_REGISTRATION_TICKETS].
         val registration = node.path("registration")
-        val ticketing = registration.path("ticketing").takeIf { registration.path("type").asInt(0) == WIX_REGISTRATION_TICKETS }
+        val ticketing = registration.wixTicketing()
         val description = node.stringOrNull("description")
         return ScrapedEvent(
             title = title,

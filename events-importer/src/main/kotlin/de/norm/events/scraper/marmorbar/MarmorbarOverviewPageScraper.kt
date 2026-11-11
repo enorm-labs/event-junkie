@@ -3,17 +3,17 @@ package de.norm.events.scraper.marmorbar
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WIX_REGISTRATION_OPEN_TICKETS
-import de.norm.events.scraper.WIX_REGISTRATION_TICKETS
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.isWixCheckoutOpen
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.mapWixEventStatus
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.wixTicketing
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
@@ -49,7 +49,6 @@ class MarmorbarOverviewPageScraper {
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
         val date = requireNotNull(schedule.date) { "Marmorbar event '$slug' has no start date" }
         val registration = node.path("registration")
-        val soldByWix = registration.path("type").asInt(0) == WIX_REGISTRATION_TICKETS
         val eventPage = resolveUrl(baseUrl, "event-details/$slug")
         val cue = inferUnmarkedTitleType(title).takeUnless { it == EventType.OTHER.name }
         return ScrapedEvent(
@@ -67,8 +66,8 @@ class MarmorbarOverviewPageScraper {
             sourceId = "${EventSource.MARMORBAR.sourceIdPrefix}$id",
             ticketUrl =
                 registration.path("external").stringOrNull("registration")
-                    ?: eventPage.takeIf { soldByWix && registration.path("status").asInt(0) == WIX_REGISTRATION_OPEN_TICKETS },
-            soldOut = (soldByWix && registration.path("ticketing").path("soldOut").asBoolean(false)) || cleanedTitle.soldOut,
+                    ?: eventPage.takeIf { registration.isWixCheckoutOpen() },
+            soldOut = registration.wixTicketing()?.path("soldOut")?.asBoolean(false) == true || cleanedTitle.soldOut,
             status = mapWixEventStatus(node.path("status"))
         )
     }

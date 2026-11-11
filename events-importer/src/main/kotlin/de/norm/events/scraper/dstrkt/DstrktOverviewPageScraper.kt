@@ -3,8 +3,8 @@ package de.norm.events.scraper.dstrkt
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.htmlParagraphText
@@ -30,29 +30,9 @@ class DstrktOverviewPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val records = records(document) ?: return emptyList()
+        val records = WixEventsWarmupData.collectionRecords(document, COLLECTION, EventSource.DSTRKT) ?: return emptyList()
         logger.info { "Found ${records.size()} record(s) in the DSTRKT UPCOMINGEVENTS collection" }
         return records.mapSkippingFailures(logger, "DSTRKT event record") { parseRecord(it, baseUrl) }
-    }
-
-    private fun records(document: Document): JsonNode? {
-        val script = document.getElementById("wix-warmup-data")
-        if (script == null) {
-            logger.warn { "No 'wix-warmup-data' script on the DSTRKT home page" }
-            return null
-        }
-        val records =
-            runCatching { SCRAPER_JSON.readTree(script.data()) }
-                .onFailure { logger.warn(it) { "Failed to parse the DSTRKT wix-warmup-data JSON" } }
-                .getOrNull()
-                ?.path("appsWarmupData")
-                ?.path("dataBinding")
-                ?.path("dataStore")
-                ?.path("recordsByCollectionId")
-                ?.path(COLLECTION)
-                ?.takeIf { it.isObject }
-        if (records == null) logger.warn { "No $COLLECTION collection in the DSTRKT warmup payload" }
-        return records
     }
 
     private fun parseRecord(

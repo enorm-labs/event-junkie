@@ -3,7 +3,6 @@ package de.norm.events.scraper.colosseum
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WIX_REGISTRATION_OPEN_TICKETS
 import de.norm.events.scraper.WIX_REGISTRATION_TICKETS
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.buildArtistList
@@ -12,6 +11,7 @@ import de.norm.events.scraper.colosseum.ColosseumOverviewPageScraper.Companion.C
 import de.norm.events.scraper.colosseum.ColosseumOverviewPageScraper.Companion.VENUE_FORMATS
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.isWixCheckoutOpen
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.mapWixEventStatus
 import de.norm.events.scraper.parseWixSchedule
@@ -19,6 +19,7 @@ import de.norm.events.scraper.parseWixTicketPrice
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.wixPriceRangeNote
+import de.norm.events.scraper.wixTicketing
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
@@ -106,8 +107,7 @@ class ColosseumOverviewPageScraper {
         // Freunden", "CEO, Wirtschaftsmanager, Aufsichtsrat") — a subtitle, not a description.
         val subtitle = node.stringOrNull("description")
         val registration = node.path("registration")
-        val soldByWix = registration.path("type").asInt(0) == WIX_REGISTRATION_TICKETS
-        val ticketing = registration.path("ticketing").takeIf { soldByWix }
+        val ticketing = registration.wixTicketing()
         val eventPage = resolveUrl(baseUrl, "$DETAILS_PATH$slug")
         return ScrapedEvent(
             title = title,
@@ -122,7 +122,7 @@ class ColosseumOverviewPageScraper {
             sourceId = "${EventSource.COLOSSEUM.sourceIdPrefix}$slug",
             ticketUrl =
                 registration.path("external").stringOrNull("registration")
-                    ?: eventPage.takeIf { soldByWix && registration.path("status").asInt(0) == WIX_REGISTRATION_OPEN_TICKETS },
+                    ?: eventPage.takeIf { registration.isWixCheckoutOpen() },
             pricePresale = ticketing?.let { parseWixTicketPrice(it.path("lowestTicketPrice")) },
             priceNote = ticketing?.let { wixPriceRangeNote(it) },
             soldOut = ticketing?.path("soldOut")?.asBoolean(false) == true || cleanedTitle.soldOut,
