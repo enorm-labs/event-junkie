@@ -22,6 +22,7 @@ buildscript {
             classpath("com.fasterxml.jackson.core:jackson-databind:${property("jackson-buildscript-2.version")}")
             classpath("org.jsoup:jsoup:${property("jsoup.version")}")
             classpath("com.google.guava:guava:${property("guava-buildscript.version")}")
+            classpath("org.json:json:${property("org-json-buildscript.version")}")
         }
     }
 }
