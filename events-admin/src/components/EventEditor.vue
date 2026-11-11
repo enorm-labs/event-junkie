@@ -41,6 +41,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { errorText } from '@/lib/errorText'
 
 const props = defineProps<{ eventId: number | null }>()
 const emit = defineEmits<{ close: []; saved: [event: AdminEvent] }>()
@@ -147,7 +148,7 @@ async function loadFestivals() {
   try {
     festivals.value = await fetchFestivals()
   } catch (e) {
-    festivalsError.value = e instanceof Error ? e.message : String(e)
+    festivalsError.value = errorText(e)
   }
 }
 
@@ -187,7 +188,7 @@ async function runCheck(id: number) {
   try {
     checkRun.value = await checkEvent(id)
   } catch (e) {
-    checkError.value = e instanceof Error ? e.message : String(e)
+    checkError.value = errorText(e)
   } finally {
     checking.value = false
   }
@@ -209,7 +210,7 @@ async function loadFeatures(id: number) {
   try {
     showFeatures(await fetchEventFeatures(id))
   } catch (e) {
-    featuresError.value = e instanceof Error ? e.message : String(e)
+    featuresError.value = errorText(e)
   }
 }
 
@@ -289,7 +290,7 @@ async function run(action: () => Promise<void>) {
   try {
     await action()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
   } finally {
     busy.value = false
   }
@@ -311,7 +312,7 @@ watch(
       void loadFestivals()
       show(await fetchEvent(id))
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e)
+      error.value = errorText(e)
     } finally {
       loading.value = false
     }

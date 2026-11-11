@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import {
@@ -12,6 +12,7 @@ import {
 import { fetchAllVenues } from '@/api/venues'
 import ArtistReview from '@/components/ArtistReview.vue'
 import PagerButtons from '@/components/PagerButtons.vue'
+import { useLoad } from '@/composables/useLoad'
 import { publicOrigin } from '@/lib/environments'
 
 const route = useRoute()
@@ -20,45 +21,31 @@ const router = useRouter()
 // The page is in the query string, so a reload keeps it.
 const page = computed(() => Math.max(0, Number(route.query.page) || 0))
 
-const result = shallowRef<ReviewPage | null>(null)
+const {
+  data: result,
+  loading,
+  error,
+  reload,
+} = useLoad<ReviewPage | null>(() => fetchReviewPage(page.value), null)
 const artists = ref<ReviewArtist[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
 const notice = ref<string | null>(null)
-const venueNames = shallowRef<ReadonlyMap<number, string>>(new Map())
+// A venue name is a nicety beside the date and the title, so a failed read leaves the ids.
+const { data: venueNames, reload: loadVenueNames } = useLoad<ReadonlyMap<number, string>>(
+  async () => new Map((await fetchAllVenues()).map((v) => [v.id, v.name])),
+  new Map(),
+)
 
 const origin = publicOrigin(import.meta.env.MODE)
 
-async function load() {
-  loading.value = true
-  error.value = null
-  try {
-    result.value = await fetchReviewPage(page.value)
-    artists.value = [...result.value.content]
-  } catch (e) {
-    result.value = null
-    artists.value = []
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-}
-
-watch(page, load, { immediate: true })
-
-// A venue name is a nicety beside the date and the title, so a failed read leaves the ids.
-onMounted(async () => {
-  try {
-    const venues = await fetchAllVenues()
-    venueNames.value = new Map(venues.map((v) => [v.id, v.name]))
-  } catch {
-    venueNames.value = new Map()
-  }
-})
+watch(page, reload, { immediate: true })
+onMounted(loadVenueNames)
 
 /** What is left: the total the importer counted, less what this page matched since. */
 const matched = ref(0)
-watch(result, () => (matched.value = 0))
+watch(result, (loaded) => {
+  artists.value = loaded ? [...loaded.content] : []
+  matched.value = 0
+})
 const left = computed(() => Math.max(0, (result.value?.totalElements ?? 0) - matched.value))
 const hasNext = computed(() => page.value + 1 < (result.value?.totalPages ?? 0))
 

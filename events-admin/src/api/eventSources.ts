@@ -1,3 +1,5 @@
+import { ensureOk, fetchAllPages } from '@/api/http'
+
 /**
  * The fields of the importer's `EventSourceResponse` this app reads. Hand-written: no generated
  * schema covers the admin API yet, and `EventSourceResponses.kt` is the source of truth.
@@ -19,62 +21,16 @@ export interface EventSource {
   flaggedAt: string | null
 }
 
-interface Page<T> {
-  content: T[]
-  totalElements: number
-}
-
-/** The importer caps a page at 100, whatever `size` asks for. */
-export const PAGE_SIZE = 100
-const MAX_PAGES = 50
+export { PAGE_SIZE } from '@/api/http'
 const SOURCES = '/api/admin/event-sources'
 
-/**
- * Every source, sorted by name. Pages until `totalElements` is reached and refuses a partial
- * listing, as `scripts/force-import.py` does: one page reads as a complete list (#2595).
- */
-export async function fetchAllSources(fetchFn: typeof fetch = fetch): Promise<EventSource[]> {
-  const bySlug = new Map<string, EventSource>()
-  let total = 0
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const response = await fetchFn(`${SOURCES}?page=${page}&size=${PAGE_SIZE}&sort=name,asc`, {
-      headers: { Accept: 'application/json' },
-    })
-    if (!response.ok) {
-      throw new Error(`GET /api/admin/event-sources page ${page}: HTTP ${response.status}`)
-    }
-    const body = (await response.json()) as Page<EventSource>
-    total = body.totalElements
-    for (const source of body.content) bySlug.set(source.slug, source)
-    if (body.content.length === 0 || bySlug.size >= total) break
-  }
-  if (bySlug.size !== total) {
-    throw new Error(`Read ${bySlug.size} of ${total} sources. A partial listing is not shown.`)
-  }
-  return [...bySlug.values()]
-}
-
-/**
- * Throws for a response that is not 2xx. The message names the call and the status, and adds the
- * importer's `ProblemDetail.detail` when the body carries one (`GlobalExceptionHandler.kt`).
- */
-export async function ensureOk(response: Response, call: string): Promise<void> {
-  if (response.ok) return
-  let detail = ''
-  try {
-    const body = (await response.json()) as { detail?: unknown; errors?: unknown }
-    if (typeof body.detail === 'string' && body.detail) detail = `: ${body.detail}`
-    // A validation 400 says only "Validation failed" in `detail`; the reasons are in `errors`.
-    if (Array.isArray(body.errors)) {
-      const reasons = body.errors
-        .map((e: { message?: unknown }) => e?.message)
-        .filter((m): m is string => typeof m === 'string' && m !== '')
-      if (reasons.length) detail += ` (${reasons.join('; ')})`
-    }
-  } catch {
-    // No JSON body: the status alone is the message.
-  }
-  throw new Error(`${call}: HTTP ${response.status}${detail}`)
+/** Every source, sorted by name. Refuses a partial listing (#2595). */
+export function fetchAllSources(fetchFn: typeof fetch = fetch): Promise<EventSource[]> {
+  return fetchAllPages<EventSource>(
+    SOURCES,
+    { sort: 'name,asc', noun: 'sources', key: (source) => source.slug },
+    fetchFn,
+  )
 }
 
 /** One source, read again after an action changed it. */

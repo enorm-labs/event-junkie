@@ -23,15 +23,14 @@ import EventEditor from '@/components/EventEditor.vue'
 import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useLoad } from '@/composables/useLoad'
+import { errorText } from '@/lib/errorText'
 
 const route = useRoute()
 const router = useRouter()
 
 const page = computed(() => Math.max(0, Number(route.query.page) || 0))
-const result = shallowRef<DraftPage | null>(null)
 const nights = ref<DraftNight[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
 const busy = ref<string | null>(null)
 const failures = ref<Record<string, string>>({})
 const notice = ref<string | null>(null)
@@ -46,22 +45,20 @@ const editing = ref<number | null>(null)
 /** The venue whose "Switch off" was pressed once. The second press deletes its drafts. */
 const confirmingOff = ref<string | null>(null)
 
-async function load() {
-  loading.value = true
-  error.value = null
+const {
+  data: result,
+  loading,
+  error,
+  reload: load,
+} = useLoad<DraftPage | null>(() => {
   failures.value = {}
-  try {
-    result.value = await fetchDrafts(page.value)
-    nights.value = groupByNight(result.value.content)
-    void loadTargets()
-  } catch (e) {
-    result.value = null
-    nights.value = []
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-}
+  return fetchDrafts(page.value)
+}, null)
+
+watch(result, (loaded) => {
+  nights.value = loaded ? groupByNight(loaded.content) : []
+  if (loaded) void loadTargets()
+})
 
 /** Reads the approved event of every update night on the page. */
 async function loadTargets() {
@@ -73,7 +70,7 @@ async function loadTargets() {
       try {
         targets.value[night.key] = await fetchEvent(eventId)
       } catch (e) {
-        targets.value[night.key] = e instanceof Error ? e.message : String(e)
+        targets.value[night.key] = errorText(e)
       }
     }),
   )
@@ -101,7 +98,7 @@ async function applyUpdate(night: DraftNight) {
     if (changed.length) await updateEvent(event.id, applyChanges(event, changed))
     await approveDraft(night.drafts[0]!.id, event.id)
   } catch (e) {
-    failures.value[night.key] = e instanceof Error ? e.message : String(e)
+    failures.value[night.key] = errorText(e)
     return
   } finally {
     busy.value = null
@@ -123,7 +120,7 @@ async function loadVenues() {
     venues.value = await fetchInstagramVenues()
     venuesError.value = null
   } catch (e) {
-    venuesError.value = e instanceof Error ? e.message : String(e)
+    venuesError.value = errorText(e)
   }
 }
 
@@ -147,7 +144,7 @@ async function reject(night: DraftNight) {
   try {
     await rejectDraft(night.drafts[0]!.id)
   } catch (e) {
-    failures.value[night.key] = e instanceof Error ? e.message : String(e)
+    failures.value[night.key] = errorText(e)
     return
   } finally {
     busy.value = null
@@ -168,7 +165,7 @@ async function switchOff(venue: InstagramVenue) {
     notice.value = `${venue.name} is switched off. ${deleted} draft(s) deleted.`
     await Promise.all([loadVenues(), load()])
   } catch (e) {
-    venuesError.value = e instanceof Error ? e.message : String(e)
+    venuesError.value = errorText(e)
   } finally {
     busy.value = null
   }

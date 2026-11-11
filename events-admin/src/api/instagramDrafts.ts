@@ -7,13 +7,8 @@
  * venue and date. A pending draft that already carries an `eventId` is a later post of a night
  * approved before: it proposes an update to that event.
  */
-import {
-  type AdminEvent,
-  type EventRequest,
-  failOnError,
-  type NewEventForm,
-  toEventRequest,
-} from '@/api/events'
+import { type AdminEvent, type EventRequest, type NewEventForm, toEventRequest } from '@/api/events'
+import { failOnError, type Page } from '@/api/http'
 
 export type DraftStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_AN_EVENT'
 
@@ -45,11 +40,7 @@ export interface InstagramDraft {
   createdAt: string
 }
 
-export interface DraftPage {
-  content: InstagramDraft[]
-  totalElements: number
-  totalPages: number
-}
+export type DraftPage = Page<InstagramDraft>
 
 /** The drafts of one venue and date: one night, announced by one post or several. */
 export interface DraftNight {

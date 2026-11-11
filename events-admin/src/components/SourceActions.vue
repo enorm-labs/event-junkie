@@ -26,6 +26,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { errorText } from '@/lib/errorText'
 
 const props = defineProps<{ source: EventSource }>()
 const emit = defineEmits<{ updated: [source: EventSource] }>()
@@ -58,7 +59,7 @@ async function runCheck() {
     await checkSource(props.source.slug)
     checkStarted.value = true
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
   } finally {
     checking.value = false
   }
@@ -86,7 +87,7 @@ async function run(action: Action) {
     if (action === 'retry') emit('updated', await retrySource(slug))
     else await triggerImport(slug, action === 'force')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
     return
   } finally {
     busy.value = null
@@ -103,7 +104,7 @@ async function poll(slug: string, lastImportAtBefore: string | null, deadline: n
     current = await fetchSource(slug)
   } catch (e) {
     if (unmounted) return
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
     polling.value = false
     return
   }

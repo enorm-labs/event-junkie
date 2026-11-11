@@ -6,6 +6,7 @@
  * (ADR-042). So an edit sends back every stored value as it was read, and only the edited field
  * differs: a field left out of the body would reset to its default and pin that.
  */
+import { failOnError, type Page } from '@/api/http'
 
 /** `EventType` in `events-core`, in its order. */
 export const EVENT_TYPES = [
@@ -209,32 +210,6 @@ function relocationEdit(
 function editedText(typed: string | undefined, stored: string | null): string | null {
   if (typed === undefined || typed === (stored ?? '')) return stored
   return blankToNull(typed)
-}
-
-interface ProblemDetail {
-  detail?: unknown
-  errors?: { field?: unknown; message?: unknown }[]
-}
-
-/** The `detail` of a Problem Detail, with the field errors a failed validation lists. */
-function problemText(body: ProblemDetail): string | null {
-  const detail = typeof body.detail === 'string' ? body.detail : null
-  const fields = Array.isArray(body.errors)
-    ? body.errors.map((e) => `${String(e.field)}: ${String(e.message)}`)
-    : []
-  if (fields.length === 0) return detail
-  return `${detail ?? 'Validation failed'} (${fields.join('; ')})`
-}
-
-/** [response] when it is a success. Else an error naming [what], the status and the Problem Detail. */
-export async function failOnError(response: Response, what: string): Promise<Response> {
-  if (response.ok) return response
-  // The importer answers a refused request with an RFC 9457 Problem Detail.
-  const detail = await response
-    .json()
-    .then((body: ProblemDetail) => problemText(body))
-    .catch(() => null)
-  throw new Error(`${what}: HTTP ${response.status}${detail ? ` — ${detail}` : ''}`)
 }
 
 export async function fetchEvent(id: number, fetchFn: typeof fetch = fetch): Promise<AdminEvent> {
@@ -533,11 +508,7 @@ export interface EventSearch {
   page: number
 }
 
-export interface EventSearchPage {
-  content: AdminEvent[]
-  totalElements: number
-  totalPages: number
-}
+export type EventSearchPage = Page<AdminEvent>
 
 /**
  * The `GET /api/admin/events` URL for [search], sorted by date, then start time: oldest first from

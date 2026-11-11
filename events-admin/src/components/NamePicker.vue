@@ -5,6 +5,7 @@ import { ref, watch } from 'vue'
 import { type NameKind, type NamedRow, searchByName } from '@/api/names'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { errorText } from '@/lib/errorText'
 
 /** Finds an artist or a promoter by part of the name and hands the chosen row up. */
 const props = defineProps<{
@@ -37,7 +38,7 @@ const search = useDebounceFn(async (name: string) => {
     rows.value = result.rows
     total.value = result.total
   } catch (e) {
-    if (request === latest) error.value = e instanceof Error ? e.message : String(e)
+    if (request === latest) error.value = errorText(e)
   } finally {
     if (request === latest) searching.value = false
   }

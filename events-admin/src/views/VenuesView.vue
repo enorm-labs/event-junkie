@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Tags } from '@lucide/vue'
-import { computed, onMounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { type AdminVenue, fetchAllVenues } from '@/api/venues'
 import VenueCharacterTags from '@/components/VenueCharacterTags.vue'
@@ -21,22 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoad } from '@/composables/useLoad'
 
-const venues = shallowRef<AdminVenue[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const { data: venues, loading, error, reload } = useLoad(fetchAllVenues, [])
 const query = ref('')
 const open = ref<AdminVenue | null>(null)
 
-onMounted(async () => {
-  try {
-    venues.value = await fetchAllVenues()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-})
+onMounted(reload)
 
 // The importer sorts by name. Closed venues go to the end, still by name.
 const ordered = computed(() => [

@@ -1,4 +1,4 @@
-import { ensureOk } from './eventSources'
+import { ensureOk, fetchAllPages } from '@/api/http'
 
 /**
  * The fields of the importer's `VenueResponse` this app reads. Hand-written: `VenueResponse.kt`
@@ -14,38 +14,20 @@ export interface AdminVenue {
   programmeFamilies: string[]
 }
 
-interface Page<T> {
-  content: T[]
-  totalElements: number
-}
-
-/** The importer caps a page at 100, whatever `size` asks for. */
-const PAGE_SIZE = 100
-const MAX_PAGES = 50
-
 /** Every venue, sorted by name. Refuses a partial listing, as `fetchAllSources` does (#2595). */
 export async function fetchAllVenues(fetchFn: typeof fetch = fetch): Promise<AdminVenue[]> {
-  const byId = new Map<number, AdminVenue>()
-  let total = 0
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const response = await fetchFn(
-      `/api/admin/venues?page=${page}&size=${PAGE_SIZE}&sort=name,asc`,
-      { headers: { Accept: 'application/json' } },
-    )
-    if (!response.ok) {
-      throw new Error(`GET /api/admin/venues page ${page}: HTTP ${response.status}`)
-    }
-    const body = (await response.json()) as Page<AdminVenue>
-    total = body.totalElements
-    for (const { id, name, slug, closedOn, programmeFamilies } of body.content) {
-      byId.set(id, { id, name, slug, closedOn, programmeFamilies })
-    }
-    if (body.content.length === 0 || byId.size >= total) break
-  }
-  if (byId.size !== total) {
-    throw new Error(`Read ${byId.size} of ${total} venues. A partial listing is not shown.`)
-  }
-  return [...byId.values()]
+  const venues = await fetchAllPages<AdminVenue>(
+    '/api/admin/venues',
+    { sort: 'name,asc', noun: 'venues', key: (venue) => venue.id },
+    fetchFn,
+  )
+  return venues.map(({ id, name, slug, closedOn, programmeFamilies }) => ({
+    id,
+    name,
+    slug,
+    closedOn,
+    programmeFamilies,
+  }))
 }
 
 const VENUES = '/api/admin/venues'

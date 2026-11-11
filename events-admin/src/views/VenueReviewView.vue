@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RefreshCw } from '@lucide/vue'
-import { computed, onMounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import {
   fetchNeedsReview,
@@ -28,13 +28,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoad } from '@/composables/useLoad'
 import { berlinDay } from '@/lib/berlinTime'
 import { publicOrigin } from '@/lib/environments'
+import { errorText } from '@/lib/errorText'
 import { STICKY_CELL, STICKY_HEAD } from '@/lib/utils'
 
-const venues = shallowRef<NeedsReviewVenue[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
+const { data: venues, loading, error, reload: load } = useLoad(fetchNeedsReview, [])
 /** The venue whose action runs. One at a time: each is a read and a full write. */
 const busy = ref<number | null>(null)
 const notice = ref<string | null>(null)
@@ -54,19 +54,6 @@ const rows = computed(() =>
   ),
 )
 
-async function load() {
-  loading.value = true
-  error.value = null
-  try {
-    venues.value = await fetchNeedsReview()
-  } catch (e) {
-    venues.value = []
-    error.value = e instanceof Error ? e.message : String(e)
-  } finally {
-    loading.value = false
-  }
-}
-
 onMounted(load)
 
 async function review(venue: NeedsReviewVenue, change: VenueReview, done: string) {
@@ -76,7 +63,7 @@ async function review(venue: NeedsReviewVenue, change: VenueReview, done: string
   try {
     await reviewVenue(venue.venueId, change)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
     return false
   } finally {
     busy.value = null
@@ -118,7 +105,7 @@ async function checkNow() {
     await runSiteCheck()
     checkStarted.value = true
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = errorText(e)
   } finally {
     checking.value = false
   }

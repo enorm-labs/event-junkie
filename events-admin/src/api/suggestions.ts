@@ -14,7 +14,6 @@ import {
   EVENT_TYPES,
   type EventFeatures,
   type EventType,
-  failOnError,
   fetchEvent,
   fetchEventFeatures,
   EVENT_FEATURES,
@@ -23,6 +22,7 @@ import {
   toEventRequest,
   updateEvent,
 } from '@/api/events'
+import { failOnError, type Page } from '@/api/http'
 import { createArtist, fetchNames, findArtistByName } from '@/api/names'
 
 export type SuggestionStatus = 'OPEN' | 'DISMISSED' | 'ACCEPTED'
@@ -56,11 +56,7 @@ export interface ShowDatesResult {
   skipped: number
 }
 
-export interface SuggestionPage {
-  content: Suggestion[]
-  totalElements: number
-  totalPages: number
-}
+export type SuggestionPage = Page<Suggestion>
 
 /** The checks that write suggestions, for the filter. */
 export const SUGGESTION_CHECKS = ['event-classification'] as const

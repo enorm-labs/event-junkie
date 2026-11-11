@@ -3,7 +3,7 @@
  * `eventSources.ts`: `QualityIssue.kt`, `DataQualityResponses.kt` and
  * `EventClassificationController.kt` are the source of truth.
  */
-import { ensureOk } from '@/api/eventSources'
+import { ensureOk, failOnError } from '@/api/http'
 
 /** Each `QualityIssue` by its `?issue=` key, in the enum's order. */
 export const QUALITY_ISSUES = [
@@ -71,9 +71,7 @@ export async function fetchWorklist(
   fetchFn: typeof fetch = fetch,
 ): Promise<Worklist> {
   const response = await fetchFn(worklistUrl(query), { headers: { Accept: 'application/json' } })
-  if (!response.ok) {
-    throw new Error(`GET /api/admin/data-quality/worklist: HTTP ${response.status}`)
-  }
+  await failOnError(response, 'GET /api/admin/data-quality/worklist')
   return (await response.json()) as Worklist
 }
 

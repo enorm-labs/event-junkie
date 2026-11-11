@@ -3,7 +3,7 @@
  * `GET /api/admin/promoters?name=` match any part of the name, ignoring case (#2988).
  */
 
-import { failOnError } from '@/api/events'
+import { failOnError, getJson, type Page } from '@/api/http'
 
 /** An artist or a promoter as a picker shows it. */
 export interface NamedRow {
@@ -17,20 +17,9 @@ export type NameKind = 'artists' | 'promoters'
 /** How many matches a search shows. More means the name typed is too short. */
 export const SEARCH_LIMIT = 10
 
-interface Page<T> {
-  content: T[]
-  totalElements: number
-}
-
 export interface SearchResult {
   rows: NamedRow[]
   total: number
-}
-
-async function getJson<T>(path: string, fetchFn: typeof fetch): Promise<T> {
-  const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
-  if (!response.ok) throw new Error(`GET ${path}: HTTP ${response.status}`)
-  return (await response.json()) as T
 }
 
 /** The first [SEARCH_LIMIT] rows of [kind] whose name contains [name], sorted by name. */
