@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { LoaderCircle, Sparkles } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
 
-import { checkEvent, type ClassificationRun } from '@/api/dataQuality'
 import { type Festival, fetchFestivals, festivalsOn } from '@/api/festivals'
 
 import {
@@ -27,6 +24,8 @@ import {
   updateEvent,
 } from '@/api/events'
 import { fetchNames, type NameKind, type NamedRow } from '@/api/names'
+import ClassificationCheck from '@/components/ClassificationCheck.vue'
+import FeaturesFieldset from '@/components/FeaturesFieldset.vue'
 import NamePicker from '@/components/NamePicker.vue'
 import { fromBerlinLocal, toBerlinLocal } from '@/lib/berlinTime'
 import { Badge } from '@/components/ui/badge'
@@ -99,12 +98,6 @@ const loading = ref(false)
 const busy = ref(false)
 const error = ref<string | null>(null)
 
-/** The AI check: asked, running, and what the last run reported. */
-const confirmingCheck = ref(false)
-const checking = ref(false)
-const checkRun = ref<ClassificationRun | null>(null)
-const checkError = ref<string | null>(null)
-
 const lineupIds = computed(() => lineup.value.map((artist) => artist.artistId))
 
 const timetableChanged = computed(() =>
@@ -160,45 +153,6 @@ const featuresChanged = computed(() => {
       stored.some((slug) => !features.value.includes(slug)))
   )
 })
-
-/** One line for what the run did. A run of one event reports at most one of these. */
-const checkOutcome = computed(() => {
-  const run = checkRun.value
-  if (!run) return null
-  if (run.overBudget > 0) return 'Not sent: the month’s token budget is spent.'
-  if (run.unchanged > 0) {
-    return 'Skipped: the title, subtitle and description did not change since the last check.'
-  }
-  if (run.failed > 0) return 'The model gave no answer. The nightly run tries again.'
-  if (run.overCap > 0) return 'Not sent: the run reached its cap on model calls.'
-  if (run.checked > 0) {
-    const fields = Object.keys(run.suggested)
-    return fields.length
-      ? `Checked. New suggestions for: ${fields.join(', ')}.`
-      : 'Checked. No field differs from the stored value.'
-  }
-  return 'Not sent to the model.'
-})
-
-async function runCheck(id: number) {
-  confirmingCheck.value = false
-  checking.value = true
-  checkError.value = null
-  checkRun.value = null
-  try {
-    checkRun.value = await checkEvent(id)
-  } catch (e) {
-    checkError.value = errorText(e)
-  } finally {
-    checking.value = false
-  }
-}
-
-function cuesOf(slug: string): string[] {
-  return (storedFeatures.value?.uncertain ?? [])
-    .filter((cue) => cue.feature === slug)
-    .map((cue) => cue.phrase)
-}
 
 function showFeatures(loaded: EventFeatures) {
   storedFeatures.value = loaded
@@ -302,9 +256,6 @@ watch(
     event.value = null
     storedFeatures.value = null
     error.value = null
-    confirmingCheck.value = false
-    checkRun.value = null
-    checkError.value = null
     if (id === null) return
     loading.value = true
     try {
@@ -533,47 +484,7 @@ function unpin(field: string) {
             </span>
           </div>
 
-          <fieldset class="flex flex-col gap-2" aria-describedby="features-hint">
-            <legend class="mb-2 text-sm font-medium">Kind of night</legend>
-            <p v-if="featuresError" class="text-sm text-destructive" role="alert">
-              {{ featuresError }}
-            </p>
-            <ul v-else-if="storedFeatures" class="flex flex-col gap-1.5">
-              <li
-                v-for="feature in EVENT_FEATURES"
-                :key="feature.slug"
-                class="flex flex-col gap-0.5"
-                data-testid="feature-row"
-              >
-                <label
-                  :for="`edit-feature-${feature.slug}`"
-                  class="flex items-center gap-2 text-sm"
-                >
-                  <input
-                    :id="`edit-feature-${feature.slug}`"
-                    v-model="features"
-                    :value="feature.slug"
-                    class="size-4"
-                    name="features"
-                    type="checkbox"
-                  />
-                  {{ feature.label }}
-                </label>
-                <span
-                  v-for="cue in cuesOf(feature.slug)"
-                  :key="cue"
-                  class="pl-6 text-xs text-muted-foreground"
-                  data-testid="feature-cue"
-                >
-                  Unsure: “{{ cue }}”
-                </span>
-              </li>
-            </ul>
-            <span id="features-hint" class="text-xs text-muted-foreground">
-              Saving a changed set pins <code>features</code>, so the importer keeps it, and clears
-              the uncertain cues.
-            </span>
-          </fieldset>
+          <FeaturesFieldset v-model="features" :error="featuresError" :stored="storedFeatures" />
 
           <section class="flex flex-col gap-2" aria-labelledby="lineup-heading">
             <h3 id="lineup-heading" class="text-sm font-medium">Lineup</h3>
@@ -715,52 +626,7 @@ function unpin(field: string) {
             <p v-else class="text-sm text-muted-foreground">None.</p>
           </section>
 
-          <section class="flex flex-col gap-2" aria-labelledby="check-heading">
-            <h3 id="check-heading" class="text-sm font-medium">Check with AI</h3>
-            <p class="text-xs text-muted-foreground">
-              Proposes fixes for this event. It changes nothing: a proposal waits on Suggested
-              fixes.
-            </p>
-            <div
-              v-if="confirmingCheck"
-              class="flex flex-col gap-2 rounded-md border border-primary/40 bg-muted/50 p-3 text-sm"
-              data-testid="check-confirm"
-              role="group"
-              aria-label="Confirm the check"
-            >
-              <p>One model call, counted against the month’s token budget. Check this event?</p>
-              <div class="flex flex-wrap gap-2">
-                <Button size="sm" type="button" @click="runCheck(event.id)">Check</Button>
-                <Button size="sm" type="button" variant="outline" @click="confirmingCheck = false">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-            <div v-else>
-              <Button
-                :disabled="checking"
-                size="sm"
-                type="button"
-                variant="outline"
-                @click="confirmingCheck = true"
-              >
-                <LoaderCircle v-if="checking" aria-hidden="true" class="animate-spin" />
-                <Sparkles v-else aria-hidden="true" />
-                Check with AI
-              </Button>
-            </div>
-            <p v-if="checkError" class="text-sm text-destructive" role="alert">{{ checkError }}</p>
-            <p v-if="checkOutcome" class="text-sm" data-testid="check-outcome" role="status">
-              {{ checkOutcome }}
-              <RouterLink
-                class="underline underline-offset-4"
-                to="/suggestions"
-                @click="emit('close')"
-              >
-                Suggested fixes
-              </RouterLink>
-            </p>
-          </section>
+          <ClassificationCheck :key="event.id" :event-id="event.id" @leave="emit('close')" />
 
           <SheetFooter class="px-0">
             <Button :disabled="busy" type="submit">Save</Button>
