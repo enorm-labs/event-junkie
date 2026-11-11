@@ -253,6 +253,11 @@ class SchokoladenOverviewPageScraperTest {
                 djsOf("&amp; after 22h: Fish'n'Candy DJ-Team (wave, punk, tanz)") shouldContainExactly listOf("Fish'n'Candy")
                 djsOf("&amp; after 22h: DJ Don Kamisi aka Schapur (punk, post-punk, ndw… )") shouldContainExactly listOf("Don Kamisi")
                 djsOf("&amp; after 22h: DJs Whywolf (sonic sisters) &amp; guest") shouldContainExactly listOf("Whywolf")
+                // 20 November 2026: a guest slot keeps no role word in the name (#4886).
+                djsOf("&amp; after 22h: Kreuzgut.Disko DJs + Gast DJ Christian Krach (post-punk / indie-pop / shoegaze ...)") shouldContainExactly
+                    listOf("Kreuzgut.Disko", "Christian Krach")
+                djsOf("+ Gast DJ Christian Krach") shouldContainExactly listOf("Christian Krach")
+                djsOf("+ Gast-DJ Christian Krach") shouldContainExactly listOf("Christian Krach")
                 djsOf("&amp; after 22h: DJ TBA").shouldBeEmpty()
                 // No lead-in, no lineup: a cancellation note and the sold-out banner are not DJs.
                 djsOf("[unfortunately Cool Sorcery had to cancel their EU-Tour]").shouldBeEmpty()
@@ -394,6 +399,26 @@ class SchokoladenOverviewPageScraperTest {
                     listOf("Beatz aus der Kurve", "Else Jahn Kurve")
                 promotersOf("Kiezkollektiv lädt ein zur Soliparty: &nbsp;") shouldContainExactly listOf("Kiezkollektiv")
             }
+        }
+
+        @Test
+        fun `stores a door-ticket notice in the promoter span as the price note, not as a promoter`() {
+            // 20 November 2026 (#4886).
+            val event =
+                scraper
+                    .scrape(
+                        Jsoup.parse(
+                            """
+                            <div class="event"><span class="promoter">Nur 10 Tickets an der Abendkasse!</span><h2 class="fw-bold">ParkPunk (deutschpunk, regensburg)</h2>
+                              <div class="event-info" id="e20261120" data-event-date="2026-11-20"></div></div>
+                            """.trimIndent(),
+                            baseUrl
+                        ),
+                        baseUrl
+                    ).single()
+
+            event.promoters.shouldBeEmpty()
+            event.priceNote shouldBe "Nur 10 Tickets an der Abendkasse!"
         }
 
         @Test

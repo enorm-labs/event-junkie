@@ -92,6 +92,7 @@ class SchokoladenOverviewPageScraper {
         val subtitle = block.textAt("h6.subtitle")
         val (doorsTime, startTime) = parseTimes(info, block)
         val soldOut = isSoldOut(title, subtitle, info)
+        val (promoters, ticketNotice) = parsePromoters(block)
 
         return ScrapedEvent(
             title = title,
@@ -107,9 +108,10 @@ class SchokoladenOverviewPageScraper {
             // The page keeps the shop button on a sold-out show; its own words are "Tickets on the Doors".
             ticketUrl = block.hrefAt("a.ticket-btn").takeUnless { soldOut },
             genre = parseGenre(title),
+            priceNote = ticketNotice,
             soldOut = soldOut,
             artists = parseArtists(title, subtitle, eventType),
-            promoters = parsePromoters(block)
+            promoters = promoters
         )
     }
 
@@ -196,21 +198,24 @@ class SchokoladenOverviewPageScraper {
      * ": " tagline, because the night's own billing may follow (`"m:soundtrack prsnts: Falling into
      * Autumn: Dreamy Indie"`). Co-promoters are joined by ",", "&" and "+" (`"beav boloney, wild wax &
      * little league shows prsnt:"`), each its own promoter row (#328). [JOINED_PROMOTERS] carry an
-     * "&" in their name and stay whole.
+     * "&" in their name and stay whole. A [TICKET_NOTICE] in the span is no promoter: it comes back second, as the night's price
+     * note (#4886).
      */
-    private fun parsePromoters(block: Element): List<String> {
+    private fun parsePromoters(block: Element): Pair<List<String>, String?> {
         val credit =
             block
                 .textAt("span.promoter")
                 ?.replace(PRESENTS_TAIL, "")
                 ?.replace(TAGLINE_TAIL, "")
-                ?: return emptyList()
+                ?.trim()
+                ?: return emptyList<String>() to null
+        if (TICKET_NOTICE.containsMatchIn(credit)) return emptyList<String>() to credit
         return PROMOTER_TOKEN
             .findAll(credit)
             .map { it.value.trim() }
             .filter { it.isNotBlank() }
             .map { PROMOTER_ABBREVIATIONS[it.lowercase()] ?: it }
-            .toList()
+            .toList() to null
     }
 
     /**
@@ -307,6 +312,9 @@ class SchokoladenOverviewPageScraper {
 
         /** The sold-out banner, at the start of the subtitle or of a description paragraph: "---> Ausverkauft / Sold Out / …". */
         private val SOLD_OUT_BANNER = Regex("""^\W*(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
+
+        /** A door-ticket notice the venue writes where the promoter goes, `Nur 10 Tickets an der Abendkasse!`: the night's price note (#4886). */
+        private val TICKET_NOTICE = Regex("""\b(?:tickets?|abendkasse|vorverkauf|ausverkauft)\b""", RegexOption.IGNORE_CASE)
 
         /** Promoters whose own name carries an "&", which would otherwise split them. */
         private val JOINED_PROMOTERS = listOf("""thirsty\s*&\s*miserable""", """old\s*&\s*fast\b""")
@@ -422,9 +430,9 @@ private fun aftershowDjs(subtitle: String?): List<ScrapedArtist> {
         .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 }
 
-/** The aftershow lead-in, capturing the lineup after it: `& after 22h:`, or a `+` straight before a `DJ` label. */
+/** The aftershow lead-in, capturing the lineup after it: `& after 22h:`, or a `+` straight before a `DJ` or `Gast DJ` label. */
 private val AFTERSHOW_LEAD_IN =
-    Regex("""^\W*(?:after\s+\d{1,2}(?::\d{2})?\s*h?\s*:|\+\s*(?=djs?\s))\s*(.+)$""", RegexOption.IGNORE_CASE)
+    Regex("""^\W*(?:after\s+\d{1,2}(?::\d{2})?\s*h?\s*:|\+\s*(?=(?:gast[\s-]?)?djs?\s))\s*(.+)$""", RegexOption.IGNORE_CASE)
 
 /** A `(genre)` note after a DJ, closed or cut off by the subtitle's end. */
 private val DJ_NOTE = Regex("""\s*\([^)]*(?:\)|$)""")
@@ -441,8 +449,8 @@ private const val NIGHT_WITH = " w/ "
 /** Comma and plus always part two DJs; a slash does not, because `fragil/stabil` is one name. */
 private val DJ_HARD_SEPARATOR = Regex("""\s*[,+]\s*""")
 
-/** The `DJ` / `DJs` label in front of a name. */
-private val DJ_LABEL = Regex("""^djs?\s+""", RegexOption.IGNORE_CASE)
+/** The `DJ` / `DJs` / `Gast DJ` label in front of a name: `Gast DJ Christian Krach` (#4886). */
+private val DJ_LABEL = Regex("""^(?:gast[\s-]?)?djs?\s+""", RegexOption.IGNORE_CASE)
 
 /** A format word after a name: `Everything Crash DJ-Set`, `fragil/stabil DJ night`, `Fish'n'Candy DJ-Team`, `Kreuzgut.Disko DJs`. */
 private val DJ_SUFFIX = Regex("""\s+dj(?:s|[\s-]?(?:set|team|night))?$""", RegexOption.IGNORE_CASE)
