@@ -118,6 +118,32 @@ internal object WixEventsWarmupData {
         return event
     }
 
+    /**
+     * The records of a Wix CMS [collection] bound into the page, keyed by record id, or `null` with a warning when the
+     * warmup script is absent, does not parse, or carries no such collection. DSTRKT and M-BIA list their nights this way.
+     */
+    fun collectionRecords(
+        document: Document,
+        collection: String,
+        source: EventSource
+    ): JsonNode? {
+        val script = document.getElementById(WARMUP_SCRIPT_ID)
+        if (script == null) {
+            logger.warn { "No '$WARMUP_SCRIPT_ID' script found on $source page" }
+            return null
+        }
+        val records =
+            parseWarmupJson(script, source)
+                ?.path("appsWarmupData")
+                ?.path("dataBinding")
+                ?.path("dataStore")
+                ?.path("recordsByCollectionId")
+                ?.path(collection)
+                ?.takeIf { it.isObject }
+        if (records == null) logger.warn { "No $collection collection in $source warmup payload" }
+        return records
+    }
+
     /** The detail page's state key, where the overview's widget key is generated per page. */
     private const val EVENTS_PAGE_STATE = "EventsPageInitialState"
 
@@ -235,6 +261,15 @@ internal const val WIX_REGISTRATION_TICKETS = 2
  * event's own page is open. A closed or scheduled registration has no checkout to link to.
  */
 internal const val WIX_REGISTRATION_OPEN_TICKETS = 5
+
+/** Whether Wix itself sells this event's tickets, read on its `registration` node. */
+internal fun JsonNode.isSoldByWix(): Boolean = path("type").asInt(0) == WIX_REGISTRATION_TICKETS
+
+/** This `registration` node's `ticketing` block, only when Wix sells the tickets: see [WIX_REGISTRATION_TICKETS]. */
+internal fun JsonNode.wixTicketing(): JsonNode? = path("ticketing").takeIf { isSoldByWix() }
+
+/** Whether Wix sells this event's tickets and its checkout is open, read on its `registration` node. */
+internal fun JsonNode.isWixCheckoutOpen(): Boolean = isSoldByWix() && path("status").asInt(0) == WIX_REGISTRATION_OPEN_TICKETS
 
 /**
  * Reads a Wix ticket price node (`{"amount": "19.30", "currency": "EUR"}`), or `null` when the
