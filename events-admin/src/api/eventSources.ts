@@ -1,4 +1,4 @@
-import { ensureOk, fetchAllPages } from '@/api/http'
+import { failOnError, fetchAllPages } from '@/api/http'
 
 /**
  * The fields of the importer's `EventSourceResponse` this app reads. Hand-written: no generated
@@ -40,7 +40,7 @@ export async function fetchSource(
 ): Promise<EventSource> {
   const path = `${SOURCES}/${encodeURIComponent(slug)}`
   const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
-  await ensureOk(response, `GET ${path}`)
+  await failOnError(response, `GET ${path}`)
   return (await response.json()) as EventSource
 }
 
@@ -71,7 +71,7 @@ export async function triggerImport(
 ): Promise<void> {
   const path = `${SOURCES}/${encodeURIComponent(slug)}/import${force ? '?force=true' : ''}`
   const response = await fetchFn(path, { method: 'POST', headers: { Accept: 'application/json' } })
-  await ensureOk(response, `POST ${path}`)
+  await failOnError(response, `POST ${path}`)
 }
 
 /** The fields of `EventSourceUpdateRequest.kt` this app edits. A missing field stays unchanged. */
@@ -94,7 +94,7 @@ export async function updateSource(
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(update),
   })
-  await ensureOk(response, `PATCH ${path}`)
+  await failOnError(response, `PATCH ${path}`)
   return (await response.json()) as EventSource
 }
 
@@ -108,6 +108,6 @@ export async function retrySource(
 ): Promise<EventSource> {
   const path = `${SOURCES}/${encodeURIComponent(slug)}/retry`
   const response = await fetchFn(path, { method: 'POST', headers: { Accept: 'application/json' } })
-  await ensureOk(response, `POST ${path}`)
+  await failOnError(response, `POST ${path}`)
   return (await response.json()) as EventSource
 }

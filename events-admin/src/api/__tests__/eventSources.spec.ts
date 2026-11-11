@@ -108,7 +108,7 @@ describe('one source', () => {
     )
 
     await expect(triggerImport('gone', false, fetchFn)).rejects.toThrow(
-      "POST /api/admin/event-sources/gone/import: HTTP 404: Event source not found: 'gone'",
+      "POST /api/admin/event-sources/gone/import: HTTP 404 — Event source not found: 'gone'",
     )
   })
 
@@ -144,7 +144,7 @@ describe('one source', () => {
     )
 
     await expect(updateSource('lido', { importIntervalMinutes: 0 }, fetchFn)).rejects.toThrow(
-      'PATCH /api/admin/event-sources/lido: HTTP 400: Validation failed (Import interval must be at least 1 minute)',
+      'PATCH /api/admin/event-sources/lido: HTTP 400 — Validation failed (importIntervalMinutes: Import interval must be at least 1 minute)',
     )
   })
 

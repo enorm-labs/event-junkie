@@ -34,7 +34,7 @@ Tables use TanStack Table v9: `src/lib/sourceTable.ts` declares the features and
 The admin API caps a page at 100 items. A list reads every page and shows an error for a partial listing (`fetchAllPages` in `src/api/http.ts`).
 
 The admin follows the composable rule of `events-frontend/AGENTS.md`. A view loads through `useLoad` (`src/composables/useLoad.ts`), and an API module
-checks a response with `failOnError` or `ensureOk` from `src/api/http.ts`. `errorText` (`src/lib/errorText.ts`) turns a thrown value into the message a view shows.
+checks a response with `failOnError` from `src/api/http.ts`. `errorText` (`src/lib/errorText.ts`) turns a thrown value into the message a view shows.
 
 Each source row has an Import button and a row menu with Force import and, for a `FAILED` or `RUNNING` source, Retry (`src/components/SourceActions.vue`). The
 actions column sticks to the table's right edge. An import runs in the background, so after an action the row reads its source every 3 s until a run newer than

@@ -183,7 +183,7 @@ describe('FestivalsView', () => {
     await submit()
 
     expect(document.body.querySelector('[role="alert"]')!.textContent).toContain(
-      "POST /api/admin/festivals: HTTP 409: A festival with slug 'fete-de-la-musique-2026'",
+      "POST /api/admin/festivals: HTTP 409 — A festival with slug 'fete-de-la-musique-2026'",
     )
     expect(document.body.querySelector('[data-testid="festival-form"]')).not.toBeNull()
   })

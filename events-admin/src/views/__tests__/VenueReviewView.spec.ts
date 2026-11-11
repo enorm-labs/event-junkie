@@ -170,7 +170,7 @@ describe('VenueReviewView', () => {
     const wrapper = await mountView()
 
     expect(wrapper.find('[role="alert"]').text()).toBe(
-      'GET /api/admin/venues/needs-review: HTTP 503: down',
+      'GET /api/admin/venues/needs-review: HTTP 503 — down',
     )
   })
 
@@ -231,7 +231,7 @@ describe('VenueReviewView', () => {
 
     expect(cells(wrapper)).toHaveLength(1)
     expect(wrapper.find('[role="alert"]').text()).toBe(
-      'PUT /api/admin/venues/42: HTTP 400: Validation failed',
+      'PUT /api/admin/venues/42: HTTP 400 — Validation failed',
     )
   })
 

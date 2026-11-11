@@ -3,7 +3,7 @@
  * `eventSources.ts`: `QualityIssue.kt`, `DataQualityResponses.kt` and
  * `EventClassificationController.kt` are the source of truth.
  */
-import { ensureOk, failOnError } from '@/api/http'
+import { failOnError } from '@/api/http'
 
 /** Each `QualityIssue` by its `?issue=` key, in the enum's order. */
 export const QUALITY_ISSUES = [
@@ -102,7 +102,7 @@ export async function dismissWorklistRow(
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ issue, eventId: entry.id, fingerprint: entry.fingerprint }),
   })
-  await ensureOk(response, `POST ${DISMISSALS}`)
+  await failOnError(response, `POST ${DISMISSALS}`)
   return (await response.json()) as WorklistDismissal
 }
 
@@ -113,7 +113,7 @@ export async function fetchDismissals(
 ): Promise<WorklistDismissal[]> {
   const path = `${DISMISSALS}?${new URLSearchParams({ issue })}`
   const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
-  await ensureOk(response, `GET ${path}`)
+  await failOnError(response, `GET ${path}`)
   return (await response.json()) as WorklistDismissal[]
 }
 
@@ -121,7 +121,7 @@ export async function fetchDismissals(
 export async function undoDismissal(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
   const path = `${DISMISSALS}/${id}`
   const response = await fetchFn(path, { method: 'DELETE' })
-  await ensureOk(response, `DELETE ${path}`)
+  await failOnError(response, `DELETE ${path}`)
 }
 
 /** What one run of the event-classification check did. */
@@ -148,7 +148,7 @@ export async function checkEvent(
 ): Promise<ClassificationRun> {
   const path = `${CHECK}/event/${id}`
   const response = await fetchFn(path, { method: 'POST', headers: { Accept: 'application/json' } })
-  await ensureOk(response, `POST ${path}`)
+  await failOnError(response, `POST ${path}`)
   return (await response.json()) as ClassificationRun
 }
 
@@ -159,5 +159,5 @@ export async function checkEvent(
 export async function checkSource(slug: string, fetchFn: typeof fetch = fetch): Promise<void> {
   const path = `${CHECK}/source/${encodeURIComponent(slug)}`
   const response = await fetchFn(path, { method: 'POST', headers: { Accept: 'application/json' } })
-  await ensureOk(response, `POST ${path}`)
+  await failOnError(response, `POST ${path}`)
 }

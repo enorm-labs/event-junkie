@@ -186,7 +186,7 @@ describe('SourceActions', () => {
     await tick()
     await tick()
 
-    expect(wrapper.get('[role="alert"]').text()).toBe(`${READ}: HTTP 502: Bad Gateway`)
+    expect(wrapper.get('[role="alert"]').text()).toBe(`${READ}: HTTP 502 — Bad Gateway`)
     expect(wrapper.find('[role="status"]').exists()).toBe(false)
     expect(fetchFn).toHaveBeenCalledTimes(3)
   })
@@ -256,7 +256,7 @@ describe('SourceActions', () => {
     await click(wrapper, 'Import')
 
     expect(wrapper.get('[role="alert"]').text()).toBe(
-      "POST /api/admin/event-sources/lido/import: HTTP 404: Event source not found: 'lido'",
+      "POST /api/admin/event-sources/lido/import: HTTP 404 — Event source not found: 'lido'",
     )
     expect(calls(fetchFn)).toHaveLength(1)
     expect(wrapper.emitted('updated')).toBeUndefined()
@@ -361,7 +361,7 @@ describe('SourceActions', () => {
       await confirmButton(wrapper, 'Check').trigger('click')
       await flushPromises()
 
-      expect(wrapper.get('[role="alert"]').text()).toBe(`${CHECK}: HTTP 409: ${detail}`)
+      expect(wrapper.get('[role="alert"]').text()).toBe(`${CHECK}: HTTP 409 — ${detail}`)
       expect(wrapper.find('[role="status"]').exists()).toBe(false)
     })
   })
