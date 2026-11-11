@@ -7,12 +7,14 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseEnglishWeekday
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -30,7 +32,9 @@ import java.util.Locale
  * with a range (`20 – 25 October 2026`) announces a series whose nights follow on their own, so
  * it is skipped. The intro states the house doors, start and admission, which a night's heading
  * may override: a labelled `doors:`/`start:` clock, or a bare `(14:30)` that is the start. A
- * matinée and an evening show can share a date, so a night is keyed by date and title.
+ * matinée and an evening show can share a date, so a night is keyed by date and title. The page
+ * sometimes names the wrong weekday (`Saturday, 15 November 2026`, a Sunday): the day, month and
+ * year win, and the mismatch is logged.
  */
 class KuehlspotOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -62,7 +66,7 @@ class KuehlspotOverviewPageScraper {
     ): ScrapedEvent? {
         val headings = block.select("h2.elementor-heading-title").map { it.text().collapseWhitespace() }
         val dateLine = headings.first()
-        val date = DATE.find(dateLine)?.value?.let(::parseDate)
+        val date = parseDate(dateLine)
         val title = headings.getOrNull(1)
         if (date == null || title.isNullOrBlank()) {
             logger.debug { "Kühlspot block '$dateLine' names no single night, skipping" }
@@ -117,7 +121,12 @@ class KuehlspotOverviewPageScraper {
         return lines.map { it.toString().collapseWhitespace() }.filter { it.isNotEmpty() }
     }
 
-    private fun parseDate(text: String): LocalDate? = dateOrNull { LocalDate.parse(text, DATE_FORMATTER) }
+    /** The printed day, month and year; a weekday that disagrees is logged, never used to move the date. */
+    private fun parseDate(dateLine: String): LocalDate? {
+        val match = DATE.find(dateLine) ?: return null
+        val date = dateOrNull { LocalDate.parse(match.groupValues[2], DATE_FORMATTER) } ?: return null
+        return dateCheckedAgainstWeekday(date, parseEnglishWeekday(match.groupValues[1]), dateLine, plausible = { false })
+    }
 
     private data class HouseRules(
         val doors: LocalTime?,
@@ -127,11 +136,11 @@ class KuehlspotOverviewPageScraper {
 
     private companion object {
         /** `Thursday, 8 October 2026`; a range such as `8–10 October 2026` has no weekday and does not match. */
-        val DATE = Regex("""^\p{L}+day,\s+\d{1,2}\s+\p{L}+\s+\d{4}""")
+        val DATE = Regex("""^(\p{L}+day),\s+(\d{1,2}\s+\p{L}+\s+\d{4})""")
 
         /** `Saturday, 14 November 2026 (14:30)`: a clock alone in brackets, with no `doors`/`start` label. */
         val BARE_CLOCK = Regex("""\(\s*(\d{1,2}:\d{2})\s*\)""")
-        val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.ENGLISH)
+        val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
 
         /** `Ingebrigt Håker Flaten – double bass`, `Nicola Hein -guitar`; the dash inside `Hui-Chun` has no space beside it. */
         val MUSICIAN = Regex("""^(.+?)(?:\s[–-]|[–-]\s)\s*\p{Ll}.*$""")
