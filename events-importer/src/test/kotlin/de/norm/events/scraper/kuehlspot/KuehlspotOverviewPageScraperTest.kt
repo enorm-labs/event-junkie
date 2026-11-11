@@ -2,6 +2,7 @@ package de.norm.events.scraper.kuehlspot
 
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -9,6 +10,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -125,9 +127,37 @@ class KuehlspotOverviewPageScraperTest {
     }
 
     @Test
+    fun `a date line naming the wrong weekday keeps its date and logs the mismatch`() {
+        // 15 November 2026 is a Sunday.
+        val (nights, warnings) = withWeekdayWarnings { scraper.scrape(Jsoup.parse(oneNight("Saturday, 15 November 2026 (14:30)"), baseUrl), baseUrl) }
+
+        nights.single().eventDate shouldBe LocalDate.of(2026, 11, 15)
+        nights.single().startTime shouldBe LocalTime.of(14, 30)
+        warnings.single().formattedMessage shouldStartWith "Heading 'Saturday, 15 November 2026 (14:30)' names a SATURDAY but 2026-11-15 is a SUNDAY"
+    }
+
+    @Test
+    fun `a date line naming the right weekday logs nothing`() {
+        val (nights, warnings) = withWeekdayWarnings { scraper.scrape(Jsoup.parse(oneNight("Sunday, 15 November 2026"), baseUrl), baseUrl) }
+
+        nights.single().eventDate shouldBe LocalDate.of(2026, 11, 15)
+        warnings.shouldBeEmpty()
+    }
+
+    @Test
     fun `a page without an events section yields nothing`() {
         scraper.scrape(Jsoup.parse("<html><body><p>Closed</p></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    private fun oneNight(dateLine: String) =
+        """
+        <div id="events">
+          <div class="e-con e-child">
+            <h2 class="elementor-heading-title">$dateLine</h2>
+            <h2 class="elementor-heading-title">KAFFEE UND KUCHEN</h2>
+          </div>
+        </div>
+        """.trimIndent()
 
     /** The shape of the 14 November 2026 page: a matinée with a bare clock, then an evening show on the same date. */
     private val twoNightsOnOneDate =
