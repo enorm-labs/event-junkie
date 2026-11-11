@@ -2,6 +2,7 @@ package de.norm.events.scraper.kulturhausspandau
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.MYSQL_DATE_TIME
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -20,7 +21,6 @@ import de.norm.events.scraper.stripSoldOutMarker
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure parser for the theme's `/wp-json/eventmanager/v1/events`, which answers about 250 events, past ones included, with
@@ -61,8 +61,8 @@ class KulturhausSpandauApiScraper {
                 .toSet()
         if (isOutOfScope(categories, rawTitle, subtitle)) return null
         val (title, kicker) = headline(cleanEventTitle(stripSoldOutMarker(rawTitle).trim(' ', '-', '–')).text, subtitle?.trim())
-        val start = node.stringOrNull("start")?.let { LocalDateTime.parse(it, API_TIME) } ?: return null
-        val end = node.stringOrNull("end")?.let { LocalDateTime.parse(it, API_TIME) }?.takeIf { it.isAfter(start) }
+        val start = node.stringOrNull("start")?.let { LocalDateTime.parse(it, MYSQL_DATE_TIME) } ?: return null
+        val end = node.stringOrNull("end")?.let { LocalDateTime.parse(it, MYSQL_DATE_TIME) }?.takeIf { it.isAfter(start) }
         val admission = node.path("ticketprices").toList().firstOrNull { it.path("active").asBoolean(false) && it.stringOrNull("title") == "Eintritt" }
         val admissionText = admission?.stringOrNull("price")
         val type = typeOf(categories)
@@ -149,7 +149,6 @@ private const val CHILDRENS_MAXIMUM_AGE = 12
 
 private val PARTICIPATION = setOf("Führung", "Workshop", "Ausstellung")
 private val STAGE = setOf("Show", "Theater", "Zauberei", "Konzert")
-private val API_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
 /** An auction (EVENT_SCOPE.md §3.2). */
 private val NOT_A_SHOW = Regex("""auktion""", RegexOption.IGNORE_CASE)

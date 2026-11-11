@@ -4,6 +4,7 @@ import de.norm.events.common.deshout
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.isNonArtistName
@@ -60,7 +61,7 @@ class TempodromDetailPageScraper {
         document: Document
     ): ScrapedEvent {
         if (event.startTime != null) return event
-        val day = event.eventDate.format(SCHEDULE_DATE)
+        val day = event.eventDate.format(PADDED_GERMAN_DATE)
         val clock =
             description(document)
                 ?.let(SCHEDULE_ENTRY::findAll)
@@ -179,9 +180,6 @@ class TempodromDetailPageScraper {
          * Capitals only, so a sentence's opening words are never part of the name.
          */
         val TRIBUTE_BAND = Regex("""\b(\p{Lu}[\p{Lu}\p{N}&'’-]*(?:\s+[\p{Lu}\p{N}&'’-]+)*)\s+gilt\s+als\b[^.]*?\b(?i:tribute[\s-]?band)\b""")
-
-        /** How the schedule prints a day: `17.12.2026`. */
-        val SCHEDULE_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
         /** A schedule clock: `18:00`, `9:30`. */
         val CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
