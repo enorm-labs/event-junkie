@@ -241,6 +241,17 @@ marks a show for small children, and adults go to these concerts too.
 unmarked. A new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it
 here. No source is a venue that plays only for children, such as FEZ or Theater an der Parkaue.
 
+### 3.6 Programme announcements
+
+A listing item that announces a run of nights is not an event. The nights are listed on their own, so the item
+only duplicates them.
+
+| Venue  | Predicate                                               | Signal                                                                 |
+| ------ | ------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Tresor | `PROGRAMME_DATE_RANGE` (`TresorOverviewPageScraper.kt`) | A title that spans days (`28.12 - 02.01`) on an item that bills no one |
+
+An item that spans days and bills a line-up stays, because it is one event over several days.
+
 ## 4. What is in scope, and sometimes surprises people
 
 - **Not just live music.** A theatre, a comedy club or an arena-scale room is in scope. **Bar jeder Vernunft** set that precedent: its programme is imported,

@@ -226,6 +226,14 @@ class ArtistNameCleanupTest {
     }
 
     @Test
+    fun `stripArtistSuffix cuts a one-word shouted record only after a head of two words`() {
+        // Event 13544: Gretchen bills the trumpeter with his album.
+        stripArtistSuffix("Robinson Khoury - MŸA") shouldBe "Robinson Khoury"
+        stripArtistSuffix("Tigercub - NETS") shouldBe "Tigercub - NETS"
+        stripArtistSuffix("Sinem - Hatun") shouldBe "Sinem - Hatun"
+    }
+
+    @Test
     fun `stripArtistSuffix strips a tribute descriptor after any dash and in any case`() {
         stripArtistSuffix("Always Amy - A tribute to Amy Winehouse") shouldBe "Always Amy"
         stripArtistSuffix("Always Amy — Tribute to Amy Winehouse") shouldBe "Always Amy"

@@ -175,6 +175,7 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "jud" to "JUD",
         "cave" to "CAVE",
         "emf" to "EMF",
+        "dosis" to "DOSIS",
         // Wild at Heart's German punk band, billed `"WHAT" (Punk-Rock - D)`.
         "what" to "WHAT",
         // Spellings the de-shouter cannot reach: Huxleys' `MR. HURLEY UND DIE PULVERAFFEN`, Neue Zukunft's `D*B*S`,

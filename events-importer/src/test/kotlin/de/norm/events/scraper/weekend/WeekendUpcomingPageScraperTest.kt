@@ -50,6 +50,8 @@ class WeekendUpcomingPageScraperTest {
         operator.imageUrl!! shouldStartWith "https://images.squarespace-cdn.com/"
         operator.description!! shouldStartWith "🖤 WKND X OPERATOR\n"
         operator.description shouldContain "Hosted by Dennis Beutler"
+        // Event 13502: a `<p>` is a paragraph, a `<br>` inside it a line break.
+        operator.description shouldContain "(please check our Instagram for updates)\n\nOn November 13th, OPERATOR returns"
         operator.artists.map { it.name to it.role } shouldContainExactly listOf("Dennis Beutler" to ArtistRole.DJ)
     }
 

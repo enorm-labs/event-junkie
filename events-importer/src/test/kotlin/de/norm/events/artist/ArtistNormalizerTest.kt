@@ -340,6 +340,7 @@ class ArtistNormalizerTest {
             canonicalArtistName("TÄRA") shouldBe "TÄRA"
             canonicalArtistName("SIND") shouldBe "SIND"
             canonicalArtistName("WHAT") shouldBe "WHAT"
+            canonicalArtistName("DOSIS") shouldBe "DOSIS"
             canonicalArtistName("MR. HURLEY UND DIE PULVERAFFEN") shouldBe "Mr. Hurley & Die Pulveraffen"
             canonicalArtistName("D*B*S") shouldBe "DxBxSx"
             canonicalArtistName("D*B*S*") shouldBe "DxBxSx"

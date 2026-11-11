@@ -82,11 +82,12 @@ class TausendOverviewPageScraper {
             return null
         }
         val id = sourceId(start.date, act)
+        val description = texts[id] ?: node.stringOrNull("description")
         val eventType = if (series?.contains(LIVE_SERIES, ignoreCase = true) == true) EventType.CONCERT.name else EventType.PARTY.name
         return ScrapedEvent(
             title = act,
             subtitle = series?.takeUnless { it.equals(act, ignoreCase = true) },
-            description = texts[id] ?: node.stringOrNull("description"),
+            description = description,
             eventType = eventType,
             eventDate = start.date,
             startTime = start.time,
@@ -95,7 +96,7 @@ class TausendOverviewPageScraper {
             sourceId = id,
             ticketUrl = node.schemaOffers().firstNotNullOfOrNull { offer -> offer.stringOrNull("url")?.takeIf { it.startsWith("http") } },
             status = node.schemaStatus(),
-            artists = artists(act, series, eventType)
+            artists = artists(act, series, eventType, description)
         )
     }
 
@@ -108,18 +109,27 @@ class TausendOverviewPageScraper {
 
     /**
      * A live night bills its act as one headliner, because a band name carries `&`, unless the `&` adds a
-     * DJ: `Desney Bailey & DJ Jauche` is a singer and a DJ set (11778). A DJ night splits a shared bill
-     * into its DJs. A night whose act is its own series names nobody.
+     * DJ: `Desney Bailey & DJ Jauche` is a singer and a DJ set (11778). The night's credit line says the same in words:
+     * `· Flashbaxx live & Daniel Paul DJ-Set ·` (13490). A DJ night splits a shared bill into its DJs.
+     * A night whose act is its own series names nobody.
      */
     private fun artists(
         act: String,
         series: String?,
-        eventType: String
+        eventType: String,
+        description: String?
     ): List<ScrapedArtist> {
         if (act.equals(series, ignoreCase = true)) return emptyList()
         if (eventType == EventType.CONCERT.name) {
-            LIVE_WITH_DJ.matchEntire(act)?.let { match ->
-                val (live, dj) = match.destructured
+            val liveAndDj =
+                LIVE_WITH_DJ.matchEntire(act)?.destructured?.toList()
+                    ?: description
+                        ?.let { LIVE_AND_DJ_SET_CREDIT.find(it) }
+                        ?.destructured
+                        ?.toList()
+                        ?.takeIf { (live, dj) -> "$live & $dj".equals(act, ignoreCase = true) }
+            if (liveAndDj != null) {
+                val (live, dj) = liveAndDj
                 return listOf(ScrapedArtist(name = live, role = ArtistRole.HEADLINER), ScrapedArtist(name = dj, role = ArtistRole.DJ))
             }
         }
@@ -161,6 +171,7 @@ class TausendOverviewPageScraper {
         private const val LIVE_SERIES = "Live"
         private const val CLOSED_EVENT_ACT = "Closed Event"
         private val LIVE_WITH_DJ = Regex("""(.+?)\s+&\s+(DJ\s+.+)""")
+        private val LIVE_AND_DJ_SET_CREDIT = Regex("""·\s*([^·\n]+?)\s+live\s+&\s+([^·\n]+?)\s+DJ-Set\s*·""", RegexOption.IGNORE_CASE)
         private const val LOCAL_DATE_TIME_LENGTH = 19
         private val END_OF_NIGHT: LocalTime = LocalTime.of(23, 59)
     }

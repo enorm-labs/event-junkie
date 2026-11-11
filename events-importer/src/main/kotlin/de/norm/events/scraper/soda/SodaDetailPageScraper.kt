@@ -1,5 +1,6 @@
 package de.norm.events.scraper.soda
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
@@ -23,6 +24,7 @@ import de.norm.events.scraper.schemaSoldOut
 import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.splitCrossBilled
+import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
@@ -48,8 +50,8 @@ import java.math.BigDecimal
  * shows the "Abendkasse verfügbar" badge; the JSON-LD offer is the shop's fee-inclusive figure
  * and never a price column (see [parsePrices]);
  * - the JSON-LD `performer` is always `"Unbekannt"` and the `organizer` the venue itself, so
- * neither is read — a night is a [PARTY][EventType.PARTY] with no artists or promoters, unless its blurb
- * bills a live show ([liveActs]).
+ * neither is read. The blurb bills the DJs under a `Booking` or `Line Up:` line ([bookedDjs]), and a
+ * live show on the line above `LIVE` ([liveActs]), which makes the night a concert.
  *
  * @see SodaOverviewPageScraper for overview parsing (discovery, year-less date fallback).
  * @see SodaWebsiteImporter for the HTTP fetch orchestrator.
@@ -84,7 +86,7 @@ class SodaDetailPageScraper {
             title = title,
             description = parseDescription(content) ?: jsonLd?.stringOrNull("description"),
             eventType = if (acts.isEmpty()) EventType.PARTY.name else EventType.CONCERT.name,
-            artists = acts,
+            artists = acts.ifEmpty { bookedDjs(content) },
             eventDate = jsonLd?.schemaDate("startDate") ?: UNRESOLVED_EVENT_DATE,
             // No doors time — the "Einlass" box states an age limit.
             startTime = jsonLd?.schemaTime("startDate") ?: parseTime(infoBoxValue(content, "Beginn")?.take(HH_MM_LENGTH)),
@@ -116,6 +118,53 @@ class SodaDetailPageScraper {
         if (live < 0) return emptyList()
         val names = lines.getOrNull(live - 1)?.let(::splitCrossBilled) ?: headlinersFromTitle(title).map { it.name }
         return names.filterNot(::isNonArtistName).map { ScrapedArtist(name = it) }
+    }
+
+    /**
+     * The DJs the blurb books, one floor a line, up to the next `***` rule (13524, 13525):
+     *
+     * ```text
+     * Booking
+     * Urban Dance: Kai Breest & DJ R'n'P
+     * Kizomba / Urban Kiz: DJ Tarrixa
+     * ```
+     *
+     * The label before the colon names the floor. Silvester heads each room in capitals (`KESSELHAUS`), and the room is
+     * the stage then. A `Party-Liveband „JCB“` is the band, billed as the headliner.
+     */
+    private fun bookedDjs(content: Element): List<ScrapedArtist> {
+        val lines = content.textLinesAt("p.event-details")
+        val start = lines.indexOfFirst { BOOKING_HEADING.matches(it.trim()) }
+        if (start < 0) return emptyList()
+        var room: String? = null
+        return lines
+            .drop(start + 1)
+            .takeWhile { !it.trim().startsWith(RULE) }
+            .flatMap { line ->
+                val label = line.substringBefore(':', "").trim()
+                if (label.isEmpty()) {
+                    if (line.isNotBlank() && line.none { it.isLowerCase() }) room = line.trim()
+                    return@flatMap emptyList()
+                }
+                line
+                    .substringAfter(':')
+                    .split(',')
+                    .flatMap { splitSegmentOnConjunctions(it.trim()) }
+                    .map { name -> bookedAct(name.trim(), stage = room ?: label) }
+            }.filterNot { it.name.isBlank() || isNonArtistName(it.name) }
+            .distinctBy { it.name.lowercase() }
+    }
+
+    private fun bookedAct(
+        name: String,
+        stage: String
+    ): ScrapedArtist {
+        val band = LIVE_BAND.matchEntire(name)?.groupValues?.get(1)
+        return if (band != null) {
+            ScrapedArtist(name = band, role = ArtistRole.HEADLINER, stage = stage)
+        } else {
+            ScrapedArtist(name = name, role = ArtistRole.DJ, stage = stage)
+        }
     }
 
     /**
@@ -190,6 +239,15 @@ class SodaDetailPageScraper {
     private companion object {
         /** A blurb line that opens with the capitalised word; a club night's `Live DJs` or `live` in prose does not count. */
         val LIVE_LINE = Regex("""^LIVE\b""")
+
+        /** The line that opens the DJ list: `Booking` on a club night, `Line Up:` on a Social Club night. */
+        val BOOKING_HEADING = Regex("""booking|line\s?-?up:?""", RegexOption.IGNORE_CASE)
+
+        /** The rule of asterisks that closes the DJ list. */
+        const val RULE = "***"
+
+        /** `Party-Liveband „JCB“`: the band's name is the quoted part. */
+        val LIVE_BAND = Regex("""(?:Party-)?Live-?band\s+["„“]([^"„“”]+)["“”]""", RegexOption.IGNORE_CASE)
 
         /** Renders `15.43` as the German `15,43 €` the venue's pages print. */
         private fun formatEuro(amount: BigDecimal): String = "${amount.setScale(2).toPlainString().replace('.', ',')} €"

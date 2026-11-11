@@ -52,6 +52,26 @@ class DescriptionGenresTest {
     }
 
     @Test
+    fun `two words that join into a key by accident are not a genre`() {
+        // Events 13495 and MOJELA: "in die" was read as Indie.
+        descriptionGenres("Am 7. Januar führt diese musikalische Reise in die Tausend.").shouldBeEmpty()
+        descriptionGenres("Let's go a little further tonight").shouldBeEmpty()
+        descriptionGenres("Indie Pop und Reisen in die Ferne") shouldBe listOf("Indie")
+    }
+
+    @Test
+    fun `a decade the title bills as a party is a genre, a bare decade is not`() {
+        // Events 13541 and 13511.
+        titleDecadeGenres("80er/90er Party im Spiegelsaal", null) shouldBe listOf("80s", "90s")
+        titleDecadeGenres("DANCING WITH TEARS IN YOUR EYES", "Die 80er Party - Tanzen wie früher") shouldBe listOf("80s")
+        titleDecadeGenres("80'S & 90'S PARTY VOL. 2") shouldBe listOf("80s", "90s")
+        titleDecadeGenres("Y2K 2000er-Party") shouldBe listOf("2000s")
+        titleDecadeGenres("Hits of the 80s", "since the 90s").shouldBeEmpty()
+        titleDecadeGenres("Silvester 2026 Party").shouldBeEmpty()
+        titleDecadeGenres("70er Party").shouldBeEmpty()
+    }
+
+    @Test
     fun `free text that names no known genre gives nothing`() {
         descriptionGenres("Die Band spielt Lieder aus ihrem neuen Album.").shouldBeEmpty()
         descriptionGenres(null).shouldBeEmpty()
