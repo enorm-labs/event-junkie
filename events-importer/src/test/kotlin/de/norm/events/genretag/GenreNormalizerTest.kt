@@ -182,6 +182,12 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `the German and adjective House pairs give the tags the word match gives`() {
+        normalizeGenre("Melodic House").shouldContainExactly("House")
+        normalizeGenre("Organic House, Elektronische Musik").shouldContainExactly("House", "Electronic")
+    }
+
+    @Test
     fun `a real genre beside a dropped format still survives`() {
         // The stop-list must not swallow a label that also names a style.
         normalizeGenre("Berlin Techno").shouldContainExactly("Techno")

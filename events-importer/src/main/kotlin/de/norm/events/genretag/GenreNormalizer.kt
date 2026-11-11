@@ -92,11 +92,19 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "dungeonsynth" to "Dungeon Synth",
         // Electronic family
         "electronic" to "Electronic",
+        // German prose names the style as a phrase; the pair keeps "elektronische Gitarre" untagged (#4899).
+        "elektronischemusik" to "Electronic",
+        "elektronischermusik" to "Electronic",
         "electronica" to "Electronic",
         "elektrofusion" to "Electronic",
         "synthesizerinstrumental&melodicelectronica" to "Electronic",
         "techno" to "Techno",
         "house" to "House",
+        // A pair, so prose's "Opera House" stays untagged while "Melodischer House" reads as the style (#4899).
+        "melodichouse" to "House",
+        "melodischerhouse" to "House",
+        "organichouse" to "House",
+        "organischerhouse" to "House",
         "ambient" to "Ambient",
         // Word-level, so a note such as "experimental singer, composer" gives the night a genre (#3583).
         "experimental" to "Experimental",
