@@ -72,6 +72,16 @@ class DescriptionGenresTest {
     }
 
     @Test
+    fun `German electronic-music phrases are genres, the single words are not`() {
+        // Event 13495, Hidéo at Bar Tausend.
+        descriptionGenres("Hidéo versteht elektronische Musik als Erzählung.") shouldBe listOf("Electronic")
+        descriptionGenres("Melodischer House, organische Rhythmen und atmosphärische Klanglandschaften") shouldBe listOf("House")
+        descriptionGenres("Ein Abend mit Organic House und Deep Grooves") shouldBe listOf("House")
+        descriptionGenres("Er spielt elektronische Gitarre im Trio.").shouldBeEmpty()
+        descriptionGenres("Live in the Opera House").shouldBeEmpty()
+    }
+
+    @Test
     fun `free text that names no known genre gives nothing`() {
         descriptionGenres("Die Band spielt Lieder aus ihrem neuen Album.").shouldBeEmpty()
         descriptionGenres(null).shouldBeEmpty()
