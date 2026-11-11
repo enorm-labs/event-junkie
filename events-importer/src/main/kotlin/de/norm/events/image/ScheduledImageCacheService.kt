@@ -1,7 +1,7 @@
 package de.norm.events.image
 
+import de.norm.events.common.rethrowIfCancelled
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.runBlocking
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
@@ -24,17 +24,19 @@ class ScheduledImageCacheService(
     private val logger = KotlinLogging.logger {}
 
     @Scheduled(fixedDelayString = "\${app.images.tick-millis:300000}")
-    fun tick() {
-        // Nothing here may throw: an uncaught exception silently cancels a @Scheduled task for the
-        // life of the process, and the next symptom is images that stopped updating weeks ago.
-        runCatching {
-            runBlocking {
-                // Fetch first, then derive. A derivative needs an original, so deriving first would
-                // simply find nothing on the pass that fetched it.
-                imageCacheService.refreshBatch()
-                derivativeService.generateBatch()
-            }
-        }.onFailure { logger.error(it) { "Image cache pass failed" } }
+    // Intentional: an exception escaping cancels the @Scheduled task for the life of the process, and
+    // the next symptom is images that stopped updating weeks ago.
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
+    suspend fun tick() {
+        try {
+            // Fetch first, then derive. A derivative needs an original, so deriving first would
+            // simply find nothing on the pass that fetched it.
+            imageCacheService.refreshBatch()
+            derivativeService.generateBatch()
+        } catch (e: Exception) {
+            rethrowIfCancelled()
+            logger.error(e) { "Image cache pass failed" }
+        }
     }
 
     /**
@@ -45,8 +47,13 @@ class ScheduledImageCacheService(
      * listing to find nothing, most times.
      */
     @Scheduled(fixedDelayString = "\${app.images.sweep.tick-millis:21600000}")
-    fun sweepTick() {
-        runCatching { runBlocking { removalService.sweep() } }
-            .onFailure { logger.error(it) { "Image sweep failed" } }
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
+    suspend fun sweepTick() {
+        try {
+            removalService.sweep()
+        } catch (e: Exception) {
+            rethrowIfCancelled()
+            logger.error(e) { "Image sweep failed" }
+        }
     }
 }

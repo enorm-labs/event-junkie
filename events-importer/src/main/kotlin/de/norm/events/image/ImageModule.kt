@@ -14,5 +14,5 @@ import org.springframework.modulith.ApplicationModule
  * `event` is deliberately absent. The URLs are read with raw SQL in [CachedImageRepository] rather
  * than through the event module's types, because all this needs is a column.
  */
-@ApplicationModule(allowedDependencies = ["scraper"])
+@ApplicationModule(allowedDependencies = ["scraper", "common"])
 class ImageModule
