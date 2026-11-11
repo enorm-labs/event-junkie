@@ -1,5 +1,7 @@
 package de.norm.events.scraper.wuehlmaeuse
 
+import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.SpokenLanguage
 import de.norm.events.scraper.AbstractWpRestImporter
 import de.norm.events.scraper.AcceptedLimitation
@@ -7,13 +9,17 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.WalkedListing
 import de.norm.events.scraper.WpRestWalk
 import de.norm.events.scraper.enrichFromSharedPages
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.querySeparator
 import org.springframework.stereotype.Component
+import java.time.Clock
+import java.time.LocalDate
 
 /**
  * Website importer for Die Wühlmäuse, the Kabarett theatre at Theodor-Heuss-Platz, over its
@@ -25,7 +31,8 @@ import org.springframework.stereotype.Component
  *
  * The products carry no show text. Each production's `/veranstaltung/<slug>/` page does, so each one
  * is read once and its text applied to every performance. A failed page flags its performances, so the
- * upsert keeps the stored text.
+ * upsert keeps the stored text. A dated guest line goes only to its own performance, which bills the guests when it bills
+ * no one else (Nightwash).
  *
  * @see WuehlmaeuseApiScraper for the product shape and the fold into one event per performance.
  * @see WuehlmaeuseProductionPageScraper for the show text.
@@ -34,7 +41,9 @@ import org.springframework.stereotype.Component
 @Component
 class WuehlmaeuseWebsiteImporter(
     apiClient: ApiClient,
-    private val htmlFetcher: HtmlFetcher
+    private val htmlFetcher: HtmlFetcher,
+    /** For the year-less guest lines; override in tests. */
+    private val clock: Clock = Clock.system(BERLIN)
 ) : AbstractWpRestImporter<WuehlmaeuseTicket, WuehlmaeuseShopPage>(apiClient, WUEHLMAEUSE_PER_PAGE, MAX_PAGES) {
     override val eventSource: EventSource = EventSource.WUEHLMAEUSE
     override val fetchesBeyondEntryPage: Boolean = true
@@ -48,10 +57,23 @@ class WuehlmaeuseWebsiteImporter(
     override suspend fun toEvents(
         listing: WalkedListing<WuehlmaeuseTicket>,
         url: String
-    ): List<ScrapedEvent> =
-        enrichFromSharedPages(htmlFetcher::fetchDocument, apiScraper.toEvents(listing.items), productionScraper::scrape, { production, event ->
-            event.copy(description = production.description)
+    ): List<ScrapedEvent> {
+        val today = LocalDate.now(clock)
+        return enrichFromSharedPages(htmlFetcher::fetchDocument, apiScraper.toEvents(listing.items), productionScraper::scrape, { production, event ->
+            val guests = guestLineFor(event.eventDate, production.guests, today)
+            event.copy(
+                description = listOfNotNull(guests?.line, production.description).joinToString("\n").ifBlank { null },
+                artists =
+                    event.artists.ifEmpty {
+                        guests
+                            ?.names
+                            .orEmpty()
+                            .filterNot(::isNonArtistName)
+                            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+                    }
+            )
         })
+    }
 
     override fun scrapedMessage(
         events: List<ScrapedEvent>,

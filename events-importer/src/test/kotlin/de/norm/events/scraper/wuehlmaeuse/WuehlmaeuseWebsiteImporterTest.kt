@@ -1,5 +1,6 @@
 package de.norm.events.scraper.wuehlmaeuse
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
@@ -8,6 +9,7 @@ import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.fixtureText
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -18,8 +20,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 
 class WuehlmaeuseWebsiteImporterTest {
@@ -52,6 +57,21 @@ class WuehlmaeuseWebsiteImporterTest {
             }
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(RUDELSINGEN) }
             coVerify(exactly = 1) { apiClient.fetchJson(any()) }
+        }
+
+    @Test
+    fun `bills a dated guest line on its own performance only, and shows it there alone`() =
+        runTest {
+            coEvery { apiClient.fetchJson(page1) } returns fixtureText("wuehlmaeuse/wuehlmaeuse-shop-rudelsingen.json")
+            coEvery { htmlFetcher.fetchDocument(RUDELSINGEN) } answers { Jsoup.parse(GUEST_PAGE, firstArg<String>()) }
+            val dated = WuehlmaeuseWebsiteImporter(apiClient, htmlFetcher, Clock.fixed(Instant.parse("2026-10-15T10:00:00Z"), BERLIN))
+
+            val (first, second) = dated.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events
+
+            first.description shouldBe "Gäste am 25.10.: Anna Gast, Bert Gast\nDer Abend."
+            first.artists.map { it.name } shouldBe listOf("Anna Gast", "Bert Gast")
+            second.description shouldBe "Der Abend."
+            second.artists.shouldBeEmpty()
         }
 
     @Test
@@ -128,5 +148,9 @@ class WuehlmaeuseWebsiteImporterTest {
 
     private companion object {
         const val RUDELSINGEN = "https://wuehlmaeuse.de/veranstaltung/rudelsingen"
+        const val GUEST_PAGE =
+            """<div class="elementor-widget-heading"><div class="elementor-widget-container"><p class="elementor-heading-title">""" +
+                """<h5 class="elementor-heading-title"></h5>Gäste am 25.10.: Anna Gast, Bert Gast<br />Der Abend.""" +
+                """<div class="elementor">Box</div></div></div>"""
     }
 }
