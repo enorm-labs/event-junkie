@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
  * page's events section is the whole programme, about a month ahead, parsed by [KuehlspotOverviewPageScraper].
  * There is no event post type and no page per night, so the WordPress REST API has nothing to add.
  *
- * The room plays one night a date, so the date is the night's identity.
+ * A date can carry a matinée and an evening show, so a night's identity is its date and title.
  *
  * @see <a href="https://kuehlspot.com/#events">Kühlspot events</a>
  */
