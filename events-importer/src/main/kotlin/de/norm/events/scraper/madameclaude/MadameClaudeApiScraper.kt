@@ -21,6 +21,7 @@ import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -77,15 +78,8 @@ class MadameClaudeApiScraper {
     }
 
     /** The response body as a JSON array, or null if unparseable or not an array. */
-    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
     private fun parseRoot(json: String): JsonNode? {
-        val root =
-            try {
-                SCRAPER_JSON_SNAKE_CASE.readTree(json)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Madame Claude WP REST API response" }
-                return null
-            }
+        val root = SCRAPER_JSON_SNAKE_CASE.readTreeOrNull(json, logger) { "Failed to parse Madame Claude WP REST API response" } ?: return null
         if (!root.isArray) {
             logger.warn { "Madame Claude WP REST API response is not a JSON array" }
             return null

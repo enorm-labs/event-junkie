@@ -7,6 +7,7 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -50,7 +51,6 @@ internal object BinuuSvelteKitPayload {
      * for a detail page).
      * @param openBracket the bracket opening its value (`'['` / `'{'`), disambiguating the marker.
      */
-    @Suppress("TooGenericExceptionCaught") // A malformed/absent payload must degrade to null, never abort the import
     fun dataNode(
         document: Document,
         key: String,
@@ -63,12 +63,7 @@ internal object BinuuSvelteKitPayload {
             return null
         }
         val json = extractObjectLiteral(script, marker) ?: return null
-        return try {
-            lenientJson.readTree(json).get(key)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to parse Bi Nuu SvelteKit '$key' payload" }
-            null
-        }
+        return lenientJson.readTreeOrNull(json, logger) { "Failed to parse Bi Nuu SvelteKit '$key' payload" }?.get(key)
     }
 
     /** Extracts the balanced `{…}` object that opens immediately before [marker]. */

@@ -1,6 +1,9 @@
 package de.norm.events.scraper
 
+import io.github.oshai.kotlinlogging.KLogger
+import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
@@ -21,6 +24,23 @@ fun JsonNode.stringOrNull(field: String): String? = path(field).asString("").bla
  * Entities stay encoded: each venue decodes or flattens the HTML in its own way.
  */
 fun JsonNode.wpRendered(field: String): String? = path(field).stringOrNull("rendered")
+
+/**
+ * Parses [json] into a tree, or logs [message] at `WARN` with the exception and returns `null`. A malformed payload
+ * degrades a source to "no events", never a failed import. Every Jackson 3 exception is a [JacksonException], so the
+ * catch stays narrow.
+ */
+fun ObjectMapper.readTreeOrNull(
+    json: String,
+    logger: KLogger,
+    message: () -> String
+): JsonNode? =
+    try {
+        readTree(json)
+    } catch (e: JacksonException) {
+        logger.warn(e, message)
+        null
+    }
 
 /**
  * The mapper every scraper reads JSON with. Jackson 3 ignores unknown fields by default, and the Kotlin

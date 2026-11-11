@@ -122,17 +122,10 @@ internal object WixEventsWarmupData {
     private const val EVENTS_PAGE_STATE = "EventsPageInitialState"
 
     /** Reads the warmup [script]'s JSON, or `null` when it does not parse. */
-    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import
     private fun parseWarmupJson(
         script: Element,
         source: EventSource
-    ): JsonNode? =
-        try {
-            SCRAPER_JSON.readTree(script.data())
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to parse $source wix-warmup-data JSON" }
-            null
-        }
+    ): JsonNode? = SCRAPER_JSON.readTreeOrNull(script.data(), logger) { "Failed to parse $source wix-warmup-data JSON" }
 }
 
 /**

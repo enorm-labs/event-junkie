@@ -20,6 +20,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseRelocation
 import de.norm.events.scraper.promoterFromCredit
+import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.splitPromoterCredit
 import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -76,15 +77,8 @@ class FestsaalApiScraper {
     }
 
     /** The response body's `items` array, or null if unparseable or without an array. */
-    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
     private fun parseItems(json: String): JsonNode? {
-        val root =
-            try {
-                SCRAPER_JSON_SNAKE_CASE.readTree(json)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Festsaal Wagtail API response" }
-                return null
-            }
+        val root = SCRAPER_JSON_SNAKE_CASE.readTreeOrNull(json, logger) { "Failed to parse Festsaal Wagtail API response" } ?: return null
         val items = root.path("items")
         if (!items.isArray) {
             logger.warn { "Festsaal Wagtail API response has no 'items' array" }

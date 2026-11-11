@@ -23,6 +23,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTitleStatus
+import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.stringOrNull
@@ -115,15 +116,12 @@ internal class Bogen47ApiScraper(
      * oldest event date (reached-the-past check). An unparseable or non-array body yields an
      * empty page, which stops paging.
      */
-    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to an empty page, never abort the import.
     fun scrapePage(json: String): Bogen47Page {
         val posts =
-            try {
-                SCRAPER_JSON.readTree(json).takeIf { it.isArray }?.toList()
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse the $eventSource event listing page" }
-                null
-            }
+            SCRAPER_JSON
+                .readTreeOrNull(json, logger) { "Failed to parse the $eventSource event listing page" }
+                ?.takeIf { it.isArray }
+                ?.toList()
         if (posts == null) {
             logger.warn { "$eventSource event listing page is not a JSON array; stopping" }
             return Bogen47Page(entries = emptyList(), postCount = 0, oldestDate = null)
@@ -141,27 +139,21 @@ internal class Bogen47ApiScraper(
      * Parses a `/wp-json/wp/v2/media?include=…` response into attachment id → image URL. Empty for
      * an unparseable body: a missing poster is worth losing, an import is not.
      */
-    @Suppress("TooGenericExceptionCaught") // A malformed media response must not cost the events.
     fun parseMedia(json: String): Map<Long, String> =
-        try {
-            SCRAPER_JSON
-                .readTree(json)
-                .takeIf { it.isArray }
-                ?.mapNotNull { node ->
-                    val id = node.path("id").asLong(0L).takeIf { it > 0 } ?: return@mapNotNull null
-                    val url =
-                        node
-                            .path("source_url")
-                            .asString("")
-                            .trim()
-                            .takeIf { it.startsWith("http") } ?: return@mapNotNull null
-                    id to url
-                }?.toMap()
-                .orEmpty()
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to parse the $eventSource media response; events keep no poster" }
-            emptyMap()
-        }
+        SCRAPER_JSON
+            .readTreeOrNull(json, logger) { "Failed to parse the $eventSource media response; events keep no poster" }
+            ?.takeIf { it.isArray }
+            ?.mapNotNull { node ->
+                val id = node.path("id").asLong(0L).takeIf { it > 0 } ?: return@mapNotNull null
+                val url =
+                    node
+                        .path("source_url")
+                        .asString("")
+                        .trim()
+                        .takeIf { it.startsWith("http") } ?: return@mapNotNull null
+                id to url
+            }?.toMap()
+            .orEmpty()
 
     private fun parsePost(
         post: JsonNode,
