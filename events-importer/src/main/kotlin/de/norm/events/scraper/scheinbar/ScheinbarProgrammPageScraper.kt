@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
@@ -12,7 +13,6 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.Month
 
@@ -59,7 +59,7 @@ class ScheinbarProgrammPageScraper {
         val sourceUrl = item.selectFirst("a[href^=/programm/]")?.absUrl("href") ?: return null
         val host = second?.takeIf { first.endsWith(PRESENTED_BY) }
         val priceText = item.selectFirst(".preis")?.ownText()?.trim()
-        val prices = AMOUNT.findAll(priceText.orEmpty()).map { BigDecimal(it.value.replace(',', '.')) }.toList()
+        val prices = AMOUNT.findAll(priceText.orEmpty()).mapNotNull { it.value.germanDecimalOrNull() }.toList()
         return ScrapedEvent(
             title = if (host != null) "$first $host" else first,
             subtitle = second.takeIf { host == null },

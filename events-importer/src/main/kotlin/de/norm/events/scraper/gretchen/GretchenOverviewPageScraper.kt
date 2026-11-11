@@ -15,6 +15,7 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.dateCheckedAgainstWeekday
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.COLLAB_SEPARATOR
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.DROP_LINE_PATTERN
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.PRESENTS_PREFIX
@@ -282,8 +283,7 @@ class GretchenOverviewPageScraper {
             .find(priceText)
             ?.groupValues
             ?.get(1)
-            ?.replace(',', '.')
-            ?.toBigDecimalOrNull()
+            ?.germanDecimalOrNull()
 
     /**
      * The performer list from the `.lineup` blocks, the authoritative artist source (the headline is

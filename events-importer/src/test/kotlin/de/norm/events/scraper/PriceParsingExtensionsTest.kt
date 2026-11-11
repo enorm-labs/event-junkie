@@ -116,6 +116,21 @@ class PriceParsingExtensionsTest {
     }
 
     @Test
+    fun `germanDecimals reads every bare number, comma or point, without a currency`() {
+        germanDecimals("18,00 / 15,00") shouldBe listOf(BigDecimal("18.00"), BigDecimal("15.00"))
+        germanDecimals("VVK 9.5, AK 12") shouldBe listOf(BigDecimal("9.5"), BigDecimal("12"))
+        germanDecimals("tba").shouldBeEmpty()
+    }
+
+    @Test
+    fun `germanDecimalOrNull reads a decimal comma and refuses what is not a number`() {
+        "15,90".germanDecimalOrNull() shouldBe BigDecimal("15.90")
+        "15.90".germanDecimalOrNull() shouldBe BigDecimal("15.90")
+        "frei".germanDecimalOrNull().shouldBeNull()
+        "".germanDecimalOrNull().shouldBeNull()
+    }
+
+    @Test
     fun `price labels match whole words only`() {
         isBoxOfficeLabel("Abendkasse") shouldBe true
         isBoxOfficeLabel("AK / Tageskasse") shouldBe true

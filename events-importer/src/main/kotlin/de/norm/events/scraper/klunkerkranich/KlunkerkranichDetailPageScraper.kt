@@ -1,5 +1,6 @@
 package de.norm.events.scraper.klunkerkranich
 
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.textAt
@@ -81,7 +82,7 @@ class KlunkerkranichDetailPageScraper {
     fun scrapeImageUrl(document: Document): String? = document.hrefAt("$HEADER_MEDIA a[href]") ?: document.imgSrcAt("$HEADER_MEDIA img")
 
     /** A euro amount with a German comma or a dot decimal separator. */
-    private fun parseAmount(text: String): BigDecimal? = runCatching { BigDecimal(text.replace(",", ".")) }.getOrNull()
+    private fun parseAmount(text: String): BigDecimal? = text.germanDecimalOrNull()
 
     private companion object {
         /** The event page's prose block; the sidebar beside it holds date and price. */

@@ -10,6 +10,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
@@ -268,8 +269,7 @@ class MorphineDetailPageScraper {
             .selectFirst("div.block.paypal form")
             ?.takeIf { it.attrAt("input[name=currency_code]", "value").equals(EUR, ignoreCase = true) }
             ?.attrAt("input[name=amount]", "value")
-            ?.replace(',', '.')
-            ?.toBigDecimalOrNull()
+            ?.germanDecimalOrNull()
 
     /** One `ul.lineup` `<li>`: the set's start time as written, and the billed name. */
     private data class LineupEntry(

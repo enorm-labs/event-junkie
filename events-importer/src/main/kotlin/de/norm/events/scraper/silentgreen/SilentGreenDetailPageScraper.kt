@@ -1,6 +1,7 @@
 package de.norm.events.scraper.silentgreen
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.GERMAN_DECIMAL
 import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedArtist
@@ -82,7 +83,7 @@ class SilentGreenDetailPageScraper {
         val amounts = euroAmounts(line)
         return when {
             amounts.isEmpty() -> SilentGreenEventDetails()
-            FIGURE.findAll(line).count() > 1 -> SilentGreenEventDetails(priceNote = line)
+            GERMAN_DECIMAL.findAll(line).count() > 1 -> SilentGreenEventDetails(priceNote = line)
             AT_THE_DOOR.containsMatchIn(line) || isBoxOfficeLabel(line) -> SilentGreenEventDetails(priceBoxOffice = amounts.single())
             else -> SilentGreenEventDetails(pricePresale = amounts.single())
         }
@@ -182,9 +183,6 @@ class SilentGreenDetailPageScraper {
 
         /** A `Tickets:` line, capturing what follows the label. */
         val TICKETS_LINE = Regex("""^Tickets?\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
-
-        /** One number on a `Tickets:` line, signed or not. */
-        val FIGURE = Regex("""\d+(?:[.,]\d{1,2})?""")
 
         /** `vor Ort`, the venue's word for a price paid at the door. */
         val AT_THE_DOOR = Regex("""(?<!\p{L})vor\s+ort(?!\p{L})""", RegexOption.IGNORE_CASE)

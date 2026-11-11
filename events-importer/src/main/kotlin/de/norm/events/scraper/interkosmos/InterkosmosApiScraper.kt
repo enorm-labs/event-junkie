@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
+import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parsePriceValue
@@ -111,7 +112,7 @@ class InterkosmosApiScraper {
         val start = parseTime(node.stringOrNull("ik_time_start"))
         val end = parseTime(node.stringOrNull("ik_time_end"))?.takeIf { start != null && it.isAfter(start) }
         val price = node.stringOrNull("ik_price")
-        val amount = price?.replace(',', '.')?.toBigDecimalOrNull() ?: parsePriceValue(price)
+        val amount = price?.germanDecimalOrNull() ?: parsePriceValue(price)
         return ScrapedEvent(
             title = title,
             soldOut = cleanedTitle.soldOut,
