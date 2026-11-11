@@ -185,8 +185,8 @@ A declared limitation stays true only while the venue stays silent, and nothing 
     - **NOW PUBLISHED** — the page prints it. Quote the text. The row is now a defect, so it gets a draft in the 🔍 Importer / data defect form's shape.
     - **UNCHECKED** — robots.txt, a `403`/`429`, a JavaScript page, or a page that cannot decide the aspect. Say which.
 
-When the reason says the parser derives a value anyway, judge the source, not the stored row. A row is never re-dated by this prompt. A person bumps
-`verified` on the STILL SILENT rows in one pull request a month, from the month's report issue.
+When the reason says the parser derives a value anyway, judge the source, not the stored row. A row is never re-dated by this prompt. `/maintain` stage 13
+moves `verified` on the STILL SILENT rows in one pull request a month (#4841).
 
 ## Step 5 — Write the report
 

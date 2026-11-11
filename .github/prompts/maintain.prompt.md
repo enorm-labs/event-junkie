@@ -5,7 +5,7 @@ run. The steps are the existing commands; this command only joins them.
 
 ```text
 /daily-check → file the drafts → (/refine-issues) → /afk → /afk merge → cut a release → /post-release
-  → (weekly) /musicbrainz-review, /artist-cleanup, /enrich → (monthly) /data-quality-audit → (idle) /next-importer → again
+  → (weekly) /musicbrainz-review, /artist-cleanup, /enrich → (monthly) /data-quality-audit, re-date limitations → (idle) /next-importer → again
 ```
 
 ## Important
@@ -36,6 +36,7 @@ ls -t temp/daily-check-*.md temp/worklist-*.md temp/admin-review-*.md temp/afk-h
 ls -t temp/musicbrainz-review-production-*.tsv temp/artist-cleanup-production-*.json temp/promoter-cleanup-production-*.json \
   temp/enrich-*.md temp/data-quality-*.md 2>/dev/null                 # the dated steps: when each last ran
 gh issue list --label afk-ok --state open --json number,title,assignees --jq 'length'
+gh pr list --state merged --search 'in:title "re-date accepted limitations"' --json number,mergedAt --limit 1   # stage 13
 ```
 
 A key that answers `{"error": …}` is not checked. Say so, and decide the stage from the rest.
@@ -44,23 +45,24 @@ A key that answers `{"error": …}` is not checked. Say so, and decide the stage
 
 The first row that holds decides. Each row names its evidence; report it with the stage.
 
-| #   | Holds when                                                                                        | Next step                                         | This command |
-| --- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------ |
-| 1   | `release_main` is red, or `ej.sh status` shows a cluster or pod not Ready                         | The blocker, with the failed step                 | reports      |
-| 2   | No `temp/daily-check-<today>.md`                                                                  | `/daily-check`                                    | runs         |
-| 3   | Today's `daily-check`, `worklist` or `admin-review` report has a draft heading ending `(unfiled)` | "File which?", with each draft's `afk-ok` verdict | asks         |
-| 4   | The newest `temp/afk-handover-*.md` has a pull request in **Merge order** still open              | `/afk merge`                                      | runs         |
-| 5   | An open `afk-ok` issue no session holds, and no handover from today                               | `/afk`                                            | runs         |
-| 6   | `release.commits` holds a `feat`, `fix` or `perf` subject                                         | The cut, as two commands for the operator         | proposes     |
-| 7   | `after_deploy` has a released step whose `due` has come (below)                                   | `/post-release`                                   | runs         |
-| 8   | No `temp/musicbrainz-review-production-*.tsv` from the last 7 days, and the tunnel is up          | `/musicbrainz-review production`                  | runs         |
-| 9   | No `temp/artist-cleanup-production-*.json` from the last 7 days, and the tunnel is up             | `/artist-cleanup production`                      | runs         |
-| 10  | No `temp/promoter-cleanup-production-*.json` from the last 7 days, and the tunnel is up           | `/artist-cleanup production --kind promoters`     | runs         |
-| 11  | No `temp/enrich-*.md` from the last 7 days                                                        | `/enrich`                                         | runs         |
-| 12  | No `temp/data-quality-*.md` from the last 30 days, and the tunnel is up                           | `/data-quality-audit`                             | runs         |
-| 13  | No open `afk-ok` issue, and no `temp/refine-*.md` from the last 7 days                            | `/refine-issues` on the next milestone            | proposes     |
-| 14  | A 🔨 Ready venue in `docs/EVENT_DATA_SOURCES.md`, and no open `importer` pull request             | `/next-importer`                                  | proposes     |
-| 15  | None of the above                                                                                 | "Nothing due", and the next date anything is due  | reports      |
+| #   | Holds when                                                                                                                   | Next step                                         | This command |
+| --- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------ |
+| 1   | `release_main` is red, or `ej.sh status` shows a cluster or pod not Ready                                                    | The blocker, with the failed step                 | reports      |
+| 2   | No `temp/daily-check-<today>.md`                                                                                             | `/daily-check`                                    | runs         |
+| 3   | Today's `daily-check`, `worklist` or `admin-review` report has a draft heading ending `(unfiled)`                            | "File which?", with each draft's `afk-ok` verdict | asks         |
+| 4   | The newest `temp/afk-handover-*.md` has a pull request in **Merge order** still open                                         | `/afk merge`                                      | runs         |
+| 5   | An open `afk-ok` issue no session holds, and no handover from today                                                          | `/afk`                                            | runs         |
+| 6   | `release.commits` holds a `feat`, `fix` or `perf` subject                                                                    | The cut, as two commands for the operator         | proposes     |
+| 7   | `after_deploy` has a released step whose `due` has come (below)                                                              | `/post-release`                                   | runs         |
+| 8   | No `temp/musicbrainz-review-production-*.tsv` from the last 7 days, and the tunnel is up                                     | `/musicbrainz-review production`                  | runs         |
+| 9   | No `temp/artist-cleanup-production-*.json` from the last 7 days, and the tunnel is up                                        | `/artist-cleanup production`                      | runs         |
+| 10  | No `temp/promoter-cleanup-production-*.json` from the last 7 days, and the tunnel is up                                      | `/artist-cleanup production --kind promoters`     | runs         |
+| 11  | No `temp/enrich-*.md` from the last 7 days                                                                                   | `/enrich`                                         | runs         |
+| 12  | No `temp/data-quality-*.md` from the last 30 days, and the tunnel is up                                                      | `/data-quality-audit`                             | runs         |
+| 13  | No `re-date accepted limitations` PR merged in the last 30 days, and the newest nightly-reports issue has STILL SILENT lines | Re-date the STILL SILENT rows (below)             | runs         |
+| 14  | No open `afk-ok` issue, and no `temp/refine-*.md` from the last 7 days                                                       | `/refine-issues` on the next milestone            | proposes     |
+| 15  | A 🔨 Ready venue in `docs/EVENT_DATA_SOURCES.md`, and no open `importer` pull request                                        | `/next-importer`                                  | proposes     |
+| 16  | None of the above                                                                                                            | "Nothing due", and the next date anything is due  | reports      |
 
 - **Stage 3**: list the drafts, one line each with `afk-ok: yes|no — reason`, and stop. When the operator answers, file exactly those, as
   [`/daily-check`](daily-check.prompt.md) Step 7 says: the label from the verdict, the board in one batch, the heading rewritten to `(filed #N)`.
@@ -76,9 +78,17 @@ The first row that holds decides. Each row names its evidence; report it with th
   fixes are pull requests. A MERGE waits for the operator's word.
 - **Stage 11**: after stage 10, because a row that is not a promoter wastes a search. It opens a pull request and writes nothing to a cluster.
 - **Stage 12**: read-only. It writes its report and files nothing.
-- **Stages 13 and 14**: each asks something of the operator or takes an hour or more, so this command names it and does not run it.
+- **Stage 13**: the nightly `/plausibility-check` re-checks the oldest accepted limitations (#4828), and this stage moves the dates it confirmed (#4841).
+  Collect every `SOURCE/ASPECT` line under _Limitation re-check_ → STILL SILENT in the comments of the newest `Plausibility check — nightly reports` issue
+  and the one before it, each with the date of the report that saw it. Write them as `SOURCE/ASPECT YYYY-MM-DD` to `temp/limitation-redate-<today>.txt`,
+  then run `python3 scripts/limitation-verified.py temp/limitation-redate-<today>.txt` and, when nothing is refused, again with `--apply`. Regenerate
+  `docs/data-quality/ACCEPTED_LIMITATIONS.md` with the `cp` that `AcceptedLimitationsTest` prints, run `scripts/format-markdown.sh`, and open the pull
+  request with [`/open-pr`](open-pr.prompt.md), titled `chore(importer): re-date accepted limitations`, listing the rows and linking the report comments.
+  A NOW PUBLISHED row is not re-dated: it is a defect draft, and `/daily-check` Step 7 files it. A refused pair is a report row that names no declaration;
+  quote it in the pull request and leave it out.
+- **Stages 14 and 15**: each asks something of the operator or takes an hour or more, so this command names it and does not run it.
 - **The dated stages read the newest file in `temp/`.** Deleting a report makes its step due again, which is the safe way round.
-- **Stage 15**: the next date is the earliest future `due`, the day a weekly or monthly stage is due again, or the next dark day of a `dark-day` step.
+- **Stage 16**: the next date is the earliest future `due`, the day a weekly or monthly stage is due again, or the next dark day of a `dark-day` step.
 
 ## Step 3 — Run or hand over
 
@@ -86,7 +96,7 @@ Run the step when the stage says _runs_, under its prompt. Then go back to Step 
 in the same invocation: the operator reads each result before the next one starts.
 
 Under `/loop /maintain`, a step that waits on something outside the session — CI, a rollout, a release window — ends the turn with a wakeup matched to it,
-not a poll. Stages 3, 6, 13 and 14 end the loop's turn with the question, and stage 15 sleeps until the next due date or the next morning, whichever comes first.
+not a poll. Stages 3, 6, 14 and 15 end the loop's turn with the question, and stage 16 sleeps until the next due date or the next morning, whichever comes first.
 
 ## Step 4 — The report
 

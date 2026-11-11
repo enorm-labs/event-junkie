@@ -99,6 +99,9 @@ jobs:
       - name: festival-match proposes one row per event at the entry's venue and date
         run: python3 scripts/test_festival_match.py
 
+      - name: limitation-verified moves only the named row, only to a later date
+        run: python3 scripts/test_limitation_verified.py
+
       # Gated on the two steps it explains.
       - name: Explain the fix
         if: failure() && (steps.check.outcome == 'failure' || steps.format.outcome == 'failure')
