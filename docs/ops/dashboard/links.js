@@ -1105,6 +1105,10 @@ window.EJ_LINKS = {
           "note": "open suggested fixes"
         },
         {
+          "command": "curl -s 'http://localhost:28081/api/admin/venues/manual' | jq -r 'sort_by(.programmeCheckedAt // \"\", .name) | .[:8][] | [.name, (.programmeUrl // \"-\")] | @tsv'",
+          "note": "the 8 manual venues most due: read each programme, enter its events on the \"Manual venues\" page, press Checked"
+        },
+        {
           "command": "scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .frontend.page_loads, .bff.sessions, .bff.night_sessions] | @tsv'",
           "note": "sessions per day"
         }
