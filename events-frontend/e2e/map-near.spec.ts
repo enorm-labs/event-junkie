@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { skipWithoutWebGL } from './webgl'
 
 /**
  * "Near me" and "on now" on the events map (#358), with a mocked BFF. Nothing here needs WebGL:
@@ -150,9 +151,7 @@ test('a pin opens its venue over the map, three events deep, and closing returns
 
   // Five at Lido carry a count; Astra's single show keeps the pin's size without a digit.
   const pin = page.getByRole('button', { name: /^Lido: 5 events/ })
-  const unavailable = page.getByText(/cannot draw the map/)
-  await expect(pin.or(unavailable)).toBeVisible()
-  test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+  await skipWithoutWebGL(page, pin)
   await expect(pin).toHaveText('5')
   await expect(page.getByRole('button', { name: 'Astra: 1 event', exact: true })).toHaveText('')
 
@@ -198,9 +197,7 @@ test('venues that share a door share one marker, which lists them and hands over
 
   // One marker for both, counting the events at either: 2 at the annex and 1 at Lido.
   const marker = page.getByRole('button', { name: /^2 venues: / })
-  const unavailable = page.getByText(/cannot draw the map/)
-  await expect(marker.or(unavailable)).toBeVisible()
-  test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+  await skipWithoutWebGL(page, marker)
   await expect(marker).toHaveText('3')
   await expect(page.getByRole('button', { name: /^Lido: / })).toHaveCount(0)
 
@@ -238,7 +235,9 @@ test('with no dates in the URL the map shows today, so Today reads as pressed', 
     'false',
   )
   // "On now" is a time, so it sits with the presets rather than with the location controls.
-  const times = page.locator('div', { has: page.getByRole('button', { name: 'Today', exact: true }) }).last()
+  const times = page
+    .locator('div', { has: page.getByRole('button', { name: 'Today', exact: true }) })
+    .last()
   await expect(times.getByRole('button', { name: 'On now', exact: true })).toBeVisible()
 })
 
@@ -273,9 +272,7 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     await page.goto('/en/map')
 
     const pin = page.getByRole('button', { name: 'Lido: 1 event, 1 on now', exact: true })
-    const unavailable = page.getByText(/cannot draw the map/)
-    await expect(pin.or(unavailable)).toBeVisible()
-    test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+    await skipWithoutWebGL(page, pin)
     await expect(pin).toHaveClass(/\bis-live\b/)
 
     // The pins follow the canvas in the Tab order; Tab on until it reaches Lido's.
