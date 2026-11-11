@@ -13,6 +13,7 @@ import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.gatsbyPageDataUrl
 import de.norm.events.scraper.gatsbyStaticQueryUrl
+import de.norm.events.scraper.readTreeOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -76,17 +77,12 @@ class InselWebsiteImporter(
     }
 
     /** The `staticQueryHashes` the page-data artefact lists, in the order Gatsby wrote them. */
-    @Suppress("TooGenericExceptionCaught") // A malformed page-data body must degrade to no candidates, never abort the import.
     private fun staticQueryHashes(json: String): List<String> =
-        try {
-            SCRAPER_JSON
-                .readTree(json)
-                .path(GATSBY_STATIC_QUERY_HASHES)
-                .mapNotNull { node -> node.asString().blankToNull() }
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to parse Insel page-data for its static-query hashes" }
-            emptyList()
-        }
+        SCRAPER_JSON
+            .readTreeOrNull(json, logger) { "Failed to parse Insel page-data for its static-query hashes" }
+            ?.path(GATSBY_STATIC_QUERY_HASHES)
+            ?.mapNotNull { node -> node.asString("").blankToNull() }
+            .orEmpty()
 }
 
 val INSEL_LIMITATIONS =

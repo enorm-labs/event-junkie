@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
@@ -51,15 +52,8 @@ class SisyphosCalendarScraper {
             }
     }
 
-    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import
     private fun parseEntries(json: String): JsonNode? {
-        val root =
-            try {
-                SCRAPER_JSON.readTree(json)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Sisyphos calendar feed" }
-                return null
-            }
+        val root = SCRAPER_JSON.readTreeOrNull(json, logger) { "Failed to parse Sisyphos calendar feed" } ?: return null
         return root.takeIf { it.isArray } ?: run {
             logger.warn { "Sisyphos calendar feed is not an array" }
             null

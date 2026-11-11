@@ -3,6 +3,7 @@ package de.norm.events.scraper.elfsight
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateOrNull
+import de.norm.events.scraper.readTreeOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import java.time.DayOfWeek
@@ -25,18 +26,11 @@ private val logger = KotlinLogging.logger {}
  * `settings.events` array (the `event-calendar` app) contribute. [venue] names the venue in
  * the warnings.
  */
-@Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
 internal fun parseElfsightEventNodes(
     json: String,
     venue: String
 ): List<JsonNode>? {
-    val root =
-        try {
-            SCRAPER_JSON.readTree(json)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to parse $venue widget boot response" }
-            return null
-        }
+    val root = SCRAPER_JSON.readTreeOrNull(json, logger) { "Failed to parse $venue widget boot response" } ?: return null
     val widgets = root.path("data").path("widgets")
     if (!widgets.isObject) {
         logger.warn { "$venue boot response has no 'data.widgets' object" }

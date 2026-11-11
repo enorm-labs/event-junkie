@@ -25,6 +25,7 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseOffsetToBerlin
+import de.norm.events.scraper.readTreeOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
@@ -114,15 +115,8 @@ class InselApiScraper(
      * sibling query publishes the same collection projected to a bare date and category, so the
      * array is accepted only once its first node carries a `name`.
      */
-    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
     private fun eventNodes(json: String): JsonNode? {
-        val root =
-            try {
-                SCRAPER_JSON.readTree(json)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse an Insel static-query artefact" }
-                return null
-            }
+        val root = SCRAPER_JSON.readTreeOrNull(json, logger) { "Failed to parse an Insel static-query artefact" } ?: return null
         val edges = root.path("data").path(EVENTS_QUERY).path("edges")
         if (!edges.isArray) return null
         return edges.takeIf { it.isEmpty || it.first().path("node").has("name") }

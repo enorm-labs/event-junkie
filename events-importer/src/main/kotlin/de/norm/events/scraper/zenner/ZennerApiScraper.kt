@@ -23,6 +23,7 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseOffsetToBerlin
+import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.splitHeadlinerTitle
 import de.norm.events.scraper.stripArtistSuffix
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -94,15 +95,8 @@ class ZennerApiScraper(
     }
 
     /** Parses the response body and returns its `result.data` object, or null when unparseable or absent. */
-    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
     private fun parseData(json: String): JsonNode? {
-        val root =
-            try {
-                SCRAPER_JSON.readTree(json)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Zenner page-data response" }
-                return null
-            }
+        val root = SCRAPER_JSON.readTreeOrNull(json, logger) { "Failed to parse Zenner page-data response" } ?: return null
         val data = root.path("result").path("data")
         if (!data.isObject) {
             logger.warn { "Zenner page-data has no 'result.data' object" }

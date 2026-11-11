@@ -22,6 +22,7 @@ import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.wpRendered
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -91,14 +92,8 @@ class HeimathafenApiScraper(
         return HeimathafenPage(postCount = root.size(), events = events)
     }
 
-    @Suppress("TooGenericExceptionCaught") // Intentional: any malformed body degrades to "no events", never a failed import
     private fun parseRoot(json: String): JsonNode? =
-        try {
-            SCRAPER_JSON.readTree(json).takeIf { it.isArray }
-        } catch (e: Exception) {
-            logger.warn(e) { "Heimathafen API response is not parseable JSON" }
-            null
-        }
+        SCRAPER_JSON.readTreeOrNull(json, logger) { "Heimathafen API response is not parseable JSON" }?.takeIf { it.isArray }
 
     /** Expands one event post into one [ScrapedEvent] per **upcoming** performance. */
     private fun parsePost(

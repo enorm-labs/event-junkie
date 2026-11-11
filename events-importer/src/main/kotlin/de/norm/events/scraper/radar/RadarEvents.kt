@@ -6,6 +6,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseOffsetToBerlin
+import de.norm.events.scraper.readTreeOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import java.time.ZonedDateTime
@@ -68,19 +69,14 @@ data class RadarListing(
  *
  * A malformed row is skipped with a warning; an unparseable body gives an empty listing.
  */
-@Suppress("TooGenericExceptionCaught") // A malformed payload or row must degrade, never abort the import.
 internal fun parseRadarEvents(
     json: String,
     venue: String,
     isProgramme: (RadarEvent) -> Boolean = ::isRadarProgramme
 ): RadarListing {
     val root =
-        try {
-            SCRAPER_JSON.readTree(json)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to parse the $venue radar response" }
-            return RadarListing(emptyList(), 0, 0)
-        }
+        SCRAPER_JSON.readTreeOrNull(json, logger) { "Failed to parse the $venue radar response" }
+            ?: return RadarListing(emptyList(), 0, 0)
     val rows = root.path("result").let { if (it.isObject) it.properties().toList() else emptyList() }
     val events =
         rows

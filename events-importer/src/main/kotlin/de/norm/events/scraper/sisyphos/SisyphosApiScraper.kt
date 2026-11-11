@@ -9,6 +9,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -47,15 +48,8 @@ class SisyphosApiScraper {
             }
     }
 
-    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import
     private fun parseProducts(json: String): JsonNode? {
-        val root =
-            try {
-                SCRAPER_JSON.readTree(json)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Sisyphos ticket feed" }
-                return null
-            }
+        val root = SCRAPER_JSON.readTreeOrNull(json, logger) { "Failed to parse Sisyphos ticket feed" } ?: return null
         return root.path("products").takeIf { it.isArray } ?: run {
             logger.warn { "Sisyphos ticket feed carries no products array" }
             null
