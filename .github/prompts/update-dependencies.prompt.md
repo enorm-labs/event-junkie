@@ -42,7 +42,8 @@ was wrong. Every count in the summary carries the command that produced it.
 - **Anything declared without a version string comes from a BOM and is not touched**: `spring-boot-starter-*`, `spring-*`, `kotlin-*`, `kotlinx-coroutines-*`,
   `reactor-kotlin-extensions`, `jackson-module-kotlin`, `flyway-*`, `postgresql` / `r2dbc-postgresql`, `testcontainers`, `junit`.
 - **Existing CVE-remediation overrides are the exception**, and they are temporary by design: a property named exactly as the Boot BOM names it
-  (none today), plus `constraints` blocks in module scripts (`com.ongres.scram`) and in the root `buildscript` block, for the plugin classpath no BOM reaches (FreeMarker, Jackson 2; `jackson-buildscript-2.version`). The "Pins that are not ordinary project versions" block —
+  (`opentelemetry.version` today), plus `constraints` blocks in module scripts (`com.ongres.scram`) and in the root `buildscript` block, for the plugin
+  classpath no BOM reaches (FreeMarker, Jackson 2, jsoup, Guava and org.json; each property's comment names its plugin and its deletion check). The "Pins that are not ordinary project versions" block —
   `log4j-api`, `scram` — is not BOM-managed. Never bump these because a newer release exists; **do check on every run whether they
   are obsolete** (Step 5).
 

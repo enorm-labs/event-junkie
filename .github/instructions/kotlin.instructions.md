@@ -25,7 +25,8 @@ How code here is written, and where its versions and thresholds live. Comments h
       imported because it manages `spring-*` only.
     - **A CVE-remediation override is temporary by design.** Setting a BOM property name in `gradle.properties` overrides it for every Boot module, and an
       override kept past its purpose pins the project _behind_ the BOM invisibly. Delete it once a Boot release ships an equal or newer version;
-      `/update-dependencies` checks on every run. None is set today.
+      `/update-dependencies` checks on every run. They sit under "Spring Boot BOM overrides (CVE remediation)"; `opentelemetry.version` is the one
+      set today.
     - **`log4j-api.version` is deliberately not `log4j2.version`**, and a Framework pin would not be `spring-framework.version` — each is the BOM's own
       property, and a pin `events-core` needs would silently become an override every Boot module resolves. Check a new pin's name against the BOM properties;
       verifying only the Boot modules reports success either way.
