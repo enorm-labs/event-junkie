@@ -2,6 +2,7 @@ package de.norm.events.scraper.ballhausberlin
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.MYSQL_DATE_TIME
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
@@ -15,7 +16,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure parser for the Ballhaus Berlin `/de/termine/` page: one `li.termin` per date since 2019, server-rendered. The top
@@ -48,7 +48,7 @@ class BallhausBerlinTerminePageScraper {
     ): ScrapedEvent? {
         val top = item.selectFirst(".terminTopSchrift") ?: return null
         val stamp = top.selectFirst(".terminDatetime[data-olddatum]")?.attr("data-olddatum") ?: return null
-        val start = LocalDateTime.parse(stamp, STAMP)
+        val start = LocalDateTime.parse(stamp, MYSQL_DATE_TIME)
         val cleanedTitle = top.textNodes().firstNotNullOfOrNull { it.text().blankToNull() }?.let(::cleanEventTitle) ?: return null
         val title = cleanedTitle.text
         if (OUT_OF_SCOPE.containsMatchIn(title)) return null
@@ -104,7 +104,6 @@ class BallhausBerlinTerminePageScraper {
     }
 
     private companion object {
-        val STAMP: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val OUT_OF_SCOPE = Regex("""^(?:Geschlossene Gesellschaft|Vintage Market|Yes Choir)""", RegexOption.IGNORE_CASE)
         val PLACEHOLDER = Regex("""info folgen""", RegexOption.IGNORE_CASE)
 

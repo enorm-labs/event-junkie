@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.CONCESSION_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.MYSQL_DATE_TIME
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -36,7 +37,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 /**
@@ -171,7 +171,7 @@ class SaalchenOverviewPageScraper {
         if (text.isNullOrBlank()) return null
         return try {
             LocalDateTime
-                .parse(text.trim(), ATC_TIMESTAMP_FORMATTER)
+                .parse(text.trim(), MYSQL_DATE_TIME)
                 .atZone(ZoneId.of("UTC"))
                 .withZoneSameInstant(BERLIN)
                 .toLocalDate()
@@ -368,9 +368,6 @@ private val NOTICE_LABELS = setOf(DATE_LABEL, DOORS_LABEL, START_LABEL, END_LABE
 
 /** Splits the description on `<br>` and on paragraph boundaries. */
 private val LINE_BREAK_PATTERN = Regex("""<br\s*/?>|</p>\s*<p[^>]*>""", RegexOption.IGNORE_CASE)
-
-/** The AddToCalendar widget's timestamp format, always emitted in UTC. */
-private val ATC_TIMESTAMP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
 /** The first time in a notice value: `"20:00"` (branch 1) or the bare-hour `"19 Uhr"` (branch 2). */
 private val NOTICE_TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})|(\d{1,2})\s*Uhr""", RegexOption.IGNORE_CASE)

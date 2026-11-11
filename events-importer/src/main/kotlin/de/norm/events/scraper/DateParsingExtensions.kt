@@ -38,6 +38,9 @@ val COMPACT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 /** `20261017T200000`: an iCalendar `DATE-TIME`, read after a trailing UTC `Z` is removed. */
 val ICAL_LOCAL_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
 
+/** `2026-10-17 20:00:00`: a MySQL `DATETIME` as WordPress plugins and PHP APIs hand it out, without a zone. */
+val MYSQL_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
 /** `17.10.2026`, two-digit day and month only. [parseGermanDate] also takes `7.1.2026`. */
 val PADDED_GERMAN_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 

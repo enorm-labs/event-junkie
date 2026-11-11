@@ -11,7 +11,6 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Period
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 // The reader for a WordPress venue on The Events Calendar, whose REST API
@@ -20,9 +19,6 @@ import java.time.format.DateTimeParseException
 // the field readers live here.
 
 private val logger = KotlinLogging.logger {}
-
-/** The plugin's local date-time format, in the venue's own timezone. */
-private val TEC_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
 /** The plugin's own blocks inside a block-editor description: schedule, price, venue, export links. */
 private const val TEC_TEMPLATE_BLOCKS = ".tribe-events-schedule, .tribe-block"
@@ -118,7 +114,7 @@ abstract class AbstractTecImporter(
 fun JsonNode.tecDateTime(field: String): LocalDateTime? =
     stringOrNull(field)?.let {
         try {
-            LocalDateTime.parse(it, TEC_DATE_TIME)
+            LocalDateTime.parse(it, MYSQL_DATE_TIME)
         } catch (_: DateTimeParseException) {
             null
         }

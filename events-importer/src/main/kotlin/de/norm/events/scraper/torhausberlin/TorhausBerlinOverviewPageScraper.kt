@@ -7,12 +7,12 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
-import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.nextFlightPayload
+import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -21,7 +21,6 @@ import org.jsoup.nodes.Element
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 /** A card's React key: the Teamup event id and the start as epoch milliseconds. */
 private val CARD_KEY = Regex(""""TU(\d+):(\d+)"""")
@@ -30,8 +29,6 @@ private val CLOCK = Regex("""\d{1,2}:\d{2}""")
 
 /** The end of a range that crosses midnight names its own day: `23.10.26, 18:00 – 24.10.26, 00:00`. */
 private val END_DATE = Regex("""–\s*(\d{2}\.\d{2}\.\d{2}),""")
-
-private val SHORT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yy")
 
 /** The cooking collective's community dinner: a food row, not programme. */
 private val FOOD_ROW = Regex("""\bK[üu]fa\b""", RegexOption.IGNORE_CASE)
@@ -106,10 +103,7 @@ class TorhausBerlinOverviewPageScraper {
         return show to names
     }
 
-    private fun endDateOf(times: String): LocalDate? =
-        END_DATE.find(times)?.groupValues?.get(1)?.let {
-            dateOrNull { LocalDate.parse(it, SHORT_DATE) }
-        }
+    private fun endDateOf(times: String): LocalDate? = parseGermanShortDate(END_DATE.find(times)?.groupValues?.get(1))
 
     private fun skip(
         teamupId: String,
