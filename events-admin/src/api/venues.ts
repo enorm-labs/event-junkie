@@ -1,4 +1,4 @@
-import { ensureOk, fetchAllPages } from '@/api/http'
+import { failOnError, fetchAllPages } from '@/api/http'
 
 /**
  * The fields of the importer's `VenueResponse` this app reads. Hand-written: `VenueResponse.kt`
@@ -68,7 +68,7 @@ export interface NeedsReviewVenue {
 export async function fetchNeedsReview(fetchFn: typeof fetch = fetch): Promise<NeedsReviewVenue[]> {
   const path = `${VENUES}/needs-review`
   const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
-  await ensureOk(response, `GET ${path}`)
+  await failOnError(response, `GET ${path}`)
   return (await response.json()) as NeedsReviewVenue[]
 }
 
@@ -76,7 +76,7 @@ export async function fetchNeedsReview(fetchFn: typeof fetch = fetch): Promise<N
 export async function runSiteCheck(fetchFn: typeof fetch = fetch): Promise<void> {
   const path = `${VENUES}/site-check`
   const response = await fetchFn(path, { method: 'POST', headers: { Accept: 'application/json' } })
-  await ensureOk(response, `POST ${path}`)
+  await failOnError(response, `POST ${path}`)
 }
 
 /** One row of `GET /api/admin/venues/manual`. `ManualVenueResponse` in `ManualVenueStore.kt`. */
@@ -117,7 +117,7 @@ export function sortManualVenues(venues: readonly ManualVenue[]): ManualVenue[] 
 export async function fetchManualVenues(fetchFn: typeof fetch = fetch): Promise<ManualVenue[]> {
   const path = `${VENUES}/manual`
   const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
-  await ensureOk(response, `GET ${path}`)
+  await failOnError(response, `GET ${path}`)
   return (await response.json()) as ManualVenue[]
 }
 
@@ -128,7 +128,7 @@ export async function markProgrammeChecked(
 ): Promise<Pick<ManualVenue, 'id' | 'programmeCheckedAt'>> {
   const path = `${VENUES}/${id}/programme-checked`
   const response = await fetchFn(path, { method: 'PUT', headers: { Accept: 'application/json' } })
-  await ensureOk(response, `PUT ${path}`)
+  await failOnError(response, `PUT ${path}`)
   const { programmeCheckedAt } = (await response.json()) as ManualVenue
   return { id, programmeCheckedAt }
 }
@@ -223,14 +223,14 @@ export async function reviewVenue(
 ): Promise<VenueDetail> {
   const path = `${VENUES}/${id}`
   const read = await fetchFn(path, { headers: { Accept: 'application/json' } })
-  await ensureOk(read, `GET ${path}`)
+  await failOnError(read, `GET ${path}`)
   const venue = (await read.json()) as VenueDetail
   const response = await fetchFn(path, {
     method: 'PUT',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(toVenueRequest(venue, review)),
   })
-  await ensureOk(response, `PUT ${path}`)
+  await failOnError(response, `PUT ${path}`)
   return (await response.json()) as VenueDetail
 }
 
@@ -282,7 +282,7 @@ export async function fetchCharacterTags(
 ): Promise<CharacterTag[]> {
   const path = tagsPath(venueId)
   const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
-  await ensureOk(response, `GET ${path}`)
+  await failOnError(response, `GET ${path}`)
   return (await response.json()) as CharacterTag[]
 }
 
@@ -300,7 +300,7 @@ export async function setCharacterTag(
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ sourceUrl }),
   })
-  await ensureOk(response, `PUT ${path}`)
+  await failOnError(response, `PUT ${path}`)
   return (await response.json()) as CharacterTag
 }
 
@@ -315,5 +315,5 @@ export async function clearCharacterTag(
     method: 'DELETE',
     headers: { Accept: 'application/json' },
   })
-  await ensureOk(response, `DELETE ${path}`)
+  await failOnError(response, `DELETE ${path}`)
 }

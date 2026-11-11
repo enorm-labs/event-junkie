@@ -35,29 +35,6 @@ export async function failOnError(response: Response, what: string): Promise<Res
   throw new Error(`${what}: HTTP ${response.status}${detail ? ` — ${detail}` : ''}`)
 }
 
-/**
- * Throws for a response that is not 2xx, as [failOnError] does. Its message puts the Problem
- * Detail after a colon and lists only the reasons, as the source and venue pages show it.
- */
-export async function ensureOk(response: Response, call: string): Promise<void> {
-  if (response.ok) return
-  let detail = ''
-  try {
-    const body = (await response.json()) as { detail?: unknown; errors?: unknown }
-    if (typeof body.detail === 'string' && body.detail) detail = `: ${body.detail}`
-    // A validation 400 says only "Validation failed" in `detail`; the reasons are in `errors`.
-    if (Array.isArray(body.errors)) {
-      const reasons = body.errors
-        .map((e: { message?: unknown }) => e?.message)
-        .filter((m): m is string => typeof m === 'string' && m !== '')
-      if (reasons.length) detail += ` (${reasons.join('; ')})`
-    }
-  } catch {
-    // No JSON body: the status alone is the message.
-  }
-  throw new Error(`${call}: HTTP ${response.status}${detail}`)
-}
-
 export async function getJson<T>(url: string, fetchFn: typeof fetch = fetch): Promise<T> {
   const response = await fetchFn(url, { headers: { Accept: 'application/json' } })
   await failOnError(response, `GET ${url}`)

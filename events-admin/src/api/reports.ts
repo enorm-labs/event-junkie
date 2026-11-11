@@ -2,7 +2,7 @@
  * Problem reports from the public event page (#4399), and their resolution. Hand-written like
  * `dataQuality.ts`: `ReportAdminController.kt` in the importer is the source of truth.
  */
-import { ensureOk } from '@/api/http'
+import { failOnError } from '@/api/http'
 
 /** The boxes of "Report a problem", labelled as the operator reads them. `ReportProblem` in the BFF. */
 export const PROBLEM_LABELS: Record<string, string> = {
@@ -39,7 +39,7 @@ const REPORTS = '/api/admin/reports'
 /** Every open report, one entry per event, by event date. */
 export async function fetchReports(fetchFn: typeof fetch = fetch): Promise<ReportedEvent[]> {
   const response = await fetchFn(REPORTS, { headers: { Accept: 'application/json' } })
-  await ensureOk(response, `GET ${REPORTS}`)
+  await failOnError(response, `GET ${REPORTS}`)
   return (await response.json()) as ReportedEvent[]
 }
 
@@ -53,6 +53,6 @@ export async function resolveReports(
     method: 'DELETE',
     headers: { Accept: 'application/json' },
   })
-  await ensureOk(response, `DELETE ${path}`)
+  await failOnError(response, `DELETE ${path}`)
   return ((await response.json()) as { resolved: number }).resolved
 }

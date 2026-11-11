@@ -1,4 +1,4 @@
-import { ensureOk, type Page, PAGE_SIZE } from '@/api/http'
+import { failOnError, type Page, PAGE_SIZE } from '@/api/http'
 
 /** `FestivalRequest.kt`: the body of a create and of the PUT, which replaces the whole festival. */
 export interface FestivalRequest {
@@ -32,7 +32,7 @@ const JSON_HEADERS = { Accept: 'application/json', 'Content-Type': 'application/
 export async function fetchFestivals(fetchFn: typeof fetch = fetch): Promise<Festival[]> {
   const path = `${FESTIVALS}?page=0&size=${PAGE_SIZE}&sort=firstDay,desc`
   const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
-  await ensureOk(response, `GET ${FESTIVALS}`)
+  await failOnError(response, `GET ${FESTIVALS}`)
   const body = (await response.json()) as Page<Festival>
   if (body.content.length !== body.totalElements) {
     throw new Error(
@@ -62,7 +62,7 @@ export async function saveFestival(
     headers: JSON_HEADERS,
     body: JSON.stringify(request),
   })
-  await ensureOk(response, `${method} ${path}`)
+  await failOnError(response, `${method} ${path}`)
   return (await response.json()) as Festival
 }
 
@@ -73,5 +73,5 @@ export async function deleteFestival(id: number, fetchFn: typeof fetch = fetch):
     method: 'DELETE',
     headers: { Accept: 'application/json' },
   })
-  await ensureOk(response, `DELETE ${path}`)
+  await failOnError(response, `DELETE ${path}`)
 }

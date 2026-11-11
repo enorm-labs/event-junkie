@@ -70,7 +70,7 @@ describe('SourceEditForm', () => {
     await flushPromises()
 
     expect(wrapper.get('[role="alert"]').text()).toBe(
-      'PATCH /api/admin/event-sources/lido: HTTP 400: Validation failed (Max retries must not be negative)',
+      'PATCH /api/admin/event-sources/lido: HTTP 400 — Validation failed (maxRetries: Max retries must not be negative)',
     )
     expect(wrapper.emitted('saved')).toBeUndefined()
   })

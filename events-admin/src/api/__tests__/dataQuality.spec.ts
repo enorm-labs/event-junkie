@@ -95,7 +95,7 @@ describe('the classification check', () => {
     ['a source', () => checkSource('lido', conflict())],
   ])('carries the detail of a 409 for %s', async (_, call) => {
     await expect(call()).rejects.toThrow(
-      /HTTP 409: The event-classification check is off: set app.data-quality.classification.enabled and a key$/,
+      /HTTP 409 — The event-classification check is off: set app.data-quality.classification.enabled and a key$/,
     )
   })
 })
@@ -123,7 +123,7 @@ describe('worklist dismissals', () => {
 
     await expect(
       dismissWorklistRow('missingGenre', { id: 418, fingerprint: 'abc' }, fetchFn),
-    ).rejects.toThrow(/HTTP 409: Event 418 changed/)
+    ).rejects.toThrow(/HTTP 409 — Event 418 changed/)
   })
 
   it('lists one issue and undoes by id', async () => {

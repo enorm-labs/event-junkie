@@ -130,7 +130,7 @@ describe('WorklistView dismissals', () => {
     await button(wrapper, 'Correct as is: Die Nerven').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[role="alert"]').text()).toContain('HTTP 409: Event 418 changed')
+    expect(wrapper.find('[role="alert"]').text()).toContain('HTTP 409 — Event 418 changed')
     expect(wrapper.text()).toContain('Die Nerven')
   })
 

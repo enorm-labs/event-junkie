@@ -227,7 +227,7 @@ describe('character tags', () => {
     )
 
     await expect(setCharacterTag(7, 'nope', 'https://x.org/', fetchFn)).rejects.toThrow(
-      "PUT /api/admin/venues/7/character-tags/nope: HTTP 400: Unknown character tag 'nope'",
+      "PUT /api/admin/venues/7/character-tags/nope: HTTP 400 — Unknown character tag 'nope'",
     )
   })
 })
