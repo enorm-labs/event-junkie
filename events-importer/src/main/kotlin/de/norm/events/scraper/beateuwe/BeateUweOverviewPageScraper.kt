@@ -6,8 +6,8 @@ import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -119,7 +119,7 @@ class BeateUweOverviewPageScraper {
 
     private fun Element.iconText(icon: String): String? = selectFirst("li:has(i.$icon) .elementor-icon-list-text")?.clean()
 
-    private fun Element.clean(): String = text().replace(WHITESPACE, " ").trim()
+    private fun Element.clean(): String = text().collapseWhitespace()
 
     private companion object {
         const val DATE_LIST = "ul.elementor-icon-list-items:has(i.fa-calendar-alt)"

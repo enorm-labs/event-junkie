@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zimmer16
 
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.isNonArtistName
 
 /**
@@ -99,7 +100,6 @@ private fun repeats(
 
 private val SEPARATOR = Regex(""", | [–—-] |: |\? """)
 private val DASHES = setOf("–", "—", "-")
-private val WHITESPACE = Regex("""\s+""")
 private val TRAILING_SOLO = Regex("""\s+Solo$""")
 private val RELEASE_TOUR = Regex("""\sRelease[- ]Tour$""", RegexOption.IGNORE_CASE)
 

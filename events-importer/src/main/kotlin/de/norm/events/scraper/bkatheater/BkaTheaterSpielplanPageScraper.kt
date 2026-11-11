@@ -6,9 +6,9 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.childrensShowPhrase
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.isNonArtistName
@@ -111,7 +111,7 @@ class BkaTheaterSpielplanPageScraper {
         date: LocalDate,
         time: LocalTime?,
         title: String
-    ): String = "$date $time ${title.replace(WHITESPACE, " ").trim().lowercase()}"
+    ): String = "$date $time ${title.collapseWhitespace().lowercase()}"
 
     private fun parseCompactDate(value: String): LocalDate? = dateOrNull { LocalDate.parse(value, COMPACT_DATE) }
 

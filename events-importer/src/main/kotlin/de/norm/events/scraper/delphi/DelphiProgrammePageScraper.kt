@@ -11,6 +11,7 @@ import de.norm.events.scraper.billsTradeFairOrConference
 import de.norm.events.scraper.billsVarietyShow
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
@@ -178,7 +179,7 @@ class DelphiProgrammePageScraper {
         row
             .textAt("p.stabText")
             ?.split('|')
-            ?.map { it.replace(WHITESPACE, " ").trim() }
+            ?.map { it.collapseWhitespace() }
             ?.filter { it.isNotBlank() && !isNonArtistName(it) && !isCreditedAuthor(it, teaser) }
             ?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
             .orEmpty()

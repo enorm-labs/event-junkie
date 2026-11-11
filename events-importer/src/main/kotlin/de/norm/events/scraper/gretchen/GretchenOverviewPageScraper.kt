@@ -13,6 +13,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.COLLAB_SEPARATOR
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.DROP_LINE_PATTERN
@@ -427,8 +428,7 @@ class GretchenOverviewPageScraper {
      * annotation removed so its `/` cannot split a name, then [splitSupportActs] (`LXST CXNTURY & ÆSTRAL`
      * to two acts, `Feo & Friends` whole).
      */
-    private fun splitCreditList(line: String): List<String> =
-        splitSupportActs(stripCreditPrefix(line).replace(PARENS_ANNOTATION, " ").replace(WHITESPACE, " ").trim())
+    private fun splitCreditList(line: String): List<String> = splitSupportActs(stripCreditPrefix(line).replace(PARENS_ANNOTATION, " ").collapseWhitespace())
 
     /**
      * A prose note that leaked into the lineup ("Die Show wird … verlegt.", a long blurb). Real act

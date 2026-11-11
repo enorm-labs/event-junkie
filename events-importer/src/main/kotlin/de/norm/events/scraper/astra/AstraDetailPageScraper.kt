@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
@@ -148,8 +149,6 @@ class AstraDetailPageScraper {
 
         /** A set time before or after the act: `22:00 Alle Farben`, `Lahos (23:30 - 01:00 Uhr)`. */
         val SET_TIME = Regex("""^$SLOT\s*[-–|:]?\s*|\s*[-–|]?\s*$SLOT\s*$""", RegexOption.IGNORE_CASE)
-
-        val WHITESPACE = Regex("""\s+""")
 
         /** More words than this on one line is a sentence, not an act. */
         const val MAX_NAME_WORDS = 8
