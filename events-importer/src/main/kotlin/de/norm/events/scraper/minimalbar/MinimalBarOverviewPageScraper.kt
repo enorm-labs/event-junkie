@@ -8,8 +8,8 @@ import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.flightStringOrNull
 import de.norm.events.scraper.isNonArtistName
@@ -134,7 +134,7 @@ class MinimalBarOverviewPageScraper {
     }
 
     private fun actsOf(billing: String): List<String> =
-        splitSegmentOnConjunctions(billing.replace(WHITESPACE, " ").trim())
+        splitSegmentOnConjunctions(billing.collapseWhitespace())
             .map { act ->
                 stripArtistSuffix(
                     act

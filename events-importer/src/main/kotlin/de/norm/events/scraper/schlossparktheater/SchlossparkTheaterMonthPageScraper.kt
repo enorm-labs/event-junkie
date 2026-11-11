@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -149,7 +150,7 @@ private class SchlossparkBilling private constructor(
         private val MATINEE = Regex("""matin[ée]e""", RegexOption.IGNORE_CASE)
         private val UNNAMED_COMPANY = Regex("""\s+(?:&|und)\s+(?:sein\s+|ihr\s+)?(?:band|orchester)$""", RegexOption.IGNORE_CASE)
 
-        private fun unquoted(programme: String): String = programme.replace(QUOTE, "").replace(WHITESPACE, " ").trim()
+        private fun unquoted(programme: String): String = programme.replace(QUOTE, "").collapseWhitespace()
 
         fun of(lines: List<String>): SchlossparkBilling? {
             val first = lines.firstOrNull()?.blankToNull() ?: return null

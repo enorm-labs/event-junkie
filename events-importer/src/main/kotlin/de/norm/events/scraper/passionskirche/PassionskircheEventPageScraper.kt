@@ -8,8 +8,8 @@ import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.headlinersFromTitle
@@ -99,7 +99,7 @@ class PassionskircheEventPageScraper {
                 RegexOption.IGNORE_CASE
             )
 
-        fun plainText(text: String): String = text.replace(' ', ' ').replace(WHITESPACE, " ").trim()
+        fun plainText(text: String): String = text.replace(' ', ' ').collapseWhitespace()
 
         fun scheduleDate(line: String): LocalDate? {
             val match = SCHEDULE_DATE.find(line) ?: return null

@@ -2,6 +2,7 @@ package de.norm.events.scraper.studioiiii
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.stripArtistSuffix
@@ -56,5 +57,4 @@ private val ROOM_LABEL = Regex("""\s*\b(\p{L}*room)\s*:\s*""", RegexOption.IGNOR
 
 /** `DJS` or `WITH` after a word, where prose hands over to the names. */
 private val PROSE_MARKER = Regex("""(?<=\p{L}\s)(?:DJS|WITH)\s+""", RegexOption.IGNORE_CASE)
-private val WHITESPACE = Regex("""\s+""")
 private const val MIN_PROSE_WORDS = 3

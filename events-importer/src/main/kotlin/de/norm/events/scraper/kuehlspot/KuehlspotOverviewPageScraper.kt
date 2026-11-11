@@ -5,8 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
@@ -58,7 +58,7 @@ class KuehlspotOverviewPageScraper {
         baseUrl: String,
         house: HouseRules
     ): ScrapedEvent? {
-        val headings = block.select("h2.elementor-heading-title").map { it.text().replace(WHITESPACE, " ").trim() }
+        val headings = block.select("h2.elementor-heading-title").map { it.text().collapseWhitespace() }
         val dateLine = headings.first()
         val date = DATE.find(dateLine)?.value?.let(::parseDate)
         val title = headings.getOrNull(1)
@@ -111,7 +111,7 @@ class KuehlspotOverviewPageScraper {
                 node is Element -> lines.last().append(node.text())
             }
         }
-        return lines.map { it.toString().replace(WHITESPACE, " ").trim() }.filter { it.isNotEmpty() }
+        return lines.map { it.toString().collapseWhitespace() }.filter { it.isNotEmpty() }
     }
 
     private fun parseDate(text: String): LocalDate? = dateOrNull { LocalDate.parse(text, DATE_FORMATTER) }
