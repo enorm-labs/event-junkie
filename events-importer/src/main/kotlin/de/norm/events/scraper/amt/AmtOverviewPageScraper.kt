@@ -33,8 +33,8 @@ import java.time.LocalDate
  * - `.name` — the title (a party/series name like `SUBSTATION`, not a performer);
  * - `.sexpos` — an optional theme tag (`[SEX POSITIV]`), stored as the subtitle;
  * - `.perf` — the DJ line, stored as the description; split into [ScrapedArtist]s only when
- * delimited with `//` (a space-separated line cannot be split reliably), and dropped entirely
- * when it is a `tba` placeholder;
+ * delimited with `//` or a spaced `/` (a space-separated line cannot be split reliably), and
+ * dropped entirely when it is a `tba` placeholder;
  * - `a.div-strela` — the external ticket link (Resident Advisor / EventJet);
  * - `.text-block-4` — the price: a tiered `min – max` (presale / box-office), a single figure
  * (presale), or `Door sale only. 10` (box-office only); and
@@ -114,12 +114,13 @@ class AmtOverviewPageScraper {
     }
 
     /**
-     * The DJ line split into performers — only when delimited with `//`. A space-separated line
-     * (`"Rubi ChrizzT Reza"`) cannot be split reliably, so no artists come from it.
-     * Placeholder/non-artist tokens are filtered out.
+     * The DJ line split into performers — only when delimited with `//` or a spaced `/`
+     * (`"Pamela Svart / Nanzhen Yang"`). A slash without spaces stays inside a name. A
+     * space-separated line (`"Rubi ChrizzT Reza"`) cannot be split reliably, so no artists come
+     * from it. Placeholder/non-artist tokens are filtered out.
      */
     private fun parseDjs(lineup: String?): List<ScrapedArtist> {
-        if (lineup == null || !lineup.contains(DJ_SEPARATOR)) return emptyList()
+        if (lineup == null || !DJ_SEPARATOR.containsMatchIn(lineup)) return emptyList()
         return lineup
             .split(DJ_SEPARATOR)
             .map { it.trim() }
@@ -159,8 +160,8 @@ class AmtOverviewPageScraper {
     }
 
     companion object {
-        /** The `//` delimiter AMT uses between DJs in the `.perf` line. */
-        private const val DJ_SEPARATOR = "//"
+        /** The delimiters AMT puts between DJs in the `.perf` line: `//`, or a `/` with spaces on both sides. */
+        private val DJ_SEPARATOR = Regex("""//|\s+/\s+""")
 
         /** The bill after a host's `presents:` or ` x `, as the venue's titles write it. */
         private val HOSTED_BILL = Regex("""^.+?(?:\s+presents:|\s+[x×]\s+)\s*(.+)$""", RegexOption.IGNORE_CASE)

@@ -52,8 +52,8 @@ val AMT_LIMITATIONS =
         EventSource.AMT,
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably",
-            verified = "2026-10-08"
+            "a DJ line without `/` separates names with spaces only, so it cannot be split apart reliably",
+            verified = "2026-11-11"
         ),
         AcceptedLimitation(
             LimitedAspect.START_TIME,
