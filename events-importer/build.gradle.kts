@@ -203,7 +203,11 @@ val webQueryModeTest =
                 .get()
                 .output.classesDirs
         classpath = sourceSets.test.get().runtimeClasspath
-        filter { includeTestsMatching("de.norm.events.scraper.*") }
+        filter {
+            includeTestsMatching("de.norm.events.scraper.*")
+            // Wall-clock timeouts and no jsoup: a CPU-heavy class in the other fork starved its 300 ms timer (#4897). `test` runs it.
+            excludeTestsMatching("de.norm.events.scraper.HostResponseTimeoutTest")
+        }
         systemProperty("jsoup.queryMode", "web")
         maxParallelForks = 2
         mustRunAfter(tasks.test)
