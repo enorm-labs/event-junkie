@@ -613,6 +613,19 @@ class PromoterNormalizerTest {
         }
     }
 
+    @Test
+    fun `keeps the Greyzone GbR credit whole, even beside the rows its parts once keyed`() {
+        val stored = setOf("greyzone-concerts", "grey", "promotion-grey", "von-bronikowski", "crunch-tapes")
+        val resolve = { raw: String -> splitCoBilledPromoter(raw) { it in stored }.map(::canonicalPromoterName) }
+        assertSoftly {
+            resolve("Greyzone Concerts & Promotion Grey & von Bronikowski GbR") shouldBe listOf("Greyzone Concerts")
+            resolve("Greyzone Concerts & Promotion Grey & von Bronikowski") shouldBe listOf("Greyzone Concerts")
+            resolve("Grey & von Bronikowski GbR") shouldBe listOf("Greyzone Concerts")
+            resolve("Grey & von Bronikowski") shouldBe listOf("Greyzone Concerts")
+            resolve("Greyzone Concerts & Crunch Tapes") shouldBe listOf("Greyzone Concerts", "Crunch Tapes")
+        }
+    }
+
     // A word in another script is a name, not a connector the strip may take (#4611).
     @Test
     fun `keeps a credit in Cyrillic or Greek whole`() {
