@@ -408,11 +408,11 @@ class CassiopeiaDetailPageScraperTest {
     }
 
     @ParameterizedTest
-    // Every genre slot of the 48 upcoming production rows on 11 October 2026, but the festival name.
+    // Every genre slot of the 48 upcoming production rows on 11 October 2026, but the festival name and the pub quiz.
     @ValueSource(
         strings = [
             "80s, Disco & Hip Hop", "Indie Anthems, Alternative Pop", "Drag. Pop. Retro. Karaoke. Live-Acts", "post-punk / grunge rock",
-            "Kneipenquiz", "Doom Metal", "Metalcore", "80s, Rock, New Wave", "Deutschpunk", "Pop, Hip Hop, House", "80s All Out & Pop",
+            "Doom Metal", "Metalcore", "80s, Rock, New Wave", "Deutschpunk", "Pop, Hip Hop, House", "80s All Out & Pop",
             "Pop, Rock, Indie, Karaoke", "Post Punk", "Metal", "Queer Icons & Pop Hits", "Rock, Indie, Core, Live-Band", "Hardcore",
             "Indie-Rock", "Pop Punk", "Hip-House, Club-Rap", "Throwback Indie, Twenty One Pilots, Ikkimel Party", "Alternative/Indie",
             "Straight Edge Hardcore", "Dark Rock, NDH", "Beatdown Hardcore", "Dance \\ Electrionic \\ Rock", "Deutschrap",
@@ -426,7 +426,8 @@ class CassiopeiaDetailPageScraperTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["Crunch Fest Berlin", "presented by ATOK Berlin", ""])
+    // A pub quiz is a format, not a style (#4924).
+    @ValueSource(strings = ["Crunch Fest Berlin", "presented by ATOK Berlin", "Kneipenquiz", ""])
     fun `drops a genre slot that names no style`(slot: String) {
         cassiopeiaGenre(slot).shouldBeNull()
     }

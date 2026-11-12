@@ -432,6 +432,32 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `a misspelt genre lands on the genre it means`() {
+        assertSoftly {
+            normalizeGenre("Dicso").shouldContainExactly("Disco")
+            normalizeGenre("Shoesgaze").shouldContainExactly("Shoegaze")
+            normalizeGenre("Synthie").shouldContainExactly("Synthpop")
+            normalizeGenre("R'n'r").shouldContainExactly("Rock'n'Roll")
+        }
+    }
+
+    @Test
+    fun `a format, a status or a place in the genre field is no genre`() {
+        assertSoftly {
+            listOf("Ausverkauft", "Buchpremiere", "Talkshow", "Märchen-Theater-Show", "Gespräch", "DJ Sets", "Leipzig", "Workshops").forEach {
+                normalizeGenre(it).shouldBeEmpty()
+                nonGenreTokens(it) shouldBe listOf(it)
+            }
+        }
+    }
+
+    @Test
+    fun `a real style beside a format word still resolves`() {
+        normalizeGenre("Techno, Ausverkauft").shouldContainExactly("Techno")
+        normalizeGenre("Jazz Talk").shouldContainExactly("Jazz")
+    }
+
+    @Test
     fun `a canonical name written by a venue keeps its own tag`() {
         assertSoftly {
             normalizeGenre("Progressive House").shouldContainExactly("Progressive House")

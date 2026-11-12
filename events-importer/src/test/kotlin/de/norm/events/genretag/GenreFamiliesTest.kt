@@ -51,5 +51,43 @@ class GenreFamiliesTest {
         // The formats that reach genre_tag by the looksLikeGenre fall-through stay out of the filter.
         genreFamily("ping-pong").shouldBeNull()
         genreFamily("tattoo").shouldBeNull()
+        genreFamily("hexcasterband").shouldBeNull()
+    }
+
+    @Test
+    fun `a spelling variant takes the family of the spelling without hyphens or underscores`() {
+        genreFamily("dream-pop") shouldBe GenreFamily.POP
+        genreFamily("hard-trance") shouldBe GenreFamily.ELECTRONIC
+        genreFamily("indie_punk") shouldBe GenreFamily.PUNK
+        genreFamily("break-beat") shouldBe GenreFamily.ELECTRONIC
+    }
+
+    @Test
+    fun `a compound takes the family of its longest known trailing words`() {
+        genreFamily("desert-rock") shouldBe GenreFamily.ROCK
+        genreFamily("egg-punk") shouldBe GenreFamily.PUNK
+        genreFamily("noise-dream-pop") shouldBe GenreFamily.POP
+        // `post-punk` is Wave, though `punk` alone is Punk.
+        genreFamily("shoegaze-post-punk") shouldBe GenreFamily.WAVE
+        genreFamily("japanese-citypop") shouldBe GenreFamily.POP
+    }
+
+    @Test
+    fun `a compound with no known trailing word takes the family of the rightmost word that has one`() {
+        genreFamily("bass-music") shouldBe GenreFamily.ELECTRONIC
+        genreFamily("blues-trash") shouldBe GenreFamily.JAZZ_BLUES
+    }
+
+    @Test
+    fun `a word names its family through a synonym`() {
+        genreFamily("psych") shouldBe GenreFamily.ROCK
+        genreFamily("r-n-r") shouldBe GenreFamily.ROCK
+    }
+
+    @Test
+    fun `an explicit entry outranks the head word where the head word misleads`() {
+        genreFamily("d-beat") shouldBe GenreFamily.PUNK
+        genreFamily("indie-punk-noise") shouldBe GenreFamily.PUNK
+        genreFamily("new-beat") shouldBe GenreFamily.ELECTRONIC
     }
 }
