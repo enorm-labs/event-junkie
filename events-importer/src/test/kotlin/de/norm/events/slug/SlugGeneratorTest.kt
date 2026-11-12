@@ -127,4 +127,18 @@ class SlugGeneratorTest {
         SlugGenerator.slugify("Кино_2") shouldBe "kino-2"
         SlugGenerator.slugify("_") shouldBe ""
     }
+
+    @Test
+    fun `slugs a typographic apostrophe as a straight one`() {
+        SlugGenerator.slugify("DJ R'n'P") shouldBe "dj-r-n-p"
+        SlugGenerator.slugify("DJ R\u2019n\u2019P") shouldBe "dj-r-n-p"
+        SlugGenerator.slugify("DJ R\u2018n\u2019P") shouldBe "dj-r-n-p"
+        SlugGenerator.slugify("DJ R\u02BCn'P") shouldBe "dj-r-n-p"
+        SlugGenerator.slugify("\u2019Til Tuesday") shouldBe "til-tuesday"
+    }
+
+    @Test
+    fun `drops the apostrophe of a Cyrillic name`() {
+        SlugGenerator.slugify("\u041C\u02BC\u044F\u0442\u0430") shouldBe "myata"
+    }
 }

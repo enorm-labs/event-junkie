@@ -97,7 +97,8 @@ which helper lives where — is not repeated; `grep` answers that.
   `/venues/{slug}` cannot answer each other; `ResponseCachingIntegrationTest` asserts it.
 - **Slugs are server-side** (`SlugGenerator`, the `slug` module, never accepted in a request). Slugify's NFD stripping deletes a letter that does not decompose,
   so `NON_DECOMPOSING_LATIN` maps `ø æ ð þ ł đ ı ß œ` to their base form (`ø`→`o` beside `ö`→`o`; `æ`, `œ`, `ß`, `þ` to their two-letter romanisation).
-  Without it `Kėkė Søl` → `keke-sl` and `Søl`/`Sæl` collide. **Do not switch to slugify's `locale()` bundles** — `no` rewrites `å`→`aa`, `de` turns `ö`→`oe`,
+  Without it `Kėkė Søl` → `keke-sl` and `Søl`/`Sæl` collide. The typographic apostrophes `’ ‘ ʼ` fold to `'`, which slugs as `-`, so `R’n’P` and `R'n'P` are one
+  artist (#4904); a Cyrillic or Greek name drops them. **Do not switch to slugify's `locale()` bundles** — `no` rewrites `å`→`aa`, `de` turns `ö`→`oe`,
   changing slugs that are already correct. **Changing the map is a data migration in disguise**: `ArtistAssociationSync` and `PromoterAssociationSync`
   resolve artists and promoters by slug, so an old spelling is missed and re-inserted as a duplicate.
   **A Cyrillic or Greek name with no Latin letter** is transliterated: Cyrillic BGN/PCGN-style without diacritics, Greek by ELOT 743 (`ВУИНДЛИЯ` →

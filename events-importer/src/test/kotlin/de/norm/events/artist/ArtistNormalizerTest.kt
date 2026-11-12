@@ -360,7 +360,7 @@ class ArtistNormalizerTest {
             artistSlugFor("Lady Bird") shouldBe "ladybird"
             artistSlugFor("DJ M.o.E") shouldBe "m-o-e"
             artistSlugFor("Django Reinhardt Orchestra") shouldBe "the-django-reinhardt-orchestra"
-            artistSlugFor("Rave d Amor") shouldBe "rave-damor"
+            artistSlugFor("Rave d Amor") shouldBe "rave-d-amor"
             // moe., the US jam band, keeps its own row.
             artistSlugFor("moe.") shouldBe "moe"
         }
