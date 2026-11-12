@@ -14,7 +14,7 @@ object SlugGenerator {
     private val slugify =
         Slugify
             .builder()
-            .customReplacements(NON_DECOMPOSING_LATIN + UNDERSCORE)
+            .customReplacements(NON_DECOMPOSING_LATIN + UNDERSCORE + TYPOGRAPHIC_APOSTROPHES)
             .build()
 
     private val transliterating =
@@ -55,6 +55,13 @@ private val MARKS = Regex("\\p{M}+")
 
 /** Slugify keeps `_` as a word character, so `DJ_Dave` slugged to `dj_dave`. As a space it becomes the one separator a slug has. */
 private val UNDERSCORE: Map<String, String> = mapOf("_" to " ")
+
+/**
+ * Slugify turns a straight `'` into `-` but drops the typographic ones, so `R'n'P` slugged to `r-n-p` and `R’n’P` to `rnp`: one
+ * act, two artists (#4904). Folded to `'`, the smaller set of stored slugs changed. Not in a Cyrillic or Greek name, whose `ʼ`
+ * is dropped as `ь` is.
+ */
+private val TYPOGRAPHIC_APOSTROPHES: Map<String, String> = mapOf("\u2019" to "'", "\u2018" to "'", "\u02BC" to "'")
 
 /** The Cyrillic letters whose mark changes the sound, replaced before the marks are stripped. */
 private val MARKED_CYRILLIC: Map<String, String> =
