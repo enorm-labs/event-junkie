@@ -92,17 +92,24 @@ fun coBilledPromoterParts(raw: String): List<String> =
 /**
  * The promoters a [raw] credit names: its [coBilledPromoterParts] when at least one of them, as
  * canonicalized and slugged on import, is a stored promoter ([isKnownSlug]); else [raw] whole.
- * A spaced "&" alone proves nothing: "Kollektiv Kunst & Krawall" is one promoter (#4323).
+ * A spaced "&" alone proves nothing: "Kollektiv Kunst & Krawall" is one promoter (#4323). A spaced
+ * "×" does: "Duct Tape × Anytime" is two collectives, stored or not (#4917).
  */
 fun splitCoBilledPromoter(
     raw: String,
     isKnownSlug: (String) -> Boolean
 ): List<String> {
     val parts = coBilledPromoterParts(raw)
-    return parts.takeIf { it.any { part -> isKnownSlug(SlugGenerator.slugify(canonicalPromoterName(part))) } } ?: listOf(raw)
+    val collaboration = COLLABORATION_SIGN_REGEX.containsMatchIn(raw)
+    return parts.takeIf { it.isNotEmpty() && (collaboration || it.any { part -> isKnownSlug(SlugGenerator.slugify(canonicalPromoterName(part))) }) }
+        ?: listOf(raw)
 }
 
-private val CO_BILLING_REGEX = Regex("""\s+&\s+""")
+/** A spaced "&" or "×" (U+00D7); never the letter "x", which is part of names. */
+private val CO_BILLING_REGEX = Regex("""\s+[&×]\s+""")
+
+/** The multiplication sign a collaboration is written with, spaced: "Duct Tape × Anytime". */
+private val COLLABORATION_SIGN_REGEX = Regex("""\s×\s""")
 
 /** Without a trailing parenthetical, unless it is all that names something ("& (GSA)" keeps it). */
 private fun String.withoutTrailingParenthetical(): String = replace(TRAILING_PAREN_REGEX, "").trim().takeIf { rest -> rest.any(Char::isLetterOrDigit) } ?: this
