@@ -170,6 +170,8 @@ jq --arg cut "$(date -u -v-14d +%FT%TZ 2>/dev/null || date -u -d '14 days ago' +
 ```
 
 - **A programme on `ra.co`, Instagram or Facebook**: ACT, the link for the operator. No script reads it; RA's terms forbid any automated access (#356).
+  On the operator's word the agent reads that one page in the operator's Chrome (`claude-in-chrome`) instead: a page view in the operator's
+  browser, never a loop over pages or an API.
 - **Every other venue**: one subagent for the 8 reads each programme once, with the `USER_AGENT` of `scripts/musicbrainz-match.py`, after its
   `robots.txt`. It compares the dated events in scope ([EVENT_SCOPE.md](../../docs/EVENT_SCOPE.md)) with the held ones,
   `GET http://localhost:28080/api/events?venue=<slug>&from=<today>&to=<a year on>`, paged. One verdict per venue: NOTHING MISSING, MISSING with
