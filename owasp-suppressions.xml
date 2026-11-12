@@ -105,4 +105,16 @@
         <cve>CVE-2026-49844</cve>
     </suppress>
 
+    <suppress>
+        <notes><![CDATA[
+            False positive — wrong product. CVE-2026-54285 is a missing size limit in
+            `W3CBaggagePropagator.extract()` of `@opentelemetry/core`, the JavaScript client
+            (opentelemetry-js < 2.8.0). The Java artifacts do not carry that code.
+            Dependency-Check matches it on the shared OpenTelemetry CPE.
+            Re-evaluate if the advisory ever names the Java artifacts or a Java version range.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-(api|common|context)@.*$</packageUrl>
+        <cve>CVE-2026-54285</cve>
+    </suppress>
+
 </suppressions>
