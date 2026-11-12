@@ -108,9 +108,24 @@ class BilingualDescriptionTest {
         split.alt shouldBe ENGLISH
     }
 
+    // SO36's ROLLER DISCO (event 13792) points with "see below" and draws a `+++` rule between the halves.
+    @Test
+    fun `a rule between pointed halves is the cut, and a half with a head of its own does not share the first one`() {
+        val shared = splitBilingualDescription("+++++ English version see below +++++\nRollers HiFi\n$GERMAN\n+++++++\n$ENGLISH").shouldNotBeNull()
+        val ownHead =
+            splitBilingualDescription("+++++ English version see below +++++\nRollers HiFi\n$GERMAN\n+++++++\nROLLER SKATE DISCO!\n$ENGLISH")
+                .shouldNotBeNull()
+
+        shared.original shouldBe "Rollers HiFi\n$GERMAN"
+        shared.alt shouldBe "Rollers HiFi\n$ENGLISH"
+        ownHead.original shouldBe "Rollers HiFi\n$GERMAN"
+        ownHead.alt shouldBe "ROLLER SKATE DISCO!\n$ENGLISH"
+    }
+
     @Test
     fun `trimEdgeRules drops rules at the edges and keeps one between paragraphs`() {
         trimEdgeRules("~~~~~~\n\n$ENGLISH\n\n=====\n***\n") shouldBe ENGLISH
+        trimEdgeRules("$GERMAN\n++++++++") shouldBe GERMAN
         // A spaced-out rule is not one: the line could be a row of separators between names.
         trimEdgeRules("— — —\n$GERMAN\n•••") shouldBe "— — —\n$GERMAN"
         trimEdgeRules("$GERMAN\n-----\n$ENGLISH") shouldBe "$GERMAN\n-----\n$ENGLISH"

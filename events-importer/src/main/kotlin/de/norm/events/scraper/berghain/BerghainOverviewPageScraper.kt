@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dropPastEvents
+import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
@@ -102,7 +103,7 @@ class BerghainOverviewPageScraper(
         val lineText = dateLine?.text().orEmpty()
         val floors = block.select("h3").mapNotNull { it.text().trim().takeIf(String::isNotBlank) }
         val floorType = floorsToEventType(floors)
-        val lineup = parseLineup(block, floorType)
+        val lineup = parseLineup(block, floorType).ifEmpty { titleHeadliners(title, floorType, floors) }
         val liveOnly = floorType == EventType.PARTY.name && lineup.isNotEmpty() && lineup.all { it.role == ArtistRole.LIVE }
 
         return ScrapedEvent(
@@ -144,6 +145,22 @@ class BerghainOverviewPageScraper(
             }
         }
         return lineup
+    }
+
+    /**
+     * The act a concert's title names, when the venue lists no `<h4>` lineup for it: Kantine's `Ciarán
+     * (Bearface)` (event 13777) bills Ciarán. A bracket after the name is a note on the act (a former
+     * name, `Vinyl`), not part of it. A club night without a lineup bills nobody, because its title
+     * names the night.
+     */
+    private fun titleHeadliners(
+        title: String,
+        eventType: String?,
+        floors: List<String>
+    ): List<ScrapedArtist> {
+        if (eventType != EventType.CONCERT.name) return emptyList()
+        return headlinersFromTitle(title.replace(TRAILING_BRACKET, "").trim())
+            .map { it.copy(role = ArtistRole.HEADLINER, stage = floors.firstOrNull()) }
     }
 
     /**
@@ -205,6 +222,9 @@ class BerghainOverviewPageScraper(
 
         /** Tailwind utility class marking a `Live`/`b2b` format label span (not an artist name). */
         private const val MARKER_CLASS = "uppercase"
+
+        /** A bracketed note that ends a title: `Ciarán (Bearface)`. */
+        private val TRAILING_BRACKET = Regex("""\s*\([^()]*\)\s*$""")
 
         /** The one marker that changes a role: the venue's statement that the act plays live. */
         private const val LIVE_MARKER = "Live"

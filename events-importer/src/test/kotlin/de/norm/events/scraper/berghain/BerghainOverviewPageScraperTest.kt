@@ -319,6 +319,27 @@ class BerghainOverviewPageScraperTest {
             )
     }
 
+    // The Kantine listing on 2026-11-12 named Ciarán's concert (event 13777) only in its heading.
+    @Test
+    fun `bills a Kantine concert without a lineup its title's act`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/83041/">
+                <p>Mittwoch <span class="font-bold">03.03.2027</span> tür 19:00 beginn 20:00</p>
+                <h2>Ciarán (Bearface)</h2>
+                <h3>Kantine am Berghain</h3>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, kantineUrl), kantineUrl).single()
+
+        event.title shouldBe "Ciarán (Bearface)"
+        event.eventType shouldBe EventType.CONCERT.name
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Ciarán" to ArtistRole.HEADLINER)
+        event.artists.single().stage shouldBe "Kantine am Berghain"
+    }
+
     // A night with no lineup has no act to type it by, so the floor decides.
     @Test
     fun `keeps a club night without a lineup a party`() {
@@ -336,6 +357,7 @@ class BerghainOverviewPageScraperTest {
 
         event.eventType shouldBe EventType.PARTY.name
         event.genre shouldBe "House"
+        event.artists.shouldBeEmpty()
     }
 
     // The venue wrote five DJs of one night into a single name span; the span was stored as one act.

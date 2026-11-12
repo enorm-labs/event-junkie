@@ -224,7 +224,9 @@ class So36DetailPageScraper {
      * description ([descriptionSupport]). A festival bills the acts of its
      * description ([descriptionRoster]); a show or comedy night bills the performers its subtitle
      * names after `mit` (`Qualitätspodcast mit Till Reiners und Moritz Neumeier`,
-     * [performersBilledWith]); any other night (parties, readings) carries no roster.
+     * [performersBilledWith]). A party bills the DJs of a `Line up:` line in its description
+     * ([labelledLineup], ROLLER DISCO's `Line up: Rollers HiFi`, event 13792). Any other night
+     * (readings, talks) carries no roster.
      *
      * The venue names a night and its acts as `"<night> mit <acts>"` ("SADTEMBER mit TAHA, JOHNBOY
      * M.IKARUS"), so the shared billing frame is switched on: the acts after the marker are the
@@ -240,6 +242,7 @@ class So36DetailPageScraper {
         eventType: String?
     ): List<ScrapedArtist> {
         if (eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) return performersBilledWith(subtitle)
+        if (eventType == EventType.PARTY.name) return labelledLineup(document.descriptionLines()).map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         if (eventType != EventType.CONCERT.name) return emptyList()
 
         val supportActs =

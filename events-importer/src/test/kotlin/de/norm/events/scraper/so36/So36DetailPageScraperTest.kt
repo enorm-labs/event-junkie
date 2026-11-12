@@ -302,6 +302,26 @@ class So36DetailPageScraperTest {
         event.promoters shouldHaveSize 0
     }
 
+    // ROLLER DISCO on 2026-11-12 (event 13792): "+++++ English version see below +++++", then a `+++` rule before the English half.
+    @Test
+    fun `cuts a pointed bilingual page at its rule and bills the party's Line up line`() {
+        val url = "https://www.so36.com/produkte/103299-tickets-roller-disco-so36-berlin-am-21-12-2026"
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-bilingual-rule.html", url), url).shouldNotBeNull()
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists.map { it.name to it.role } shouldBe listOf("Rollers HiFi" to ArtistRole.DJ)
+        val german = event.description.shouldNotBeNull()
+        val english = event.descriptionAlt.shouldNotBeNull()
+        german shouldStartWith "ROLLER DISCO!\nEinlass ab 18:00"
+        german shouldContain "KÖNNEN KINDER & JUGENDLICHE AUCH LÄNGER BLEIBEN."
+        german shouldNotContain "doors open"
+        german shouldNotContain "+++"
+        german shouldNotContain "English version"
+        english shouldStartWith "ROLLER SKATE DISCO!\ndoors open 6:00pm"
+        english shouldContain "ACCOMPANIED BY A GUARDIAN."
+        english shouldNotContain "Einlass"
+    }
+
     @Test
     fun `bills a festival's bold, origin-tagged acts and not its name or presenters`() {
         val url = "https://www.so36.com/produkte/92099-tickets-canarias-calling-festival-so36-berlin-am-08-10-2026"

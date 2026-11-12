@@ -437,4 +437,22 @@ class SchokoladenOverviewPageScraperTest {
             empty.shouldBeEmpty()
         }
     }
+
+    // The closing lines of upcoming nights on 2026-11-12: Death Party (event 13788), 4477, 4635, 4501, 4505.
+    @Test
+    fun `drops the closing ticket and Facebook links, and keeps every other closing line`() {
+        val body = "DEATH PARTY is an Austin, TX based garage punk trio."
+        val footer = SchokoladenOverviewPageScraper::withoutLinkFooter
+
+        footer("$body\n---\nvvk.link/4qvl66o") shouldBe body
+        footer("$body\n---\nvvk.link/4gtf6wg / fb.com/events/4380841088843558") shouldBe body
+        footer("$body\n—\n/ vvk.link/4nrptm8 /\n—") shouldBe body
+        footer("$body\nTickets hier: https://vvk.link/4mtd40g") shouldBe body
+        footer("$body\nhttps://pekingrecords.bandcamp.com/album/x\nticket s: ---> https://vvk.link/4qq1u9c") shouldBe
+            "$body\nhttps://pekingrecords.bandcamp.com/album/x"
+        // A link inside a sentence, and a rule with no link after it, are the venue's text.
+        footer("$body\nTremors (Punk, Osnabrück) Tickets: https://vvk.link/4okamnk") shouldBe
+            "$body\nTremors (Punk, Osnabrück) Tickets: https://vvk.link/4okamnk"
+        footer("$body\n---") shouldBe "$body\n---"
+    }
 }
