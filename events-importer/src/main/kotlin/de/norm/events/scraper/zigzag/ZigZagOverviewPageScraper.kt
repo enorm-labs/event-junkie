@@ -101,8 +101,8 @@ class ZigZagOverviewPageScraper(
         /**
          * The weekly jam and the tribute nights name a format or an honoree, not the band on stage:
          * `A Tribute to Wayne Shorter`, `Celebrating Buena Vista Social Club`, `Golden Voices: Sinatra, … & Beyond`,
-         * `The Jazz Crusaders and Beyond`.
+         * `The Jazz Crusaders and Beyond`. A title the house's own name opens names its party: `Zig Zag Silvesterparty - …`.
          */
-        val NO_ACT = Regex("""jam session|tribute|^celebrating\s|(?:&|\band)\s*beyond$""", RegexOption.IGNORE_CASE)
+        val NO_ACT = Regex("""jam session|tribute|^celebrating\s|(?:&|\band)\s*beyond$|^zig\s*zag\s""", RegexOption.IGNORE_CASE)
     }
 }

@@ -28,7 +28,8 @@ import java.util.Locale
 /**
  * Pure parser for the events section of Kühlspot's one-page Elementor site. Each night is a child
  * container of `#events`: an `h2` date (`Thursday, 8 October 2026 (doors: 19:30 | start: 20:00)`),
- * an `h2` title, and a text block that lists the musicians as `Name – instrument`. A block dated
+ * an `h2` title, and a text block that lists the musicians as `Name – instrument`, or names the acts in a
+ * `Featuring artist A & artist B` line. A night's container can hold the next night's container. A block dated
  * with a range (`20 – 25 October 2026`) announces a series whose nights follow on their own, so
  * it is skipped. The intro states the house doors, start and admission, which a night's heading
  * may override: a labelled `doors:`/`start:` clock, or a bare `(14:30)` that is the start. A
@@ -54,7 +55,7 @@ class KuehlspotOverviewPageScraper {
                     ?.get(1)
                     ?.trim()
             )
-        val nights = document.select("#events .e-con.e-child:has(h2.elementor-heading-title)")
+        val nights = document.select(NIGHT)
         logger.info { "Found ${nights.size} Kühlspot block(s) on $baseUrl" }
         return nights.mapSkippingFailures(logger, "Kühlspot night") { parseNight(it, baseUrl, house) }
     }
@@ -64,7 +65,7 @@ class KuehlspotOverviewPageScraper {
         baseUrl: String,
         house: HouseRules
     ): ScrapedEvent? {
-        val headings = block.select("h2.elementor-heading-title").map { it.text().collapseWhitespace() }
+        val headings = block.ownSelect("h2.elementor-heading-title").map { it.text().collapseWhitespace() }
         val dateLine = headings.first()
         val date = parseDate(dateLine)
         val title = headings.getOrNull(1)
@@ -73,12 +74,12 @@ class KuehlspotOverviewPageScraper {
             return null
         }
         val ownStart = labelledClock(dateLine, START_LABELS) ?: parseTime(BARE_CLOCK.find(dateLine)?.groupValues?.get(1))
-        val lines = block.select(".elementor-widget-text-editor p").flatMap(::lines)
-        val musicians = lines.mapNotNull(::musician)
+        val lines = block.ownSelect(".elementor-widget-text-editor p").flatMap(::lines)
+        val musicians = lines.mapNotNull(::musician) + lines.flatMap(::featured)
         val promoter = lines.firstNotNullOfOrNull { PROMOTER.find(it)?.groupValues?.get(1) }
         val description =
             lines
-                .filterNot { musician(it) != null || PROMOTER.containsMatchIn(it) || it.endsWith(':') }
+                .filterNot { musician(it) != null || FEATURING.matches(it) || PROMOTER.containsMatchIn(it) || it.endsWith(':') }
                 .joinToString("\n")
                 .blankToNull()
         return ScrapedEvent(
@@ -96,6 +97,23 @@ class KuehlspotOverviewPageScraper {
             promoters = listOfNotNull(promoter)
         )
     }
+
+    /**
+     * The elements of this night alone. The page can nest the next night inside this one's container (events 13821
+     * and 13822), and a plain select would read its title and text as this night's.
+     */
+    private fun Element.ownSelect(query: String): List<Element> = select(query).filter { it.closest(NIGHT) == this }
+
+    /** The acts of a `Featuring artist A & artist B` line, or none. */
+    private fun featured(line: String): List<String> =
+        FEATURING
+            .matchEntire(line)
+            ?.groupValues
+            ?.get(1)
+            ?.split(FEATURED_SEPARATOR)
+            ?.map { it.replace(ARTIST_WORD, "").trim() }
+            ?.filter { it.isNotEmpty() }
+            .orEmpty()
 
     /** The name of a `Name – instrument` line, or null when the line is prose or a set heading. */
     private fun musician(line: String): String? {
@@ -135,6 +153,8 @@ class KuehlspotOverviewPageScraper {
     )
 
     private companion object {
+        const val NIGHT = "#events .e-con.e-child:has(h2.elementor-heading-title)"
+
         /** `Thursday, 8 October 2026`; a range such as `8–10 October 2026` has no weekday and does not match. */
         val DATE = Regex("""^(\p{L}+day),\s+(\d{1,2}\s+\p{L}+\s+\d{4})""")
 
@@ -146,8 +166,13 @@ class KuehlspotOverviewPageScraper {
         val MUSICIAN = Regex("""^(.+?)(?:\s[–-]|[–-]\s)\s*\p{Ll}.*$""")
         const val MAX_NAME_WORDS = 5
 
-        /** `Eigenveranstaltung vom Jazzkeller 69 e.V.`: a night another association runs. */
-        val PROMOTER = Regex("""Eigenveranstaltung (?:vom|von|der|des)\s+(.+?)(?:\s+e\.\s?V\.)?\s*$""")
+        /** `Eigenveranstaltung vom Jazzkeller 69 e.V.` or `Event organized by Jazzkeller 69 e.V.`: a night another association runs. */
+        val PROMOTER = Regex("""(?:Eigenveranstaltung (?:vom|von|der|des)|Event organi[sz]ed by)\s+(.+?)(?:\s+e\.\s?V\.)?\s*$""")
+
+        /** `Featuring artist Rachel D Clarke & artist Christoph Kühl`: the acts of a night with no instrument list. */
+        val FEATURING = Regex("""^featuring\s+(.+)$""", RegexOption.IGNORE_CASE)
+        val FEATURED_SEPARATOR = Regex("""\s*(?:&|,|\band\b)\s*""")
+        val ARTIST_WORD = Regex("""^artist\s+""", RegexOption.IGNORE_CASE)
 
         val HOUSE_DOORS = Regex("""Doors open at (\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
         val HOUSE_START = Regex("""music starts at (\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)

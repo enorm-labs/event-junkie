@@ -48,6 +48,25 @@ class NextFlightPayloadTest {
     }
 
     @Test
+    fun `flightText reads a referenced text row up to its byte length, though the next row follows with no break`() {
+        // `ü` and `ß` take two bytes each, so 0xc bytes are 10 characters.
+        val payload = "0:{\"description\":\"\$1a\"}\n1a:Tc,Grüße\nmehr17:[\"\$\",\"div\"]"
+
+        flightText(payload, "\$1a") shouldBe "Grüße\nmehr"
+    }
+
+    @Test
+    fun `flightText counts a character outside the BMP as four bytes`() {
+        flightText("2b:T7,🎉 okrest", "\$2b") shouldBe "🎉 ok"
+    }
+
+    @Test
+    fun `flightText keeps a plain value and answers null for a reference to an absent row`() {
+        flightText("", "5 years LIBIDOH") shouldBe "5 years LIBIDOH"
+        flightText("1a:T3,abc", "\$2c").shouldBeNull()
+    }
+
+    @Test
     fun `balancedJsonAt cuts a JavaScript literal that no quoted key leads to`() {
         val script = """calendar({ eventSources: [[{"title":"Swing ]"}]], editable: false })"""
 

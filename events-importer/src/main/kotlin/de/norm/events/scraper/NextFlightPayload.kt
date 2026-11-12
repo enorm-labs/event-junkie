@@ -129,3 +129,47 @@ private const val FLIGHT_UNDEFINED = "\$undefined"
 
 /** [stringOrNull] for a flight payload node, where an unset field arrives as `"$undefined"`. */
 fun JsonNode.flightStringOrNull(field: String): String? = stringOrNull(field)?.takeUnless { it == FLIGHT_UNDEFINED }
+
+/** A value that points at another row of the payload: `"$1a"`. */
+private val FLIGHT_ROW_REFERENCE = Regex("""^\$([0-9a-f]+)$""")
+
+/**
+ * The text [value] stands for: itself, or the text row a `"$1a"` reference points at, or `null` when that row is absent.
+ * React moves a long string out of the JSON into a row of its own, `1a:T563,<text>`, with its length in UTF-8 bytes in hex.
+ * The next row follows the text with no separator, so only the length says where the text ends.
+ */
+fun flightText(
+    payload: String,
+    value: String
+): String? {
+    val id = FLIGHT_ROW_REFERENCE.matchEntire(value)?.groupValues?.get(1) ?: return value
+    val header = Regex("""(?<![0-9a-f])$id:T([0-9a-f]+),""").find(payload) ?: return null
+    return utf8Prefix(payload, header.range.last + 1, header.groupValues[1].toInt(HEX))
+}
+
+private const val HEX = 16
+
+/** The text from [start] that fills [bytes] UTF-8 bytes. */
+private fun utf8Prefix(
+    text: String,
+    start: Int,
+    bytes: Int
+): String {
+    var used = 0
+    var end = start
+    while (end < text.length && used < bytes) {
+        val codePoint = text.codePointAt(end)
+        used += utf8Length(codePoint)
+        end += Character.charCount(codePoint)
+    }
+    return text.substring(start, end)
+}
+
+@Suppress("MagicNumber") // The UTF-8 encoding's own boundaries.
+private fun utf8Length(codePoint: Int): Int =
+    when {
+        codePoint < 0x80 -> 1
+        codePoint < 0x800 -> 2
+        codePoint < 0x10000 -> 3
+        else -> 4
+    }

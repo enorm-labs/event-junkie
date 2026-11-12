@@ -424,6 +424,13 @@ class GenreNormalizerTest {
         normalizeGenre("Progressive").shouldBeEmpty()
     }
 
+    // Events 13801 and 13804: Schokoladen's hyphenated short forms.
+    @Test
+    fun `Schokoladen's short forms land on the tags the filter knows`() {
+        normalizeGenre("psych/alt-rock/indie-folk").shouldContainExactly("Psychedelic", "Rock", "Indie-folk")
+        normalizeGenre("jangle-pop/indie-rock").shouldContainExactly("Indie")
+    }
+
     @Test
     fun `a canonical name written by a venue keeps its own tag`() {
         assertSoftly {

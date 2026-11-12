@@ -130,6 +130,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "deutschrock" to ROCK,
         "mittelalterrock" to ROCK,
         "grunge-rock" to ROCK,
+        "grunge-gaze" to ROCK,
         "post-grunge" to ROCK,
         "psychedelic" to ROCK,
         "psychedelia" to ROCK,
@@ -172,6 +173,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "psych-doom" to METAL,
         // Post-Punk & Wave
         "post-punk" to WAVE,
+        "garage-post-punk" to WAVE,
         "new-wave" to WAVE,
         "wave" to WAVE,
         "darkwave" to WAVE,

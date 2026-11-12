@@ -38,8 +38,8 @@ data class ZigZagDetail(
  * The line-up comes before the "(for English please scroll down)" line, one musician a line:
  * `Name - instrument (country)` in `h3` or `p` elements, or in one `h3` broken by `<br>`. The dash
  * can be an en dash or lack the space before it, and the country can be missing or lack its opening
- * bracket. Each name is a headliner, because a band has no support act; the instrument has no field
- * to go to.
+ * bracket. A `Special Guest: Name (instrument)` line joins them. Each name is a headliner, because a band has no
+ * support act; the instrument has no field to go to.
  */
 class ZigZagDetailPageScraper {
     fun scrape(document: Document): ZigZagDetail {
@@ -67,8 +67,7 @@ class ZigZagDetailPageScraper {
             .takeWhile { it.text().trim().let { text -> !ENGLISH_BELOW.matches(text) && !TICKETS_HEADING.matches(text) } }
             .flatMap { it.lines() }
             .mapNotNull {
-                LINEUP_LINE
-                    .matchEntire(it)
+                (LINEUP_LINE.matchEntire(it) ?: GUEST_LINE.matchEntire(it))
                     ?.groupValues
                     ?.get(1)
                     ?.trim()
@@ -102,6 +101,9 @@ class ZigZagDetailPageScraper {
          * a comma in the name or a full stop means a blurb line.
          */
         val LINEUP_LINE = Regex("""(\p{L}[^,.!?:;()]{1,60}?)\s*[-–]\s+\p{L}[^.!?:;()]{0,40}?(?:\s*\(?\p{L}{2,3}\))?""")
+
+        /** `Special Guest: MFA Kera (vocals)`, the last line of event 13835's band. */
+        val GUEST_LINE = Regex("""special guests?\s*:\s*(\p{L}[^,.!?:;()]{1,60}?)(?:\s*\([^()]*\))?""", RegexOption.IGNORE_CASE)
         const val MAX_NAME_WORDS = 5
     }
 }
