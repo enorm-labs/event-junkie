@@ -599,4 +599,21 @@ class NonArtistNamesTest {
         isNonArtistName("charli/e") shouldBe false
         isNonArtistName("Whacking Activation w/ Someone") shouldBe false
     }
+
+    @Test
+    fun `a floor host's credit or a line with a web address is no act`() {
+        // Ritter Butzke's Hippie New Year and Renate's vinyl market (V244).
+        isNonArtistName("FLOOR HOSTING BY SACHSENTRANCE") shouldBe true
+        isNonArtistName("Hosted by Hard Wax") shouldBe true
+        isNonArtistName("Sign Up Here: https://forms.gle/abc123") shouldBe true
+        isNonArtistName("www http://example.de") shouldBe true
+    }
+
+    @Test
+    fun `a night hosted by an act, or a handle with an at sign, is left alone`() {
+        isNonArtistName("Klubnacht hosted by Ben Klock") shouldBe false
+        isNonArtistName("Host") shouldBe false
+        isNonArtistName("Funk@delic") shouldBe false
+        isNonArtistName("Chaos Techno.Berlin") shouldBe false
+    }
 }

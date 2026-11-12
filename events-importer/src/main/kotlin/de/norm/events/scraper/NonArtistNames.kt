@@ -480,8 +480,21 @@ fun isNonArtistName(name: String): Boolean =
  */
 private val RECORD_LABEL = Regex("""(?!the\s)[^-–—\s][^-–—]*\s(?:records|recordings)""", RegexOption.IGNORE_CASE)
 
-/** Whether [name] counts performers ([HEAD_COUNT]) or names a [RECORD_LABEL]: a line-up entry that is no act. */
-private fun isHeadCountOrLabel(name: String): Boolean = isHeadCount(name) || RECORD_LABEL.matches(name.trim())
+/**
+ * A floor host's credit, which heads the DJs it brings: Ritter Butzke bills `FLOOR HOSTING BY SACHSENTRANCE`. The credit
+ * must lead, so a night `<name> hosted by <act>` is a title and is not matched here.
+ */
+private val HOST_CREDIT = Regex("""(?:floor\s+)?host(?:ed|ing)\s+by\s.*""", RegexOption.IGNORE_CASE)
+
+/** A web address inside a line-up entry: Renate bills `Sign Up Here: https://forms.gle/…`. */
+private val WEB_ADDRESS = Regex("""https?://""", RegexOption.IGNORE_CASE)
+
+/**
+ * Whether [name] counts performers ([HEAD_COUNT]), names a [RECORD_LABEL], is a [HOST_CREDIT] or carries a
+ * [WEB_ADDRESS]: a line-up entry that is no act.
+ */
+private fun isHeadCountOrLabel(name: String): Boolean =
+    isHeadCount(name) || RECORD_LABEL.matches(name.trim()) || HOST_CREDIT.matches(name.trim()) || WEB_ADDRESS.containsMatchIn(name)
 
 /**
  * A number of performers rather than a performer: Gretchen bills `Afro Haus Soundsystem / + 20 DJ's`

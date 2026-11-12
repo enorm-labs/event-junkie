@@ -206,7 +206,16 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "rifraf" to "Rif Raf",
         // The same, decided by the operator (V229). Wild at Heart prints both `DJ Louie Wray` and `DJs Peter + Louie Wray`.
         "djlouiewray" to "Louie Wray",
-        "panamamama" to "Panama Mama"
+        "panamamama" to "Panama Mama",
+        // The same, decided by the operator (V244): Soda's residents with and without `DJ `, one rare name at Renate and
+        // Eschschloraque, and Hafenbar, Gretchen and VOID each billing one act two ways.
+        "djdefjam" to "Defjam",
+        "djbat" to "Bat",
+        "djselektamik" to "Selekta Mik",
+        "djangelicsintesis" to "Angelic Sintesis",
+        "djhaukepauke" to "DJ HaukePauke",
+        "djhighscore" to "High Score",
+        "rabbigreen" to "Rabbi Green"
     )
 
 /** Lowercased, punctuation- and space-free lookup key for a name. */
