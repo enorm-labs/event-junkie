@@ -184,13 +184,15 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * The paragraphs of `.event-description` joined newline-separated, or `null`.
+     * The paragraphs of `.event-description` joined newline-separated, or `null`, without the
+     * [withoutLinkFooter] the venue closes most nights with.
      */
     private fun parseDescription(info: Element?): String? {
         val description = info?.selectFirst(".event-description") ?: return null
         return description
             .select("p")
             .paragraphText()
+            ?.let(::withoutLinkFooter)
     }
 
     /**
@@ -273,6 +275,34 @@ class SchokoladenOverviewPageScraper {
     }
 
     companion object {
+        /**
+         * [text] without its closing link lines: a ticket shortlink and the Facebook event, behind a rule
+         * (`---` / `vvk.link/4qvl66o / fb.com/events/…`, event 13788), or a labelled `Tickets hier: https://vvk.link/…`.
+         * The ticket link is the night's ticket URL already. A closing line that holds any other text or
+         * link (a band's Bandcamp page) ends the footer, and a text with no such line comes back unchanged.
+         */
+        internal fun withoutLinkFooter(text: String): String? {
+            val lines = text.lines()
+            var end = lines.size
+            var footer = false
+            while (end > 0) {
+                val line = lines[end - 1]
+                val isLink = FOOTER_LINK.containsMatchIn(line) && FOOTER_REST.matches(line.replace(FOOTER_LINK, ""))
+                if (!isLink && !FOOTER_REST.matches(line)) break
+                footer = footer || isLink
+                end--
+            }
+            if (!footer) return text
+            return lines.subList(0, end).joinToString("\n").ifBlank { null }
+        }
+
+        /** A ticket shortlink or a Facebook event, with or without its scheme. */
+        private val FOOTER_LINK =
+            Regex("""(?:https?://)?(?:www\.)?(?:vvk\.link|(?:fb|facebook)\.com/events)/\S*""", RegexOption.IGNORE_CASE)
+
+        /** What else a footer line holds: rules, slashes, arrows and a `Tickets (hier):` label. */
+        private val FOOTER_REST = Regex("""[\s/|:>\-–—]*(?:tickets?(?:\s+s)?(?:\s+hier)?[\s/|:>\-–—]*)?""", RegexOption.IGNORE_CASE)
+
         /** Venue category labels the shared [mapEventType] table doesn't cover. "Musik" is live music → CONCERT. */
         private val CATEGORY_SYNONYMS = mapOf("musik" to "CONCERT")
 

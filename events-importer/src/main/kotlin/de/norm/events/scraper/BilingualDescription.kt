@@ -41,7 +41,7 @@ fun hasLanguageMarker(text: String?): Boolean = !text.isNullOrBlank() && text.li
  *
  * The cut is at a heading on a line of its own (`EN`, `[EN]`, `English:`, `// ENGLISH VERSION`,
  * `Deutsch`) or a separator (`English version above`). A pointer (`(for English please scroll
- * down)`, `[English below]`, `(Deutsche Version unten)`) is removed. With a pointer and no heading,
+ * down)`, `[English below]`, `+++ English version see below +++`, `(Deutsche Version unten)`) is removed. With a pointer and no heading,
  * the cut is the line where the stop-word detection switches language for good.
  *
  * Lines before the first half that [DescriptionLanguage] cannot call are a shared head. A trailing
@@ -140,7 +140,14 @@ private fun byHeadings(lines: List<String>): Cut? {
     return Cut(preamble.subList(0, lead), opening + sections)
 }
 
-/** The cut where the per-line detection switches language once and does not switch back. */
+/**
+ * The cut where the per-line detection switches language once and does not switch back.
+ *
+ * A rule line between the halves is the venue's own cut, and it is dropped. When the second half
+ * opens with lines of its own that no detection calls (SO36's `ROLLER SKATE DISCO! / doors open
+ * 6:00pm` after `+++++`, event 13792), those lines are its head. The lines before the first half
+ * are then the first half's head, not a shared one.
+ */
 private fun byDetection(lines: List<String>): Cut? {
     val languages = lines.map { DescriptionLanguage.detect(it)?.language }
     val start = languages.indexOfFirst { it != null }
@@ -149,6 +156,18 @@ private fun byDetection(lines: List<String>): Cut? {
     val secondLanguage = languages.getOrNull(switch)
     val lastOfFirst = languages.indexOfLast { it == firstLanguage }
     if (firstLanguage == null || secondLanguage == null || lastOfFirst > switch) return null
+    val rule = (lastOfFirst + 1 until switch).firstOrNull { RULE.matches(lines[it]) }
+    if (rule != null) {
+        val ownHead = rule + 1 < switch
+        return Cut(
+            head = if (ownHead) emptyList() else lines.subList(0, start),
+            sections =
+                listOf(
+                    firstLanguage to lines.subList(if (ownHead) 0 else start, rule),
+                    secondLanguage to lines.subList(rule + 1, lines.size)
+                )
+        )
+    }
     // The lines between the halves that no detection calls go with the half they lean to.
     val cut = (lastOfFirst + 1 until switch).firstOrNull { DescriptionLanguage.leaning(lines[it]) == secondLanguage } ?: switch
     return Cut(
@@ -171,10 +190,10 @@ private fun stripPointer(line: String): String? = line.replace(POINTER, "").trim
 
 private fun detect(lines: List<String>): DescriptionLanguage? = DescriptionLanguage.detect(lines.joinToString("\n"))?.language
 
-/** Characters a venue puts around a marker: brackets, dashes, slashes, stars, a colon. */
-private const val DECORATION = "-–—_*/\\|.:[]()"
+/** Characters a venue puts around a marker: brackets, dashes, slashes, stars, plus signs, a colon. */
+private const val DECORATION = "-–—_*+/\\|.:[]()"
 
-private const val DECORATION_RUN = """[\s\-–—_*/\\|.:\[\]()]*"""
+private const val DECORATION_RUN = """[\s\-–—_*+/\\|.:\[\]()]*"""
 
 /** A language named on a line of its own: `EN`, `[EN]`, `English:`, `// ENGLISH VERSION`, `— english version —`, `Deutsch`. */
 private val HEADING =
@@ -194,12 +213,12 @@ private val ABOVE =
 private val POINTER =
     Regex(
         """[\[(]?\s*(?:for english,?\s+please\s+scroll\s+down|scroll\s+down\s+for\s+english|""" +
-            """(?:english|german)(?:\s+version)?\s+below|deutsche\s+version\s+unten)\s*[\])]?""",
+            """(?:english|german)(?:\s+version)?(?:\s+see)?\s+below|deutsche\s+version\s+unten)\s*[\])]?""",
         RegexOption.IGNORE_CASE
     )
 
 /** A line drawn as a rule: three or more rule characters and nothing else. */
-private val RULE = Regex("""\s*[_\-–—*=~#•·]{3,}\s*""")
+private val RULE = Regex("""\s*[_\-–—*+=~#•·]{3,}\s*""")
 
 /** Fewer trailing lines than this are the second half's own sign-off, not a shared line-up. */
 private const val MIN_TAIL_LINES = 2

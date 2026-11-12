@@ -85,6 +85,19 @@ internal fun descriptionSupport(document: Document): List<String> {
         .filter { it.isNotBlank() && !isNonArtistName(it) }
 }
 
+/**
+ * The acts of the first `Line up: <acts>` line, split like a support line. A bilingual page repeats the line in
+ * English, so the first one is enough. A line-up named in prose (`Um sie herum ein Line-up voller Energie: …`)
+ * does not open its line and is not read.
+ */
+internal fun labelledLineup(lines: List<String>): List<String> {
+    val acts = lines.firstNotNullOfOrNull { LINE_UP_LINE.matchEntire(it.replace(NBSP, ' ').trim())?.groupValues?.get(1) } ?: return emptyList()
+    return splitSupportActs(acts).map { it.trim() }.filter { it.isNotBlank() && !isNonArtistName(it) }
+}
+
+/** `Line up: Rollers HiFi`, `Lineup: …`, `Line-Up: …` as a line of its own. */
+private val LINE_UP_LINE = Regex("""line\s*-?\s*up\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
+
 /** The first letter of each word: `Mekanik Destrüktiw Komandöh` is `MDK`. */
 private fun initials(name: String): String = name.split(WHITESPACE).mapNotNull { word -> word.firstOrNull(Char::isLetter) }.joinToString("")
 
