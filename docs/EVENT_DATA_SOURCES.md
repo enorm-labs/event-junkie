@@ -193,7 +193,7 @@ schema change.
 | Soulcat                          | https://soulcat-berlin.com/                                              | Bar          | TEC REST API; title-only DJ nights, no Fussball           |
 | Speakeazy                        | https://www.speakeazyberlin.de/events                                    | Bar          | Squarespace HTML, robots bars `?format=json`; door prices |
 | Speiches Rock- und Blueskneipe   | http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php | Bar          | rockradio.de table; weekday picks the year                |
-| Spindler & Klatt                 | https://www.spindlerklatt.com/club                                       | Club         | Wix repeater HTML; no warmup data; date is the ID         |
+| Spindler & Klatt                 | https://www.spindlerklatt.com/club                                       | Club         | Static HTML cards; year from the weekday; date is the ID  |
 | Studio IIII                      | https://studioiiii.de/                                                   | Club         | Tilda cover blocks; year from weekday; no pages           |
 | Supamolly                        | https://www.supamolly.de/?p=programm                                     | Club         | Retro PHP; row id is the date stamp; no prices            |
 | Surprise Club                    | https://surprise-berlin.de/events-programs.php                           | Club         | Hand-built PHP; weekend only; date is the ID              |
