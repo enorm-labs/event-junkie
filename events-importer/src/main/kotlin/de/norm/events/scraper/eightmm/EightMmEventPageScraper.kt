@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.stripLineupBracket
 import org.jsoup.nodes.Document
 
 /**
@@ -45,6 +46,7 @@ class EightMmEventPageScraper {
             .replace(AND_MORE, "")
             .split('/')
             .map { it.trim() }
+            .map(::stripLineupBracket)
             .filter { it.isNotEmpty() && !isNonArtistName(it) }
             .map { ScrapedArtist(name = deshout(it), role = ArtistRole.HEADLINER) }
     }

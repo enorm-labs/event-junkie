@@ -399,6 +399,21 @@ class ArtistNormalizerTest {
         }
     }
 
+    @Test
+    fun `folds the V244 merges onto the survivor and keeps the pair the operator kept apart`() {
+        assertSoftly {
+            artistSlugFor("DJ DefJam") shouldBe "defjam"
+            artistSlugFor("DJ Bat") shouldBe "bat"
+            artistSlugFor("DJ Selekta Mik") shouldBe "selekta-mik"
+            artistSlugFor("DJ Angelic Sintesis") shouldBe "angelic-sintesis"
+            artistSlugFor("DJ Hauke_Pauke") shouldBe "dj-haukepauke"
+            artistSlugFor("RabbiGreen") shouldBe "rabbi-green"
+            canonicalArtistName("DJ High Score") shouldBe "High Score"
+            canonicalArtistName("Rabbi Green") shouldBe "Rabbi Green"
+            artistSlugFor("Dj Rokit") shouldBe "dj-rokit"
+        }
+    }
+
     // The lookup key keeps every letter, so a billing in another script never collapses onto a correction (#4611).
     @Test
     fun `keys a correction on every letter of the billing`() {

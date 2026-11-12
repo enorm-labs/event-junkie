@@ -17,6 +17,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -218,7 +219,8 @@ class VoidClubOverviewPageScraper(
      *
      * A face2face pair `Upzet x Soniq` is two DJs, like a `b2b` pair. A segment that is only an origin tag,
      * `Erotic Cafe’, (ITA)`, is the previous act's tag cut off by a stray comma. Members billed under a
-     * duo name, `Alex Pastore & Krushak as Intervention`, are the act `Intervention`.
+     * duo name, `Alex Pastore & Krushak as Intervention`, are the act `Intervention`. A bracket after the act is its crew
+     * or its members, so `Primal Rhapsody (DAHRAXT)` bills `Primal Rhapsody`.
      */
     private fun splitActs(segment: String): List<String> {
         val act = segment.replace(UNANNOUNCED_TAIL, "").trim()
@@ -231,7 +233,7 @@ class VoidClubOverviewPageScraper(
                 else -> act.split(B2B_SEPARATOR).flatMap(::splitCrossBilled)
             }
         return acts
-            .map { stripArtistSuffix(it) }
+            .map { stripLineupBracket(stripArtistSuffix(it)) }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
     }
 

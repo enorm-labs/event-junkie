@@ -234,7 +234,7 @@ class VoidClubOverviewPageScraperTest {
     }
 
     @Test
-    fun `splits a face2face pair and drops an origin tag cut off by a comma`() {
+    fun `splits a face2face pair and drops an origin tag cut off by a comma and a crew tag`() {
         // Event 13207, HUMAN_MADE 007 on 2026-11-27, and the 2026-12-19 SPLIT SIGNAL night, as the live page billed them.
         val lineup =
             "Billain (BIH), Erotic Cafe&rsquo;, (ITA), IHOPEIEXIST b2b NΞØN BL△CK, Upzet x Soniq, " +
@@ -254,7 +254,7 @@ class VoidClubOverviewPageScraperTest {
                 "Lay.Dee Strange",
                 "Mr.Lafont",
                 "Intervention",
-                "Primal Rhapsody (DAHRAXT)"
+                "Primal Rhapsody"
             )
     }
 

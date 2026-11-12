@@ -53,6 +53,21 @@ class EightMmEventPageScraperTest {
     }
 
     @Test
+    fun `drops the bracket after an act in the line-up list`() {
+        // The 8MM Fest warm-up show on 2026-11-12, whose blurb bills the Copenhagen act as `WEDDING (CPN)`.
+        val html =
+            """
+            <article class="eventitem"><div class="eventitem-column-content"><div class="sqs-html-content">
+            <p>Line up - WEDDING (CPN) / LYZZA / MAF</p>
+            </div></div></article>
+            """.trimIndent()
+
+        val event = scraper.enrich(listed("8MM Fest WARM UP SHOW"), Jsoup.parse(html))
+
+        event.artists.map { it.name } shouldBe listOf("Wedding", "Lyzza", "Maf")
+    }
+
+    @Test
     fun `keeps the acts a house-frame title bills over a line-up list`() {
         val html =
             """<article class="eventitem"><div class="eventitem-column-content"><div class="sqs-html-content"><p>Line up: SOMEONE ELSE</p></div></div></article>"""
