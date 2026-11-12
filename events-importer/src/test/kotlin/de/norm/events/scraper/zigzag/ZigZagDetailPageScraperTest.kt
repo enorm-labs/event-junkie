@@ -101,6 +101,24 @@ class ZigZagDetailPageScraperTest {
         detail.artists.map { it.name } shouldBe listOf("JOHANN GIESECKE", "Leander Neidig")
     }
 
+    // Event 13835's page: the band, then its guest on a line of its own.
+    @Test
+    fun `bills a special guest beside the band`() {
+        val detail =
+            scraper.scrape(
+                Jsoup.parse(
+                    """
+                    <div class="eventitem-column-content">
+                      <h3>Mike Russell - vocals/guitar (USA)<br>Rudi Redl - keys (DE)<br>DiCarlo - drums  (USA)<br>Special Guest: MFA Kera (vocals)</h3>
+                      <p>Liebe Freunde des ZigZag-Jazzclub: Frohes neues Jahr!</p>
+                    </div>
+                    """.trimIndent()
+                )
+            )
+
+        detail.artists.map { it.name } shouldBe listOf("Mike Russell", "Rudi Redl", "DiCarlo", "MFA Kera")
+    }
+
     // Event 12837's page, verbatim: the venue dropped the opening bracket of Kelvin Sholar's country.
     @Test
     fun `reads a country that lost its opening bracket`() {

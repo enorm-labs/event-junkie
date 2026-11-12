@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.flightText
 import de.norm.events.scraper.jsonArrayAt
 import de.norm.events.scraper.nextFlightPayload
 import de.norm.events.scraper.parseClockPrefix
@@ -36,16 +37,18 @@ class RosaOverviewPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val events = jsonArrayAt(nextFlightPayload(document), EVENTS_KEY)
+        val payload = nextFlightPayload(document)
+        val events = jsonArrayAt(payload, EVENTS_KEY)
         if (events == null) {
             logger.warn { "No events array in ROSA's flight payload" }
             return emptyList()
         }
-        return SCRAPER_JSON.readTree(events).mapNotNull { toScrapedEvent(it, baseUrl) }
+        return SCRAPER_JSON.readTree(events).mapNotNull { toScrapedEvent(it, payload, baseUrl) }
     }
 
     private fun toScrapedEvent(
         node: JsonNode,
+        payload: String,
         baseUrl: String
     ): ScrapedEvent? {
         val id = node.stringOrNull("_id") ?: return null
@@ -55,7 +58,12 @@ class RosaOverviewPageScraper {
 
         return ScrapedEvent(
             title = title,
-            description = node.stringOrNull("description")?.takeUnless { it.equals("TBA", ignoreCase = true) },
+            // A long description arrives as a `"$1a"` reference to a text row (event 13798).
+            description =
+                node
+                    .stringOrNull("description")
+                    ?.let { flightText(payload, it) }
+                    ?.takeUnless { it.equals("TBA", ignoreCase = true) },
             eventType = EventType.PARTY.name,
             // The venue names no style but programmes techno nights, so the venue is the default.
             eventDate = date,

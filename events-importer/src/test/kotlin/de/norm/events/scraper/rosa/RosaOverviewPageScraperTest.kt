@@ -2,6 +2,7 @@ package de.norm.events.scraper.rosa
 
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -67,6 +68,18 @@ class RosaOverviewPageScraperTest {
         event.imageUrl shouldBe
             "https://cdn.sanity.io/images/m0p64e3g/production/" +
             "372087c7cb47510758387c5a5ce98ff7510760ef-960x1280.jpg"
+    }
+
+    @Test
+    fun `scrape reads a long description from the text row its reference points at (event 13798)`() {
+        val payload =
+            """{"events":[{"_id":"fd58c0b9","date":"2026-12-19","description":"${'$'}1a","time":"23:00 - 08:00","title":"LIBIDOH"}]}""" +
+                "\n1a:T1c,Every system is built on it.17:[\"${'$'}\",\"div\"]"
+        val script = "self.__next_f.push([1,${SCRAPER_JSON.writeValueAsString(payload)}])"
+
+        val event = scraper.scrape(Jsoup.parse("<html><body><script>$script</script></body></html>", baseUrl), baseUrl).single()
+
+        event.description shouldBe "Every system is built on it."
     }
 
     @Test

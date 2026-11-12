@@ -77,10 +77,12 @@ class ZigZagOverviewPageScraperTest {
             // Event 12347: the page bills Atrin Madani, Martina Barta and their trio.
             "Golden Voices: Sinatra, Sammy Davis Jr., Tony Bennett & Beyond",
             // Event 12837: the page bills the five musicians.
-            "The Jazz Crusaders and Beyond"
+            "The Jazz Crusaders and Beyond",
+            // Event 13835: the house's own party, whose page bills Mike Russell's band.
+            "Zig Zag Silvesterparty - Mike Russells Funky Soul Kitchen"
         ]
     )
-    fun `names no act for a night that celebrates an honoree`(title: String) {
+    fun `names no act for a night that celebrates an honoree or is the house's party`(title: String) {
         singleNight(title).artists.shouldBeEmpty()
     }
 

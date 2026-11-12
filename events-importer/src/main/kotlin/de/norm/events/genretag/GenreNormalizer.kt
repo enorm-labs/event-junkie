@@ -28,6 +28,7 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         // Rock family
         "rock" to "Rock",
         "alternativerock" to "Rock",
+        "altrock" to "Rock",
         // Word-level, so one venue's "Dreamy Kuschelrock" lands on Rock rather than on its own tag.
         "kuschelrock" to "Rock",
         "poprock" to "Rock",
@@ -41,12 +42,14 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "garagernr" to "Garage-Rock",
         "kraut" to "Krautrock",
         "krautrock" to "Krautrock",
+        "psych" to "Psychedelic",
         "alternative" to "Alternative",
         "alternativeindie" to "Alternative",
         // Indie family
         "indie" to "Indie",
         "indiepop" to "Indie",
         "indierock" to "Indie",
+        "janglepop" to "Indie",
         "shoegaze" to "Shoegaze",
         // Pop family
         "pop" to "Pop",

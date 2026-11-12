@@ -144,6 +144,20 @@ class KuehlspotOverviewPageScraperTest {
         warnings.shouldBeEmpty()
     }
 
+    // Events 13821 and 13822: the page nests the second night's container inside the first one's.
+    @Test
+    fun `a night nested in another keeps its own text, and a featuring line bills its acts`() {
+        val nights = scraper.scrape(Jsoup.parse(nestedNights, baseUrl), baseUrl)
+
+        nights.map { it.title } shouldContainExactly listOf("BERLIN JAZZ COMPOSERS ORCHESTRA", "DIE COOLEN 20 ER")
+        val (orchestra, show) = nights
+        orchestra.description.shouldBeNull()
+        orchestra.promoters shouldContainExactly listOf("Jazzkeller 69")
+        orchestra.artists.map { it.name } shouldContainExactly listOf("BERLIN JAZZ COMPOSERS ORCHESTRA")
+        show.artists.map { it.name } shouldContainExactly listOf("Rachel D Clarke", "Christoph Kühl")
+        show.description shouldBe "Includes live music, storytelling, live collage, spoken word, and dance"
+    }
+
     @Test
     fun `a page without an events section yields nothing`() {
         scraper.scrape(Jsoup.parse("<html><body><p>Closed</p></body></html>", baseUrl), baseUrl).shouldBeEmpty()
@@ -155,6 +169,26 @@ class KuehlspotOverviewPageScraperTest {
           <div class="e-con e-child">
             <h2 class="elementor-heading-title">$dateLine</h2>
             <h2 class="elementor-heading-title">KAFFEE UND KUCHEN</h2>
+          </div>
+        </div>
+        """.trimIndent()
+
+    private val nestedNights =
+        """
+        <div id="events">
+          <div class="e-con e-child">
+            <div class="e-con-inner">
+              <h2 class="elementor-heading-title">Thursday, 19 November 2026</h2>
+              <h2 class="elementor-heading-title">BERLIN JAZZ COMPOSERS ORCHESTRA </h2>
+              <div class="elementor-widget-text-editor"><p>Event organized by Jazzkeller 69 e.V.</p></div>
+              <div class="e-con e-child">
+                <h2 class="elementor-heading-title">Friday, 20 November 2026 (19:30)</h2>
+                <h2 class="elementor-heading-title">DIE COOLEN 20 ER </h2>
+                <div class="elementor-widget-text-editor">
+                  <p>Featuring artist Rachel D Clarke &amp; artist Christoph Kühl<br>Includes live music, storytelling, live collage, spoken word, and dance</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         """.trimIndent()
