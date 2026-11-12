@@ -27,7 +27,10 @@ import de.norm.events.slug.SlugGenerator
  * The canonical form of a promoter [raw] name (file header); the trimmed input when
  * normalization would leave nothing.
  */
-fun canonicalPromoterName(raw: String): String {
+fun canonicalPromoterName(raw: String): String = strippedPromoterName(raw).let { NAME_CORRECTIONS[it.normalizedKey()] ?: it }
+
+/** [raw] stripped and de-shouted, before [NAME_CORRECTIONS] applies. */
+private fun strippedPromoterName(raw: String): String {
     // Drop a trailing parenthetical ("Mind Enterprises GmbH (wf)") first, so the strip can reach
     // the legal-form words it was shielding.
     val withoutAnnotation =
@@ -65,20 +68,21 @@ fun canonicalPromoterName(raw: String): String {
     // The initialism the guard kept a descriptor for keeps its capitals ("HB Music", not "Hb
     // Music").
     val keepFirst = tokens.first().isLoneInitialism() && tokens.drop(1).all { it.isStrippableTrailingWord() }
-    val canonical =
-        tokens
-            .mapIndexed { index, token -> if (index == 0 && keepFirst) token else token.deshoutWord() }
-            .joinToString(" ")
-            .ifBlank { raw.trim() }
-    return NAME_CORRECTIONS[canonical.normalizedKey()] ?: canonical
+    return tokens
+        .mapIndexed { index, token -> if (index == 0 && keepFirst) token else token.deshoutWord() }
+        .joinToString(" ")
+        .ifBlank { raw.trim() }
 }
 
 /**
  * The parts of a credit that joins promoters with a spaced "&" ("Crunch Tapes & Positive
- * Transmitter"); empty when it joins none. "B&C Productions" has no space, so it is one name.
+ * Transmitter"); empty when it joins none. "B&C Productions" has no space, so it is one name, and
+ * neither is a credit [NAME_CORRECTIONS] names whole ("Grey & von Bronikowski GbR", #4916).
  */
 fun coBilledPromoterParts(raw: String): List<String> =
     raw
+        .takeUnless { strippedPromoterName(it).normalizedKey() in NAME_CORRECTIONS }
+        .orEmpty()
         .split(CO_BILLING_REGEX)
         .map(String::trim)
         .filter(String::isNotEmpty)
@@ -108,7 +112,7 @@ private fun String.withoutTrailingParenthetical(): String = replace(TRAILING_PAR
  * and not a lone initialism left by a descriptor. A legal form leaves the initialism alone.
  */
 private fun List<String>.isUsableNameWithout(stripped: String): Boolean =
-    any { word -> word.any(Char::isLetter) } && !(size == 1 && first().isLoneInitialism() && !stripped.isLegalForm())
+    any { word -> word.any(Char::isLetter) } && !(size == 1 && first().isLoneInitialism() && stripped.normalizedKey() !in LEGAL_FORMS)
 
 /**
  * Up to three capitals, optionally joined by "&", and nothing else: "HB", "MFP", "B&C" — an
@@ -158,8 +162,6 @@ private fun String.isStrippableTrailingWord(): Boolean {
     val key = normalizedKey()
     return key.isEmpty() || key in STRIP_WORDS
 }
-
-private fun String.isLegalForm(): Boolean = normalizedKey() in LEGAL_FORMS
 
 private val WHITESPACE_REGEX = Regex("""\s+""")
 
@@ -350,7 +352,9 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "listenagency" to "Listen",
         "fkpscorpio" to "FKP Scorpio",
         "greyzone" to "Greyzone Concerts",
+        // Columbiahalle credits the GbR behind Greyzone in a long and a short form (#4916).
         "greyzoneconcertspromotiongreyvonbronikowski" to "Greyzone Concerts",
+        "greyvonbronikowski" to "Greyzone Concerts",
         // The person is not the company: "Konzertdirektion" is stripped above and restored here.
         "karstenjahnke" to "Karsten Jahnke Konzertdirektion",
         "känguruh" to "Känguruh Production",
