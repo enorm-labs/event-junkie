@@ -176,7 +176,7 @@ class ImageStorage(
     }
 
     /** The prefix every key of this environment starts with, trailing slash included. */
-    fun keyPrefix(): String = "${properties.prefix}/"
+    private fun keyPrefix(): String = "${properties.prefix}/"
 
     /**
      * The content hash a key belongs to, or null when the key is not one this class writes.

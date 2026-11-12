@@ -41,7 +41,7 @@ object WikipediaLead {
     fun languagesFor(country: String?): List<String> = if (country?.uppercase() in GERMAN_SPEAKING) listOf("de", "en") else listOf("en", "de")
 
     /** `birth-data` or `short` when [text] may not be stored, null when it may. */
-    fun refusalOf(text: String): String? =
+    private fun refusalOf(text: String): String? =
         when {
             BIRTH_DATA.any { it.containsMatchIn(text) } || DATED_LEAD.containsMatchIn(text.substringBefore(". ")) -> BIRTH_DATA_REFUSAL
             text.length < MIN_LENGTH -> "short"

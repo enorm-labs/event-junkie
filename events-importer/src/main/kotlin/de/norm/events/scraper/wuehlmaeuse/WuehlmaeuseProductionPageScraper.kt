@@ -39,7 +39,7 @@ fun guestLineFor(
 }
 
 /** How far ahead a year-less guest line may point. */
-const val GUEST_LINE_HORIZON_DAYS = 60L
+private const val GUEST_LINE_HORIZON_DAYS = 60L
 
 /**
  * Pure HTML parser for a Wühlmäuse production page (`/veranstaltung/<slug>/`), which every
