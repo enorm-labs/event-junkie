@@ -21,10 +21,11 @@ import de.norm.events.genretag.GenreFamily.WAVE
  * does not matter: both spellings are one tag with one slug. The map is knowledge, like
  * `GENRE_SYNONYMS` in the same module, and moves with it if #323 decides on tables.
  *
- * Every canonical name `GENRE_SYNONYMS` produces has an entry — `GenreFamiliesTest` asserts it.
- * A tag that reaches the database by the `looksLikeGenre` fall-through and is absent here has no
- * family and shows in neither filter select; `GenreFamilyReconciler` logs those on every start,
- * which is the list to extend this map — or `NON_GENRE_TOKENS` — from.
+ * Every canonical name `GENRE_SYNONYMS` produces has a family — `GenreFamiliesTest` asserts it.
+ * A tag that reaches the database by the `looksLikeGenre` fall-through, and that neither this map
+ * nor the fallback in [genreFamily] places, has no family and shows in neither filter select.
+ * `GenreFamilyReconciler` logs those on every start, which is the list to extend this map — or
+ * `NON_GENRE_TOKENS` — from.
  */
 private val GENRE_FAMILIES: Map<String, GenreFamily> =
     mapOf(
