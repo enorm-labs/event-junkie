@@ -597,6 +597,19 @@ class PromoterNormalizerTest {
     }
 
     @Test
+    fun `splits a co-billing at a spaced times sign whether or not a side is stored`() {
+        val split = { raw: String -> splitCoBilledPromoter(raw) { false } }
+        assertSoftly {
+            split("Duct Tape × Anytime") shouldBe listOf("Duct Tape", "Anytime")
+            split("Afro Haus & Crunch Tapes × Purple Events") shouldBe listOf("Afro Haus", "Crunch Tapes", "Purple Events")
+            // Unspaced, or the letter: one promoter.
+            split("Duct Tape×Anytime") shouldBe listOf("Duct Tape×Anytime")
+            split("Duct Tape x Anytime") shouldBe listOf("Duct Tape x Anytime")
+            split("× Anytime") shouldBe listOf("× Anytime")
+        }
+    }
+
+    @Test
     fun `splits a co-billing at a spaced ampersand only when one side is a stored promoter`() {
         val stored = setOf("milchmadchen-musikkultur", "concertburo-zahlmann", "crunch-tapes", "positive-transmitter", "kunst")
         val split = { raw: String -> splitCoBilledPromoter(raw) { it in stored } }
