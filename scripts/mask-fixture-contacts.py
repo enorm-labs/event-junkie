@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Mask the e-mail addresses in the scraper fixtures and the tests that quote them (#4855).
+"""Mask the e-mail addresses and API keys in the scraper fixtures and the tests that quote them (#4855, #4964).
 
 Usage:
-  scripts/mask-fixture-contacts.py          # rewrite every address to <first letter>-masked@example.de
+  scripts/mask-fixture-contacts.py          # mask every address to <first letter>-masked@example.de, and every key
   scripts/mask-fixture-contacts.py check    # list what is still unmasked, masked; exit 1 if anything is
 
 An address is a contact wherever it stands, except on an iCalendar `UID` line, where it is an event id
 (and some sources' `sourceId`). A `%40` in a URL is left too: those are `@2x` image names and handles.
 A Cloudflare `data-cfemail` / `email-protection#` value is decoded, masked and encoded again with its key.
-Output never prints an address in clear: AGENTS.md § Privacy.
+A Google API key is masked wherever it stands: a venue's page can embed its own Maps key, which GitHub secret
+scanning then raises after the push (alerts #1 to #4). `.gitleaks.toml` skips the fixture tree on purpose.
+Output never prints an address or a key in clear: AGENTS.md § Privacy.
 """
 
 import argparse
@@ -35,6 +37,8 @@ ESCAPED_PERCENT = re.compile(r"[0-9a-fA-F]{2}.")
 UID_LINE = re.compile(r"^\s*UID[;:]", re.IGNORECASE)
 CF_HEX = re.compile(r"(data-cfemail=\"|email-protection#)([0-9a-fA-F]{4,})")
 MASKED_DOMAIN = "example.de"
+API_KEY = re.compile(r"AIza[0-9A-Za-z_-]{35}")
+MASKED_KEY = "AIza-masked-third-party-maps-key"
 USAGE = "scripts/mask-fixture-contacts.py [check]"
 
 
@@ -72,10 +76,15 @@ def cf_encode(text: str, key: int) -> str:
     return f"{key:02x}" + "".join(f"{ord(c) ^ key:02x}" for c in text)
 
 
+def shown_key(key: str) -> str:
+    """Enough of a key to find it, never the whole of it."""
+    return f"{key[:8]}…"
+
+
 def mask_line(line: str) -> tuple[str, int]:
+    line, count = API_KEY.subn(MASKED_KEY, line)
     if UID_LINE.match(line):
-        return line, 0
-    count = 0
+        return line, count
 
     def plain(match: re.Match[str]) -> str:
         nonlocal count
@@ -97,6 +106,10 @@ def mask_line(line: str) -> tuple[str, int]:
 
     line = CF_HEX.sub(cloudflare, line)
     return ADDRESS.sub(plain, line), count
+
+
+def unmasked_keys(line: str) -> list[str]:
+    return [shown_key(key) for key in API_KEY.findall(line)]
 
 
 def unmasked(line: str) -> list[str]:
@@ -136,6 +149,9 @@ def main() -> int:
                 for address in unmasked(line):
                     print(f"{path.relative_to(REPO)}:{number}: {masked(address)}")
                     total += 1
+                for key in unmasked_keys(line):
+                    print(f"{path.relative_to(REPO)}:{number}: API key {key}")
+                    total += 1
             continue
         lines = text.splitlines(keepends=True)
         out = []
@@ -149,9 +165,9 @@ def main() -> int:
             total += file_count
             changed += 1
     if check:
-        print(f"{total} unmasked address(es)")
+        print(f"{total} unmasked address(es) or key(s)")
         return 1 if total else 0
-    print(f"masked {total} address(es) in {changed} file(s)")
+    print(f"masked {total} address(es) or key(s) in {changed} file(s)")
     return 0
 
 

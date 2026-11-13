@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Asserts what mask-fixture-contacts.py masks and what it leaves: a valid mask, escapes kept whole,
-Cloudflare values re-encoded, and iCalendar UIDs, handles and the project's own senders untouched (#4855).
+Cloudflare values re-encoded, and iCalendar UIDs, handles and the project's own senders untouched (#4855);
+and a third party's Google API key masked wherever it stands, and never printed whole (#4964).
 
 Usage:
     python3 scripts/test_mask_fixture_contacts.py
 
 A plain script, not pytest: it counts its checks and exits non-zero on the first failure.
 validate-python.yml runs it. Reaches no network and no git, and writes nothing.
-The addresses below are invented: none belongs to a venue or a person.
+The addresses and keys below are invented: none belongs to a venue or a person.
 """
 
 import argparse
@@ -87,6 +88,21 @@ def main() -> int:
     )
     same(mask.unmasked("UID:4711@club-invented.de"), [], "check skips a UID")
     same(mask.unmasked("Tickets: k-masked@example.de"), [], "check passes a mask")
+
+    key = "AIza" + "Sy" + "0123456789abcdefghijklmnopqrstuvw"
+    same(len(key), 39, "the invented key has a real key's length")
+    same(
+        mask.mask_line(f'<iframe src="https://maps.example.de/embed?key={key}&q=Berlin">')[0],
+        f'<iframe src="https://maps.example.de/embed?key={mask.MASKED_KEY}&q=Berlin">',
+        "a key in an attribute is masked",
+    )
+    same(mask.mask_line(f"webcard.mapsKey='{key}';")[1], 1, "a key in a script is masked and counted")
+    same(mask.mask_line(f"UID:{key}")[1], 1, "a key on a UID line is masked too")
+    same(mask.unmasked_keys(f"src=x?key={mask.MASKED_KEY}"), [], "check passes the placeholder")
+    same(mask.unmasked_keys("AIzaShort and AIza-word"), [], "a short AIza word is no key")
+    found = mask.unmasked_keys(f"key={key}")
+    same(found, ["AIzaSy01…"], "check finds a key and shows only its start")
+    same(key in "".join(found), False, "check never prints the whole key")
 
     print(f"OK {checks} checks")
     return 0
