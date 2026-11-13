@@ -650,6 +650,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/passkeys/accepted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The ids the browser's password manager may keep for this account
+         * @description For PublicKeyCredential.signalAllAcceptedCredentials(). 204 for an account that never made a passkey.
+         */
+        get: operations["accepted"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/notifications": {
         parameters: {
             query?: never;
@@ -2165,6 +2185,11 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             lastUsedAt?: string | null;
+        };
+        AcceptedPasskeys: {
+            rpId?: string;
+            userId?: string;
+            allAcceptedCredentialIds?: string[];
         };
         NotificationResponse: {
             /** Format: uuid */
@@ -3949,6 +3974,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ReportResponse"][];
+                };
+            };
+        };
+    };
+    accepted: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AcceptedPasskeys"];
                 };
             };
         };

@@ -102,6 +102,25 @@ class PasskeyFlowTest : BaseControllerTest() {
         answer: String = device.get(options("/auth/passkey/options", signedIn = false))
     ) = post("/auth/passkey/sign-in", mapOf("credential" to mapper.readTree(answer)), signedIn = false)
 
+    private fun get(
+        path: String,
+        signedIn: Boolean = true
+    ) = webTestClient
+        .get()
+        .uri(path)
+        .withCsrf(signedIn)
+        .exchange()
+
+    private fun accepted(): JsonNode =
+        mapper.readTree(
+            get("/me/passkeys/accepted")
+                .expectStatus()
+                .isOk
+                .expectBody(String::class.java)
+                .returnResult()
+                .responseBody!!
+        )
+
     private fun list(): JsonNode =
         mapper.readTree(
             webTestClient
@@ -277,6 +296,31 @@ class PasskeyFlowTest : BaseControllerTest() {
     @Test
     fun `without a session the account's passkey routes are a 401`() {
         post("/me/passkeys/options", signedIn = false).expectStatus().isUnauthorized
+        get("/me/passkeys/accepted", signedIn = false).expectStatus().isUnauthorized
+    }
+
+    @Test
+    fun `the accepted ids follow the stored passkeys, under the handle the options named`() {
+        get("/me/passkeys/accepted").expectStatus().isNoContent
+
+        val handle = options("/me/passkeys/options")["user"]["id"].asString()
+        register(SoftwarePasskey()).expectStatus().isNoContent
+        register(SoftwarePasskey()).expectStatus().isNoContent
+        val both = accepted()
+        both["rpId"].asString() shouldBe "event-junkie.de"
+        both["userId"].asString() shouldBe handle
+        both["allAcceptedCredentialIds"].size() shouldBe 2
+
+        webTestClient
+            .delete()
+            .uri("/me/passkeys/${list()[0]["id"].asString()}")
+            .withCsrf()
+            .exchange()
+            .expectStatus()
+            .isNoContent
+        val one = accepted()
+        one["userId"].asString() shouldBe handle
+        one["allAcceptedCredentialIds"].size() shouldBe 1
     }
 
     private companion object {

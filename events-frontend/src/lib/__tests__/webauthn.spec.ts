@@ -5,6 +5,7 @@ import {
   creationOptions,
   credentialJson,
   requestOptions,
+  signalAcceptedPasskeys,
   signalUnknownPasskey,
 } from '@/lib/webauthn'
 
@@ -88,5 +89,22 @@ describe('webauthn', () => {
     await signalUnknownPasskey(undefined, 'cred-1')
     expect(signalUnknownCredential).not.toHaveBeenCalled()
     await expect(signalUnknownPasskey('event-junkie.de', 'cred-1')).resolves.toBeUndefined()
+  })
+
+  it('tells the password manager which passkeys are left where the browser can, and swallows a refusal', async () => {
+    const accepted = {
+      rpId: 'event-junkie.de',
+      userId: 'aGFuZGxl',
+      allAcceptedCredentialIds: ['c1'],
+    }
+    const signalAllAcceptedCredentials = vi.fn<(options: typeof accepted) => Promise<void>>()
+    vi.stubGlobal('PublicKeyCredential', { signalAllAcceptedCredentials })
+    await signalAcceptedPasskeys(accepted)
+    expect(signalAllAcceptedCredentials).toHaveBeenCalledWith(accepted)
+
+    signalAllAcceptedCredentials.mockRejectedValue(new DOMException('no'))
+    await expect(signalAcceptedPasskeys(accepted)).resolves.toBeUndefined()
+    vi.stubGlobal('PublicKeyCredential', {})
+    await expect(signalAcceptedPasskeys(accepted)).resolves.toBeUndefined()
   })
 })

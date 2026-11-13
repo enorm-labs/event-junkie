@@ -13,6 +13,7 @@ import {
   addPasskey,
   deletePasskey,
   fetchPasskeys,
+  syncAcceptedPasskeys,
   renamePasskey,
   type Passkey,
 } from '@/api/account'
@@ -47,6 +48,7 @@ function deviceName(): string {
 async function load() {
   try {
     passkeys.value = await fetchPasskeys()
+    void syncAcceptedPasskeys()
   } catch {
     problem.value = t('account.passkeys.failed')
   }
@@ -107,6 +109,7 @@ async function remove(passkey: Passkey) {
   try {
     await deletePasskey(passkey.id)
     passkeys.value = passkeys.value.filter((p) => p.id !== passkey.id)
+    void syncAcceptedPasskeys()
   } catch {
     problem.value = t('account.passkeys.failed')
   }

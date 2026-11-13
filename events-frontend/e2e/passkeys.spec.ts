@@ -6,7 +6,8 @@ import { failUnmockedGets } from './unmocked'
  * makes a passkey and posts it as `PublicKeyCredential.toJSON()` would, and the sign-in page signs in with it.
  * The BFF's verification is `PasskeyFlowTest`'s job; this spec covers the browser half.
  *
- * Endpoints: POST /api/me/passkeys/options · POST /api/me/passkeys · GET /api/me/passkeys
+ * Endpoints: POST /api/me/passkeys/options · POST /api/me/passkeys · GET /api/me/passkeys · GET /api/me/passkeys/accepted (204, so
+ * Chromium hides nothing the test made)
  * · POST /api/auth/passkey/options · POST /api/auth/passkey/sign-in, and the GETs of the account and Following pages
  */
 
@@ -68,6 +69,7 @@ async function mockBff(page: Page, signedIn: boolean): Promise<{ path: string; b
       stored.push({ id: 'p1', name: 'Phone', createdAt: '2026-10-27T12:00:00Z' })
       return route.fulfill({ status: 204 })
     }
+    if (path === '/api/me/passkeys/accepted') return route.fulfill({ status: 204 })
     if (path === '/api/me/passkeys') return json(route, stored)
     if (path === '/api/auth/passkey/options') {
       return json(route, { challenge: b64('challenge-sign-in'), rpId: 'localhost', timeout: 300000, userVerification: 'required' })

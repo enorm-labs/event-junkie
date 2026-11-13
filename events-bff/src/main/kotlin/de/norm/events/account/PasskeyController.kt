@@ -28,6 +28,7 @@ private val logger = KotlinLogging.logger {}
 @Tag(name = "Passkeys", description = "Sign in with a passkey, and the account's passkeys")
 class PasskeyController(
     private val passkeys: Passkeys,
+    private val acceptedPasskeys: AcceptedPasskeysReader,
     private val store: PasskeyStore,
     private val metrics: AccountMetrics,
     private val sessions: SessionSecurityContextRepository
@@ -37,6 +38,15 @@ class PasskeyController(
     suspend fun list(
         @AuthenticationPrincipal account: Account
     ): List<PasskeyInfo> = store.list(account.id)
+
+    @GetMapping("/api/me/passkeys/accepted")
+    @Operation(
+        summary = "The ids the browser's password manager may keep for this account",
+        description = "For PublicKeyCredential.signalAllAcceptedCredentials(). 204 for an account that never made a passkey."
+    )
+    suspend fun accepted(
+        @AuthenticationPrincipal account: Account
+    ): ResponseEntity<AcceptedPasskeys> = acceptedPasskeys.read(account)?.let { ResponseEntity.ok(it) } ?: ResponseEntity.noContent().build()
 
     @PostMapping("/api/me/passkeys/options")
     @Operation(summary = "The options for navigator.credentials.create(). Each one holds a challenge that lives five minutes")

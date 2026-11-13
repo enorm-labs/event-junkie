@@ -92,6 +92,7 @@ async function mockBff(
       return route.fulfill({ status: 204 })
     }
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
+    if (path === '/api/me/passkeys/accepted') return route.fulfill({ status: 204 })
     if (path === '/api/me/passkeys') return json(route, [])
     if (path === '/api/me/push') return json(route, { publicKey: null })
     return fallthrough(route)

@@ -6,7 +6,9 @@ import {
   creationOptions,
   credentialJson,
   requestOptions,
+  signalAcceptedPasskeys,
   signalUnknownPasskey,
+  type AcceptedPasskeys,
   type CreationOptionsJson,
   type RequestOptionsJson,
 } from '@/lib/webauthn'
@@ -61,8 +63,14 @@ export async function signOutEverywhere(): Promise<void> {
   await unwrap(api.POST('/api/me/sign-out-everywhere'))
 }
 
+/**
+ * Deletes the account. Once that succeeded, the password manager hears that none of its passkeys is accepted any more
+ * (#4954); the ids are read first, because afterwards there is no session to read them with.
+ */
 export async function deleteAccount(): Promise<void> {
+  const accepted = await fetchAcceptedPasskeys().catch(() => null)
   await unwrap(api.DELETE('/api/me'))
+  if (accepted) await signalAcceptedPasskeys({ ...accepted, allAcceptedCredentialIds: [] })
 }
 
 /** A plain link, so the browser downloads the JSON with its own cookie and file name. */
@@ -272,6 +280,24 @@ export async function fetchRsvpCalendar(from: string, to: string): Promise<Event
 
 /** A passkey of the account (#3888), as the account page lists it: never the key. */
 export type Passkey = { id: string; name: string; createdAt: string; lastUsedAt?: string }
+
+/** The ids the password manager may keep for this account, or null for an account that never made a passkey (a 204). */
+export async function fetchAcceptedPasskeys(): Promise<AcceptedPasskeys | null> {
+  const accepted = await unwrap(api.GET('/api/me/passkeys/accepted'))
+  return accepted?.rpId && accepted.userId
+    ? {
+        rpId: accepted.rpId,
+        userId: accepted.userId,
+        allAcceptedCredentialIds: accepted.allAcceptedCredentialIds ?? [],
+      }
+    : null
+}
+
+/** Sends the password manager the account's current passkeys. Errors stay silent: the list on the page is what counts. */
+export async function syncAcceptedPasskeys(): Promise<void> {
+  const accepted = await fetchAcceptedPasskeys().catch(() => null)
+  if (accepted) await signalAcceptedPasskeys(accepted)
+}
 
 export async function fetchPasskeys(): Promise<Passkey[]> {
   return (await unwrap(api.GET('/api/me/passkeys'))).flatMap((p) =>

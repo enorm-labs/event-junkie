@@ -10,6 +10,7 @@ const account = vi.hoisted(() => ({
   addPasskey: vi.fn<(name: string) => Promise<void>>(),
   renamePasskey: vi.fn<(id: string, name: string) => Promise<void>>(),
   deletePasskey: vi.fn<(id: string) => Promise<void>>(),
+  syncAcceptedPasskeys: vi.fn<() => Promise<void>>(),
 }))
 vi.mock('@/api/account', () => account)
 
@@ -26,6 +27,7 @@ beforeEach(() => {
   account.addPasskey.mockResolvedValue()
   account.renamePasskey.mockResolvedValue()
   account.deletePasskey.mockResolvedValue()
+  account.syncAcceptedPasskeys.mockResolvedValue()
 })
 afterEach(() => {
   wrapper?.unmount()
@@ -59,6 +61,7 @@ describe('PasskeySettings', () => {
     expect(view.text()).toContain('iPhone')
     expect(view.text()).toContain('Added')
     expect(view.text()).toContain('2026')
+    expect(account.syncAcceptedPasskeys).toHaveBeenCalledTimes(1)
   })
 
   it('adds one named for the device, then lists it', async () => {
@@ -124,5 +127,6 @@ describe('PasskeySettings', () => {
     await flushPromises()
     expect(account.deletePasskey).toHaveBeenCalledWith('p1')
     expect(view.find('li').exists()).toBe(false)
+    expect(account.syncAcceptedPasskeys).toHaveBeenCalledTimes(2)
   })
 })

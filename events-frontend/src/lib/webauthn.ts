@@ -118,8 +118,12 @@ export function credentialJson(credential: PublicKeyCredential): Record<string, 
   }
 }
 
+/** What `signalAllAcceptedCredentials` takes: the account's user handle and every credential id the site still accepts. */
+export type AcceptedPasskeys = { rpId: string; userId: string; allAcceptedCredentialIds: string[] }
+
 type SignalApi = {
   signalUnknownCredential?: (options: { rpId: string; credentialId: string }) => Promise<void>
+  signalAllAcceptedCredentials?: (options: AcceptedPasskeys) => Promise<void>
 }
 
 /**
@@ -136,6 +140,20 @@ export async function signalUnknownPasskey(
     await signal.call(PublicKeyCredential, { rpId, credentialId })
   } catch {
     // The sign-in already failed; a refused signal adds nothing the visitor can act on.
+  }
+}
+
+/**
+ * Tells the password manager which of the account's passkeys the site still accepts, so it hides the rest (#4954). Chrome
+ * only for now; elsewhere, and on any failure, nothing happens.
+ */
+export async function signalAcceptedPasskeys(accepted: AcceptedPasskeys): Promise<void> {
+  const signal = (PublicKeyCredential as unknown as SignalApi).signalAllAcceptedCredentials
+  if (typeof signal !== 'function') return
+  try {
+    await signal.call(PublicKeyCredential, accepted)
+  } catch {
+    // Housekeeping for the password manager; the page itself is already right.
   }
 }
 
