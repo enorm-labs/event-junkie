@@ -1,14 +1,18 @@
 package de.norm.events.scraper.zosch
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.ScrapeFailureReason
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.scrapeFailureReason
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -111,7 +115,17 @@ class ZoschOverviewPageScraperTest {
     }
 
     @Test
-    fun `an empty page yields no nights`() {
-        scraper.scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
+    fun `an empty programme yields no nights`() {
+        val page = Jsoup.parse("""<div class="row"><div class="eventContainer accordion" id="eventAccordion"></div></div>""", baseUrl)
+        scraper.scrape(page, baseUrl).shouldBeEmpty()
+    }
+
+    @Test
+    fun `a page without the programme container fails the run and names the page`() {
+        // #4952: the clusters were served a 6 KB page with no programme, and the run read SUCCESS with 0 nights.
+        val page = Jsoup.parse("<html><head><title>Zosch Events</title></head><body><p>Kontakt</p></body></html>", baseUrl)
+        val error = shouldThrow<IllegalStateException> { scraper.scrape(page, baseUrl) }
+        error.message shouldContain "title 'Zosch Events'"
+        scrapeFailureReason(error) shouldBe ScrapeFailureReason.PARSE
     }
 }
