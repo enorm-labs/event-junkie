@@ -136,10 +136,10 @@ repos:
         files: ^scripts/
         pass_filenames: false
 
-      # A saved venue page carries the venue's e-mail addresses (#4855). The check reads the whole
+      # A saved venue page carries the venue's e-mail addresses (#4855), and can embed its Maps key (#4964). The check reads the whole
       # tree in about 3 s, so it runs only when a fixture or a Kotlin file is in the commit.
       - id: fixture-contacts
-        name: no unmasked e-mail address in a fixture
+        name: no unmasked e-mail address or API key in a fixture
         entry: scripts/mask-fixture-contacts.py check
         language: system
         files: ^(events-importer/src/test/resources/scraper/|events-[a-z]+/src/.*\.kt$)
