@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    
+    <link rel="preconnect" href="https://www.eventbrite.com">
+    <link rel="preconnect" href="https://www.universe.com">
+    
+    
+    <link rel="preconnect" href="https://cdntranscend.eventbrite.com">
+    <link rel="dns-prefetch" href="https://cdntranscend.eventbrite.com">
+
+<!-- HTMX (jsDelivr + SRI; pin 2.0.x — see SPO-519) -->
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js"
+            integrity="sha384-2OatzQy1H+Zd/IIrjr1TcuDGqLXeHhbooAyJY1KdQMKnr4LZ22k31GBLdYKHmVjg"
+            crossorigin="anonymous"></script>
+    <script>
+        // Configure HTMX to include CSRF token in POST requests
+        document.addEventListener('htmx:configRequest', function(event) {
+            // Get CSRF token from cookie
+            const csrfToken = document.cookie.split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+            if (csrfToken) {
+                event.detail.headers['X-CSRFToken'] = csrfToken;
+            }
+        });
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase) - Nov 14, 2026 @ The Wall Comedy - Gigspot</title>
+    
+    <!-- Tenant Meta Tags (favicon, description) -->
+    
+
+
+    
+    <!-- OpenGraph Meta Tags -->
+    
+    
+
+    
+        
+            <meta property="og:type" content="website">
+        
+    
+
+    
+        
+            <meta property="og:title" content="SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase) - November 14, 2026 - @ The Wall Comedy">
+        
+    
+
+    
+        
+            <meta property="og:description" content="The perfect pre dinner, pre drinks plan! Don&amp;#39;t miss the comedy pregame Saturday Night Live Standup! Quality comedy from 6:30 -7:30pm at Boxi Join us for ...">
+        
+    
+
+    
+        
+            <meta property="og:url" content="https://thewallcomedy.com/events/2026-11-14-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/">
+        
+    
+
+    
+        
+            <meta property="og:image" content="https://thewallcomedy.com/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1788441136.253719/event_image.jpg">
+        
+    
+
+    
+        
+            <meta property="og:site_name" content="Gigspot Event Hub">
+        
+    
+
+
+    
+    <!-- Include Bootstrap 5 CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
+          rel="stylesheet" 
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
+          crossorigin="anonymous">
+    <!-- Include your custom CSS file if needed -->
+    <link href="https://cdn.lineicons.com/5.0/lineicons.css"
+          rel="stylesheet"
+          integrity="sha384-QSi1wEdljpltBoEARq7p3i6POLnfxQrARLMHqjDbvKnhkjnRFEVjweOQi9lw22yY"
+          crossorigin="anonymous">
+      
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/utilities.css">
+    <link rel="stylesheet" href="/static/css/emails.css">
+
+    <!-- Tenant Theme CSS (custom colors and styles) -->
+    
+<style id="tenant-theme-css">
+:root {
+    --theme-primary: #080808;
+    --theme-secondary: #000000;
+    --theme-accent: #ffffff;
+    --theme-background: #6b190a;
+    --theme-text: #e6e6fa;
+    --theme-secondary-rgb: 0, 0, 0;
+    --theme-accent-rgb: 255, 255, 255;
+    --theme-text-rgb: 230, 230, 250;
+    --event-card-background: #000000;
+    --event-title-text-color: #ffffff;
+    --event-text-color: #ffffff;
+    --event-date-color: #ffffff;
+    --event-overlay-background: #000000;
+    --event-overlay-text-color: #ffffff;
+}
+</style>
+
+
+
+    
+    
+
+
+<link rel="canonical" href="https://thewallcomedy.com/events/2026-11-14-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/">
+
+
+
+
+
+    
+    
+    
+
+</head>
+<body class="bg-theme-dark text-theme-light tenant-site">
+    <!-- Include the top navbar -->
+    <!-- templates/_topbar.html -->
+
+
+
+
+
+
+
+
+
+<div class="tenant-floating-menu">
+    <div class="dropdown">
+        <button class="btn btn-tenant-menu" type="button" id="tenantMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Menu">
+            <i class="lni lni-menu-hamburger-1"></i>
+        </button>
+        
+        <div class="dropdown-menu dropdown-menu-end hamburger-dropdown" aria-labelledby="tenantMenuButton">
+            <div class="hamburger-menu-content">
+                <div class="menu-section">
+                    <h6 class="dropdown-header">The Wall Comedy Club</h6>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+    <div class="container-fluid">
+        <div class="row">
+            
+
+            <!-- Main Content Area -->
+            <div class="col-12">
+                <div class="content border-theme p-md-3 p-0">
+                    <div id="messages-container" class="container mt-3">
+                        
+                    </div>
+                    
+
+
+
+<script type="application/ld+json" id="event-ld">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode", "url": "https://spotagig.eu/events/2026-11-14-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1788441136.253719/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "startDate": "2026-11-14T18:00:00", "endDate": "2026-11-14T19:30:00", "description": "The perfect pre dinner, pre drinks plan! Don't miss the comedy pregame Saturday Night Live Standup! Quality comedy from 6:30 -7:30pm at Boxi Join us for a night of laughter in Friedrichshain at The Wall Comedy Club. Tickets start at just €10 going up to €15 at the door. A funky yet cozy comedy club located across the street from Boxhagner Platz, and just a few steps away from U Samariterstr. and Frankfurter Tor! Our comedy showcase features three of Berlin's best international comedians performing longer sets, as well as visiting comedians touring through the city. Saturday's at 6:30pm, we bring you a high-quality stand-up comedy show, featuring American-style stand-up comedy with headliner acts. Our talented comedians will keep you laughing throughout the night, and the friendly bar staff will keep your drinks flowing with their delicious cocktail menu and wide selection of beer. Wether you're looking to have pre drinks before a night out or just have a laugh before dinner SNL Standup is the perfect way to kick off your Saturday night!!! This venue can fill up so be sure to buy your ticket now! Early bird tickets are €10, Student \u0026 group tickets from €11, going up to 15 euro at the door. Don't miss out on some Saturday night stand-up comedy in a relaxed and friendly atmosphere. Grab your tickets now! This is a bi-monthly event, so if this week is sold-out, book your tickets for next week NOW and come join the laughter. Event Details: * Event Type: English Comedy Showcase * Date: Check listing * Time: 6:30 PM (doors open 6pm) * Location: The Wall Comedy Club (Grünberger Str. 84, 10245 Berlin) * This is a ticketed show, with tickets starting from 10 euro and going up to 15 euro at the door.", "name": "SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)", "offers": [{"@type": "Offer", "name": "Eventbrite", "url": "https://www.eventbrite.com/e/1995647491368", "price": 11.83, "priceCurrency": "EUR", "availability": "https://schema.org/InStock"}]}</script>
+
+
+
+
+<div class="container py-4">
+    <!-- Banner Row -->
+    <div class="row mb-4">
+        <div class="col-12">
+            
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-11-14-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1788441136.253719/event_image.jpg"
+     class="card-img-top"
+     alt="SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-11-14-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">14</div>
+                    <div class="fs-1rem">Nov</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-map-marker-5 text-theme-accent"></i>
+            
+                <a href="/venues/thewallcomedy/"><span class="text-theme-light">The Wall Comedy</span></a>
+            
+            
+            <span class="text-theme-light mx-2">•</span>
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Nov 14</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">6:00 PM</span>
+        </p>
+        
+    </div>
+</div>
+
+        </div>
+    </div>
+
+    <!-- Description and Actions Row -->
+    <div class="row mb-4">
+        <!-- Description Column (second on mobile so CTAs stay below hero / above fold) -->
+        <div class="col-12 col-md-8 order-2 order-md-1">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">About This Event</h4>
+                    <div class="card-text markdown"><p>The perfect pre dinner, pre drinks plan! Don't miss the comedy pregame Saturday Night Live Standup! Quality comedy from 6:30 -7:30pm at Boxi</p>
+<p>Join us for a night of laughter in Friedrichshain at The Wall Comedy Club. Tickets start at just €10 going up to €15 at the door. A funky yet cozy comedy club located across the street from Boxhagner Platz, and just a few steps away from U Samariterstr. and Frankfurter Tor! Our comedy showcase features three of Berlin's best international comedians performing longer sets, as well as visiting comedians touring through the city.</p>
+<p><br></p>
+<p>Saturday's at 6:30pm, we bring you a high-quality stand-up comedy show, featuring American-style stand-up comedy with headliner acts. Our talented comedians will keep you laughing throughout the night, and the friendly bar staff will keep your drinks flowing with their delicious cocktail menu and wide selection of beer. Wether you're looking to have pre drinks before a night out or just have a laugh before dinner SNL Standup is the perfect way to kick off your Saturday night!!!</p>
+
+<p>This venue can fill up so be sure to buy your ticket now! Early bird tickets are €10, Student &amp; group tickets from €11, going up to 15 euro at the door.</p>
+<p><br></p>
+<p>Don't miss out on some Saturday night stand-up comedy in a relaxed and friendly atmosphere. Grab your tickets now!</p>
+<p><br></p>
+
+<p>This is a bi-monthly event, so if this week is sold-out, book your tickets for next week NOW and come join the laughter.</p>
+<p><br></p>
+<p>Event Details:</p>
+<p>* Event Type: English Comedy Showcase</p>
+<p>* Date: Check listing</p>
+<p>* Time: 6:30 PM (doors open 6pm)</p>
+<p>* Location: The Wall Comedy Club (<a href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x47a84ffbf9987b47:0xcb8d69c22f3aab56?sa=X&amp;ved=1t:8290&amp;ictx=111" title="https://www.google.com/maps/place//data=!4m2!3m1!1s0x47a84ffbf9987b47:0xcb8d69c22f3aab56?sa=X&amp;ved=1t:8290&amp;ictx=111" rel="nofollow noopener" target="_blank">Grünberger Str. 84, 10245 Berlin</a>)</p>
+<p>* This is a ticketed show, with tickets starting from 10 euro and going up to 15 euro at the door.</p></div>
+                </div>
+            </div>
+
+            
+            
+            <div class="mt-4">
+                
+
+    <div class="card venue-directory-card h-100 ">
+        <div class="card-body d-flex flex-column">
+            <h3 class="h5 card-title mb-3">
+                
+                The Wall Comedy
+                
+            </h3>
+            
+
+<div class="venue-block-body">
+    <div class="row g-3 align-items-start">
+        <div class="col-12 col-md-9 order-2 order-md-1">
+            
+            
+            
+
+<div class="profile-bio mb-3">
+  
+  <input type="checkbox" id="profile-bio-expand-a6448e5e-ee32-46be-afaa-a47895adc48a" class="profile-bio-toggle visually-hidden">
+  <div class="profile-bio-collapsed markdown text-theme">The Wall Comedy Club, Berlin was ironically based on a world with no more walls and is a tribute to the fall of the Berlin Wall in 1989. It is a place where anyone can come visit to share in our common sense of laughter and fun with some of the best comedians and artists from all over the world! It is the perfect place for a night of laughs and great entertainment. We pride ourselves on being the go-to spot for stand-up comedy in Berlin, featuring some of the best of local and international act…</div>
+  <div class="profile-bio-expanded markdown text-theme"><p>The Wall Comedy Club, Berlin was ironically based on a world with no more walls and is a tribute to the fall of the Berlin Wall in 1989. It is a place where anyone can come visit to share in our common sense of laughter and fun with some of the best comedians and artists from all over the world!</p>
+<p>It is the perfect place for a night of laughs and great entertainment. We pride ourselves on being the go-to spot for stand-up comedy in Berlin, featuring some of the best of local and international acts. Our stage is alive with energy and laughter, giving audience members an unforgettable experience and a night of entertainment for both our open mic shows and showcase events. We hand-pick many of the best comedians from around the world, including the United States, Germany, the United Kingdom along with other places in Europe, North America, South America, parts of Asia and Australia.</p>
+<p>On top of experiencing a great show, feel free to enjoy a beer, wine, soft drink, craft beer, or cocktail from one of our lovely bartenders at the bar, and we welcome you to stick around to meet our comedians after the show or even take pictures of yourself on our famous stage!</p>
+<p>Whether you’re looking for a great night of out with friends or family, come to the Wall Comedy Club for a night of unforgettable comedy.</p></div>
+  <label for="profile-bio-expand-a6448e5e-ee32-46be-afaa-a47895adc48a" class="read-more-link small text-theme-muted profile-bio-read-more">
+    Read more
+  </label>
+  <label for="profile-bio-expand-a6448e5e-ee32-46be-afaa-a47895adc48a" class="read-more-link small text-theme-muted profile-bio-read-less">
+    Read less
+  </label>
+  
+</div>
+
+
+            
+            
+            <ul class="list-unstyled small mt-2 mb-0 venue-block-contact">
+                
+                
+                <li><span class="text-muted">Email:</span> <a href="mailto:i-masked@example.de" class="text-reset">i-masked@example.de</a></li>
+                
+                
+                
+                <li><span class="text-muted">Web:</span> <a href="https://www.eventbrite.com/o/the-wall-comedy-33895977485" target="_blank" rel="noopener noreferrer" class="text-reset" title="https://www.eventbrite.com/o/the-wall-comedy-33895977485">https://www.eventbrite.com/o/…</a></li>
+                
+                
+            </ul>
+            
+        </div>
+        
+        <div class="col-12 col-md-3 order-1 order-md-2">
+            <div class="venue-block-map-wrap">
+                  
+  <!-- TODO protect the API key-->
+
+  <div class="">
+    
+    <div class="ratio ratio-1x1 venue-map-embed-compact">
+        <iframe
+            width="100%"
+            class="border-0"
+            loading="lazy"
+            allowfullscreen
+            referrerpolicy="no-referrer-when-downgrade"
+            title="Map of The Wall Comedy"
+            src="https://www.google.com/maps/embed/v1/place?key=AIza-masked-third-party-maps-key&q=Gr%C3%BCnberger%20Str.%2084,Berlin,Berlin,10245,DE">
+        </iframe>
+    </div>
+    
+  </div>
+
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="venue-block-address-below-map mt-2 mt-md-3">
+        <div class="small text-muted text-uppercase mb-1">Address</div>
+        <address class="venue-address-block mb-0">
+            
+
+    
+    <div class="venue-address-line">Grünberger Str. 84</div>
+    
+    
+    <div class="venue-address-line">
+        Berlin
+        , 
+        Berlin
+        
+             10245
+        
+    </div>
+    
+    
+    <div class="venue-address-line">Germany</div>
+    
+
+
+        </address>
+    </div>
+    
+</div>
+
+        </div>
+        
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}</script>
+
+
+
+    </div>
+
+
+            </div>
+            
+
+            
+
+            <div class="mt-4">
+                
+
+
+            </div>
+        </div>
+
+        <!-- Actions Column (first on mobile so Buy Tickets / Apply sit directly under hero) -->
+        <div class="col-12 col-md-4 order-1 order-md-2 mb-3 mb-md-0">
+            
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-11-14-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase"
+     data-event-title="SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)"
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+<div class="mb-2">
+    <small class="text-theme-light ticket-option__headline">€11.83 – €15.03 total</small>
+</div>
+
+
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="1995647491368"
+        data-event-slug="2026-11-14-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase"
+        data-wt-coupon=""
+        id="eb-trigger-1995647491368"><img src="/static/images/eb-icon.svg" alt="" class="ticket-buy-logo">
+Buy Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+        </div>
+    </div>
+
+    <!-- Performers Row -->
+    <div class="row g-3">
+        
+    </div>
+
+    
+    <!-- Related Events - Last block for future/active events -->
+    <div class="row mt-4">
+        <div class="col-12">
+            
+
+
+<div class="related-events-section">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="mb-0 text-theme-light">
+            <i class="lni lni-calendar-days me-2"></i>
+            
+                More Events at The Wall Comedy
+            
+        </h4>
+    </div>
+    
+    <div id="related-events-container"
+         hx-get="/events/4f342761-bbd7-4580-8390-73ceb54b062b/related/"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="text-center py-4">
+            <div class="spinner-border spinner-border-sm text-theme-accent" role="status">
+                <span class="visually-hidden">Loading related events...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+        </div>
+    </div>
+    
+</div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Powered by Spotagig footer for tenant sites -->
+    <footer class="powered-by-footer text-center py-3 mt-4">
+        <small>
+            Powered by <a href="https://spotagig.eu" target="_blank" rel="noopener noreferrer">Gigspot</a>
+        </small>
+    </footer>
+    
+
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
+            crossorigin="anonymous"></script>
+    <!-- Include your custom JS file if needed -->
+    <script src="/static/js/custom.js"></script>
+    <!-- Per-tenant ticket checkout scripts (Eventbrite + Fienta + Universe) -->
+    
+
+
+
+
+
+
+<script src="/static/js/checkout-modal.js"></script>
+
+
+
+
+
+
+
+<script>
+window.fientaSettings = {
+    link_selector: 'a[data-fienta-checkout]',
+    utm_source: 'spotagig',
+};
+</script>
+<script src="https://fienta.com/embed.js"></script>
+
+
+
+
+
+
+
+
+
+
+<script src="https://www.universe.com/embed2.js" data-state=""></script>
+<script src="/static/js/universe-checkout.js"></script>
+
+
+
+
+<script src="/static/js/eb-checkout-utils.js"></script>
+<script src="https://www.eventbrite.com/static/widgets/eb_widgets.js" async></script>
+<script src="/static/js/eb-checkout-legacy.js"></script>
+
+
+
+<script src="/static/js/internal-ticket-checkout.js" defer></script>
+
+    <!-- Dashboard bulk actions for multi-event editing -->
+    <script src="/static/js/dashboard-bulk-actions.js"></script>
+    
+    
+    
+
+    <!-- Analytics (GA, Meta Pixel) — end of body so main DOM is not blocked by third-party work -->
+    
+
+
+
+
+<script id="analytics-loader-config" type="application/json">{"google_analytics": [{"id": "G-5NRVF2B3R6", "mode": "basic"}, {"id": "G-TQLNCVLE5W", "mode": "basic"}], "meta_pixel": [{"id": "190825411512892", "mode": "basic"}, {"id": "2158554538047713", "mode": "basic"}]}</script>
+
+    
+        
+    
+
+<script>
+  window.__INITIAL_TRACKING_GROUPS__ = (function () {
+    var groups = [];
+    
+    
+    return groups;
+  })();
+  // Short-lived signed token authorizing /capi/collect/ beacons (tenant-bound).
+  window.__CAPI_COLLECT_TOKEN__ = 'eyJ0IjoidGhld2FsbGNvbWVkeS5jb20ifQ:1xRzpL:EXpQ\u002DLHymXe0P4h\u002DdXsfjiGwrU4Sx3Agi9oBczDtfxQ';
+</script>
+<script defer src="/static/js/tracking-consent.js?v=4"></script>
+<script defer src="/static/js/analytics-events.js"></script>
+
+
+
+
+
+    <!-- Cookie Consent Banner (GDPR/ePrivacy compliant) -->
+    
+
+
+
+
+<script id="cookie-consent__cookie-groups" type="application/json">[{"varname": "analytics", "name": "Analytics", "description": "We use analytics cookies to understand how visitors interact with our website. This helps us improve our services and provide a better user experience.", "is_required": false}, {"varname": "marketing", "name": "Marketing", "description": "Marketing cookies are used to track visitors across websites. The intention is to display ads that are relevant and engaging for the individual user.", "is_required": false}]</script>
+
+
+<template id="cookie-consent__cookie-bar">
+  <div class="fixed-bottom p-3 d-flex justify-content-center" role="dialog" aria-live="polite" aria-label="Cookie consent">
+    <div class="card shadow-lg border-0 w-100">
+      <div class="card-body p-4">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h5 class="card-title fw-bold">
+              <i class="lni lni-shield-2 me-2"></i>Your Privacy
+            </h5>
+            <p class="card-text small text-muted mb-3 mb-md-0">
+              We use cookies to analyze traffic and optimize your experience. Choose your preferences below.
+              <a href="/cookies/" class="text-decoration-underline text-primary">Cookie Settings</a>
+            </p>
+          </div>
+          <div class="col-md-4">
+            <div class="d-grid gap-2">
+              <button type="button" class="btn btn-dark cookie-consent__accept">
+                Accept All
+              </button>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary flex-grow-1 cookie-consent__decline">
+                  Reject
+                </button>
+                <a href="/cookies/" class="btn btn-light border flex-grow-1 d-flex align-items-center justify-content-center">
+                  <i class="lni lni-gear-1"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+
+<div id="cookie-consent-config" 
+     data-status-url="/cookies/status/"
+     data-cookie-bar-module-url="/static/cookie_consent/cookiebar.module.js"
+     hidden></div>
+
+
+<script type="module" src="/static/js/cookie-consent-init.js?v=4"></script>
+
+
+</body>
+
+</html>

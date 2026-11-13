@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.SharedPages
 import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -17,6 +18,10 @@ import org.springframework.stereotype.Component
  * partial names the next in the same way, and the last names none, so the walk reads them all:
  * about four pages, three months. The pages carry no event detail beyond the JSON-LD.
  *
+ * The JSON-LD description is one run of text, so each event page is read for the same text with its
+ * paragraphs (#4778). The dates of one show share their text, so one page is read per distinct text:
+ * about ten pages for 27 events. A failed page flags its rows, and the upsert keeps their stored text.
+ *
  * @see TheWallEventsPageScraper for the field mapping.
  * @see <a href="https://thewallcomedy.com/venues/thewallcomedy/events/">The Wall Comedy Club events</a>
  */
@@ -26,6 +31,8 @@ class TheWallWebsiteImporter(
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "The Wall Comedy Club", TheWallEventsPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.THE_WALL
     override val maxListingPages: Int = MAX_PAGES
+    override val sharedPages: SharedPages<String> =
+        SharedPages(TheWallEventPageScraper()::description, { text, event -> event.copy(description = text) }, key = { it.description ?: it.sourceUrl })
 
     /** The "Show more" button's partial, or null on the last page. */
     override fun nextListingPage(
