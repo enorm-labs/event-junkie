@@ -25,6 +25,9 @@ import java.time.LocalTime
  * of paragraphs: a date line (`Do 1.10. 19:30 Uhr Vilma Remezaite singt Barbra Streisand - Konzert`), then free
  * text, a price line (`23 € Vorverkauf - 27 € AK`) and a `Tickets` link.
  *
+ * A cancellation note is its own paragraph, in two layouts. `leider abgesagt:` with a colon cancels the entry after it.
+ * A bare `leider abgesagt` cancels the entry before it, or the next one when no entry precedes it in the month block.
+ *
  * A date has no year. Each month block takes the year that most of its printed weekdays fall in, so a stale block
  * (a past September after June) still dates right, and one misprinted weekday is outvoted.
  * A date line that ends in a preposition or an article runs on into the next paragraph, which joins the title.
@@ -71,7 +74,7 @@ class BallhausWeddingOverviewPageScraper {
                 }
 
                 CANCELLED_NOTE.matches(paragraph.text) -> {
-                    cancelNext = true
+                    if (paragraph.text.endsWith(":") || entries.isEmpty()) cancelNext = true else entries.last().cancelled = true
                 }
 
                 dateLine != null -> {
@@ -155,7 +158,7 @@ class BallhausWeddingOverviewPageScraper {
         val start: LocalTime?,
         val end: LocalTime?,
         val title: String,
-        val cancelled: Boolean,
+        var cancelled: Boolean,
         val runsOn: Boolean
     ) {
         val lines = mutableListOf<String>()
