@@ -4,7 +4,9 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.fixtureDocument
+import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -19,6 +21,7 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalTime
 import java.time.ZoneId
 
 /**
@@ -86,6 +89,39 @@ class CrackBellmerWebsiteImporterTest {
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events.first().description shouldStartWith "We're standing at the peak of summer"
             result.events.first().detailUnavailable shouldBe false
+        }
+
+    @Test
+    fun `adds the doors time and the free-entry note from the event page's doors line`() =
+        runTest {
+            stubListing()
+            stubEventPages("crackbellmer-detail-doors.html")
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val event = result.events.first()
+            event.doorsTime shouldBe LocalTime.of(19, 0)
+            event.priceNote shouldBe "Free entry until 22:00"
+            event.pricePresale.shouldBeNull()
+            event.priceBoxOffice.shouldBeNull()
+            // Free only until 22:00, so the night is not free.
+            detectFree(event.pricePresale, event.priceBoxOffice, event.priceNote, event.title) shouldBe false
+        }
+
+    @Test
+    fun `leaves the doors time empty when the blurb has no doors line`() =
+        runTest {
+            stubListing()
+            stubEventPages()
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events.forAll {
+                it.doorsTime.shouldBeNull()
+                it.priceNote.shouldBeNull()
+            }
         }
 
     @Test

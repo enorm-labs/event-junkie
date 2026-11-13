@@ -35,7 +35,7 @@ import java.util.Locale
  *
  * Every night is an `.event-item` in one Finsweet CMS list: a `data-date`, an `h:mm a` start
  * time, the title, a comma-separated genre line, a comma-separated lineup line, and a poster.
- * Its `/events/<slug>` page adds only a prose blurb, read by [CrackBellmerDetailPageScraper].
+ * Its `/events/<slug>` page adds a prose blurb and its doors line, read by [CrackBellmerDetailPageScraper].
  *
  * 1. **`data-date` is the only place the year is written.** The calendar column renders
  * `Fri . 7 . 8 .`; the attribute carries the full `August 7, 2026` — and ADR-007 ranks a
