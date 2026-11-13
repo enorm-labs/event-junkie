@@ -499,7 +499,14 @@ jobs:
             --password "${{ secrets.GITHUB_TOKEN }}"
           # `helm push` prints the digest it created, and that is what gets signed — captured rather than
           # re-resolved from the tag. An empty capture fails rather than signing nothing.
-          helm push "build/chart/event-junkie-${VERSION}.tgz" "$CHART_REPO" | tee push.log
+          # GHCR can answer `failed to perform "Tag" … not found` right after storing the manifest. The same
+          # push passes on retry, with the same digest. Any other error fails at once.
+          for attempt in 1 2 3; do
+            if helm push "build/chart/event-junkie-${VERSION}.tgz" "$CHART_REPO" 2>&1 | tee push.log; then break; fi
+            grep -q 'failed to perform "Tag".*not found' push.log && [ "$attempt" -lt 3 ] || exit 1
+            echo "::warning::helm push hit the GHCR tag race (attempt ${attempt} of 3); retrying in 15 s"
+            sleep 15
+          done
           digest="$(sed -n 's/^Digest: *//p' push.log)"
           [[ "$digest" == sha256:* ]] || { echo "::error::helm push printed no digest"; exit 1; }
           echo "digest=${digest}" >> "$GITHUB_OUTPUT"

@@ -249,6 +249,10 @@ The levers, in order:
 A run can also fail at _Sign the published images_. The images are then pushed and clean, but not signed, and a cluster refuses them. When three
 attempts in a row fail, the cause is Sigstore and not the change. Re-run the failed job with `gh run rerun <run id> --failed`.
 
+A run can also fail at _Publish the chart_ with `failed to perform "Tag" on destination: sha256:…: not found`. GHCR stored the chart but did not tag
+it, so Flux sees no new version. The step tries the push three times, 15 seconds apart. When all three fail, re-run the failed job. This happened on
+2026-11-12 and on 2026-11-13 (`v0.86.8`), and the re-run passed both times.
+
 A red publish on `main` does two things by itself (#1122). `publish-failure-issue.yml` opens one blocker issue with the Trivy tables, updates it on
 each further red run, and closes it on the first green one. `agent-security.yml` runs on the same trigger. It walks this list with the commands in
 [`security-triage.prompt.md` § A blocked publish](../../.github/prompts/security-triage.prompt.md#a-blocked-publish). When the answer is an upgrade
