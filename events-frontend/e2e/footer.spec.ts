@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './test'
 
 /**
  * The footer is part of the app shell, so it has to hold up on every route and at every width —

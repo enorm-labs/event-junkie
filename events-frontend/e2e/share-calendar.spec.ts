@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 
-import { expect, type Page, test } from '@playwright/test'
+import { expect, type Page, test } from './test'
 
 /**
  * Share and add-to-calendar on the event page, with the BFF mocked (#476), all behind one Share

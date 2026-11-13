@@ -1,4 +1,4 @@
-import { expect, type Page, type Route, test } from '@playwright/test'
+import { expect, type Page, type Route, test } from './test'
 
 /**
  * The header search (#2514) with a mocked BFF: the palette, its keyboard path, and the results page.

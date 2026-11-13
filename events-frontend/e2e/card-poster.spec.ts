@@ -1,4 +1,4 @@
-import { expect, type Route, test } from '@playwright/test'
+import { expect, type Route, test } from './test'
 
 /**
  * The card poster on a phone: it reaches both edges, and it reveals itself without a pointer.

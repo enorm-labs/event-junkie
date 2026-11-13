@@ -1,4 +1,4 @@
-import { expect, type Route, test } from '@playwright/test'
+import { expect, type Route, test } from './test'
 
 /**
  * The last answer of a spec's `/api/(auth|me)` mock (#4095). A write gets the 204 the BFF answers.

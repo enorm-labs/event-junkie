@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, type Page, type Route, test } from '@playwright/test'
+import { expect, type Page, type Route, test } from './test'
 import { sectionLink } from './header-nav'
 import { failUnmockedGets } from './unmocked'
 

@@ -1,4 +1,4 @@
-import { expect, type Page, type Route, test } from '@playwright/test'
+import { expect, type Page, type Route, test } from './test'
 
 /**
  * Promoters overview e2e tests with a fully mocked BFF (#1349), the shape of `venues.spec.ts`:

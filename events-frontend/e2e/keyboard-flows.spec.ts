@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page, type Route, test } from '@playwright/test'
+import { expect, type Locator, type Page, type Route, test } from './test'
 
 /**
  * Each main flow completed with the keyboard alone (#2989), the half of #373 a test can do. No
