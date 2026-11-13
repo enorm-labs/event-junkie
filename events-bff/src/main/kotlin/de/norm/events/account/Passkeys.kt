@@ -51,7 +51,7 @@ class Passkeys(
     @Value("\${app.site.origin}") origin: String
 ) {
     private val origin = Origin(origin)
-    private val rpId = requireNotNull(URI(origin).host) { "app.site.origin has no host: $origin" }
+    internal val rpId = requireNotNull(URI(origin).host) { "app.site.origin has no host: $origin" }
     private val converter = ObjectConverter()
     private val credentials = AttestedCredentialDataConverter(converter)
     private val manager = WebAuthnManager.createNonStrictWebAuthnManager(converter)
@@ -216,7 +216,7 @@ class Passkeys(
         /** The same algorithms, as the options JSON names them. */
         val CREDENTIAL_PARAMETERS = COSE_ALGORITHMS.map { CredentialParameter(it.value.toInt()) }
 
-        private fun base64(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+        internal fun base64(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     }
 }
 

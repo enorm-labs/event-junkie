@@ -191,6 +191,7 @@ the first column. It fails in two cases:
 | `/api/me/notifications/{id}/read`      | Marking one notification read                                                                           |
 | `/api/me/notifications/read`           | Marking every notification read                                                                         |
 | `/api/me/passkeys`                     | The account's passkeys, and storing a new one                                                           |
+| `/api/me/passkeys/accepted`            | The passkey ids the browser's password manager may keep for the account                                 |
 | `/api/me/passkeys/options`             | A challenge for adding a passkey                                                                        |
 | `/api/me/passkeys/{id}`                | Renaming or deleting a passkey                                                                          |
 | `/api/me/following`                    | Upcoming events of everything the account follows, with the events list's filters and sort              |

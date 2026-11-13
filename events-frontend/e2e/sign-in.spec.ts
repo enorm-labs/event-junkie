@@ -37,6 +37,7 @@ async function mockAccount(page: Page): Promise<{ path: string; csrf: string | n
     if (path === '/api/me/following') return json(route, { content: [], totalPages: 0 })
     if (path === '/api/me/following/today') return json(route, [])
     if (path === '/api/me/follows') return json(route, [])
+    if (path === '/api/me/passkeys/accepted') return route.fulfill({ status: 204 })
     if (path === '/api/me/passkeys') return json(route, [])
     if (path === '/api/me/push') return json(route, { publicKey: null })
     if (path === '/api/me/push/changes') return route.fulfill({ status: 204 })
