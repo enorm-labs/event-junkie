@@ -107,6 +107,36 @@ class BallhausWeddingScrapersTest {
     }
 
     @Test
+    fun `a bare note cancels the entry before it, as the page of 2026-11-13 prints it`() {
+        val page = fixtureDocument("ballhauswedding/ballhauswedding-veranstaltungen-2026-11-13.html", baseUrl)
+        val november = BallhausWeddingOverviewPageScraper().scrape(page, baseUrl, LocalDate.of(2026, 11, 12))
+
+        november.first { it.title == "Russisch Roulette - Krimi - Theater" }.status shouldBe EventStatus.CANCELLED.name
+        november.first { it.title == "Vertigo" }.status shouldBe EventStatus.SCHEDULED.name
+        november.filter { it.status == EventStatus.CANCELLED.name }.map { it.title } shouldBe listOf("Russisch Roulette - Krimi - Theater")
+    }
+
+    @Test
+    fun `a colon note cancels the next entry and a bare note the one before it, at either end of a block`() {
+        fun statuses(vararg paragraphs: String): List<String> {
+            val html = (listOf("November") + paragraphs).joinToString("") { "<p>$it</p>" }
+            val page = Jsoup.parse("<div data-testid=\"richTextElement\">$html</div>", baseUrl)
+            return BallhausWeddingOverviewPageScraper().scrape(page, baseUrl, LocalDate.of(2026, 11, 1)).map { it.status.take(1) }
+        }
+        val a = "Do 12.11. 19:30 Uhr A"
+        val b = "Fr 13.11. 20 Uhr B"
+        val c = "Sa 14.11. 20 Uhr C"
+
+        statuses("leider abgesagt:", a, b, c) shouldBe listOf("C", "S", "S")
+        statuses(a, "leider abgesagt", b, c) shouldBe listOf("C", "S", "S")
+        statuses("leider abgesagt", a, b) shouldBe listOf("C", "S")
+        statuses(a, b, c, "leider abgesagt") shouldBe listOf("S", "S", "C")
+        statuses(a, b, "leider abgesagt:") shouldBe listOf("S", "S")
+        statuses(a, "leider abgesagt", b, "leider abgesagt", c) shouldBe listOf("C", "C", "S")
+        statuses("leider abgesagt:", a, "leider abgesagt:", b, c) shouldBe listOf("C", "C", "S")
+    }
+
+    @Test
     fun `adds the end, the poster and the full text from the Wix Events page`() {
         val listing = BallhausWeddingOverviewPageScraper().scrape(document, baseUrl, LocalDate.of(2026, 10, 1)).first()
         val page = fixtureDocument("ballhauswedding/ballhauswedding-event-barbra-streisand.html", listing.sourceUrl)
