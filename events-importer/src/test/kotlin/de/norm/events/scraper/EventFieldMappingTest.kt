@@ -28,6 +28,10 @@ class EventFieldMappingTest {
     fun `stripTitleStatusMarker strips a trailing scheduling note and stray dash`() {
         stripTitleStatusMarker("Iggi Kelly Nachholtermin vom 28.04.26-") shouldBe "Iggi Kelly"
         stripTitleStatusMarker("Wird verlegt: Deep Purple") shouldBe "Deep Purple"
+        // Event 13899: the postponed show's new date, which keeps its scheduled status.
+        stripTitleStatusMarker("Neuer Termin: ELIF") shouldBe "ELIF"
+        parseTitleStatus("Neuer Termin: ELIF").shouldBeNull()
+        stripTitleStatusMarker("Neuer Termin für die Band") shouldBe "Neuer Termin für die Band"
         stripTitleStatusMarker("The Dear Hunter -Nachholtermin vom 30.09.2025.") shouldBe "The Dear Hunter"
         stripTitleStatusMarker(cleanEventTitle("DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY  WIRD VERSCHOBEN").text) shouldBe
             "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY"

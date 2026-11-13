@@ -128,6 +128,22 @@ class BarJederVernunftShowPageScraperTest {
     }
 
     @Test
+    fun `applyTo bills a duo a show is named for, but not a performer with a band`() {
+        // Event 13924: a magician duo, billed as one act.
+        val show =
+            BarJederVernunftShow(
+                genre = "Show",
+                pricePresale = null,
+                priceNote = null,
+                description = "Siegfried & Joy und das Geheimnis um das goldene Tuch: So könnte die Karriere überschrieben sein."
+            )
+
+        show.applyTo(occurrence(title = "Siegfried & Joy")).artists.map { it.name to it.role } shouldBe
+            listOf("Siegfried & Joy" to ArtistRole.HEADLINER)
+        show.copy(description = "Gitte Haenning & Band spielen die Hits.").applyTo(occurrence(title = "Gitte Haenning & Band")).artists shouldHaveSize 0
+    }
+
+    @Test
     fun `applyTo bills the comedian a comedy night is named for`() {
         // Event 12189: the programme is the subtitle, and the blurb opens elsewhere.
         val show =

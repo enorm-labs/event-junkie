@@ -30,8 +30,8 @@ internal fun addAmtEventPageFields(
 
 /**
  * The start most nights do not print: a `Start: 7:00 PM` label, else the first running-order slot
- * (`19:00–20:00 — Pamela Svart`). A slot counts only at the head of a paragraph, so a ticket window
- * mid-sentence (`EARLY ENTRY: … arrival 22:00–23:00`) is no start, and a bare `19 - 20` has no minutes.
+ * (`19:00–20:00 — Pamela Svart`, or `7PM mchvlsm` on the Loone nights). A slot counts only at the head
+ * of a paragraph, so a ticket window mid-sentence is no start, and a bare `19 - 20` has no minutes or meridiem.
  */
 private fun proseStartTime(prose: String?): LocalTime? =
     labelledClock(prose, START_LABEL)
@@ -40,7 +40,15 @@ private fun proseStartTime(prose: String?): LocalTime? =
             ?.groupValues
             ?.get(1)
             ?.let { parseClock(it) }
+        ?: prose
+            ?.let { MERIDIEM_SLOT.find(it) }
+            ?.destructured
+            ?.let { (hour, minute, meridiem) -> parseClock("$hour:${minute.ifEmpty { "00" }}", meridiem) }
 
 private const val START_LABEL = "start"
 
 private val RUNNING_ORDER_SLOT = Regex("""^(\d{1,2}:\d{2})\s*[–—-]\s*\d{1,2}:\d{2}(?!\d)""", RegexOption.MULTILINE)
+
+// The venue's editor leads some paragraphs with a zero-width joiner.
+private val MERIDIEM_SLOT =
+    Regex("""^[\u200D\h]*(\d{1,2})(?::(\d{2}))?\h*([ap])\.?m\.?(?!\p{L})\h+\p{L}""", setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE))

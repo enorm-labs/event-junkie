@@ -240,6 +240,7 @@ class SchokoladenOverviewPageScraper {
         LEADING_BRACKETED_ACT.find(stripTitleStatusMarker(title))?.let { return buildArtistsForEventType(it.groupValues[1], subtitle, eventType) }
         val artistTitle =
             title
+                .replace(QUOTED_SHOW_AFTER_ANNOTATION, " ")
                 .replace(GENRE_PARENTHETICAL, " ")
                 .replace(TITLE_NOTE, " ")
                 .replace(WHITESPACE, " ")
@@ -336,6 +337,9 @@ class SchokoladenOverviewPageScraper {
 
         /** A quoted album after `w/`: `Angela Aux w/ "Das Nichts macht Kopien von sich selbst"` names a work, not an act. */
         private val QUOTED_WORK = Regex("""\s+w/\s*["„“][^"„“”]*["“”]""", RegexOption.IGNORE_CASE)
+
+        /** A quoted show name right after an act's annotation: `ASTORE (P38 GANG, IT) "Non è un live rap"` bills ASTORE (event 13880). */
+        private val QUOTED_SHOW_AFTER_ANNOTATION = Regex("""(?<=[)\]])\s*["„“][^"„“”]+["“”]""")
 
         /** A quoted album's tour after the act: `GLUT 'BURN' Tour 2027 + special guest` bills GLUT (event 12195). */
         private val QUOTED_TOUR = Regex("""\s+['‘’"„“][^'‘’"„“”]+['‘’"“”]\s+tour(?:\s+\d{4})?\b""", RegexOption.IGNORE_CASE)

@@ -58,7 +58,7 @@ val AMT_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.START_TIME,
             "most nights print no time, and a few state `Start:` or a running order in the event page prose",
-            verified = "2026-11-10"
+            verified = "2026-11-13"
         ),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the month and event pages print a date but no clock time", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.GENRE, "the event pages name no style", verified = "2026-10-13"),

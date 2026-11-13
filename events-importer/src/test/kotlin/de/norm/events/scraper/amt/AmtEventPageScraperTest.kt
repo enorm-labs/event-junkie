@@ -62,7 +62,12 @@ class AmtEventPageScraperTest {
         "'Start: 11:30 pm', 23:30",
         "'Start: 23:00', 23:00",
         "'23:00–01:00 — Night Owl', 23:00",
-        "'0:00-2:00 — After Midnight', 00:00"
+        "'0:00-2:00 — After Midnight', 00:00",
+        // 13901 and 13902: the Loone nights print a bare hour with a meridiem, one led by a zero-width joiner.
+        "'7PM mchvlsm', 19:00",
+        "'\u200D5PM Florian Meindl', 17:00",
+        "'12AM Late Shift', 00:00",
+        "'6:30 p.m. Opening Set', 18:30"
     )
     fun `the prose start reads both clocks and a slot over midnight`(
         paragraph: String,
@@ -74,6 +79,7 @@ class AmtEventPageScraperTest {
     @Test
     fun `a slot inside a sentence and a bare-hour slot are no start`() {
         enrichProse("Doors close for the arrival 22:00–23:00 window.", "19 - 20 Anna Amato").startTime.shouldBeNull()
+        enrichProse("Join us from 6pm for the opening.", "PM Ly Sas").startTime.shouldBeNull()
     }
 
     @Test
