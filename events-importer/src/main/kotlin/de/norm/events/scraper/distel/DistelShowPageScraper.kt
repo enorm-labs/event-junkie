@@ -15,7 +15,7 @@ data class DistelShow(
 /**
  * Pure HTML parser for a DISTEL show page (`/spielplan/event/<slug>/`). One page serves every
  * performance of the show, so it is read once per show. The text is the `ce_text` paragraphs and
- * the running time under them; the photo is the header image. A guest show can name its cast in a
+ * the running time under them, a blank line between each (event 5984); the photo is the header image. A guest show can name its cast in a
  * paragraph that opens with a bold `LINE UP` (#3673); the ensemble's shows name theirs only in prose.
  */
 class DistelShowPageScraper {
@@ -28,7 +28,7 @@ class DistelShowPageScraper {
                 ?.filter { it.isNotEmpty() }
                 .orEmpty()
         return DistelShow(
-            description = paragraphs.joinToString("\n").takeIf { it.isNotBlank() },
+            description = paragraphs.joinToString("\n\n").takeIf { it.isNotBlank() },
             imageUrl = reader?.selectFirst(".head img[src]")?.absUrl("src")?.takeIf { it.isNotEmpty() },
             lineup = reader?.select(".text .ce_text p")?.firstNotNullOfOrNull(::lineupOf).orEmpty()
         )

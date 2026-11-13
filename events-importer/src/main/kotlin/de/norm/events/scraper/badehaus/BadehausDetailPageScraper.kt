@@ -104,8 +104,8 @@ class BadehausDetailPageScraper {
     /**
      * Joins the description paragraphs, dropping the meta paragraph (the "Einlass"/"Beginn" times
      * and room) and social/blank lines. The meta paragraph goes whole, before its `<br>` lines are
-     * split. Every other `<br>` stays a line break, so `Support: ZANDER HAWLEY` does not swallow the
-     * blurb's first sentence (#4776).
+     * split. A blank line sets the paragraphs apart, and every other `<br>` stays a line break, so
+     * `Support: ZANDER HAWLEY` does not swallow the blurb's first sentence (#4776, #4778).
      */
     private fun parseDescription(event: Element): String? =
         event
@@ -114,7 +114,7 @@ class BadehausDetailPageScraper {
             .filter { paragraph -> paragraph.text().let { it.isNotBlank() && !DOORS_LINE.containsMatchIn(it) && !START_LINE.containsMatchIn(it) } }
             .mapNotNull { it.descriptionText() }
             .distinct()
-            .joinToString("\n")
+            .joinToString("\n\n")
             .takeIf { it.isNotBlank() }
 
     /**

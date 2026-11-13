@@ -86,8 +86,8 @@ class BrotfabrikApiScraperTest {
         glanz.priceNote shouldBe "€12 – €18"
         glanz.free shouldBe false
         glanz.artists.shouldBeEmpty()
-        // The date line is a line of its own (#4778).
-        glanz.description!!.startsWith("22.10.26 | 20 Uhr\nEin Vorsprechen") shouldBe true
+        // The date line is a paragraph of its own (#4778).
+        glanz.description!!.startsWith("22.10.26 | 20 Uhr\n\nEin Vorsprechen") shouldBe true
     }
 
     @Test

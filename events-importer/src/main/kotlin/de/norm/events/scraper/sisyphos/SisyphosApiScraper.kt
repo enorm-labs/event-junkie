@@ -4,8 +4,8 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.descriptionTextOf
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanMonthAbbreviation
@@ -13,7 +13,6 @@ import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
 import java.math.BigDecimal
 import java.time.DateTimeException
@@ -144,18 +143,7 @@ class SisyphosApiScraper {
 }
 
 /**
- * Flattens a Sisyphos HTML blurb to trimmed plain text, one line per block or `<br>`. The shop
- * breaks lines with `<br>`, the calendar with paragraphs and headings.
+ * A Sisyphos HTML blurb as description text ([descriptionTextOf]). The shop breaks lines with `<br>` and paragraphs with
+ * `<br><br>` (event 5426), the calendar with paragraphs and headings.
  */
-internal fun sisyphosHtmlToText(html: String?): String? =
-    html
-        ?.replace(LINE_BREAK, "$0\n")
-        ?.let { Jsoup.parseBodyFragment(it).wholeText() }
-        ?.replace('\u00A0', ' ')
-        ?.lines()
-        ?.map { it.trim() }
-        ?.filter { it.isNotEmpty() }
-        ?.joinToString("\n")
-        .blankToNull()
-
-private val LINE_BREAK = Regex("""(?i)</(?:p|h[1-6]|li|div)>|<br\s*/?>""")
+internal fun sisyphosHtmlToText(html: String?): String? = html?.let(::descriptionTextOf)?.replace('\u00A0', ' ')

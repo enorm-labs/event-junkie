@@ -54,6 +54,13 @@ class SisyphosApiScraperTest {
         night.artists.shouldBeEmpty()
     }
 
+    // Event 5426: the shop sets its paragraphs apart with `<br><br>`, and the page shows them with a gap.
+    @Test
+    fun `a double br is a paragraph break, and a single one a line break`() {
+        sisyphosHtmlToText("<p>Sisyphos lädt ein! <br/><br/>Zwei Tage&nbsp;Sauna.<br>Samstag 14-8</p><p>Sonntag 12-0</p>") shouldBe
+            "Sisyphos lädt ein!\n\nZwei Tage Sauna.\nSamstag 14-8\n\nSonntag 12-0"
+    }
+
     @Test
     fun `reads a dotted date and marks a night whose variants are all unavailable as sold out`() {
         val night =

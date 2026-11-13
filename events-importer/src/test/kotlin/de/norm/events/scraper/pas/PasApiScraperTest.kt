@@ -95,8 +95,8 @@ class PasApiScraperTest {
     fun `keeps the plugin's date and calendar-export blocks out of the description`() {
         val description = event("ernesto-rodrigues-eric-wong-guilherme-rodrigues-alexander-markvart").description.shouldNotBeNull()
 
-        // Each `<p>` and `<br>` line of the HTML is a line of its own (#4778).
-        description shouldStartWith "Sudden concert in PAS:\ntrio:\nErnesto Rodrigues"
+        // A `<p>` is a paragraph, set off by a blank line, and a `<br>` a line (#4778).
+        description shouldStartWith "Sudden concert in PAS:\n\ntrio:\nErnesto Rodrigues"
         description shouldNotContain "Google Calendar"
         description shouldNotContain "iCalendar"
     }

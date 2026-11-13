@@ -4,6 +4,7 @@ package de.norm.events.scraper
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import java.net.URI
 
@@ -176,36 +177,70 @@ fun Element.textLines(keepBlankLines: Boolean = false): List<String> {
 }
 
 /**
- * This element's text with the source's line structure kept: a block element and a `<br>` at any
- * depth each end a line. Lines are trimmed, blank ones dropped, and joined with `\n`; `null` when none is left.
+ * This element's text with the source's paragraphs and lines kept. A paragraph ends with a blank line, `\n\n`:
+ * a [PARAGRAPH_BLOCKS] element, or a `<br>` right after another one. A line ends with `\n`: a [LINE_BLOCKS]
+ * element, or a single `<br>` at any depth. A run of breaks counts as its strongest one. Lines are trimmed, and
+ * the text opens and ends with no break; `null` when nothing is left.
  *
- * The shape of a description, which the event page renders line by line. [textLines] breaks only at
- * a direct-child `<br>`, and [paragraphText] not inside a paragraph (#4778).
+ * The shape of a description, which the event page renders line by line, a blank line as a gap. A `div` ends
+ * only a line, because page builders wrap single lines in one. [textLines] breaks only at a direct-child `<br>`,
+ * and [paragraphText] not inside a paragraph (#4778).
  */
 fun Element.descriptionText(): String? {
     val copy = clone()
-    copy.select("br").forEach { it.replaceWith(TextNode(LINE_MARK)) }
-    copy.select(":scope :is($DESCRIPTION_BLOCKS)").forEach { block ->
-        block.before(TextNode(LINE_MARK))
-        block.after(TextNode(LINE_MARK))
+    val breaks = copy.select("br").associateWith { br -> if (br.previousSibling()?.let(::skipBlankBefore).isBreak()) PARAGRAPH_MARK else LINE_MARK }
+    breaks.forEach { (br, mark) -> br.replaceWith(TextNode(mark)) }
+    copy.select(":scope :is($PARAGRAPH_BLOCKS)").forEach { it.surroundWith(PARAGRAPH_MARK) }
+    copy.select(":scope :is($LINE_BLOCKS)").forEach { it.surroundWith(LINE_MARK) }
+    return joinAtBreaks(copy.text())
+}
+
+/** [text]'s lines between the break marks, trimmed, each run of marks written as its strongest break. */
+private fun joinAtBreaks(text: String): String? {
+    val out = StringBuilder()
+    var gap: String? = null
+    var last = 0
+    (BREAK_RUN.findAll(text) + sequenceOf(null)).forEach { run ->
+        val line = text.substring(last, run?.range?.first ?: text.length).trim()
+        if (line.isNotEmpty()) {
+            if (out.isNotEmpty()) out.append(gap)
+            out.append(line)
+            gap = null
+        }
+        if (run != null) {
+            gap = if (gap == PARAGRAPH_BREAK || PARAGRAPH_MARK in run.value) PARAGRAPH_BREAK else "\n"
+            last = run.range.last + 1
+        }
     }
-    return copy
-        .text()
-        .split(LINE_MARK)
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
-        .joinToString("\n")
-        .ifEmpty { null }
+    return out.toString().ifEmpty { null }
+}
+
+private fun Node?.isBreak(): Boolean = this is Element && tagName().equals("br", ignoreCase = true)
+
+/** The node before [node] that is not blank text, so a `<br> <br>` counts as two breaks in a row. */
+private fun skipBlankBefore(node: Node): Node? = if (node is TextNode && node.isBlank) node.previousSibling()?.let(::skipBlankBefore) else node
+
+private fun Element.surroundWith(mark: String) {
+    before(TextNode(mark))
+    after(TextNode(mark))
 }
 
 /** [descriptionText] of an HTML fragment, such as a WordPress `content.rendered` field. */
 fun descriptionTextOf(html: String): String? = Jsoup.parseBodyFragment(html).body().descriptionText()
 
-/** The elements that end a line in [descriptionText]. */
-private const val DESCRIPTION_BLOCKS = "p, div, li, h1, h2, h3, h4, h5, h6, blockquote, tr, section, article, ul, ol, table"
+/** The elements that end a paragraph in [descriptionText]. */
+private const val PARAGRAPH_BLOCKS = "p, h1, h2, h3, h4, h5, h6, blockquote, section, article, ul, ol, table"
 
-/** A private-use character, so the whitespace collapsing in `text()` keeps it. */
+/** The elements that end a line in [descriptionText]. */
+private const val LINE_BLOCKS = "div, li, tr"
+
+/** Private-use characters, so the whitespace collapsing in `text()` keeps them. */
 private const val LINE_MARK = "\uE000"
+private const val PARAGRAPH_MARK = "\uE001"
+private const val PARAGRAPH_BREAK = "\n\n"
+
+/** A run of break marks, with the blank text between them. */
+private val BREAK_RUN = Regex("""[\s\u00A0]*[\uE000\uE001][\s\u00A0\uE000\uE001]*""")
 
 /**
  * These elements' texts, trimmed, blank ones dropped, one per line; `null` when none is left.
