@@ -1,4 +1,4 @@
-import { expect, type Page, type Route, test } from '@playwright/test'
+import { expect, type Page, type Route, test } from './test'
 
 /**
  * A page must not move while it loads. The fetch is held back so the loading state paints first,

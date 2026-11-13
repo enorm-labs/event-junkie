@@ -1,4 +1,4 @@
-import { expect, type Page, type Route, test } from '@playwright/test'
+import { expect, type Page, type Route, test } from './test'
 
 /**
  * Coming back to a list with the browser's back gesture has to land where the visitor left it,

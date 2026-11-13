@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from './test'
 
 /**
  * Waits until the map has drawn `drawn` or said it cannot draw, and skips the test in a browser without WebGL. The map

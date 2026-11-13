@@ -428,6 +428,10 @@ tests:
       - matchRegex:
           path: spec.headers.contentSecurityPolicyReportOnly
           pattern: "^default-src 'self';"
+      # Trusted Types (#4955): no raw string at a DOM sink, and three named policies.
+      - matchRegex:
+          path: spec.headers.contentSecurityPolicyReportOnly
+          pattern: "require-trusted-types-for 'script'; trusted-types vue json-ld default;"
 
   # The other half of the switch: `serving.enabled` swaps where images come from, and a policy still
   # naming `https:` would keep permitting the venues' servers — the disclosure ADR-019 removes.

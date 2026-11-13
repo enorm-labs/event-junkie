@@ -364,6 +364,10 @@ ingress:
         # and contacting no third party.
         - "font-src 'self'"
         - "connect-src 'self'"
+        # A raw string at a DOM sink (`innerHTML` and the like) is refused (#4955). Three policies may exist: Vue's, and the two in
+        # `events-frontend/src/lib/trustedTypes.ts`. The e2e suite fails on any violation, in place of a report endpoint.
+        - "require-trusted-types-for 'script'"
+        - "trusted-types vue json-ld default"
   # ingress.rateLimit renders two Traefik Middlewares — one type per object, or Traefik drops every
   # router naming them (#268). Template and README have the numbers' derivation.
   rateLimit:

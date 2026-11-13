@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../test'
 
 /**
  * The bundle, served by nginx, through Traefik, from the image the chart runs (#1699). Every other

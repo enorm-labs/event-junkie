@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../test'
 
 /**
  * The response headers Traefik's middlewares add (#846, #286). They exist only in a deployment: the
@@ -25,6 +25,9 @@ test('the enforcing CSP is served, and not the report-only one', async ({ page }
   // The inline theme script is allowed by hash, never by `unsafe-inline` (#846).
   expect(policy).toMatch(/script-src 'self' 'sha256-[A-Za-z0-9+/=]+'/)
   expect(policy).not.toContain('unsafe-inline')
+  // No raw string at a DOM sink, and no policy but the three the site makes (#4955).
+  expect(policy).toContain("require-trusted-types-for 'script'")
+  expect(policy).toContain('trusted-types vue json-ld default')
 })
 
 test('the other security headers are on the response', async ({ page }) => {

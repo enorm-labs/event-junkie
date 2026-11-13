@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './test'
 
 /**
  * The legal pages have to be reachable: German practice expects the imprint within a couple of

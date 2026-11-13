@@ -364,6 +364,9 @@ response header has no Ingress API vocabulary, which is why this is Traefik-spec
 - **The directives have a second copy**, in `events-frontend/scripts/csp.ts`, which applies the same policy to `npm run preview` — the server the Playwright
   suite runs against. `scripts/csp-parity.sh` fails when the two drift, and when the `sha256-` in `script-src` stops matching the inline theme script in
   `events-frontend/index.html`. That script runs before first paint, so a nonce cannot work here: this header is one static string on every response.
+- **Trusted Types are enforced** (`require-trusted-types-for 'script'; trusted-types vue json-ld default`, #4955). A raw string at a DOM sink such as
+  `innerHTML` is refused. Three policies may exist: Vue's, and the two in `events-frontend/src/lib/trustedTypes.ts`, which admit only JSON and the map
+  worker's URL. There is no report endpoint: `events-frontend/e2e/test.ts` fails a Playwright test on any violation.
 
 The Ingress annotation that names these is a **comma-separated string with no schema behind it**, so a stray comma or an empty element silently drops _every_
 middleware on the router. It is built as a list in one place, and `tests/ingress_test.yaml` pins the whole string rather than checking that each name appears

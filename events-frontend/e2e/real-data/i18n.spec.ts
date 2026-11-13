@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../test'
 
 /**
  * The locale contract behind a real ingress (ADR-013). `e2e/i18n.spec.ts` covers the same rules

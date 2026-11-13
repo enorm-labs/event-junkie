@@ -1,4 +1,4 @@
-import { expect, type Page, type Route, test } from '@playwright/test'
+import { expect, type Page, type Route, test } from './test'
 import { displaySetting, sectionLink } from './header-nav'
 
 /**

@@ -1,4 +1,4 @@
-import { expect, type Route, test } from '@playwright/test'
+import { expect, type Route, test } from './test'
 import { venueFilter } from './filter-bar'
 
 /**

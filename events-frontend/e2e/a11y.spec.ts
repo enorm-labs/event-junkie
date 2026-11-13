@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, type Page, test } from '@playwright/test'
+import { expect, type Page, test } from './test'
 import { json, mockBff } from './bff-mocks'
 import { displaySetting } from './header-nav'
 import { skipWithoutWebGL } from './webgl'

@@ -1,6 +1,7 @@
 import { type MaybeRefOrGetter, onScopeDispose, toValue, watchEffect } from 'vue'
 
 import { INJECTED_ATTRIBUTE, type JsonLd, jsonLdText } from '@/lib/structuredData'
+import { jsonLdScript } from '@/lib/trustedTypes'
 
 /**
  * Publishes JSON-LD documents into a `<script type="application/ld+json">` for the current view.
@@ -33,7 +34,7 @@ export function useStructuredData(documents: MaybeRefOrGetter<JsonLd | JsonLd[] 
       Object.assign(document.createElement('script'), { type: 'application/ld+json' }),
     )
     // `textContent` keeps the browser from parsing scraped third-party text as markup.
-    script.textContent = jsonLdText(list)
+    script.textContent = jsonLdScript(jsonLdText(list))
   })
 
   onScopeDispose(remove)

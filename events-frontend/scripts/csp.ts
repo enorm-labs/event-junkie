@@ -31,6 +31,10 @@ export const CSP_DIRECTIVES = [
   // `@font-face` rules over `/assets/*.woff2`, one same-origin `fetch` to `/api`.
   "font-src 'self'",
   "connect-src 'self'",
+  // A raw string at a DOM sink is refused (#4955). Three policies may exist: Vue's, and the two in
+  // `src/lib/trustedTypes.ts`. `e2e/test.ts` fails a test on any violation, in place of a report endpoint.
+  "require-trusted-types-for 'script'",
+  'trusted-types vue json-ld default',
 ] as const
 
 /**

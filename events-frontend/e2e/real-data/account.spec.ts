@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 
-import { type BrowserContext, expect, test } from '@playwright/test'
+import { type BrowserContext, expect, test } from '../test'
 
 /**
  * The seeded accounts of `fixtures/accounts.sql` (#4102), signed in through the real BFF, nginx and

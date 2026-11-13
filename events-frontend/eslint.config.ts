@@ -48,6 +48,28 @@ export default defineConfigWithVueTs(
   },
 
   {
+    // Every test runs under the CSP guard in `e2e/test.ts` (#4955); a spec that took `test` from Playwright
+    // directly would pass whatever the page violates.
+    name: 'app/e2e-csp-guard',
+    files: ['e2e/**/*.ts'],
+    ignores: ['e2e/test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@playwright/test',
+              importNames: ['test'],
+              message: "Import `test` from './test' (or '../test'): it fails a test on any CSP violation.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
     // `e2e/real-data/` is the suite that talks to a deployment (#1699), and a request handler there
     // would put a mock back in front of the thing under test. A grep for `page.route` matched its own
     // documentation on the first run; this reads the syntax, and it runs on every pull request rather

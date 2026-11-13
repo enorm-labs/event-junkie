@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './test'
 import { sectionLink } from './header-nav'
 
 /**
@@ -130,7 +130,8 @@ const EVENT = {
   eventDate: '2026-06-12',
   startTime: '20:00',
   description: 'A night of something.',
-  imageUrl: 'https://example.test/poster.jpg',
+  // Same-origin, as the cluster serves it: the preview server's `img-src 'self'` blocks any other host.
+  imageUrl: '/images/poster.jpg',
   ticketUrl: 'https://tickets.test/buy',
   pricePresale: 38,
   priceCurrency: 'EUR',
@@ -223,7 +224,7 @@ test('an event page describes itself rather than the site', async ({ page }) => 
   const description = 'Fri, 12 Jun 2026 · Lido, Berlin — A night of something.'
   expect(await meta(page, 'meta[name="description"]')).toBe(description)
   expect(await meta(page, 'meta[property="og:description"]')).toBe(description)
-  expect(await meta(page, 'meta[property="og:image"]')).toBe('https://example.test/poster.jpg')
+  expect(await meta(page, 'meta[property="og:image"]')).toBe('https://event-junkie.de/images/poster.jpg')
 })
 
 test('the same event describes itself in German under /de', async ({ page }) => {

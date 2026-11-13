@@ -82,7 +82,8 @@ if not match:
     sys.exit("could not find `export const CSP_DIRECTIVES = [ ... ]`")
 # Whole-line comments only: a base64 hash can hold `//`.
 body = re.sub(r"^\s*//[^\n]*", "", match.group(1), flags=re.M)
-directives = re.findall(r'"([^"]*)"', body)
+# A directive with no quote in it is single-quoted, as the formatter writes it; one with a `'self'` is double-quoted.
+directives = [d or s for d, s in re.findall(r'"([^"]*)"|\'([^\']*)\'', body)]
 if not directives:
     sys.exit("CSP_DIRECTIVES parsed as empty")
 print("\n".join(directives))
