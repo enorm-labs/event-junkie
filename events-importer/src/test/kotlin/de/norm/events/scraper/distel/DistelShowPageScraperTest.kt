@@ -2,10 +2,12 @@ package de.norm.events.scraper.distel
 
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -20,6 +22,12 @@ class DistelShowPageScraperTest {
 
         show.description.shouldNotBeNull() shouldStartWith "Die kleinste GroKo aller Zeiten"
         show.description.shouldNotBeNull() shouldEndWith "inklusive 1 Pause"
+        // Event 5984: each paragraph is set off by a blank line, so the page shows a gap.
+        show.description
+            .shouldNotBeNull()
+            .split("\n\n")
+            .size shouldBeGreaterThan 1
+        show.description.shouldNotBeNull() shouldNotContain "\n\n\n"
         show.imageUrl shouldBe "https://distel-berlin.de/assets/images/1/2560-1080-3-programme-a8d62d51.jpg"
     }
 

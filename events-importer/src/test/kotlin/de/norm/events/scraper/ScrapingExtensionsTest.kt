@@ -374,7 +374,7 @@ class ScrapingExtensionsTest {
     @Nested
     inner class DescriptionText {
         @Test
-        fun `a paragraph, a br at any depth and a list item each end a line`() {
+        fun `a paragraph ends with a blank line, and a br at any depth and a list item each end a line`() {
             val content =
                 html(
                     """
@@ -387,17 +387,31 @@ class ScrapingExtensionsTest {
                 listOf(
                     "Support: Zander Hawley",
                     "Noah Gundersen ist ein Singer-Songwriter.",
+                    "",
                     "Line-up:",
                     "Act One",
                     "Act Two",
+                    "",
                     "Einlass 19:00",
                     "Beginn 20:00"
                 ).joinToString("\n")
         }
 
         @Test
-        fun `inline text around a block stays on its own lines, and blank lines go`() {
-            html("intro<div>block</div>tail<p> </p><br><br>end").descriptionText() shouldBe "intro\nblock\ntail\nend"
+        fun `inline text around a block stays on its own lines, and a run of breaks counts as its strongest`() {
+            html("intro<div>block</div>tail<p> </p><br><br>end").descriptionText() shouldBe "intro\nblock\ntail\n\nend"
+        }
+
+        // Event 5426: Sisyphos separates its paragraphs with `<br><br>`.
+        @Test
+        fun `two br in a row end a paragraph, and one ends a line`() {
+            html("<p>Erstens! <br/><br/>Zweitens.<br>Drittens.</p>").descriptionText() shouldBe "Erstens!\n\nZweitens.\nDrittens."
+        }
+
+        @Test
+        fun `a div of lines ends only lines, and a heading ends a paragraph`() {
+            html("<div>Einlass 19:00</div><div>Beginn 20:00</div><h3>Line-up</h3>Act One").descriptionText() shouldBe
+                "Einlass 19:00\nBeginn 20:00\n\nLine-up\n\nAct One"
         }
 
         @Test
@@ -407,7 +421,7 @@ class ScrapingExtensionsTest {
 
         @Test
         fun `a fragment is read the same way`() {
-            descriptionTextOf("<p>One</p><p>Two &amp; three</p>") shouldBe "One\nTwo & three"
+            descriptionTextOf("<p>One</p><p>Two &amp; three</p>") shouldBe "One\n\nTwo & three"
         }
     }
 

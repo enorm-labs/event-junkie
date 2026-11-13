@@ -21,20 +21,24 @@ class DescriptionTextPropertyTest {
         runTest {
             checkAll(HTML) { html ->
                 val body = Jsoup.parseBodyFragment(html).body()
-                body.descriptionText()?.replace('\n', ' ').orEmpty() shouldBe body.text()
+                body.descriptionText()?.replace(BREAKS, " ").orEmpty() shouldBe body.text()
             }
         }
 
     @Test
-    fun `no line is blank or carries surrounding whitespace`() =
+    fun `no line carries surrounding whitespace, and a blank line stands alone between two lines`() =
         runTest {
             checkAll(HTML) { html ->
-                Jsoup
-                    .parseBodyFragment(html)
-                    .body()
-                    .descriptionText()
-                    ?.lines()
-                    ?.forEach { line -> line shouldBe line.trim().ifEmpty { "<blank>" } }
+                val lines =
+                    Jsoup
+                        .parseBodyFragment(html)
+                        .body()
+                        .descriptionText()
+                        ?.lines()
+                        .orEmpty()
+                lines.forEach { line -> line shouldBe line.trim() }
+                (lines.isEmpty() || (lines.first().isNotEmpty() && lines.last().isNotEmpty())) shouldBe true
+                lines.zipWithNext().none { (a, b) -> a.isEmpty() && b.isEmpty() } shouldBe true
             }
         }
 
@@ -46,13 +50,17 @@ class DescriptionTextPropertyTest {
             Arb.choice(
                 WORD,
                 WORD.map { " $it " },
-                Arb.element("<br>", "<br><br>", " ", "<p> </p>"),
+                Arb.element("<br>", "<br><br>", "<br> <br>", " ", "<p> </p>"),
                 WORD.map { "<strong>$it</strong>" },
                 WORD.map { "<span>$it<br>$it</span>" },
                 WORD.map { "<p>$it</p>" },
                 WORD.map { "<div>$it <em>$it</em></div>" },
-                WORD.map { "<ul><li>$it</li><li>$it</li></ul>" }
+                WORD.map { "<ul><li>$it</li><li>$it</li></ul>" },
+                WORD.map { "<h2>$it</h2>" },
+                WORD.map { "<blockquote>$it</blockquote>" }
             )
+
+        val BREAKS = Regex("""\n+""")
 
         val HTML: Arb<String> = Arb.list(PIECE, 0..12).map { it.joinToString("") }
     }
