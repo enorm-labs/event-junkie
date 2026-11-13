@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component
  * — doors/start, description, ticket URL and media presenters.
  *
  * @see ColumbiaTheaterOverviewPageScraper for overview parsing (discovery, date, fallback).
- * @see ColumbiaTheaterDetailPageScraper for detail parsing (times, blurb, tickets, presenters).
+ * @see ColumbiaTheaterDetailPageScraper for detail parsing (times, blurb, price, tickets, presenters).
  * @see <a href="https://columbia-theater.de/">Columbia Theater Berlin</a>
  */
 @Component
@@ -36,7 +36,11 @@ class ColumbiaTheaterWebsiteImporter(
 val COLUMBIA_THEATER_LIMITATIONS =
     VenueLimitations(
         EventSource.COLUMBIA_THEATER,
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets are sold through an Eventim link", verified = "2026-09-30"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "most pages print no figure and sell through an Eventim link; a few print one price line in the blurb",
+            verified = "2026-11-13"
+        ),
         AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre or category; style appears only in the description", verified = "2026-10-13"),
         AcceptedLimitation(
             LimitedAspect.PROMOTERS,
