@@ -23,12 +23,13 @@ import org.jsoup.nodes.Document
  * One `.event-content` block: `h1.header-title`, optional `.header-tour-text` tour name,
  * `.header-support` billing rows, `.header-date` (`Wd. DD.MM.[YY] um HH:mm / Einlass HH:mm`),
  * poster (`img.event-image-img`), `.header-promoters` "präsentiert von …", the ticket-shop
- * button, the `.event-text` blurb, and for a cancelled/relocated/rescheduled show an
+ * button, the `.event-text` blurb (whose price line, on the few pages that print one, is read by
+ * [parseColumbiaTheaterBlurbPrices]), and for a cancelled/relocated/rescheduled show an
  * `.event-status` notice plus the overview's `data-c` / `data-m` / `data-p` flags. A sold-out
  * show replaces the ticket button with a `.ticket-status` notice ("Das Event ist ausverkauft!"). No JSON-LD;
  * the WordPress REST API is disabled site-wide.
  *
- * Source for what the overview lacks — doors/start, blurb, ticket URL, presenters — and repeats
+ * Source for what the overview lacks — doors/start, blurb, price, ticket URL, presenters — and repeats
  * the shared fields, so a successful fetch is a complete event; the overview fills gaps (or
  * stands in entirely when the fetch fails) via
  * [ColumbiaTheaterWebsiteImporter.fillGapsFromOverview]. The date comes from the permalink slug
@@ -68,11 +69,13 @@ class ColumbiaTheaterDetailPageScraper {
         val dateLine = content.textAt(".header-date:not(.header-date-prev)").orEmpty()
         val eventType = inferConcertVenueType(title)
         val statusNotice = content.textAt("div.event-status")
+        val description = content.selectFirst("div.event-text")?.descriptionText()
+        val prices = parseColumbiaTheaterBlurbPrices(description)
 
         return ScrapedEvent(
             title = title,
             subtitle = columbiaTheaterSubtitle(content.textAt(".header-tour-text"), supportRows),
-            description = content.selectFirst("div.event-text")?.descriptionText(),
+            description = description,
             eventType = eventType,
             eventDate = parseBasicIsoDatePrefix(slug) ?: UNRESOLVED_EVENT_DATE,
             doorsTime = labelledClock(dateLine, DOORS_LABELS),
@@ -81,6 +84,9 @@ class ColumbiaTheaterDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.COLUMBIA_THEATER.sourceIdPrefix}$slug",
             ticketUrl = content.hrefAt(".event-tickets .ticket-links a")?.let(::firstTicketUrl),
+            pricePresale = prices.presale,
+            priceBoxOffice = prices.boxOffice,
+            priceNote = prices.note,
             // Only a notice that says sold out counts; another ticket status is not one.
             soldOut = hasSoldOutMarker(content.textAt(".event-tickets .ticket-status")) || cleanedTitle.soldOut,
             status = parseColumbiaTheaterStatus(content, statusNotice),

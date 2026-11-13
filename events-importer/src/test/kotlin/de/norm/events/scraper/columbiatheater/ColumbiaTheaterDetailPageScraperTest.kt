@@ -13,6 +13,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -144,6 +145,45 @@ class ColumbiaTheaterDetailPageScraperTest {
         // This page's blurb is empty, so no description is stored.
         kmfdm.description.shouldBeNull()
         kmfdm.subtitle.shouldBeNull()
+    }
+
+    private fun scrapeBlurb(vararg paragraphs: String): ScrapedEvent {
+        val url = "https://columbia-theater.de/event/20261211-dillon/"
+        val blurb = paragraphs.joinToString("") { "<p>$it</p>" }
+        val html = """<div class="event-content"><h1 class="header-title">Dillon</h1><div class="event-text text">$blurb</div></div>"""
+        return scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+    }
+
+    @Test
+    fun `reads the price line a blurb prints, and keeps its fee tail as the note`() {
+        val dillon =
+            scrapeBlurb(
+                "11.12.2026 Berlin – Columbia Theater",
+                "Der Vorverkauf beginnt am Freitag, 31.07.2026 ab 11:00 Uhr",
+                "Ticketpreis 36,- Euro zzgl. Gebühren",
+                "Tickets erhältlich auf eventim.de"
+            )
+        dillon.pricePresale shouldBe BigDecimal("36")
+        dillon.priceBoxOffice.shouldBeNull()
+        dillon.priceNote shouldBe "Ticketpreis 36,- Euro zzgl. Gebühren"
+
+        val verivery = scrapeBlurb("Doors: 18:30", "Start: 19:30", "GA Ticket: € 45,00 plus sales fees")
+        verivery.pricePresale shouldBe BigDecimal("45.00")
+        verivery.priceBoxOffice.shouldBeNull()
+        verivery.priceNote shouldBe "GA Ticket: € 45,00 plus sales fees"
+
+        val nieUndNimmer = scrapeBlurb("Ab dem 26. Januar 2026 heißt es: Komm vorbei", "Abendkasse: 40,00 €")
+        nieUndNimmer.pricePresale.shouldBeNull()
+        nieUndNimmer.priceBoxOffice shouldBe BigDecimal("40.00")
+        nieUndNimmer.priceNote.shouldBeNull()
+    }
+
+    @Test
+    fun `stores no price for a blurb without a price line`() {
+        val soulfly = scrape("columbiatheater-detail-concert.html", "20260803-soulfly").shouldNotBeNull()
+        soulfly.pricePresale.shouldBeNull()
+        soulfly.priceBoxOffice.shouldBeNull()
+        soulfly.priceNote.shouldBeNull()
     }
 
     @Test
