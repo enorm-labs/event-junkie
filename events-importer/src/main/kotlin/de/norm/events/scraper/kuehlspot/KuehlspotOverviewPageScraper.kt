@@ -84,7 +84,7 @@ class KuehlspotOverviewPageScraper {
         val promoter = lines.firstNotNullOfOrNull { PROMOTER.find(it)?.groupValues?.get(1) }
         val description =
             lines
-                .filterNot { musician(it) != null || FEATURING.matches(it) || PROMOTER.containsMatchIn(it) || it.endsWith(':') }
+                .filterNot { musician(it) != null || FEATURING.matches(it) || PROMOTER.containsMatchIn(it) || LINK_POINTER.matches(it) || it.endsWith(':') }
                 .joinToString("\n")
                 .blankToNull()
         return ScrapedEvent(
@@ -176,6 +176,12 @@ class KuehlspotOverviewPageScraper {
 
         /** `Featuring artist Rachel D Clarke & artist Christoph Kühl`: the acts of a night with no instrument list. */
         val FEATURING = Regex("""^featuring\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+        /**
+         * `Further information >> here <<` (event 13818): the words of a link whose address the stored text loses, so they point at nothing.
+         */
+        val LINK_POINTER =
+            Regex("""^(?:(?:further|more)\s+info(?:rmation)?|weitere\s+info(?:rmationen|s)?)[^\p{L}]*(?:here|hier)[^\p{L}]*$""", RegexOption.IGNORE_CASE)
         val FEATURED_SEPARATOR = Regex("""\s*(?:&|,|\band\b)\s*""")
         val ARTIST_WORD = Regex("""^artist\s+""", RegexOption.IGNORE_CASE)
 
