@@ -1,5 +1,9 @@
 package de.norm.events.scraper.kuehlspot
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
@@ -13,6 +17,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -147,7 +152,9 @@ class KuehlspotOverviewPageScraperTest {
     // Events 13821 and 13822: the page nests the second night's container inside the first one's.
     @Test
     fun `a night nested in another keeps its own text, and a featuring line bills its acts`() {
-        val nights = scraper.scrape(Jsoup.parse(nestedNights, baseUrl), baseUrl)
+        val (nights, logs) = withScraperLogs { scraper.scrape(Jsoup.parse(nestedNights, baseUrl), baseUrl) }
+
+        logs.filter { it.level == Level.WARN }.shouldBeEmpty()
 
         nights.map { it.title } shouldContainExactly listOf("BERLIN JAZZ COMPOSERS ORCHESTRA", "DIE COOLEN 20 ER")
         val (orchestra, show) = nights
@@ -156,6 +163,34 @@ class KuehlspotOverviewPageScraperTest {
         orchestra.artists.map { it.name } shouldContainExactly listOf("BERLIN JAZZ COMPOSERS ORCHESTRA")
         show.artists.map { it.name } shouldContainExactly listOf("Rachel D Clarke", "Christoph Kühl")
         show.description shouldBe "Includes live music, storytelling, live collage, spoken word, and dance"
+    }
+
+    // #4932: the outer container holds two nights and no heading of its own.
+    @Test
+    fun `a wrapper holding only nested nights gives no event of its own and logs no warning`() {
+        val (nights, logs) = withScraperLogs { scraper.scrape(Jsoup.parse(wrapperOfNights, baseUrl), baseUrl) }
+
+        nights.map { it.title } shouldContainExactly listOf("KAFFEE UND KUCHEN", "THEBOWIESTORIES")
+        logs.filter { it.level == Level.WARN }.shouldBeEmpty()
+        logs.map { it.formattedMessage } shouldContainExactly listOf("Kühlspot block holds only nested nights, skipping")
+    }
+
+    @Test
+    fun `an empty container is not a night`() {
+        val page =
+            """
+            <div id="events">
+              <div class="e-con e-child"></div>
+              <div class="e-con e-child">
+                <h2 class="elementor-heading-title">Sunday, 15 November 2026</h2>
+                <h2 class="elementor-heading-title">KAFFEE UND KUCHEN</h2>
+              </div>
+            </div>
+            """.trimIndent()
+        val (nights, logs) = withScraperLogs { scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl) }
+
+        nights.map { it.title } shouldContainExactly listOf("KAFFEE UND KUCHEN")
+        logs.filter { it.level == Level.WARN }.shouldBeEmpty()
     }
 
     @Test
@@ -192,6 +227,38 @@ class KuehlspotOverviewPageScraperTest {
           </div>
         </div>
         """.trimIndent()
+
+    private val wrapperOfNights =
+        """
+        <div id="events">
+          <div class="e-con e-child">
+            <div class="e-con e-child">
+              <h2 class="elementor-heading-title">Sunday, 15 November 2026</h2>
+              <h2 class="elementor-heading-title">KAFFEE UND KUCHEN</h2>
+            </div>
+            <div class="e-con e-child">
+              <h2 class="elementor-heading-title">Monday, 16 November 2026</h2>
+              <h2 class="elementor-heading-title">THEBOWIESTORIES</h2>
+            </div>
+          </div>
+        </div>
+        """.trimIndent()
+
+    /** What the scraper's own logger writes during [block], from DEBUG up. */
+    private fun <T> withScraperLogs(block: () -> T): Pair<T, List<ILoggingEvent>> {
+        val logger = LoggerFactory.getLogger(KuehlspotOverviewPageScraper::class.java) as Logger
+        val level = logger.level
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.level = Level.DEBUG
+        logger.addAppender(appender)
+        return try {
+            block() to appender.list.filter { it.level != Level.INFO }
+        } finally {
+            logger.detachAppender(appender)
+            logger.level = level
+            appender.stop()
+        }
+    }
 
     /** The shape of the 14 November 2026 page: a matinée with a bare clock, then an evening show on the same date. */
     private val twoNightsOnOneDate =

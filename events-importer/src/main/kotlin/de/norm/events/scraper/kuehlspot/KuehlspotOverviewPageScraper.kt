@@ -29,7 +29,8 @@ import java.util.Locale
  * Pure parser for the events section of Kühlspot's one-page Elementor site. Each night is a child
  * container of `#events`: an `h2` date (`Thursday, 8 October 2026 (doors: 19:30 | start: 20:00)`),
  * an `h2` title, and a text block that lists the musicians as `Name – instrument`, or names the acts in a
- * `Featuring artist A & artist B` line. A night's container can hold the next night's container. A block dated
+ * `Featuring artist A & artist B` line. A night's container can hold the next night's container, and a wrapper
+ * container can hold only nested nights and no heading of its own, which is skipped. A block dated
  * with a range (`20 – 25 October 2026`) announces a series whose nights follow on their own, so
  * it is skipped. The intro states the house doors, start and admission, which a night's heading
  * may override: a labelled `doors:`/`start:` clock, or a bare `(14:30)` that is the start. A
@@ -66,7 +67,11 @@ class KuehlspotOverviewPageScraper {
         house: HouseRules
     ): ScrapedEvent? {
         val headings = block.ownSelect("h2.elementor-heading-title").map { it.text().collapseWhitespace() }
-        val dateLine = headings.first()
+        val dateLine =
+            headings.firstOrNull() ?: run {
+                logger.debug { "Kühlspot block holds only nested nights, skipping" }
+                return null
+            }
         val date = parseDate(dateLine)
         val title = headings.getOrNull(1)
         if (date == null || title.isNullOrBlank()) {
