@@ -33,6 +33,11 @@ warning, so the floor moves when a dependency's does, as it did for `vue-i18n` (
 silently hides dependency updates**: `npm outdated` filters out versions whose `engines` your interpreter fails, which is how jsdom 30 stayed invisible. A
 quiet report means check `node --version` against `.nvmrc` first.
 
+**Browser support follows Baseline.** A Baseline Widely available feature is used without a fallback; the build targets `baseline-widely-available`,
+Vite's default, so `vite.config.ts` sets no `build.target`. A Newly available or limited feature is used only behind feature detection, and the page still
+works without it. Its fallback is about 20 lines at most and adds no dependency; otherwise it has none. No polyfills, and no `browserslist` file: nothing
+here reads one. `signalUnknownPasskey` in `lib/webauthn.ts` is the pattern. `events-admin` follows the same rule.
+
 Path-scoped rules carry the rest and load with the matching files: [vue.instructions.md](../.github/instructions/vue.instructions.md) (SFC structure,
 Tailwind, shadcn-vue, accessibility), [design.instructions.md](../.github/instructions/design.instructions.md) (tokens, type scale),
 [testing.instructions.md](../.github/instructions/testing.instructions.md) (Vitest, Playwright, the locale strategy),
