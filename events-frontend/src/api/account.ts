@@ -6,6 +6,7 @@ import {
   creationOptions,
   credentialJson,
   requestOptions,
+  signalUnknownPasskey,
   type CreationOptionsJson,
   type RequestOptionsJson,
 } from '@/lib/webauthn'
@@ -304,7 +305,8 @@ export async function deletePasskey(id: string): Promise<void> {
 
 /**
  * Signs in with a passkey. [mediation] `conditional` waits for the visitor to pick one in the address field's
- * autofill; [signal] ends that wait. A 401 means the passkey did not verify, or was deleted.
+ * autofill; [signal] ends that wait. A 404 means the site holds no such passkey, and the browser hears so; a 401 means it
+ * did not verify.
  */
 export async function signInWithPasskey(
   mediation?: CredentialMediationRequirement,
@@ -316,9 +318,15 @@ export async function signInWithPasskey(
     mediation,
     signal,
   })) as PublicKeyCredential
-  return unwrap(
-    api.POST('/api/auth/passkey/sign-in', { body: { credential: credentialJson(credential) } }),
-  )
+  try {
+    return await unwrap(
+      api.POST('/api/auth/passkey/sign-in', { body: { credential: credentialJson(credential) } }),
+    )
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404)
+      await signalUnknownPasskey(options.rpId, credential.id)
+    throw e
+  }
 }
 
 /** The newest 20 notifications under the header's bell (#4078), read or not. */

@@ -118,6 +118,27 @@ export function credentialJson(credential: PublicKeyCredential): Record<string, 
   }
 }
 
+type SignalApi = {
+  signalUnknownCredential?: (options: { rpId: string; credentialId: string }) => Promise<void>
+}
+
+/**
+ * Tells the password manager that the site holds no such passkey, so it stops offering it (#4949). Chrome only for now;
+ * elsewhere, and on any failure, nothing happens.
+ */
+export async function signalUnknownPasskey(
+  rpId: string | undefined,
+  credentialId: string,
+): Promise<void> {
+  const signal = (PublicKeyCredential as unknown as SignalApi).signalUnknownCredential
+  if (!rpId || typeof signal !== 'function') return
+  try {
+    await signal.call(PublicKeyCredential, { rpId, credentialId })
+  } catch {
+    // The sign-in already failed; a refused signal adds nothing the visitor can act on.
+  }
+}
+
 /** The visitor closed the browser's dialog, or another request took its place: nothing to report. */
 export function cancelled(e: unknown): boolean {
   return e instanceof DOMException && (e.name === 'NotAllowedError' || e.name === 'AbortError')

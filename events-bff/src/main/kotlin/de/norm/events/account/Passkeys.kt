@@ -40,8 +40,8 @@ private val logger = KotlinLogging.logger {}
  * required, because a passkey replaces the e-mail link and is then the only factor. Attestation is `none`: the site has
  * no use for the authenticator's make, and the AAGUID is zeroed before the row is stored.
  *
- * Verification is CPU only, so it runs on the caller's coroutine. Every refusal is one outcome to the caller, whatever
- * the cause, and the log carries no credential id.
+ * Verification is CPU only, so it runs on the caller's coroutine. A sign-in tells the caller one cause apart, a credential
+ * this site does not hold, so the browser can tell the password manager (#4949). The log carries no credential id.
  */
 @Component
 class Passkeys(
@@ -113,8 +113,8 @@ class Passkeys(
         return RequestOptions(challenge = base64(challenge(null)), rpId = rpId)
     }
 
-    /** The account the browser's answer to [requestOptions] signs in, or null. */
-    suspend fun signIn(credential: Map<String, Any?>): Account? =
+    /** The account the browser's answer to [requestOptions] signs in, or why it does not. */
+    suspend fun signIn(credential: Map<String, Any?>): PasskeySignInOutcome =
         try {
             val data = parsed(credential, manager::parseAuthenticationResponseJSON)
             val challenge = data.collectedClientData?.challenge?.value
@@ -122,23 +122,31 @@ class Passkeys(
             val handle = data.userHandle
             when {
                 challenge == null || !store.consumeChallenge(challenge, null, clock.instant()) -> {
-                    null
+                    PasskeySignInOutcome.Refused
                 }
 
-                row == null || (handle != null && !handle.contentEquals(row.userHandle)) -> {
-                    null
+                // Checked after the challenge, so only a real ceremony learns that a credential is gone.
+                row == null -> {
+                    logger.info { "Passkey sign-in refused: unknown credential" }
+                    PasskeySignInOutcome.Unknown
+                }
+
+                handle != null && !handle.contentEquals(row.userHandle) -> {
+                    PasskeySignInOutcome.Refused
                 }
 
                 else -> {
                     manager.verify(data, AuthenticationParameters(server(challenge), credentialRecord(row.passkey), null, true, true))
                     val authenticator = requireNotNull(data.authenticatorData)
-                    store.signedIn(row.id, authenticator.signCount, authenticator.isFlagBS, clock.instant())
+                    store
+                        .signedIn(row.id, authenticator.signCount, authenticator.isFlagBS, clock.instant())
+                        ?.let { PasskeySignInOutcome.SignedIn(it) } ?: PasskeySignInOutcome.Refused
                 }
             }
         } catch (e: WebAuthnException) {
             logger.info { "Passkey sign-in refused: ${e.javaClass.simpleName}" }
-            null
-        }.also { record(if (it == null) PasskeyOutcome.SIGN_IN_REFUSED else PasskeyOutcome.SIGNED_IN) }
+            PasskeySignInOutcome.Refused
+        }.also { record(if (it is PasskeySignInOutcome.SignedIn) PasskeyOutcome.SIGNED_IN else PasskeyOutcome.SIGN_IN_REFUSED) }
 
     private suspend fun challenge(account: Account?): ByteArray =
         bytes().also { store.issueChallenge(it, account?.id, clock.instant().plus(CHALLENGE_VALIDITY)) }
@@ -210,6 +218,19 @@ class Passkeys(
 
         private fun base64(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     }
+}
+
+/** What a passkey sign-in came to. */
+sealed interface PasskeySignInOutcome {
+    data class SignedIn(
+        val account: Account
+    ) : PasskeySignInOutcome
+
+    /** The credential has no row: the passkey or its account was deleted. A 404, so the browser can signal it. */
+    data object Unknown : PasskeySignInOutcome
+
+    /** Every other refusal. A 401. */
+    data object Refused : PasskeySignInOutcome
 }
 
 enum class RegisterOutcome(
