@@ -243,16 +243,17 @@ private const val PARAGRAPH_BREAK = "\n\n"
 private val BREAK_RUN = Regex("""[\s\u00A0]*[\uE000\uE001][\s\u00A0\uE000\uE001]*""")
 
 /**
- * These elements' texts, trimmed, blank ones dropped, one per line; `null` when none is left.
+ * These elements' texts, trimmed, blank ones dropped, a blank line between each; `null` when none is left.
  *
- * The shape of a detail page's description: its prose paragraphs, joined. With [distinct] a
- * paragraph that two layouts both carry (Lido's and Astra's bio and blurb blocks) is kept once.
+ * The shape of a detail page's description: its prose paragraphs, joined, so the event page shows a gap
+ * between them (#4778). With [distinct] a paragraph that two layouts both carry (Lido's and Astra's bio and
+ * blurb blocks) is kept once.
  */
 fun Iterable<Element>.paragraphText(distinct: Boolean = false): String? =
     map { it.text().trim() }
         .filter { it.isNotBlank() }
         .let { if (distinct) it.distinct() else it }
-        .joinToString("\n")
+        .joinToString("\n\n")
         .takeIf { it.isNotBlank() }
 
 /**
