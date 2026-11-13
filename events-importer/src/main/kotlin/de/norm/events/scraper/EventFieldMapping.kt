@@ -77,13 +77,14 @@ fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?
  * `----ABGESAGT----- Jeff Lorber Fusion`, #4219). Whole
  * words only: "Abgesagte Lesung" is a title, not a marker. A leading "verschoben" counts only
  * with a separator after it (Uber Eats Music Hall's `VERSCHOBEN: Omah Lay`, #4762), because the
- * word also opens a sentence. A "verschoben"/"verlegt" tail is [TITLE_STATUS_TAIL]'s, and a
+ * word also opens a sentence. A leading `Neuer Termin:` goes the same way (event 13899): the row is the
+ * new date, so it marks no status. A "verschoben"/"verlegt" tail is [TITLE_STATUS_TAIL]'s, and a
  * sentence that is the notice (Wild at Heart) stays the title.
  */
 private val TITLE_STATUS_MARKER =
     Regex(
         """^\s*[(\[*-]*\s*(?:abgesagt|absage|cancell?ed|postponed|wird\s+verlegt|venue\s?(?:ä|ae)nderung""" +
-            """|verschoben(?=!?\s*[)\]*:|–—-]))\b!?\s*[)\]*-]*\s*[-–—:|]*\s*""" +
+            """|verschoben(?=!?\s*[)\]*:|–—-])|neuer\s+termin(?=!?\s*[)\]*:|–—-]))\b!?\s*[)\]*-]*\s*[-–—:|]*\s*""" +
             """|\s*[-–—:|]*\s*[(\[*-]*\s*\b(?:abgesagt|absage|cancell?ed|postponed|venue\s?(?:ä|ae)nderung)!?\s*[)\]*-]*\s*$""",
         RegexOption.IGNORE_CASE
     )

@@ -147,7 +147,7 @@ private fun performerOfShow(
             EventType.SHOW.name -> opensWithTitle
             else -> false
         }
-    if (!named || !PERFORMER_NAME.matches(title)) return emptyList()
+    if (!named || !(PERFORMER_NAME.matches(title) || PERFORMER_DUO.matches(title))) return emptyList()
     return listOf(ScrapedArtist(name = title, role = ArtistRole.HEADLINER, titleDerived = true))
 }
 
@@ -156,6 +156,14 @@ private fun performerOfShow(
  * `Katharine Mehrling`, `Eckart von Hirschhausen`, not `SAGO Song Salon`.
  */
 private val PERFORMER_NAME = Regex("""^\p{Lu}\p{Ll}[\p{L}'-]*(?:\s+(?:von\s+|van\s+|zu\s+)?\p{Lu}\p{Ll}[\p{L}'-]*){1,2}$""")
+
+/**
+ * Two performers billed as one act, `Siegfried & Joy` (event 13924). `Gitte Haenning & Band` is a
+ * performer with a band, not a duo, so a band word after the `&` is refused.
+ */
+private const val DUO_NAME = """\p{Lu}\p{Ll}[\p{L}'-]*(?:\s+\p{Lu}\p{Ll}[\p{L}'-]*)?"""
+
+private val PERFORMER_DUO = Regex("""^$DUO_NAME\s+&\s+(?!(?:Band|Friends|Ensemble|Orchester)$)$DUO_NAME$""")
 
 /**
  * Maps a `Genre` label to an [EventType] name.

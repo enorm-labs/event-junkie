@@ -156,6 +156,8 @@ class ArtistNameCleanupTest {
         stripArtistSuffix("Zascha HOT MESS Debut at Lark") shouldBe "Zascha"
         stripArtistSuffix("WISBORG Phantomschmerz Tour") shouldBe "WISBORG"
         stripArtistSuffix("YASUHARU TAKANASHI TOUR") shouldBe "YASUHARU TAKANASHI"
+        stripArtistSuffix("SERAPHIM TOUR SAAM SULTAN") shouldBe "SAAM SULTAN"
+        stripArtistSuffix("DOMINIC MILLER ON TOUR 2027") shouldBe "DOMINIC MILLER ON TOUR 2027"
         // A denylisted package tour stays whole, so the denylist still drops it.
         stripArtistSuffix("THE REVIVAL TOUR") shouldBe "THE REVIVAL TOUR"
         stripArtistSuffix("Tour") shouldBe "Tour"

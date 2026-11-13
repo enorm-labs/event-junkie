@@ -157,6 +157,8 @@ class SchokoladenOverviewPageScraperTest {
                 listOf("Angela Aux")
             // 15 February 2027: a quoted album's tour after the act is no act (event 12195).
             artistsOf("GLUT 'BURN' Tour 2027 + special guest") shouldContainExactly listOf("GLUT")
+            // Event 13880: a quoted show name right after the annotation is no part of the act.
+            artistsOf("ASTORE (P38 GANG, IT) \"Non è un live rap\" - ONE STEP FORWARD Tour") shouldContainExactly listOf("ASTORE")
             // The contracted presents verb and its colon frame the bill, not the promoter (#3213).
             artistsOf("M:Soundtrack prsts: Dark Selbo Release Show (Bln) + CHEEKY (US/Bln)") shouldContainExactly listOf("Dark Selbo", "CHEEKY")
             // Event 12252, 29 January 2027: the contraction "prstns", and genre notes in square brackets.

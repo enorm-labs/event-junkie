@@ -161,8 +161,9 @@ private val BACKING_BAND_TAIL =
     Regex("""(?<=\S)(?:\s+solo)?\s+(?:&|und|and)\s+(?:(?:his|her|seine|seiner|ihre|ihrer)\s+)?band\s*$""", RegexOption.IGNORE_CASE)
 
 /**
- * Tails no separator marks, where the casing change alone shows where the act ends (#1841). Case-sensitive
- * on purpose, and each shape needs a closing word as well: a debut at a venue, a tour word, or a year.
+ * Tails no separator marks, and one shouted tour name ahead of the act, where the casing alone shows where
+ * the act is (#1841). Case-sensitive on purpose, and each shape needs a marking word as well: a debut at a
+ * venue, a tour word, or a year.
  * Each matched one production title of 3303.
  */
 private val CASED_TAILS: List<Regex> =
@@ -173,6 +174,8 @@ private val CASED_TAILS: List<Regex> =
         Regex("""^([\p{Lu}\d]{2,}(?:\s+[\p{Lu}\d]{2,})*)\s+\p{Lu}\p{Ll}.*[Tt]our$"""),
         // `YASUHARU TAKANASHI TOUR`: a shouted act and a bare tour word (#2709).
         Regex("""^(\P{Ll}*\p{Lu}\P{Ll}*?)\s+TOUR$"""),
+        // `SERAPHIM TOUR SAAM SULTAN`: a shouted tour name ahead of a shouted act (event 13936).
+        Regex("""^\p{Lu}[\p{Lu}\d]+(?:\s+[\p{Lu}\d]{2,}){0,2}\s+TOUR\s+(\P{Ll}*\p{Lu}\P{Ll}*)$"""),
         // `schluma Heulen am Wasser 2026`: a lowercase act before a capitalised work title and its year.
         Regex("""^(\p{Ll}[\p{Ll}\d]+)\s+\p{Lu}\p{Ll}.*\s(?:19|20)\d{2}$"""),
         // `Exofa - Altern.RockPop`: a genre tag abbreviated with a dot inside one word.
