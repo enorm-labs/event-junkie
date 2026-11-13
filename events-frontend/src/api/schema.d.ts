@@ -318,7 +318,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Signs in with the browser's answer to the options, and starts a session. 401 for every refusal */
+        /**
+         * Signs in with the browser's answer to the options, and starts a session
+         * @description 404 when the site holds no such passkey, so the browser can tell the password manager. 401 for every other refusal.
+         */
         post: operations["signIn_1"];
         delete?: never;
         options?: never;

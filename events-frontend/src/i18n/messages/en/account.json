@@ -12,6 +12,7 @@
     "paused": "New accounts are paused for now. If you already have one, we still send you a link.",
     "passkey": "Sign in with a passkey",
     "passkeyFailed": "The passkey did not sign you in. Use the e-mail link instead.",
+    "passkeyUnknown": "This passkey no longer exists here. Use the e-mail link instead.",
     "passkeyTooMany": "Too many passkey sign-ins from here. Try again in an hour."
   },
   "checkMail": {

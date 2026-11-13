@@ -177,6 +177,20 @@ describe('SignInView with passkeys', () => {
     await flushPromises()
     expect(view.find('[role="alert"]').text()).toContain('Use the e-mail link instead')
   })
+
+  it('says the passkey is gone when the site no longer holds it', async () => {
+    passkeyBrowser(false)
+    account.signInWithPasskey.mockRejectedValue(new ApiError(404, 'gone'))
+    const view = await mountAt(SignInView, '/en/sign-in')
+    await view
+      .findAll('button')
+      .find((b) => b.text() === 'Sign in with a passkey')!
+      .trigger('click')
+    await flushPromises()
+    expect(view.find('[role="alert"]').text()).toBe(
+      'This passkey no longer exists here. Use the e-mail link instead.',
+    )
+  })
 })
 
 describe('SignInView with a page to return to', () => {

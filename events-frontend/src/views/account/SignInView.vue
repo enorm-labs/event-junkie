@@ -59,11 +59,14 @@ async function withPasskey(mediation?: CredentialMediationRequirement, signal?: 
   } catch (e) {
     // The autofill starts with the page, so its failure is not the visitor's doing: the button still works.
     if (cancelled(e) || mediation === 'conditional') return
-    problem.value =
-      e instanceof ApiError && e.status === 429
-        ? t('account.signIn.passkeyTooMany')
-        : t('account.signIn.passkeyFailed')
+    problem.value = passkeyProblem(e)
   }
+}
+
+function passkeyProblem(e: unknown): string {
+  if (e instanceof ApiError && e.status === 429) return t('account.signIn.passkeyTooMany')
+  if (e instanceof ApiError && e.status === 404) return t('account.signIn.passkeyUnknown')
+  return t('account.signIn.passkeyFailed')
 }
 
 async function submit() {

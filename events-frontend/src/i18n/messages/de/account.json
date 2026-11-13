@@ -12,6 +12,7 @@
     "paused": "Neue Konten sind gerade pausiert. Wenn du schon eins hast, schicken wir dir trotzdem einen Link.",
     "passkey": "Mit Passkey anmelden",
     "passkeyFailed": "Der Passkey hat dich nicht angemeldet. Nutze stattdessen den Link per E-Mail.",
+    "passkeyUnknown": "Diesen Passkey gibt es hier nicht mehr. Nutze stattdessen den Link per E-Mail.",
     "passkeyTooMany": "Von hier kamen zu viele Anmeldungen mit einem Passkey. Versuch es in einer Stunde noch einmal."
   },
   "checkMail": {

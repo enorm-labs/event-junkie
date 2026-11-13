@@ -88,12 +88,20 @@ class PasskeyController(
             ?: refuse(HttpStatus.TOO_MANY_REQUESTS, "Too many passkey sign-ins from here. Try again in an hour")
 
     @PostMapping("/api/auth/passkey/sign-in")
-    @Operation(summary = "Signs in with the browser's answer to the options, and starts a session. 401 for every refusal")
+    @Operation(
+        summary = "Signs in with the browser's answer to the options, and starts a session",
+        description = "404 when the site holds no such passkey, so the browser can tell the password manager. 401 for every other refusal."
+    )
     suspend fun signIn(
         @RequestBody request: PasskeySignIn,
         exchange: ServerWebExchange
     ): AccountResponse {
-        val account = passkeys.signIn(request.credential) ?: refuse(HttpStatus.UNAUTHORIZED, "The passkey did not sign in. Use the e-mail link")
+        val account =
+            when (val outcome = passkeys.signIn(request.credential)) {
+                is PasskeySignInOutcome.SignedIn -> outcome.account
+                PasskeySignInOutcome.Unknown -> refuse(HttpStatus.NOT_FOUND, "This passkey no longer exists. Use the e-mail link")
+                PasskeySignInOutcome.Refused -> refuse(HttpStatus.UNAUTHORIZED, "The passkey did not sign in. Use the e-mail link")
+            }
         sessions.save(exchange, SecurityContextImpl(AccountAuthentication(account))).awaitSingleOrNull()
         return AccountResponse.of(account)
     }

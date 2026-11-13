@@ -172,7 +172,7 @@ class PasskeyFlowTest : BaseControllerTest() {
     }
 
     @Test
-    fun `a deleted passkey can no longer sign in`() {
+    fun `a deleted passkey can no longer sign in, and the answer says the site does not hold it`() {
         val device = SoftwarePasskey()
         register(device).expectStatus().isNoContent
         val id = list()[0]["id"].asString()
@@ -185,7 +185,17 @@ class PasskeyFlowTest : BaseControllerTest() {
             .expectStatus()
             .isNoContent
         list().size() shouldBe 0
-        signInWith(device).expectStatus().isUnauthorized
+        signInWith(device).expectStatus().isNotFound
+    }
+
+    @Test
+    fun `an unknown passkey is named only by an answer to a fresh challenge`() {
+        val device = SoftwarePasskey()
+        device.create(options("/me/passkeys/options"))
+        val answer = device.get(options("/auth/passkey/options", signedIn = false))
+
+        signInWith(device, answer).expectStatus().isNotFound
+        signInWith(device, answer).expectStatus().isUnauthorized
     }
 
     @Test
