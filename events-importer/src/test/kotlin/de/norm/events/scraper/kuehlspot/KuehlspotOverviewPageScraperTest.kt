@@ -165,6 +165,28 @@ class KuehlspotOverviewPageScraperTest {
         show.description shouldBe "Includes live music, storytelling, live collage, spoken word, and dance"
     }
 
+    // Event 13818: the link's address is lost, so the words that point at it are dropped.
+    @Test
+    fun `a further-information line that only points at a link is not description`() {
+        val page =
+            """
+            <div id="events">
+              <div class="e-con e-child">
+                <h2 class="elementor-heading-title">Saturday, 14 November 2026 (14:30)</h2>
+                <h2 class="elementor-heading-title">DIE COOLEN 20 ER</h2>
+                <div class="elementor-widget-text-editor">
+                  <p>Event organized and produced by Rachel D Clarke</p>
+                  <p>Further information &gt;&gt; <a href="https://tickets.example.de/"><strong>here</strong></a> &lt;&lt;</p>
+                  <p>Further information on the dance workshop follows soon.</p>
+                </div>
+              </div>
+            </div>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl).single().description shouldBe
+            "Event organized and produced by Rachel D Clarke\nFurther information on the dance workshop follows soon."
+    }
+
     // #4932: the outer container holds two nights and no heading of its own.
     @Test
     fun `a wrapper holding only nested nights gives no event of its own and logs no warning`() {
