@@ -452,16 +452,16 @@ class ScrapingExtensionsTest {
     @Nested
     inner class ParagraphText {
         @Test
-        fun `joins the trimmed texts one per line, dropping blank ones`() {
+        fun `joins the trimmed texts with a blank line between each, dropping blank ones`() {
             val el = html("""<div><p>  One  </p><p> </p><p>Two</p></div>""")
-            el.select("p").paragraphText() shouldBe "One\nTwo"
+            el.select("p").paragraphText() shouldBe "One\n\nTwo"
         }
 
         @Test
         fun `keeps a repeated paragraph unless distinct is set`() {
             val el = html("""<div><p>Bio</p><p>Blurb</p><p>Bio</p></div>""")
-            el.select("p").paragraphText() shouldBe "Bio\nBlurb\nBio"
-            el.select("p").paragraphText(distinct = true) shouldBe "Bio\nBlurb"
+            el.select("p").paragraphText() shouldBe "Bio\n\nBlurb\n\nBio"
+            el.select("p").paragraphText(distinct = true) shouldBe "Bio\n\nBlurb"
         }
 
         @Test
