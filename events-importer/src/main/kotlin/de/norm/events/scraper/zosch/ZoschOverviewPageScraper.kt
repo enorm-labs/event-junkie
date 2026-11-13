@@ -26,6 +26,9 @@ import java.time.format.DateTimeFormatter
  * the header's `data-bs-target` that points at it (#3929). The clock prints seconds (`20:00:00 Uhr`).
  * The `.theme` beside the title is the genre, the `.subtitle` the band's own style line.
  * The `.links` anchor is the band's website, not a ticket shop, so it is not read.
+ *
+ * A page without the `.eventContainer` fails the run: the container is part of the layout, so a week with nothing on
+ * keeps it empty, while its absence means a different page came back. The clusters were sent one for days (#4952).
  */
 class ZoschOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -34,7 +37,11 @@ class ZoschOverviewPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val nights = document.select(".eventContainer div.event")
+        val container =
+            checkNotNull(document.selectFirst(".eventContainer")) {
+                "No '.eventContainer' on the Zosch page (title '${document.title()}', ${document.outerHtml().length} chars) — not the programme"
+            }
+        val nights = container.select("div.event")
         logger.info { "Found ${nights.size} night(s) on the Zosch page" }
         return nights.mapSkippingFailures(logger, "Zosch night") { parseNight(it, baseUrl) }
     }

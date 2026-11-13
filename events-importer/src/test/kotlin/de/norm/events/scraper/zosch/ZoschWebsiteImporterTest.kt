@@ -62,11 +62,11 @@ class ZoschWebsiteImporterTest {
         }
 
     @Test
-    fun `importEvents returns no events for an empty page`() =
+    fun `importEvents returns no events for an empty programme`() =
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
                 FetchResult.Success(
-                    document = Jsoup.parse("<html><body></body></html>", sourceUrl),
+                    document = Jsoup.parse("""<html><body><div class="eventContainer"></div></body></html>""", sourceUrl),
                     etag = null,
                     lastModified = null
                 )
