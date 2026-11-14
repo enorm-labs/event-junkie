@@ -108,26 +108,29 @@ function surpriseMe() {
     </section>
 
     <!-- Pulled up into the hero's bottom padding: with the section rhythm on top it sat about
-         100px below the buttons, further from them than from the list it introduces. -->
-    <FestivalNotice class="-mt-8 sm:-mt-10" />
+         100px below the buttons. One block, so the festival notice and the market teaser share
+         one rule; `empty:hidden` keeps an empty block from pulling the next section up. -->
+    <div class="-mt-8 empty:hidden sm:-mt-10">
+      <FestivalNotice />
 
-    <aside
-      v-if="christmasMarketSeason"
-      :aria-label="t('christmasMarkets.homeTeaser')"
-      :class="[CARD_LIST_CLASS, '-mt-8 sm:-mt-10']"
-      data-testid="christmas-market-teaser"
-    >
-      <div class="space-y-1 py-4 text-body">
-        <RouterLink
-          :to="localePath('/christmas-markets')"
-          :class="['inline-flex items-center gap-1 font-medium', TEXT_LINK_CLASS]"
-        >
-          <TreePine aria-hidden="true" class="size-4" />
-          {{ t('christmasMarkets.homeTeaser') }}
-        </RouterLink>
-        <p class="text-muted-foreground">{{ t('christmasMarkets.homeTeaserHint') }}</p>
-      </div>
-    </aside>
+      <aside
+        v-if="christmasMarketSeason"
+        :aria-label="t('christmasMarkets.homeTeaser')"
+        class="border-b border-border first:border-t"
+        data-testid="christmas-market-teaser"
+      >
+        <div class="space-y-1 py-4 text-body">
+          <RouterLink
+            :to="localePath('/christmas-markets')"
+            :class="['inline-flex items-center gap-1 font-medium', TEXT_LINK_CLASS]"
+          >
+            <TreePine aria-hidden="true" class="size-4" />
+            {{ t('christmasMarkets.homeTeaser') }}
+          </RouterLink>
+          <p class="text-muted-foreground">{{ t('christmasMarkets.homeTeaserHint') }}</p>
+        </div>
+      </aside>
+    </div>
 
     <!-- Headings by scale, not the mono eyebrow: at 14 px "Upcoming" sat in the grid's own rhythm
          and read as one more row of cards (#2347). The count stays outside the heading's name. -->
