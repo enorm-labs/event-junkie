@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# lighthouse.sh — run Lighthouse over the four baseline cells of a deployed origin, three times each,
+# lighthouse.sh — run Lighthouse over the six baseline cells of a deployed origin, three times each,
 # and gate on the audits that are deterministic.
 #
 # Usage:
@@ -17,9 +17,11 @@
 # the pin in `perf/lighthouse/package.json`, so `npm ci` there first. `npx --yes lighthouse@13` would
 # resolve a different build on every run and is not a pin (#1698).
 #
-# THE FOUR CELLS ARE `perf/README.md` § Lighthouse baseline: `/de/events` and one event detail page,
-# mobile and desktop. The detail slug is resolved from `/api/events` at run time, never written down —
-# an event passes and a literal slug becomes a 404 that reads as a regression.
+# THE SIX CELLS: `/de/events`, one event detail page and `/de/christmas-markets`, mobile and desktop.
+# The first four are `perf/README.md` § Lighthouse baseline; the markets page came later (#4975). Out of
+# season it shows only its empty state, which is still a page to measure. The detail slug is resolved
+# from `/api/events` at run time, never written down — an event passes and a literal slug becomes a
+# 404 that reads as a regression.
 #
 # WHAT IS GATED AND WHAT IS ONLY REPORTED. Performance scores from a shared runner move by tens of
 # points for reasons that belong to the runner, so a threshold loose enough to survive them catches
@@ -96,13 +98,16 @@ slug="$(jq -r 'first(.content[] | select(.imageUrl != null) | .slug) // empty' <
     exit 1
 }
 
-# --- 2. Twelve runs -------------------------------------------------------------------------------
+# --- 2. Eighteen runs -----------------------------------------------------------------------------
 # `list` and `detail` are the row labels in `perf/README.md`; keep them in step with that table.
+# `markets` has no hand-taken row (#4975): the workflow's step summary carries its numbers.
 CELLS=(
     "list|mobile|/de/events"
     "list|desktop|/de/events"
     "detail|mobile|/de/events/$slug"
     "detail|desktop|/de/events/$slug"
+    "markets|mobile|/de/christmas-markets"
+    "markets|desktop|/de/christmas-markets"
 )
 
 # A run is retried, and the retry is visible. Lighthouse loses the navigation trace on a fast page

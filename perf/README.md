@@ -249,7 +249,7 @@ What the numbers say, and what was done with each:
   headless Chrome; `dom-size` on the list page is 925 elements for 20 cards and their filters, which is the page.
 
 **Since #1698 the row above is the last one taken by hand.** `.github/workflows/lighthouse.yml` runs the same four cells after every successful production
-deployment and weekly, through `scripts/lighthouse.sh`, and ADR-033 says why that one runs from Actions while the smoke runs in the cluster: production is
+deployment and weekly, plus `/de/christmas-markets` on both profiles (#4975), through `scripts/lighthouse.sh`, and ADR-033 says why that one runs from Actions while the smoke runs in the cluster: production is
 public and staging is not. Its numbers are in the run's step summary and its JSON reports are artifacts for 30 days. **There is no trend store**: OpenObserve
 is `ClusterIP` on both clusters with no Ingress, so nothing in Actions can write to it, and #298 closed without a second store. Read the last four weeks of
 runs, not this table.
