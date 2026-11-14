@@ -1,5 +1,6 @@
 package de.norm.events.scraper.peteredel
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
@@ -20,6 +21,7 @@ import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferVenueFormatType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.knownSoloPerformer
 import de.norm.events.scraper.labelledClock
@@ -32,6 +34,8 @@ import de.norm.events.scraper.parseTitleStatus
 import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.DESCRIPTION_CUES
 import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.VENUE_FORMAT_KEYWORDS
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitSupportActs
+import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -88,8 +92,9 @@ import java.time.LocalTime
  * [inferUnmarkedTitleType] over title and subtitle. A support billing then makes a concert, and
  * last the blurb's own words decide ([DESCRIPTION_CUES], #2992). Else `OTHER` — never a default
  * `CONCERT`, which would also mint the event's name as a headliner. For the same reason [buildArtistList] takes an act
- * only where a support billing confirms one, so "Tanztee im PETER EDEL" is not an artist. The one other confirmation
- * is a quoted show after a dash, `FIL - "Lieder of the world"`: the act is the part before it ([dashedQuotedShowActs]).
+ * only where a support billing confirms one, so "Tanztee im PETER EDEL" is not an artist. A quoted show after a dash confirms
+ * one too, `FIL - "Lieder of the world"`: the act is the part before it ([dashedQuotedShowActs]). A concert has three
+ * more confirmations ([concertActNames]): a `- mit <name>` tail, a tour, and a quoted work in the subtitle.
  * A `ZUSATZSHOW!` line in the subtitle slot is a booking note and goes to [ScrapedEvent.statusNote]. Seating
  * badges ("Bestuhlt", "Freie Platzwahl") are dropped on purpose: seating is not part of the event model.
  *
@@ -259,7 +264,7 @@ class PeterEdelOverviewPageScraper {
             status = resolveStatus(rawTitle, ticketColumn),
             statusNote = extraShowNote,
             promoters = listOfNotNull(promoterOf(info)),
-            artists = actsOf(title, support, eventType)
+            artists = actsOf(title, subtitle, support, eventType)
         ).forChildrenIf(childrensShowPhrase(title, subtitle))
     }
 
@@ -419,6 +424,26 @@ class PeterEdelOverviewPageScraper {
                 Regex("""album|alben|konzert|concerts?|orchest(?:er|ra)|duett(?:e|s)?""", RegexOption.IGNORE_CASE) to EventType.CONCERT.name
             )
 
+        /** A concert title's closing `- mit <names>`: `Klassische Adventsmatinée - mit Yannick Rafalimanana` (event 10095). */
+        private val BILLED_WITH_TAIL = Regex("""\s[-–—]\s+[Mm]it\s+(\S.*)$""")
+
+        /** A concert title's dash tail that ends in a tour: `Veljanov - Shanderilan Tour` (event 2010). */
+        private val TOUR_TAIL = Regex("""\s[-–—]\s+\S.*tour$""", RegexOption.IGNORE_CASE)
+
+        /** `tour` alone or inside a word, as in the subtitle `Die Aufnahmetour - Live in Berlin` (event 2013). */
+        private val TOUR_WORD = Regex("tour", RegexOption.IGNORE_CASE)
+
+        /** A quoted work in straight or German quotes: the subtitle `20 Jahre "Apologies to the Queen Mary"` (event 13807). */
+        private val QUOTED_WORK = Regex(""""[^"]+"|„[^„“”"]+[“”"]""")
+
+        /** The first dash with spaces around it, which separates the act from the rest of the title. */
+        private val TITLE_DASH = Regex("""\s[-–—]\s""")
+
+        private val WHITESPACE = Regex("""\s+""")
+
+        /** A title head longer than this names a programme, not an act. */
+        private const val MAX_ACT_WORDS = 5
+
         /** The promoter a `Präsentiert von:` credit in the info line names ([PROMOTER]), or `null`. */
         fun promoterOf(info: String): String? =
             PROMOTER
@@ -444,15 +469,51 @@ class PeterEdelOverviewPageScraper {
 
         /**
          * The acts a support billing confirms, else the act before a quoted show (`FIL - "Lieder of the world"`),
-         * else a [knownSoloPerformer] (`FIL - MIT NEUER SHOW`). A party's title names the night, so neither confirms an act there.
+         * else a [knownSoloPerformer] (`FIL - MIT NEUER SHOW`), else for a concert the [concertActNames].
+         * A party's title names the night, so nothing confirms an act there.
          */
         fun actsOf(
             title: String,
+            subtitle: String?,
             support: List<String>,
             eventType: String
         ): List<ScrapedArtist> =
             buildArtistList(title, support).ifEmpty {
-                if (eventType == EventType.PARTY.name) emptyList() else dashedQuotedShowActs(title).ifEmpty { knownSoloPerformer(title) }
+                if (eventType == EventType.PARTY.name) {
+                    emptyList()
+                } else {
+                    dashedQuotedShowActs(title).ifEmpty { knownSoloPerformer(title) }.ifEmpty {
+                        if (eventType == EventType.CONCERT.name) concertActs(title, subtitle) else emptyList()
+                    }
+                }
             }
+
+        private fun concertActs(
+            title: String,
+            subtitle: String?
+        ): List<ScrapedArtist> =
+            concertActNames(title, subtitle)
+                .map { stripArtistSuffix(it, fromTitle = true) }
+                .filterNot(::isNonArtistName)
+                .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
+
+        /**
+         * The names a concert bills without a support act: the names after a `- mit` tail, else the head before the dash
+         * when the title or the subtitle names a tour, else the whole title when the subtitle quotes a work.
+         * A head longer than [MAX_ACT_WORDS] words gives nothing.
+         */
+        private fun concertActNames(
+            title: String,
+            subtitle: String?
+        ): List<String> {
+            BILLED_WITH_TAIL.find(title)?.let { return splitSupportActs(it.groupValues[1]) }
+            val head =
+                when {
+                    TOUR_TAIL.containsMatchIn(title) || subtitle.orEmpty().contains(TOUR_WORD) -> title.split(TITLE_DASH, limit = 2).first()
+                    subtitle.orEmpty().contains(QUOTED_WORK) -> title
+                    else -> return emptyList()
+                }.trim()
+            return listOf(head).filter { it.split(WHITESPACE).size <= MAX_ACT_WORDS }
+        }
     }
 }
