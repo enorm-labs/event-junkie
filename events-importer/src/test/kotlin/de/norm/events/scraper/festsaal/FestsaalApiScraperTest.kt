@@ -81,6 +81,14 @@ class FestsaalApiScraperTest {
         parsed.single().description shouldBe "Die Band spielt live."
     }
 
+    // Event 13985 split the car dealer Riller & Schnauck into two promoters (#5000).
+    @Test
+    fun `keeps a credited company whose own name carries a spaced ampersand`() {
+        val parsed = scraper.scrape(apiWithText("<p>präsentiert von Helios, Mini, IHK Berlin, Riller &amp; Schnauck</p>"))
+
+        parsed.single().promoters shouldBe listOf("Helios", "Mini", "IHK Berlin", "Riller & Schnauck")
+    }
+
     @Test
     fun `keeps a description paragraph that only mentions a presentation`() {
         val parsed = scraper.scrape(apiWithText("<p>Ende des Jahres präsentiert Monchi sein Buch auf einer Lesetour.</p>"))
