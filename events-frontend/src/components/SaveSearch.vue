@@ -75,7 +75,7 @@ async function save(chosen: string) {
     <RouterLink
       v-if="!account"
       :title="t('account.search.signIn')"
-      :to="{ path: localePath('/sign-in'), query: { next: localePath('/events') } }"
+      :to="{ path: localePath('/sign-in'), query: { next: localePath('/events'), intent: 'save' } }"
       :class="['inline-flex items-center gap-1', TEXT_LINK_CLASS]"
     >
       <Bookmark aria-hidden="true" class="size-4" />

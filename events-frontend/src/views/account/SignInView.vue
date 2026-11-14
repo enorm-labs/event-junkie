@@ -4,7 +4,7 @@
  * never into a URL, so no log and no history entry carries it. A passkey signs in without the mail (#3888):
  * from the button, or from the address field's autofill where the browser offers it.
  */
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import BaseInput from '@/components/BaseInput.vue'
@@ -16,8 +16,9 @@ import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { setSession } from '@/composables/useSession'
 import { isLocale } from '@/i18n/locales'
+import { signInIntent, type SignInIntent } from '@/lib/signInIntent'
 import { signInNext } from '@/lib/signInNext'
-import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
+import { SECTION_TITLE_CLASS, UNDERLINED_LINK_CLASS } from '@/lib/utils'
 import { autofillSupported, cancelled, passkeysSupported } from '@/lib/webauthn'
 
 const { t, locale } = useI18n()
@@ -26,6 +27,21 @@ const route = useRoute()
 // The page that sent the visitor here, such as a Follow button's (#3889). The mail link returns there.
 const next = signInNext(route.query.next)
 const localePath = useLocalePath()
+// The button that sent the visitor here names the heading and the first benefit (#4968).
+const intent = signInIntent(route.query.intent)
+const heading = computed(() =>
+  intent ? t(`account.signIn.heading.${intent}`) : t('pageTitle.signIn'),
+)
+
+const BENEFITS = ['follow', 'push', 'calendar', 'save'] as const
+const FIRST: Record<SignInIntent, (typeof BENEFITS)[number]> = {
+  follow: 'follow',
+  rsvp: 'calendar',
+  save: 'save',
+}
+const benefits = intent
+  ? [FIRST[intent], ...BENEFITS.filter((b) => b !== FIRST[intent])]
+  : [...BENEFITS]
 
 const email = ref('')
 const sending = ref(false)
@@ -100,43 +116,57 @@ function messageFor(e: unknown): string {
 </script>
 
 <template>
-  <ListPage :title="t('pageTitle.signIn')">
-    <form class="max-w-md space-y-4" novalidate @submit.prevent="submit">
-      <p class="text-body text-muted-foreground">{{ t('account.signIn.intro') }}</p>
-      <p v-if="!signUpOpen" class="text-body" role="status">{{ t('account.signIn.paused') }}</p>
-      <div class="space-y-2">
-        <label class="block text-body font-medium" for="sign-in-email">
-          {{ t('account.signIn.emailLabel') }}
-        </label>
-        <BaseInput
-          id="sign-in-email"
-          v-model="email"
-          :aria-describedby="problem ? 'sign-in-problem' : undefined"
-          :aria-invalid="problem ? 'true' : undefined"
-          autocomplete="username webauthn"
-          class="w-full"
-          inputmode="email"
-          name="email"
-          required
-          type="email"
-        />
-      </div>
-      <!-- Announced when it appears, so a screen reader hears why nothing happened. -->
-      <ErrorLine id="sign-in-problem">{{ problem }}</ErrorLine>
-      <div class="flex flex-wrap gap-3">
-        <Button :disabled="sending" type="submit">
-          {{ sending ? t('account.signIn.sending') : t('account.signIn.submit') }}
-        </Button>
-        <Button v-if="passkeys" type="button" variant="outline" @click="withPasskey()">
-          {{ t('account.signIn.passkey') }}
-        </Button>
-      </div>
-      <p class="text-meta text-muted-foreground">
-        {{ t('account.signIn.privacy') }}
-        <RouterLink :to="localePath('/legal/privacy#account')" :class="UNDERLINED_LINK_CLASS">
-          {{ t('account.signIn.privacyLink') }}
-        </RouterLink>
-      </p>
-    </form>
+  <ListPage :title="heading">
+    <div class="grid gap-8 md:grid-cols-2">
+      <form class="max-w-md space-y-4" novalidate @submit.prevent="submit">
+        <p class="text-body text-muted-foreground">{{ t('account.signIn.intro') }}</p>
+        <p v-if="!signUpOpen" class="text-body" role="status">{{ t('account.signIn.paused') }}</p>
+        <div class="space-y-2">
+          <label class="block text-body font-medium" for="sign-in-email">
+            {{ t('account.signIn.emailLabel') }}
+          </label>
+          <BaseInput
+            id="sign-in-email"
+            v-model="email"
+            :aria-describedby="problem ? 'sign-in-problem' : undefined"
+            :aria-invalid="problem ? 'true' : undefined"
+            autocomplete="username webauthn"
+            class="w-full"
+            inputmode="email"
+            name="email"
+            required
+            type="email"
+          />
+        </div>
+        <!-- Announced when it appears, so a screen reader hears why nothing happened. -->
+        <ErrorLine id="sign-in-problem">{{ problem }}</ErrorLine>
+        <div class="flex flex-wrap gap-3">
+          <Button :disabled="sending" type="submit">
+            {{ sending ? t('account.signIn.sending') : t('account.signIn.submit') }}
+          </Button>
+          <Button v-if="passkeys" type="button" variant="outline" @click="withPasskey()">
+            {{ t('account.signIn.passkey') }}
+          </Button>
+        </div>
+        <p class="text-meta text-muted-foreground">
+          {{ t('account.signIn.privacy') }}
+          <RouterLink :to="localePath('/legal/privacy#account')" :class="UNDERLINED_LINK_CLASS">
+            {{ t('account.signIn.privacyLink') }}
+          </RouterLink>
+        </p>
+      </form>
+      <!-- A paused sign-up cannot give a new address any of this (#3906). -->
+      <section v-if="signUpOpen" aria-labelledby="sign-in-benefits" class="max-w-md space-y-3">
+        <h2 id="sign-in-benefits" :class="SECTION_TITLE_CLASS">
+          {{ t('account.signIn.benefits.title') }}
+        </h2>
+        <ul class="list-disc space-y-2 ps-5 text-body" data-testid="sign-in-benefits">
+          <li v-for="benefit in benefits" :key="benefit">
+            {{ t(`account.signIn.benefits.${benefit}`) }}
+          </li>
+        </ul>
+        <p class="text-body text-muted-foreground">{{ t('account.signIn.benefits.trust') }}</p>
+      </section>
+    </div>
   </ListPage>
 </template>

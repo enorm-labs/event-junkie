@@ -111,7 +111,7 @@ test('signed out, Follow leads to sign-in, which keeps the page to return to', a
   await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible()
   await page.getByRole('link', { name: 'Follow' }).click()
 
-  await expect(page).toHaveURL(/\/en\/sign-in\?next=\/en\/venues\/mock-venue$/)
+  await expect(page).toHaveURL(/\/en\/sign-in\?next=\/en\/venues\/mock-venue&intent=follow$/)
 })
 
 test('signed in, Follow follows with the CSRF header and then reads Following', async ({
@@ -343,7 +343,7 @@ test('signed out, Save search leads to sign-in', async ({ page }) => {
   await page.goto('/en/events?genre=techno&free=true')
 
   await page.getByRole('link', { name: 'Save search' }).click()
-  await expect(page).toHaveURL(/\/en\/sign-in\?next=\/en\/events$/)
+  await expect(page).toHaveURL(/\/en\/sign-in\?next=\/en\/events&intent=save$/)
 })
 
 test('signed in, the header icon opens the account menu, and sign-out leaves the account page', async ({

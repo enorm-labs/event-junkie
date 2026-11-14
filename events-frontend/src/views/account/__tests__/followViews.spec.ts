@@ -92,7 +92,9 @@ describe('FollowButton', () => {
       slug: 'sisyphos',
     })
 
-    expect(view.find('a').attributes('href')).toBe('/en/sign-in?next=/en/venues/sisyphos')
+    expect(view.find('a').attributes('href')).toBe(
+      '/en/sign-in?next=/en/venues/sisyphos&intent=follow',
+    )
     expect(account.fetchFollowNotify).not.toHaveBeenCalled()
   })
 
