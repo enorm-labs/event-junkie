@@ -59,7 +59,7 @@ class DstrktOverviewPageScraperTest {
     @Test
     fun `keeps the spaces between the runs of a rich-text description`() {
         scrape("dstrkt-overview-edge-cases.html").single { it.title == "SUMMER RAVE" }.description shouldBe
-            "Two floors of techno until noon.\nGarden open."
+            "Two floors of techno until noon.\n\nGarden open."
     }
 
     @Test

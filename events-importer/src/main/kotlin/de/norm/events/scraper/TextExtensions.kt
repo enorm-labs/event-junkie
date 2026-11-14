@@ -45,21 +45,37 @@ fun String.collapseWhitespace(): String = replace(WHITESPACE, " ").trim()
 const val HH_MM_LENGTH = 5
 
 /**
- * Flattens an HTML body into plain text, one paragraph per line: `<br>` and closing block tags
- * become newlines before the remaining tags are stripped, then blank lines are collapsed. `null`
- * for a missing or empty body. For a JSON payload that carries its text as HTML (Elfsight, radar).
+ * Flattens an HTML body into plain text with the source's paragraphs and lines kept, the shape
+ * [descriptionText] gives a DOM element. A paragraph ends with a blank line: a closing `</p>`,
+ * heading, list, table or quote, a `<br>` after another one or after a `</div>`, and in a body
+ * with no tags a blank line. Every other `<br>`, `</div>` and newline ends a line. `null` for a
+ * missing or empty body. For a JSON payload that carries its text as HTML (Elfsight, radar).
  */
 fun htmlParagraphText(html: String?): String? {
     val raw = html.blankToNull() ?: return null
-    val withBreaks = raw.replace(BLOCK_BREAK_PATTERN, "\n")
-    return Jsoup
-        .parse(withBreaks)
-        .wholeText()
-        .lines()
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
-        .joinToString("\n")
-        .blankToNull()
+    val plain = !ANY_TAG.containsMatchIn(raw)
+    val marked = raw.replace(PARAGRAPH_END_PATTERN, "\n$PARAGRAPH_END\n").replace(BLOCK_BREAK_PATTERN, "\n")
+    val out = StringBuilder()
+    var gap = ""
+    Jsoup.parse(marked).wholeText().lines().map { it.trim() }.forEach { line ->
+        if (line == PARAGRAPH_END || (plain && line.isEmpty())) {
+            gap = "\n\n"
+        } else if (line.isNotEmpty()) {
+            if (out.isNotEmpty()) out.append(gap.ifEmpty { "\n" })
+            out.append(line)
+            gap = ""
+        }
+    }
+    return out.toString().blankToNull()
 }
 
-private val BLOCK_BREAK_PATTERN = Regex("""(?i)<br\s*/?>|</div>|</p>""")
+/** A `<br>` that follows another one or a closing `</div>` renders as a blank line, as a closing paragraph-level block does. */
+private val PARAGRAPH_END_PATTERN =
+    Regex("""(?i)</(?:p|h[1-6]|blockquote|ul|ol|table|section|article)>|(?:<br\s*/?>|</div>)\s*<br\s*/?>""")
+
+private val ANY_TAG = Regex("""<[a-zA-Z/][^>]*>""")
+
+/** A private-use character, so the paragraph mark survives the tag stripping. */
+private const val PARAGRAPH_END = "\uE002"
+
+private val BLOCK_BREAK_PATTERN = Regex("""(?i)<br\s*/?>|</(?:div|li|tr)>""")

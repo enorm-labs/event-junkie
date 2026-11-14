@@ -29,7 +29,7 @@ class EightMmEventPageScraperTest {
     fun `reads the blurb and the doors and show times`() {
         val event = scraper.enrich(listed("RMFC LIVE in 8MM"), fixtureDocument("eightmm/eightmm-event-rmfc.html", "https://www.8mmbar.de/program"))
 
-        event.description!! shouldStartWith "ROUGH’n’ROLL Concerts presents:\nR.M.F.C. (Sydney, Australia)"
+        event.description!! shouldStartWith "ROUGH’n’ROLL Concerts presents:\n\nR.M.F.C. (Sydney, Australia)"
         event.description shouldContain "Aftershow DJ set Liam Carrol"
         event.doorsTime shouldBe LocalTime.of(19, 0)
         event.startTime shouldBe LocalTime.of(20, 30)

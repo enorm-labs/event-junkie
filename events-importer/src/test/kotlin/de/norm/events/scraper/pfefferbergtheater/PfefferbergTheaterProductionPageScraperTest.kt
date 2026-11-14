@@ -23,6 +23,7 @@ class PfefferbergTheaterProductionPageScraperTest {
         description shouldStartWith "Ausverkauft! Zusatztermin am 16.12."
         description shouldContain "Fil wuchs im Märkischen Viertel auf"
         description shouldNotContain "Rollstuhlfahrer"
+        description shouldContain "\n\n" // a gap between the paragraphs (event 13949)
     }
 
     private fun audienceOf(fixture: String) = audienceOfPage(fixtureText("pfefferbergtheater/$fixture"))

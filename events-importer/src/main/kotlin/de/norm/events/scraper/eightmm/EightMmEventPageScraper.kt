@@ -36,12 +36,12 @@ class EightMmEventPageScraper {
         )
     }
 
-    /** The acts of the blurb's `Line up -` list, on the label's line or the one below it; none without the label. */
+    /** The acts of the blurb's `Line up -` list, on the label's line or the next one with text; none without the label. */
     private fun lineUp(description: String): List<ScrapedArtist> {
         val lines = description.lines()
         val index = lines.indexOfFirst { LINE_UP_LABEL.containsMatchIn(it) }
         if (index < 0) return emptyList()
-        val list = lines[index].replace(LINE_UP_LABEL, "").trim().ifEmpty { lines.getOrNull(index + 1).orEmpty() }
+        val list = lines[index].replace(LINE_UP_LABEL, "").trim().ifEmpty { lines.drop(index + 1).firstOrNull { it.isNotBlank() }.orEmpty() }
         return list
             .replace(AND_MORE, "")
             .split('/')

@@ -31,6 +31,7 @@ class AcudMachtNeuEventPageScraperTest {
         event.imageUrl shouldBe "https://acudmachtneu.de/resources/uploads/2026/10/blurred-frame-3.jpg"
         event.ticketUrl shouldBe "https://ra.co/events/2554847"
         event.description!! shouldContain "HEAVENPHETAMINE is coming back to Berlin"
+        event.description shouldContain "\n\n" // a gap between the paragraphs (event 12148)
         event.artists.shouldBeEmpty()
     }
 

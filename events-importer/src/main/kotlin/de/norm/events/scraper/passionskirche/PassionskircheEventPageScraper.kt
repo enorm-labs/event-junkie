@@ -47,7 +47,7 @@ class PassionskircheEventPageScraper {
         val anchor = paragraphs.indexOfFirst { SCHEDULE_HEADING.matches(plainText(it.text())) }
         val text = if (anchor < 0) paragraphs else paragraphs.subList(0, anchor)
         val schedule = if (anchor < 0) emptyList() else paragraphs.subList(anchor + 1, paragraphs.size)
-        val description = text.mapNotNull { htmlParagraphText(it.html()) }.joinToString("\n").blankToNull()
+        val description = text.mapNotNull { htmlParagraphText(it.html()) }.joinToString("\n\n").blankToNull()
         val scheduleText = schedule.joinToString("\n") { plainText(it.text()) }
         val eventType = inferConcertVenueType(title)
         return ScrapedEvent(

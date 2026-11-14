@@ -70,7 +70,8 @@ class SlaughterhouseOverviewPageScraper {
         val cleanedTitle = cleanEventTitle(rawTitle)
         val title = cleanedTitle.text
         val type = if (kind.contains("konzert", ignoreCase = true)) EventType.CONCERT.name else EventType.PARTY.name
-        val paragraphs = blocks.filter { it.tagName() == "p" && it !== header }.map { it.textLines() }
+        val bodyBlocks = blocks.filter { it.tagName() == "p" && it !== header }
+        val paragraphs = bodyBlocks.map { it.textLines() }
         val lines = paragraphs.flatten()
         val ticketLink =
             blocks.flatMap { it.select("a[href]") }.firstOrNull { link ->
@@ -83,7 +84,7 @@ class SlaughterhouseOverviewPageScraper {
         val entry = lines.firstOrNull { it.startsWith("Eintritt:") }
         return ScrapedEvent(
             title = title,
-            description = lines.filterNot(::isFieldLine).joinToString("\n").ifBlank { null },
+            description = descriptionOf(bodyBlocks),
             eventType = type,
             eventDate = date,
             doorsTime = labelledTime(lines, DOORS_LINE),
@@ -144,6 +145,20 @@ class SlaughterhouseOverviewPageScraper {
             ?.get(1)
             ?.takeIf { CO_BILL.containsMatchIn(it) } ?: title
 
+    /** The body paragraphs less their field lines, a blank line between two, as the page spaces them; `<br><br>` is a gap too. */
+    private fun descriptionOf(paragraphs: List<Element>): String? =
+        paragraphs
+            .map { paragraph ->
+                paragraph
+                    .textLines(keepBlankLines = true)
+                    .filterNot(::isFieldLine)
+                    .joinToString("\n")
+                    .replace(BLANK_RUN, "\n\n")
+                    .trim()
+            }.filter { it.isNotEmpty() }
+            .joinToString("\n\n")
+            .ifEmpty { null }
+
     private fun isFieldLine(line: String): Boolean = FIELD_LINE.containsMatchIn(line) || STYLE_LINE.matches(line) || DIVIDER.matches(line)
 
     private fun unwrapFacebookRedirect(url: String): String {
@@ -158,6 +173,8 @@ class SlaughterhouseOverviewPageScraper {
     }
 
     private companion object {
+        val BLANK_RUN = Regex("""\n{3,}""")
+
         val HEADING = Regex("""^((?:Konzert|Party)(?:\s*\+\s*(?:Konzert|Party))?)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
         val TICKETS = Regex("""^\s*Tickets?\b""", RegexOption.IGNORE_CASE)
         val FIELD_LINE =
