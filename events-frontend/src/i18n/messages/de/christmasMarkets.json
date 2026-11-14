@@ -6,5 +6,13 @@
   "details": "Öffnungszeiten und Eintritt",
   "empty": "Gerade gibt es keine Weihnachtsmärkte. Sie kommen im November zurück.",
   "homeTeaser": "Weihnachtsmärkte in Berlin",
-  "homeTeaserHint": "Alle Märkte auf einer Karte, mit Öffnungszeiten und Eintritt."
+  "homeTeaserHint": "Alle Märkte auf einer Karte, mit Öffnungszeiten und Eintritt.",
+  "filters": {
+    "byDistrict": "Nach Bezirk filtern",
+    "allDistricts": "Alle Bezirke",
+    "districtsSelected": "{n} Bezirke",
+    "clearDistricts": "Bezirke zurücksetzen",
+    "free": "Eintritt frei"
+  },
+  "emptyFiltered": "Zu diesen Filtern gibt es keinen Weihnachtsmarkt."
 }
