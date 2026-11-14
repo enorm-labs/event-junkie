@@ -97,6 +97,9 @@ abstract class AbstractTecImporter(
     // javaClass.name, so the log names the concrete importer rather than this base.
     private val importLogger = KotlinLogging.logger(javaClass.name)
 
+    /** The endpoint has no default end date, and a failed page or the page cap makes the walk incomplete, which skips the cleanup (#5028). */
+    final override val listsWholeProgramme: Boolean = true
+
     final override suspend fun importEvents(
         url: String,
         etag: String?,
