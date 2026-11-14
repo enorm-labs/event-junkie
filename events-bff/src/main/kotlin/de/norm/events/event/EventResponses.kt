@@ -322,8 +322,8 @@ data class EventDetailResponse(
             Schema(
                 description =
                     "What kind of night it is, as event feature slugs ordered by slug. Set only where the event's own title or " +
-                        "description, or for for-children its venue's page, states it; christmas-market is set by hand. " +
-                        "The venue's character tags never fill it.",
+                        "description, or for for-children its venue's page, states it. christmas-market and a market's " +
+                        "christmas-market-<kind> are set by hand. The venue's character tags never fill it.",
                 example = "[\"open-end\", \"queer\"]"
             ),
         schema = Schema(implementation = EventFeature::class)

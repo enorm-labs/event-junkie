@@ -287,6 +287,12 @@ export const EVENT_FEATURES = [
   { slug: 'open-stage', label: 'Open stage' },
   { slug: 'for-children', label: 'For children' },
   { slug: 'christmas-market', label: 'Christmas market' },
+  { slug: 'christmas-market-traditional', label: 'Market kind: traditional' },
+  { slug: 'christmas-market-historic', label: 'Market kind: medieval & historic' },
+  { slug: 'christmas-market-craft', label: 'Market kind: craft & design' },
+  { slug: 'christmas-market-funfair', label: 'Market kind: funfair' },
+  { slug: 'christmas-market-kiez', label: 'Market kind: neighbourhood (Kiez)' },
+  { slug: 'christmas-market-alternative', label: 'Market kind: alternative & queer' },
 ] as const
 
 /** A feature slug and the words of the event's text behind it. */

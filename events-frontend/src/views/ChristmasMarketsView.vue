@@ -33,6 +33,7 @@ import {
   MARKET_WEEKEND,
   nearestFirst,
 } from '@/lib/christmasMarkets'
+import { MARKET_KIND_PREFIX, MARKET_KINDS } from '@/lib/eventFeatures'
 import { todayIso, venueLocationLine } from '@/lib/format'
 import { formatDistance, type Position } from '@/lib/geo'
 import { type MapPin, venuePin, venuePosition } from '@/lib/mapPins'
@@ -52,20 +53,24 @@ const venueMap = useTemplateRef<{ center(): Position | null }>('venueMap')
 const PAGE_SIZE = 100
 
 const { t, locale } = useI18n()
-const { formatDayRange } = useFormat()
+const { formatDayRange, formatEventFeature } = useFormat()
 const localePath = useLocalePath()
 
 const today = todayIso()
+
+/** The running Christmas markets that also carry [features]. */
+async function loadMarkets(...features: string[]): Promise<EventSummary[]> {
+  const page = await searchEvents({
+    feature: [CHRISTMAS_MARKET, ...features],
+    from: today,
+    running: true,
+    size: PAGE_SIZE,
+  })
+  return page.content ?? []
+}
+
 const markets = useAsync<EventSummary[]>(
-  async () => {
-    const page = await searchEvents({
-      feature: [CHRISTMAS_MARKET],
-      from: today,
-      running: true,
-      size: PAGE_SIZE,
-    })
-    return page.content ?? []
-  },
+  () => loadMarkets(),
   'errors.subject.christmasMarkets',
   () => `/api/events?feature=${CHRISTMAS_MARKET}&from=${today}&running=true&size=${PAGE_SIZE}`,
 )
@@ -82,12 +87,20 @@ const {
   filtered,
   districtCounts,
   districtOptions,
+  kind,
+  kindError,
+  kindPending,
   setDay,
   setFree,
   setDistricts,
   sort,
   setSort,
-} = useMarketFilters(events)
+  setKind,
+} = useMarketFilters(events, loadMarkets)
+
+const kindOptions = computed(() =>
+  MARKET_KINDS.map((value) => ({ value, label: formatEventFeature(MARKET_KIND_PREFIX + value) })),
+)
 
 /** The markets the filters keep, by name: the list, the count and the map all read this one list. */
 const listed = computed(() =>
@@ -260,6 +273,16 @@ function dayRange(market: EventSummary): string {
           :selected="districts"
           @change="setDistricts"
         />
+        <BaseSelect
+          :aria-label="t('christmasMarkets.filters.byKind')"
+          :model-value="kind"
+          @change="setKind(($event.target as HTMLSelectElement).value)"
+        >
+          <option value="">{{ t('christmasMarkets.filters.allKinds') }}</option>
+          <option v-for="option in kindOptions" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
+        </BaseSelect>
         <Button
           :aria-pressed="free"
           :variant="free ? 'default' : 'outline'"
@@ -331,7 +354,11 @@ function dayRange(market: EventSummary): string {
         </p>
       </section>
 
-      <div v-if="!listed.length" class="space-y-3">
+      <p v-if="kindPending" class="text-body text-muted-foreground">
+        {{ t('common.states.loading') }}
+      </p>
+      <ErrorLine v-else-if="kindError">{{ kindError }}</ErrorLine>
+      <div v-else-if="!listed.length" class="space-y-3">
         <p class="text-body text-muted-foreground">{{ t('christmasMarkets.emptyFiltered') }}</p>
         <ClearAllFilters empty-state />
       </div>

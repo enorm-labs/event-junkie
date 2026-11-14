@@ -70,8 +70,9 @@ describe('ChristmasMarketsView nearest first', () => {
       ?.trigger('click')
     await flushPromises()
     expect(useLocation().origin.value?.source).toBe('device')
-    await wrapper.find('select').setValue('v1')
-    await wrapper.find('select').trigger('change')
+    const fromMarket = wrapper.find('select[aria-label="From a market…"]')
+    await fromMarket.setValue('v1')
+    await fromMarket.trigger('change')
     await flushPromises()
 
     expect(useLocation().origin.value?.source).toBe('venue')
