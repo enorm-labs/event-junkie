@@ -1,9 +1,10 @@
 <script setup lang="ts">
 /**
  * "Interested" and "Going" on the event page (#3892). Private: only the account sees them. A press
- * on the chosen one withdraws it. Signed out, both lead to sign-in and back to this event.
+ * on the chosen one withdraws it. Signed out, both lead to sign-in and back to this event, which
+ * then sets the status pressed (#4969).
  */
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import { CalendarCheck, Star } from '@lucide/vue'
@@ -13,13 +14,16 @@ import type { RsvpStatus } from '@/api/account'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useRsvps } from '@/composables/useRsvps'
 import { useSession } from '@/composables/useSession'
+import { useSignInAction } from '@/composables/useSignInAction'
+import { signInReturn } from '@/lib/signInNext'
 
 const props = defineProps<{ slug: string }>()
 
 const { t } = useI18n()
 const localePath = useLocalePath()
 const { account } = useSession()
-const { statuses, choose } = useRsvps()
+const { statuses, choose, ready } = useRsvps()
+const signInAction = useSignInAction()
 
 const OPTIONS: { status: RsvpStatus; icon: typeof Star }[] = [
   { status: 'interested', icon: Star },
@@ -36,6 +40,21 @@ async function press(status: RsvpStatus) {
     problem.value = t('account.rsvp.failed')
   }
 }
+
+// Back from the sign-in a press led to. The status set already stays: a press would withdraw it.
+watch(
+  account,
+  async (signedIn) => {
+    if (!signedIn) return
+    const status = OPTIONS.map((option) => option.status).find((s) =>
+      signInAction.take(`rsvp-${s}`),
+    )
+    if (!status) return
+    await ready()
+    if (statuses.value[props.slug] !== status) await press(status)
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -61,7 +80,10 @@ async function press(status: RsvpStatus) {
             :title="t('account.rsvp.signIn')"
             :to="{
               path: localePath('/sign-in'),
-              query: { next: localePath(`/events/${slug}`), intent: 'rsvp' },
+              query: {
+                next: signInReturn(localePath(`/events/${slug}`), `rsvp-${option.status}`),
+                intent: 'rsvp',
+              },
             }"
           >
             <component :is="option.icon" aria-hidden="true" />

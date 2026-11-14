@@ -142,6 +142,17 @@ class SignInFlowTest : BaseControllerTest() {
     }
 
     @Test
+    fun `the link carries the action and the search to save, with next's own query encoded as one value`() {
+        val csrf = csrf()
+        post("/auth/link", LinkRequest("save@example.org", "en", next = "/en/events?genre=techno&q=a+b&do=save"), csrf).expectStatus().isAccepted
+        post("/auth/link", LinkRequest("odd@example.org", "en", next = "/en/events?genre=techno&evil=1"), csrf).expectStatus().isAccepted
+
+        val (save, odd) = greenMail.receivedMessages.map { GreenMailUtil.getBody(it) }
+        save shouldContain "/en/sign-in/confirm?next=/en/events?genre%3Dtechno%26q%3Da%2Bb%26do%3Dsave#token="
+        odd shouldContain "/en/sign-in/confirm#token="
+    }
+
+    @Test
     fun `a link works once`() {
         val csrf = csrf()
         requestLink("once@example.org", csrf).expectStatus().isAccepted

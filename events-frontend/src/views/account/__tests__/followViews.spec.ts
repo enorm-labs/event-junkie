@@ -93,9 +93,48 @@ describe('FollowButton', () => {
     })
 
     expect(view.find('a').attributes('href')).toBe(
-      '/en/sign-in?next=/en/venues/sisyphos&intent=follow',
+      '/en/sign-in?next=/en/venues/sisyphos?do=follow&intent=follow',
     )
     expect(account.fetchFollowNotify).not.toHaveBeenCalled()
+  })
+
+  it('back from the sign-in it led to, follows once and drops `do` from the URL', async () => {
+    setSession(me as never)
+    account.fetchFollowNotify.mockResolvedValue(null)
+    const view = await mountAt(FollowButton, '/en/venues/sisyphos?do=follow#top', {
+      kind: 'venue',
+      slug: 'sisyphos',
+    })
+
+    expect(account.follow).toHaveBeenCalledExactlyOnceWith('venue', 'sisyphos')
+    expect(view.find('button').text()).toBe('Following (press to unfollow)')
+    expect(router.currentRoute.value.fullPath).toBe('/en/venues/sisyphos#top')
+  })
+
+  it('back from the sign-in, leaves a follow the account has already', async () => {
+    setSession(me as never)
+    account.fetchFollowNotify.mockResolvedValue('off')
+    const view = await mountAt(FollowButton, '/en/venues/sisyphos?do=follow', {
+      kind: 'venue',
+      slug: 'sisyphos',
+    })
+
+    expect(account.follow).not.toHaveBeenCalled()
+    expect(account.unfollow).not.toHaveBeenCalled()
+    expect(view.find('button').text()).toBe('Following (press to unfollow)')
+    expect(router.currentRoute.value.fullPath).toBe('/en/venues/sisyphos')
+  })
+
+  it('in a list that knows its state, a `do` in the URL follows nothing', async () => {
+    setSession(me as never)
+    await mountAt(FollowButton, '/en/following?do=follow', {
+      kind: 'venue',
+      slug: 'sisyphos',
+      initiallyFollowing: false,
+    })
+
+    expect(account.follow).not.toHaveBeenCalled()
+    expect(router.currentRoute.value.query.do).toBe('follow')
   })
 
   it('signed in, follows on a press and then says Following, with the unfollow for screen readers', async () => {
