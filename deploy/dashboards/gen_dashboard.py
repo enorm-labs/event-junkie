@@ -86,9 +86,14 @@ def dq(metric):
     return 'max by (source) (data_quality{metric="%s"})' % metric
 
 
-def dq_share(metric):
-    """One `data_quality` metric as a fraction of every event measured, all sources together."""
-    return "sum(%s) / sum(%s)" % (dq(metric), dq("totalEvents"))
+def dq_unexplained(metric):
+    """One `data_quality_unexplained` metric per source: 0 where an accepted limitation excuses it (#5002)."""
+    return 'max by (source) (data_quality_unexplained{metric="%s"})' % metric
+
+
+def dq_share(metric, series=dq):
+    """One metric of `series` as a fraction of every event measured, all sources together."""
+    return "sum(%s) / sum(%s)" % (series(metric), dq("totalEvents"))
 
 
 def panel(pid, title, description, typ, promql, x, y, w, h, unit=None, decimals=2, y_axis_min=None):
@@ -538,8 +543,9 @@ panels = [
     ),
 ]
 
-# The data-quality tab (#386). One gauge, `data_quality{source,metric}`, written by the 03:00 snapshot.
-# A restart empties it until the next 03:00 run, and its trend is the gauge history, not `data_quality_snapshot`.
+# The data-quality tab (#386). Two gauges, `data_quality{source,metric}` and `data_quality_unexplained{source,metric}`,
+# written by the 03:00 snapshot. The second is the count no accepted limitation of the source explains (#5002).
+# A restart empties both until the next 03:00 run, and their trend is the gauge history, not `data_quality_snapshot`.
 DQ_WINDOW_NOTE = (
     "\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. "
     "After a restart the gauge is empty until the next 03:00 run."
@@ -599,6 +605,22 @@ def worklist_hint(key):
     return " `GET /api/admin/data-quality/worklist?issue=%s&source=<slug>` lists the rows." % key
 
 
+# The metrics an accepted limitation can excuse, `DataQualityRegressionCheck.ACCEPTED_ASPECT`'s keys. Each gets
+# `data_quality_unexplained` too, and its panels read that series beside or instead of the raw one.
+DQ_EXCUSABLE = {
+    "concertsWithoutArtist",
+    "eventsTypedOther",
+    "missingGenre",
+    "missingPromoter",
+    "missingPrice",
+    "missingStartTime",
+}
+
+DQ_UNEXPLAINED_NOTE = (
+    " The unexplained share leaves out each source whose accepted limitations declare the field: the venue does "
+    "not publish it, so no fix of ours can close that part. It is the `%sUnexplainedPct` of the report."
+)
+
 DQ_TILES = [
     ("concertsWithoutArtist", "Concerts without an artist (% of events)"),
     ("eventsTypedOther", "Events typed OTHER (% of events)"),
@@ -608,23 +630,59 @@ DQ_TILES = [
 
 DQ_TREND_METRICS = "|".join(key for key, _, _ in DQ_BARS if key != "suspectNonArtistTitles")
 
-dq_panels = [
-    panel(
+RAW_SHARE_DESCRIPTION = (
+    "Every source together, as a share of every event in the database — the same ratio as the per-source "
+    "`%sPct` in `GET /api/admin/data-quality`."
+)
+
+
+def dq_tiles(n, key, title):
+    """One tile per metric, or a raw tile and an unexplained tile side by side in the same 48 columns."""
+    if key not in DQ_EXCUSABLE:
+        tile = panel(
+            "p_dq_share_%s" % key,
+            title,
+            RAW_SHARE_DESCRIPTION % key + DQ_WINDOW_NOTE,
+            "metric",
+            dq_share(key),
+            x=48 * n,
+            y=0,
+            w=48,
+            h=10,
+            unit="percent-1",
+            decimals=1,
+        )
+        return [tile]
+    raw = panel(
         "p_dq_share_%s" % key,
         title,
-        "Every source together, as a share of every event in the database — the same ratio as the per-source "
-        "`%sPct` in `GET /api/admin/data-quality`." % key + DQ_WINDOW_NOTE,
+        RAW_SHARE_DESCRIPTION % key + DQ_WINDOW_NOTE,
         "metric",
         dq_share(key),
         x=48 * n,
         y=0,
-        w=48,
+        w=24,
         h=10,
         unit="percent-1",
         decimals=1,
     )
-    for n, (key, title) in enumerate(DQ_TILES)
-]
+    unexplained = panel(
+        "p_dq_unexplained_%s" % key,
+        title.replace(" (% of events)", ", unexplained (% of events)"),
+        "The tile to its left, less the events no fix of ours can change." + DQ_UNEXPLAINED_NOTE % key + DQ_WINDOW_NOTE,
+        "metric",
+        dq_share(key, dq_unexplained),
+        x=48 * n + 24,
+        y=0,
+        w=24,
+        h=10,
+        unit="percent-1",
+        decimals=1,
+    )
+    return [raw, unexplained]
+
+
+dq_panels = [tile for n, (key, title) in enumerate(DQ_TILES) for tile in dq_tiles(n, key, title)]
 dq_panels.append(
     panel(
         "p_dq_trend",
@@ -642,13 +700,25 @@ dq_panels.append(
         decimals=0,
     )
 )
+
+
+def dq_bar_meaning(key, meaning):
+    """What a bar says, and for an excusable metric that it ranks only what no limitation explains."""
+    if key not in DQ_EXCUSABLE:
+        return meaning
+    return (
+        meaning + " Ranked by the unexplained count: a source whose accepted limitations declare the field "
+        "counts 0, so the bars name what a fix of ours can change (#5002)."
+    )
+
+
 dq_panels += [
     panel(
         "p_dq_%s" % key,
         "%s — fifteen worst sources" % title,
-        meaning + worklist_hint(key) + DQ_WINDOW_NOTE,
+        dq_bar_meaning(key, meaning) + worklist_hint(key) + DQ_WINDOW_NOTE,
         "bar",
-        "topk(15, %s)" % dq(key),
+        "topk(15, %s)" % (dq_unexplained(key) if key in DQ_EXCUSABLE else dq(key)),
         x=96 * (n % 2),
         y=26 + 14 * (n // 2),
         w=96,

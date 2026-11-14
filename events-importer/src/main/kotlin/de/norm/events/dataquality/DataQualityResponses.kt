@@ -116,7 +116,38 @@ data class SourceQualityMetrics(
                 "(UNCERTAIN_PARTY_FEATURE). The regression alert judges this count (#3148)",
         example = "4"
     )
-    val flaggedAtImportKeptOut: Long
+    val flaggedAtImportKeptOut: Long,
+    @Schema(
+        description =
+            "The metrics an accepted limitation of this source excuses: the venue does not publish the field (#5002). " +
+                "Always empty for 'manual' and for the overall roll-up",
+        example = "[\"missingPrice\", \"missingPromoter\"]"
+    )
+    val limitationAccepted: List<String>,
+    @Schema(description = "concertsWithoutArtist, or 0 when limitationAccepted names it. On overall, the sum over the sources", example = "40")
+    val concertsWithoutArtistUnexplained: Long,
+    @Schema(description = "concertsWithoutArtistUnexplained as a percentage of totalEvents", example = "43.5")
+    val concertsWithoutArtistUnexplainedPct: Double,
+    @Schema(description = "eventsTypedOther, or 0 when limitationAccepted names it", example = "4")
+    val eventsTypedOtherUnexplained: Long,
+    @Schema(description = "eventsTypedOtherUnexplained as a percentage of totalEvents", example = "4.3")
+    val eventsTypedOtherUnexplainedPct: Double,
+    @Schema(description = "missingGenre, or 0 when limitationAccepted names it", example = "0")
+    val missingGenreUnexplained: Long,
+    @Schema(description = "missingGenreUnexplained as a percentage of totalEvents", example = "0.0")
+    val missingGenreUnexplainedPct: Double,
+    @Schema(description = "missingPromoter, or 0 when limitationAccepted names it", example = "0")
+    val missingPromoterUnexplained: Long,
+    @Schema(description = "missingPromoterUnexplained as a percentage of totalEvents", example = "0.0")
+    val missingPromoterUnexplainedPct: Double,
+    @Schema(description = "missingPrice, or 0 when limitationAccepted names it", example = "0")
+    val missingPriceUnexplained: Long,
+    @Schema(description = "missingPriceUnexplained as a percentage of totalEvents", example = "0.0")
+    val missingPriceUnexplainedPct: Double,
+    @Schema(description = "missingStartTime, or 0 when limitationAccepted names it", example = "12")
+    val missingStartTimeUnexplained: Long,
+    @Schema(description = "missingStartTimeUnexplained as a percentage of totalEvents", example = "13.0")
+    val missingStartTimeUnexplainedPct: Double
 )
 
 /** One event failing one metric, in the shape a steward needs to decide whether to open it. */

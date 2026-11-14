@@ -142,10 +142,12 @@ The top row is the answer; the two rows under it are why.
 | Page loads per hour        | **Did anyone come?** Visitors' page loads, probes and crawlers out (#1126) |
 | Where page loads came from | Which channel sent them — the referrer, in aggregate                       |
 
-**The Data quality tab is the importer's `data_quality{source,metric}` gauge** (#386), written by `DataQualityReportLogger` at
-03:00 and empty after a restart until the next run. Four tiles give the share of all events with a gap, one line gives each
-count over time, and eight bars name the fifteen worst sources per metric. The trend is the gauge's history in OpenObserve:
-OpenObserve cannot read the `data_quality_snapshot` table, so a week's window is the shortest that shows a trend.
+**The Data quality tab is the importer's `data_quality{source,metric}` and `data_quality_unexplained{source,metric}` gauges**
+(#386, #5002), written by `DataQualityReportLogger` at 03:00 and empty after a restart until the next run. The second gauge is the
+count that no accepted limitation of the source explains, and 0 where one does. The top row gives the share of all events with a
+gap, and beside three of them the unexplained share. One line gives each raw count over time. Eight bars name the fifteen worst
+sources per metric, and the six that a limitation can excuse rank by the unexplained count. The trend is the gauges' history in
+OpenObserve: OpenObserve cannot read the `data_quality_snapshot` table, so a week's window is the shortest that shows a trend.
 
 **"Future events" is the panel that justifies the whole exercise.** A venue redesigns its site, the
 scraper keeps returning 200 and writing nothing, the importer reports success, and the listings

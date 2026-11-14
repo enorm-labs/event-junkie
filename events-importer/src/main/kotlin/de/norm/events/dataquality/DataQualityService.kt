@@ -1,7 +1,9 @@
 package de.norm.events.dataquality
 
 import de.norm.events.importing.EventQualityFlagRepository
+import de.norm.events.importing.EventSourceEntity
 import de.norm.events.importing.EventSourceRepository
+import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.isNonArtistName
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
@@ -30,13 +32,19 @@ class DataQualityService(
     /** The full report: every source, plus the roll-up. */
     suspend fun report(): DataQualityReportResponse {
         val rows = repository.aggregatePerSource().toList()
-        val slugsById = sourceSlugsById()
+        val sourcesById = sourcesById()
+        val slugsById = sourcesById.mapValues { it.value.slug }
         val suspectByeSource = suspectNonArtistNamesPerSource()
 
         val perSource =
             rows
                 .map { row ->
-                    metrics(label(row.eventSourceId, slugsById), row, suspectByeSource[row.eventSourceId] ?: 0L)
+                    metrics(
+                        label(row.eventSourceId, slugsById),
+                        row,
+                        suspectByeSource[row.eventSourceId] ?: 0L,
+                        excusedIssues(row.eventSourceId?.let(sourcesById::get))
+                    )
                 }.sortedBy { it.source }
 
         return DataQualityReportResponse(
@@ -96,12 +104,24 @@ class DataQualityService(
             else -> slugsById[sourceId] ?: "$UNRESOLVED_PREFIX$sourceId"
         }
 
-    private suspend fun sourceSlugsById(): Map<Long, String> =
+    private suspend fun sourceSlugsById(): Map<Long, String> = sourcesById().mapValues { it.value.slug }
+
+    private suspend fun sourcesById(): Map<Long, EventSourceEntity> =
         eventSourceRepository
             .findAll()
             .toList()
-            .mapNotNull { source -> source.id?.let { it to source.slug } }
+            .mapNotNull { source -> source.id?.let { it to source } }
             .toMap()
+
+    /**
+     * The metrics [source]'s accepted limitations excuse (#5002), by the rule the regression gate
+     * uses. `manual` and an unresolved source have no source type, so nothing excuses their events.
+     */
+    private fun excusedIssues(source: EventSourceEntity?): Set<QualityIssue> =
+        source
+            ?.let { DataQualityRegressionCheck.excusedIssues(AcceptedLimitations.declaredAspects(it.sourceType)) }
+            .orEmpty()
+            .toSet()
 
     /**
      * The one metric SQL cannot express, because `isNonArtistName` is a curated Kotlin vocabulary.
@@ -121,30 +141,60 @@ class DataQualityService(
     private fun metrics(
         slug: String,
         row: SourceQualityRow,
-        suspectNames: Long
-    ) = SourceQualityMetrics(
-        source = slug,
-        totalEvents = row.totalEvents,
-        concertsWithoutArtist = row.concertsWithoutArtist,
-        concertsWithoutArtistPct = pct(row.concertsWithoutArtist, row.totalEvents),
-        eventsTypedOther = row.eventsTypedOther,
-        eventsTypedOtherPct = pct(row.eventsTypedOther, row.totalEvents),
-        missingGenre = row.missingGenre,
-        missingGenrePct = pct(row.missingGenre, row.totalEvents),
-        missingPromoter = row.missingPromoter,
-        missingPromoterPct = pct(row.missingPromoter, row.totalEvents),
-        missingPrice = row.missingPrice,
-        missingPricePct = pct(row.missingPrice, row.totalEvents),
-        missingStartTime = row.missingStartTime,
-        missingStartTimePct = pct(row.missingStartTime, row.totalEvents),
-        suspectNonArtistTitles = suspectNames,
-        unreviewedLicence = row.unreviewedLicence,
-        unreviewedLicencePct = pct(row.unreviewedLicence, row.totalEvents),
-        titleDerivedSingletons = row.titleDerivedSingletons,
-        titleDerivedUnmatched = row.titleDerivedUnmatched,
-        flaggedAtImport = row.flaggedAtImport,
-        flaggedAtImportKeptOut = row.flaggedAtImportKeptOut
-    )
+        suspectNames: Long,
+        excused: Set<QualityIssue>
+    ): SourceQualityMetrics {
+        fun unexplained(
+            issue: QualityIssue,
+            count: Long
+        ): Long = if (issue in excused) 0L else count
+
+        val concerts = unexplained(QualityIssue.CONCERTS_WITHOUT_ARTIST, row.concertsWithoutArtist)
+        val other = unexplained(QualityIssue.EVENTS_TYPED_OTHER, row.eventsTypedOther)
+        val genre = unexplained(QualityIssue.MISSING_GENRE, row.missingGenre)
+        val promoter = unexplained(QualityIssue.MISSING_PROMOTER, row.missingPromoter)
+        val price = unexplained(QualityIssue.MISSING_PRICE, row.missingPrice)
+        val startTime = unexplained(QualityIssue.MISSING_START_TIME, row.missingStartTime)
+        return SourceQualityMetrics(
+            source = slug,
+            totalEvents = row.totalEvents,
+            concertsWithoutArtist = row.concertsWithoutArtist,
+            concertsWithoutArtistPct = pct(row.concertsWithoutArtist, row.totalEvents),
+            eventsTypedOther = row.eventsTypedOther,
+            eventsTypedOtherPct = pct(row.eventsTypedOther, row.totalEvents),
+            missingGenre = row.missingGenre,
+            missingGenrePct = pct(row.missingGenre, row.totalEvents),
+            missingPromoter = row.missingPromoter,
+            missingPromoterPct = pct(row.missingPromoter, row.totalEvents),
+            missingPrice = row.missingPrice,
+            missingPricePct = pct(row.missingPrice, row.totalEvents),
+            missingStartTime = row.missingStartTime,
+            missingStartTimePct = pct(row.missingStartTime, row.totalEvents),
+            suspectNonArtistTitles = suspectNames,
+            unreviewedLicence = row.unreviewedLicence,
+            unreviewedLicencePct = pct(row.unreviewedLicence, row.totalEvents),
+            titleDerivedSingletons = row.titleDerivedSingletons,
+            titleDerivedUnmatched = row.titleDerivedUnmatched,
+            flaggedAtImport = row.flaggedAtImport,
+            flaggedAtImportKeptOut = row.flaggedAtImportKeptOut,
+            limitationAccepted =
+                DataQualityRegressionCheck.ACCEPTED_ASPECT.keys
+                    .filter { it in excused }
+                    .map { it.key },
+            concertsWithoutArtistUnexplained = concerts,
+            concertsWithoutArtistUnexplainedPct = pct(concerts, row.totalEvents),
+            eventsTypedOtherUnexplained = other,
+            eventsTypedOtherUnexplainedPct = pct(other, row.totalEvents),
+            missingGenreUnexplained = genre,
+            missingGenreUnexplainedPct = pct(genre, row.totalEvents),
+            missingPromoterUnexplained = promoter,
+            missingPromoterUnexplainedPct = pct(promoter, row.totalEvents),
+            missingPriceUnexplained = price,
+            missingPriceUnexplainedPct = pct(price, row.totalEvents),
+            missingStartTimeUnexplained = startTime,
+            missingStartTimeUnexplainedPct = pct(startTime, row.totalEvents)
+        )
+    }
 
     private fun rollUp(perSource: List<SourceQualityMetrics>): SourceQualityMetrics {
         val total = perSource.sumOf { it.totalEvents }
@@ -155,6 +205,12 @@ class DataQualityService(
         val price = perSource.sumOf { it.missingPrice }
         val startTime = perSource.sumOf { it.missingStartTime }
         val unreviewed = perSource.sumOf { it.unreviewedLicence }
+        val concertsUnexplained = perSource.sumOf { it.concertsWithoutArtistUnexplained }
+        val otherUnexplained = perSource.sumOf { it.eventsTypedOtherUnexplained }
+        val genreUnexplained = perSource.sumOf { it.missingGenreUnexplained }
+        val promoterUnexplained = perSource.sumOf { it.missingPromoterUnexplained }
+        val priceUnexplained = perSource.sumOf { it.missingPriceUnexplained }
+        val startTimeUnexplained = perSource.sumOf { it.missingStartTimeUnexplained }
         return SourceQualityMetrics(
             source = OVERALL,
             totalEvents = total,
@@ -178,7 +234,21 @@ class DataQualityService(
             titleDerivedSingletons = perSource.sumOf { it.titleDerivedSingletons },
             titleDerivedUnmatched = perSource.sumOf { it.titleDerivedUnmatched },
             flaggedAtImport = perSource.sumOf { it.flaggedAtImport },
-            flaggedAtImportKeptOut = perSource.sumOf { it.flaggedAtImportKeptOut }
+            flaggedAtImportKeptOut = perSource.sumOf { it.flaggedAtImportKeptOut },
+            // The roll-up excuses nothing itself: each source's own excuses are in its unexplained counts.
+            limitationAccepted = emptyList(),
+            concertsWithoutArtistUnexplained = concertsUnexplained,
+            concertsWithoutArtistUnexplainedPct = pct(concertsUnexplained, total),
+            eventsTypedOtherUnexplained = otherUnexplained,
+            eventsTypedOtherUnexplainedPct = pct(otherUnexplained, total),
+            missingGenreUnexplained = genreUnexplained,
+            missingGenreUnexplainedPct = pct(genreUnexplained, total),
+            missingPromoterUnexplained = promoterUnexplained,
+            missingPromoterUnexplainedPct = pct(promoterUnexplained, total),
+            missingPriceUnexplained = priceUnexplained,
+            missingPriceUnexplainedPct = pct(priceUnexplained, total),
+            missingStartTimeUnexplained = startTimeUnexplained,
+            missingStartTimeUnexplainedPct = pct(startTimeUnexplained, total)
         )
     }
 

@@ -11,6 +11,8 @@
 ### For trends, read the daily `data_quality_snapshot` rows or the
 ### `data_quality{source=…,metric=…}` Prometheus gauges instead: a
 ### point-in-time report cannot show whether anything moved.
+### Each row's `limitationAccepted` names the metrics its declared limitations
+### excuse, and `<metric>Unexplained` counts what none explains (#5002).
 GET {{importer-host}}/api/admin/data-quality
 Accept: application/json
 

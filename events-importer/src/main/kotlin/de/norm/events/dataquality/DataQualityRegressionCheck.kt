@@ -32,7 +32,7 @@ import java.time.LocalDate
  *
  * A series whose metric maps to an aspect the source declares in its `VenueLimitations` is measured
  * but never [Verdict.regressed] (#3195). The source does not publish that field reliably, so its share
- * has no baseline worth an alert. [ACCEPTED_ASPECT] holds the mapping.
+ * has no baseline worth an alert. [excuses] holds the rule, and the report's unexplained shares use it too.
  */
 object DataQualityRegressionCheck {
     /** How far back the baseline reaches, today excluded. */
@@ -76,8 +76,8 @@ object DataQualityRegressionCheck {
     private const val EPSILON = 1e-9
 
     /**
-     * The declared aspect that takes a metric out of the gate. Only the whole `PRICE` aspect counts:
-     * a source without a presale price can still lose its box-office price.
+     * The declared aspect that takes a metric out of the gate and out of the unexplained shares. For
+     * `missingPrice`, [PRICE_PARTS] together count as `PRICE` too; see [excuses].
      */
     val ACCEPTED_ASPECT: Map<QualityIssue, LimitedAspect> =
         mapOf(
@@ -88,6 +88,13 @@ object DataQualityRegressionCheck {
             QualityIssue.MISSING_PRICE to LimitedAspect.PRICE,
             QualityIssue.MISSING_START_TIME to LimitedAspect.START_TIME
         )
+
+    /**
+     * The two price aspects that excuse `missingPrice` only together (#5002). `missingPrice` counts an
+     * event with no figure at all, and a source that publishes neither price has none to lose. One of
+     * the two alone does not excuse it: a source without a presale price can still lose its box-office price.
+     */
+    val PRICE_PARTS: Set<LimitedAspect> = setOf(LimitedAspect.PRICE_BOX_OFFICE, LimitedAspect.PRICE_PRESALE)
 
     /** The metrics no declaration can excuse: each counts work of ours or a gate's verdict, not a field the venue publishes. */
     val ALWAYS_JUDGED: Set<QualityIssue> =
@@ -190,10 +197,25 @@ object DataQualityRegressionCheck {
             METRIC_OF_SERIES[row.metric]?.takeIf { row.totalEvents > 0 }?.let { row.copy(metric = it) }
         }
 
+    /**
+     * Whether the [declared] aspects of a source excuse [issue]. The gate and the report's unexplained
+     * shares both call this, so the two cannot disagree on what a declaration excuses (#5002).
+     */
+    fun excuses(
+        declared: Set<LimitedAspect>,
+        issue: QualityIssue
+    ): Boolean {
+        val aspect = ACCEPTED_ASPECT[issue] ?: return false
+        return aspect in declared || (aspect == LimitedAspect.PRICE && declared.containsAll(PRICE_PARTS))
+    }
+
+    /** The [ACCEPTED_ASPECT] metrics the [declared] aspects excuse, in the map's order. */
+    fun excusedIssues(declared: Set<LimitedAspect>): List<QualityIssue> = ACCEPTED_ASPECT.keys.filter { excuses(declared, it) }
+
     private fun accepts(
         declared: Set<LimitedAspect>,
         metric: String
-    ): Boolean = QualityIssue.byKey(metric)?.let(ACCEPTED_ASPECT::get)?.let { it in declared } == true
+    ): Boolean = QualityIssue.byKey(metric)?.let { excuses(declared, it) } == true
 
     private fun share(row: DataQualitySnapshotEntity): Double = row.metricCount * PERCENT / row.totalEvents
 

@@ -30,6 +30,7 @@ class DataQualityMetrics(
     private val registry: MeterRegistry
 ) {
     private val gauges = ConcurrentHashMap<Pair<String, String>, AtomicLong>()
+    private val unexplained = ConcurrentHashMap<Pair<String, String>, AtomicLong>()
 
     /**
      * Publishes one measurement, registering the series on first use.
@@ -41,14 +42,29 @@ class DataQualityMetrics(
         source: String,
         metric: String,
         value: Long
-    ) {
-        gauges
-            .computeIfAbsent(source to metric) { (s, m) ->
-                val holder = AtomicLong(0)
-                registry.gauge(GAUGE, Tags.of(TAG_SOURCE, s, TAG_METRIC, m), holder) { it.get().toDouble() }
-                holder
-            }.set(value)
-    }
+    ) = holder(gauges, GAUGE, source, metric).set(value)
+
+    /**
+     * Publishes one `data_quality_unexplained{source,metric}` measurement (#5002): the count no accepted
+     * limitation of the source explains, so 0 when one excuses the metric. The same refresh as [publish].
+     */
+    fun publishUnexplained(
+        source: String,
+        metric: String,
+        value: Long
+    ) = holder(unexplained, UNEXPLAINED_GAUGE, source, metric).set(value)
+
+    private fun holder(
+        series: ConcurrentHashMap<Pair<String, String>, AtomicLong>,
+        name: String,
+        source: String,
+        metric: String
+    ): AtomicLong =
+        series.computeIfAbsent(source to metric) { (s, m) ->
+            val holder = AtomicLong(0)
+            registry.gauge(name, Tags.of(TAG_SOURCE, s, TAG_METRIC, m), holder) { it.get().toDouble() }
+            holder
+        }
 
     private val regressions = ConcurrentHashMap<Pair<String, String>, AtomicLong>()
 
@@ -63,12 +79,7 @@ class DataQualityMetrics(
     fun publishRegressions(verdicts: List<DataQualityRegressionCheck.Verdict>) {
         regressions.values.forEach { it.set(0) }
         verdicts.forEach { verdict ->
-            regressions
-                .computeIfAbsent(verdict.source to verdict.metric) { (s, m) ->
-                    val holder = AtomicLong(0)
-                    registry.gauge(REGRESSION_GAUGE, Tags.of(TAG_SOURCE, s, TAG_METRIC, m), holder) { it.get().toDouble() }
-                    holder
-                }.set(if (verdict.regressed) 1 else 0)
+            holder(regressions, REGRESSION_GAUGE, verdict.source, verdict.metric).set(if (verdict.regressed) 1 else 0)
         }
     }
 
@@ -84,6 +95,12 @@ class DataQualityMetrics(
          * became `db_events` and broke every rule written against the documented name (§7).
          */
         const val GAUGE = "data.quality"
+
+        /**
+         * `data_quality_unexplained{source,metric}`: the `data_quality` count of the six metrics an
+         * accepted limitation can excuse, or 0 when the source's declarations excuse it (#5002).
+         */
+        const val UNEXPLAINED_GAUGE = "data.quality.unexplained"
 
         /**
          * `data_quality_regression{source,metric}`: 1 while today's share is more than ten points

@@ -38,14 +38,15 @@ class DataQualityServiceTest {
 
     private fun source(
         id: Long,
-        slug: String
+        slug: String,
+        sourceType: String = "CASSIOPEIA"
     ) = EventSourceEntity(
         id = id,
         venueId = 1L,
         name = slug,
         slug = slug,
         url = "https://$slug.example",
-        sourceType = "CASSIOPEIA"
+        sourceType = sourceType
     )
 
     private fun row(
@@ -53,7 +54,9 @@ class DataQualityServiceTest {
         total: Long,
         concerts: Long = 0,
         unreviewed: Long = 0,
-        titleDerived: Long = 0
+        titleDerived: Long = 0,
+        price: Long = 0,
+        startTime: Long = 0
     ) = SourceQualityRow(
         eventSourceId = sourceId,
         totalEvents = total,
@@ -61,8 +64,8 @@ class DataQualityServiceTest {
         eventsTypedOther = 0,
         missingGenre = 0,
         missingPromoter = 0,
-        missingPrice = 0,
-        missingStartTime = 0,
+        missingPrice = price,
+        missingStartTime = startTime,
         unreviewedLicence = unreviewed,
         titleDerivedSingletons = titleDerived,
         titleDerivedUnmatched = 0,
@@ -199,5 +202,76 @@ class DataQualityServiceTest {
             val bySource = service.report().perSource.associateBy { it.source }
             bySource.getValue("alpha").suspectNonArtistTitles shouldBe 2L
             bySource.getValue("beta").suspectNonArtistTitles shouldBe 0L
+        }
+
+    /**
+     * CASSIOPEIA declares `PRICE`, so its unpriced events are explained. WUEHLMAEUSE declares the
+     * box-office price alone, which does not excuse an event with no price at all (#5002).
+     */
+    @Test
+    fun `a declared aspect excuses its metric on that source alone`() =
+        runTest {
+            coEvery { sources.findAll() } returns
+                listOf(source(1L, "alpha"), source(2L, "beta", sourceType = "WUEHLMAEUSE")).asFlow()
+            coEvery { repository.aggregatePerSource() } returns
+                listOf(row(1L, total = 10, price = 8, startTime = 2), row(2L, total = 10, price = 3)).asFlow()
+
+            val bySource = service.report().perSource.associateBy { it.source }
+
+            bySource.getValue("alpha").let {
+                it.limitationAccepted shouldBe listOf(QualityIssue.MISSING_PRICE.key)
+                it.missingPrice shouldBe 8L
+                it.missingPriceUnexplained shouldBe 0L
+                it.missingPriceUnexplainedPct shouldBe 0.0
+                it.missingStartTimeUnexplained shouldBe 2L
+            }
+            bySource.getValue("beta").let {
+                it.limitationAccepted shouldBe listOf(QualityIssue.EVENTS_TYPED_OTHER.key, QualityIssue.MISSING_GENRE.key, QualityIssue.MISSING_PROMOTER.key)
+                it.missingPriceUnexplained shouldBe 3L
+                it.missingPriceUnexplainedPct shouldBe 30.0
+            }
+        }
+
+    /** BKA Theater declares both price aspects: it publishes no figure either way, as `PRICE` says (#5002). */
+    @Test
+    fun `a source declaring the box-office and the presale price is excused for a missing price`() =
+        runTest {
+            coEvery { sources.findAll() } returns listOf(source(1L, "bka-theater", sourceType = "BKA_THEATER")).asFlow()
+            coEvery { repository.aggregatePerSource() } returns listOf(row(1L, total = 10, price = 10)).asFlow()
+
+            val metrics = service.report().perSource.single()
+
+            metrics.limitationAccepted shouldBe
+                listOf(QualityIssue.CONCERTS_WITHOUT_ARTIST.key, QualityIssue.MISSING_PROMOTER.key, QualityIssue.MISSING_PRICE.key)
+            metrics.missingPriceUnexplained shouldBe 0L
+        }
+
+    @Test
+    fun `nothing excuses the manual bucket or an unresolved source`() =
+        runTest {
+            coEvery { repository.aggregatePerSource() } returns
+                listOf(row(null, total = 4, price = 4), row(99L, total = 2, price = 2)).asFlow()
+
+            service.report().perSource.forEach {
+                it.limitationAccepted shouldBe emptyList()
+                it.missingPriceUnexplained shouldBe it.missingPrice
+            }
+        }
+
+    @Test
+    fun `overall sums the unexplained counts and keeps the raw ones`() =
+        runTest {
+            coEvery { repository.aggregatePerSource() } returns
+                listOf(row(1L, total = 100, price = 50), row(2L, total = 100, price = 50), row(null, total = 50, price = 25)).asFlow()
+            coEvery { sources.findAll() } returns
+                listOf(source(1L, "alpha"), source(2L, "beta", sourceType = "WUEHLMAEUSE")).asFlow()
+
+            val overall = service.report().overall
+
+            overall.missingPrice shouldBe 125L
+            overall.missingPricePct shouldBe 50.0
+            overall.missingPriceUnexplained shouldBe 75L
+            overall.missingPriceUnexplainedPct shouldBe 30.0
+            overall.limitationAccepted shouldBe emptyList()
         }
 }
