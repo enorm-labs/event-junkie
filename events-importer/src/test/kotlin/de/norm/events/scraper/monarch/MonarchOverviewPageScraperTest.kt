@@ -9,6 +9,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -147,6 +149,47 @@ class MonarchOverviewPageScraperTest {
         event.eventType shouldBe "CONCERT"
         event.eventDate shouldBe LocalDate.of(2026, 7, 24)
         event.sourceId shouldBe "monarch:2026-07-24-weird-youth"
+    }
+
+    @Test
+    fun `strips an ABGESAGT marker with its separator and keeps the headliner`() {
+        // The live 2026-11-14 cell (#4981).
+        val event = scraper.scrape(block("Samstag 14/11/2026-20:00", "ABGESAGT - REALLY GOOD TIME (KONZERT)"), baseUrl).single()
+
+        event.title shouldBe "REALLY GOOD TIME"
+        event.status shouldBe "CANCELLED"
+        event.eventType shouldBe "CONCERT"
+        event.sourceId shouldBe "monarch:2026-11-14-really-good-time"
+        event.artists.single().name shouldBe "REALLY GOOD TIME"
+        event.artists.single().role shouldBe ArtistRole.HEADLINER
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "ABGESAGT: REALLY GOOD TIME (KONZERT)",
+            "ABGESAGT – REALLY GOOD TIME (KONZERT)",
+            "ABGESAGT! REALLY GOOD TIME (KONZERT)",
+            "(ABGESAGT) REALLY GOOD TIME (KONZERT)",
+            "abgesagt -REALLY GOOD TIME (KONZERT)",
+            "REALLY GOOD TIME - ABGESAGT (KONZERT)",
+            "REALLY GOOD TIME (KONZERT) ABGESAGT"
+        ]
+    )
+    fun `strips every separator form of the ABGESAGT marker`(cell: String) {
+        val event = scraper.scrape(block("Samstag 14/11/2026-20:00", cell), baseUrl).single()
+
+        event.title shouldBe "REALLY GOOD TIME"
+        event.status shouldBe "CANCELLED"
+    }
+
+    @Test
+    fun `keeps a long cancelled title whole after its marker`() {
+        val title = "REALLY GOOD TIME - THE FAREWELL TOUR WITH VERY SPECIAL GUESTS FROM HAMBURG AND A LATE AFTERSHOW IN THE BAR"
+        val event = scraper.scrape(block("Samstag 14/11/2026-20:00", "ABGESAGT - $title (KONZERT)"), baseUrl).single()
+
+        event.title shouldBe title
+        event.status shouldBe "CANCELLED"
     }
 
     @Test
