@@ -195,6 +195,40 @@ class ResponseCacheTest {
             cache.loadingCount() shouldBe 0
         }
 
+    // An unconfined waiter resumes inside the loader's completeWith, before any later line of the
+    // load runs, so these see the claim exactly as the loader leaves it at completion (#4986).
+    @Test
+    fun `releases the claim before a waiter sees the load complete`(): Unit =
+        runBlocking {
+            val release = CompletableDeferred<Unit>()
+            val cache = cache()
+
+            val loader = async { cache.get(Key("calendar")) { "value".also { release.await() } } }
+            awaitLoadStarted(cache)
+            val waiter =
+                async(Dispatchers.Unconfined) {
+                    cache.get(Key("calendar")) { "unused" } to cache.loadingCount()
+                }
+            release.complete(Unit)
+
+            waiter.await() shouldBe ("value" to 0)
+            loader.await() shouldBe "value"
+        }
+
+    @Test
+    fun `hands a cancelled load to a waiter that resumes at once`(): Unit =
+        runBlocking {
+            val cache = cache()
+
+            val loader = launch { cache.get<String>(Key("calendar")) { awaitCancellation() } }
+            awaitLoadStarted(cache)
+            val waiter = async(Dispatchers.Unconfined) { cache.get(Key("calendar")) { "loaded by the waiter" } }
+            loader.cancelAndJoin()
+
+            waiter.await() shouldBe "loaded by the waiter"
+            cache.loadingCount() shouldBe 0
+        }
+
     @Test
     fun `loads different keys in parallel`(): Unit =
         runBlocking(Dispatchers.Default) {
