@@ -10,6 +10,7 @@ import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.stripFriendsTail
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -97,8 +98,10 @@ internal fun splitTagline(raw: String): Pair<String, String?> {
  * (`Doppelkonzert: Glam Jam + Mission BlueZ`), and a tribute night names the band after
  * "präsentiert von" (`BAD COMPANY- und FREE-Songs präsentiert von FREE COMPANY`), a sing-along
  * after "mit der Band" (`Mitsing Konzert mit der Band The Rollin’ Horses`), a tribute after "Tribute mit"
- * (`Beatles Tribute mit Big Tom and the Bogsnorklers`, event 13448). A trailing `live`,
- * `live und in Farbe` or `and the Band` is billing, not a second act after `und` (#3749, #3792).
+ * (`Beatles Tribute mit Big Tom and the Bogsnorklers`, event 13448). With the plural verb the acts
+ * come first, and their `& Friends` are the evening's guests: `George Kranz & Friends präsentieren das
+ * brandneue Album …` bills `George Kranz` (#4980). A trailing `live`, `live und in Farbe` or
+ * `and the Band` is billing, not a second act after `und` (#3749, #3792).
  */
 internal fun billedActs(title: String): String {
     val acts =
@@ -106,6 +109,7 @@ internal fun billedActs(title: String): String {
             ?.groupValues
             ?.get(1)
             ?.trim()
+            ?: PRESENT_THE_SHOW.find(title)?.let { stripFriendsTail(it.groupValues[1].trim()) }
             ?: title.replaceFirst(FORMAT_LABEL, "").ifBlank { title }
     return acts
         .replaceFirst(LIVE_TAIL, "")
@@ -120,6 +124,7 @@ private val TAGLINE_SEPARATOR = Regex("""\s-\s""")
 private val FORMAT_LABEL = Regex("""^\p{L}+:\s+""")
 private val LIVE_TAIL = Regex("""\s+live(?:\s+und\s+in\s+farbe)?$""", RegexOption.IGNORE_CASE)
 private val PRESENTED_BY = Regex("""\spräsentiert\s+von\s+(.+)$""", RegexOption.IGNORE_CASE)
+private val PRESENT_THE_SHOW = Regex("""^(.+?)\s+präsentieren\s+(?!von\b)""", RegexOption.IGNORE_CASE)
 private val WITH_THE_BAND = Regex("""\smit\s+der\s+band\s+(.+)$""", RegexOption.IGNORE_CASE)
 private val TRIBUTE_WITH = Regex("""\btribute\s+mit\s+(.+)$""", RegexOption.IGNORE_CASE)
 private val BAND_TAIL = Regex("""\s+(?:and\s+the|&(?:\s+the)?|und(?:\s+die)?|mit\s+der)\s+band$""", RegexOption.IGNORE_CASE)

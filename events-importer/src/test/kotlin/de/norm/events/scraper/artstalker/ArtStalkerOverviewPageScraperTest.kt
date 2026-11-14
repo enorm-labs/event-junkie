@@ -103,6 +103,17 @@ class ArtStalkerOverviewPageScraperTest {
             listOf("The Fab Four" to ArtistRole.HEADLINER)
     }
 
+    @Test
+    fun `bills the acts before präsentieren, without their friends`() {
+        // Event 13980.
+        cardArtists("George Kranz & Friends präsentieren das brandneue Album ‘Kuddelmuddel‘") shouldBe
+            listOf("George Kranz" to ArtistRole.HEADLINER)
+        cardArtists("Glam Jam und Mission BlueZ präsentieren ihr neues Album - Rock") shouldBe
+            listOf("Glam Jam" to ArtistRole.HEADLINER, "Mission BlueZ" to ArtistRole.HEADLINER)
+        cardArtists("BAD COMPANY- und FREE-Songs präsentiert von FREE COMPANY") shouldBe
+            listOf("FREE COMPANY" to ArtistRole.HEADLINER)
+    }
+
     private fun cardArtists(title: String) = card(title).artists.map { it.name to it.role }
 
     private fun card(title: String) =
