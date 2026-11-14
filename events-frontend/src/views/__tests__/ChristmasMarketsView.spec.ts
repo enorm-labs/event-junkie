@@ -13,6 +13,27 @@ vi.mock('@/composables/useEvents', () => ({
   searchEvents: (params: EventSearchParams) => searchEvents(params),
 }))
 
+// MapLibre needs WebGL. A mocked module also loads at once, so the view never shows its placeholder
+// here (#5026).
+vi.mock('@/components/VenueMap.vue', () => ({
+  default: defineComponent({
+    name: 'VenueMap',
+    props: { pins: Array<{ slug: string }>, selected: String },
+    emits: ['update:selected', 'unavailable'],
+    setup:
+      (props, { emit, slots }) =>
+      () =>
+        h('div', { 'data-testid': 'map', 'data-pins': props.pins?.length }, [
+          h('button', {
+            'data-testid': 'pick',
+            onClick: () => emit('update:selected', props.pins?.[0]?.slug),
+          }),
+          slots.default?.(),
+        ]),
+  }),
+  __esModule: true,
+}))
+
 const { default: ChristmasMarketsView } = await import('@/views/ChristmasMarketsView.vue')
 
 function market(
@@ -46,21 +67,6 @@ const stubs = {
         { 'data-slug': props.event?.slug, 'data-marker': props.marker },
         props.distance ? `${props.event?.title} · ${props.distance}` : props.event?.title,
       ),
-  }),
-  VenueMap: defineComponent({
-    name: 'VenueMap',
-    props: { pins: Array<{ slug: string }>, selected: String },
-    emits: ['update:selected', 'unavailable'],
-    setup:
-      (props, { emit, slots }) =>
-      () =>
-        h('div', { 'data-testid': 'map', 'data-pins': props.pins?.length }, [
-          h('button', {
-            'data-testid': 'pick',
-            onClick: () => emit('update:selected', props.pins?.[0]?.slug),
-          }),
-          slots.default?.(),
-        ]),
   }),
 }
 

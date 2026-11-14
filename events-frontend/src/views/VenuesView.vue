@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { LocateFixed } from '@lucide/vue'
-import { computed, defineAsyncComponent, ref, shallowRef, useTemplateRef, watch } from 'vue'
+import { computed, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import type { VenueListItem } from '@/api/types'
 import { describeError } from '@/api/client'
@@ -8,6 +8,7 @@ import { retryTransient } from '@/api/retry'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ErrorLine from '@/components/ErrorLine.vue'
+import { LazyVenueMap as VenueMap } from '@/components/lazyVenueMap'
 import ListFilterBar from '@/components/ListFilterBar.vue'
 import ListPage from '@/components/ListPage.vue'
 import MapPanel from '@/components/MapPanel.vue'
@@ -56,7 +57,6 @@ const SELECT_ROW_CLASS = 'grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:fle
 const SELECT_CLASS = 'w-full min-w-0 truncate sm:w-auto'
 
 // Loaded only when the map is shown: MapLibre is the heaviest dependency the site has.
-const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
 const venueMap = useTemplateRef<{ center(): Position | null; focusPin(slug: string): void }>(
   'venueMap',
 )
