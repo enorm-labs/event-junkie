@@ -1,4 +1,5 @@
 // The Christmas markets' own page (#4972): an event feature set by hand, which the default lists leave out.
+import { daysBetween } from '@/lib/format'
 
 import type { EventSummary } from '@/api/types'
 import { addDays, isoWeekday } from './format'
@@ -117,4 +118,36 @@ export function nearestFirst<T extends EventSummary>(
       }
       return a.distanceKm - b.distanceKm
     })
+}
+
+/** How many days ahead a market's opening or ending earns a marker in its row (#5006). */
+const MARKER_DAYS = 6
+
+/**
+ * The one state word a market's row carries about its dates: opening soon, last day, or ending soon. A one-day market
+ * has its own two: on its day, or on a day in the next {@link MARKER_DAYS}.
+ */
+export type MarketMarker = {
+  kind: 'opens' | 'lastDay' | 'endsSoon' | 'todayOnly' | 'onlyOn'
+  day: string
+}
+
+/**
+ * The marker for a market's run on [today], a Berlin ISO date, or `null`. A run with no end date is a run of one day.
+ * When the opening and the ending both fall in the next {@link MARKER_DAYS} days, the ending wins.
+ */
+export function marketMarker(
+  run: { eventDate?: string | null; endDate?: string | null },
+  today: string,
+): MarketMarker | null {
+  if (!run.eventDate) return null
+  const ends = run.endDate ?? run.eventDate
+  const oneDay = ends === run.eventDate
+  const untilEnd = daysBetween(today, ends)
+  if (untilEnd === 0) return { kind: oneDay ? 'todayOnly' : 'lastDay', day: ends }
+  if (untilEnd > 0 && untilEnd <= MARKER_DAYS)
+    return { kind: oneDay ? 'onlyOn' : 'endsSoon', day: ends }
+  const untilStart = daysBetween(today, run.eventDate)
+  if (untilStart > 0 && untilStart <= MARKER_DAYS) return { kind: 'opens', day: run.eventDate }
+  return null
 }

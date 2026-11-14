@@ -28,9 +28,11 @@ import { useLocation } from '@/composables/useLocation'
 import { useMarketFilters } from '@/composables/useMarketFilters'
 import {
   CHRISTMAS_MARKET,
+  type ChristmasMarket,
   MARKET_NEAREST,
   MARKET_TODAY,
   MARKET_WEEKEND,
+  marketMarker,
   nearestFirst,
 } from '@/lib/christmasMarkets'
 import { MARKET_KIND_PREFIX, MARKET_KINDS } from '@/lib/eventFeatures'
@@ -217,6 +219,29 @@ function dayRange(market: EventSummary): string {
     ? formatDayRange(market.eventDate, market.endDate ?? market.eventDate)
     : ''
 }
+
+const weekday = computed(
+  () => new Intl.DateTimeFormat(locale.value, { weekday: 'long', timeZone: 'UTC' }),
+)
+
+/**
+ * "Ab Freitag", "Letzter Tag", "Nur noch bis Sonntag", "Nur heute" or "Nur am Sonntag" (#5006), or nothing. A market
+ * entered per block of days is read as one run, from its first block's start to its last block's end.
+ */
+function marker(market: ChristmasMarket<EventSummary>): string | undefined {
+  const first = market.blocks[0]
+  const last = market.blocks[market.blocks.length - 1]
+  const found = marketMarker(
+    { eventDate: first?.eventDate, endDate: last?.endDate ?? last?.eventDate },
+    today,
+  )
+  if (!found) return undefined
+  if (found.kind === 'lastDay' || found.kind === 'todayOnly') {
+    return t(`christmasMarkets.marker.${found.kind}`)
+  }
+  const day = weekday.value.format(new Date(`${found.day}T00:00:00Z`))
+  return t(`christmasMarkets.marker.${found.kind}`, { day })
+}
 </script>
 
 <template>
@@ -396,6 +421,10 @@ function dayRange(market: EventSummary): string {
           >
             <p class="text-body text-muted-foreground tabular-nums">
               {{ [selectedBlocks, selectedDistance].filter(Boolean).join(' · ') }}
+              <template v-if="marker(selectedMarket)">
+                <span aria-hidden="true"> · </span>
+                <span class="font-medium text-primary">{{ marker(selectedMarket) }}</span>
+              </template>
             </p>
             <RouterLink
               :to="localePath(`/events/${selectedMarket.shown.slug}`)"
@@ -414,6 +443,7 @@ function dayRange(market: EventSummary): string {
               :key="market.key"
               :distance="distance(distanceKm)"
               :event="market.shown"
+              :marker="marker(market)"
               as="h3"
             />
           </div>

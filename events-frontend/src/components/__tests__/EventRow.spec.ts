@@ -228,4 +228,34 @@ describe('EventRow', () => {
     expect(row.find('[data-testid="pick-badge"]').exists()).toBe(true)
     expect(row.text()).toContain('Cancelled')
   })
+
+  it('shows no marker by default, and a marker in place of the state word (#5006)', () => {
+    const running = { ...event, soldOut: false, eventDate: '2026-06-12', endDate: '2026-06-16' }
+    const plain = mount(EventRow, { props: { event: running }, global: { stubs } })
+    expect(plain.text()).toContain('Running since Fri')
+    expect(plain.find('.text-primary').text()).toBe('Running since Fri')
+
+    const marked = mount(EventRow, {
+      props: { event: running, marker: 'Until Tuesday only' },
+      global: { stubs },
+    })
+    expect(marked.find('.text-primary').text()).toBe('Until Tuesday only')
+    expect(marked.text()).not.toContain('Running since')
+  })
+
+  it('keeps a cancelled or a past state over the marker (#5006)', () => {
+    const cancelled = mount(EventRow, {
+      props: { event: { ...event, status: 'CANCELLED' }, marker: 'Last day' },
+      global: { stubs },
+    })
+    expect(cancelled.text()).toContain('Cancelled')
+    expect(cancelled.text()).not.toContain('Last day')
+
+    const past = mount(EventRow, {
+      props: { event: { ...event, eventDate: '2026-06-14' }, marker: 'Last day' },
+      global: { stubs },
+    })
+    expect(past.text()).toContain('Past')
+    expect(past.text()).not.toContain('Last day')
+  })
 })
