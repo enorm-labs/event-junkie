@@ -71,20 +71,18 @@ class ResponseCache(
         key: Any,
         load: suspend () -> V
     ): V {
-        cache.getIfPresent(key)?.let { return it as V }
-        val mine = CompletableDeferred<Any>()
-        val running = loading.putIfAbsent(key, mine)
-        return when {
-            running == null -> loadAs(key, mine, load)
-
-            // The loader's visitor left: ask again, and one of the waiters becomes the loader.
-            running.joinedCancelled() -> get(key, load)
-
-            else -> running.await() as V
+        while (true) {
+            cache.getIfPresent(key)?.let { return it as V }
+            val mine = CompletableDeferred<Any>()
+            val running = loading.putIfAbsent(key, mine) ?: return loadAs(key, mine, load)
+            if (!running.joinedCancelled()) return running.await() as V
+            // The loader's visitor left: drop its claim, so one of the waiters becomes the loader.
+            loading.remove(key, running)
         }
     }
 
-    // completeWith hands a cancellation to the waiters and getOrThrow rethrows it.
+    // completeWith hands a cancellation to the waiters and getOrThrow rethrows it. The claim goes
+    // first: a waiter can resume inside completeWith, and a retry must not find it (#4986).
     @Suppress("UNCHECKED_CAST", "SuspendFunSwallowedCancellation")
     private suspend fun <V : Any> loadAs(
         key: Any,
@@ -94,8 +92,8 @@ class ResponseCache(
         // A load that finished between the miss and the claim left its value behind.
         runCatching { (cache.getIfPresent(key) as V?) ?: load().also { cache.put(key, it) } }
             .also { result ->
-                mine.completeWith(result)
                 loading.remove(key, mine)
+                mine.completeWith(result)
             }.getOrThrow()
 
     /** Waits for the load without taking on its failure; only this caller's cancellation throws. */
