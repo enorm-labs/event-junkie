@@ -96,7 +96,7 @@ language gets the house language, if the event has a language type. An explicit 
 
 ## 3. What is deliberately excluded
 
-Four exclusions, and one format that is imported but kept out of the default lists (§3.5). Each section names the
+Four exclusions, and two formats that are kept out of the default lists (§3.5, §3.7). Each section names the
 predicates that implement it, so a rule can be revisited without archaeology.
 
 ### 3.1 Sport
@@ -169,6 +169,9 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Colosseum           | `MARKET_TITLE` (`ColosseumOverviewPageScraper.kt`)       | A title word that ends in `markt`, or the word `market`: the `Weihnachtsrodeo` design market                                         |
 | Badehaus            | `WORKSHOP_TITLE` (`BadehausOverviewPageScraper.kt`)      | A title that names a `Workshop`. A subtitle that names one is not enough: `Café com Samba` is a dance night                          |
 | Duncker Club        | `MARKET` (`DunckerOverviewPageScraper.kt`)               | A name or style line that names a `Market` or ends in `markt`: the `Dark Market` design and flea market                              |
+
+A market in a venue's feed stays out, a Christmas market too. Christmas markets get their own page, entered by hand
+(§3.7). The predicates above do not change for it.
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
@@ -252,6 +255,24 @@ only duplicates them.
 
 An item that spans days and bills a line-up stays, because it is one event over several days.
 
+### 3.7 Christmas markets
+
+**Entered by hand, marked `christmas-market`, and kept out of the default lists** (#4972). A Christmas market is not
+an evening on a stage, so no list shows it. But visitors look for the markets in the season. The page
+`/christmas-markets` lists them, with a map. The home page links to it from 10 November to 6 January.
+
+- **One market is one event**, from its first day to its last (`endDate`), at a venue of its own. The opening hours change
+  per weekday, so they go into the description. The entry fee goes into the price fields, or into the price note when it
+  depends on the day or the hour.
+- **The facts come from each market's own site**, or from its organiser. A list of markets in the press is for discovery
+  only. Its text is not copied.
+- **The page lists the season's public markets**: Christmas markets, winter craft markets and Christmas funfairs. A
+  bazaar, a flea market and a market run by a shop, such as a wine merchant, stay out.
+- **A market in a venue's feed still stays out** (§3.2). The scrapers do not mark it, because the page is entered by hand.
+- The public API lists such an event only when the request asks for it. The request names `feature=christmas-market`,
+  or a venue, artist, promoter, festival or text filter. The event page and the venue page always show it.
+- A concert on a market stage is a normal event and stays in every list.
+
 ## 4. What is in scope, and sometimes surprises people
 
 - **Not just live music.** A theatre, a comedy club or an arena-scale room is in scope. **Bar jeder Vernunft** set that precedent: its programme is imported,
@@ -279,6 +300,7 @@ The one that is still open is open on _sequencing_, not on principle.
 | **Sport?**                                                                                   | ❌ **No**                     | —                | Settled. Different venues, different audience, and past the point where this is a music app                              |
 | **Recurring bar nights?** (a punk Tresen, an Open Jam, a karaoke night)                      | ✅ **Yes** — if not daily     | nothing          | Low. A night that recurs weekly or fortnightly is programme. A bar that is the same every evening is opening hours       |
 | **Children's shows?** (Kita mornings, family afternoons)                                     | ✅ **Marked**                 | nothing          | Imported as `for-children` and kept out of the default lists (#3796). §3.5 holds the rule                                |
+| **Christmas markets?** (Gendarmenmarkt, Lucia, Spandau, …)                                   | ✅ **Own page**               | nothing          | Entered by hand as `christmas-market` and kept out of the default lists (#4972). §3.7 holds the rule                     |
 | **Online-only livestream?**                                                                  | ❌ **No**                     | —                | Settled. There is no venue to go to. A public viewing at a venue is a `SCREENING` and stays in                           |
 
 **The opening hours of a bar are not a night.** Crack Bellmer lists its bar opening as `BELLMER BAR` at 19:00, with no

@@ -11,11 +11,11 @@ let lastSurprise: string | undefined
 <script lang="ts" setup>
 import { computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { ArrowRight, CalendarDays, Compass, Dices } from '@lucide/vue'
+import { ArrowRight, CalendarDays, Compass, Dices, TreePine } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import ErrorLine from '@/components/ErrorLine.vue'
 import EventCard from '@/components/EventCard.vue'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, SECTION_TITLE_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, SECTION_TITLE_CLASS, TEXT_LINK_CLASS } from '@/lib/utils'
 import ClubStamp from '@/components/ClubStamp'
 import EventRow from '@/components/EventRow.vue'
 import TodayEvents from '@/components/TodayEvents.vue'
@@ -23,6 +23,7 @@ import FestivalNotice from '@/components/FestivalNotice.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useNarrowViewport } from '@/composables/useNarrowViewport'
 import { useTodayEvents, useUpcomingEvents } from '@/composables/useEvents'
+import { inChristmasMarketSeason } from '@/lib/christmasMarkets'
 import { todayIso, tomorrowIso } from '@/lib/format'
 import { splitDayList } from '@/lib/longRuns'
 import { pickSurprise, SMALL_ROOM_CAPACITY, surpriseCandidates } from '@/lib/surpriseMe'
@@ -50,6 +51,9 @@ const { t, locale } = useI18n()
 useStructuredData(() => websiteJsonLd(locale.value as Locale))
 // The compact view is a global display preference — see `useCompactView`.
 const { compact } = useCompactView()
+
+// The markets have their own page, out of every list; in their season the home page points to it (#4972).
+const christmasMarketSeason = inChristmasMarketSeason(todayIso())
 
 const todayTotal = computed(() => today.data.value?.length ?? 0)
 
@@ -106,6 +110,24 @@ function surpriseMe() {
     <!-- Pulled up into the hero's bottom padding: with the section rhythm on top it sat about
          100px below the buttons, further from them than from the list it introduces. -->
     <FestivalNotice class="-mt-8 sm:-mt-10" />
+
+    <aside
+      v-if="christmasMarketSeason"
+      :aria-label="t('christmasMarkets.homeTeaser')"
+      :class="[CARD_LIST_CLASS, '-mt-8 sm:-mt-10']"
+      data-testid="christmas-market-teaser"
+    >
+      <div class="space-y-1 py-4 text-body">
+        <RouterLink
+          :to="localePath('/christmas-markets')"
+          :class="['inline-flex items-center gap-1 font-medium', TEXT_LINK_CLASS]"
+        >
+          <TreePine aria-hidden="true" class="size-4" />
+          {{ t('christmasMarkets.homeTeaser') }}
+        </RouterLink>
+        <p class="text-muted-foreground">{{ t('christmasMarkets.homeTeaserHint') }}</p>
+      </div>
+    </aside>
 
     <!-- Headings by scale, not the mono eyebrow: at 14 px "Upcoming" sat in the grid's own rhythm
          and read as one more row of cards (#2347). The count stays outside the heading's name. -->

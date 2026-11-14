@@ -23,7 +23,11 @@ enum class PinnedField(
         ->
         e.copy(status = s.status, relocatedTo = s.relocatedTo, relocatedOn = s.relocatedOn)
     }),
-    EVENT_DATE("eventDate", { it.eventDate }, { e, s -> e.copy(eventDate = s.eventDate, endDate = s.endDate, endTime = s.endTime) }),
+
+    // The end belongs to the date, so a hand change to the last day pins it (#4972).
+    EVENT_DATE("eventDate", { listOf(it.eventDate, it.endDate) }, { e, s ->
+        e.copy(eventDate = s.eventDate, endDate = s.endDate, endTime = s.endTime)
+    }),
     DOORS_TIME("doorsTime", { it.doorsTime }, { e, s -> e.copy(doorsTime = s.doorsTime) }),
     START_TIME("startTime", { it.startTime }, { e, s -> e.copy(startTime = s.startTime) }),
     IMAGE_URL("imageUrl", { it.imageUrl }, { e, s -> e.copy(imageUrl = s.imageUrl, imageWithheld = s.imageWithheld) }),

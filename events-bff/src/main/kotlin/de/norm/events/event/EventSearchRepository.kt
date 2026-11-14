@@ -88,18 +88,26 @@ data class EventFilter(
     val followed: FollowedIds? = null
 ) {
     /**
-     * The search leaves out a [FOR_CHILDREN] event unless the filter asks for that feature or names a
-     * venue, an artist, a promoter, a festival or a text, each a sign the visitor is looking for it (#3796).
+     * The [HIDDEN_FEATURES] the search leaves out: each one the filter does not ask for, unless the filter names a
+     * venue, an artist, a promoter, a festival or a text, each a sign the visitor is looking for it (#3796, #4972).
      */
-    val hidesForChildren: Boolean
+    val hiddenFeatures: List<String>
         get() =
-            FOR_CHILDREN !in features &&
-                venueSlugs.isEmpty() &&
-                listOf(artistSlug, promoterSlug, festivalSlug, query).all { it.isNullOrBlank() }
+            if (venueSlugs.isNotEmpty() || listOf(artistSlug, promoterSlug, festivalSlug, query).any { !it.isNullOrBlank() }) {
+                emptyList()
+            } else {
+                HIDDEN_FEATURES.filterNot { it in features }
+            }
 
     companion object {
         /** The feature slug of a show for small children (EVENT_SCOPE.md §3.5). */
         const val FOR_CHILDREN = "for-children"
+
+        /** The feature slug of a Christmas market, entered by hand for its own page (EVENT_SCOPE.md §3.6). */
+        const val CHRISTMAS_MARKET = "christmas-market"
+
+        /** The features a default list leaves out. */
+        val HIDDEN_FEATURES = listOf(FOR_CHILDREN, CHRISTMAS_MARKET)
 
         /** Before this on its end day, an earlier night is over for the list's `running=true` (#2923). */
         val RUNNING_CUTOFF: LocalTime = LocalTime.of(12, 0)
@@ -389,7 +397,7 @@ class EventSearchRepository(
      * Applies the many-to-many filters as `EXISTS` subqueries from one template parameterized by
      * [Association]; each correlates on `event_id = e.id`, so it tests membership without
      * multiplying the outer rows. The event features are an `IN` over their own table, and a
-     * children's show is left out where [EventFilter.hidesForChildren].
+     * children's show or a Christmas market is left out where [EventFilter.hiddenFeatures] names it.
      */
     private fun appendAssociationFilters(
         filter: EventFilter,
@@ -426,10 +434,11 @@ class EventSearchRepository(
             params["features"] = filter.features
             params["featureCount"] = filter.features.size.toLong()
         }
-        if (filter.hidesForChildren) {
+        val hidden = filter.hiddenFeatures
+        if (hidden.isNotEmpty()) {
             conditions +=
-                "NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_feature ef WHERE ef.event_id = e.id AND ef.feature = :forChildren)"
-            params["forChildren"] = EventFilter.FOR_CHILDREN
+                "NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_feature ef WHERE ef.event_id = e.id AND ef.feature IN (:hiddenFeatures))"
+            params["hiddenFeatures"] = hidden
         }
     }
 

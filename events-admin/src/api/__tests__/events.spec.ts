@@ -398,6 +398,22 @@ describe('toCreateRequest', () => {
     })
   })
 
+  it('sends the last day and the price note of a run (#4972)', () => {
+    const request = toCreateRequest(
+      newEventForm({ endDate: '2026-12-31', priceNote: ' Mo–Do frei, Fr–So 2 € ' }),
+      'kulturhaus-x',
+    )
+
+    expect(request).toMatchObject({ endDate: '2026-12-31', priceNote: 'Mo–Do frei, Fr–So 2 €' })
+  })
+
+  it('leaves the end out of a one-day event, and refuses one before the date', () => {
+    expect(toCreateRequest(newEventForm(), 'kulturhaus-x')).not.toHaveProperty('endDate')
+    expect(() => toCreateRequest(newEventForm({ endDate: '2026-11-13' }), 'kulturhaus-x')).toThrow(
+      'The last day is before the date.',
+    )
+  })
+
   it('sends the subtitle and description, trimmed', () => {
     const request = toCreateRequest(
       newEventForm({ subtitle: ' Vinyl only ', description: ' Bring your records.\n' }),

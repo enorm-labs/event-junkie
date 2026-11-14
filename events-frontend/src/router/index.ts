@@ -127,6 +127,15 @@ const router = createRouter({
           component: () => import('../views/PromotersView.vue'),
         },
         {
+          path: 'christmas-markets',
+          name: 'christmas-markets',
+          meta: {
+            titleKey: 'pageTitle.christmasMarkets',
+            descriptionKey: 'pageDescription.christmasMarkets',
+          },
+          component: () => import('../views/ChristmasMarketsView.vue'),
+        },
+        {
           path: 'promoters/:slug',
           name: 'promoter',
           component: () => import('../views/PromoterDetailView.vue'),

@@ -9,7 +9,8 @@ import com.fasterxml.jackson.annotation.JsonValue
  *
  * The [slug] is what `event_feature.feature`, the BFF's `feature=` parameter and the frontend's
  * translation keys carry; [ordinal] is the display order. [EventFeatureRules] sets them from the stored text,
- * and a scraper sets [FOR_CHILDREN] from what its page says (`ScrapedEvent.features`).
+ * a scraper sets [FOR_CHILDREN] from what its page says (`ScrapedEvent.features`), and an operator sets
+ * [CHRISTMAS_MARKET] in the admin editor.
  *
  * Not here: audience labels that are our opinion about visitors (#327, #2379), and an age limit,
  * which is a number and needs its own field.
@@ -52,7 +53,13 @@ enum class EventFeature(
      * A show for small children, as the venue bills it (EVENT_SCOPE.md §3.5, #3796). The BFF leaves it out of a list that
      * does not ask for it. A show for teenagers and a children's band on a real stage are not this.
      */
-    FOR_CHILDREN("for-children");
+    FOR_CHILDREN("for-children"),
+
+    /**
+     * A Christmas market, entered by hand for the seasonal page (EVENT_SCOPE.md §3.6, #4972). No rule and no scraper sets
+     * it. The BFF leaves it out of a list that does not ask for it.
+     */
+    CHRISTMAS_MARKET("christmas-market");
 
     companion object {
         /** The feature whose [slug] matches, or `null` for a slug the vocabulary does not know. */
