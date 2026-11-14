@@ -190,20 +190,51 @@ class RemindersFlowTest : BaseControllerTest() {
         }
 
     @Test
-    fun `a cancelled and a postponed event stay silent, a relocated one names where it moved`() =
+    fun `a cancelled and a postponed event stay silent, also with a stale relocation note`() =
         runBlocking<Unit> {
+            insertVenue("Huxleys Neue Welt", "huxleys-neue-welt")
             val cancelled = insertEvent(club, "Cancelled", "cancelled", WINTER)
             val postponed = insertEvent(club, "Postponed", "postponed", WINTER)
-            val relocated = insertEvent(club, "Relocated", "relocated", WINTER)
             insertEvent(club, "Postponed", "postponed-new", WINTER.plusDays(14))
-            listOf("cancelled", "postponed", "relocated", "postponed-new").forEach { mark(it) }
-            status(cancelled, "CANCELLED")
-            status(postponed, "POSTPONED")
-            status(relocated, "RELOCATED", "Astra")
+            listOf("cancelled", "postponed", "postponed-new").forEach { mark(it) }
+            status(cancelled, "CANCELLED", "huxleys")
+            status(postponed, "POSTPONED", "huxleys")
             subscribe()
 
-            store.due(WINTER).map { it.slug to it.place } shouldBe listOf("relocated" to "Astra")
-            store.due(WINTER.plusDays(14)).map { it.slug } shouldBe listOf("postponed-new")
+            store.due(WINTER).shouldBeEmpty()
+            store.due(WINTER.plusDays(14)).map { it.slug to it.place } shouldBe listOf("postponed-new" to "Columbiahalle")
+        }
+
+    @Test
+    fun `a relocated event names the venue its note resolves to, as the event page does`() =
+        runBlocking<Unit> {
+            insertVenue("Huxleys Neue Welt", "huxleys-neue-welt")
+            val moved = insertEvent(club, "Hatebreed", "hatebreed", WINTER, startTime = LocalTime.of(19, 0))
+            val unknown = insertEvent(club, "Relocated", "relocated", WINTER, startTime = LocalTime.of(20, 0))
+            insertEvent(club, "Moderat", "moderat", WINTER, startTime = LocalTime.of(21, 0))
+            listOf("hatebreed", "relocated", "moderat").forEach { mark(it) }
+            status(moved, "RELOCATED", "huxleys")
+            status(unknown, "RELOCATED", "Astra")
+            subscribe()
+
+            store.due(WINTER).map { it.slug to it.place } shouldBe
+                listOf("hatebreed" to "Huxleys Neue Welt", "relocated" to "Astra", "moderat" to "Columbiahalle")
+        }
+
+    @Test
+    fun `a long resolved venue name reaches the push whole`() =
+        runBlocking<Unit> {
+            val long = "Kulturbrauerei Maschinenhaus und Kesselhaus am Prenzlauer Berg, Eingang Sredzkistraße"
+            insertVenue(long, "kulturbrauerei-maschinenhaus")
+            val moved = insertEvent(club, "Moderat", "moderat", WINTER)
+            mark("moderat")
+            status(moved, "RELOCATED", "Kulturbrauerei")
+            subscribe()
+
+            val due = store.due(WINTER)
+
+            due.map { it.place } shouldBe listOf(long)
+            ReminderPush.message(due).title shouldBe "Tonight: Moderat at $long"
         }
 
     @Test
