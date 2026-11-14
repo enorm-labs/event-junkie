@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-type Rules = { createScript?: (s: string) => unknown; createScriptURL?: (s: string) => unknown }
+type Rules = {
+  createHTML?: (s: string) => unknown
+  createScript?: (s: string) => unknown
+  createScriptURL?: (s: string) => unknown
+}
 
 function stubTrustedTypes() {
   const policies = new Map<string, Rules>()
@@ -26,10 +30,10 @@ describe('trustedTypes', () => {
     expect(() => policies.get('json-ld')!.createScript!('alert(1)')).toThrow(SyntaxError)
   })
 
-  it('lets the default policy vouch for the map worker and nothing else', async () => {
+  it('lets the default policy vouch for the map worker and its attribution, and nothing else', async () => {
     const policies = stubTrustedTypes()
-    const { allowWorkerUrl } = await import('@/lib/trustedTypes')
-    allowWorkerUrl('/assets/maplibre-gl-worker-abc.js')
+    const { allowMapStrings } = await import('@/lib/trustedTypes')
+    allowMapStrings('/assets/maplibre-gl-worker-abc.js', '<a href="https://osm.org">© OSM</a>')
     const rules = policies.get('default')!
     expect(rules.createScriptURL!(`${location.origin}/assets/maplibre-gl-worker-abc.js`)).toBe(
       `${location.origin}/assets/maplibre-gl-worker-abc.js`,
@@ -37,12 +41,16 @@ describe('trustedTypes', () => {
     expect(() => rules.createScriptURL!('https://evil.example/x.js')).toThrow(
       'Script URL not allowed',
     )
+    expect(rules.createHTML!('<a href="https://osm.org">© OSM</a>')).toBe(
+      '<a href="https://osm.org">© OSM</a>',
+    )
+    expect(() => rules.createHTML!('<img src=x onerror=alert(1)>')).toThrow('HTML not allowed')
     expect(rules.createScript).toBeUndefined()
   })
 
   it('hands back the plain string where the browser has no Trusted Types', async () => {
-    const { allowWorkerUrl, jsonLdScript } = await import('@/lib/trustedTypes')
+    const { allowMapStrings, jsonLdScript } = await import('@/lib/trustedTypes')
     expect(jsonLdScript('{}')).toBe('{}')
-    expect(() => allowWorkerUrl('/assets/w.js')).not.toThrow()
+    expect(() => allowMapStrings('/assets/w.js', '© OSM')).not.toThrow()
   })
 })

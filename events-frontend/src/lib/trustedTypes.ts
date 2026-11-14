@@ -5,6 +5,7 @@
  */
 
 type Policy = {
+  createHTML?: (input: string) => unknown
   createScript?: (input: string) => unknown
   createScriptURL?: (input: string) => unknown
 }
@@ -32,14 +33,19 @@ export function jsonLdScript(text: string): string {
 let defaultMade = false
 
 /**
- * Lets MapLibre start its worker from [url] and from nothing else. MapLibre passes the URL as a string, so only the
- * `default` policy can vouch for it; every other string at a script-URL sink still throws.
+ * Lets MapLibre start its worker from [workerUrl] and parse the map's own [attribution], and nothing else. MapLibre
+ * passes both as strings (the worker URL, and the attribution to `DOMParser` in its sanitizer), so only the `default`
+ * policy can vouch for them; every other string at an HTML or script-URL sink still throws.
  */
-export function allowWorkerUrl(url: string): void {
+export function allowMapStrings(workerUrl: string, attribution: string): void {
   const tt = factory()
   if (!tt || defaultMade) return
-  const allowed = new URL(url, location.href).href
+  const allowed = new URL(workerUrl, location.href).href
   tt.createPolicy('default', {
+    createHTML: (input) => {
+      if (input !== attribution) throw new TypeError(`HTML not allowed: ${input.slice(0, 80)}`)
+      return input
+    },
     createScriptURL: (input) => {
       if (new URL(input, location.href).href !== allowed)
         throw new TypeError(`Script URL not allowed: ${input}`)
