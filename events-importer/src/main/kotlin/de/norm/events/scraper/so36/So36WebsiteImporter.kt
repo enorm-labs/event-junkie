@@ -8,8 +8,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.childrensShowPhrase
-import de.norm.events.scraper.forChildrenIf
+import de.norm.events.scraper.withChildrensShowsMarked
 import org.springframework.stereotype.Component
 
 /**
@@ -45,16 +44,7 @@ class So36WebsiteImporter(
         url: String,
         etag: String?,
         lastModified: String?
-    ): ImportResult =
-        when (val result = super.importEvents(url, etag, lastModified)) {
-            is ImportResult.Success -> {
-                result.copy(events = result.events.map { it.forChildrenIf(childrensShowPhrase(it.title, it.subtitle)) })
-            }
-
-            else -> {
-                result
-            }
-        }
+    ): ImportResult = super.importEvents(url, etag, lastModified).withChildrensShowsMarked()
 }
 
 val SO36_LIMITATIONS =

@@ -28,6 +28,17 @@ fun ScrapedEvent.forChildren(phrase: String): ScrapedEvent =
 /** [forChildren] when [phrase] is not null. */
 fun ScrapedEvent.forChildrenIf(phrase: String?): ScrapedEvent = phrase?.let(::forChildren) ?: this
 
+/**
+ * Every event of a successful result marked for children where [childrensShowPhrase] reads the billing.
+ * For a source whose cue survives only the page merge, so neither page alone decides it (#3796).
+ */
+internal fun ImportResult.withChildrensShowsMarked(): ImportResult =
+    if (this is ImportResult.Success) {
+        copy(events = events.map { it.forChildrenIf(childrensShowPhrase(it.title, it.subtitle)) })
+    } else {
+        this
+    }
+
 private val CHILDRENS_SHOW =
     Regex(
         listOf(
