@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.encodeForUri
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hrefAt
@@ -337,10 +338,9 @@ class PrivatclubOverviewPageScraper(
                     !p.hasClass("genre") &&
                         !p.hasClass("genremobile") &&
                         p.closest(".veranstaltertext") == null
-                }.map { it.text().trim() }
-                .filter { it.isNotBlank() }
+                }.mapNotNull { it.descriptionText() }
 
-        return paragraphs.joinToString("\n").takeIf { it.isNotBlank() }
+        return paragraphs.joinToString("\n\n").takeIf { it.isNotBlank() }
     }
 
     /**

@@ -353,7 +353,7 @@ private val SUBTITLE_CREDIT = Regex("""^\s*(?:$PRESENTED_BY_WORDS)\b""", RegexOp
  */
 private fun Document.descriptionLines(): List<String> =
     select(".product_description > p, .product_description > div")
-        .flatMap { htmlParagraphText(it.html())?.lines().orEmpty() }
+        .flatMap { htmlParagraphText(it.html())?.lines().orEmpty().filter(String::isNotEmpty) }
 
 /**
  * The promoters a night filed under the venue credits in its description (#3319): the first line

@@ -109,8 +109,8 @@ class KreuzwerkWebsiteImporterTest {
                 listOf("Banana Moon", "Massimiliano Pagliara", "BYRON YEATES", "Cashu", "Chris Cruse", "Majdolen", "Stathis")
             night.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
             night.description shouldBe
-                "Power Dance Club and BUTT Magazine revive their love affair in Berlin. Aw!\n" +
-                "Join us for a very special 14 hour function, featuring a new BUTT-curated chill out space: the XXX KINO\n" +
+                "Power Dance Club and BUTT Magazine revive their love affair in Berlin. Aw!\n\n" +
+                "Join us for a very special 14 hour function, featuring a new BUTT-curated chill out space: the XXX KINO\n\n" +
                 "Expect the usual sweaty dance floors ;)"
             night.ticketUrl.shouldBeNull()
         }

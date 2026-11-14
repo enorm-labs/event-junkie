@@ -27,7 +27,7 @@ class GalilaeakircheEventPageScraperTest {
         event.pricePresale.shouldBeNull()
         event.priceNote.shouldBeNull()
         event.ticketUrl.shouldBeNull()
-        event.description!! shouldStartWith "ZEA / ZE4\nArnold de Boer (Niederlande): Gitarre, Gesang"
+        event.description!! shouldStartWith "ZEA / ZE4\n\nArnold de Boer (Niederlande): Gitarre, Gesang"
         event.description shouldContain "Zea greift die Zeit"
     }
 

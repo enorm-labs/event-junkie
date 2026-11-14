@@ -6,6 +6,7 @@ import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
@@ -55,6 +56,7 @@ class SlaughterhouseOverviewPageScraperTest {
         concert.imageUrl shouldBe "https://slaughterhouse-berlin.de/wp-content/uploads/2026/09/image-3.png"
         concert.artists.map { it.name } shouldBe listOf("Tyske Ludder", "To Avoid")
         concert.description!! shouldNotContain "Tickets:"
+        concert.description shouldContain "\n\n" // a gap between the paragraphs (events 13953, 13955)
     }
 
     @Test

@@ -53,7 +53,7 @@ class GalilaeakircheEventPageScraper {
         document
             .select("main .vsel-content .vsel-acf-beschreibung .acf-field-value, main .vsel-content div[class^=vsel-acf-band_] .acf-field-value")
             .mapNotNull { htmlParagraphText(it.html()) }
-            .joinToString("\n")
+            .joinToString("\n\n")
             .blankToNull()
 
     private companion object {

@@ -27,7 +27,7 @@ class BkaTheaterProductionPageScraper {
                 ?.filterNot { LINK_ONLY.matches(it) }
                 .orEmpty()
         return BkaTheaterProduction(
-            description = text.joinToString("\n").blankToNull(),
+            description = text.joinToString("\n").replace(BLANK_RUN, "\n\n").blankToNull(),
             doorsLead = DOORS_LEAD.find(document.text())?.let(::toDuration)
         )
     }
@@ -42,5 +42,8 @@ class BkaTheaterProductionPageScraper {
 
         /** A paragraph that is only the act's social link (`instagram.com/friedemannweise`). */
         val LINK_ONLY = Regex("""^\S+\.\S+/\S*$""")
+
+        /** The blank lines a dropped link paragraph leaves on both sides of it. */
+        val BLANK_RUN = Regex("""\n{3,}""")
     }
 }

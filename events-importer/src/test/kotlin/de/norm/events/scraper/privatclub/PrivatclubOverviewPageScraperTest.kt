@@ -58,6 +58,7 @@ class PrivatclubOverviewPageScraperTest {
             concert.status shouldBe "SCHEDULED"
             concert.description shouldContain "American singer-songwriter"
             concert.description shouldContain "five full-length albums"
+            concert.description shouldContain "\n\n" // a gap between the paragraphs (event 13939)
         }
 
         @Test

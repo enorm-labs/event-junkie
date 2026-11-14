@@ -44,7 +44,7 @@ class BkaTheaterWebsiteImporterTest {
             result.etag shouldBe "\"bka\""
             val show = result.events.first { it.sourceId == "bka_theater:4218" }
             val description = show.description.shouldNotBeNull()
-            description shouldStartWith "Satire darf alles. Außer sterben!\n»Wenn die Satire stirbt"
+            description shouldStartWith "Satire darf alles. Außer sterben!\n\n»Wenn die Satire stirbt"
             description shouldNotContain "mehr lesen"
             description shouldNotContain "instagram.com"
             show.doorsTime shouldBe LocalTime.of(19, 0)

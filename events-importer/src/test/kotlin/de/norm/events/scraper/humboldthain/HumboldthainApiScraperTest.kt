@@ -56,6 +56,7 @@ class HumboldthainApiScraperTest {
         event.sourceUrl shouldBe "https://www.humboldthain.com/"
         event.imageUrl.shouldNotBeNull() shouldStartWith "https://files.elfsightcdn.com/"
         event.description.shouldNotBeNull() shouldContain "LINEUP: TBA"
+        event.description shouldContain "\n\n" // a gap between the paragraphs (events 13944, 13946)
         event.status shouldBe "SCHEDULED"
         event.soldOut shouldBe false
     }
