@@ -1,5 +1,6 @@
 package de.norm.events.scraper.monarch
 
+import de.norm.events.artist.canonicalArtistName
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
@@ -10,6 +11,7 @@ import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 import java.time.LocalDate
 import java.time.LocalTime
@@ -263,5 +265,89 @@ class MonarchOverviewPageScraperTest {
 
         billed("Session Victim") shouldBe listOf("Session Victim")
         billed("Berlin Session Strings") shouldBe listOf("Berlin Session Strings")
+    }
+
+    @Test
+    fun `capitalises a small umlaut inside a shouted title, so the headliner de-shouts`() {
+        // The live 2026-11-14 cell (#4996).
+        val event = scraper.scrape(block("Freitag 11/12/2026-20:00", "KEIN GEWöHNLICHER STURM (KONZERT)"), baseUrl).single()
+
+        event.title shouldBe "KEIN GEWÖHNLICHER STURM"
+        event.sourceId shouldBe "monarch:2026-12-11-kein-gewohnlicher-sturm"
+        canonicalArtistName(event.artists.single().name) shouldBe "Kein Gewöhnlicher Sturm"
+        event.artists.single().role shouldBe ArtistRole.HEADLINER
+    }
+
+    @Test
+    fun `capitalises a small umlaut in a shouted billing of several acts`() {
+        val event =
+            scraper.scrape(block("Samstag 28/11/2026-20:00", "HERZER & GEBRüDER MANNS & THE HAND CUTS (KONZERT)"), baseUrl).single()
+
+        event.title shouldBe "HERZER & GEBRÜDER MANNS & THE HAND CUTS"
+        event.sourceId shouldBe "monarch:2026-11-28-herzer-gebruder-manns-the-hand-cuts"
+        // The scraper's split is unchanged; only `GEBRüDER` no longer keeps the second billing shouted.
+        event.artists.map { canonicalArtistName(it.name) } shouldBe listOf("Herzer", "Gebrüder Manns & The Hand Cuts")
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "BLüMCHEN|BLÜMCHEN",
+            "DJ Fü|DJ FÜ",
+            "MüLLER, MäDCHEN & SöHNE|MÜLLER, MÄDCHEN & SÖHNE",
+            "Gebrüder Manns|Gebrüder Manns",
+            "Die Ärzte über Köln|Die Ärzte über Köln",
+            "STRAßE DER LIEDER|STRAßE DER LIEDER",
+            "GROßE äRA|GROßE äRA"
+        ]
+    )
+    fun `capitalises only an umlaut that has a capital before it`(
+        cell: String,
+        title: String
+    ) {
+        scraper.scrape(block("Samstag 14/11/2026-20:00", cell), baseUrl).single().title shouldBe title
+    }
+
+    @Test
+    fun `capitalises small umlauts throughout a long title`() {
+        val event =
+            scraper
+                .scrape(
+                    block(
+                        "Samstag 14/11/2026-20:00",
+                        "KEIN GEWöHNLICHER STURM - DIE ABSCHIEDSTOUR MIT GäSTEN AUS MüNCHEN UND EINER AFTERSHOW IN DER BAR (KONZERT)"
+                    ),
+                    baseUrl
+                ).single()
+
+        event.title shouldBe "KEIN GEWÖHNLICHER STURM - DIE ABSCHIEDSTOUR MIT GÄSTEN AUS MÜNCHEN UND EINER AFTERSHOW IN DER BAR"
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "ABGESAGT GEWöHNLICHER STURM (KONZERT)|CANCELLED",
+            "ABGESAGT - GEWöHNLICHER STURM (KONZERT)|CANCELLED",
+            "GEWöHNLICHER STURM - ABGESAGT (KONZERT)|CANCELLED",
+            "ABSAGE: GEWöHNLICHER STURM (KONZERT)|CANCELLED",
+            "CANCELLED: GEWöHNLICHER STURM (KONZERT)|CANCELLED",
+            "VERSCHOBEN: GEWöHNLICHER STURM (KONZERT)|POSTPONED",
+            "POSTPONED: GEWöHNLICHER STURM (KONZERT)|POSTPONED",
+            "WIRD VERLEGT: GEWöHNLICHER STURM (KONZERT)|RELOCATED",
+            "VENUE äNDERUNG: GEWöHNLICHER STURM (KONZERT)|RELOCATED",
+            "VENUE ÄNDERUNG: GEWöHNLICHER STURM (KONZERT)|RELOCATED"
+        ]
+    )
+    fun `reads the status and strips its marker beside a small umlaut`(
+        cell: String,
+        status: String
+    ) {
+        val event = scraper.scrape(block("Samstag 14/11/2026-20:00", cell), baseUrl).single()
+
+        event.title shouldBe "GEWÖHNLICHER STURM"
+        event.status shouldBe status
+        canonicalArtistName(event.artists.single().name) shouldBe "Gewöhnlicher Sturm"
     }
 }

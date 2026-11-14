@@ -162,10 +162,15 @@ class MonarchOverviewPageScraper {
         return dateOrNull { LocalTime.of(hour, minute) }
     }
 
-    /** Strips the "(KONZERT)" type marker, then a leading or trailing "ABGESAGT" flag with its separator ("ABGESAGT - …", #4981). */
+    /**
+     * Strips the "(KONZERT)" type marker, then a leading or trailing "ABGESAGT" flag with its separator ("ABGESAGT - …", #4981).
+     * The venue shouts its titles but leaves an umlaut small (`GEWöHNLICHER`), which reads as styled and is never
+     * de-shouted, so that umlaut is capitalised first (#4996).
+     */
     private fun cleanTitle(rawTitle: String): String =
         stripTitleStatusMarker(
             rawTitle
+                .replace(SMALL_UMLAUT_IN_CAPITALS) { it.value.uppercase() }
                 .replace(KONZERT_PATTERN, " ")
                 .replace(WHITESPACE, " ")
                 .trim()
@@ -189,6 +194,12 @@ class MonarchOverviewPageScraper {
 
         /** A blurb that calls the night a party ("Pop-Party") or names its dancefloor. */
         private val CLUB_NIGHT_BLURB = Regex("""party|dance\s?floor""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A small `ä`, `ö` or `ü` after a capital, before a capital or the word's end: `GEWöHNLICHER`, `GEBRüDER`. A word in
+         * mixed case (`Gebrüder`) has a small neighbour, and `ß` has no capital the venue would write.
+         */
+        private val SMALL_UMLAUT_IN_CAPITALS = Regex("""(?<=\p{Lu})[äöü](?=\p{Lu}|(?!\p{L}))""")
 
         /** The "(KONZERT)" concert marker suffix, case-insensitive. */
         private val KONZERT_PATTERN = Regex("""\(\s*konzert\s*\)""", RegexOption.IGNORE_CASE)
