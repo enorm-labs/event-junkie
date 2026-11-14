@@ -1,14 +1,6 @@
 <script lang="ts" setup>
 import { LocateFixed, MapPin as MapPinIcon } from '@lucide/vue'
-import {
-  computed,
-  defineAsyncComponent,
-  onMounted,
-  ref,
-  shallowRef,
-  useTemplateRef,
-  watch,
-} from 'vue'
+import { computed, onMounted, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { type LocationQueryRaw, RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { EventSummary, VenueSummary } from '@/api/types'
@@ -18,6 +10,7 @@ import BaseSelect from '@/components/BaseSelect.vue'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ErrorLine from '@/components/ErrorLine.vue'
+import { LazyVenueMap as VenueMap } from '@/components/lazyVenueMap'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
 import ListPage from '@/components/ListPage.vue'
@@ -45,9 +38,6 @@ import {
   venuePosition,
 } from '@/lib/mapPins'
 import { CARD_LIST_CLASS, SECTION_TITLE_CLASS, TEXT_LINK_CLASS } from '@/lib/utils'
-
-// MapLibre is the heaviest dependency the site has; only this route and the venues map pay for it.
-const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
 
 /** The BFF's calendar endpoint refuses a range longer than this. */
 const MAX_RANGE_DAYS = 92

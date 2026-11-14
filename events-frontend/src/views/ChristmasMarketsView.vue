@@ -5,7 +5,7 @@
  * measures on the device: the origin stays in memory, and the URL carries only `sort=distance`.
  */
 import { LocateFixed, MapPin as MapPinIcon } from '@lucide/vue'
-import { computed, defineAsyncComponent, onMounted, ref, useId, useTemplateRef } from 'vue'
+import { computed, onMounted, ref, useId, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
@@ -13,6 +13,7 @@ import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ErrorLine from '@/components/ErrorLine.vue'
+import { LazyVenueMap as VenueMap } from '@/components/lazyVenueMap'
 import EventRow from '@/components/EventRow.vue'
 import ListPage from '@/components/ListPage.vue'
 import LocateStatus from '@/components/LocateStatus.vue'
@@ -48,7 +49,6 @@ import {
   TEXT_LINK_CLASS,
 } from '@/lib/utils'
 
-const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
 const venueMap = useTemplateRef<{ center(): Position | null }>('venueMap')
 
 /** The API's page cap. A season has about thirty markets. */
