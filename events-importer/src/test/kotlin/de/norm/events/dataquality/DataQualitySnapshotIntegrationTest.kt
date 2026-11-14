@@ -87,8 +87,8 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
 
     private val priceUpcoming = DataQualityRegressionCheck.MISSING_PRICE_UPCOMING
 
-    /** A Sisyphos source, which declares no `PRICE` limitation, so its price share can regress. */
-    private suspend fun seedSisyphos() {
+    /** A Wühlmäuse source. It declares the box-office price alone, which excuses no missing price, so its price share can regress (#5002). */
+    private suspend fun seedWuehlmaeuse() {
         val venueId =
             databaseClient
                 .sql(
@@ -99,12 +99,12 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
         databaseClient
             .sql(
                 "INSERT INTO events.event_source (venue_id, name, slug, url, source_type) " +
-                    "VALUES ($venueId, 'sisyphos', 'sisyphos', 'https://s.example', 'SISYPHOS')"
+                    "VALUES ($venueId, 'wuehlmaeuse', 'wuehlmaeuse', 'https://s.example', 'WUEHLMAEUSE')"
             ).await()
     }
 
-    /** [count] Sisyphos events, one a day from [firstDay] days after today; [priced] ones carry a presale price. */
-    private suspend fun seedSisyphosEvents(
+    /** [count] Wühlmäuse events, one a day from [firstDay] days after today; [priced] ones carry a presale price. */
+    private suspend fun seedWuehlmaeuseEvents(
         prefix: String,
         firstDay: Long,
         count: Int,
@@ -119,16 +119,16 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
                 "INSERT INTO events.event (venue_id, event_source_id, title, slug, event_date, end_date, source_id, price_presale, status) " +
                     "SELECT s.venue_id, s.id, '$prefix' || n, '$prefix-' || n, DATE '$today' + $firstDay + n, $endDate, " +
                     "'$prefix-' || n, $price, '$status' " +
-                    "FROM events.event_source s, generate_series(0, ${count - 1}) n WHERE s.slug = 'sisyphos'"
+                    "FROM events.event_source s, generate_series(0, ${count - 1}) n WHERE s.slug = 'wuehlmaeuse'"
             ).await()
     }
 
     /** Three earlier days with no unpriced event in the window and none overall: the least history that makes a baseline. */
-    private suspend fun seedSisyphosPriceHistory() {
+    private suspend fun seedWuehlmaeusePriceHistory() {
         snapshots
             .saveAll(
                 listOf(QualityIssue.MISSING_PRICE.key, priceUpcoming).flatMap { metric ->
-                    (1L..3L).map { row(it, metric, 0, source = "sisyphos") }
+                    (1L..3L).map { row(it, metric, 0, source = "wuehlmaeuse") }
                 }
             ).toList()
     }
@@ -195,6 +195,30 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
                 .tags(DataQualityMetrics.TAG_SOURCE, "alpha", DataQualityMetrics.TAG_METRIC, "concertsWithoutArtist")
                 .gauge()!!
                 .value() shouldBe 1.0
+        }
+
+    /** CASSIOPEIA declares `PRICE` and nothing that excuses a concert without an artist (#5002). */
+    @Test
+    fun `the unexplained gauge is 0 for a metric the source declares and the count for one it does not`(): Unit =
+        runBlocking {
+            seedOneImperfectEvent()
+            val registry = SimpleMeterRegistry()
+
+            logger(DataQualityMetrics(registry)).snapshot()
+
+            fun gauge(
+                name: String,
+                metric: String
+            ) = registry
+                .find(name)
+                .tags(DataQualityMetrics.TAG_SOURCE, "alpha", DataQualityMetrics.TAG_METRIC, metric)
+                .gauge()
+                ?.value()
+            gauge(DataQualityMetrics.GAUGE, QualityIssue.MISSING_PRICE.key) shouldBe 1.0
+            gauge(DataQualityMetrics.UNEXPLAINED_GAUGE, QualityIssue.MISSING_PRICE.key) shouldBe 0.0
+            gauge(DataQualityMetrics.UNEXPLAINED_GAUGE, QualityIssue.CONCERTS_WITHOUT_ARTIST.key) shouldBe 1.0
+            // Only the six metrics a declaration can excuse get the gauge.
+            registry.find(DataQualityMetrics.UNEXPLAINED_GAUGE).gauges().size shouldBe DataQualityRegressionCheck.ACCEPTED_ASPECT.size
         }
 
     @Test
@@ -324,18 +348,18 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
     @Test
     fun `unpriced events beyond the next 30 days do not regress the price share`(): Unit =
         runBlocking {
-            seedSisyphos()
-            seedSisyphosEvents("near", firstDay = 1, count = 10, priced = true)
-            seedSisyphosPriceHistory()
-            // Sisyphos on 2026-11-03: a batch of far-ahead nights, none with a presale yet.
-            seedSisyphosEvents("far", firstDay = DataQualityRegressionCheck.PRICE_WINDOW_DAYS, count = 31, priced = false)
+            seedWuehlmaeuse()
+            seedWuehlmaeuseEvents("near", firstDay = 1, count = 10, priced = true)
+            seedWuehlmaeusePriceHistory()
+            // As at Sisyphos on 2026-11-03: a batch of far-ahead nights, none with a presale yet.
+            seedWuehlmaeuseEvents("far", firstDay = DataQualityRegressionCheck.PRICE_WINDOW_DAYS, count = 31, priced = false)
             val registry = SimpleMeterRegistry()
 
             val lines = captureLogs { logger(DataQualityMetrics(registry)).snapshot() }
 
-            regressionGauge(registry, "sisyphos", QualityIssue.MISSING_PRICE.key) shouldBe 0.0
+            regressionGauge(registry, "wuehlmaeuse", QualityIssue.MISSING_PRICE.key) shouldBe 0.0
             lines.none { it.level == ch.qos.logback.classic.Level.WARN } shouldBe true
-            val rows = snapshots.findBySnapshotDate(today).toList().filter { it.sourceSlug == "sisyphos" }
+            val rows = snapshots.findBySnapshotDate(today).toList().filter { it.sourceSlug == "wuehlmaeuse" }
             // The dashboard's series still counts every event.
             rows.single { it.metric == QualityIssue.MISSING_PRICE.key }.let { it.metricCount to it.totalEvents } shouldBe (31L to 41L)
             rows.single { it.metric == priceUpcoming }.let { it.metricCount to it.totalEvents } shouldBe (0L to 10L)
@@ -344,57 +368,57 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
     @Test
     fun `unpriced events inside the next 30 days still regress the price share`(): Unit =
         runBlocking {
-            seedSisyphos()
-            seedSisyphosEvents("near", firstDay = 1, count = 10, priced = true)
-            seedSisyphosPriceHistory()
-            seedSisyphosEvents("lost", firstDay = 11, count = 5, priced = false)
+            seedWuehlmaeuse()
+            seedWuehlmaeuseEvents("near", firstDay = 1, count = 10, priced = true)
+            seedWuehlmaeusePriceHistory()
+            seedWuehlmaeuseEvents("lost", firstDay = 11, count = 5, priced = false)
             val registry = SimpleMeterRegistry()
 
             val lines = captureLogs { logger(DataQualityMetrics(registry)).snapshot() }
 
-            regressionGauge(registry, "sisyphos", QualityIssue.MISSING_PRICE.key) shouldBe 1.0
+            regressionGauge(registry, "wuehlmaeuse", QualityIssue.MISSING_PRICE.key) shouldBe 1.0
             val warning = lines.single { it.level == ch.qos.logback.classic.Level.WARN }
             warning.formattedMessage shouldBe
-                "Data quality regressed: missingPrice of sisyphos is at 33.3% against a 7-day median of 0.0% " +
+                "Data quality regressed: missingPrice of wuehlmaeuse is at 33.3% against a 7-day median of 0.0% " +
                 "(15 events in the next 30 days)"
-            warning.keyValuePairs.single { it.key == LogContext.SOURCE_SLUG }.value shouldBe "sisyphos"
+            warning.keyValuePairs.single { it.key == LogContext.SOURCE_SLUG }.value shouldBe "wuehlmaeuse"
         }
 
     @Test
     fun `two newly unpriced nights at a small venue get an INFO line and no alert`(): Unit =
         runBlocking {
             // Orangerie Neukölln on 2026-11-10: two of 13 nights in the next 30 days printed no price (#4794).
-            seedSisyphos()
-            seedSisyphosEvents("near", firstDay = 1, count = 11, priced = true)
-            seedSisyphosPriceHistory()
-            seedSisyphosEvents("unpriced", firstDay = 12, count = 2, priced = false)
+            seedWuehlmaeuse()
+            seedWuehlmaeuseEvents("near", firstDay = 1, count = 11, priced = true)
+            seedWuehlmaeusePriceHistory()
+            seedWuehlmaeuseEvents("unpriced", firstDay = 12, count = 2, priced = false)
             val registry = SimpleMeterRegistry()
 
             val lines = captureLogs { logger(DataQualityMetrics(registry)).snapshot() }
 
-            regressionGauge(registry, "sisyphos", QualityIssue.MISSING_PRICE.key) shouldBe 0.0
+            regressionGauge(registry, "wuehlmaeuse", QualityIssue.MISSING_PRICE.key) shouldBe 0.0
             lines.none { it.level == ch.qos.logback.classic.Level.WARN } shouldBe true
             lines.single { it.formattedMessage.contains("not a regression") }.formattedMessage shouldBe
                 "Data quality got worse by 2.0 events over the median, fewer than 3, not a regression: " +
-                "missingPrice of sisyphos is at 15.4% against a 7-day median of 0.0% (13 events in the next 30 days)"
+                "missingPrice of wuehlmaeuse is at 15.4% against a 7-day median of 0.0% (13 events in the next 30 days)"
         }
 
     @Test
     fun `the window takes today to the 29th day ahead, by start date, whatever the status`(): Unit =
         runBlocking {
-            seedSisyphos()
+            seedWuehlmaeuse()
             // Counted: today, the 29th day ahead, a cancelled night, and one that runs over midnight into tomorrow.
-            seedSisyphosEvents("today", firstDay = 0, count = 1, priced = false, endDays = 1)
-            seedSisyphosEvents("edge-in", firstDay = DataQualityRegressionCheck.PRICE_WINDOW_DAYS - 1, count = 1, priced = false)
-            seedSisyphosEvents("cancelled", firstDay = 2, count = 1, priced = false, status = "CANCELLED")
-            seedSisyphosEvents("priced", firstDay = 3, count = 1, priced = true)
+            seedWuehlmaeuseEvents("today", firstDay = 0, count = 1, priced = false, endDays = 1)
+            seedWuehlmaeuseEvents("edge-in", firstDay = DataQualityRegressionCheck.PRICE_WINDOW_DAYS - 1, count = 1, priced = false)
+            seedWuehlmaeuseEvents("cancelled", firstDay = 2, count = 1, priced = false, status = "CANCELLED")
+            seedWuehlmaeuseEvents("priced", firstDay = 3, count = 1, priced = true)
             // Not counted: the 30th day ahead, and a festival that started yesterday and runs three more days.
-            seedSisyphosEvents("edge-out", firstDay = DataQualityRegressionCheck.PRICE_WINDOW_DAYS, count = 1, priced = false)
-            seedSisyphosEvents("started", firstDay = -1, count = 1, priced = false, endDays = 3)
+            seedWuehlmaeuseEvents("edge-out", firstDay = DataQualityRegressionCheck.PRICE_WINDOW_DAYS, count = 1, priced = false)
+            seedWuehlmaeuseEvents("started", firstDay = -1, count = 1, priced = false, endDays = 3)
 
             logger().snapshot()
 
-            val rows = snapshots.findBySnapshotDate(today).toList().filter { it.sourceSlug == "sisyphos" }
+            val rows = snapshots.findBySnapshotDate(today).toList().filter { it.sourceSlug == "wuehlmaeuse" }
             rows.single { it.metric == priceUpcoming }.let { it.metricCount to it.totalEvents } shouldBe (3L to 4L)
             rows.single { it.metric == QualityIssue.MISSING_PRICE.key }.let { it.metricCount to it.totalEvents } shouldBe (5L to 6L)
         }
@@ -402,20 +426,20 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
     @Test
     fun `a source whose events all lie beyond the next 30 days gets no price verdict`(): Unit =
         runBlocking {
-            seedSisyphos()
-            seedSisyphosEvents("far", firstDay = 40, count = 12, priced = false)
-            seedSisyphosPriceHistory()
+            seedWuehlmaeuse()
+            seedWuehlmaeuseEvents("far", firstDay = 40, count = 12, priced = false)
+            seedWuehlmaeusePriceHistory()
             val registry = SimpleMeterRegistry()
 
             val lines = captureLogs { logger(DataQualityMetrics(registry)).snapshot() }
 
             // Zero of zero has no share, so the gate skips the series and publishes nothing for it.
-            regressionGauge(registry, "sisyphos", QualityIssue.MISSING_PRICE.key) shouldBe null
+            regressionGauge(registry, "wuehlmaeuse", QualityIssue.MISSING_PRICE.key) shouldBe null
             lines.none { it.level == ch.qos.logback.classic.Level.WARN } shouldBe true
             snapshots
                 .findBySnapshotDate(today)
                 .toList()
-                .single { it.sourceSlug == "sisyphos" && it.metric == priceUpcoming }
+                .single { it.sourceSlug == "wuehlmaeuse" && it.metric == priceUpcoming }
                 .let { it.metricCount to it.totalEvents } shouldBe (0L to 0L)
         }
 }

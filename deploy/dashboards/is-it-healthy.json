@@ -1049,9 +1049,53 @@
           "layout": {
             "x": 0,
             "y": 0,
-            "w": 48,
+            "w": 24,
             "h": 10,
             "i": 20
+          }
+        },
+        {
+          "id": "p_dq_unexplained_concertsWithoutArtist",
+          "type": "metric",
+          "title": "Concerts without an artist, unexplained (% of events)",
+          "description": "The tile to its left, less the events no fix of ours can change. The unexplained share leaves out each source whose accepted limitations declare the field: the venue does not publish it, so no fix of ours can close that part. It is the `concertsWithoutArtistUnexplainedPct` of the report.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1,
+            "unit": "percent-1"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum(max by (source) (data_quality_unexplained{metric=\"concertsWithoutArtist\"})) / sum(max by (source) (data_quality{metric=\"totalEvents\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 24,
+            "y": 0,
+            "w": 24,
+            "h": 10,
+            "i": 21
           }
         },
         {
@@ -1093,9 +1137,53 @@
           "layout": {
             "x": 48,
             "y": 0,
-            "w": 48,
+            "w": 24,
             "h": 10,
-            "i": 21
+            "i": 22
+          }
+        },
+        {
+          "id": "p_dq_unexplained_eventsTypedOther",
+          "type": "metric",
+          "title": "Events typed OTHER, unexplained (% of events)",
+          "description": "The tile to its left, less the events no fix of ours can change. The unexplained share leaves out each source whose accepted limitations declare the field: the venue does not publish it, so no fix of ours can close that part. It is the `eventsTypedOtherUnexplainedPct` of the report.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1,
+            "unit": "percent-1"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum(max by (source) (data_quality_unexplained{metric=\"eventsTypedOther\"})) / sum(max by (source) (data_quality{metric=\"totalEvents\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 72,
+            "y": 0,
+            "w": 24,
+            "h": 10,
+            "i": 23
           }
         },
         {
@@ -1137,9 +1225,53 @@
           "layout": {
             "x": 96,
             "y": 0,
-            "w": 48,
+            "w": 24,
             "h": 10,
-            "i": 22
+            "i": 24
+          }
+        },
+        {
+          "id": "p_dq_unexplained_missingPrice",
+          "type": "metric",
+          "title": "Events without a price, unexplained (% of events)",
+          "description": "The tile to its left, less the events no fix of ours can change. The unexplained share leaves out each source whose accepted limitations declare the field: the venue does not publish it, so no fix of ours can close that part. It is the `missingPriceUnexplainedPct` of the report.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1,
+            "unit": "percent-1"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum(max by (source) (data_quality_unexplained{metric=\"missingPrice\"})) / sum(max by (source) (data_quality{metric=\"totalEvents\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 120,
+            "y": 0,
+            "w": 24,
+            "h": 10,
+            "i": 25
           }
         },
         {
@@ -1183,7 +1315,7 @@
             "y": 0,
             "w": 48,
             "h": 10,
-            "i": 23
+            "i": 26
           }
         },
         {
@@ -1226,14 +1358,14 @@
             "y": 10,
             "w": 192,
             "h": 16,
-            "i": 24
+            "i": 27
           }
         },
         {
           "id": "p_dq_concertsWithoutArtist",
           "type": "bar",
           "title": "Concerts without an artist \u2014 fifteen worst sources",
-          "description": "The headline gap: a concert nobody can find by the act they want. A tall bar is a scraper that does not read the line-up, or a venue that does not publish one. `GET /api/admin/data-quality/worklist?issue=concertsWithoutArtist&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "description": "The headline gap: a concert nobody can find by the act they want. A tall bar is a scraper that does not read the line-up, or a venue that does not publish one. Ranked by the unexplained count: a source whose accepted limitations declare the field counts 0, so the bars name what a fix of ours can change (#5002). `GET /api/admin/data-quality/worklist?issue=concertsWithoutArtist&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
           "config": {
             "show_legends": true,
             "decimals": 0
@@ -1241,7 +1373,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "topk(15, max by (source) (data_quality{metric=\"concertsWithoutArtist\"}))",
+              "query": "topk(15, max by (source) (data_quality_unexplained{metric=\"concertsWithoutArtist\"}))",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -1267,145 +1399,16 @@
           "layout": {
             "x": 0,
             "y": 26,
-            "w": 96,
-            "h": 14,
-            "i": 25
-          }
-        },
-        {
-          "id": "p_dq_missingGenre",
-          "type": "bar",
-          "title": "Events without a genre \u2014 fifteen worst sources",
-          "description": "A tall bar is a venue that publishes no genre, or a genre vocabulary the source uses and the importer drops. `GET /api/admin/data-quality/worklist?issue=missingGenre&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
-          "config": {
-            "show_legends": true,
-            "decimals": 0
-          },
-          "queryType": "promql",
-          "queries": [
-            {
-              "query": "topk(15, max by (source) (data_quality{metric=\"missingGenre\"}))",
-              "vrlFunctionQuery": null,
-              "customQuery": true,
-              "fields": {
-                "stream": "",
-                "stream_type": "metrics",
-                "x": [],
-                "y": [],
-                "z": [],
-                "breakdown": [],
-                "filter": {
-                  "filterType": "group",
-                  "logicalOperator": "AND",
-                  "conditions": []
-                }
-              },
-              "config": {
-                "promql_legend": "",
-                "layer_type": "scatter",
-                "weight_fixed": 1
-              }
-            }
-          ],
-          "layout": {
-            "x": 96,
-            "y": 26,
-            "w": 96,
-            "h": 14,
-            "i": 26
-          }
-        },
-        {
-          "id": "p_dq_missingPrice",
-          "type": "bar",
-          "title": "Events without a price \u2014 fifteen worst sources",
-          "description": "No presale, no box office, not free and no price note. A free event or a note-only price does not count. `GET /api/admin/data-quality/worklist?issue=missingPrice&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
-          "config": {
-            "show_legends": true,
-            "decimals": 0
-          },
-          "queryType": "promql",
-          "queries": [
-            {
-              "query": "topk(15, max by (source) (data_quality{metric=\"missingPrice\"}))",
-              "vrlFunctionQuery": null,
-              "customQuery": true,
-              "fields": {
-                "stream": "",
-                "stream_type": "metrics",
-                "x": [],
-                "y": [],
-                "z": [],
-                "breakdown": [],
-                "filter": {
-                  "filterType": "group",
-                  "logicalOperator": "AND",
-                  "conditions": []
-                }
-              },
-              "config": {
-                "promql_legend": "",
-                "layer_type": "scatter",
-                "weight_fixed": 1
-              }
-            }
-          ],
-          "layout": {
-            "x": 0,
-            "y": 40,
-            "w": 96,
-            "h": 14,
-            "i": 27
-          }
-        },
-        {
-          "id": "p_dq_missingPromoter",
-          "type": "bar",
-          "title": "Events without a promoter \u2014 fifteen worst sources",
-          "description": "Many venues publish no promoter. Read this bar against the venue's page before it is called a defect. `GET /api/admin/data-quality/worklist?issue=missingPromoter&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
-          "config": {
-            "show_legends": true,
-            "decimals": 0
-          },
-          "queryType": "promql",
-          "queries": [
-            {
-              "query": "topk(15, max by (source) (data_quality{metric=\"missingPromoter\"}))",
-              "vrlFunctionQuery": null,
-              "customQuery": true,
-              "fields": {
-                "stream": "",
-                "stream_type": "metrics",
-                "x": [],
-                "y": [],
-                "z": [],
-                "breakdown": [],
-                "filter": {
-                  "filterType": "group",
-                  "logicalOperator": "AND",
-                  "conditions": []
-                }
-              },
-              "config": {
-                "promql_legend": "",
-                "layer_type": "scatter",
-                "weight_fixed": 1
-              }
-            }
-          ],
-          "layout": {
-            "x": 96,
-            "y": 40,
             "w": 96,
             "h": 14,
             "i": 28
           }
         },
         {
-          "id": "p_dq_missingStartTime",
+          "id": "p_dq_missingGenre",
           "type": "bar",
-          "title": "Events without a start time \u2014 fifteen worst sources",
-          "description": "An event with a date and no time. A tall bar usually means a changed detail-page layout. `GET /api/admin/data-quality/worklist?issue=missingStartTime&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "title": "Events without a genre \u2014 fifteen worst sources",
+          "description": "A tall bar is a venue that publishes no genre, or a genre vocabulary the source uses and the importer drops. Ranked by the unexplained count: a source whose accepted limitations declare the field counts 0, so the bars name what a fix of ours can change (#5002). `GET /api/admin/data-quality/worklist?issue=missingGenre&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
           "config": {
             "show_legends": true,
             "decimals": 0
@@ -1413,7 +1416,136 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "topk(15, max by (source) (data_quality{metric=\"missingStartTime\"}))",
+              "query": "topk(15, max by (source) (data_quality_unexplained{metric=\"missingGenre\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 26,
+            "w": 96,
+            "h": 14,
+            "i": 29
+          }
+        },
+        {
+          "id": "p_dq_missingPrice",
+          "type": "bar",
+          "title": "Events without a price \u2014 fifteen worst sources",
+          "description": "No presale, no box office, not free and no price note. A free event or a note-only price does not count. Ranked by the unexplained count: a source whose accepted limitations declare the field counts 0, so the bars name what a fix of ours can change (#5002). `GET /api/admin/data-quality/worklist?issue=missingPrice&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality_unexplained{metric=\"missingPrice\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 40,
+            "w": 96,
+            "h": 14,
+            "i": 30
+          }
+        },
+        {
+          "id": "p_dq_missingPromoter",
+          "type": "bar",
+          "title": "Events without a promoter \u2014 fifteen worst sources",
+          "description": "Many venues publish no promoter. Read this bar against the venue's page before it is called a defect. Ranked by the unexplained count: a source whose accepted limitations declare the field counts 0, so the bars name what a fix of ours can change (#5002). `GET /api/admin/data-quality/worklist?issue=missingPromoter&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality_unexplained{metric=\"missingPromoter\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 40,
+            "w": 96,
+            "h": 14,
+            "i": 31
+          }
+        },
+        {
+          "id": "p_dq_missingStartTime",
+          "type": "bar",
+          "title": "Events without a start time \u2014 fifteen worst sources",
+          "description": "An event with a date and no time. A tall bar usually means a changed detail-page layout. Ranked by the unexplained count: a source whose accepted limitations declare the field counts 0, so the bars name what a fix of ours can change (#5002). `GET /api/admin/data-quality/worklist?issue=missingStartTime&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality_unexplained{metric=\"missingStartTime\"}))",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -1441,14 +1573,14 @@
             "y": 54,
             "w": 96,
             "h": 14,
-            "i": 29
+            "i": 32
           }
         },
         {
           "id": "p_dq_eventsTypedOther",
           "type": "bar",
           "title": "Events typed OTHER \u2014 fifteen worst sources",
-          "description": "`OTHER` is the classifier's fallback, so a rising bar is the classifier losing ground on that source. `GET /api/admin/data-quality/worklist?issue=eventsTypedOther&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "description": "`OTHER` is the classifier's fallback, so a rising bar is the classifier losing ground on that source. Ranked by the unexplained count: a source whose accepted limitations declare the field counts 0, so the bars name what a fix of ours can change (#5002). `GET /api/admin/data-quality/worklist?issue=eventsTypedOther&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
           "config": {
             "show_legends": true,
             "decimals": 0
@@ -1456,7 +1588,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "topk(15, max by (source) (data_quality{metric=\"eventsTypedOther\"}))",
+              "query": "topk(15, max by (source) (data_quality_unexplained{metric=\"eventsTypedOther\"}))",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -1484,7 +1616,7 @@
             "y": 54,
             "w": 96,
             "h": 14,
-            "i": 30
+            "i": 33
           }
         },
         {
@@ -1527,7 +1659,7 @@
             "y": 68,
             "w": 96,
             "h": 14,
-            "i": 31
+            "i": 34
           }
         },
         {
@@ -1570,7 +1702,7 @@
             "y": 68,
             "w": 96,
             "h": 14,
-            "i": 32
+            "i": 35
           }
         },
         {
@@ -1613,7 +1745,7 @@
             "y": 82,
             "w": 96,
             "h": 14,
-            "i": 33
+            "i": 36
           }
         },
         {
@@ -1656,7 +1788,7 @@
             "y": 82,
             "w": 96,
             "h": 14,
-            "i": 34
+            "i": 37
           }
         }
       ]

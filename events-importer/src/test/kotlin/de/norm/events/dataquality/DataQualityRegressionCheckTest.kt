@@ -270,6 +270,27 @@ class DataQualityRegressionCheckTest {
     }
 
     @Test
+    fun `the box-office and the presale price together skip missingPrice, as PRICE does`() {
+        val today = listOf(row(0, 31, metric = priceUpcoming))
+        val history = (1L..3L).map { row(it, 20, metric = priceUpcoming) }
+
+        fun verdict(vararg declared: LimitedAspect) = DataQualityRegressionCheck.check(today, history, mapOf("alpha" to declared.toSet())).single()
+
+        verdict(LimitedAspect.PRICE_BOX_OFFICE, LimitedAspect.PRICE_PRESALE).let { Triple(it.worse, it.limitationAccepted, it.regressed) } shouldBe
+            Triple(true, true, false)
+        verdict(LimitedAspect.PRICE).regressed shouldBe false
+        verdict(LimitedAspect.PRICE_BOX_OFFICE).regressed shouldBe true
+    }
+
+    @Test
+    fun `the price pair excuses only missingPrice`() {
+        DataQualityRegressionCheck.excusedIssues(DataQualityRegressionCheck.PRICE_PARTS) shouldBe listOf(QualityIssue.MISSING_PRICE)
+        DataQualityRegressionCheck.excusedIssues(setOf(LimitedAspect.PRICE_PRESALE, LimitedAspect.GENRE)) shouldBe listOf(QualityIssue.MISSING_GENRE)
+        DataQualityRegressionCheck.excusedIssues(LimitedAspect.entries.toSet()) shouldBe DataQualityRegressionCheck.ACCEPTED_ASPECT.keys.toList()
+        DataQualityRegressionCheck.excuses(LimitedAspect.entries.toSet(), QualityIssue.UNREVIEWED_LICENCE) shouldBe false
+    }
+
+    @Test
     fun `missingPrice is judged on the next 30 days only, and reported under its own name`() {
         // Sisyphos on 2026-11-03: 31 far-ahead nights without a presale lifted the share over every event.
         val today = listOf(row(0, 90, metric = price), row(0, 20, total = 40, metric = priceUpcoming))

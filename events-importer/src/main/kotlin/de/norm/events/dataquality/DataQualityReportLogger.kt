@@ -124,6 +124,9 @@ class DataQualityReportLogger(
                         )
                     }
                 }
+            report.perSource.forEach { source ->
+                unexplainedMeasurements(source).forEach { (metric, count) -> metrics.publishUnexplained(source.source, metric, count) }
+            }
             val rows = measured + upcomingPriceRows(today, report.perSource.map { it.source }, upcoming, existing)
             snapshots.saveAll(rows).toList()
 
@@ -274,6 +277,20 @@ class DataQualityReportLogger(
             QualityIssue.FLAGGED_AT_IMPORT.key to source.flaggedAtImport,
             DataQualityRegressionCheck.FLAGGED_AT_IMPORT_KEPT_OUT to source.flaggedAtImportKeptOut,
             SUSPECT_NON_ARTIST_TITLES to source.suspectNonArtistTitles
+        )
+
+    /**
+     * The counts no accepted limitation explains, per source: the `data_quality_unexplained` gauge (#5002).
+     * No snapshot row: they follow from the snapshot and the declarations.
+     */
+    private fun unexplainedMeasurements(source: SourceQualityMetrics): List<Pair<String, Long>> =
+        listOf(
+            QualityIssue.CONCERTS_WITHOUT_ARTIST.key to source.concertsWithoutArtistUnexplained,
+            QualityIssue.EVENTS_TYPED_OTHER.key to source.eventsTypedOtherUnexplained,
+            QualityIssue.MISSING_GENRE.key to source.missingGenreUnexplained,
+            QualityIssue.MISSING_PROMOTER.key to source.missingPromoterUnexplained,
+            QualityIssue.MISSING_PRICE.key to source.missingPriceUnexplained,
+            QualityIssue.MISSING_START_TIME.key to source.missingStartTimeUnexplained
         )
 
     private companion object {

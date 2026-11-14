@@ -48,8 +48,24 @@ resolve:
 3. **There is measurement and no gate.** `de.norm.events.dataquality` holds the numbers per source, with a `data_quality_snapshot` history. A trend is
    visible. Since #2604 a regressed metric sets off an alert, but nothing stops the import that caused it.
 
-Measured against staging's 3,409 events, **3.5%** of concerts carry no artist (74 of 2,128). 119 events are typed `OTHER`. Title-as-headliner extraction
+The first measurement, against staging's 3,409 events, found **3.5%** of concerts without an artist (74 of 2,128). Title-as-headliner extraction
 runs in 96 scrapers.
+
+Each metric has two shares. The raw share is what a visitor sees. The unexplained share leaves out each source whose accepted limitations declare
+the field (#5002). The venue does not publish that field, so no fix of ours can change that part. Production on 2026-11-14, 13,062 events:
+
+| Metric                  | Raw            | Unexplained   | Of which `manual` |
+| ----------------------- | -------------- | ------------- | ----------------- |
+| `missingPromoter`       | 10,510 (80.5%) | 1,765 (13.5%) | 635               |
+| `missingGenre`          | 9,105 (69.7%)  | 800 (6.1%)    | 553               |
+| `missingPrice`          | 6,821 (52.2%)  | 1,092 (8.4%)  | 524               |
+| `missingStartTime`      | 882 (6.8%)     | 260 (2.0%)    | 220               |
+| `concertsWithoutArtist` | 558 (4.3%)     | 186 (1.4%)    | 45                |
+| `eventsTypedOther`      | 234 (1.8%)     | 116 (0.9%)    | 20                |
+
+The `missingPrice` row is from before a source with both `PRICE_BOX_OFFICE` and `PRICE_PRESALE` declared counted as excused. That rule takes at
+least 439 more events out of the unexplained count: 277 at BKA Theater and 162 at Renaissance-Theater. `manual` has no source, so nothing excuses
+its events. `GET /api/admin/data-quality` gives both shares, and the `data_quality_unexplained` gauge gives the unexplained counts per source.
 
 **The order-of-magnitude gap between the estimate and the measurement is the point of §1.3**, not a footnote to it.
 This document asserted ~40% in prose, that figure survived unchallenged into planning, and the first thing an actual
@@ -236,8 +252,9 @@ they are excluded rather than counted as unreviewed.
   value out of an event. A review flag such as `UNCERTAIN_PARTY_FEATURE` removes nothing, so the check ignores it. The
   snapshot stores this count as `flaggedAtImportKeptOut` (#3148). The check skips a metric when the source declares its
   field in `VenueLimitations` (#3195). `missingStartTime` maps to `START_TIME`, `missingGenre` to `GENRE`, `missingPromoter`
-  to `PROMOTERS`, `concertsWithoutArtist` to `ARTISTS` and `eventsTypedOther` to `EVENT_TYPE`. `missingPrice` maps to the
-  whole `PRICE` aspect only. A partial declaration also counts. The snapshot and the report keep these series, and the
+  to `PROMOTERS`, `concertsWithoutArtist` to `ARTISTS` and `eventsTypedOther` to `EVENT_TYPE`. `missingPrice` maps to
+  `PRICE`, or to `PRICE_BOX_OFFICE` and `PRICE_PRESALE` together (#5002). One of the two alone does not count. A partial declaration also counts.
+  The report's unexplained shares use the same rule, through `DataQualityRegressionCheck.excuses`. The snapshot and the report keep these series, and the
   check writes an INFO line instead of the WARN. For `missingPrice`, the check counts only the events that start in the next 30 days, today included. A far-ahead night rarely has a presale yet, so the share of all events moves with the venue's planning horizon. The snapshot stores this count as `missingPriceUpcoming`, and its `totalEvents` holds the events of the window. The ten-event minimum counts these events. The `missingPrice` series keeps every event for the dashboard (#4420). The check never judges `titleDerivedSingletons` and `titleDerivedUnmatched`, because each is a queue for `/musicbrainz-review` and not a defect count (#3314). The snapshot and the worklist keep both. The other metrics are always judged. The table is the baseline, so nobody maintains one. There is no CI
   gate on fixtures: the golden tests of each scraper already fail on changed output.
 
