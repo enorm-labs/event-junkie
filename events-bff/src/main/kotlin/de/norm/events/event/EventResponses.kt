@@ -14,6 +14,7 @@ import de.norm.events.venue.NEARBY_STOPS_DESCRIPTION
 import de.norm.events.venue.NearbyStopResponse
 import de.norm.events.venue.VenueSummaryResponse
 import de.norm.events.weather.WeatherForecastResponse
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 import java.time.Instant
@@ -316,13 +317,16 @@ data class EventDetailResponse(
                 "must link each one (ADR-036). Empty for almost every event."
     )
     val enrichmentSources: List<EnrichmentSourceResponse> = emptyList(),
-    @Schema(
-        description =
-            "What kind of night it is, as event feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, " +
-                "fetish-dress-code, no-photo-policy, open-end, day-party, open-stage, for-children, christmas-market. Set only where the " +
-                "event's own title or description, or for for-children its venue's page, states it; christmas-market is set by hand. " +
-                "The venue's character tags never fill it.",
-        example = "[\"open-end\", \"queer\"]"
+    @ArraySchema(
+        arraySchema =
+            Schema(
+                description =
+                    "What kind of night it is, as event feature slugs ordered by slug. Set only where the event's own title or " +
+                        "description, or for for-children its venue's page, states it; christmas-market is set by hand. " +
+                        "The venue's character tags never fill it.",
+                example = "[\"open-end\", \"queer\"]"
+            ),
+        schema = Schema(implementation = EventFeature::class)
     )
     val features: List<String>,
     @Schema(description = CHANGES_DESCRIPTION)

@@ -274,7 +274,7 @@ export async function setTimetable(
   return (await response.json()) as AdminEvent
 }
 
-/** `EventFeature` in the importer, in its order, with the label the editor shows. */
+/** `EventFeature` in events-core, in its order, with the label the editor shows. */
 export const EVENT_FEATURES = [
   { slug: 'flinta-only', label: 'FLINTA* only' },
   { slug: 'queer', label: 'Queer' },

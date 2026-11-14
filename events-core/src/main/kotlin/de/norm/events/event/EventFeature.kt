@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonValue
  * have the fact. Each night stands alone: a venue tag never fills a night that says nothing.
  *
  * The [slug] is what `event_feature.feature`, the BFF's `feature=` parameter and the frontend's
- * translation keys carry; [ordinal] is the display order. [EventFeatureRules] sets them from the stored text,
+ * translation keys carry; [ordinal] is the display order. The importer's `EventFeatureRules` sets them from the stored text,
  * a scraper sets [FOR_CHILDREN] from what its page says (`ScrapedEvent.features`), and an operator sets
  * [CHRISTMAS_MARKET] in the admin editor.
  *
