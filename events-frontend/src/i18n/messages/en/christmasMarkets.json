@@ -6,5 +6,13 @@
   "details": "Hours and entry",
   "empty": "No Christmas markets are on right now. They come back in November.",
   "homeTeaser": "Christmas markets in Berlin",
-  "homeTeaserHint": "All markets on one map, with hours and entry."
+  "homeTeaserHint": "All markets on one map, with hours and entry.",
+  "filters": {
+    "byDistrict": "Filter by district",
+    "allDistricts": "All districts",
+    "districtsSelected": "{n} districts",
+    "clearDistricts": "Clear districts",
+    "free": "Free entry"
+  },
+  "emptyFiltered": "No Christmas market matches these filters."
 }
