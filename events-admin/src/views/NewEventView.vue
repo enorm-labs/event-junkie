@@ -269,7 +269,17 @@ async function save(addAnother: boolean) {
       <span class="text-sm font-medium">Date</span>
       <Input id="new-event-date" v-model="form.eventDate" name="eventDate" required type="date" />
     </label>
-    <label class="flex flex-col gap-1.5" for="new-event-type">
+    <label class="flex flex-col gap-1.5" for="new-event-end-date">
+      <span class="text-sm font-medium">Last day</span>
+      <Input
+        id="new-event-end-date"
+        v-model="form.endDate"
+        :min="form.eventDate || undefined"
+        name="endDate"
+        type="date"
+      />
+    </label>
+    <label class="flex flex-col gap-1.5 sm:col-span-2" for="new-event-type">
       <span class="text-sm font-medium">Event type</span>
       <select id="new-event-type" v-model="form.eventType" :class="selectClass" name="eventType">
         <option v-for="type in EVENT_TYPES" :key="type" :value="type">{{ type }}</option>
@@ -315,6 +325,16 @@ async function save(addAnother: boolean) {
         v-model="form.priceBoxOffice"
         inputmode="decimal"
         name="priceBoxOffice"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1.5 sm:col-span-2" for="new-event-price-note">
+      <span class="text-sm font-medium">Price note</span>
+      <Input
+        id="new-event-price-note"
+        v-model="form.priceNote"
+        name="priceNote"
+        placeholder="No price note"
       />
     </label>
 

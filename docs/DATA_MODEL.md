@@ -650,7 +650,7 @@ event.
 | `matched_phrase` | `TEXT`      | No       | The words of the event's text that set the feature, on one line | `FLINTA* only` |
 
 The primary key is `(event_id, feature)`. The vocabulary is `flinta-only`, `queer`, `sex-positive`, `dress-code`,
-`fetish-dress-code`, `no-photo-policy`, `open-end`, `day-party`, `open-stage` and `for-children`. Where `venue_character_tag` has the same fact, the
+`fetish-dress-code`, `no-photo-policy`, `open-end`, `day-party`, `open-stage`, `for-children` and `christmas-market`. Where `venue_character_tag` has the same fact, the
 two share the slug. **Each night stands alone: no venue tag fills a night that says nothing.** The importer's
 `EventFeatureRules` reads the features off the stored title, subtitle and description, with keyword rules in German and
 English. Every import replaces the rows of the events it saved. A description the licence withholds is not stored, so it
@@ -663,7 +663,8 @@ FLINTA*", "Einlass nur für FLINTA*". `for-children` comes from the scraper, not
 in the stored text, such as a price per child or a venue category (`ScrapedEvent.features`, EVENT_SCOPE.md §3.5). The
 scraper's phrase goes to `matched_phrase`. Where the text sets the same feature, the text's phrase stays. The public API
 filters by `feature=` (every given feature must hold) and returns the slugs on the event detail. A list leaves out a
-`for-children` event unless the request asks for it (EVENT_SCOPE.md §3.5).
+`for-children` or `christmas-market` event unless the request asks for it (EVENT_SCOPE.md §3.5, §3.7).
+`christmas-market` is only set by hand, through the PUT.
 
 ### event_classification_check (Side Table)
 

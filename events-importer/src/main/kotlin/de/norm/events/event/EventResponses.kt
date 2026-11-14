@@ -32,6 +32,8 @@ data class EventResponse(
     val slug: String,
     @Schema(description = "Calendar date of the event", example = "2026-06-12")
     val eventDate: LocalDate,
+    @Schema(description = "Last day of an event that runs over several days, or null", example = "2026-12-31")
+    val endDate: LocalDate? = null,
     @Schema(description = "Time when doors open to the public", example = "19:00")
     val doorsTime: LocalTime?,
     @Schema(description = "Time when the show/performance starts", example = "20:00")
@@ -106,6 +108,7 @@ data class EventResponse(
                 status = EventStatus.valueOf(entity.status),
                 slug = entity.slug,
                 eventDate = entity.eventDate,
+                endDate = entity.endDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,
                 imageUrl = entity.imageUrl,

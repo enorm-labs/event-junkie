@@ -154,7 +154,22 @@ data class EventRequest(
         nullable = true,
         example = "2027-03-12"
     )
-    val relocatedOn: Optional<LocalDate>? = null
+    val relocatedOn: Optional<LocalDate>? = null,
+    /**
+     * The last day of a run, such as a Christmas market (#4972). Left out, an update keeps the stored end while it is not
+     * before [eventDate]; an explicit JSON `null` clears it. A day before [eventDate] is a 400.
+     */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(
+        description =
+            "The last day of an event that runs over several days. On an update, leaving the field out keeps the current " +
+                "value, and null clears it. A day before eventDate is a 400",
+        type = "string",
+        format = "date",
+        nullable = true,
+        example = "2026-12-31"
+    )
+    val endDate: Optional<LocalDate>? = null
 )
 
 /**

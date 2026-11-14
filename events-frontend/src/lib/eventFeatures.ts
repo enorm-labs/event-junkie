@@ -1,5 +1,5 @@
-// The event features of a night (#2631) and `for-children` (#3796), in display order — the same order and slugs as `EventFeature`
-// in the importer. Labels live in i18n under `eventFeature.<slug>`; an unknown slug renders as itself.
+// The event features of a night (#2631), `for-children` (#3796) and `christmas-market` (#4972), in display order — the same
+// order and slugs as `EventFeature` in the importer. Labels live in i18n under `eventFeature.<slug>`; an unknown slug renders as itself.
 
 export const EVENT_FEATURES: readonly string[] = [
   'flinta-only',
@@ -12,6 +12,7 @@ export const EVENT_FEATURES: readonly string[] = [
   'day-party',
   'open-stage',
   'for-children',
+  'christmas-market',
 ]
 
 /** The BFF orders features by slug; this puts them in display order, an unknown slug last. */

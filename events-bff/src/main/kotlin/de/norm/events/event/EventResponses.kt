@@ -319,8 +319,9 @@ data class EventDetailResponse(
     @Schema(
         description =
             "What kind of night it is, as event feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, " +
-                "fetish-dress-code, no-photo-policy, open-end, day-party, open-stage, for-children. Set only where the event's own title " +
-                "or description, or for for-children its venue's page, states it; the venue's character tags never fill it.",
+                "fetish-dress-code, no-photo-policy, open-end, day-party, open-stage, for-children, christmas-market. Set only where the " +
+                "event's own title or description, or for for-children its venue's page, states it; christmas-market is set by hand. " +
+                "The venue's character tags never fill it.",
         example = "[\"open-end\", \"queer\"]"
     )
     val features: List<String>,

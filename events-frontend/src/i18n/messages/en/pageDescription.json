@@ -10,5 +10,6 @@
   "privacy": "What data Event Junkie processes and why: no cookies, no analytics, no tracking, and your rights under the GDPR.",
   "notices": "The open-source components Event Junkie is built on, grouped by licence, generated from the build.",
   "forVenues": "How Event Junkie reads a venue's event page, how politely, and how a venue operator gets their listings taken down.",
-  "week": "{range}: concerts, club nights and more in Berlin, day by day."
+  "week": "{range}: concerts, club nights and more in Berlin, day by day.",
+  "christmasMarkets": "Every Christmas market in Berlin this season, on one map: dates, opening hours and entry."
 }
