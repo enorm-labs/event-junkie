@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { inChristmasMarketSeason } from '@/lib/christmasMarkets'
+import { foldMarkets, inChristmasMarketSeason, isOpenOn, marketDays } from '@/lib/christmasMarkets'
 
 describe('inChristmasMarketSeason', () => {
   it.each([
@@ -11,5 +11,103 @@ describe('inChristmasMarketSeason', () => {
     ['2027-07-01', false],
   ])('on %s is %s', (day, expected) => {
     expect(inChristmasMarketSeason(day)).toBe(expected)
+  })
+})
+
+describe('marketDays', () => {
+  it.each([
+    ['a Wednesday', '2026-12-09', ['2026-12-12', '2026-12-13']],
+    ['a Friday', '2026-12-11', ['2026-12-12', '2026-12-13']],
+    ['a Saturday', '2026-12-12', ['2026-12-12', '2026-12-13']],
+    ['a Sunday', '2026-12-13', ['2026-12-13']],
+  ])('reads the weekend on %s', (_, today, expected) => {
+    expect(marketDays('weekend', today)).toEqual(expected)
+  })
+
+  it('reads today and a date from today on', () => {
+    expect(marketDays('today', '2026-12-09')).toEqual(['2026-12-09'])
+    expect(marketDays('2026-12-09', '2026-12-09')).toEqual(['2026-12-09'])
+    expect(marketDays('2026-12-24', '2026-12-09')).toEqual(['2026-12-24'])
+  })
+
+  it.each(['', '2026-12-08', 'tomorrow', '12.12.2026'])('reads %j as no choice', (choice) => {
+    expect(marketDays(choice, '2026-12-09')).toEqual([])
+  })
+})
+
+describe('isOpenOn', () => {
+  const daily = { eventDate: '2026-11-23', endDate: '2026-12-31' }
+  const oneWeekend = { eventDate: '2026-12-12', endDate: '2026-12-13' }
+  const oneDay = { eventDate: '2026-12-12', endDate: null }
+
+  it.each([
+    ['a daily run on its first day', daily, '2026-11-23', true],
+    ['a daily run on a Monday', daily, '2026-12-14', true],
+    ['a daily run on its last day', daily, '2026-12-31', true],
+    ['a daily run after it', daily, '2027-01-01', false],
+    ['a daily run before it', daily, '2026-11-22', false],
+    ['a weekend market on its Sunday', oneWeekend, '2026-12-13', true],
+    ['a weekend market on the Monday after', oneWeekend, '2026-12-14', false],
+    ['a one-day market on its day', oneDay, '2026-12-12', true],
+    ['a one-day market the day after', oneDay, '2026-12-13', false],
+    ['a market with no date', { eventDate: null }, '2026-12-12', false],
+  ])('%s is %s', (_, market, day, expected) => {
+    expect(isOpenOn(market, day)).toBe(expected)
+  })
+})
+
+describe('foldMarkets', () => {
+  function block(slug: string, title: string, venue: string, eventDate: string, endDate: string) {
+    return { slug, title, eventDate, endDate, venue: { slug: venue } }
+  }
+
+  const daily = block('rathaus', 'Rotes Rathaus', 'rathaus-platz', '2026-11-23', '2026-12-31')
+  // Domäne Dahlem: four Advent weekends, entered in no particular order.
+  const dahlem = [
+    block('dahlem-3', 'Adventsmarkt', 'domaene', '2026-12-12', '2026-12-13'),
+    block('dahlem-1', 'Adventsmarkt', 'domaene', '2026-11-28', '2026-11-29'),
+    block('dahlem-4', 'Adventsmarkt', 'domaene', '2026-12-19', '2026-12-20'),
+    block('dahlem-2', 'Adventsmarkt', 'domaene', '2026-12-05', '2026-12-06'),
+  ]
+  const slugs = (blocks: { slug: string }[]) => blocks.map(({ slug }) => slug)
+
+  it('leaves a daily run as it is', () => {
+    expect(foldMarkets([daily], '2026-11-28')).toEqual([
+      { key: 'rathaus-platz|Rotes Rathaus', shown: daily, blocks: [daily] },
+    ])
+  })
+
+  it('folds the weekends of one market into one, first weekend first', () => {
+    const folded = foldMarkets([daily, ...dahlem], '2026-11-28')
+
+    expect(folded.map(({ key }) => key)).toEqual([
+      'rathaus-platz|Rotes Rathaus',
+      'domaene|Adventsmarkt',
+    ])
+    expect(slugs(folded[1]?.blocks ?? [])).toEqual(['dahlem-1', 'dahlem-2', 'dahlem-3', 'dahlem-4'])
+  })
+
+  it('keeps two markets at one venue apart by their titles', () => {
+    const lights = block('lights', 'Lichterfest', 'domaene', '2026-12-05', '2026-12-06')
+
+    const folded = foldMarkets([dahlem[0]!, lights], '2026-11-28')
+
+    expect(folded.map(({ shown }) => shown.slug)).toEqual(['dahlem-3', 'lights'])
+  })
+
+  it.each([
+    ['on the first weekend', '2026-11-28', 'dahlem-1'],
+    ['on the Monday after it', '2026-11-30', 'dahlem-2'],
+    ['on the last Sunday', '2026-12-20', 'dahlem-4'],
+  ])('shows the next block that has not ended %s', (_, today, expected) => {
+    expect(foldMarkets(dahlem, today)[0]?.shown.slug).toBe(expected)
+  })
+
+  it('shows the block open on the chosen day, and drops a market with none', () => {
+    const chosen = '2026-12-13'
+    const folded = foldMarkets([daily, ...dahlem], '2026-11-28', (b) => isOpenOn(b, chosen))
+
+    expect(folded.map(({ shown }) => shown.slug)).toEqual(['rathaus', 'dahlem-3'])
+    expect(foldMarkets(dahlem, '2026-11-28', (b) => isOpenOn(b, '2026-12-09'))).toEqual([])
   })
 })

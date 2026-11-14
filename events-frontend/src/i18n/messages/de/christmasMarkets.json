@@ -12,7 +12,10 @@
     "allDistricts": "Alle Bezirke",
     "districtsSelected": "{n} Bezirke",
     "clearDistricts": "Bezirke zurücksetzen",
-    "free": "Eintritt frei"
+    "free": "Eintritt frei",
+    "today": "Heute",
+    "weekend": "Dieses Wochenende",
+    "date": "Am"
   },
   "emptyFiltered": "Zu diesen Filtern gibt es keinen Weihnachtsmarkt."
 }

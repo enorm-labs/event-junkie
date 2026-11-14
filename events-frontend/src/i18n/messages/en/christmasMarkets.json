@@ -12,7 +12,10 @@
     "allDistricts": "All districts",
     "districtsSelected": "{n} districts",
     "clearDistricts": "Clear districts",
-    "free": "Free entry"
+    "free": "Free entry",
+    "today": "Today",
+    "weekend": "This weekend",
+    "date": "On"
   },
   "emptyFiltered": "No Christmas market matches these filters."
 }
