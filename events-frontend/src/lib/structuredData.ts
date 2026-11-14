@@ -1,4 +1,4 @@
-import type { EventDetail, VenueDetail } from '@/api/types'
+import type { EventDetail, EventType, VenueDetail } from '@/api/types'
 import { descriptionFor } from '@/lib/description'
 import { absoluteImageUrl, canonicalUrl, SITE_URL } from '@/lib/seo'
 import { isPastEvent } from '@/lib/format'
@@ -81,7 +81,7 @@ const EVENT_STATUS: Record<string, string> = {
  * The most specific schema.org type per event kind. `READING` and `SHOW` stay `Event`: there is no
  * `LiteraryEvent`, and `TheaterEvent` would assert a form we do not know.
  */
-const EVENT_TYPES: Record<string, string> = {
+const EVENT_TYPES: Partial<Record<EventType, string>> = {
   CONCERT: 'MusicEvent',
   FESTIVAL: 'MusicEvent',
   PARTY: 'SocialEvent',
