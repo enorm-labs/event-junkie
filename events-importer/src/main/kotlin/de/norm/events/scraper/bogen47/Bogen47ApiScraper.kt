@@ -23,6 +23,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTitleStatus
+import de.norm.events.scraper.presentsFrameNames
 import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.splitBackToBack
@@ -89,7 +90,8 @@ data class Bogen47Page(
  * are the concert's headliners in listed order, and the title, the night's name, bills no act.
  *
  * **A party bills only what its description names as DJs** ([partyLineup]): a timetable of `23:00–02:00: A b2b B (label)` lines,
- * each act with its set, a run of `<name> @handle` lines (#4394), or a `Joining us are A and B` sentence. Its title names the night, never an act.
+ * each act with its set, a run of `<name> @handle` lines (#4394), or a `Joining us are A and B` sentence. Its title names the night,
+ * unless the description names nobody and the title is a `TEMPO GALLERY presents: A, B, and C` bill ([presentsFrameNames]).
  *
  * The remaining ACF fields are unused defaults: `event_entrance_fee` is `None` throughout, and
  * `event_music_genre`, `event_card_subtitle` and the act repeater are all but always empty. A
@@ -213,7 +215,7 @@ internal class Bogen47ApiScraper(
                         if (eventType ==
                             EventType.PARTY.name
                         ) {
-                            partyLineup(description, startedAt.toLocalDate())
+                            partyLineup(title, description, startedAt.toLocalDate())
                         } else {
                             artistsFrom(title, description, eventType)
                         },
@@ -312,9 +314,19 @@ internal class Bogen47ApiScraper(
 /**
  * The DJs a party's description names, in the venue's order: a timetable of two or more `HH:MM–HH:MM: <acts>` lines, each act
  * with its set, or else the names after `Joining us are`, up to `, alongside` or the sentence's end. A party without either bills
- * none. A timetable line splits at `b2b` only, because `Manolito & Sons` is one act, and its trailing parenthesis is a label.
+ * the acts of a `<promoter> presents: <bill>` title, or none. A timetable line splits at `b2b` only, because `Manolito & Sons` is
+ * one act, and its trailing parenthesis is a label.
  */
 private fun partyLineup(
+    title: String,
+    description: String?,
+    night: LocalDate
+): List<ScrapedArtist> =
+    descriptionLineup(description, night).ifEmpty {
+        presentsFrameNames(title).orEmpty().map { ScrapedArtist(name = it, role = ArtistRole.DJ, titleDerived = true) }
+    }
+
+private fun descriptionLineup(
     description: String?,
     night: LocalDate
 ): List<ScrapedArtist> {

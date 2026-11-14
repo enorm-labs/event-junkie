@@ -137,6 +137,48 @@ class SlaughterhouseOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills event 13955's co-bill after the series colon, without each act's genre and town`() {
+        val html =
+            """
+            <div class="entry-content">
+            <p class="wp-block-paragraph">04.12.2026<br><strong>Konzert: Santa&#8217;s Riot VI: Deshurance – Hardcore (Berlin) + The IronY &#8211; Mixed Metal Arts (Berlin) + Ravenpath &#8211; Melodic Death Metal (Zwickau) </strong></p>
+            <p class="wp-block-paragraph">Beginn: 19:00</p>
+            </div>
+            """.trimIndent()
+        val night = SlaughterhouseOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        night.artists.map { it.name to it.role } shouldBe
+            listOf("Deshurance", "The IronY", "Ravenpath").map { it to ArtistRole.HEADLINER }
+    }
+
+    @Test
+    fun `bills event 13954's co-bill after a numbered series name and its colon`() {
+        val html =
+            """
+            <div class="entry-content">
+            <p class="wp-block-paragraph">27.11.2026<br><strong>Konzert: 34. Lange Nacht der Indieschönheiten: Planet Pankow + First&#8217;n&#8217;Stripes + GFR</strong></p>
+            <p class="wp-block-paragraph">Beginn: 20:00</p>
+            </div>
+            """.trimIndent()
+        val night = SlaughterhouseOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        night.artists.map { it.name } shouldBe listOf("Planet Pankow", "First’n’Stripes", "GFR")
+    }
+
+    @Test
+    fun `bills event 13956's band without its record release concert tail`() {
+        val html =
+            """
+            <div class="entry-content">
+            <p class="wp-block-paragraph">11.12.2026<br><strong>Konzert: Lemur „Yeniden“ Record Release Concert</strong></p>
+            </div>
+            """.trimIndent()
+        SlaughterhouseOverviewPageScraper()
+            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+            .single()
+            .artists
+            .map { it.name } shouldBe listOf("Lemur")
+    }
+
+    @Test
     fun `bills the live acts an entry names over the series before its title's colon`() {
         on(11, 14).title shouldBe "Aufnahme+Wiedergabe: Sutcliffe No More / Control / Kommando"
         billing(11, 14) shouldBe

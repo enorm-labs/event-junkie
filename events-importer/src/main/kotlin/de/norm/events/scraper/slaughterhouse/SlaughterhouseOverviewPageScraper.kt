@@ -29,6 +29,8 @@ import java.nio.charset.StandardCharsets
  *
  * A title's dash reads two ways. `Blutgott – Blutfest 2026` names the band and its festival, so the band is on the
  * left. `Stoner’s Fall – Sheev + Ghostones + Caosonora` names the night and its `+` co-bill, so the acts are on the right.
+ * A colon reads the same way: `Capper: Rockin And Clubbin` bills Capper, but `Santa’s Riot VI: Deshurance – Hardcore (Berlin) + …`
+ * names the series and bills the co-bill after the colon, less each act's genre and town.
  *
  * No entry has its own page, so the source id is the date. A ticket link the editor pasted through Facebook's
  * `l.php` redirect is unwrapped to its target.
@@ -132,11 +134,19 @@ class SlaughterhouseOverviewPageScraper {
         if (type == EventType.PARTY.name) return djs
         val headliners =
             lineup.headliners.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }.ifEmpty {
-                ACT_PREFIX.find(title)?.let { listOf(ScrapedArtist(name = it.groupValues[1].trim(), role = ArtistRole.HEADLINER, titleDerived = true)) }
+                seriesCoBill(title)?.let { buildArtistsForEventType(it, subtitle = null, eventType = type) }
+                    ?: ACT_PREFIX.find(title)?.let { listOf(ScrapedArtist(name = it.groupValues[1].trim(), role = ArtistRole.HEADLINER, titleDerived = true)) }
                     ?: buildArtistsForEventType(billedSideOfDash(title), subtitle = null, eventType = type)
             }
         return headliners + djs
     }
+
+    private fun seriesCoBill(title: String): String? =
+        ACT_PREFIX
+            .find(title)
+            ?.let { title.substring(it.range.last + 1) }
+            ?.takeIf { CO_BILL.containsMatchIn(it) }
+            ?.replace(GENRE_TAIL, "")
 
     private fun billedSideOfDash(title: String): String =
         SERIES_DASH
@@ -189,6 +199,9 @@ class SlaughterhouseOverviewPageScraper {
 
         /** `Capper: Rockin And Clubbin – …` names its band before the colon, and the rest is the night's name. */
         val ACT_PREFIX = Regex("""^([^:]+):\s+""")
+
+        /** A co-billed act's `– Hardcore (Berlin)`: its genre and home town, not part of its name. */
+        val GENRE_TAIL = Regex("""\s+[–—-]\s+[^+–—]+?\s*\([^()+]+\)(?=\s*(?:\+|$))""")
         val SERIES_DASH = Regex("""^.+?\s+[–—-]\s+(.+)$""")
         val CO_BILL = Regex("""\s\+\s""")
         val DIVIDER = Regex("""^[–\-\s]+$""")
