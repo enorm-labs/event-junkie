@@ -17,5 +17,14 @@
     "weekend": "Dieses Wochenende",
     "date": "Am"
   },
-  "emptyFiltered": "Zu diesen Filtern gibt es keinen Weihnachtsmarkt."
+  "emptyFiltered": "Zu diesen Filtern gibt es keinen Weihnachtsmarkt.",
+  "nearest": "Nächste zuerst",
+  "near": {
+    "label": "Entfernung",
+    "fromMarket": "Ab einem Markt …",
+    "needsOrigin": "„Nächste zuerst“ braucht einen Startpunkt: deinen Standort, einen Punkt auf der Karte oder einen Markt.",
+    "denied": "Der Standortzugriff ist für diese Seite aus, die Märkte bleiben also nach Namen sortiert. Wähle stattdessen einen Punkt auf der Karte oder einen Markt.",
+    "unavailable": "Dein Standort ließ sich nicht ermitteln, die Märkte bleiben also nach Namen sortiert. Wähle stattdessen einen Punkt auf der Karte oder einen Markt.",
+    "resultCount": "{count} Weihnachtsmarkt, der nächste zuerst | {count} Weihnachtsmärkte, die nächsten zuerst"
+  }
 }

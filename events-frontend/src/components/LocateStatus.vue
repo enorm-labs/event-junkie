@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 /**
- * What the "near me" button is doing, shared by the events map and the venues map. The failure
+ * What the "near me" button is doing, shared by the events map, the venues map and the Christmas markets. The failure
  * messages come from each page's own keys, because each offers that page's way round it.
  */
 import { useI18n } from 'vue-i18n'
@@ -8,7 +8,7 @@ import type { LocateState } from '@/composables/useLocation'
 
 defineProps<{
   state: LocateState
-  messages: 'map.near' | 'venues.near'
+  messages: 'map.near' | 'venues.near' | 'christmasMarkets.near'
 }>()
 
 const { t } = useI18n()

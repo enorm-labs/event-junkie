@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { foldMarkets, inChristmasMarketSeason, isOpenOn, marketDays } from '@/lib/christmasMarkets'
+import type { EventSummary } from '@/api/types'
+import {
+  foldMarkets,
+  inChristmasMarketSeason,
+  isOpenOn,
+  marketDays,
+  nearestFirst,
+} from '@/lib/christmasMarkets'
 
 describe('inChristmasMarketSeason', () => {
   it.each([
@@ -109,5 +116,33 @@ describe('foldMarkets', () => {
 
     expect(folded.map(({ shown }) => shown.slug)).toEqual(['rathaus', 'dahlem-3'])
     expect(foldMarkets(dahlem, '2026-11-28', (b) => isOpenOn(b, '2026-12-09'))).toEqual([])
+  })
+})
+
+describe('nearestFirst', () => {
+  const origin = { latitude: 52.52, longitude: 13.4 }
+  function at(slug: string, latitude: number | null): EventSummary {
+    return {
+      slug,
+      title: slug,
+      venue: { slug, latitude, longitude: latitude === null ? null : 13.4 },
+    }
+  }
+
+  it('orders by the distance of each market, and the unplaced last in their order', () => {
+    const markets = foldMarkets(
+      [at('none-b', null), at('far', 52.6), at('none-a', null), at('near', 52.53)],
+      '2026-11-14',
+    )
+    const result = nearestFirst(markets, origin)
+
+    expect(result.map(({ market }) => market.shown.slug)).toEqual([
+      'near',
+      'far',
+      'none-b',
+      'none-a',
+    ])
+    expect(result[0]?.distanceKm).toBeCloseTo(1.11, 2)
+    expect(result[3]?.distanceKm).toBeNull()
   })
 })

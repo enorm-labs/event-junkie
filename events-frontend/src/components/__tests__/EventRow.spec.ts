@@ -68,6 +68,13 @@ describe('EventRow', () => {
     expect(unsaid.text()).not.toContain('English')
   })
 
+  it('shows a distance only when the page measured one (#5010)', () => {
+    const near = mount(EventRow, { props: { event, distance: '1,2 km' }, global: { stubs } })
+    expect(near.text()).toContain('1,2 km')
+    const plain = mount(EventRow, { props: { event }, global: { stubs } })
+    expect(plain.text()).not.toContain(' km')
+  })
+
   it('sets the date without the year, which the title needs the room for', () => {
     const wrapper = mount(EventRow, { props: { event }, global: { stubs } })
 

@@ -181,15 +181,17 @@ const { t } = useI18n()
       <!-- LEGAL.md §7.4a: the position is used in the browser and nowhere else. -->
       <h3>Dein Standort für „In der Nähe“</h3>
       <p>
-        Die Eventkarte kann zeigen, was in deiner Nähe läuft, und die Location-Karte, welche
-        Locations in deiner Nähe sind. Erst wenn du
+        Die Eventkarte kann zeigen, was in deiner Nähe läuft, die Location-Karte, welche Locations
+        in deiner Nähe sind, und die Seite der Weihnachtsmärkte, welche Märkte dir am nächsten sind.
+        Erst wenn du
         <strong>Meinen Standort verwenden</strong> wählst, fragt dein Browser, ob er deine Position
         teilen soll, und du entscheidest. Erlaubst du es, wird die Position
         <strong>nur in deinem Browser</strong> verwendet, um die Entfernung zu jeder Location zu
         berechnen. Sie wird weder an Event Junkie noch an Dritte übermittelt, erscheint in keiner
         Adresse und keinem Protokoll und wird nicht gespeichert: Sie ist weg, sobald du die Seite
         neu lädst oder den Tab schließt. Auf der Eventkarte kannst du stattdessen auch einen Punkt
-        oder eine Location wählen, mit demselben Ergebnis.
+        oder eine Location wählen, auf der Seite der Weihnachtsmärkte einen Punkt oder einen Markt.
+        Das Ergebnis ist dasselbe.
       </p>
       <p>
         Weil die Position dein Gerät nie verlässt, habe ich keine Kopie davon, und es gibt nichts,

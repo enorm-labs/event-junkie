@@ -167,14 +167,14 @@ const { t } = useI18n()
       <!-- LEGAL.md §7.4a: the position is used in the browser and nowhere else. -->
       <h3>Your location, for “near me”</h3>
       <p>
-        The events map can show what is on near you, and the venues map which venues are near you.
-        Only when you choose
+        The events map can show what is on near you, the venues map which venues are near you, and
+        the Christmas markets page which markets are nearest. Only when you choose
         <strong>Use my location</strong> does your browser ask whether to share your position, and
         you decide. If you allow it, the position is used <strong>only in your browser</strong>, to
         measure the distance to each venue. It is not sent to Event Junkie or to anyone else, it
         appears in no address and no log, and it is not stored: it is gone when you reload the page
-        or close the tab. On the events map you can pick a point or a venue instead, with the same
-        result.
+        or close the tab. On the events map you can pick a point or a venue instead, and on the
+        Christmas markets page a point or a market. The result is the same.
       </p>
       <p>
         Because the position never leaves your device, I hold no copy of it, and there is nothing
