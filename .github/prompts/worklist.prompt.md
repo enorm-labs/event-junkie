@@ -73,7 +73,8 @@ Read the entries in the JSON for each row, then give it one verdict:
   adds an `AcceptedLimitation` with its `LimitedAspect`, a one-line reason in the venue's words, and `verified`: the ISO date you read the venue's page.
 - **A curated list** is one of three shared files: `NonArtistNames.kt`, `GenreNormalizer.kt` and `EventFeatureRules.kt`. A change there acts on every
   source. So the draft names the values, and its **Done when** asks for production-wide proof in the pull request: across all sources, every event the
-  new value would change, and that each change is right.
+  new value would change, and that each change is right. A word added to `NON_GENRE_TOKENS` clears its `NON_GENRE_TOKEN` rows at the next import of each
+  source: a listed word is dropped without a flag (#5030).
 
 ## Step 3 — Re-measure each finding
 

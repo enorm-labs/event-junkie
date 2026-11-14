@@ -136,7 +136,7 @@ class AssociationSyncQualityFlagIntegrationTest : BaseControllerTest() {
 
             associationSyncService.resolveAndSyncAssociations(
                 listOf(event),
-                listOf(scraped(sourceId, listOf("Acid Night", "Die Nerven"), genre = "Immersive Ausstellung, Techno", promoters = listOf("Acid Night")))
+                listOf(scraped(sourceId, listOf("Acid Night", "Die Nerven"), genre = "Lange Nacht der Museen, Techno", promoters = listOf("Acid Night")))
             )
 
             val linked = eventArtistRepository.findByEventIdIn(listOf(eventId)).toList().map { it.artistId }
@@ -144,7 +144,7 @@ class AssociationSyncQualityFlagIntegrationTest : BaseControllerTest() {
             qualityFlagRepository.findByEventIds(listOf(eventId)) shouldBe
                 listOf(
                     EventQualityFlag(eventId, QualityFlagKind.HELD_BACK_PROMOTER_NAME, "Acid Night"),
-                    EventQualityFlag(eventId, QualityFlagKind.NON_GENRE_TOKEN, "Immersive Ausstellung")
+                    EventQualityFlag(eventId, QualityFlagKind.NON_GENRE_TOKEN, "Lange Nacht der Museen")
                 )
         }
     }
