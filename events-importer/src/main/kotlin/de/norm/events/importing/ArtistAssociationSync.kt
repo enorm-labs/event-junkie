@@ -92,8 +92,8 @@ class ArtistAssociationSync(
         return unglueSeriesTails(billed) to heldBack
     }
 
-    /** The subset of [slugs] whose artist row MusicBrainz matched `EXACT`. */
-    private suspend fun exactSlugs(slugs: Set<String>): Set<String> =
+    /** The subset of [slugs] whose artist row MusicBrainz matched `EXACT`. [ActTitleCasing] applies the same rule. */
+    internal suspend fun exactSlugs(slugs: Set<String>): Set<String> =
         if (slugs.isEmpty()) {
             emptySet()
         } else {

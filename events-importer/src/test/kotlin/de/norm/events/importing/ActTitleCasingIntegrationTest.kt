@@ -2,10 +2,13 @@ package de.norm.events.importing
 
 import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.artist.MusicBrainzMatch
 import de.norm.events.artist.artistSlugFor
+import de.norm.events.artist.canonicalArtistName
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventRepository
+import de.norm.events.event.EventStatus
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.venue.VenueEntity
@@ -15,6 +18,8 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDate
 import java.time.LocalTime
@@ -67,7 +72,9 @@ class ActTitleCasingIntegrationTest : BaseControllerTest() {
     private fun show(
         title: String,
         vararg acts: String,
-        titleDerived: Boolean = false
+        titleDerived: Boolean = false,
+        promoters: List<String> = emptyList(),
+        status: EventStatus = EventStatus.SCHEDULED
     ) = ScrapedEvent(
         title = title,
         eventType = "CONCERT",
@@ -75,11 +82,31 @@ class ActTitleCasingIntegrationTest : BaseControllerTest() {
         startTime = LocalTime.of(20, 0),
         sourceId = "astra:${title.lowercase().replace(Regex("\\W+"), "-")}",
         sourceUrl = "https://www.astra-berlin.de/events/1",
+        status = status.name,
         artists =
             acts.mapIndexed { index, act ->
-                ScrapedArtist(act, if (index == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT, titleDerived = titleDerived)
-            }
+                ScrapedArtist(act, if (index == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT, titleDerived = titleDerived && index == 0)
+            },
+        promoters = promoters
     )
+
+    /** The act presents her own show (#4983): the title gives the act, and the promoter block names her too. */
+    private fun ownShow(
+        title: String,
+        vararg support: String,
+        status: EventStatus = EventStatus.SCHEDULED
+    ) = show(title, title, *support, titleDerived = true, promoters = listOf(canonicalArtistName(title)), status = status)
+
+    private suspend fun storeArtist(
+        name: String,
+        match: MusicBrainzMatch? = null
+    ) {
+        artistRepository.insertIfAbsent(name, artistSlugFor(name))
+        if (match != null) {
+            val id = requireNotNull(artistRepository.findBySlug(artistSlugFor(name))?.id)
+            artistRepository.storeMusicBrainzVerdict(id, match.name, "00000000-0000-0000-0000-000000004983".takeIf { match == MusicBrainzMatch.EXACT })
+        }
+    }
 
     private suspend fun importTitles(vararg events: ScrapedEvent): Map<String, String> {
         eventUpsertService.upsertAndCleanup(events.toList(), venueId, venueSlug, eventSourceId)
@@ -154,5 +181,53 @@ class ActTitleCasingIntegrationTest : BaseControllerTest() {
             val stored = eventRepository.findBySourceIdIn(listOf(event.sourceId)).toList().single()
             eventRepository.save(stored.copy(title = "CONWAY THE MACHINE", pinnedFields = listOf("title")))
             titleOf(event) shouldBe "CONWAY THE MACHINE"
+        }
+
+    @Test
+    fun `an act that is also the promoter takes its name when MusicBrainz matched it EXACT`(): Unit =
+        runBlocking {
+            storeArtist("Domiziana", MusicBrainzMatch.EXACT)
+
+            titleOf(ownShow("DOMIZIANA")) shouldBe "Domiziana"
+        }
+
+    @Test
+    fun `an act that is also the promoter keeps the capitals without an EXACT row`(): Unit =
+        runBlocking {
+            storeArtist("Domiziana")
+            storeArtist("Wisborg", MusicBrainzMatch.AMBIGUOUS)
+
+            titleOf(ownShow("DOMIZIANA")) shouldBe "DOMIZIANA"
+            titleOf(ownShow("WISBORG")) shouldBe "WISBORG"
+            titleOf(ownShow("UNRELEASED BERLIN")) shouldBe "UNRELEASED BERLIN"
+        }
+
+    @Test
+    fun `beside a support act, only the EXACT promoter-named act is title-cased, in one import`(): Unit =
+        runBlocking {
+            storeArtist("Domiziana", MusicBrainzMatch.EXACT)
+
+            importTitles(ownShow("DOMIZIANA", "Support Band"), ownShow("UNRELEASED BERLIN", "Support Band")).values.sorted() shouldBe
+                listOf("Domiziana", "UNRELEASED BERLIN")
+        }
+
+    @Test
+    fun `a long promoter-named title is title-cased whole`(): Unit =
+        runBlocking {
+            val name = "The Very Long Name of an Orchestra That Presents Its Own Winter Show Again and Again"
+            storeArtist(name, MusicBrainzMatch.EXACT)
+
+            titleOf(ownShow(name.uppercase())) shouldBe name
+        }
+
+    @ParameterizedTest
+    @EnumSource(EventStatus::class)
+    fun `the promoter-named rule holds for every status`(status: EventStatus): Unit =
+        runBlocking {
+            storeArtist("Domiziana", MusicBrainzMatch.EXACT)
+            storeArtist("Wisborg")
+
+            titleOf(ownShow("DOMIZIANA", status = status)) shouldBe "Domiziana"
+            titleOf(ownShow("WISBORG", status = status)) shouldBe "WISBORG"
         }
 }

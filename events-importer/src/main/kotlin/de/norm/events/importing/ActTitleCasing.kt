@@ -25,12 +25,17 @@ class ActTitleCasing(
 
     /** The title-cased title of each of [events] the rule changes, by `sourceId`. */
     suspend fun titles(events: List<ScrapedEvent>): Map<String, String> {
+        val capitals = events.filter { it.storedTitle().isCapitals() }
+        val promoterNamed = capitals.flatMap(::promoterNamedTitleSlugs).toSet()
+        val verified = if (promoterNamed.isEmpty()) emptySet() else artistSync.exactSlugs(promoterNamed)
         val candidates =
-            events
+            capitals
                 .mapNotNull { event ->
                     val title = event.storedTitle()
-                    if (!title.isCapitals()) return@mapNotNull null
-                    val slugs = billedNames(event).filter { it.equals(title, ignoreCase = true) }.map { it to artistSlugFor(it, event.sourceId) }
+                    val slugs =
+                        billedNames(event, verified)
+                            .filter { it.equals(title, ignoreCase = true) }
+                            .map { it to artistSlugFor(it, event.sourceId) }
                     if (slugs.isEmpty()) null else event to slugs
                 }
         if (candidates.isEmpty()) return emptyMap()
@@ -50,12 +55,26 @@ class ActTitleCasing(
 
     /**
      * The names [ArtistAssociationSync.billedArtists] bills. A title-derived name that the event credits as its
-     * promoter is left out: the import holds it back unless MusicBrainz vouches for it (#1772).
+     * promoter is left out unless its slug is in [verified], the MusicBrainz `EXACT` rows that keep it billed
+     * (#1772, #1841, #4983). This logs nothing: [ArtistAssociationSync.billedArtists] logs each held-back name.
      */
-    private fun billedNames(event: ScrapedEvent): List<String> {
+    private fun billedNames(
+        event: ScrapedEvent,
+        verified: Set<String>
+    ): List<String> {
         val promoterSlugs = event.promoters.map(::artistSlugFor).toSet()
         return strippedArtists(event)
-            .filterNot { it.titleDerived && artistSlugFor(it.name) in promoterSlugs }
+            .filterNot { it.titleDerived && artistSlugFor(it.name).let { slug -> slug in promoterSlugs && slug !in verified } }
             .map { it.name }
+    }
+
+    /** The slugs of [event]'s title-derived acts that are the whole title and its promoter: the ones only an `EXACT` row bills. */
+    private fun promoterNamedTitleSlugs(event: ScrapedEvent): List<String> {
+        val title = event.storedTitle()
+        val promoterSlugs = event.promoters.map(::artistSlugFor).toSet()
+        return strippedArtists(event)
+            .filter { it.titleDerived && it.name.equals(title, ignoreCase = true) }
+            .map { artistSlugFor(it.name) }
+            .filter { it in promoterSlugs }
     }
 }
