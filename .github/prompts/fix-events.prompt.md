@@ -45,17 +45,20 @@ A failed call prints nothing, which is not an empty queue: say "queue not readab
 the route (#4399) has not reached production. An empty list, `[]`, is "No open reports", and the run ends. Otherwise each entry becomes one URL, `https://event-junkie.de/de/events/<slug>`, and one note:
 the ticked problems in words, then each reporter's free text. Two reports on one event are one entry with both notes.
 
-| Problem         | Lead                                  |
-| --------------- | ------------------------------------- |
-| `ARTISTS`       | wrong or missing artists              |
-| `TITLE`         | garbled title                         |
-| `DATE_TIME`     | wrong date or time                    |
-| `STATUS`        | cancelled or postponed status wrong   |
-| `PRICE_TICKETS` | price or ticket link wrong or missing |
-| `TYPE_GENRE`    | wrong event type or genre             |
-| `NOT_AN_EVENT`  | should not be listed                  |
-| `DUPLICATE`     | listed twice                          |
-| `OTHER`         | the note says what                    |
+| Problem         | Lead                                                  |
+| --------------- | ----------------------------------------------------- |
+| `ARTISTS`       | wrong or missing artists, or the title billed as one  |
+| `TITLE`         | garbled title                                         |
+| `DESCRIPTION`   | garbled, cut-off or badly formatted description       |
+| `DATE_TIME`     | wrong date or time                                    |
+| `STATUS`        | cancelled, postponed or moved, shown wrong or not     |
+| `PRICE_TICKETS` | price or ticket link wrong or missing                 |
+| `TYPE_GENRE`    | wrong event type, genre or audience                   |
+| `NOT_AN_EVENT`  | should not be listed                                  |
+| `DUPLICATE`     | listed twice                                          |
+| `OTHER`         | the note says what                                    |
+| `QUESTION`      | a question or suggestion, not a data error            |
+| `ON_IMAGE`      | a hint: the details are on the event's image (Step 1) |
 
 Keep the `eventId` and the number of reports per entry: Step 6 needs both. Then run Step 1 for each entry, as for a pasted URL.
 
@@ -76,6 +79,9 @@ Then read the venue's own data, as the scraper reads it. Find the scraper by the
 `events-importer/src/main/kotlin/de/norm/events/scraper/<venue>/`, and its importer's KDoc names the URL it fetches: a listing page, a JSON API, an
 iCalendar feed. Fetch that, not only the page a visitor sees. A JSON source or a feed often holds the value that the visible page hides.
 
+With `ON_IMAGE`, read the event's image (`imageUrl` in the API answer) before you judge the line-up, the times or the type. A poster often bills
+the acts that the text leaves out.
+
 A finding holds only when three things agree: the venue publishes X, we store Y, and the parser's code shows why. A note that does not hold is a
 verdict of **Correct as it is**, with what the source showed.
 
@@ -88,10 +94,11 @@ verdict of **Correct as it is**, with what the source showed.
 | **Accepted limitation** | The venue never publishes the value, in any form the parser can read            | CLEAR if the venue's `*_LIMITATIONS` declares it     |
 | **Hand fix**            | A one-off the parser cannot be expected to read: a typo on the venue's page     | A numbered proposal, applied on the operator's word  |
 | **Correct as it is**    | The stored value matches the source, or the note does not hold                  | One line, with what the source showed                |
+| **Question**            | `QUESTION`: the note asks or suggests something, and no stored value is wrong   | The answer, and an issue draft for a product idea    |
 
 **A queued event's reports are resolved by its verdict.** Resolving deletes them, as the privacy notice promises, so it waits for the fix to be live:
 
-- **Correct as it is**, **Accepted limitation**, or **Out of scope** under a rule that already exists: now, on the operator's number (Step 6).
+- **Correct as it is**, **Question**, **Accepted limitation**, or **Out of scope** under a rule that already exists: now, on the operator's number (Step 6).
 - **Parser defect**, or a new scope rule: after the release, by the PR's `## After deploy` step.
 - **Hand fix**: right after the operator's number applies it.
 

@@ -32,7 +32,7 @@ export interface paths {
         get?: never;
         /**
          * Reports a problem with an event, or replaces the account's earlier report on it
-         * @description Only for accounts the operator allows. At least one problem; a note of at most 500 characters, required with OTHER.
+         * @description Only for accounts the operator allows. At least one problem, and ON_IMAGE never alone; a note of at most 500 characters, required with OTHER and QUESTION.
          */
         put: operations["save"];
         post?: never;

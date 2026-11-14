@@ -222,6 +222,7 @@ export async function withdrawRsvp(slug: string): Promise<void> {
 export const REPORT_PROBLEMS = [
   'ARTISTS',
   'TITLE',
+  'DESCRIPTION',
   'DATE_TIME',
   'STATUS',
   'PRICE_TICKETS',
@@ -229,6 +230,8 @@ export const REPORT_PROBLEMS = [
   'NOT_AN_EVENT',
   'DUPLICATE',
   'OTHER',
+  'QUESTION',
+  'ON_IMAGE',
 ] as const
 export type ReportProblem = (typeof REPORT_PROBLEMS)[number]
 

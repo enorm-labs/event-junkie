@@ -284,7 +284,7 @@ CREATE TABLE accounts.event_report (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT event_report_note_check CHECK (((length(note) >= 1) AND (length(note) <= 500))),
-    CONSTRAINT event_report_problems_check CHECK ((((cardinality(problems) >= 1) AND (cardinality(problems) <= 9)) AND (problems <@ ARRAY['ARTISTS'::text, 'TITLE'::text, 'DATE_TIME'::text, 'STATUS'::text, 'PRICE_TICKETS'::text, 'TYPE_GENRE'::text, 'NOT_AN_EVENT'::text, 'DUPLICATE'::text, 'OTHER'::text])))
+    CONSTRAINT event_report_problems_check CHECK ((((cardinality(problems) >= 1) AND (cardinality(problems) <= 12)) AND (problems <@ ARRAY['ARTISTS'::text, 'TITLE'::text, 'DESCRIPTION'::text, 'DATE_TIME'::text, 'STATUS'::text, 'PRICE_TICKETS'::text, 'TYPE_GENRE'::text, 'NOT_AN_EVENT'::text, 'DUPLICATE'::text, 'OTHER'::text, 'QUESTION'::text, 'ON_IMAGE'::text])))
 );
 
 --

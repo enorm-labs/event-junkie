@@ -3,6 +3,7 @@ package de.norm.events.account
 import de.norm.events.BaseControllerTest
 import de.norm.events.common.BERLIN
 import io.kotest.matchers.shouldBe
+import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -25,6 +26,9 @@ class ReportFlowTest : BaseControllerTest() {
 
     @Autowired
     private lateinit var reportRows: ReportStore
+
+    @Autowired
+    private lateinit var registry: MeterRegistry
 
     private lateinit var session: String
     private lateinit var csrf: String
@@ -130,6 +134,30 @@ class ReportFlowTest : BaseControllerTest() {
         get("/me/reports").expectBody().jsonPath("$.length()").isEqualTo(0)
     }
 
+    private fun ticked(problem: String): Double =
+        registry
+            .get(AccountMetrics.REPORT_PROBLEM)
+            .tag(AccountMetrics.TAG_PROBLEM, problem)
+            .counter()
+            .count()
+
+    @Test
+    fun `the new boxes are stored, and each ticked box is counted on a store and a replace, not on a withdraw`() {
+        val artists = ticked("artists")
+        val image = ticked("on_image")
+        val description = ticked("description")
+
+        put("tonight", listOf("ARTISTS", "ON_IMAGE")).expectStatus().isNoContent
+        put("tonight", listOf("DESCRIPTION", "ON_IMAGE")).expectStatus().isNoContent
+        put("next-week", listOf("QUESTION"), "Is there a festival page?").expectStatus().isNoContent
+        withdraw("tonight").expectStatus().isNoContent
+
+        ticked("artists") - artists shouldBe 1.0
+        ticked("on_image") - image shouldBe 2.0
+        ticked("description") - description shouldBe 1.0
+        get("/me/reports").expectBody().jsonPath("$[0].problems").isEqualTo(listOf("QUESTION"))
+    }
+
     @Test
     fun `an account the operator has not allowed is refused`() {
         val plain = runBlocking { sessionFor("fan@example.org", canReport = false) }
@@ -137,10 +165,12 @@ class ReportFlowTest : BaseControllerTest() {
     }
 
     @Test
-    fun `no problem, an unknown one, OTHER without a note and a long note are 400s, an unknown event a 404`() {
+    fun `no problem, an unknown one, OTHER or QUESTION without a note, ON_IMAGE alone and a long note are 400s, an unknown event a 404`() {
         put("tonight", emptyList()).expectStatus().isBadRequest
         put("tonight", listOf("WEATHER")).expectStatus().isBadRequest
         put("tonight", listOf("OTHER"), "   ").expectStatus().isBadRequest
+        put("tonight", listOf("QUESTION")).expectStatus().isBadRequest
+        put("tonight", listOf("ON_IMAGE", "ON_IMAGE"), "See the poster").expectStatus().isBadRequest
         put("tonight", listOf("TITLE"), "x".repeat(501)).expectStatus().isBadRequest
         put("nothing-here", listOf("TITLE")).expectStatus().isNotFound
         put("tonight", listOf("OTHER"), "Wrong venue").expectStatus().isNoContent

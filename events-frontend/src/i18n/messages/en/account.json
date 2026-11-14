@@ -134,7 +134,7 @@
     "close": "Close",
     "legend": "What is wrong? Tick all that apply.",
     "note": "Note (optional)",
-    "noteRequired": "Note (needed for “Something else”)",
+    "noteRequired": "Note (needed for “Something else” and questions)",
     "send": "Send report",
     "update": "Update report",
     "withdraw": "Withdraw report",
@@ -142,15 +142,18 @@
     "failed": "That did not work. Please try again.",
     "forbidden": "This account cannot report problems.",
     "problems": {
-      "ARTISTS": "Wrong or missing artists",
+      "ARTISTS": "Wrong or missing artists, or the title is listed as an artist",
       "TITLE": "Title is garbled",
+      "DESCRIPTION": "Description is garbled, cut off or badly formatted",
       "DATE_TIME": "Wrong date or time",
-      "STATUS": "Cancelled or postponed status is wrong",
+      "STATUS": "Cancelled, postponed or moved: shown wrong or not at all",
       "PRICE_TICKETS": "Price or ticket link wrong or missing",
-      "TYPE_GENRE": "Wrong event type or genre",
+      "TYPE_GENRE": "Wrong event type, genre or audience (e.g. for children, comedy)",
       "NOT_AN_EVENT": "Should not be listed (private, workshop, …)",
       "DUPLICATE": "Listed twice",
-      "OTHER": "Something else"
+      "OTHER": "Something else",
+      "QUESTION": "Question or suggestion (not a data error)",
+      "ON_IMAGE": "The details are on the event's image"
     }
   },
   "push": {

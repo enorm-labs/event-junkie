@@ -10,10 +10,11 @@ import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.UUID
 
-/** The ticked boxes of "Report a problem" (#4399). V220's CHECK lists the same names. */
+/** The ticked boxes of "Report a problem" (#4399), in the form's order. V247's CHECK lists the same names. */
 enum class ReportProblem {
     ARTISTS,
     TITLE,
+    DESCRIPTION,
     DATE_TIME,
     STATUS,
     PRICE_TICKETS,
@@ -22,7 +23,13 @@ enum class ReportProblem {
     DUPLICATE,
 
     /** Needs a note: the box alone says nothing. */
-    OTHER;
+    OTHER,
+
+    /** A question or a suggestion, not a data error (#4978). Needs a note, as [OTHER] does. */
+    QUESTION,
+
+    /** A hint, not a problem: the details are on the event's image. Never the only box. */
+    ON_IMAGE;
 
     companion object {
         fun ofOrNull(name: String): ReportProblem? = entries.firstOrNull { it.name == name }

@@ -7,6 +7,7 @@ const account = vi.hoisted(() => ({
   REPORT_PROBLEMS: [
     'ARTISTS',
     'TITLE',
+    'DESCRIPTION',
     'DATE_TIME',
     'STATUS',
     'PRICE_TICKETS',
@@ -14,6 +15,8 @@ const account = vi.hoisted(() => ({
     'NOT_AN_EVENT',
     'DUPLICATE',
     'OTHER',
+    'QUESTION',
+    'ON_IMAGE',
   ],
   prepareCsrf: vi.fn<() => Promise<void>>(),
   fetchSession: vi.fn<() => Promise<unknown>>(),
@@ -105,9 +108,29 @@ describe('ReportProblemForm', () => {
     const view = await mountForm()
     await view.find('[data-testid="report-OTHER"]').setValue(true)
     expect(send(view).attributes('disabled')).toBeDefined()
-    expect(view.text()).toContain('Note (needed for “Something else”)')
+    expect(view.text()).toContain('Note (needed for “Something else” and questions)')
 
     await view.find('[data-testid="report-note"]').setValue('Wrong venue')
+    expect(send(view).attributes('disabled')).toBeUndefined()
+  })
+
+  it('needs a note with a question', async () => {
+    setSession({ ...me, canReport: true } as never)
+    const view = await mountForm()
+    await view.find('[data-testid="report-QUESTION"]').setValue(true)
+    expect(send(view).attributes('disabled')).toBeDefined()
+
+    await view.find('[data-testid="report-note"]').setValue('Is there a festival page?')
+    expect(send(view).attributes('disabled')).toBeUndefined()
+  })
+
+  it('sends the image hint only with a problem', async () => {
+    setSession({ ...me, canReport: true } as never)
+    const view = await mountForm()
+    await view.find('[data-testid="report-ON_IMAGE"]').setValue(true)
+    expect(send(view).attributes('disabled')).toBeDefined()
+
+    await view.find('[data-testid="report-ARTISTS"]').setValue(true)
     expect(send(view).attributes('disabled')).toBeUndefined()
   })
 

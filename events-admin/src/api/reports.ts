@@ -8,6 +8,7 @@ import { failOnError } from '@/api/http'
 export const PROBLEM_LABELS: Record<string, string> = {
   ARTISTS: 'Artists',
   TITLE: 'Title',
+  DESCRIPTION: 'Description',
   DATE_TIME: 'Date or time',
   STATUS: 'Cancelled/postponed',
   PRICE_TICKETS: 'Price or tickets',
@@ -15,6 +16,8 @@ export const PROBLEM_LABELS: Record<string, string> = {
   NOT_AN_EVENT: 'Not an event',
   DUPLICATE: 'Duplicate',
   OTHER: 'Other',
+  QUESTION: 'Question',
+  ON_IMAGE: 'On the image',
 }
 
 export interface ReportEntry {

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * The form inside "Report a problem" (#4399): the common problems as boxes, a note, Send. The
- * note is required only with "Something else", because that box alone says nothing.
+ * note is required with "Something else" and a question, because those boxes alone say nothing.
+ * "On the image" is a hint, so it never goes alone (#4978).
  */
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -25,8 +26,15 @@ const note = ref(earlier.value?.note ?? '')
 const busy = ref(false)
 const problem = ref('')
 
-const needsNote = computed(() => problems.value.includes('OTHER') && !note.value.trim())
-const canSend = computed(() => problems.value.length > 0 && !needsNote.value && !busy.value)
+const NEEDS_NOTE: ReportProblem[] = ['OTHER', 'QUESTION']
+
+const needsNote = computed(
+  () => problems.value.some((p) => NEEDS_NOTE.includes(p)) && !note.value.trim(),
+)
+const hintOnly = computed(() => problems.value.length === 1 && problems.value[0] === 'ON_IMAGE')
+const canSend = computed(
+  () => problems.value.length > 0 && !hintOnly.value && !needsNote.value && !busy.value,
+)
 
 function message(e: unknown): string {
   if (e instanceof ApiError && e.status === 403) return t('account.report.forbidden')
