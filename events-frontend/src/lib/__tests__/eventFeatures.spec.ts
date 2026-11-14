@@ -33,9 +33,9 @@ describe('the kinds of Christmas market', () => {
     ])
   })
 
-  it('stay out of the events list feature filter, which keeps the market itself', () => {
-    expect(FILTER_FEATURES).toContain('christmas-market')
-    expect(FILTER_FEATURES.filter((slug) => slug.startsWith('christmas-market-'))).toEqual([])
+  it('stay out of the events list feature filter with the market itself, and for-children stays (#5019)', () => {
+    expect(FILTER_FEATURES.filter((slug) => slug.startsWith('christmas-market'))).toEqual([])
+    expect(FILTER_FEATURES).toContain('for-children')
   })
 })
 

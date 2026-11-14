@@ -1,4 +1,5 @@
 import type { EventFeature } from '@/api/types'
+import { CHRISTMAS_MARKET } from './christmasMarkets'
 
 // The event features of a night (#2631), `for-children` (#3796), `christmas-market` (#4972) and a market's kinds (#5007),
 // in display order.
@@ -35,9 +36,9 @@ export const MARKET_KINDS: readonly string[] = EVENT_FEATURES.filter((slug) =>
   slug.startsWith(MARKET_KIND_PREFIX),
 ).map((slug) => slug.slice(MARKET_KIND_PREFIX.length))
 
-/** The features the events list filters by: every one but a market's kind. */
+/** The features the events list filters by: no market and no kind, which the markets page alone shows (#5019). */
 export const FILTER_FEATURES: readonly string[] = EVENT_FEATURES.filter(
-  (slug) => !slug.startsWith(MARKET_KIND_PREFIX),
+  (slug) => slug !== CHRISTMAS_MARKET && !slug.startsWith(MARKET_KIND_PREFIX),
 )
 
 /** The BFF orders features by slug; this puts them in display order, an unknown slug last. */
