@@ -28,7 +28,7 @@ enum class QualityFlagKind(
     /** A genre that only repeats the event title. */
     GENRE_EQUALS_TITLE,
 
-    /** A word in the genre field that names no genre, such as `Ausstellung`. */
+    /** A word in the genre field that names no genre and is not on the non-genre stop list (#5030). */
     NON_GENRE_TOKEN,
 
     /**

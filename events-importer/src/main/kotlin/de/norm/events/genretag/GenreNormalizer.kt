@@ -248,8 +248,9 @@ internal val GENRE_SYNONYMS: Map<String, String> =
  * Ausstellung", "… Special"). Stored as [lookupKey] keys and matched per word
  * ([looksLikeGenre]), so `ausstellung` drops "Immersive Ausstellung" and "Ausstellung" alike. A
  * word here only vetoes a token with no recognised genre in it: "Retro Pop" still resolves to
- * Pop via the word-level match, which runs first. Keep tight; extend from the `Dropping
- * non-genre …` logs.
+ * Pop via the word-level match, which runs first. A listed word is a judged non-genre, so it
+ * is dropped without a `NON_GENRE_TOKEN` flag ([nonGenreTokens], #5030): listing a word silences
+ * it on the worklist. Keep tight; extend from the worklist and the `Dropping non-genre …` logs.
  */
 private val NON_GENRE_TOKENS: Set<String> =
     setOf(
@@ -473,9 +474,11 @@ fun normalizeGenre(rawGenre: String?): List<String> = genreTokens(rawGenre).flat
 
 /**
  * The tokens of [rawGenre] that [normalizeGenre] drops because they name no genre ([looksLikeGenre]),
- * as the venue wrote them. The import flags them for the data-quality worklist (#320).
+ * as the venue wrote them, less the ones [NON_GENRE_TOKENS] already names. The import flags them
+ * for the data-quality worklist (#320). A listed word was judged when it was listed, so it is
+ * dropped without a flag (#5030): flagging it put the same rows back on the worklist after every import.
  */
-fun nonGenreTokens(rawGenre: String?): List<String> = genreTokens(rawGenre).filter { resolveGenreOrNull(it) == null }.distinct()
+fun nonGenreTokens(rawGenre: String?): List<String> = genreTokens(rawGenre).filter { resolveGenreOrNull(it) == null && !it.isListedNonGenre }.distinct()
 
 /** [rawGenre] split on the delimiters, with the noise suffixes stripped. */
 private fun genreTokens(rawGenre: String?): List<String> {
@@ -587,13 +590,12 @@ private const val GENRE_ACRONYM_MAX_LEN = 3
  * normalize to a [NON_GENRE_TOKENS] entry ("Open Air" to `openair`, "Release Party" to
  * `releaseparty`), which the per-word check misses.
  */
-private fun looksLikeGenre(token: String): Boolean {
-    val words = token.trim().split(Regex("""\s+""")).filter { it.isNotBlank() }
-    return words.size <= MAX_GENRE_WORDS &&
-        words.none { lookupKey(it) in NON_GENRE_TOKENS } &&
-        lookupKey(token) !in NON_GENRE_TOKENS &&
-        token.any { it.isLetter() }
-}
+private fun looksLikeGenre(token: String): Boolean =
+    token.trim().split(WHITESPACE_RUN).count { it.isNotBlank() } <= MAX_GENRE_WORDS && !token.isListedNonGenre && token.any { it.isLetter() }
+
+/** True when the token or one of its words is a [NON_GENRE_TOKENS] key, by [lookupKey]. */
+private val String.isListedNonGenre: Boolean
+    get() = lookupKey(this) in NON_GENRE_TOKENS || split(WHITESPACE_RUN).any { lookupKey(it) in NON_GENRE_TOKENS }
 
 /** Maximum word count for a fall-through token to still be treated as a genre name. */
 private const val MAX_GENRE_WORDS = 2

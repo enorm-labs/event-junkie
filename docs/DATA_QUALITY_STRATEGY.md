@@ -43,8 +43,8 @@ resolve:
    case-by-case as they surface", "new ones need an entry", "slip through until denylisted". Newly-seen bad data
    lands in the DB first, and is corrected later, if ever.
 2. **The feedback loop is only partly closed.** Artist-less concerts, `OTHER`-typed events and the sync gate's
-   refusals reach the worklist, the dropped non-genre tokens included. The curated lists still grow only when someone
-   reads that worklist.
+   refusals reach the worklist. The dropped non-genre tokens reach it too, except a word on the `NON_GENRE_TOKENS`
+   stop list (#5030). The curated lists still grow only when someone reads that worklist.
 3. **There is measurement and no gate.** `de.norm.events.dataquality` holds the numbers per source, with a `data_quality_snapshot` history. A trend is
    visible. Since #2604 a regressed metric sets off an alert, but nothing stops the import that caused it.
 

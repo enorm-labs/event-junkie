@@ -173,9 +173,27 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `a word on the stop list is dropped without a flag, in any case and spelling`() {
+        assertSoftly {
+            listOf("Neuköllnical", "NEUKÖLLNICAL", "neuköllnical!", "Musik-Comedy", "Immersive Ausstellung").forEach {
+                normalizeGenre(it).shouldBeEmpty()
+                nonGenreTokens(it).shouldBeEmpty()
+            }
+        }
+    }
+
+    @Test
+    fun `an unknown token is still flagged beside a listed word and a genre`() {
+        normalizeGenre("Comedy, Techno, Lange Nacht der Museen").shouldContainExactly("Techno")
+        nonGenreTokens("Comedy, Techno, Lange Nacht der Museen").shouldContainExactly("Lange Nacht der Museen")
+        nonGenreTokens("").shouldBeEmpty()
+        nonGenreTokens("  ").shouldBeEmpty()
+    }
+
+    @Test
     fun `nonGenreTokens names the dropped labels as written, and not the noise`() {
-        nonGenreTokens("Immersive Ausstellung, Techno").shouldContainExactly("Immersive Ausstellung")
-        nonGenreTokens("Comedy, Soul, Comedy").shouldContainExactly("Comedy")
+        nonGenreTokens("Lange Nacht der Museen, Techno").shouldContainExactly("Lange Nacht der Museen")
+        nonGenreTokens("Lange Nacht der Museen, Soul, Lange Nacht der Museen").shouldContainExactly("Lange Nacht der Museen")
         nonGenreTokens("Berlin Techno").shouldBeEmpty()
         nonGenreTokens("from 22:00, x").shouldBeEmpty()
         nonGenreTokens(null).shouldBeEmpty()
@@ -318,7 +336,7 @@ class GenreNormalizerTest {
     fun `standalone freeform fragments are dropped, and wave is kept as a genre`() {
         normalizeGenre("Beyond, Retro").shouldBeEmpty()
         normalizeGenre("Beyond, Retro, Wave").shouldContainExactly("Wave")
-        nonGenreTokens("Beyond, Retro, Wave").shouldContainExactly("Beyond", "Retro")
+        nonGenreTokens("Beyond, Retro, Wave").shouldBeEmpty()
     }
 
     @Test
@@ -446,7 +464,8 @@ class GenreNormalizerTest {
         assertSoftly {
             listOf("Ausverkauft", "Buchpremiere", "Talkshow", "Märchen-Theater-Show", "Gespräch", "DJ Sets", "Leipzig", "Workshops").forEach {
                 normalizeGenre(it).shouldBeEmpty()
-                nonGenreTokens(it) shouldBe listOf(it)
+                // Listed words, so dropped without a flag: flagging them sent BKA Theater's rows back to the worklist (#5030).
+                nonGenreTokens(it).shouldBeEmpty()
             }
         }
     }
@@ -591,7 +610,7 @@ class GenreNormalizerTest {
     @Test
     fun `Straight Edge Hardcore resolves to Hardcore while a bare Core stays dropped`() {
         normalizeGenre("Straight Edge Hardcore, Core").shouldContainExactly("Hardcore")
-        nonGenreTokens("Straight Edge Hardcore, Core").shouldContainExactly("Core")
+        nonGenreTokens("Straight Edge Hardcore, Core").shouldBeEmpty()
     }
 
     @Test
@@ -618,7 +637,7 @@ class GenreNormalizerTest {
     fun `the labels around the new genres stay dropped`() {
         normalizeGenre("Party").shouldBeEmpty()
         normalizeGenre("Core").shouldBeEmpty()
-        nonGenreTokens("Party Schlager, Party").shouldContainExactly("Party")
+        nonGenreTokens("Party Schlager, Party").shouldBeEmpty()
     }
 
     @Test
@@ -650,6 +669,6 @@ class GenreNormalizerTest {
         normalizeGenre("Contemporary Vocal Music").shouldContainExactly("Classical")
         normalizeGenre("Zeitgenössischer Tanz").shouldBeEmpty()
         normalizeGenre("Konzert").shouldBeEmpty()
-        nonGenreTokens("Zeitgenössisches Konzert, Zeitgenössischer Tanz").shouldContainExactly("Zeitgenössischer Tanz")
+        nonGenreTokens("Zeitgenössisches Konzert, Zeitgenössischer Tanz").shouldBeEmpty()
     }
 }
