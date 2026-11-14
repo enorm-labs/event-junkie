@@ -19,7 +19,7 @@ class VenueCharacterTagTest {
 
     @Test
     fun `slugs are unique and the frontend's order is the declaration order`() {
-        // The frontend keeps the same list in `lib/venueCharacters.ts`; this is the side to change first.
+        // `lib/venueCharacters.ts` type-checks against this enum through the OpenAPI document; the order it keeps by hand.
         VenueCharacterTag.entries.map { it.slug }.shouldContainExactly(
             "queer",
             "sex-positive",

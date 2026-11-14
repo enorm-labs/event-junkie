@@ -47,6 +47,9 @@ dependencies {
     // main source set brings it. Declared by name, versioned by the Modulith BOM.
     testFixturesImplementation("org.springframework.modulith:spring-modulith-core")
 
+    // `@JsonValue` on the slug enums, so the importer's API and the BFF's OpenAPI document carry the slug.
+    compileOnly("com.fasterxml.jackson.core:jackson-annotations:${property("jackson-annotations.version")}")
+
     // Kotlin Logging — idiomatic SLF4J wrapper for Kotlin
     // See: https://github.com/oshai/kotlin-logging
     implementation("io.github.oshai:kotlin-logging-jvm:${property("kotlin-logging.version")}")

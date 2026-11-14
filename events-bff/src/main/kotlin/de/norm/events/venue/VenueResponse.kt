@@ -311,7 +311,7 @@ data class VenueDetailResponse(
 /** A character tag on a venue and the venue's own page that states it (#2379). */
 @Schema(description = "A character tag and the venue's own page that states it")
 data class VenueCharacterTagResponse(
-    @Schema(description = "Character tag slug", example = "queer")
+    @Schema(description = "Character tag slug", example = "queer", implementation = VenueCharacterTag::class)
     val tag: String,
     @Schema(description = "URL of the venue's own page that states the tag", example = "https://www.so36.com/about")
     val sourceUrl: String

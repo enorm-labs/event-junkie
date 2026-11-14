@@ -1357,8 +1357,9 @@ export interface components {
             /**
              * @description Character tag slug
              * @example queer
+             * @enum {string}
              */
-            tag?: string;
+            tag?: "queer" | "sex-positive" | "diy-collective" | "awareness-team" | "safer-space-policy" | "quiet-room" | "all-gender-toilets" | "free-water" | "smoke-free" | "dress-code" | "fetish-dress-code" | "no-photo-policy" | "cash-only" | "wheelchair-accessible";
             /**
              * @description URL of the venue's own page that states the tag
              * @example https://www.so36.com/about
@@ -2603,14 +2604,8 @@ export interface components {
             };
             /** @description The other sources that filled empty fields of this event, such as a promoter's page (ADR-043). The page must link each one (ADR-036). Empty for almost every event. */
             enrichmentSources?: components["schemas"]["EnrichmentSourceResponse"][];
-            /**
-             * @description What kind of night it is, as event feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, fetish-dress-code, no-photo-policy, open-end, day-party, open-stage, for-children, christmas-market. Set only where the event's own title or description, or for for-children its venue's page, states it; christmas-market is set by hand. The venue's character tags never fill it.
-             * @example [
-             *       "open-end",
-             *       "queer"
-             *     ]
-             */
-            features?: string[];
+            /** @description What kind of night it is, as event feature slugs ordered by slug. Set only where the event's own title or description, or for for-children its venue's page, states it; christmas-market is set by hand. The venue's character tags never fill it. */
+            features?: ("flinta-only" | "queer" | "sex-positive" | "dress-code" | "fetish-dress-code" | "no-photo-policy" | "open-end" | "day-party" | "open-stage" | "for-children" | "christmas-market")[];
             /** @description What moved on the event in the last 14 days, newest first: its date, start, end, status or venue. Empty for a new event and for one that has not moved. */
             changes?: components["schemas"]["EventChangeResponse"][];
             /** @description For a POSTPONED event, the one later SCHEDULED event at the same venue with the same act or title. Null for every other status, and when no event or more than one matches. */

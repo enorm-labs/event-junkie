@@ -3,7 +3,7 @@ package de.norm.events.venue
 import com.fasterxml.jackson.annotation.JsonValue
 
 /**
- * What a venue says about itself, beyond its [VenueType] and its programme: its kind of space, its door and its access (#2379).
+ * What a venue says about itself, beyond its `VenueType` and its programme: its kind of space, its door and its access (#2379).
  *
  * A tag is set only where the venue's own page states it, and the row keeps that page's URL. The
  * [slug] is what `venue_character_tag.tag`, the BFF's `character=` parameter and the frontend's
@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonValue
  *
  * A venue gets [DRESS_CODE] or [FETISH_DRESS_CODE], never both: a stated fetish code is the more specific fact.
  *
- * No `open-air`: [VenueType.OPEN_AIR] already marks a venue with an open-air floor, and filters by it.
+ * No `open-air`: `VenueType.OPEN_AIR` already marks a venue with an open-air floor, and filters by it.
  */
 enum class VenueCharacterTag(
     @get:JsonValue val slug: String
