@@ -18,6 +18,13 @@ class PresenterMappingTest {
         splitPromoterCredit(" , ") shouldBe emptyList()
     }
 
+    // Event 13985 stored `Riller` and `Schnauck`, two halves of one car dealer (#5000).
+    @Test
+    fun `splitPromoterCredit keeps a company whose own name carries a spaced ampersand`() {
+        splitPromoterCredit("Helios, Mini, IHK Berlin, Riller & Schnauck") shouldBe listOf("Helios", "Mini", "IHK Berlin", "Riller & Schnauck")
+        splitPromoterCredit("RILLER & SCHNAUCK und Loft") shouldBe listOf("RILLER & SCHNAUCK", "Loft")
+    }
+
     @Test
     fun `promoterFromCredit strips the presenter verb after the name`() {
         promoterFromCredit("Konzertbüro Schoneberg presents") shouldBe "Konzertbüro Schoneberg"

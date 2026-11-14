@@ -34,11 +34,24 @@ fun promoterFromCredit(credit: String?): String? {
 /**
  * The co-promoters one credit names: `LOFT, Musikexpress, Rausgegangen und Bedroomdisco` to four names. It splits at a comma,
  * a spaced `&`, and a lower-case `und` or `and`. A capitalised `And` is part of a name (`Now And Ever Music`), and so are an
- * unspaced `&` (`B&C Productions`) and a `+` (`aufnahme + wiedergabe`).
+ * unspaced `&` (`B&C Productions`) and a `+` (`aufnahme + wiedergabe`). A company in [AMPERSAND_COMPANIES] keeps its
+ * spaced `&`: `Riller & Schnauck` is one car dealer (#5000).
  */
-fun splitPromoterCredit(credit: String): List<String> = credit.split(CO_PROMOTER_SEPARATOR).mapNotNull { it.trim().ifBlank { null } }
+fun splitPromoterCredit(credit: String): List<String> =
+    credit
+        .split(CO_PROMOTER_LIST_SEPARATOR)
+        .flatMap { part -> if (part.trim().lowercase() in AMPERSAND_COMPANIES) listOf(part) else part.split(CO_PROMOTER_AMPERSAND) }
+        .mapNotNull { it.trim().ifBlank { null } }
 
-private val CO_PROMOTER_SEPARATOR = Regex("""\s*,\s*|\s+&\s+|\s+(?:und|and)\s+""")
+private val CO_PROMOTER_LIST_SEPARATOR = Regex("""\s*,\s*|\s+(?:und|and)\s+""")
+
+private val CO_PROMOTER_AMPERSAND = Regex("""\s+&\s+""")
+
+/**
+ * Companies whose own name carries a spaced `&`, lower-cased. The promoter normalizer's `NAME_CORRECTIONS` lists each one
+ * too, so the import's own `&` split keeps it whole; the scraper module may not read that map.
+ */
+private val AMPERSAND_COMPANIES = setOf("riller & schnauck")
 
 /** Companies whose own name ends in `Presents`, matched at the start of a credit. */
 private val PRESENTS_COMPANIES = Regex("""^(?:AEG|Pansy)\s+Presents(?!\p{L})""", RegexOption.IGNORE_CASE)

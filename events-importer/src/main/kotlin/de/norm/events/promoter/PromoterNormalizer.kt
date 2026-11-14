@@ -362,6 +362,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         // Columbiahalle credits the GbR behind Greyzone in a long and a short form (#4916).
         "greyzoneconcertspromotiongreyvonbronikowski" to "Greyzone Concerts",
         "greyvonbronikowski" to "Greyzone Concerts",
+        // One car dealer, whose spaced "&" would otherwise split it in two (#5000).
+        "rillerschnauck" to "Riller & Schnauck",
         // The person is not the company: "Konzertdirektion" is stripped above and restored here.
         "karstenjahnke" to "Karsten Jahnke Konzertdirektion",
         "känguruh" to "Känguruh Production",

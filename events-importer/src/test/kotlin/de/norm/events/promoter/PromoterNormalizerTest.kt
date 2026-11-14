@@ -226,6 +226,7 @@ class PromoterNormalizerTest {
             canonicalPromoterName("TV Noir") shouldBe "TV Noir"
             canonicalPromoterName("BOSSA FM") shouldBe "Bossa FM"
             canonicalPromoterName("Bossa FM") shouldBe "Bossa FM"
+            canonicalPromoterName("IHK Berlin") shouldBe "IHK Berlin"
             // Three letters and not on the list: nothing distinguishes it from a shouted word.
             canonicalPromoterName("MIND Enterprises") shouldBe "Mind Enterprises"
         }
@@ -294,6 +295,7 @@ class PromoterNormalizerTest {
             canonicalPromoterName("GreyZone Concerts") shouldBe "Greyzone Concerts"
             canonicalPromoterName("Greyzone") shouldBe "Greyzone Concerts"
             canonicalPromoterName("Greyzone Concerts & Promotion Grey & von Bronikowski") shouldBe "Greyzone Concerts"
+            canonicalPromoterName("RILLER & SCHNAUCK") shouldBe "Riller & Schnauck"
             canonicalPromoterName("Messed!Up Magazine") shouldBe "Messed!Up Magazine"
             canonicalPromoterName("MessedUp! Magazine") shouldBe "Messed!Up Magazine"
             canonicalPromoterName("MusikBlog.de") shouldBe "MusikBlog"
@@ -637,6 +639,13 @@ class PromoterNormalizerTest {
             resolve("Grey & von Bronikowski") shouldBe listOf("Greyzone Concerts")
             resolve("Greyzone Concerts & Crunch Tapes") shouldBe listOf("Greyzone Concerts", "Crunch Tapes")
         }
+    }
+
+    // Until V249 deletes them, `riller` and `schnauck` are stored halves of one car dealer (#5000).
+    @Test
+    fun `keeps Riller & Schnauck whole beside the rows its halves once keyed`() {
+        val stored = setOf("riller", "schnauck")
+        splitCoBilledPromoter("Riller & Schnauck") { it in stored }.map(::canonicalPromoterName) shouldBe listOf("Riller & Schnauck")
     }
 
     // A word in another script is a name, not a connector the strip may take (#4611).
