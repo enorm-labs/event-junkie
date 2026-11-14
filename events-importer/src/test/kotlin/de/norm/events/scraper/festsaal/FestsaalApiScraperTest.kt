@@ -378,6 +378,18 @@ class FestsaalApiScraperTest {
           "genre": {"id": 7, "title": "$genre"}}]}
         """.trimIndent()
 
+    // Event 13985 billed its title, `Energy Live mit Lea`, as the act.
+    @Test
+    fun `bills the act after mit, and keeps an act whose mit names its own band`() {
+        scraper.scrape(apiWithGenre("ENERGY LIVE mit Lea", "Pop")).single().artists shouldContainExactly
+            listOf(ScrapedArtist("Lea", ArtistRole.HEADLINER, titleDerived = true))
+        scraper
+            .scrape(apiWithGenre("STOPPOK mit Band", "Rock"))
+            .single()
+            .artists
+            .map { it.name } shouldContainExactly listOf("STOPPOK")
+    }
+
     // `ANNA – Lass es Liebe sein` minted `Anna` (/artist-cleanup): the cast is a musical actress the title does not name.
     @Test
     fun `bills no headliner for a show of another act's songs`() {

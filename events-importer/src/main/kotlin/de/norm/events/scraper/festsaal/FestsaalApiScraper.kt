@@ -246,8 +246,9 @@ class FestsaalApiScraper {
 
     /**
      * The lineup: for concerts the title carries the headliner(s) (co-bills via
-     * [headlinersFromTitle]) followed by the acts on the structured `support` line — the API's
-     * dedicated field, the authoritative source, split via [splitSupportActs]; a party bills the DJs
+     * [headlinersFromTitle]; a radio format's `ENERGY LIVE mit Lea` bills only the act after `mit`)
+     * followed by the acts on the structured `support` line — the API's dedicated field, the
+     * authoritative source, split via [splitSupportActs]; a party bills the DJs
      * its subtitle names ([djsOf]); other types (festivals, quizzes) name an event, not an artist, so none. Non-artist noise
      * (placeholders, role labels, festival labels) is filtered by the shared [isNonArtistName].
      * A show of another act's songs names that act in a [SONGS_OF_LINE], and its title is the show, not
@@ -269,7 +270,7 @@ class FestsaalApiScraper {
                 .filterNot(::isNonArtistName)
                 .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
         val songsOfAnotherAct = description?.lineSequence()?.any { SONGS_OF_LINE.containsMatchIn(it) } == true
-        return headlinersFromTitle(title).takeUnless { songsOfAnotherAct }.orEmpty() + supportActs
+        return headlinersFromTitle(title, unpackWithFrame = true).takeUnless { songsOfAnotherAct }.orEmpty() + supportActs
     }
 
     /** Rewrites the CMS `html_url` from the admin host to the public host, or rebuilds it from the [slug]. */
