@@ -37,7 +37,6 @@ on:
       - 'events-frontend/package.json'
       - '.github/workflows/validate-chart.yml'
   pull_request:
-    branches: [ main ]
     # No `paths:` here (#443): these checks are **required**, and a required check that never runs stays
     # Pending forever, deadlocking every pull request that does not touch these paths. Affordable
     # because the whole workflow is seconds. The `push:` filter keeps its paths.

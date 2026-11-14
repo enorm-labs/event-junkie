@@ -7,7 +7,6 @@ on:
       - 'events-frontend/**'
       - '.github/workflows/build-frontend.yml'
   pull_request:
-    branches: [ main ]
     # No `paths:` here (#494): `Build & Test (frontend)` is **required**, and a required check that never
     # runs stays Pending forever. The filtering lives in `detect-changes` below; the `push:` filter keeps
     # its paths.

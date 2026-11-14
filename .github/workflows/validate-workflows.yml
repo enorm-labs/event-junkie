@@ -18,7 +18,6 @@ on:
       - 'scripts/scan-coverage-baseline.txt'
       - 'scripts/schedule-guard-parity.sh'
   pull_request:
-    branches: [ main ]
     # No `paths:` here (#443): these checks are **required**, and a required check that never runs stays
     # Pending forever. Affordable because the whole workflow is seconds. The `push:` filter keeps its paths.
   workflow_dispatch:

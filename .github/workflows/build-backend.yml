@@ -12,7 +12,6 @@ on:
       - '.github/**/*.md'
       - '.claude/**/*.md'
   pull_request:
-    branches: [ main ]
     # No `paths-ignore:` here (#494): `Build & Test (backend)` is **required**, and a required check that
     # never runs stays Pending forever. The filtering lives in `detect-changes` below, so a docs-only pull
     # request skips the build while the context still reports. The `push:` filter keeps its paths.

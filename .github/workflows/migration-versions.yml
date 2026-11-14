@@ -13,7 +13,6 @@ on:
       - 'events-importer/src/main/resources/db/migration/**'
   # No `paths:` filter: a PR without a migration still gets `success`, so the context is never pending.
   pull_request:
-    branches: [ main ]
     types: [ opened, synchronize, reopened ]
   # Re-checks every open PR, e.g. a fork PR whose own run could not write its status.
   workflow_dispatch:
