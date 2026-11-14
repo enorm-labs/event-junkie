@@ -66,7 +66,7 @@ internal val ARTIST_SUFFIX_PATTERN =
             """|\s+(?:dj[\s-]?set|hybrid|(?:acoustic|akustik)[\s-]?set)$""" +
             """|\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben)\b.*$""" +
             """|\s+(?:singt|sings)\s+\S.*$""" +
-            """|\s+(?:album|ep|single|mixtape|record|rec|tape)\s+release(?:\s+(?:party|show|special))?$""" +
+            """|\s+(?:album|ep|single|mixtape|record|rec|tape)\s+release(?:\s+(?:party|show|special|concert|konzert))?$""" +
             """|\s+release(?:\s+party|\s?show)$""" +
             """|(?<=\S)(?<!\bmade)\s+in\s+berlin$""" +
             """|\s+[-–—]\s+(?:\p{L}\s+){2,}\p{L}\s*$""" +

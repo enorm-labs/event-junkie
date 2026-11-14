@@ -259,6 +259,19 @@ class Bogen47ApiScraperTest {
     }
 
     @Test
+    fun `scrapePage bills event 13951's presents bill as DJs when its description names nobody`() {
+        val event =
+            eventDescribed(
+                "TEMPO GALLERY presents: Olsvanger, KINTEL, Ian Zunich, and Hyperbole",
+                """<p>TEMPO has officially moved to Berlin, with a brand new home.</p>""",
+                eventType = "Party"
+            )
+
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Olsvanger", "KINTEL", "Ian Zunich", "Hyperbole").map { it to ArtistRole.DJ }
+    }
+
+    @Test
     fun `scrapePage bills a party's name-and-handle lines as DJs, without the handles`() {
         // Event 10154 (#4394), handles masked: the credit line closes the run and bills nobody.
         val event =

@@ -8,6 +8,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.isForChildren
 import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -140,6 +141,24 @@ class ColumbiaTheaterWebsiteImporterTest {
             val stored = turbopaolo.toEventEntity(venueId = 1L, venueSlug = "columbia-theater", eventSourceId = 1L)
             stored.status shouldBe "RELOCATED"
             stored.relocatedTo shouldBe "Cosmic Comedy Club"
+        }
+
+    @Test
+    fun `marks event 13971's children's concert for children, and no show of the saved programme`() =
+        runTest {
+            events(importer.importEvents(overviewUrl)).none { it.isForChildren } shouldBe true
+            val card =
+                """
+                <a class="item " data-id="1" href="https://columbia-theater.de/event/20270221-senta/" data-p="0" data-m="0" data-c="0">
+                  <div class="item-content"><div class="item-meta">
+                    <h2 class="item-title">Senta</h2>
+                    <div class="item-tour-text">"Ich bin stark - Tour" - Konzerte für Kinder und Familien</div>
+                  </div></div>
+                </a>
+                """.trimIndent()
+            coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns FetchResult.Success(Jsoup.parse(card, overviewUrl), null, null)
+
+            events(importer.importEvents(overviewUrl)).single().isForChildren shouldBe true
         }
 
     @Test

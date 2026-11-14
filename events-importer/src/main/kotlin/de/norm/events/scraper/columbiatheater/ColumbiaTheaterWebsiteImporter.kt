@@ -4,8 +4,11 @@ import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.childrensShowPhrase
+import de.norm.events.scraper.forChildrenIf
 import org.springframework.stereotype.Component
 
 /**
@@ -31,6 +34,22 @@ class ColumbiaTheaterWebsiteImporter(
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, ColumbiaTheaterOverviewPageScraper()::scrape, ColumbiaTheaterDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.COLUMBIA_THEATER
     override val listsWholeProgramme: Boolean = true
+
+    /** Marks a children's show `for-children`: its tour line says so (`Konzerte für Kinder und Familien`). */
+    override suspend fun importEvents(
+        url: String,
+        etag: String?,
+        lastModified: String?
+    ): ImportResult =
+        when (val result = super.importEvents(url, etag, lastModified)) {
+            is ImportResult.Success -> {
+                result.copy(events = result.events.map { it.forChildrenIf(childrensShowPhrase(it.title, it.subtitle)) })
+            }
+
+            else -> {
+                result
+            }
+        }
 }
 
 val COLUMBIA_THEATER_LIMITATIONS =

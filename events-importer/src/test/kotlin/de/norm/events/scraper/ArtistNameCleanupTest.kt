@@ -379,6 +379,9 @@ class ArtistNameCleanupTest {
         // Schokoladen, production 2026-12-02.
         stripArtistSuffix("Saba Lou Rec Release") shouldBe "Saba Lou"
         stripArtistSuffix("Some Band Release Party") shouldBe "Some Band"
+        // Slaughterhouse, event 13956.
+        stripArtistSuffix("Lemur „Yeniden“ Record Release Concert") shouldBe "Lemur"
+        stripArtistSuffix("Some Band Album Release Konzert") shouldBe "Some Band"
     }
 
     @Test

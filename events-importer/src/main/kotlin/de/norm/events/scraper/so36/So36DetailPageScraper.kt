@@ -241,6 +241,7 @@ class So36DetailPageScraper {
         subtitle: String?,
         eventType: String?
     ): List<ScrapedArtist> {
+        if (eventType == EventType.COMEDY.name && SOLO_PROGRAMME.matches(subtitle?.trim().orEmpty())) return headlinersFromTitle(title)
         if (eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) return performersBilledWith(subtitle)
         if (eventType == EventType.PARTY.name) return labelledLineup(document.descriptionLines()).map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         if (eventType != EventType.CONCERT.name) return emptyList()
@@ -398,7 +399,7 @@ private val TOUR_PROMOTER_LINE = Regex("""^tourveranstalter\s*:\s*(.+)$""", Rege
  * `Qualitätspodcast`. A support line is never read this way, so `+ Festival Band` stays a concert.
  * A title that names a festival ([isFestivalTitle]) is one here already, so its roster is read (#2829).
  * A subtitle that bills one night of a run (`TAG 1 MIT …`, [dayLineup]) makes the night a festival too.
- * A bingo night (`KIEZBINGO`, [BINGO_WORD]) is a hosted show, and its title is no act.
+ * A bingo night (`KIEZBINGO`, [BINGO_WORD]) is a hosted show, and its title is no act. A `Soloprogramm` subtitle is a comedian's.
  */
 private fun refineBySubtitle(
     eventType: String,
@@ -412,6 +413,7 @@ private fun refineBySubtitle(
         isSupportLine(line) -> eventType
         FESTIVAL_WORD.containsMatchIn(line) || DAY_LINEUP.containsMatchIn(line) -> EventType.FESTIVAL.name
         PODCAST_WORD.containsMatchIn(line) || BINGO_WORD.containsMatchIn(title) -> EventType.SHOW.name
+        SOLO_PROGRAMME.matches(line.trim()) -> EventType.COMEDY.name
         CONVENTION_WORD.containsMatchIn(line) || PANEL_PREFIX.containsMatchIn(title) -> EventType.OTHER.name
         else -> eventType
     }
@@ -419,6 +421,9 @@ private fun refineBySubtitle(
 
 /** Whether a subtitle is a support line: it opens with a joiner or a support label. */
 private fun isSupportLine(line: String): Boolean = line.firstOrNull() in SUPPORT_JOINERS || SUPPORT_ROLE_PREFIX.containsMatchIn(line)
+
+/** A comedian's evening, billed with the bare subtitle `Soloprogramm`: the title is the comedian. */
+private val SOLO_PROGRAMME = Regex("""soloprogramm""", RegexOption.IGNORE_CASE)
 
 /** A festival named in the subtitle: `Punk- und Hardcore-Festival - Tag 1`. */
 private val FESTIVAL_WORD = Regex("""festival\b""", RegexOption.IGNORE_CASE)

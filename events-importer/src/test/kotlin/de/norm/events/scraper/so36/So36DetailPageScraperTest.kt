@@ -77,6 +77,8 @@ class So36DetailPageScraperTest {
         typeAndActs("TALK OHNE GAST", "Qualitätspodcast mit Till Reiners und Moritz Neumeier") shouldBe
             (EventType.SHOW.name to listOf("Till Reiners", "Moritz Neumeier"))
         typeAndActs("Bingo Night", "mit DJ Bingobongo") shouldBe (EventType.SHOW.name to emptyList())
+        // Event 13973.
+        typeAndActs("ANA LUCÍA", "Soloprogramm") shouldBe (EventType.COMEDY.name to listOf("ANA LUCÍA"))
         typeAndActs("BINGOBONGO", "Live").first shouldBe EventType.CONCERT.name
         // A support line naming a festival band is still a concert.
         typeAndActs("POISON RUIN", "+ Festival Band").first shouldBe EventType.CONCERT.name

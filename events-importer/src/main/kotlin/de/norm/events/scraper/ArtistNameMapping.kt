@@ -267,16 +267,24 @@ private val PRESENTS_FRAME =
  * comma segment then goes through [splitHeadlinerTitle], which keeps `David August w/ MFO` and
  * `AC/DC` whole. Every act is a headliner: the frame says who booked the night, not who opens it.
  */
-private fun presentsFrameActs(title: String): List<ScrapedArtist>? {
+private fun presentsFrameActs(title: String): List<ScrapedArtist>? =
+    presentsFrameNames(title)?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
+
+/**
+ * The names a [PRESENTS_FRAME] title bills, or `null` without the frame. A serial comma's `and` (`A, B, and C`) is not part of C.
+ * A party reads them as its DJs.
+ */
+fun presentsFrameNames(title: String): List<String>? {
     val bill = PRESENTS_FRAME.find(title.trim())?.groupValues?.get(1) ?: return null
     return bill
         .split(',')
-        .flatMap { splitHeadlinerTitle(it.trim()) }
+        .flatMap { splitHeadlinerTitle(it.trim().replace(SERIAL_CONJUNCTION, "")) }
         .map { stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(it))) }
         .filterNot(::isNonArtistName)
-        .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
         .ifEmpty { null }
 }
+
+private val SERIAL_CONJUNCTION = Regex("""^(?:and|und|&)\s+""", RegexOption.IGNORE_CASE)
 
 /**
  * `<partner> x <partner>: <night> with <acts>`: two promoters that join forces on a night name
