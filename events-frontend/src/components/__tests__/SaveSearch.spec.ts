@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { createMemoryHistory, createRouter } from 'vue-router'
+import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import { defineComponent, h } from 'vue'
 
 import { ApiError } from '@/api/client'
@@ -17,6 +17,7 @@ const { setSession } = await import('@/composables/useSession')
 
 const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:00:00Z' }
 let wrapper: VueWrapper | undefined
+let current: Router
 
 beforeEach(() => {
   vi.resetAllMocks()
@@ -35,14 +36,15 @@ interface Props {
   labels: string[]
 }
 
-async function mountWith(props: Props) {
+async function mountWith(props: Props, path = '/en/events') {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: '/:locale(en|de)/:rest(.*)', component: defineComponent({ render: () => h('p') }) },
     ],
   })
-  await router.push('/en/events')
+  await router.push(path)
+  current = router
   wrapper = mount(SaveSearch, { props, global: { plugins: [router] }, attachTo: document.body })
   await flushPromises()
   return wrapper
@@ -58,7 +60,53 @@ describe('SaveSearch', () => {
   it('signed out, leads to sign-in and back to the list', async () => {
     setSession(null)
     const view = await mountWith({ filters: { genre: ['techno'] }, range: {}, labels: ['Techno'] })
-    expect(view.find('a').attributes('href')).toBe('/en/sign-in?next=/en/events&intent=save')
+    expect(view.find('a').attributes('href')).toBe(
+      '/en/sign-in?next=/en/events?genre=techno%26do=save&intent=save',
+    )
+  })
+
+  it('signed out, carries the list as the visitor sees it, dates and free text included', async () => {
+    setSession(null)
+    const view = await mountWith({
+      filters: { genre: ['techno', 'house'], q: 'Café Nacht', free: true },
+      range: { from: '2026-11-20', to: '2026-11-22' },
+      labels: ['Techno', 'House'],
+    })
+    const next = new URL(view.find('a').attributes('href')!, 'https://x').searchParams.get('next')
+    expect(next).toBe(
+      '/en/events?genre=techno&genre=house&q=Caf%C3%A9+Nacht&free=true&from=2026-11-20&to=2026-11-22&do=save',
+    )
+  })
+
+  it('back from the sign-in it led to, saves under the suggested name and drops `do`', async () => {
+    setSession(me as never)
+    const view = await mountWith(
+      {
+        filters: { genre: ['techno'], district: ['neukoelln'] },
+        range: {},
+        labels: ['Techno', 'Neukölln'],
+      },
+      '/en/events?genre=techno&district=neukoelln&do=save',
+    )
+
+    expect(account.saveSearch).toHaveBeenCalledExactlyOnceWith(
+      'Techno, Neukölln',
+      'genre=techno&district=neukoelln',
+    )
+    expect(view.find('[role="status"]').text()).toContain('Saved.')
+    expect(current.currentRoute.value.fullPath).toBe('/en/events?genre=techno&district=neukoelln')
+  })
+
+  it('back from the sign-in with no name to suggest, opens the form for one', async () => {
+    setSession(me as never)
+    await mountWith(
+      { filters: { maxPrice: '10' }, range: {}, labels: [] },
+      '/en/events?maxPrice=10&do=save',
+    )
+
+    expect(account.saveSearch).not.toHaveBeenCalled()
+    expect(document.body.querySelector('#saved-search-name')).not.toBeNull()
+    expect(current.currentRoute.value.query.do).toBeUndefined()
   })
 
   it('saves one genre alone with a single press, named after it', async () => {
@@ -98,7 +146,11 @@ describe('SaveSearch', () => {
   it('says when the account holds 20 searches already', async () => {
     setSession(me as never)
     account.saveSearch.mockRejectedValue(new ApiError(409, 'full'))
-    const view = await mountWith({ filters: { district: ['mitte'] }, range: {}, labels: ['Mitte'] })
+    const view = await mountWith({
+      filters: { district: ['mitte'] },
+      range: {},
+      labels: ['Mitte'],
+    })
     await view.find('[data-testid="save-search"]').trigger('click')
     await flushPromises()
 

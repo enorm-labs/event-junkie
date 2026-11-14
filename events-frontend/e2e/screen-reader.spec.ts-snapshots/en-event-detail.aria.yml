@@ -21,9 +21,9 @@
     - paragraph: Price not announced
     - group "Your plans for this event":
       - link "Interested":
-        - /url: /en/sign-in?next=/en/events/tonight-show&intent=rsvp
+        - /url: /en/sign-in?next=/en/events/tonight-show?do=rsvp-interested&intent=rsvp
       - link "Going":
-        - /url: /en/sign-in?next=/en/events/tonight-show&intent=rsvp
+        - /url: /en/sign-in?next=/en/events/tonight-show?do=rsvp-going&intent=rsvp
     - button "Share"
     - status
     - heading "Promoters" [level=2]

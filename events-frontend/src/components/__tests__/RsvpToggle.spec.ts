@@ -35,17 +35,17 @@ afterEach(() => {
   wrapper = undefined
 })
 
-async function mountToggle() {
+async function mountToggle(path = '/en/events/tonight') {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: '/:locale(en|de)/:rest(.*)', component: defineComponent({ render: () => h('p') }) },
     ],
   })
-  await router.push('/en/events/tonight')
+  await router.push(path)
   wrapper = mount(RsvpToggle, { props: { slug: 'tonight' }, global: { plugins: [router] } })
   await flushPromises()
-  return wrapper
+  return { view: wrapper, router }
 }
 
 const pressed = (view: VueWrapper, status: string) =>
@@ -54,17 +54,38 @@ const pressed = (view: VueWrapper, status: string) =>
 describe('RsvpToggle', () => {
   it('signed out, both lead to sign-in and back to the event', async () => {
     setSession(null)
-    const view = await mountToggle()
+    const { view } = await mountToggle()
     const hrefs = view.findAll('a').map((a) => a.attributes('href'))
     expect(hrefs).toEqual([
-      '/en/sign-in?next=/en/events/tonight&intent=rsvp',
-      '/en/sign-in?next=/en/events/tonight&intent=rsvp',
+      '/en/sign-in?next=/en/events/tonight?do=rsvp-interested&intent=rsvp',
+      '/en/sign-in?next=/en/events/tonight?do=rsvp-going&intent=rsvp',
     ])
+  })
+
+  it('back from the sign-in a press led to, sets that status once and drops `do`', async () => {
+    setSession(me as never)
+    const { view, router } = await mountToggle('/en/events/tonight?do=rsvp-going')
+
+    expect(account.setRsvp).toHaveBeenCalledExactlyOnceWith('tonight', 'going')
+    expect(pressed(view, 'going')).toBe('true')
+    expect(router.currentRoute.value.fullPath).toBe('/en/events/tonight')
+  })
+
+  it('back from the sign-in, keeps the status the account has already', async () => {
+    setSession(me as never)
+    account.fetchRsvps.mockResolvedValue({ tonight: 'interested' })
+    useRsvps().statuses.value = { tonight: 'interested' }
+    const { view, router } = await mountToggle('/en/events/tonight?do=rsvp-interested')
+
+    expect(account.setRsvp).not.toHaveBeenCalled()
+    expect(account.withdrawRsvp).not.toHaveBeenCalled()
+    expect(pressed(view, 'interested')).toBe('true')
+    expect(router.currentRoute.value.fullPath).toBe('/en/events/tonight')
   })
 
   it('sets, changes and withdraws, with the pressed state following', async () => {
     setSession(me as never)
-    const view = await mountToggle()
+    const { view } = await mountToggle()
 
     await view.find('[data-testid="rsvp-interested"]').trigger('click')
     await flushPromises()
@@ -86,7 +107,7 @@ describe('RsvpToggle', () => {
   it('goes back and says why when the BFF refuses', async () => {
     setSession(me as never)
     account.setRsvp.mockRejectedValue(new ApiError(503, 'down'))
-    const view = await mountToggle()
+    const { view } = await mountToggle()
 
     await view.find('[data-testid="rsvp-going"]').trigger('click')
     await flushPromises()

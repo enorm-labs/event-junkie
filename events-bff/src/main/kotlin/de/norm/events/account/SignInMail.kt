@@ -2,6 +2,7 @@ package de.norm.events.account
 
 import de.norm.events.mail.MailBody
 import de.norm.events.mail.MailMessage
+import org.springframework.web.util.UriUtils
 
 /**
  * The sign-in mail, in German or English. The token travels in the fragment, so neither nginx's
@@ -9,13 +10,18 @@ import de.norm.events.mail.MailMessage
  * the link therefore cannot use it up (#3887).
  */
 internal object SignInMail {
-    /** The confirm page's address. `next` is a checked path of letters, digits, hyphens and slashes (AuthController), so it needs no encoding. */
+    /**
+     * The confirm page's address. `next` is checked by AuthController, and its own query is encoded so it stays one value. `+` is
+     * encoded too, because the SPA's router reads a bare `+` as a space.
+     */
     fun link(
         origin: String,
         locale: String,
         token: String,
         next: String? = null
-    ) = "$origin/$locale/sign-in/confirm${next?.let { "?next=$it" }.orEmpty()}#token=$token"
+    ) = "$origin/$locale/sign-in/confirm${next?.let { "?next=${encodeNext(it)}" }.orEmpty()}#token=$token"
+
+    private fun encodeNext(next: String) = UriUtils.encodeQueryParam(next, Charsets.UTF_8).replace("+", "%2B")
 
     fun message(
         to: String,

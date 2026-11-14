@@ -4,6 +4,7 @@
  * comes back to this page. Signed in, a toggle between "Follow" and "Following": a press on
  * "Following" unfollows. It changes at once and goes back with a message if the BFF refuses.
  * Given a `name`, the bell (#4077) stands beside it while followed, as on the Following page.
+ * The sign-in link carries `do=follow`, so the follow is done on return (#4969).
  */
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -23,6 +24,8 @@ import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { usePush } from '@/composables/usePush'
 import { useSession } from '@/composables/useSession'
+import { useSignInAction } from '@/composables/useSignInAction'
+import { signInReturn } from '@/lib/signInNext'
 import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
 
 // `initiallyFollowing` defaults to undefined, not to Vue's false for an absent boolean: undefined means "ask".
@@ -46,6 +49,7 @@ const route = useRoute()
 const localePath = useLocalePath()
 const { account } = useSession()
 const push = usePush()
+const signInAction = useSignInAction()
 
 const following = ref<boolean | null>(null)
 const busy = ref(false)
@@ -86,6 +90,8 @@ watch(
     } catch {
       following.value = false
     }
+    // Back from the sign-in this button led to (#4969). Followed already, nothing is left to do.
+    if (signInAction.take('follow') && !following.value) await toggle()
   },
   { immediate: true },
 )
@@ -132,7 +138,10 @@ async function toggle() {
   <div v-if="account !== undefined" class="flex flex-wrap items-center gap-x-3 gap-y-1">
     <Button v-if="!account" as-child variant="outline">
       <RouterLink
-        :to="{ path: localePath('/sign-in'), query: { next: route.path, intent: 'follow' } }"
+        :to="{
+          path: localePath('/sign-in'),
+          query: { next: signInReturn(route.path, 'follow'), intent: 'follow' },
+        }"
       >
         <Plus data-icon="inline-start" />
         {{ t('account.follow.follow') }}

@@ -207,6 +207,22 @@ describe('SignInView with passkeys', () => {
     expect(router.currentRoute.value.fullPath).toBe('/en/following')
   })
 
+  it('signs in without the mail and returns to `next` with its action (#4969)', async () => {
+    passkeyBrowser(false)
+    account.signInWithPasskey.mockResolvedValue(me)
+    const view = await mountAt(
+      SignInView,
+      '/en/sign-in?next=/en/artists/ada%3Fdo%3Dfollow&intent=follow',
+    )
+
+    await view
+      .findAll('button')
+      .find((b) => b.text() === 'Sign in with a passkey')!
+      .trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.fullPath).toBe('/en/artists/ada?do=follow')
+  })
+
   it('says nothing when the autofill fails, because the visitor did not ask for it', async () => {
     passkeyBrowser(true)
     account.signInWithPasskey.mockRejectedValue(new ApiError(429, 'no'))
@@ -261,6 +277,26 @@ describe('SignInView with a page to return to', () => {
     await flushPromises()
     expect(account.requestLink).toHaveBeenCalledWith('ada@example.com', 'en', '/en/artists/ada')
   })
+
+  it('passes a saved search and its action on, and drops a `next` with any other key', async () => {
+    account.requestLink.mockResolvedValue()
+    const next = '/en/events?genre=techno&q=a+b&do=save'
+    const view = await mountAt(SignInView, `/en/sign-in?next=${encodeURIComponent(next)}`)
+    await view.find('input').setValue('ada@example.com')
+    await view.find('form').trigger('submit')
+    await flushPromises()
+    expect(account.requestLink).toHaveBeenCalledWith('ada@example.com', 'en', next)
+
+    wrapper?.unmount()
+    const other = await mountAt(
+      SignInView,
+      `/en/sign-in?next=${encodeURIComponent('/en/events?genre=techno&evil=1')}`,
+    )
+    await other.find('input').setValue('ada@example.com')
+    await other.find('form').trigger('submit')
+    await flushPromises()
+    expect(account.requestLink).toHaveBeenLastCalledWith('ada@example.com', 'en', undefined)
+  })
 })
 
 describe('SignInConfirmView', () => {
@@ -287,6 +323,16 @@ describe('SignInConfirmView', () => {
     await view.find('button').trigger('click')
     await flushPromises()
     expect(router.currentRoute.value.fullPath).toBe('/en/venues/sisyphos')
+
+    // The mail encodes `next`'s own query, `+` included (SignInMail.link).
+    wrapper?.unmount()
+    const action = await mountAt(
+      SignInConfirmView,
+      '/en/sign-in/confirm?next=/en/events?q%3Da%2Bb%26do%3Dsave#token=abc',
+    )
+    await action.find('button').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query).toEqual({ q: 'a b', do: 'save' })
 
     wrapper?.unmount()
     const other = await mountAt(

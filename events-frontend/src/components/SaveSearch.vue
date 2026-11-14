@@ -2,8 +2,8 @@
 /**
  * "Save search" on the events list (#3890). The name is suggested from the filter labels and can be
  * changed. One genre or one district alone saves with a single press, named after it. Signed out,
- * it leads to sign-in and back to the list; the filters are not carried, because the sign-in only
- * returns to a path (#3889).
+ * it leads to sign-in and back to the list with its filters, which then saves the search under the
+ * suggested name (#4969). Without a name to suggest, the form opens for one.
  */
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -15,8 +15,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { prepareCsrf, saveSearch } from '@/api/account'
 import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { useFilterLists } from '@/composables/useFilterLists'
 import { useSession } from '@/composables/useSession'
+import { useSignInAction } from '@/composables/useSignInAction'
 import { savedQuery, singleFilter } from '@/lib/savedSearch'
+import { signInReturn } from '@/lib/signInNext'
 import { TEXT_LINK_CLASS } from '@/lib/utils'
 
 type FilterValue = string | number | boolean | readonly string[] | undefined
@@ -40,6 +43,16 @@ const single = computed(() =>
 )
 const suggested = computed(() => props.labels.join(', ').slice(0, MAX_NAME))
 
+/** The list as the visitor sees it, dates included, so the sign-in returns to the same list. */
+const signInNext = computed(() => {
+  const query = new URLSearchParams(savedQuery(props.filters, {})?.query)
+  if (props.range.from) query.set('from', props.range.from)
+  if (props.range.to) query.set('to', props.range.to)
+  return signInReturn(localePath('/events'), 'save', query)
+})
+const signInAction = useSignInAction()
+const lists = useFilterLists()
+
 const open = ref(false)
 const name = ref('')
 const status = ref<'idle' | 'busy' | 'saved' | 'failed' | 'tooMany'>('idle')
@@ -51,9 +64,24 @@ watch(open, (isOpen) => {
   }
 })
 // A changed filter is another search; an old "Saved." would be about the previous one.
-watch(saving, () => {
-  status.value = 'idle'
-})
+watch(
+  () => saving.value?.query,
+  () => {
+    status.value = 'idle'
+  },
+)
+
+// Back from the sign-in: saved once the lists have named its venues and styles, as the form would.
+watch(
+  [account, saving, () => lists.genres.loading.value || lists.venues.loading.value],
+  ([signedIn, search, naming]) => {
+    if (!signedIn || !search || naming || !signInAction.take('save')) return
+    const name = single.value ?? suggested.value
+    if (name) void save(name)
+    else open.value = true
+  },
+  { immediate: true },
+)
 
 async function save(chosen: string) {
   const query = saving.value?.query
@@ -75,7 +103,7 @@ async function save(chosen: string) {
     <RouterLink
       v-if="!account"
       :title="t('account.search.signIn')"
-      :to="{ path: localePath('/sign-in'), query: { next: localePath('/events'), intent: 'save' } }"
+      :to="{ path: localePath('/sign-in'), query: { next: signInNext, intent: 'save' } }"
       :class="['inline-flex items-center gap-1', TEXT_LINK_CLASS]"
     >
       <Bookmark aria-hidden="true" class="size-4" />
