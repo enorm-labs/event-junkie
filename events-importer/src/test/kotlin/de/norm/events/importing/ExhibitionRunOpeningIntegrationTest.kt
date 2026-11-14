@@ -18,7 +18,8 @@ import java.time.LocalDate
 
 /**
  * An exhibition run imported on two consecutive days, against a real PostgreSQL (Testcontainers). The second listing no longer
- * carries the first day, and the stored opening, the slug and the row stay as the first import wrote them (#2940).
+ * carries the first day, and the stored opening, the slug and the row stay as the first import wrote them (#2940). That holds on the
+ * last day too, when the listing folds to a single day (#4982).
  */
 class ExhibitionRunOpeningIntegrationTest : BaseControllerTest() {
     @Autowired
@@ -62,9 +63,12 @@ class ExhibitionRunOpeningIntegrationTest : BaseControllerTest() {
     }
 
     /** The overview's open days from [firstListed], folded into one run as the importer folds them. */
-    private fun listing(firstListed: LocalDate): List<ScrapedEvent> =
+    private fun listing(
+        firstListed: LocalDate,
+        lastListed: LocalDate = closing
+    ): List<ScrapedEvent> =
         firstListed
-            .datesUntil(closing.plusDays(1))
+            .datesUntil(lastListed.plusDays(1))
             .toList()
             .map { day ->
                 ScrapedEvent(
@@ -76,8 +80,10 @@ class ExhibitionRunOpeningIntegrationTest : BaseControllerTest() {
                 )
             }.collapseExhibitionRuns { runId }
 
-    private suspend fun import(firstListed: LocalDate) =
-        eventUpsertService.upsertAndCleanup(listing(firstListed), venueId, venueSlug, eventSourceId, staleCleanup = StaleCleanup.OPEN_ENDED)
+    private suspend fun import(
+        firstListed: LocalDate,
+        lastListed: LocalDate = closing
+    ) = eventUpsertService.upsertAndCleanup(listing(firstListed, lastListed), venueId, venueSlug, eventSourceId, staleCleanup = StaleCleanup.OPEN_ENDED)
 
     @Test
     fun `a run imported on two consecutive days keeps its first opening and slug`() {
@@ -93,6 +99,25 @@ class ExhibitionRunOpeningIntegrationTest : BaseControllerTest() {
             after.id shouldBe first.id
             after.eventDate shouldBe today.minusDays(1)
             after.endDate shouldBe closing
+            after.slug shouldBe first.slug
+        }
+    }
+
+    @Test
+    fun `a run whose listing is down to its last day keeps its opening and slug`() {
+        runBlocking {
+            // Yesterday's import listed the last two days. Today's lists only today, the closing day.
+            import(firstListed = today.minusDays(1), lastListed = today).inserted shouldBe 1
+            val first = eventRepository.findAll().toList().single()
+
+            val outcome = import(firstListed = today, lastListed = today)
+
+            outcome.inserted shouldBe 0
+            val after = eventRepository.findAll().toList().single()
+            after.id shouldBe first.id
+            after.eventDate shouldBe today.minusDays(1)
+            after.endDate shouldBe today
+            after.endTime shouldBe null
             after.slug shouldBe first.slug
         }
     }
