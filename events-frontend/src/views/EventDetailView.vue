@@ -201,9 +201,10 @@ const metaItems = computed<MetaItem[]>(() => {
   const status = formatEventStatus(e.status, movedTo, e.postponedTo?.eventDate, e.relocatedOn)
   // A postponed or cancelled show does not happen on this date, so its date is struck and its time dropped.
   const offDate = e.status === 'POSTPONED' || e.status === 'CANCELLED'
+  const time = formatEventTime(e)
   const items: (MetaItem | null)[] = [
     { text: formatEventDates(e), struck: offDate },
-    offDate ? null : { text: formatEventTime(e) },
+    offDate || !time ? null : { text: time },
     timeHint.value && !offDate ? { text: timeHint.value } : null,
     e.venue?.name ? { text: e.venue.name } : null,
     // The room as the venue names it (#316): a proper name, so never translated.
