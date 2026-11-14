@@ -255,10 +255,21 @@ class PeterEdelOverviewPageScraperTest {
     }
 
     @Test
-    fun `takes artists only where the venue bills a support act, or the title names FIL`() {
+    fun `takes artists only where the venue bills a support act or a tour, or the title names FIL`() {
         val withArtists = events.filter { it.artists.isNotEmpty() }
         withArtists.map { it.title } shouldContainExactly
-            listOf("Poliça - Dreams Go Tour 2026", "Buffalo Tom", "FIL'S TESTSHOWS", "FIL'S TESTSHOWS", "FIL", "FIL")
+            listOf(
+                "Poliça - Dreams Go Tour 2026",
+                "Buffalo Tom",
+                "FIL'S TESTSHOWS",
+                "FIL'S TESTSHOWS",
+                "Veljanov - Shanderilan Tour",
+                "Monsters of Liedermaching - Absolute Aufnahmetalente",
+                "FIL",
+                "FIL"
+            )
+        withArtists.drop(4).take(2).map { event -> event.artists.map { it.name } } shouldContainExactly
+            listOf(listOf("Veljanov"), listOf("Monsters of Liedermaching"))
         withArtists[1].artists shouldContainExactly
             listOf(
                 ScrapedArtist("Buffalo Tom", ArtistRole.HEADLINER, titleDerived = true),
@@ -457,6 +468,94 @@ class PeterEdelOverviewPageScraperTest {
             .single()
             .artists
             .shouldBeEmpty()
+    }
+
+    /** One concert box with the given title and subtitle, typed by a blurb that names a concert. */
+    private fun concertActs(
+        title: String,
+        subtitle: String?
+    ): List<String> {
+        val main =
+            "<h3>$title</h3>${subtitle?.let { "<p>$it</p>" }.orEmpty()}" +
+                "<div class=\"text-block\"><div class=\"text-container\"><p>Ein Konzert.</p></div></div>"
+        val event = scraper.scrape(grid("DEZEMBER 2026", "SO | 20.12.", main), baseUrl).single()
+        event.eventType shouldBe "CONCERT"
+        event.artists.forEach { it shouldBe ScrapedArtist(it.name, ArtistRole.HEADLINER, titleDerived = true) }
+        return event.artists.map { it.name }
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        quoteCharacter = '\'',
+        value = [
+            // A quoted work in the subtitle: event 13807.
+            "Wolf Parade | 20 Jahre \"Apologies to the Queen Mary\" | Wolf Parade",
+            "Wolf Parade | Das Album „Apologies to the Queen Mary“ live | Wolf Parade",
+            // A dash tail that ends in a tour: event 2010.
+            "Veljanov - Shanderilan Tour | | Veljanov",
+            // A tour inside a word of the subtitle: event 2013.
+            "Monsters of Liedermaching - Absolute Aufnahmetalente | Die Aufnahmetour - Live in Berlin | Monsters of Liedermaching",
+            // A tour subtitle under a title with no dash bills the whole title.
+            "Wolf Parade | Europe Tour 2027 | Wolf Parade",
+            // A closing `- mit <name>`: event 10095.
+            "Klassische Adventsmatinée - mit Yannick Rafalimanana | Vorfestliche Klänge mit Flügel und Violine | Yannick Rafalimanana"
+        ]
+    )
+    fun `bills a concert's act from a tour, a quoted work in the subtitle or a closing mit`(
+        title: String,
+        subtitle: String?,
+        act: String
+    ) {
+        concertActs(title, subtitle) shouldContainExactly listOf(act)
+    }
+
+    @Test
+    fun `bills every name a closing mit lists`() {
+        concertActs("Adventsmatinée - mit Yannick Rafalimanana und Eri Mantani", null) shouldContainExactly
+            listOf("Yannick Rafalimanana", "Eri Mantani")
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            // A format, not an act: no tour, no quoted work, no closing mit.
+            "Rudelsingen - Das Original aus Münster | ",
+            // A possessive first name is not a billing (event 12748).
+            "Yannicks Salon - Meisterwerke der Kammermusik | Mit Yannick Rafalimanana",
+            // A head of more than five words names a programme.
+            "Die schönsten Lieder der Zwanziger und Dreißiger Jahre | Die Jubiläumstour 2027"
+        ]
+    )
+    fun `bills no act for a concert whose title only names its format`(
+        title: String,
+        subtitle: String?
+    ) {
+        concertActs(title, subtitle).shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            // A party's title names the night, mit or not.
+            "Indie & Wave Tanzcafé - mit DJ Iron Henning | | PARTY",
+            // A tour confirms an act only for a concert.
+            "Miriam Davoudvandi | Das können wir uns nicht leisten - Tour 2026 | READING"
+        ]
+    )
+    fun `bills no act from a tour or a closing mit outside a concert`(
+        title: String,
+        subtitle: String?,
+        type: String
+    ) {
+        val main =
+            "<h3>$title</h3>${subtitle?.let { "<p>$it</p>" }.orEmpty()}" +
+                "<div class=\"text-block\"><div class=\"text-container\"><p>Mit ihrem Buch auf der Bühne.</p></div></div>"
+        val event = scraper.scrape(grid("DEZEMBER 2026", "SO | 20.12.", main), baseUrl).single()
+        event.eventType shouldBe type
+        event.artists.shouldBeEmpty()
     }
 
     @ParameterizedTest

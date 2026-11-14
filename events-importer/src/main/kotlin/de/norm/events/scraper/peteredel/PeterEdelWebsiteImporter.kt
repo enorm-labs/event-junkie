@@ -43,7 +43,8 @@ val PETER_EDEL_LIMITATIONS =
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "without a category nothing confirms that a title is a performer rather than a format, so an act needs a support billing or a quoted show",
+            "without a category nothing confirms that a title is a performer rather than a format, so an act needs a support billing " +
+                "or a quoted show, and for a concert also a tour, a quoted work in the subtitle or a `- mit <name>` tail",
             verified = "2026-10-22"
         ),
         AcceptedLimitation(
