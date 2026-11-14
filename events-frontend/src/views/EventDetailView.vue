@@ -24,7 +24,8 @@ import { useEvent } from '@/composables/useEvent'
 import { useEventChanges } from '@/composables/useEventChanges'
 import { useRelatedEvents } from '@/composables/useRelatedEvents'
 import { descriptionFor } from '@/lib/description'
-import { inFeatureOrder } from '@/lib/eventFeatures'
+import { CHRISTMAS_MARKET } from '@/lib/christmasMarkets'
+import { inFeatureOrder, MARKET_KIND_PREFIX } from '@/lib/eventFeatures'
 import { withReferral } from '@/lib/referral'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
@@ -105,12 +106,23 @@ const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null
 // A fact block beside the venue and the tickets, not a word under the title (#2523).
 const spokenLanguage = computed(() => formatSpokenLanguage(event.value?.spokenLanguages, null))
 const subtitles = computed(() => formatSpokenLanguage(null, event.value?.subtitleLanguage))
-// What kind of night it is, as its own text says (#2631); each pill opens the list filtered by it.
+// What kind of night it is, as its own text says (#2631); each pill opens the list filtered by it,
+// and a market's pills open the markets page, the one place markets are browsed (#5019).
+function featureLink(slug: string) {
+  if (slug === CHRISTMAS_MARKET) return { path: localePath('/christmas-markets') }
+  if (slug.startsWith(MARKET_KIND_PREFIX)) {
+    return {
+      path: localePath('/christmas-markets'),
+      query: { kind: slug.slice(MARKET_KIND_PREFIX.length) },
+    }
+  }
+  return { path: localePath('/events'), query: { feature: slug } }
+}
 const features = computed(() =>
   inFeatureOrder(event.value?.features ?? []).map((slug) => ({
     slug,
     label: formatEventFeature(slug),
-    to: { path: localePath('/events'), query: { feature: slug } },
+    to: featureLink(slug),
   })),
 )
 // What kind of event and which sound, the card's taxonomy without the language, which has its own

@@ -269,7 +269,9 @@ an evening on a stage, so no list shows it. But visitors look for the markets in
 - **The page lists the season's public markets**: Christmas markets, winter craft markets and Christmas funfairs. A
   bazaar, a flea market and a market run by a shop, such as a wine merchant, stay out.
 - **Each market has one or two kinds**, set by hand as the feature `christmas-market-<kind>` (#5007). The kinds are
-  `traditional`, `historic`, `craft`, `funfair`, `kiez` and `alternative`. The markets page filters by kind. The feature filter of the events list does not show the kinds.
+  `traditional`, `historic`, `craft`, `funfair`, `kiez` and `alternative`. The markets page filters by kind.
+- **Visitors browse the markets on their page only** (#5019). The feature filter of the events list shows neither the
+  market nor its kinds. On the event page, the market's feature pills open the markets page.
 - **A market in a venue's feed still stays out** (§3.2). The scrapers do not mark it, because the page is entered by hand.
 - The public API lists such an event only when the request asks for it. The request names `feature=christmas-market`,
   or a venue, artist, promoter, festival or text filter. The event page and the venue page always show it.

@@ -476,6 +476,17 @@ describe('EventDetailView', () => {
     expect(section.text()).toContain("As the event's own text or the venue's page states it.")
   })
 
+  it("links a market's pills to the markets page, and every other pill to the list (#5019)", async () => {
+    const view = await mountEvent(
+      { ...night, features: ['christmas-market', 'christmas-market-craft', 'queer'] },
+      'de',
+    )
+
+    expect(hrefOf(view, 'Weihnachtsmarkt')).toBe('/de/christmas-markets')
+    expect(hrefOf(view, 'Kunsthandwerk & Design')).toBe('/de/christmas-markets?kind=craft')
+    expect(hrefOf(view, 'Queer')).toBe('/de/events?feature=queer')
+  })
+
   it('shows the type and the genre tags under the date and venue line', async () => {
     const view = await mountEvent({
       ...night,
