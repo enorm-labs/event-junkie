@@ -6,6 +6,7 @@ import {
   type ChristmasMarket,
   foldMarkets,
   isOpenOn,
+  MARKET_NEAREST,
   MARKET_TODAY,
   MARKET_WEEKEND,
   marketDays,
@@ -17,7 +18,8 @@ import { todayIso } from '@/lib/format'
  * The filters of the Christmas markets page (#5004, #5005), kept in the URL so a filtered view can be shared. The page
  * loads every market at once, so they filter on the device. Each filter is one entry in `filters`: a later one
  * adds its query key and its test there, and the list, the count and the map follow it. The filters test each event,
- * and a market entered as several events passes when one of them does.
+ * and a market entered as several events passes when one of them does. The order (#5010) is no filter:
+ * `sort` only tells the view how to order what `filtered` returns.
  */
 export function useMarketFilters(markets: Ref<readonly EventSummary[]>) {
   const { queryString, queryList, applyFilters } = useQueryParams()
@@ -34,6 +36,9 @@ export function useMarketFilters(markets: Ref<readonly EventSummary[]>) {
   const date = computed(() =>
     day.value === MARKET_TODAY || day.value === MARKET_WEEKEND ? '' : day.value,
   )
+
+  /** `distance` for nearest first, `''` for name order. The URL never carries the origin. */
+  const sort = computed(() => (queryString('sort') === MARKET_NEAREST ? MARKET_NEAREST : ''))
 
   const filters = computed(() => ({
     free: free.value ? (market: EventSummary) => market.free === true : null,
@@ -95,6 +100,10 @@ export function useMarketFilters(markets: Ref<readonly EventSummary[]>) {
     applyFilters({ district: values })
   }
 
+  function setSort(nearest: boolean) {
+    applyFilters({ sort: nearest ? MARKET_NEAREST : '' })
+  }
+
   return {
     day,
     date,
@@ -104,8 +113,10 @@ export function useMarketFilters(markets: Ref<readonly EventSummary[]>) {
     filtered,
     districtCounts,
     districtOptions,
+    sort,
     setDay,
     setFree,
     setDistricts,
+    setSort,
   }
 }

@@ -17,5 +17,14 @@
     "weekend": "This weekend",
     "date": "On"
   },
-  "emptyFiltered": "No Christmas market matches these filters."
+  "emptyFiltered": "No Christmas market matches these filters.",
+  "nearest": "Nearest first",
+  "near": {
+    "label": "Distance",
+    "fromMarket": "From a market…",
+    "needsOrigin": "Nearest first needs a starting point: your location, a point on the map or a market.",
+    "denied": "Location access is off for this site, so the markets stay in name order. Pick a point on the map or a market instead.",
+    "unavailable": "Your location could not be found, so the markets stay in name order. Pick a point on the map or a market instead.",
+    "resultCount": "{count} Christmas market, nearest first | {count} Christmas markets, nearest first"
+  }
 }

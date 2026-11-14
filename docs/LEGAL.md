@@ -466,14 +466,16 @@ product decision, not an implementation detail, so escalate rather than implemen
 
 ### 7.4a Location — measured in the browser, never sent
 
-"Near me" on the events map (#358) and on the venues map uses the visitor's position. The position stays in the browser. The design keeps it there,
+"Near me" on the events map (#358) and on the venues map uses the visitor's position. The
+Christmas markets page uses it for "Nearest first" (#5010). The position stays in the browser. The design keeps it there,
 so that the notice can say so.
 
 - **The browser asks, on a click only.** `useLocation.ts` calls the Geolocation API when the visitor chooses "Use my
   location". The browser's own prompt is the consent. Nothing asks on page load.
-- **The distance is computed on the device.** The events map loads `/events/calendar` and the venues map loads
-  `/venues`. Both responses are the same for every visitor. `lib/mapPins.ts` filters and sorts them by distance in the
-  browser.
+- **The distance is computed on the device.** The events map loads `/events/calendar`, and the venues map loads `/venues`.
+  The Christmas markets page loads `/events?feature=christmas-market`. Each response is the same for every
+  visitor. `lib/mapPins.ts` and `lib/christmasMarkets.ts` filter and sort them by distance in the browser. The
+  markets page puts only `sort=distance` in the URL.
 - **The position goes nowhere.** It is not in a request, a URL, a log or `localStorage`. It is held in memory and goes
   when the page reloads.
 - **The header allows it for this origin only.** The chart's `permissionsPolicy` sets `geolocation=(self)`.

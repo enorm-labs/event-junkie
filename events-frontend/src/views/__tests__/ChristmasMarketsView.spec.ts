@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import { defineComponent, h } from 'vue'
 import type { EventPage, EventSummary } from '@/api/types'
 import type { EventSearchParams } from '@/composables/useEvents'
 import { setI18nLocale } from '@/i18n'
+import { useLocation } from '@/composables/useLocation'
 
 const searchEvents = vi.fn<(params: EventSearchParams) => Promise<EventPage>>()
 
@@ -38,8 +39,13 @@ const SEASON = [
 
 const stubs = {
   EventRow: defineComponent({
-    props: { event: Object },
-    setup: (props) => () => h('article', { 'data-slug': props.event?.slug }, props.event?.title),
+    props: { event: Object, distance: String },
+    setup: (props) => () =>
+      h(
+        'article',
+        { 'data-slug': props.event?.slug },
+        props.distance ? `${props.event?.title} · ${props.distance}` : props.event?.title,
+      ),
   }),
   VenueMap: defineComponent({
     name: 'VenueMap',
@@ -70,6 +76,7 @@ async function mountWith(content: EventSummary[], path = '/de/christmas-markets'
 }
 
 afterEach(() => {
+  useLocation().clear()
   mounted?.unmount()
   mounted = undefined
   searchEvents.mockReset()
@@ -383,5 +390,180 @@ describe('ChristmasMarketsView with a market entered per weekend', () => {
     const panel = wrapper.findComponent({ name: 'MapPanel' })
     expect(panel.text().split(' · ')).toHaveLength(4)
     expect(panel.find('a[href="/de/events/domaene-2"]').exists()).toBe(true)
+  })
+})
+
+describe('ChristmasMarketsView nearest first', () => {
+  const PERMISSION_DENIED = 1
+  type Success = (position: {
+    coords: { latitude: number; longitude: number; accuracy: number }
+  }) => void
+  type Failure = (error: { code: number; PERMISSION_DENIED: number }) => void
+  const getCurrentPosition = vi.fn<(success: Success, failure: Failure) => void>()
+
+  // Alexanderplatz.
+  const HERE = { latitude: 52.5219, longitude: 13.4132 }
+
+  function placed(
+    title: string,
+    position: { latitude: number; longitude: number } | null,
+    { free = false, venue = title.toLowerCase().replace(/ /g, '-') } = {},
+  ): EventSummary {
+    const base = market(title, title.toLowerCase().replace(/ /g, '-'), { free })
+    return {
+      ...base,
+      venue: {
+        ...base.venue,
+        slug: venue,
+        latitude: position?.latitude ?? null,
+        longitude: position?.longitude ?? null,
+      },
+    } as EventSummary
+  }
+
+  // About 0.5 km, 1.7 km and 14 km from HERE; two markets at one venue; one with no coordinate.
+  const MARKETS = [
+    placed('Altstadt Spandau', { latitude: 52.5365, longitude: 13.2042 }, { free: true }),
+    placed('Domäne Dahlem 2', { latitude: 52.5175, longitude: 13.3889 }, { venue: 'dahlem' }),
+    placed('Domäne Dahlem 3', { latitude: 52.5175, longitude: 13.3889 }, { venue: 'dahlem' }),
+    placed('Ohne Ort', null, { free: true }),
+    placed('Rotes Rathaus', { latitude: 52.5186, longitude: 13.4081 }, { free: true }),
+  ]
+
+  function titles(wrapper: VueWrapper): string[] {
+    return wrapper.findAll('article').map((row) => row.text())
+  }
+
+  function pinCount(wrapper: VueWrapper): string | undefined {
+    return wrapper.find('[data-testid="map"]').attributes('data-pins')
+  }
+
+  function button(wrapper: VueWrapper, text: string) {
+    return wrapper.findAll('button').find((candidate) => candidate.text() === text)
+  }
+
+  beforeEach(() => {
+    getCurrentPosition.mockReset()
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition },
+    })
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(navigator, 'geolocation')
+  })
+
+  it('sorts by the distance from the device, and shows it on each row', async () => {
+    getCurrentPosition.mockImplementation((success) =>
+      success({ coords: { ...HERE, accuracy: 50 } }),
+    )
+    const wrapper = await mountWith(MARKETS)
+    expect(getCurrentPosition).not.toHaveBeenCalled()
+
+    await button(wrapper, 'Nächste zuerst')?.trigger('click')
+    await flushPromises()
+    expect(getCurrentPosition).not.toHaveBeenCalled()
+    await button(wrapper, 'Meinen Standort verwenden')?.trigger('click')
+    await flushPromises()
+
+    expect(getCurrentPosition).toHaveBeenCalledOnce()
+    expect(router.currentRoute.value.query).toEqual({ sort: 'distance' })
+    expect(button(wrapper, 'Nächste zuerst')?.attributes('aria-pressed')).toBe('true')
+    expect(titles(wrapper)).toEqual([
+      'Rotes Rathaus · 500 m',
+      'Domäne Dahlem 2 · 1,7 km',
+      'Domäne Dahlem 3 · 1,7 km',
+      'Altstadt Spandau · 14,2 km',
+      'Ohne Ort',
+    ])
+    expect(wrapper.text()).toContain('5 Weihnachtsmärkte, die nächsten zuerst')
+    expect(wrapper.text()).toContain('Rund um deinen Standort')
+    // A sort has no radius.
+    expect(wrapper.find('[aria-label="Umkreis"]').exists()).toBe(false)
+  })
+
+  it('sorts only the markets the filters keep', async () => {
+    useLocation().set({ ...HERE, source: 'map' })
+    const wrapper = await mountWith(MARKETS, '/de/christmas-markets?free=true&sort=distance')
+
+    expect(titles(wrapper)).toEqual([
+      'Rotes Rathaus · 500 m',
+      'Altstadt Spandau · 14,2 km',
+      'Ohne Ort',
+    ])
+    expect(pinCount(wrapper)).toBe('2')
+  })
+
+  it('sorts from a market picked by name', async () => {
+    const wrapper = await mountWith(MARKETS, '/de/christmas-markets?sort=distance')
+
+    const select = wrapper.find('select[aria-label="Ab einem Markt …"]')
+    await select.setValue('altstadt-spandau')
+    await select.trigger('change')
+    await flushPromises()
+
+    expect(titles(wrapper)[0]).toBe('Altstadt Spandau · 50 m')
+    expect(titles(wrapper)[1]).toBe('Domäne Dahlem 2 · 12,7 km')
+    expect(router.currentRoute.value.query).toEqual({ sort: 'distance' })
+  })
+
+  it('shows the distance in the map panel', async () => {
+    useLocation().set({ ...HERE, source: 'map' })
+    const wrapper = await mountWith(MARKETS, '/de/christmas-markets?sort=distance')
+
+    wrapper.findComponent({ name: 'VenueMap' }).vm.$emit('update:selected', 'rotes-rathaus')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="map"]').text()).toContain('500 m')
+  })
+
+  it('keeps the name order and says why when the location is denied', async () => {
+    getCurrentPosition.mockImplementation((_, failure) =>
+      failure({ code: PERMISSION_DENIED, PERMISSION_DENIED }),
+    )
+    const wrapper = await mountWith(MARKETS)
+
+    await button(wrapper, 'Nächste zuerst')?.trigger('click')
+    await flushPromises()
+    await button(wrapper, 'Meinen Standort verwenden')?.trigger('click')
+    await flushPromises()
+
+    expect(router.currentRoute.value.query).toEqual({ sort: 'distance' })
+    expect(titles(wrapper)).toEqual(MARKETS.map((m) => m.title))
+    expect(wrapper.text()).toContain(
+      'Der Standortzugriff ist für diese Seite aus, die Märkte bleiben also nach Namen sortiert.',
+    )
+  })
+
+  it('keeps the name order of a shared link until the visitor picks an origin', async () => {
+    const wrapper = await mountWith(MARKETS, '/de/christmas-markets?sort=distance')
+
+    expect(getCurrentPosition).not.toHaveBeenCalled()
+    expect(titles(wrapper)).toEqual(MARKETS.map((m) => m.title))
+    expect(wrapper.text()).toContain('„Nächste zuerst“ braucht einen Startpunkt')
+  })
+
+  it('goes back to name order and drops the sort from the URL', async () => {
+    useLocation().set({ ...HERE, source: 'map' })
+    const wrapper = await mountWith(MARKETS, '/de/christmas-markets?free=true&sort=distance')
+
+    await button(wrapper, 'Zurücksetzen')?.trigger('click')
+    await flushPromises()
+
+    expect(router.currentRoute.value.query).toEqual({ free: 'true' })
+    expect(useLocation().origin.value).toBeNull()
+    expect(titles(wrapper)).toEqual(['Altstadt Spandau', 'Ohne Ort', 'Rotes Rathaus'])
+  })
+
+  it('keeps the sort when the filters are cleared', async () => {
+    useLocation().set({ ...HERE, source: 'map' })
+    const wrapper = await mountWith(MARKETS, '/de/christmas-markets?free=true&sort=distance')
+
+    await button(wrapper, 'Alles zurücksetzen')?.trigger('click')
+    await flushPromises()
+
+    expect(router.currentRoute.value.query).toEqual({ sort: 'distance' })
+    expect(titles(wrapper)[0]).toBe('Rotes Rathaus · 500 m')
   })
 })

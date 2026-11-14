@@ -1,6 +1,9 @@
 // The Christmas markets' own page (#4972): an event feature set by hand, which the default lists leave out.
 
+import type { EventSummary } from '@/api/types'
 import { addDays, isoWeekday } from './format'
+import { distanceKm, type Position } from './geo'
+import { venuePosition } from './mapPins'
 
 /** The event feature that marks a Christmas market, as `EventFeature.CHRISTMAS_MARKET` in the importer. */
 export const CHRISTMAS_MARKET = 'christmas-market'
@@ -17,6 +20,9 @@ export function inChristmasMarketSeason(day: string): boolean {
 /** The day filter's two words in the URL; any other value is a date (#5005). */
 export const MARKET_TODAY = 'today'
 export const MARKET_WEEKEND = 'weekend'
+
+/** The `sort` value for nearest first (#5010). */
+export const MARKET_NEAREST = 'distance'
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 const SATURDAY = 6
@@ -90,4 +96,25 @@ export function foldMarkets<T extends MarketEvent>(
     const shown = kept.find((block) => (block.endDate ?? block.eventDate ?? '') >= today) ?? kept[0]
     return shown ? [{ key, shown, blocks }] : []
   })
+}
+
+/**
+ * The markets nearest first from [origin], each with its distance, measured by the venue of the block it shows. A
+ * market with no coordinate goes last; the sort is stable, so a tie and those last keep the order they came in.
+ */
+export function nearestFirst<T extends EventSummary>(
+  markets: readonly ChristmasMarket<T>[],
+  origin: Position,
+): { market: ChristmasMarket<T>; distanceKm: number | null }[] {
+  return markets
+    .map((market) => {
+      const position = venuePosition(market.shown.venue)
+      return { market, distanceKm: position ? distanceKm(origin, position) : null }
+    })
+    .sort((a, b) => {
+      if (a.distanceKm === null || b.distanceKm === null) {
+        return (a.distanceKm === null ? 1 : 0) - (b.distanceKm === null ? 1 : 0)
+      }
+      return a.distanceKm - b.distanceKm
+    })
 }

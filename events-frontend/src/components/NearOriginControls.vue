@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 /**
- * The "near me" controls once an origin is chosen, shared by the events map and the venues map:
- * the origin's name, the radius group, and the way back out. It renders no wrapper element,
+ * The "near me" controls once an origin is chosen, shared by the events map, the venues map and the
+ * Christmas markets: the origin's name, the radius group, and the way back out. A page that only
+ * sorts by distance passes no radius and gets no radius group. It renders no wrapper element,
  * because each map already places these beside controls of its own.
  */
 import { X } from '@lucide/vue'
@@ -15,7 +16,7 @@ import { describeOrigin } from '@/lib/nearOrigin'
 
 const props = defineProps<{
   origin: Origin
-  radiusKm: number
+  radiusKm?: number
 }>()
 
 const emit = defineEmits<{
@@ -34,7 +35,7 @@ function distance(km: number): string {
 
 <template>
   <span>{{ t('map.near.from', { origin: originLabel }) }}</span>
-  <div :aria-label="t('map.near.radius')" class="flex gap-1" role="group">
+  <div v-if="props.radiusKm" :aria-label="t('map.near.radius')" class="flex gap-1" role="group">
     <Button
       v-for="radius in RADII"
       :key="radius"

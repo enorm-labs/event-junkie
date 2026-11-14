@@ -29,6 +29,8 @@ const props = withDefaults(
      * a pick, and the home page, the map and the calendar do not.
      */
     marksPick?: boolean
+    /** How far the event is from the visitor's chosen origin, already formatted (#5010). */
+    distance?: string
   }>(),
   { as: 'h3', marksPick: false },
 )
@@ -83,6 +85,9 @@ const rsvp = computed(() => (props.event.slug ? statuses.value[props.event.slug]
         {{ event.title }}
       </component>
       <span v-if="price" class="shrink-0 text-meta font-medium text-foreground">{{ price }}</span>
+      <span v-if="distance" class="shrink-0 text-meta text-muted-foreground tabular-nums">
+        {{ distance }}
+      </span>
     </div>
     <p v-if="state || meta.length || rsvp" class="truncate text-meta text-muted-foreground">
       <BaseBadge v-if="rsvp" class="mr-2 py-0" data-testid="rsvp-badge" variant="primary">
