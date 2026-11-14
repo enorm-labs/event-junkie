@@ -14,6 +14,7 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.stripTitleStatusMarker
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -161,13 +162,14 @@ class MonarchOverviewPageScraper {
         return dateOrNull { LocalTime.of(hour, minute) }
     }
 
-    /** Strips the "(KONZERT)" type marker and "ABGESAGT" cancellation flag from the raw title cell text. */
+    /** Strips the "(KONZERT)" type marker, then a leading or trailing "ABGESAGT" flag with its separator ("ABGESAGT - …", #4981). */
     private fun cleanTitle(rawTitle: String): String =
-        rawTitle
-            .replace(KONZERT_PATTERN, " ")
-            .replace(ABGESAGT_PATTERN, " ")
-            .replace(WHITESPACE, " ")
-            .trim()
+        stripTitleStatusMarker(
+            rawTitle
+                .replace(KONZERT_PATTERN, " ")
+                .replace(WHITESPACE, " ")
+                .trim()
+        )
 
     companion object {
         /**
@@ -193,8 +195,5 @@ class MonarchOverviewPageScraper {
 
         /** An edition of a series, which names no act: `LEAKED SESSION 04`. `Session Victim` and `Berlin Session Strings` carry no number. */
         private val NUMBERED_SESSION = Regex("""\S.*\ssession\s+\d+""", RegexOption.IGNORE_CASE)
-
-        /** The "ABGESAGT" (cancelled) flag, matched as a whole word anywhere in the title. */
-        private val ABGESAGT_PATTERN = Regex("""\babgesagt\b""", RegexOption.IGNORE_CASE)
     }
 }
