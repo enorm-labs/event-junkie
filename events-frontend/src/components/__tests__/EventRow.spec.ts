@@ -141,6 +141,15 @@ describe('EventRow', () => {
     expect(neither.text()).toContain('Time not announced')
   })
 
+  // A Christmas market's hours are opening hours; the row shows only the first day, so it says the last (#4987).
+  it('shows a run without a time by its last day', () => {
+    const run = { ...event, startTime: null, eventDate: '2026-11-23', endDate: '2026-12-31' }
+    const wrapper = mount(EventRow, { props: { event: run }, global: { stubs } })
+
+    expect(wrapper.text()).toContain('Until Thu 31 Dec')
+    expect(wrapper.text()).not.toContain('Time not announced')
+  })
+
   it('marks an assumed start as a guess (#1384)', () => {
     const wrapper = mount(EventRow, {
       props: {

@@ -349,6 +349,15 @@ describe('EventCard', () => {
     expect(wrapper.text()).toContain('Time not announced')
   })
 
+  // The date range already spans the run; a note beside it would read as a defect (#4987).
+  it('shows a run without a time by its dates alone', () => {
+    const run = { ...event, startTime: null, eventDate: '2026-11-23', endDate: '2026-12-31' }
+    const wrapper = mount(EventCard, { props: { event: run }, global: { stubs } })
+
+    const line = wrapper.findAll('p').find((p) => p.text().includes('2026 –'))
+    expect(line?.text().replace(/\s+/g, ' ')).toBe('Mon, 23 Nov 2026 – Thu, 31 Dec 2026 · Lido')
+  })
+
   it('shows the start alone when both are published', () => {
     const wrapper = mount(EventCard, {
       props: { event: { ...event, doorsTime: '19:00:00' } },

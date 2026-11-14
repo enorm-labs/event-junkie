@@ -49,6 +49,43 @@ export function useFormat() {
     }
   }
 
+  /**
+   * A run with no time at all: a Christmas market or an exhibition, whose hours are opening hours
+   * and live in the description (#4987).
+   */
+  const isUntimedRun = (event: EventTimes) =>
+    !!event.eventDate &&
+    !!event.endDate &&
+    event.endDate > event.eventDate &&
+    !event.startTime &&
+    !event.doorsTime &&
+    !event.assumedStartTime &&
+    !event.endTime
+
+  /**
+   * The time a card, row or detail header shows: the start when the venue published one, else the
+   * doors labelled as doors, else the BFF's guess marked as one (`~23:00`), else a note that no
+   * time was announced (#1383, #1384). Doors is labelled because `19:00` beside a 21:00 concert
+   * reads as our mistake; the guess is marked because the list sorts by it, and `eventTimeHint`
+   * says so in words. `''` for a run without a time: its date range already says enough.
+   */
+  const formatEventTime = (event: EventTimes) => {
+    const end = endLabel(event)
+    if (event.startTime) {
+      const start = formatTime(event.startTime)
+      if (!end) return start
+      // `Fri 22:00 – Mon 10:00`: once the end names a day, so does the start.
+      const day = end.farAway ? `${formatWeekday(event.eventDate, intlLocale())} ` : ''
+      return `${day}${start} – ${end.text}`
+    }
+    if (event.doorsTime) return t('events.card.doors', { time: formatTime(event.doorsTime) })
+    if (event.assumedStartTime)
+      return t('events.card.assumed', { time: formatTime(event.assumedStartTime) })
+    if (end) return t('events.card.until', { time: end.text })
+    if (isUntimedRun(event)) return ''
+    return t('events.card.timeUnknown')
+  }
+
   return {
     /**
      * `formatDate` bound to the active locale, mapped to a formatting tag first: bare `en` means US
@@ -87,28 +124,16 @@ export function useFormat() {
     formatShortDate: (isoDate?: string | null) =>
       formatShortDate(isoDate, isLocale(locale.value) ? INTL_LOCALES[locale.value] : 'en-GB'),
 
+    formatEventTime,
+
     /**
-     * The time a card, row or detail header shows: the start when the venue published one, else the
-     * doors labelled as doors, else the BFF's guess marked as one (`~23:00`), else a note that no
-     * time was announced (#1383, #1384). Doors is labelled because `19:00` beside a 21:00 concert
-     * reads as our mistake; the guess is marked because the list sorts by it, and `eventTimeHint`
-     * says so in words.
+     * The time a row shows. A row prints only the first day, so a run with no time says when it ends
+     * instead: `Until 31 Dec`.
      */
-    formatEventTime: (event: EventTimes) => {
-      const end = endLabel(event)
-      if (event.startTime) {
-        const start = formatTime(event.startTime)
-        if (!end) return start
-        // `Fri 22:00 – Mon 10:00`: once the end names a day, so does the start.
-        const day = end.farAway ? `${formatWeekday(event.eventDate, intlLocale())} ` : ''
-        return `${day}${start} – ${end.text}`
-      }
-      if (event.doorsTime) return t('events.card.doors', { time: formatTime(event.doorsTime) })
-      if (event.assumedStartTime)
-        return t('events.card.assumed', { time: formatTime(event.assumedStartTime) })
-      if (end) return t('events.card.until', { time: end.text })
-      return t('events.card.timeUnknown')
-    },
+    formatRowTime: (event: EventTimes) =>
+      isUntimedRun(event)
+        ? t('events.card.until', { time: formatShortDate(event.endDate, intlLocale()) })
+        : formatEventTime(event),
 
     /**
      * The date line: one day, or `Fri, 12 Jun 2026 – Mon, 15 Jun 2026` for a run with an end date

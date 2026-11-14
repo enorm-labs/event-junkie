@@ -120,3 +120,30 @@ describe('formatEventStatus', () => {
     expect(formatEventStatus('RELOCATED', 'Hole 44')).toBe('Verlegt: Hole 44')
   })
 })
+
+describe('formatEventTime and formatRowTime', () => {
+  const run = { eventDate: '2026-11-23', endDate: '2026-12-31' }
+
+  it('gives a run without a time its last day on a row and nothing on a card (#4987)', () => {
+    const { formatEventTime, formatRowTime } = format()
+
+    expect(formatRowTime(run)).toBe('Until Thu 31 Dec')
+    expect(formatEventTime(run)).toBe('')
+  })
+
+  it('keeps the start of a run that has one', () => {
+    const { formatEventTime, formatRowTime } = format()
+
+    expect(formatRowTime({ ...run, startTime: '11:00:00' })).toBe('11:00')
+    expect(formatEventTime({ ...run, startTime: '11:00:00' })).toBe('11:00')
+  })
+
+  it('says a one-day event without a time has none announced', () => {
+    const { formatEventTime, formatRowTime } = format()
+    const oneDay = { eventDate: '2026-11-23', endDate: '2026-11-23' }
+
+    expect(formatRowTime(oneDay)).toBe('Time not announced')
+    expect(formatEventTime(oneDay)).toBe('Time not announced')
+    expect(formatEventTime({ eventDate: '2026-11-23' })).toBe('Time not announced')
+  })
+})

@@ -40,6 +40,8 @@ const props = withDefaults(
 const { formatEventDates, formatEventTime, formatShortDate } = useFormat()
 
 const posterDate = computed(() => formatShortDate(props.event.eventDate))
+// Empty for a run without a time, whose date range already says enough (#4987).
+const time = computed(() => formatEventTime(props.event))
 const genreFamilies = useGenreFamilies()
 
 const { eventType, isLive, language, liveLabel, state, timeHint } = useEventState(() => props.event)
@@ -126,11 +128,13 @@ const { t } = useI18n()
       </p>
       <p class="text-body text-muted-foreground">
         {{ formatEventDates(event) }}
-        ·
-        <span :title="timeHint ?? undefined">
-          {{ formatEventTime(event) }}
-          <span v-if="timeHint" class="sr-only">({{ timeHint }})</span>
-        </span>
+        <template v-if="time">
+          ·
+          <span :title="timeHint ?? undefined">
+            {{ time }}
+            <span v-if="timeHint" class="sr-only">({{ timeHint }})</span>
+          </span>
+        </template>
         <template v-if="event.venue?.name"> · {{ event.venue.name }}</template>
       </p>
       <p

@@ -33,7 +33,7 @@ const props = withDefaults(
   { as: 'h3', marksPick: false },
 )
 
-const { formatShortDate, formatEventTime } = useFormat()
+const { formatShortDate, formatRowTime } = useFormat()
 const { t } = useI18n()
 const localePath = useLocalePath()
 
@@ -66,7 +66,7 @@ const rsvp = computed(() => (props.event.slug ? statuses.value[props.event.slug]
         {{ formatShortDate(event.eventDate) }}
         ·
         <span :title="timeHint ?? undefined">
-          {{ formatEventTime(event) }}
+          {{ formatRowTime(event) }}
           <span v-if="timeHint" class="sr-only">({{ timeHint }})</span>
         </span>
       </span>
