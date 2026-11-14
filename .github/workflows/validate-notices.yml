@@ -34,7 +34,6 @@ on:
       - 'scripts/notices-parity.sh'
       - '.github/workflows/validate-notices.yml'
   pull_request:
-    branches: [ main ]
     # No `paths:` here: this check is **required**, and a filter would deadlock every pull request that
     # does not touch a dependency file (#443). **The cost was priced**: both dependency graphs resolve on
     # every pull request — 58s warm, 213–260s cold. The `push:` filter keeps its paths.

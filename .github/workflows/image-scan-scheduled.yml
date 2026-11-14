@@ -26,7 +26,6 @@ on:
   # Also when the thing that decides *what* gets scanned changes, so a broken resolver is caught by the
   # change that caused it.
   pull_request:
-    branches: [ main ]
     paths:
       - '.github/workflows/image-scan-scheduled.yml'
       - 'scripts/deployed-versions.sh'

@@ -42,7 +42,6 @@ on:
       - 'events-frontend/package-lock.json'
       - '.github/workflows/validate-docs.yml'
   pull_request:
-    branches: [ main ]
     # `paths:` is present because this check is **not** required. **If it is ever made required, delete
     # this filter in the same change** — a required check that never runs stays Pending forever (#443).
     paths:

@@ -22,7 +22,6 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
     # No `paths:` filter — see the header.
   schedule:
     # Weekly, off-the-hour; the scheduled run is the one that catches a new query finding an old bug.

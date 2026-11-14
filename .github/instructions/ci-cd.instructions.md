@@ -211,6 +211,8 @@ no `dry_run` because every run is one, no `issues: write` on the agent's job, AD
 - **Each required check runs on every PR**, because GitHub keeps a required-but-skipped check Pending forever (#447 never ran `Lint & render`). So: **never add a
   `paths:` filter to the `pull_request` trigger of a required workflow** (the failure looks like a hung check), and **adding a stack to `validate-infra`'s
   matrix creates a context that is not required** — add it to the ruleset in the same change.
+- **No `branches:` filter on a `pull_request` trigger**: a PR stacked on another branch runs every check, not only the `pull_request_target` ones. With
+  `branches: [ main ]` a stacked PR ran 4 checks and read as green before its build had run once (#4974). The `push:` filters keep `main`.
 - **`Build & Test (backend)`, `(frontend)` and `(admin)` are required, and none is the job that does the work.** Each workflow is `detect-changes` (seconds, no
   checkout, the PR's file list from the API), the build gated on it, and a **`gate` job that always runs and carries the context** — red when the build
   failed, green when skipped, red when detection failed (a detection bug must never read as a green build). A job skipped by a workflow-level `paths:`
