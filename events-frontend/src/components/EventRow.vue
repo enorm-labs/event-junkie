@@ -31,15 +31,29 @@ const props = withDefaults(
     marksPick?: boolean
     /** How far the event is from the visitor's chosen origin, already formatted (#5010). */
     distance?: string
+    /**
+     * A state word the page knows and the event does not, such as a market's "Last day" (#5006). It takes the
+     * coloured slot in place of the event's own state, but not a past or a cancelled one.
+     */
+    marker?: string
   }>(),
-  { as: 'h3', marksPick: false },
+  { as: 'h3', marksPick: false, marker: undefined },
 )
 
 const { formatShortDate, formatRowTime } = useFormat()
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-const { eventType, isLive, language, liveLabel, state, timeHint } = useEventState(() => props.event)
+const { eventType, isLive, isPast, language, liveLabel, state, status, timeHint } = useEventState(
+  () => props.event,
+)
+
+const showsMarker = computed(() => !!props.marker && !isPast.value && !status.value)
+const shownState = computed(() =>
+  showsMarker.value ? { label: props.marker ?? '', class: 'text-primary' } : state.value,
+)
+// The marker can displace "on now", and then the dot has to say it again.
+const dotLabel = computed(() => (showsMarker.value ? t('events.card.onNow') : liveLabel.value))
 
 // Venue, kind of night and genres read as one list, as they do on the card (#1248).
 const meta = computed(() =>
@@ -72,7 +86,7 @@ const rsvp = computed(() => (props.event.slug ? statuses.value[props.event.slug]
           <span v-if="timeHint" class="sr-only">({{ timeHint }})</span>
         </span>
       </span>
-      <LiveDot v-if="isLive" :label="liveLabel" />
+      <LiveDot v-if="isLive" :label="dotLabel" />
       <PickBadge v-if="showsPick" small class="shrink-0 self-center" />
       <component
         :is="as"
@@ -89,7 +103,7 @@ const rsvp = computed(() => (props.event.slug ? statuses.value[props.event.slug]
         {{ distance }}
       </span>
     </div>
-    <p v-if="state || meta.length || rsvp" class="truncate text-meta text-muted-foreground">
+    <p v-if="shownState || meta.length || rsvp" class="truncate text-meta text-muted-foreground">
       <BaseBadge v-if="rsvp" class="mr-2 py-0" data-testid="rsvp-badge" variant="primary">
         {{ t(rsvp === 'going' ? 'account.rsvp.badgeGoing' : 'account.rsvp.badgeInterested') }}
       </BaseBadge>
@@ -103,8 +117,10 @@ const rsvp = computed(() => (props.event.slug ? statuses.value[props.event.slug]
       >
         {{ event.festival.name }}
       </BaseBadge>
-      <span v-if="state" :class="['font-medium', state.class]">{{ state.label }}</span>
-      <span v-if="state && meta.length" aria-hidden="true"> · </span>
+      <span v-if="shownState" :class="['font-medium', shownState.class]">{{
+        shownState.label
+      }}</span>
+      <span v-if="shownState && meta.length" aria-hidden="true"> · </span>
       <span v-if="meta.length">{{ meta.join(' · ') }}</span>
     </p>
   </RouterLink>

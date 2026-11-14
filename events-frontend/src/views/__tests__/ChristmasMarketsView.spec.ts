@@ -39,22 +39,28 @@ const SEASON = [
 
 const stubs = {
   EventRow: defineComponent({
-    props: { event: Object, distance: String },
+    props: { event: Object, distance: String, marker: String },
     setup: (props) => () =>
       h(
         'article',
-        { 'data-slug': props.event?.slug },
+        { 'data-slug': props.event?.slug, 'data-marker': props.marker },
         props.distance ? `${props.event?.title} · ${props.distance}` : props.event?.title,
       ),
   }),
   VenueMap: defineComponent({
     name: 'VenueMap',
-    props: { pins: Array, selected: String },
+    props: { pins: Array<{ slug: string }>, selected: String },
     emits: ['update:selected', 'unavailable'],
     setup:
-      (props, { slots }) =>
+      (props, { emit, slots }) =>
       () =>
-        h('div', { 'data-testid': 'map', 'data-pins': props.pins?.length }, slots.default?.()),
+        h('div', { 'data-testid': 'map', 'data-pins': props.pins?.length }, [
+          h('button', {
+            'data-testid': 'pick',
+            onClick: () => emit('update:selected', props.pins?.[0]?.slug),
+          }),
+          slots.default?.(),
+        ]),
   }),
 }
 
@@ -192,6 +198,53 @@ describe('ChristmasMarketsView', () => {
     await toggle?.trigger('click')
     await flushPromises()
     expect(router.currentRoute.value.query).toEqual({ district: ['mitte'] })
+  })
+
+  describe('marks a run that opens or ends within the week (#5006)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date('2026-11-18T10:00:00Z'))
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    function run(slug: string, eventDate: string, endDate: string): EventSummary {
+      return { ...market(slug, slug), eventDate, endDate }
+    }
+
+    it('in the rows, in German', async () => {
+      const wrapper = await mountWith([
+        run('a-opens', '2026-11-20', '2026-12-31'),
+        run('b-last', '2026-11-01', '2026-11-18'),
+        run('c-ends', '2026-11-01', '2026-11-22'),
+        run('d-none', '2026-11-01', '2026-12-31'),
+        run('e-today', '2026-11-18', '2026-11-18'),
+        run('f-saturday', '2026-11-21', '2026-11-21'),
+      ])
+
+      expect(wrapper.findAll('article').map((row) => row.attributes('data-marker'))).toEqual([
+        'Ab Freitag',
+        'Letzter Tag',
+        'Nur noch bis Sonntag',
+        undefined,
+        'Nur heute',
+        'Nur am Samstag',
+      ])
+    })
+
+    it('in the map panel, in English', async () => {
+      const wrapper = await mountWith(
+        [run('opens', '2026-11-20', '2026-12-31')],
+        '/en/christmas-markets',
+      )
+      setI18nLocale('en')
+      await wrapper.get('[data-testid="pick"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('.text-primary').text()).toBe('From Friday')
+    })
   })
 })
 
@@ -367,6 +420,18 @@ describe('ChristmasMarketsView with a market entered per weekend', () => {
   function rows(wrapper: VueWrapper): (string | undefined)[] {
     return wrapper.findAll('article').map((row) => row.attributes('data-slug'))
   }
+
+  it('marks the market from its first weekend to its last, not each weekend (#5006)', async () => {
+    const marker = async (instant: string) =>
+      (await mountOn(instant)).find('[data-slug^="domaene"]').attributes('data-marker')
+
+    // Sunday of the first weekend: the market goes on, so no "Nur noch bis".
+    expect(await marker('2026-11-29T10:00:00Z')).toBeUndefined()
+    // The Monday before it opens, and the last weekend's two days.
+    expect(await marker('2026-11-23T10:00:00Z')).toBe('Ab Samstag')
+    expect(await marker('2026-12-19T10:00:00Z')).toBe('Nur noch bis Sonntag')
+    expect(await marker('2026-12-20T10:00:00Z')).toBe('Letzter Tag')
+  })
 
   it('lists the market once, with its next weekend, and counts and pins it once', async () => {
     const wrapper = await mountOn('2026-11-30T10:00:00Z')

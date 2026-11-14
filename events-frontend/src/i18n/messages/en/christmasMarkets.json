@@ -28,5 +28,12 @@
     "denied": "Location access is off for this site, so the markets stay in name order. Pick a point on the map or a market instead.",
     "unavailable": "Your location could not be found, so the markets stay in name order. Pick a point on the map or a market instead.",
     "resultCount": "{count} Christmas market, nearest first | {count} Christmas markets, nearest first"
+  },
+  "marker": {
+    "opens": "From {day}",
+    "lastDay": "Last day",
+    "endsSoon": "Until {day} only",
+    "todayOnly": "Today only",
+    "onlyOn": "Only on {day}"
   }
 }

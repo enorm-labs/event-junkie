@@ -1,12 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EventSummary } from '@/api/types'
 import {
   foldMarkets,
   inChristmasMarketSeason,
   isOpenOn,
   marketDays,
+  marketMarker,
   nearestFirst,
 } from '@/lib/christmasMarkets'
+import { todayIso } from '@/lib/format'
 
 describe('inChristmasMarketSeason', () => {
   it.each([
@@ -144,5 +146,61 @@ describe('nearestFirst', () => {
     ])
     expect(result[0]?.distanceKm).toBeCloseTo(1.11, 2)
     expect(result[3]?.distanceKm).toBeNull()
+  })
+})
+
+describe('marketMarker', () => {
+  // 23:30 UTC is already Sunday 15 November in Berlin, so the day comes from Berlin, not UTC.
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-14T23:30:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const marker = (eventDate: string, endDate?: string | null) =>
+    marketMarker({ eventDate, endDate }, todayIso())
+
+  it('reads today in Berlin', () => {
+    expect(todayIso()).toBe('2026-11-15')
+  })
+
+  it.each([
+    ['opens tomorrow', '2026-11-16', { kind: 'opens', day: '2026-11-16' }],
+    ['opens in 6 days', '2026-11-21', { kind: 'opens', day: '2026-11-21' }],
+    ['opens in 7 days', '2026-11-22', null],
+    ['opened today', '2026-11-15', null],
+  ])('%s', (_, eventDate, expected) => {
+    expect(marker(eventDate, '2026-12-31')).toEqual(expected)
+  })
+
+  it.each([
+    ['ends today', '2026-11-15', { kind: 'lastDay', day: '2026-11-15' }],
+    ['ends tomorrow', '2026-11-16', { kind: 'endsSoon', day: '2026-11-16' }],
+    ['ends in 6 days', '2026-11-21', { kind: 'endsSoon', day: '2026-11-21' }],
+    ['ends in 7 days', '2026-11-22', null],
+    ['ended yesterday', '2026-11-14', null],
+  ])('%s', (_, endDate, expected) => {
+    expect(marker('2026-11-01', endDate)).toEqual(expected)
+  })
+
+  it('lets the ending win when opening and ending fall in the same 6 days', () => {
+    expect(marker('2026-11-17', '2026-11-20')).toEqual({ kind: 'endsSoon', day: '2026-11-20' })
+  })
+
+  it.each([
+    ['today', '2026-11-15', { kind: 'todayOnly', day: '2026-11-15' }],
+    ['in 1 day', '2026-11-16', { kind: 'onlyOn', day: '2026-11-16' }],
+    ['in 6 days', '2026-11-21', { kind: 'onlyOn', day: '2026-11-21' }],
+    ['in 7 days', '2026-11-22', null],
+  ])('marks a one-day market %s, with or without an end date', (_, day, expected) => {
+    expect(marker(day, null)).toEqual(expected)
+    expect(marker(day, day)).toEqual(expected)
+  })
+
+  it('has no marker without a date', () => {
+    expect(marketMarker({ eventDate: null }, '2026-11-15')).toBeNull()
   })
 })

@@ -75,5 +75,5 @@ export function useEventState(event: () => EventSummary) {
     state.value?.label === t('events.card.onNow') ? undefined : t('events.card.onNow'),
   )
 
-  return { eventType, isLive, language, liveLabel, state, timeHint }
+  return { eventType, isLive, isPast, language, liveLabel, state, status, timeHint }
 }

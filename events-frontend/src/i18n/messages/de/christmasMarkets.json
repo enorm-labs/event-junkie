@@ -28,5 +28,12 @@
     "denied": "Der Standortzugriff ist für diese Seite aus, die Märkte bleiben also nach Namen sortiert. Wähle stattdessen einen Punkt auf der Karte oder einen Markt.",
     "unavailable": "Dein Standort ließ sich nicht ermitteln, die Märkte bleiben also nach Namen sortiert. Wähle stattdessen einen Punkt auf der Karte oder einen Markt.",
     "resultCount": "{count} Weihnachtsmarkt, der nächste zuerst | {count} Weihnachtsmärkte, die nächsten zuerst"
+  },
+  "marker": {
+    "opens": "Ab {day}",
+    "lastDay": "Letzter Tag",
+    "endsSoon": "Nur noch bis {day}",
+    "todayOnly": "Nur heute",
+    "onlyOn": "Nur am {day}"
   }
 }
