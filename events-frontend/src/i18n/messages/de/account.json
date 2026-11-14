@@ -134,7 +134,7 @@
     "close": "Schließen",
     "legend": "Was stimmt nicht? Kreuze alles Zutreffende an.",
     "note": "Notiz (optional)",
-    "noteRequired": "Notiz (nötig bei „Etwas anderes“)",
+    "noteRequired": "Notiz (nötig bei „Etwas anderes“ und Fragen)",
     "send": "Meldung senden",
     "update": "Meldung ändern",
     "withdraw": "Meldung zurückziehen",
@@ -142,15 +142,18 @@
     "failed": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
     "forbidden": "Dieses Konto kann keine Probleme melden.",
     "problems": {
-      "ARTISTS": "Falsche oder fehlende Künstler",
+      "ARTISTS": "Falsche oder fehlende Künstler, oder der Titel steht als Künstler da",
       "TITLE": "Titel ist verstümmelt",
+      "DESCRIPTION": "Beschreibung ist verstümmelt, abgeschnitten oder schlecht formatiert",
       "DATE_TIME": "Falsches Datum oder Uhrzeit",
-      "STATUS": "Abgesagt/verschoben stimmt nicht",
+      "STATUS": "Abgesagt, verschoben oder verlegt: falsch oder gar nicht angezeigt",
       "PRICE_TICKETS": "Preis oder Ticketlink falsch oder fehlt",
-      "TYPE_GENRE": "Falscher Veranstaltungstyp oder Genre",
+      "TYPE_GENRE": "Falscher Veranstaltungstyp, falsches Genre oder Publikum (z. B. für Kinder, Comedy)",
       "NOT_AN_EVENT": "Gehört nicht hierher (privat, Workshop, …)",
       "DUPLICATE": "Doppelt gelistet",
-      "OTHER": "Etwas anderes"
+      "OTHER": "Etwas anderes",
+      "QUESTION": "Frage oder Vorschlag (kein Datenfehler)",
+      "ON_IMAGE": "Die Angaben stehen auf dem Bild der Veranstaltung"
     }
   },
   "push": {

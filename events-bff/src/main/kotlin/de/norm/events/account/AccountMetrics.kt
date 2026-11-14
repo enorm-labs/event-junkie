@@ -21,6 +21,7 @@ class AccountMetrics(
     private val searches = SavedSearchAction.entries.associateWith { registry.counter(SAVED_SEARCH, TAG_ACTION, it.tag) }
     private val rsvps = RsvpAction.entries.associateWith { registry.counter(RSVP, TAG_ACTION, it.tag) }
     private val reports = ReportAction.entries.associateWith { registry.counter(REPORT, TAG_ACTION, it.tag) }
+    private val reportProblems = ReportProblem.entries.associateWith { registry.counter(REPORT_PROBLEM, TAG_PROBLEM, it.name.lowercase()) }
     private val pushes = PushAction.entries.associateWith { registry.counter(PUSH, TAG_ACTION, it.tag) }
     private val passkeys = PasskeyOutcome.entries.associateWith { registry.counter(PASSKEY, TAG_OUTCOME, it.tag) }
     private val cleanup = CleanupOutcome.entries.associateWith { registry.counter(CLEANUP, TAG_OUTCOME, it.tag) }
@@ -60,6 +61,8 @@ class AccountMetrics(
     fun record(action: RsvpAction) = rsvps.getValue(action).increment()
 
     fun record(action: ReportAction) = reports.getValue(action).increment()
+
+    fun record(problems: List<ReportProblem>) = problems.forEach { reportProblems.getValue(it).increment() }
 
     fun record(action: PushAction) = pushes.getValue(action).increment()
 
@@ -105,6 +108,9 @@ class AccountMetrics(
         /** `bff.account.report{action}`: problem reports stored, replaced and withdrawn, and those refused at the limit (#4399). */
         const val REPORT = "bff.account.report"
 
+        /** `bff.account.report.problem{problem}`: each ticked box of a stored or replaced report, counts only (#4978). */
+        const val REPORT_PROBLEM = "bff.account.report.problem"
+
         /** `bff.account.push{action}`: browsers subscribed and unsubscribed, and bells turned on and off (#3894). What was sent is `bff.push.sent`. */
         const val PUSH = "bff.account.push"
 
@@ -127,6 +133,7 @@ class AccountMetrics(
         const val TAG_ACTION = "action"
         const val TAG_KIND = "kind"
         const val TAG_STATE = "state"
+        const val TAG_PROBLEM = "problem"
     }
 }
 

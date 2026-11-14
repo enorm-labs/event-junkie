@@ -40,7 +40,9 @@ class ReportController(
     @PutMapping("/{slug}")
     @Operation(
         summary = "Reports a problem with an event, or replaces the account's earlier report on it",
-        description = "Only for accounts the operator allows. At least one problem; a note of at most 500 characters, required with OTHER."
+        description =
+            "Only for accounts the operator allows. At least one problem, and ON_IMAGE never alone; " +
+                "a note of at most 500 characters, required with OTHER and QUESTION."
     )
     suspend fun save(
         @AuthenticationPrincipal account: Account,
@@ -51,7 +53,7 @@ class ReportController(
         val problems = problems(request.problems)
         val note = request.note?.trim()?.takeIf { it.isNotEmpty() }
         if (note != null && note.length > MAX_NOTE) refuse(HttpStatus.BAD_REQUEST, "A note of at most $MAX_NOTE characters")
-        if (ReportProblem.OTHER in problems && note == null) refuse(HttpStatus.BAD_REQUEST, "OTHER needs a note")
+        problems.firstOrNull { it in NEEDS_NOTE }?.let { if (note == null) refuse(HttpStatus.BAD_REQUEST, "${it.name} needs a note") }
         val eventId = rsvps.eventId(slug) ?: refuse(HttpStatus.NOT_FOUND, "No such event")
         val replaced = reports.save(account.id, eventId, problems, note, clock.instant())
         record(if (replaced) ReportAction.REPLACE else ReportAction.STORE, problems)
@@ -78,24 +80,28 @@ class ReportController(
         problems: List<ReportProblem>
     ) {
         metrics.record(action)
+        if (action != ReportAction.WITHDRAW) metrics.record(problems)
         // The problem names come from a closed list, so they are safe in the line; the note never is.
         logger.info { "Problem report ${action.tag}" + if (problems.isEmpty()) "" else ": ${problems.joinToString()}" }
     }
 
     private companion object {
         const val MAX_NOTE = 500
+        val NEEDS_NOTE = setOf(ReportProblem.OTHER, ReportProblem.QUESTION)
 
         fun problems(raw: List<String>): List<ReportProblem> {
             val problems = raw.map { ReportProblem.ofOrNull(it) ?: refuse(HttpStatus.BAD_REQUEST, "Unknown problem $it") }.distinct()
-            return problems.ifEmpty { refuse(HttpStatus.BAD_REQUEST, "At least one problem") }
+            if (problems.isEmpty()) refuse(HttpStatus.BAD_REQUEST, "At least one problem")
+            if (problems == listOf(ReportProblem.ON_IMAGE)) refuse(HttpStatus.BAD_REQUEST, "ON_IMAGE needs a problem")
+            return problems
         }
     }
 }
 
 data class ReportRequest(
-    /** [ReportProblem] names, at least one. */
+    /** [ReportProblem] names, at least one, and `ON_IMAGE` never alone. */
     val problems: List<String>,
-    /** Free text, at most 500 characters. Required with `OTHER`. */
+    /** Free text, at most 500 characters. Required with `OTHER` and `QUESTION`. */
     val note: String? = null
 )
 

@@ -34,7 +34,11 @@ data class ReportedEventResponse(
 
 @Schema(description = "One account's report on the event. The reporter is not named.")
 data class ReportEntryResponse(
-    @Schema(description = "The ticked problems: ARTISTS, TITLE, DATE_TIME, STATUS, PRICE_TICKETS, TYPE_GENRE, NOT_AN_EVENT, DUPLICATE, OTHER.")
+    @Schema(
+        description =
+            "The ticked problems: ARTISTS, TITLE, DESCRIPTION, DATE_TIME, STATUS, PRICE_TICKETS, TYPE_GENRE, " +
+                "NOT_AN_EVENT, DUPLICATE, OTHER, QUESTION, ON_IMAGE."
+    )
     val problems: List<String>,
     val note: String?,
     val updatedAt: Instant
