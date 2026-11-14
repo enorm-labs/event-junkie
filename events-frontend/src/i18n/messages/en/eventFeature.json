@@ -9,5 +9,11 @@
   "day-party": "Day party",
   "open-stage": "Open stage",
   "for-children": "For children",
-  "christmas-market": "Christmas market"
+  "christmas-market": "Christmas market",
+  "christmas-market-traditional": "Traditional",
+  "christmas-market-historic": "Medieval & historic",
+  "christmas-market-craft": "Craft & design",
+  "christmas-market-funfair": "Funfair",
+  "christmas-market-kiez": "Neighbourhood",
+  "christmas-market-alternative": "Alternative & queer"
 }

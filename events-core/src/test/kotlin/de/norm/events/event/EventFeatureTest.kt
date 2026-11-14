@@ -31,7 +31,13 @@ class EventFeatureTest {
             "day-party",
             "open-stage",
             "for-children",
-            "christmas-market"
+            "christmas-market",
+            "christmas-market-traditional",
+            "christmas-market-historic",
+            "christmas-market-craft",
+            "christmas-market-funfair",
+            "christmas-market-kiez",
+            "christmas-market-alternative"
         )
     }
 }

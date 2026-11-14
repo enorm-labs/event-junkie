@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonValue
  * The [slug] is what `event_feature.feature`, the BFF's `feature=` parameter and the frontend's
  * translation keys carry; [ordinal] is the display order. The importer's `EventFeatureRules` sets them from the stored text,
  * a scraper sets [FOR_CHILDREN] from what its page says (`ScrapedEvent.features`), and an operator sets
- * [CHRISTMAS_MARKET] in the admin editor.
+ * [CHRISTMAS_MARKET] and a market's kinds in the admin editor.
  *
  * Not here: audience labels that are our opinion about visitors (#327, #2379), and an age limit,
  * which is a number and needs its own field.
@@ -59,7 +59,18 @@ enum class EventFeature(
      * A Christmas market, entered by hand for the seasonal page (EVENT_SCOPE.md §3.6, #4972). No rule and no scraper sets
      * it. The BFF leaves it out of a list that does not ask for it.
      */
-    CHRISTMAS_MARKET("christmas-market");
+    CHRISTMAS_MARKET("christmas-market"),
+
+    // The kind of a Christmas market, one or two per market, for the page's kind filter (#5007). Set by hand beside
+    // [CHRISTMAS_MARKET], which already keeps the event out of the default lists.
+    CHRISTMAS_MARKET_TRADITIONAL("christmas-market-traditional"),
+    CHRISTMAS_MARKET_HISTORIC("christmas-market-historic"),
+    CHRISTMAS_MARKET_CRAFT("christmas-market-craft"),
+    CHRISTMAS_MARKET_FUNFAIR("christmas-market-funfair"),
+    CHRISTMAS_MARKET_KIEZ("christmas-market-kiez"),
+
+    /** Alternative and queer markets: "queer" alone would hold one market. */
+    CHRISTMAS_MARKET_ALTERNATIVE("christmas-market-alternative");
 
     companion object {
         /** The feature whose [slug] matches, or `null` for a slug the vocabulary does not know. */

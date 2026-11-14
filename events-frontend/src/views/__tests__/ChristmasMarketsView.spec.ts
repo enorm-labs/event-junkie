@@ -61,8 +61,15 @@ const stubs = {
 let mounted: VueWrapper | undefined
 let router: Router
 
-async function mountWith(content: EventSummary[], path = '/de/christmas-markets') {
-  searchEvents.mockResolvedValue({ content, totalElements: content.length } as EventPage)
+/** [content] is the markets, or the markets for each request's parameters. */
+async function mountWith(
+  content: EventSummary[] | ((params: EventSearchParams) => EventSummary[]),
+  path = '/de/christmas-markets',
+) {
+  searchEvents.mockImplementation(async (params) => {
+    const events = typeof content === 'function' ? content(params) : content
+    return { content: events, totalElements: events.length } as EventPage
+  })
   const Page = defineComponent({ render: () => h('p') })
   router = createRouter({
     history: createMemoryHistory(),
@@ -565,5 +572,99 @@ describe('ChristmasMarketsView nearest first', () => {
 
     expect(router.currentRoute.value.query).toEqual({ sort: 'distance' })
     expect(titles(wrapper)[0]).toBe('Rotes Rathaus · 500 m')
+  })
+})
+
+describe('ChristmasMarketsView by kind', () => {
+  // A list carries no features, so the page asks for the markets of the chosen kind.
+  function byKind(slugs: string[]) {
+    return ({ feature }: EventSearchParams) =>
+      feature?.some((slug) => slug.startsWith('christmas-market-'))
+        ? SEASON.filter((event) => slugs.includes(event.slug ?? ''))
+        : SEASON
+  }
+
+  function titles(wrapper: VueWrapper): string[] {
+    return wrapper.findAll('article').map((row) => row.text())
+  }
+
+  it('asks for the markets of the kind in the URL, with both features, and keeps them', async () => {
+    const wrapper = await mountWith(
+      byKind(['lucia', 'gendarmen']),
+      '/de/christmas-markets?kind=historic&free=true',
+    )
+
+    expect(searchEvents).toHaveBeenCalledWith(
+      expect.objectContaining({ feature: ['christmas-market', 'christmas-market-historic'] }),
+    )
+    expect(titles(wrapper)).toEqual(['Lucia'])
+    expect((wrapper.find('select').element as HTMLSelectElement).value).toBe('historic')
+  })
+
+  it('offers the six kinds, labelled, and writes the choice into the URL', async () => {
+    const wrapper = await mountWith(byKind(['gendarmen', 'rathaus']))
+
+    const select = wrapper.find('select')
+    expect(select.attributes('aria-label')).toBe('Art des Markts')
+    expect(select.findAll('option').map((option) => option.text())).toEqual([
+      'Alle Arten',
+      'Traditionell',
+      'Mittelalterlich & historisch',
+      'Kunsthandwerk & Design',
+      'Rummel',
+      'Kiez',
+      'Alternativ & queer',
+    ])
+
+    await select.setValue('funfair')
+    await flushPromises()
+    expect(router.currentRoute.value.query).toEqual({ kind: 'funfair' })
+    expect(titles(wrapper)).toEqual(['Gendarmenmarkt', 'Rotes Rathaus'])
+    expect(wrapper.text()).toContain('2 Weihnachtsmärkte')
+
+    await select.setValue('')
+    await flushPromises()
+    expect(router.currentRoute.value.query).toEqual({})
+    expect(titles(wrapper)).toHaveLength(4)
+  })
+
+  it('waits for the kind before it lists or maps any market', async () => {
+    let answer: (events: EventSummary[]) => void = () => {}
+    const wrapper = await mountWith(SEASON)
+    searchEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          answer = (events) =>
+            resolve({ content: events, totalElements: events.length } as EventPage)
+        }),
+    )
+    await wrapper.find('select').setValue('alternative')
+    await flushPromises()
+
+    expect(titles(wrapper)).toEqual([])
+    expect(wrapper.find('[data-testid="map"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Wird aufgelegt')
+
+    answer([SEASON[0]!])
+    await flushPromises()
+    expect(titles(wrapper)).toEqual(['Altstadt Spandau'])
+  })
+
+  it('reads a kind it does not know as no choice', async () => {
+    const wrapper = await mountWith(SEASON, '/de/christmas-markets?kind=sober')
+
+    expect(searchEvents).toHaveBeenCalledTimes(1)
+    expect(titles(wrapper)).toHaveLength(4)
+    expect((wrapper.find('select').element as HTMLSelectElement).value).toBe('')
+  })
+
+  it('says when the kind cannot load instead of listing every market', async () => {
+    const wrapper = await mountWith(byKind([]), '/de/christmas-markets?kind=kiez')
+    searchEvents.mockRejectedValue(new Error('down'))
+    await wrapper.find('select').setValue('craft')
+    await flushPromises()
+
+    expect(titles(wrapper)).toEqual([])
+    expect(wrapper.text()).toContain('Beim Laden der Weihnachtsmärkte ist etwas schiefgegangen.')
   })
 })

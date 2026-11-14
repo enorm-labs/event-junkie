@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { LOCALES } from '@/i18n/locales'
-import { inFeatureOrder, EVENT_FEATURES } from '@/lib/eventFeatures'
+import { EVENT_FEATURES, FILTER_FEATURES, inFeatureOrder, MARKET_KINDS } from '@/lib/eventFeatures'
 
 /** Every event feature has a label in every language; read from disk for the reason `messages.spec.ts` gives. */
 describe('EVENT_FEATURES', () => {
@@ -18,6 +18,24 @@ describe('EVENT_FEATURES', () => {
 
   it('lists each feature once', () => {
     expect(new Set(EVENT_FEATURES).size).toBe(EVENT_FEATURES.length)
+  })
+})
+
+describe('the kinds of Christmas market', () => {
+  it('are the six kinds, in display order', () => {
+    expect(MARKET_KINDS).toEqual([
+      'traditional',
+      'historic',
+      'craft',
+      'funfair',
+      'kiez',
+      'alternative',
+    ])
+  })
+
+  it('stay out of the events list feature filter, which keeps the market itself', () => {
+    expect(FILTER_FEATURES).toContain('christmas-market')
+    expect(FILTER_FEATURES.filter((slug) => slug.startsWith('christmas-market-'))).toEqual([])
   })
 })
 
