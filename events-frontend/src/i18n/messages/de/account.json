@@ -13,7 +13,20 @@
     "passkey": "Mit Passkey anmelden",
     "passkeyFailed": "Der Passkey hat dich nicht angemeldet. Nutze stattdessen den Link per E-Mail.",
     "passkeyUnknown": "Diesen Passkey gibt es hier nicht mehr. Nutze stattdessen den Link per E-Mail.",
-    "passkeyTooMany": "Von hier kamen zu viele Anmeldungen mit einem Passkey. Versuch es in einer Stunde noch einmal."
+    "passkeyTooMany": "Von hier kamen zu viele Anmeldungen mit einem Passkey. Versuch es in einer Stunde noch einmal.",
+    "heading": {
+      "follow": "Melde dich an, um Acts, Locations und Veranstaltern zu folgen",
+      "rsvp": "Melde dich an, um deinen eigenen Kalender zu führen",
+      "save": "Melde dich an, um diese Suche zu speichern"
+    },
+    "benefits": {
+      "title": "Was dir ein Konto bringt",
+      "follow": "Folge Acts, Locations und Veranstaltern und sieh alle ihre kommenden Termine auf einer Seite.",
+      "push": "Eine Push-Nachricht, sobald jemand, dem du folgst, einen neuen Termin ankündigt.",
+      "calendar": "Mein Kalender: die Events, für die du dich interessierst oder bei denen du dabei bist, als Liste oder Kalender.",
+      "save": "Gespeicherte Suchen: deine Filter, einen Tipp entfernt.",
+      "trust": "Kein Passwort: Du meldest dich per Link in der Mail oder mit einem Passkey an. Lade alles jederzeit herunter oder lösche es."
+    }
   },
   "checkMail": {
     "body": "Wenn die Adresse stimmt, ist ein Link unterwegs. Er gilt einmal und 15 Minuten lang.",

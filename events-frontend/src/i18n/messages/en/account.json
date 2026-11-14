@@ -13,7 +13,20 @@
     "passkey": "Sign in with a passkey",
     "passkeyFailed": "The passkey did not sign you in. Use the e-mail link instead.",
     "passkeyUnknown": "This passkey no longer exists here. Use the e-mail link instead.",
-    "passkeyTooMany": "Too many passkey sign-ins from here. Try again in an hour."
+    "passkeyTooMany": "Too many passkey sign-ins from here. Try again in an hour.",
+    "heading": {
+      "follow": "Sign in to follow artists, venues and promoters",
+      "rsvp": "Sign in to keep your own calendar",
+      "save": "Sign in to save this search"
+    },
+    "benefits": {
+      "title": "What an account gives you",
+      "follow": "Follow artists, venues and promoters, and see all their upcoming dates on one page.",
+      "push": "Get a push when someone you follow announces a new date.",
+      "calendar": "My calendar: the events you are interested in or going to, as a list or a calendar.",
+      "save": "Saved searches: your filters, one tap away.",
+      "trust": "No password: you sign in by mail link or passkey. Export or delete everything at any time."
+    }
   },
   "checkMail": {
     "body": "If the address is right, a link is on its way. It works once, for 15 minutes.",

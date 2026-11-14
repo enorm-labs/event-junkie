@@ -61,7 +61,7 @@ async function press(status: RsvpStatus) {
             :title="t('account.rsvp.signIn')"
             :to="{
               path: localePath('/sign-in'),
-              query: { next: localePath(`/events/${slug}`) },
+              query: { next: localePath(`/events/${slug}`), intent: 'rsvp' },
             }"
           >
             <component :is="option.icon" aria-hidden="true" />

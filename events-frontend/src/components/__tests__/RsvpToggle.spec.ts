@@ -57,8 +57,8 @@ describe('RsvpToggle', () => {
     const view = await mountToggle()
     const hrefs = view.findAll('a').map((a) => a.attributes('href'))
     expect(hrefs).toEqual([
-      '/en/sign-in?next=/en/events/tonight',
-      '/en/sign-in?next=/en/events/tonight',
+      '/en/sign-in?next=/en/events/tonight&intent=rsvp',
+      '/en/sign-in?next=/en/events/tonight&intent=rsvp',
     ])
   })
 

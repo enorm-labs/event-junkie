@@ -58,7 +58,7 @@ describe('SaveSearch', () => {
   it('signed out, leads to sign-in and back to the list', async () => {
     setSession(null)
     const view = await mountWith({ filters: { genre: ['techno'] }, range: {}, labels: ['Techno'] })
-    expect(view.find('a').attributes('href')).toBe('/en/sign-in?next=/en/events')
+    expect(view.find('a').attributes('href')).toBe('/en/sign-in?next=/en/events&intent=save')
   })
 
   it('saves one genre alone with a single press, named after it', async () => {

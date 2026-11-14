@@ -131,7 +131,9 @@ async function toggle() {
 <template>
   <div v-if="account !== undefined" class="flex flex-wrap items-center gap-x-3 gap-y-1">
     <Button v-if="!account" as-child variant="outline">
-      <RouterLink :to="{ path: localePath('/sign-in'), query: { next: route.path } }">
+      <RouterLink
+        :to="{ path: localePath('/sign-in'), query: { next: route.path, intent: 'follow' } }"
+      >
         <Plus data-icon="inline-start" />
         {{ t('account.follow.follow') }}
       </RouterLink>

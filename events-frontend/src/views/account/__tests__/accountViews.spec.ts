@@ -115,6 +115,65 @@ describe('SignInView', () => {
   })
 })
 
+describe('SignInView, why the visitor came', () => {
+  const benefits = (view: VueWrapper) =>
+    view.findAll('[data-testid="sign-in-benefits"] li').map((li) => li.text())
+
+  it.each([
+    ['follow', 'Sign in to follow artists, venues and promoters', 'Follow artists'],
+    ['rsvp', 'Sign in to keep your own calendar', 'My calendar'],
+    ['save', 'Sign in to save this search', 'Saved searches'],
+  ])(
+    'with intent=%s, says so in the heading and lists that benefit first',
+    async (intent, heading, first) => {
+      const view = await mountAt(SignInView, `/en/sign-in?next=/en/events&intent=${intent}`)
+      expect(view.find('h1').text()).toBe(heading)
+      expect(benefits(view)).toHaveLength(4)
+      expect(benefits(view)[0]).toContain(first)
+    },
+  )
+
+  it('without an intent, or with one it does not know, keeps the plain heading and order', async () => {
+    for (const path of [
+      '/en/sign-in',
+      '/en/sign-in?intent=admin',
+      '/en/sign-in?intent=follow&intent=save',
+    ]) {
+      const view = await mountAt(SignInView, path)
+      expect(view.find('h1').text()).toBe('Sign in')
+      expect(benefits(view)[0]).toContain('Follow artists')
+      expect(benefits(view)[3]).toContain('Saved searches')
+      view.unmount()
+    }
+  })
+
+  it('sends only `next` with the link, never the intent', async () => {
+    account.requestLink.mockResolvedValue()
+    const view = await mountAt(SignInView, '/en/sign-in?next=/en/events&intent=save')
+    await view.find('input').setValue('ada@example.com')
+    await view.find('form').trigger('submit')
+    await flushPromises()
+    expect(account.requestLink).toHaveBeenCalledWith('ada@example.com', 'en', '/en/events')
+  })
+
+  it('says it in German', async () => {
+    setI18nLocale('de')
+    const view = await mountAt(SignInView, '/de/sign-in?intent=follow')
+    expect(view.find('h1').text()).toBe(
+      'Melde dich an, um Acts, Locations und Veranstaltern zu folgen',
+    )
+    expect(view.find('h2').text()).toBe('Was dir ein Konto bringt')
+  })
+
+  it('lists no benefit while sign-up is paused, whatever the intent', async () => {
+    account.fetchSessionState.mockResolvedValue({ account: null, signUpOpen: false })
+    const view = await mountAt(SignInView, '/en/sign-in?intent=rsvp')
+    expect(view.find('h1').text()).toBe('Sign in to keep your own calendar')
+    expect(view.find('[data-testid="sign-in-benefits"]').exists()).toBe(false)
+    expect(view.text()).not.toContain('What an account gives you')
+  })
+})
+
 describe('SignInView with passkeys', () => {
   afterEach(() => vi.unstubAllGlobals())
 

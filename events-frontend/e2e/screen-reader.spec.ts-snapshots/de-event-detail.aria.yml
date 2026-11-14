@@ -21,9 +21,9 @@
     - paragraph: Preis nicht bekannt
     - group "Deine Pläne für dieses Event":
       - link "Interessiert":
-        - /url: /de/sign-in?next=/de/events/tonight-show
+        - /url: /de/sign-in?next=/de/events/tonight-show&intent=rsvp
       - link "Dabei":
-        - /url: /de/sign-in?next=/de/events/tonight-show
+        - /url: /de/sign-in?next=/de/events/tonight-show&intent=rsvp
     - button "Teilen"
     - status
     - heading "Veranstalter" [level=2]
