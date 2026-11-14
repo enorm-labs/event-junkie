@@ -21,7 +21,7 @@ import {
   type StyleSpecification,
 } from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { allowWorkerUrl } from '@/lib/trustedTypes'
+import { allowMapStrings } from '@/lib/trustedTypes'
 import { Protocol } from 'pmtiles'
 import {
   computed,
@@ -87,7 +87,7 @@ let nameMarker: Marker | null = null
 let protocolRegistered = false
 function registerOnce() {
   if (protocolRegistered) return
-  allowWorkerUrl(workerUrl)
+  allowMapStrings(workerUrl, ATTRIBUTION)
   setWorkerUrl(workerUrl)
   addProtocol('pmtiles', new Protocol().tile)
   protocolRegistered = true
