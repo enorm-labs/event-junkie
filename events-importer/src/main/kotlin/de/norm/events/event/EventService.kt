@@ -145,8 +145,9 @@ class EventService(
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
         festivalRepository.ensureFestivalOf(request)
         request.requireRelocationFitsStatus()
+        request.requireEndNotBeforeStart()
 
-        val saved = eventRepository.save(request.toEventEntity(request.slugAt(venue)))
+        val saved = eventRepository.save(request.toEventEntity(request.slugAt(venue)).withEndFrom(request))
         val eventId = saved.requiredId()
 
         val artistResponses = saveArtistAssociations(eventId, request.artists)
@@ -209,6 +210,7 @@ class EventService(
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
         festivalRepository.ensureFestivalOf(request)
         request.requireRelocationFitsStatus()
+        request.requireEndNotBeforeStart()
 
         // An edit that keeps date, venue and title keeps the slug, so a sitting keeps the importer's `-HHmm` suffix (#3966).
         val slug =
@@ -228,6 +230,7 @@ class EventService(
                 // The festival link follows the same rule (#3273).
                 .let { if (request.festivalId == null) it.copy(festivalId = existing.festivalId) else it }
                 .withRelocationFrom(request, storedStatus = existing.status)
+                .withEndFrom(request)
         val pinned = eventPinService.editedFields(id, existing, updated, request)
         val saved = eventRepository.save(updated.copy(pinnedFields = (existing.pinnedFields + pinned.map { it.key }).distinct()))
         // A hand edit moves the page as an import does, so the page says so either way (#2725).
@@ -484,6 +487,22 @@ private fun EventRequest.requireRelocationFitsStatus() {
     if (status !in MOVED_STATUSES && (relocatedTo?.isPresent == true || relocatedOn?.isPresent == true)) {
         throw ServerWebInputException("relocatedTo and relocatedOn need status RELOCATED or POSTPONED, not $status")
     }
+}
+
+/** An end before the start is a 400, not the database's `event_end_after_start` refusal as a 500. */
+private fun EventRequest.requireEndNotBeforeStart() {
+    val end = endDate?.orElse(null) ?: return
+    if (end.isBefore(eventDate)) throw ServerWebInputException("endDate $end is before eventDate $eventDate")
+}
+
+/**
+ * This row with the end [request] sets: left out keeps the row's end, an explicit null clears it and the end time with it.
+ * A new end day keeps the stored end time only on the same day.
+ */
+private fun EventEntity.withEndFrom(request: EventRequest): EventEntity {
+    val requested = request.endDate ?: return this
+    val end = requested.orElse(null)
+    return copy(endDate = end, endTime = endTime.takeIf { end != null && end == endDate })
 }
 
 /**

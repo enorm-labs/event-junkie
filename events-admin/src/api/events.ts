@@ -118,6 +118,8 @@ export interface EventRequest {
   /** Only on a moved status. Left out, the importer keeps the stored value; null clears it (#3994). */
   relocatedTo?: string | null
   relocatedOn?: string | null
+  /** The last day of a run (#4972). Left out, the importer keeps the stored end; null clears it. */
+  endDate?: string | null
 }
 
 /** The fields this app edits. Every other field goes back as it was read. */
@@ -284,6 +286,7 @@ export const EVENT_FEATURES = [
   { slug: 'day-party', label: 'Day party' },
   { slug: 'open-stage', label: 'Open stage' },
   { slug: 'for-children', label: 'For children' },
+  { slug: 'christmas-market', label: 'Christmas market' },
 ] as const
 
 /** A feature slug and the words of the event's text behind it. */
@@ -374,6 +377,8 @@ export interface NewEventForm {
   venueId: number | null
   title: string
   eventDate: string
+  /** The last day of a run, such as a Christmas market. Blank is a one-day event. */
+  endDate: string
   doorsTime: string
   startTime: string
   eventType: EventType
@@ -384,6 +389,7 @@ export interface NewEventForm {
   sourceUrl: string
   pricePresale: string
   priceBoxOffice: string
+  priceNote: string
   free: boolean
 }
 
@@ -392,6 +398,7 @@ export function emptyNewEventForm(): NewEventForm {
     venueId: null,
     title: '',
     eventDate: '',
+    endDate: '',
     doorsTime: '',
     startTime: '',
     eventType: 'CONCERT',
@@ -402,6 +409,7 @@ export function emptyNewEventForm(): NewEventForm {
     sourceUrl: '',
     pricePresale: '',
     priceBoxOffice: '',
+    priceNote: '',
     free: false,
   }
 }
@@ -430,6 +438,9 @@ export function toCreateRequest(form: NewEventForm, venueSlug: string): EventReq
   const title = form.title.trim()
   if (title === '') throw new Error('Enter a title.')
   if (form.eventDate === '') throw new Error('Enter a date.')
+  // ISO dates compare as text.
+  if (form.endDate !== '' && form.endDate < form.eventDate)
+    throw new Error('The last day is before the date.')
   return {
     venueId: form.venueId,
     title,
@@ -449,11 +460,12 @@ export function toCreateRequest(form: NewEventForm, venueSlug: string): EventReq
     pricePresale: parsePrice(form.pricePresale),
     priceBoxOffice: parsePrice(form.priceBoxOffice),
     priceCurrency: 'EUR',
-    priceNote: null,
+    priceNote: blankToNull(form.priceNote),
     soldOut: false,
     free: form.free,
     artists: [],
     promoterIds: [],
+    ...(form.endDate === '' ? {} : { endDate: form.endDate }),
   }
 }
 

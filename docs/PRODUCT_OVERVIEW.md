@@ -40,6 +40,8 @@ lists what that includes and what it excludes.
 **Find events**
 
 - See **Today** and **Upcoming** on the home page. A run longer than 7 days moves into an "Also running" block.
+- See Berlin's **Christmas markets** on their own page, as a list and on a map, with dates, hours and entry. From 10 November
+  to 6 January the home page links to it.
 - See up to 3 **festivals** on the home page while they run, and in the 14 days before they start. Each notice links to the festival's own programme.
 - Filter the events list, the calendar and the map with one filter bar. The filters are date range, time of night, event type,
   venue, venue type, district, genre, price range, free-only and exclude-sold-out.
@@ -131,6 +133,7 @@ the first column. It fails in two cases:
 | `/venues/:slug`                        | Venue page                                                                                              |
 | `/artists/:slug`                       | Artist page                                                                                             |
 | `/promoters`                           | Promoters list                                                                                          |
+| `/christmas-markets`                   | The Christmas markets of the season, as a list and on a map (EVENT_SCOPE.md §3.7)                       |
 | `/promoters/:slug`                     | Promoter page                                                                                           |
 | `/search`                              | All results for a header search, not indexed                                                            |
 | `/about`                               | About page                                                                                              |
