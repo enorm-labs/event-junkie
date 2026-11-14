@@ -122,7 +122,8 @@ private fun ScrapedEvent.withLinkAndPriceGapsFromStored(stored: EventEntity): Sc
 /**
  * This exhibition run with the opening of [stored], when that opening is earlier and not after [today]. A listing drops a run's
  * days once they are over, so the first listed day moves later on every import (#2940). A later opening before the run opens
- * is the venue's change and stands, and a stored run that closed before this one opens is an earlier showing.
+ * is the venue's change and stands, and a stored run that closed before this one opens is an earlier showing. On the last listed
+ * day the fold is a single day, and it becomes the run from the stored opening to that day (#4982). A stored single day is no run.
  */
 fun ScrapedEvent.withStoredOpening(
     stored: EventEntity,
@@ -130,6 +131,11 @@ fun ScrapedEvent.withStoredOpening(
 ): ScrapedEvent {
     val exhibition = EventType.EXHIBITION.name
     val storedEnd = stored.endDate
-    val sameRun = eventType == exhibition && stored.eventType == exhibition && endDate != null && storedEnd != null && storedEnd >= eventDate
-    return if (sameRun && stored.eventDate < eventDate && stored.eventDate <= today) copy(eventDate = stored.eventDate) else this
+    val sameRun = eventType == exhibition && stored.eventType == exhibition && storedEnd != null && storedEnd >= eventDate
+    val keepsOpening = sameRun && stored.eventDate < eventDate && stored.eventDate <= today
+    return when {
+        !keepsOpening -> this
+        endDate == null -> copy(eventDate = stored.eventDate, endDate = eventDate, endTime = null)
+        else -> copy(eventDate = stored.eventDate)
+    }
 }

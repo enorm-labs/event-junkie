@@ -2,6 +2,7 @@ package de.norm.events.importing
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.collapseExhibitionRuns
@@ -14,6 +15,8 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -39,7 +42,7 @@ class EventUpsertServiceStoredOpeningTest {
 
     private fun storedRun(
         eventDate: LocalDate = opening,
-        endDate: LocalDate = closing,
+        endDate: LocalDate? = closing,
         eventType: String = EventType.EXHIBITION.name
     ) = EventEntity(
         id = 7L,
@@ -56,7 +59,8 @@ class EventUpsertServiceStoredOpeningTest {
     /** The run as the importer folds it from the days the overview still lists. */
     private fun listedRun(
         firstListed: LocalDate = today,
-        lastListed: LocalDate = closing
+        lastListed: LocalDate = closing,
+        status: EventStatus = EventStatus.SCHEDULED
     ): ScrapedEvent =
         generateSequence(firstListed) { it.plusDays(1) }
             .takeWhile { it <= lastListed }
@@ -65,6 +69,7 @@ class EventUpsertServiceStoredOpeningTest {
                     title = title,
                     eventType = EventType.EXHIBITION.name,
                     eventDate = day,
+                    status = status.name,
                     sourceUrl = "https://www.berghain.berlin/de/event/${83120 + day.dayOfMonth}/",
                     sourceId = "berghain:${83120 + day.dayOfMonth}"
                 )
@@ -153,5 +158,76 @@ class EventUpsertServiceStoredOpeningTest {
             val written = upsertAndCapture(storedRun(eventType = EventType.FESTIVAL.name), festival)
 
             written.eventDate shouldBe today
+        }
+
+    @Test
+    fun `a run whose last day is all the listing still carries keeps its stored opening`() =
+        runTest {
+            val written = upsertAndCapture(storedRun(endDate = today), listedRun(firstListed = today, lastListed = today))
+
+            written.id shouldBe 7L
+            written.eventDate shouldBe opening
+            written.endDate shouldBe today
+            written.endTime shouldBe null
+            written.slug shouldBe "$opening-berghain-panorama-bar-a-shroud-woven-of-solar-threads"
+        }
+
+    @Test
+    fun `a run the venue closed early on its one listed day ends on that day`() =
+        runTest {
+            val written = upsertAndCapture(storedRun(), listedRun(firstListed = today, lastListed = today))
+
+            written.eventDate shouldBe opening
+            written.endDate shouldBe today
+        }
+
+    @ParameterizedTest
+    @EnumSource(EventStatus::class)
+    fun `the last listed day keeps the stored opening whatever its status`(status: EventStatus) =
+        runTest {
+            val written = upsertAndCapture(storedRun(endDate = today), listedRun(firstListed = today, lastListed = today, status = status))
+
+            written.eventDate shouldBe opening
+            written.endDate shouldBe today
+        }
+
+    @Test
+    fun `a stored one-day exhibition does not lend a later single day its date`() =
+        runTest {
+            val written = upsertAndCapture(storedRun(eventDate = today.minusDays(2), endDate = null), listedRun(firstListed = today, lastListed = today))
+
+            written.eventDate shouldBe today
+            written.endDate shouldBe null
+        }
+
+    @Test
+    fun `a single day after the stored run closes takes the listed date`() =
+        runTest {
+            val later = today.plusDays(3)
+            val written = upsertAndCapture(storedRun(endDate = today), listedRun(firstListed = later, lastListed = later))
+
+            written.eventDate shouldBe later
+            written.endDate shouldBe null
+        }
+
+    @Test
+    fun `a run that has not opened yet and shrinks to one day takes that day`() =
+        runTest {
+            val day = today.plusDays(3)
+            val written =
+                upsertAndCapture(storedRun(eventDate = today.plusDays(1), endDate = today.plusDays(5)), listedRun(firstListed = day, lastListed = day))
+
+            written.eventDate shouldBe day
+            written.endDate shouldBe null
+        }
+
+    @Test
+    fun `a single day that is not an exhibition takes the listed date`() =
+        runTest {
+            val festivalDay = listedRun(firstListed = today, lastListed = today).copy(eventType = EventType.FESTIVAL.name)
+            val written = upsertAndCapture(storedRun(eventType = EventType.FESTIVAL.name), festivalDay)
+
+            written.eventDate shouldBe today
+            written.endDate shouldBe null
         }
 }
