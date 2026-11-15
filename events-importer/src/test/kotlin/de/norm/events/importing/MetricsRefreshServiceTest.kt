@@ -307,9 +307,7 @@ class MetricsRefreshServiceTest {
         }
 
     /**
-     * Monitoring must not be able to take down the scheduler it shares with the imports. The visible
-     * result of this failing is a gauge that stops moving, which is itself detectable — and strictly
-     * better than a dead importer.
+     * The visible result of this failing is a gauge that stops moving, which is itself detectable.
      */
     @Test
     fun `a database failure leaves the previous values in place instead of propagating`() =

@@ -57,10 +57,9 @@ class MetricsRefreshService(
      * queues the next one immediately, and a slow database turns into a queue of queries against the
      * database that is already slow.
      *
-     * **Failures are caught, not propagated.** A monitoring refresh able to kill the scheduler would
-     * make observability a source of outages — and the scheduler it shares is the one that runs the
-     * imports. The visible result of this failing is a gauge that stops moving, which is itself
-     * detectable (`changes()` over a window) and strictly better than a dead importer.
+     * **Failures are caught, not propagated.** Spring runs the next refresh either way, but its own
+     * `WARN` names no gauge. The visible result of this failing is a gauge that stops moving, which is
+     * itself detectable (`changes()` over a window), and this line says why it stopped.
      */
     @Scheduled(fixedDelayString = $$"${app.metrics.refresh-interval-ms:60000}")
     @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: monitoring must not be able to fail the application

@@ -1,6 +1,6 @@
 package de.norm.events.importing
 
-import de.norm.events.common.rethrowIfCancelled
+import de.norm.events.common.runScheduled
 import de.norm.events.genretag.UnlinkedGenreTagStore
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -30,16 +30,7 @@ class OrphanGenreTagSweep(
 
     /** 03:50 UTC, after the venue programme sweep. */
     @Scheduled(cron = $$"${app.genre-tags.orphan-sweep-cron:0 50 3 * * *}")
-    // Intentional: an uncaught exception cancels the task and shares the import scheduler
-    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
-    suspend fun sweep() {
-        try {
-            runOnce()
-        } catch (e: Exception) {
-            rethrowIfCancelled()
-            logger.error(e) { "Orphan genre tag sweep failed" }
-        }
-    }
+    suspend fun sweep() = runScheduled("Orphan genre tag sweep", logger) { runOnce() }
 
     /** One pass: the slugs deleted, or `null` when an import was running and nothing ran. */
     suspend fun runOnce(): List<String>? =

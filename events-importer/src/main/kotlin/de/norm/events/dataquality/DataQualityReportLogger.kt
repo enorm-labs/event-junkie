@@ -86,9 +86,8 @@ class DataQualityReportLogger(
      * measures a settled corpus rather than one mid-write.
      *
      * **Failures are caught, not propagated**, for the same reason `MetricsRefreshService` catches
-     * its own: this shares the scheduler that runs the imports, and a measurement job able to kill
-     * it would make observability a source of outages. A missing snapshot row is itself detectable
-     * — a gap in the series — and strictly better than a dead importer.
+     * its own: Spring runs the next snapshot either way, but its own `WARN` names no step. A missing
+     * snapshot row is itself detectable — a gap in the series.
      */
     @Scheduled(cron = $$"${app.data-quality.snapshot-cron:0 0 3 * * *}")
     @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: measurement must not be able to fail the application
@@ -194,7 +193,7 @@ class DataQualityReportLogger(
      * The Pillar 2 gate (#2604): today's shares against each source's own 7-day median.
      *
      * Runs after the write and the summary line, so a failure here still leaves today's rows in the
-     * table, and inside the same catch, so it cannot stop the scheduler either. One WARN per regressed source and metric:
+     * table, and inside the same catch, so its failure is logged the same way. One WARN per regressed source and metric:
      * the alert says that something regressed, and this line says which source, which metric and by
      * how much. A share that got worse on a declared limitation gets an INFO line and no alert (#3195), and so
      * does one that got worse by fewer than [DataQualityRegressionCheck.MIN_EXCESS_EVENTS] events (#4794).

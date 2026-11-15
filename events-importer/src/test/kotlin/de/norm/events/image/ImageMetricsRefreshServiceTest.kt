@@ -58,9 +58,8 @@ class ImageMetricsRefreshServiceTest {
         }
 
     /**
-     * **A monitoring refresh must not be able to kill the scheduler.** It shares the one that runs
-     * the fetch and the sweep, so an uncaught exception here would stop caching images — a far worse
-     * failure than a gauge that stops moving, which is itself detectable.
+     * **A failing query freezes the gauges.** The last values stay, and a gauge that stops moving is
+     * itself detectable.
      */
     @Test
     fun `a failing query freezes the gauges rather than propagating`() =

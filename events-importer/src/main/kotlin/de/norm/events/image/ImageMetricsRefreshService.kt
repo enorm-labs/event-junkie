@@ -34,9 +34,9 @@ class ImageMetricsRefreshService(
      * `fixedDelayString` rather than `fixedRate`, so a slow database does not queue queries against
      * the database that is already slow.
      *
-     * **Failures are caught, not propagated**, exactly as in the scraper's refresher: an uncaught
-     * exception cancels a `@Scheduled` task for the life of the process, and this scheduler is the
-     * one that runs the image passes. A frozen gauge is detectable; a dead scheduler stops fetching.
+     * **Failures are caught, not propagated**, exactly as in the scraper's refresher: Spring runs the
+     * next refresh either way, but its own `WARN` names no gauge. A frozen gauge is detectable, and
+     * this line says why it froze.
      */
     @Scheduled(fixedDelayString = $$"${app.metrics.refresh-interval-ms:60000}")
     @Suppress("TooGenericExceptionCaught") // Intentional: monitoring must not be able to fail the application
