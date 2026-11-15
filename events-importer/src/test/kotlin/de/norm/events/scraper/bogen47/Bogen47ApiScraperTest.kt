@@ -272,6 +272,28 @@ class Bogen47ApiScraperTest {
     }
 
     @Test
+    fun `scrapePage bills the acts after a party title's star and both sides of its versus night (#5115)`() {
+        // Fitzroy posts 5134 and 5122 as the API served them on 2026-11-15; neither description names its DJs in a form read here.
+        val fitzroyClock = Clock.fixed(LocalDate.of(2026, 11, 15).atStartOfDay(BERLIN).toInstant(), BERLIN)
+        val events =
+            Bogen47ApiScraper(EventSource.FITZROY, "https://fitzroy-berlin.de/events/", emptyMap(), fitzroyClock)
+                .scrapePage(fixtureText("bogen47/fitzroy-title-bills.json"))
+                .entries
+                .map { it.event }
+
+        fun billOf(id: Long) = events.single { it.sourceId == "fitzroy:$id" }.artists
+
+        billOf(5134).map { it.name to it.role } shouldContainExactly listOf("Mama Snake", "Jan Loup", "Cryptofauna").map { it to ArtistRole.DJ }
+        billOf(5122).map { it.name } shouldContainExactly listOf("HONKY DONK", "Mordorkore")
+        (billOf(5134) + billOf(5122)).all { it.titleDerived } shouldBe true
+    }
+
+    @Test
+    fun `scrapePage bills nobody for a party title with one name after its star`() {
+        eventDescribed("Night Shift ★ Winter Edition", "<p>See you there.</p>", eventType = "Party").artists shouldHaveSize 0
+    }
+
+    @Test
     fun `scrapePage bills a party's name-and-handle lines as DJs, without the handles`() {
         // Event 10154 (#4394), handles masked: the credit line closes the run and bills nobody.
         val event =
