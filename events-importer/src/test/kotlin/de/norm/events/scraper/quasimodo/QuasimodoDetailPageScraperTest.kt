@@ -90,12 +90,11 @@ class QuasimodoDetailPageScraperTest {
     }
 
     @Test
-    fun `prefers party over concerts when the venue tagged both`() {
-        // Disco Inferno carries "event-categories-concerts event-categories-party"; the party
-        // reading is what keeps its event name out of the artist list.
+    fun `prefers concerts over party when the venue tagged both, and bills the band (#5121)`() {
+        // Disco Inferno carries "event-categories-concerts event-categories-party"; its text calls it a nine-piece band.
         val discoInferno = scrape("disco-inferno", "disco-inferno-65-7289")
-        discoInferno.eventType shouldBe EventType.PARTY.name
-        discoInferno.artists.shouldBeEmpty()
+        discoInferno.eventType shouldBe EventType.CONCERT.name
+        discoInferno.artists.map { it.name } shouldBe listOf("Disco Inferno")
     }
 
     @Test

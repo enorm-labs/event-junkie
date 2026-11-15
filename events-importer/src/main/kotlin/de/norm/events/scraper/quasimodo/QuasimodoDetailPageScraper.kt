@@ -29,9 +29,9 @@ import org.jsoup.nodes.Document
  * `Tageskasse` rows — a real presale *and* box-office price.
  *
  * Also the only page carrying the **category**, as an `event-categories-<slug>` class on its
- * `<article>`. The venue marks DJ nights `party` and leaves most concerts untagged, and a night
- * can carry both (`Disco Inferno` is `concerts party`) — so `party` wins, and an untagged event
- * falls back to title inference rather than `OTHER`.
+ * `<article>`. The venue marks DJ nights `party` and leaves most concerts untagged, and a band night
+ * can carry both (`Disco Inferno`, a nine-piece band, is `concerts party`) — so `concerts` wins, and
+ * an untagged event falls back to title inference rather than `OTHER`.
  *
  * A cancelled show keeps its card and its page; the page alone adds `.alert-danger` with
  * `Achtung: Abgesagt!`. Only that alert sets the status. The description is not read, because a
@@ -91,15 +91,15 @@ class QuasimodoDetailPageScraper {
 
     /**
      * Maps the `event-categories-<slug>` class on the `<article>` to an [EventType], or `null`
-     * when untagged. `party` is checked first because a DJ night can also be filed under
-     * `concerts`, and the party reading keeps its event name out of the artist list.
+     * when untagged. `concerts` is checked first: the venue files a band's dance night under
+     * `party` too, and only the concert reading bills the band (#5121).
      */
     private fun parseCategory(document: Document): String? {
         val classes = document.selectFirst("article.type-event")?.classNames().orEmpty()
         return when {
+            classes.contains("event-categories-concerts") -> EventType.CONCERT.name
             classes.contains("event-categories-party") -> EventType.PARTY.name
             classes.contains("event-categories-wuehlmaeuse") -> EventType.SHOW.name
-            classes.contains("event-categories-concerts") -> EventType.CONCERT.name
             else -> null
         }
     }

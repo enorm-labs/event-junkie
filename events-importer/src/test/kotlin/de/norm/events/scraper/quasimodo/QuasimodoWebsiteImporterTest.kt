@@ -135,10 +135,20 @@ class QuasimodoWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            // The listing alone would guess CONCERT for "Disco Inferno" and mint it as an artist.
+            // The listing alone would guess CONCERT for "We Love 80s" and mint it as an artist.
+            val weLove80s = result.events.first { it.sourceId == "quasimodo:we-love-80s-37-7300" }
+            weLove80s.eventType shouldBe EventType.PARTY.name
+            weLove80s.artists.shouldBeEmpty()
+        }
+
+    @Test
+    fun `keeps a band night tagged both concerts and party a concert (#5121)`() =
+        runTest {
+            val result = importer.importEvents(sourceUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
             val discoInferno = result.events.first { it.sourceId == "quasimodo:disco-inferno-65-7289" }
-            discoInferno.eventType shouldBe EventType.PARTY.name
-            discoInferno.artists.shouldBeEmpty()
+            discoInferno.eventType shouldBe EventType.CONCERT.name
+            discoInferno.artists.map { it.name } shouldBe listOf("Disco Inferno")
             discoInferno.eventDate shouldBe LocalDate.of(2026, 10, 2)
         }
 
