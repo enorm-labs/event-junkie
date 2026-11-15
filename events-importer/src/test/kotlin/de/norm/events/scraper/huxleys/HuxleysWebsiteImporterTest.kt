@@ -160,6 +160,33 @@ class HuxleysWebsiteImporterTest {
         }
 
     @Test
+    fun `keeps a podcast tour a show and bills its host through the merge`() =
+        runTest {
+            // Event 14046: the listing types the bare title a concert; only the detail page's `podcast` tag says otherwise.
+            val zeiglerUrl = "https://huxleysneuewelt.de/event/2027-12-07-arnd-zeigler"
+            val listing =
+                """
+                <html><body><ul><li class="event-item">
+                <a href="$zeiglerUrl">
+                <div class="date">07<span>Dezember</span></div>
+                <div class="details"><div class="time">Beginn: 20:00</div><span class="eventname">Arnd Zeigler</span></div>
+                </a></li></ul></body></html>
+                """.trimIndent()
+            val detail =
+                """
+                <html><head><meta property="og:title" content="Arnd Zeigler - Huxleys Neue Welt"></head>
+                <body><article class="event event-tags-podcast"></article></body></html>
+                """.trimIndent()
+            coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
+                FetchResult.Success(Jsoup.parse(listing, overviewUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(zeiglerUrl) } returns Jsoup.parse(detail, zeiglerUrl)
+
+            val zeigler = event(importer.importEvents(overviewUrl), "2027-12-07-arnd-zeigler")
+            zeigler.eventType shouldBe "SHOW"
+            zeigler.artists.map { it.name } shouldContainExactly listOf("Arnd Zeigler")
+        }
+
+    @Test
     fun `keeps the relocation the detail page does not know about`() =
         runTest {
             // The note lives only on the listing; the detail page would report SCHEDULED.

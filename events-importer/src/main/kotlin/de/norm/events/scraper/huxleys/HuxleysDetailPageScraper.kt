@@ -39,7 +39,8 @@ import java.time.LocalDate
  *
  * Two things live only here. The **taxonomies** are slugs on the `article` element —
  * `event-tags-*` are real music genres (`electronic`, `indietronica`, unlike other venues' mixed
- * vocabularies), except `party`, which marks a club night and types it, and `promoters-*` the booking agency — read from the
+ * vocabularies), except `party`, which marks a club night and types it, `podcast`, which marks a stage show and types it, and
+ * `promoters-*` the booking agency — read from the
  * class list at no extra request. The promoter comes from the hero's visible `<promoter> presents` credit first, since
  * the slug loses what the editor left out (`promoters-schoneberg` for "Konzertbüro Schoneberg",
  * #1139). And the page has **no heading of its own**: the act's name is only in the document
@@ -78,7 +79,15 @@ class HuxleysDetailPageScraper {
         val details = article.textAt(".event-info").orEmpty()
         val subtitle = article.textAt(".tourtitel")
         val genres = parseTaxonomy(article, GENRE_CLASS_PREFIX)
-        val eventType = inferConcertVenueType(title).let { if (it == EventType.CONCERT.name && PARTY_TAG in genres) EventType.PARTY.name else it }
+        val eventType =
+            inferConcertVenueType(title).let {
+                when {
+                    it != EventType.CONCERT.name -> it
+                    PARTY_TAG in genres -> EventType.PARTY.name
+                    HUXLEYS_PODCAST_TAG in genres -> EventType.SHOW.name
+                    else -> it
+                }
+            }
         val (presale, boxOffice, priceNote) = parsePrices(article)
 
         return ScrapedEvent(
@@ -100,7 +109,7 @@ class HuxleysDetailPageScraper {
             genre = genres.joinToString(", ").takeIf { it.isNotBlank() },
             soldOut = article.textAt(".canceledsoldout")?.contains(SOLD_OUT_TEXT, ignoreCase = true) == true || cleanedTitle.soldOut,
             status = parseHuxleysStatus(article),
-            artists = buildArtistsForEventType(title, subtitle, eventType),
+            artists = buildArtistsForEventType(title, subtitle, huxleysBillingType(eventType, genres)),
             promoters = parsePromoters(document, article)
         )
     }
@@ -205,3 +214,15 @@ class HuxleysDetailPageScraper {
         val FEE_NOTE = Regex("""zzgl|geb(?:ü|ue)hr""", RegexOption.IGNORE_CASE)
     }
 }
+
+/** The genre tag of a live podcast or talk tour, such as event 14046: it types the night a show. */
+internal const val HUXLEYS_PODCAST_TAG = "Podcast"
+
+/**
+ * The event type the line-up is built for. A podcast tour's title is its host, so it keeps the concert billing; the show
+ * rules bill no bare name.
+ */
+internal fun huxleysBillingType(
+    eventType: String?,
+    genres: List<String>
+): String? = if (HUXLEYS_PODCAST_TAG in genres) EventType.CONCERT.name else eventType

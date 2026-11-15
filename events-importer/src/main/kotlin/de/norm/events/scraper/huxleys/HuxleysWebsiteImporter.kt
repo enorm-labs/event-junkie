@@ -73,7 +73,7 @@ class HuxleysWebsiteImporter(
             statusNote = fallback.statusNote ?: primary.statusNote,
             // Built from the fields this merge stores — the listing's title and the joined subtitle — so
             // the lineup can never describe a title or type the row does not carry.
-            artists = buildArtistsForEventType(fallback.title, subtitle, primary.eventType)
+            artists = buildArtistsForEventType(fallback.title, subtitle, huxleysBillingType(primary.eventType, primary.genre?.split(", ").orEmpty()))
         )
     }
 
