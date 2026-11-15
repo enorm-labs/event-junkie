@@ -107,6 +107,24 @@ class BallhausWeddingScrapersTest {
     }
 
     @Test
+    fun `takes the promoter's Reservix shop when an entry has no Tickets link (#5109)`() {
+        val page = fixtureDocument("ballhauswedding/ballhauswedding-veranstaltungen-2026-11-13.html", baseUrl)
+        val november = BallhausWeddingOverviewPageScraper().scrape(page, baseUrl, LocalDate.of(2026, 11, 12))
+        val reservix = "https://kiezpoeten-ticketshop.reservix.de/p/reservix/group/452743"
+
+        november.first { it.title == "Wedding Slam Royale Piano Poetry Slam" }.let {
+            it.eventDate shouldBe LocalDate.of(2027, 1, 24)
+            it.ticketUrl shouldBe reservix
+            it.sourceUrl shouldBe baseUrl
+        }
+        november.first { it.title == "Wedding Slam Royale - Jahresfinale" }.ticketUrl shouldBe
+            "https://www.ballhauswedding.de/details-registrierung/wedding-slam-royale-jahresfinale"
+        november.count { it.ticketUrl == reservix } shouldBe 5
+        november.filter { it.ticketUrl == reservix }.forEach { it.title shouldStartWith "Wedding Slam Royale" }
+        november.first { it.title == "Tango - die Ballhaus Milonga" }.ticketUrl.shouldBeNull()
+    }
+
+    @Test
     fun `a bare note cancels the entry before it, as the page of 2026-11-13 prints it`() {
         val page = fixtureDocument("ballhauswedding/ballhauswedding-veranstaltungen-2026-11-13.html", baseUrl)
         val november = BallhausWeddingOverviewPageScraper().scrape(page, baseUrl, LocalDate.of(2026, 11, 12))

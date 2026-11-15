@@ -16,6 +16,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
+import java.net.URI
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -23,7 +24,8 @@ import java.time.LocalTime
 /**
  * Pure parser for the Ballhaus Wedding programme, a Wix page with one rich-text block per month. Each entry is a run
  * of paragraphs: a date line (`Do 1.10. 19:30 Uhr Vilma Remezaite singt Barbra Streisand - Konzert`), then free
- * text, a price line (`23 € Vorverkauf - 27 € AK`) and a `Tickets` link.
+ * text, a price line (`23 € Vorverkauf - 27 € AK`) and a `Tickets` link. A promoter can link its own shop under
+ * another text instead (`https://kiezpoeten.com/` to Reservix); that link counts only when no `Tickets` link exists.
  *
  * A cancellation note is its own paragraph, in two layouts. `leider abgesagt:` with a colon cancels the entry after it.
  * A bare `leider abgesagt` cancels the entry before it, or the next one when no entry precedes it in the month block.
@@ -48,7 +50,12 @@ class BallhausWeddingOverviewPageScraper {
         val entries = mutableListOf<Entry>()
         var headingYear: Int? = null
         for (block in document.select("div[data-testid=richTextElement]")) {
-            val paragraphs = block.select("p, h1, h2, h3, h4, h5, h6").map { Paragraph(clean(it.text()), ticketLinks(it)) }.filter { it.text.isNotEmpty() }
+            val paragraphs =
+                block
+                    .select(
+                        "p, h1, h2, h3, h4, h5, h6"
+                    ).map { Paragraph(clean(it.text()), ticketLinks(it), shopLinks(it)) }
+                    .filter { it.text.isNotEmpty() }
             if (paragraphs.firstOrNull()?.text?.let { it in MONTHS || YEAR_HEADING.matches(it) } != true) continue
             headingYear = paragraphs.firstNotNullOfOrNull { it.text.takeIf(YEAR_HEADING::matches)?.toInt() } ?: headingYear
             entries += readBlock(paragraphs, blockYear(paragraphs.mapNotNull { DATE_LINE.find(it.text) }, headingYear, today))
@@ -81,6 +88,7 @@ class BallhausWeddingOverviewPageScraper {
                     val entry = entryOf(dateLine, paragraphs.getOrNull(index + 1)?.text, year, cancelNext)
                     if (entry == null) logger.warn { "Ballhaus Wedding date line '${paragraph.text}' has no valid date, skipping" }
                     entry?.ticketLinks?.addAll(paragraph.ticketLinks)
+                    entry?.shopLinks?.addAll(paragraph.shopLinks)
                     entries.addAll(listOfNotNull(entry))
                     runOn = entry?.runsOn == true
                     cancelNext = false
@@ -89,6 +97,7 @@ class BallhausWeddingOverviewPageScraper {
                 entries.isNotEmpty() -> {
                     entries.last().lines += paragraph.text
                     entries.last().ticketLinks += paragraph.ticketLinks
+                    entries.last().shopLinks += paragraph.shopLinks
                 }
             }
         }
@@ -96,6 +105,8 @@ class BallhausWeddingOverviewPageScraper {
     }
 
     private fun ticketLinks(paragraph: Element): List<String> = paragraph.select("a[href]").filter { it.text().trim() == "Tickets" }.map { it.attr("href") }
+
+    private fun shopLinks(paragraph: Element): List<String> = paragraph.select("a[href]").map { it.attr("href") }.filter(::isTicketShop)
 
     private fun entryOf(
         match: MatchResult,
@@ -125,7 +136,7 @@ class BallhausWeddingOverviewPageScraper {
         val concertName = CONCERT_SUFFIX.find(entry.title)?.let { entry.title.substring(0, it.range.first).trim() }?.ifEmpty { null }
         val title = concertName ?: entry.title
         val description = text.filterNot(::isNoise).map { it.replace(MORE_INFO, "").trim() }.filter { it.isNotEmpty() }
-        val ticketUrl = entry.ticketLinks.firstOrNull { !it.startsWith("mailto:") }?.let { resolveUrl(baseUrl, it) }
+        val ticketUrl = (entry.ticketLinks.firstOrNull { !it.startsWith("mailto:") } ?: entry.shopLinks.firstOrNull())?.let { resolveUrl(baseUrl, it) }
         val prices = text.filter { "€" in it }.joinToString(" ")
         val billed = concertName?.takeIf { BARE_NAME.matches(it) && description.isEmpty() }
         return ScrapedEvent(
@@ -150,7 +161,8 @@ class BallhausWeddingOverviewPageScraper {
 
     private class Paragraph(
         val text: String,
-        val ticketLinks: List<String>
+        val ticketLinks: List<String>,
+        val shopLinks: List<String>
     )
 
     private class Entry(
@@ -163,6 +175,7 @@ class BallhausWeddingOverviewPageScraper {
     ) {
         val lines = mutableListOf<String>()
         val ticketLinks = mutableListOf<String>()
+        val shopLinks = mutableListOf<String>()
     }
 }
 
@@ -204,6 +217,11 @@ private fun blockYear(
     val best = votes.values.max()
     val winners = votes.filterValues { it == best }.keys
     return winners.singleOrNull() ?: headingYear?.takeIf { it in winners } ?: today.year
+}
+
+private fun isTicketShop(url: String): Boolean {
+    val host = runCatching { URI(url).host }.getOrNull() ?: return false
+    return TICKET_SHOPS.any { host == it || host.endsWith(".$it") }
 }
 
 private fun safeDate(
@@ -274,6 +292,7 @@ private val CONCERT_SUFFIX = Regex("""\s*-\s*Konzert$""")
 
 /** A name without a tagline: no further dash, colon or `&`, and no `singt`, `mit` or `und` joining a second name. */
 private val BARE_NAME = Regex("""(?!.*\b(?:singt|mit|und)\b)[^-–—:&]+""")
+private val TICKET_SHOPS = setOf("reservix.de")
 private val EVENT_PAGE = Regex("""ballhauswedding\.de/details-registrierung/""")
 
 private val SCREENING = Regex("""stummfilm|kino""")
