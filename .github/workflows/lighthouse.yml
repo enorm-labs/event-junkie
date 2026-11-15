@@ -55,7 +55,7 @@ concurrency:
 
 jobs:
   audit:
-    name: Audit the six baseline cells
+    name: Audit the eight baseline cells
     if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -99,7 +99,7 @@ jobs:
             printf '\n'
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      # Six cells, three runs each, medians reported. The gate is accessibility, best-practices, SEO
+      # Eight cells, three runs each, medians reported. The gate is accessibility, best-practices, SEO
       # and CLS; performance, LCP and TBT are reported and not gated, because a shared runner moves
       # them by tens of points and a threshold loose enough to survive that catches nothing
       # (`perf/README.md` § Why there is no CI workflow). CLS is layout, not timing.

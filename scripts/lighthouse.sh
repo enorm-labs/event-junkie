@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# lighthouse.sh — run Lighthouse over the six baseline cells of a deployed origin, three times each,
+# lighthouse.sh — run Lighthouse over the eight baseline cells of a deployed origin, three times each,
 # and gate on the audits that are deterministic.
 #
 # Usage:
@@ -17,11 +17,11 @@
 # the pin in `perf/lighthouse/package.json`, so `npm ci` there first. `npx --yes lighthouse@13` would
 # resolve a different build on every run and is not a pin (#1698).
 #
-# THE SIX CELLS: `/de/events`, one event detail page and `/de/christmas-markets`, mobile and desktop.
-# The first four are `perf/README.md` § Lighthouse baseline; the markets page came later (#4975). Out of
-# season it shows only its empty state, which is still a page to measure. The detail slug is resolved
-# from `/api/events` at run time, never written down — an event passes and a literal slug becomes a
-# 404 that reads as a regression.
+# THE EIGHT CELLS: `/de/events`, one event detail page, `/de/christmas-markets` and `/de/for-children`,
+# mobile and desktop. The first four are `perf/README.md` § Lighthouse baseline; the markets page (#4975)
+# and the children's page (#5082) came later. Out of season the markets page shows only its empty state,
+# which is still a page to measure. The detail slug is resolved from `/api/events` at run time, never
+# written down — an event passes and a literal slug becomes a 404 that reads as a regression.
 #
 # WHAT IS GATED AND WHAT IS ONLY REPORTED. Performance scores from a shared runner move by tens of
 # points for reasons that belong to the runner, so a threshold loose enough to survive them catches
@@ -98,9 +98,9 @@ slug="$(jq -r 'first(.content[] | select(.imageUrl != null) | .slug) // empty' <
     exit 1
 }
 
-# --- 2. Eighteen runs -----------------------------------------------------------------------------
+# --- 2. Twenty-four runs --------------------------------------------------------------------------
 # `list` and `detail` are the row labels in `perf/README.md`; keep them in step with that table.
-# `markets` has no hand-taken row (#4975): the workflow's step summary carries its numbers.
+# `markets` and `children` have no hand-taken row (#4975, #5082): the workflow's step summary carries their numbers.
 CELLS=(
     "list|mobile|/de/events"
     "list|desktop|/de/events"
@@ -108,6 +108,8 @@ CELLS=(
     "detail|desktop|/de/events/$slug"
     "markets|mobile|/de/christmas-markets"
     "markets|desktop|/de/christmas-markets"
+    "children|mobile|/de/for-children"
+    "children|desktop|/de/for-children"
 )
 
 # A run is retried, and the retry is visible. Lighthouse loses the navigation trace on a fast page
