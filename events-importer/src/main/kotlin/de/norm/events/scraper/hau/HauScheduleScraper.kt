@@ -41,6 +41,11 @@ class HauScheduleScraper(
     fun scrape(
         document: Document,
         url: String
+    ): List<ScrapedEvent> = oneRowPerSlot(rows(document, url))
+
+    private fun rows(
+        document: Document,
+        url: String
     ): List<ScrapedEvent> =
         document.select("div.month").flatMap { month ->
             val yearMonth = parseYearMonth(month.textAt(".month-box h3"))
@@ -57,6 +62,17 @@ class HauScheduleScraper(
                         ?.let { yearMonth.atDayOrNull(it) }
                 day.select(".item:has(a.event-venue)").mapSkippingFailures(logger, "HAU schedule row") { parseRow(it, date) }
             }
+        }
+
+    /**
+     * One row per production, date and start. HAU can list a slot twice, one entry `Cancelled` beside an open one (#5085); the slot is
+     * on while any entry is, and `CANCELLED` only when every entry is.
+     */
+    private fun oneRowPerSlot(events: List<ScrapedEvent>): List<ScrapedEvent> =
+        events.groupBy { it.sourceId }.map { (sourceId, twins) ->
+            val kept = twins.firstOrNull { it.status != EventStatus.CANCELLED.name } ?: twins.first()
+            if (twins.size > 1) logger.info { "HAU lists $sourceId ${twins.size} times, keeping one ${kept.status} row" }
+            kept
         }
 
     /** The month page after this one, from the month switcher's `a[title=11-2026]` links; null after the last published month. */
