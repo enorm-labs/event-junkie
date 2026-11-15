@@ -45,8 +45,10 @@ The rules:
    tag never feeds another derivation. The three most frequent tags stay.
 4. **`DESCRIPTION`: the vocabulary words of the description, only when rule 3 gives nothing.** A word or two adjacent words must be a key of
    `GENRE_SYNONYMS`, so the text never creates a new genre. A support or guest marker ends the part of a sentence that counts. The markers
-   are "support", "Support von", "special guest", "plus" and "+". It also ignores a key that prose uses in another sense, such as "house", "world" or "swing". It ignores a short quoted
-   span. Such a span is usually the title of an album, a song or a tour. Thus the album title "Whiskey Tango Foxtrot" gives no Tango.
+   are "support", "Support von", "special guest", "plus" and "+". It also ignores a key that prose uses in another sense, such as "house", "world" or
+   "swing". Some keys are also adjectives, such as "industrial". Such a key counts only near a genre word or a music word. Thus
+   "industrial techno" gives Industrial, but "the city's industrial ghosts" gives nothing (#5089). It ignores a short quoted span. Such a span is
+   usually the title of an album, a song or a tour. Thus the album title "Whiskey Tango Foxtrot" gives no Tango.
    A line that opens with "Sounds like" or "We love" lists bands. Only an item of genre words in it counts (#4359). Thus "70s Disco" gives Disco, but
    "Panic! At The Disco" gives nothing.
    The first three genres stay.
