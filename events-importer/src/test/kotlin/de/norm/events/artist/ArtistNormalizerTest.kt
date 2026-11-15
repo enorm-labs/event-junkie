@@ -58,6 +58,15 @@ class ArtistNormalizerTest {
     }
 
     @Test
+    fun `VOID Club's Vero_ takes a slug of its own and the rapper keeps vero`() {
+        assertSoftly {
+            artistSlugFor("Vero_", "void_club:2026-09-25-5-years-animarum") shouldBe "vero-2"
+            artistSlugFor("Vero", "aeden:2026-09-05-same-floor") shouldBe "vero"
+            artistSlugFor("Vero_") shouldBe "vero"
+        }
+    }
+
+    @Test
     fun `every source scope is the sourceId prefix of a real source`() {
         val prefixes = EventSource.entries.map { it.sourceIdPrefix }.toSet()
         sourceScopedArtistSlugPrefixes.filterNot { it in prefixes }.shouldBeEmpty()
