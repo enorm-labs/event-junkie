@@ -25,6 +25,20 @@ class LogeDetailPageScraperTest {
     ) = scraper.scrape(fixtureDocument("loge/$fixture", sourceUrl), sourceUrl)
 
     @Test
+    fun `reads the About section as the description and nothing from the ticket picker (#5103)`() {
+        val url = "https://www.loge-berlin.org/event-details/bird-control-tigerbeat"
+        val event = scrape("loge-detail-about.html", url)!!
+
+        event.description shouldBe "BIRD CONTROL\n(Psychedelic Postpunk / Berlin)\nTIGERBEAT\n(Rock / Hamburg)"
+    }
+
+    @Test
+    fun `leaves the description empty for a page without an About section`() {
+        val url = "https://www.loge-berlin.org/event-details/estamoe-daloy-furie"
+        scrape("loge-detail-estamoe.html", url)!!.description.shouldBeNull()
+    }
+
+    @Test
     fun `parses the price, date, and status from the JSON-LD`() {
         val url = "https://www.loge-berlin.org/event-details/estamoe-daloy-furie"
         val event = scrape("loge-detail-estamoe.html", url)!!

@@ -22,7 +22,8 @@ import java.math.BigDecimal
  * Each page carries a `<script type="application/ld+json">` schema.org `Event` block — the most
  * stable source on the page (ADR-007 §"Selector Strategy" priority 1). **Primary** for the
  * ticket price (`offers`); confirms title, Berlin-local date/start time (from the offset-aware
- * `startDate`) and status. No artist roster is rendered, so `artists` are left to the overview
+ * `startDate`) and status. The About section's paragraphs are the description, the bill with each act's
+ * genre and city (#5103). No artist roster is rendered, so `artists` are left to the overview
  * via [LogeWebsiteImporter.fillGapsFromOverview].
  *
  * @see LogeOverviewPageScraper for overview parsing (discovery, artists, fallback).
@@ -62,9 +63,19 @@ class LogeDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.LOGE.sourceIdPrefix}${extractEventSlug(sourceUrl, "/event-details/")}",
             pricePresale = parsePresalePrice(event.path("offers")),
-            status = event.schemaStatus()
+            status = event.schemaStatus(),
+            description = aboutText(document)
         )
     }
+
+    /** The About section's paragraphs, one per line, or `null` for a page without one. The heading is an `h2`, so `p` skips it. */
+    private fun aboutText(document: Document): String? =
+        document
+            .select("[data-hook=about-section] p")
+            .map { it.text().trim() }
+            .filter { it.isNotBlank() }
+            .joinToString("\n")
+            .ifBlank { null }
 
     /**
      * The presale price from the schema.org `offers` node. Loge sells on-site through Wix, so a
