@@ -219,7 +219,7 @@ private val SHOW_TITLE_WORD_PATTERN = Regex("""(?<!spandau\s)\bballett?\b|\bpage
  * exhibition/vernissage to [EXHIBITION][EventType.EXHIBITION], market to
  * [OTHER][EventType.OTHER], party/club-night keyword to [PARTY][EventType.PARTY].
  */
-private fun classifyByTitleKeyword(
+internal fun classifyByTitleKeyword(
     title: String,
     isSubtitle: Boolean = false
 ): String? {

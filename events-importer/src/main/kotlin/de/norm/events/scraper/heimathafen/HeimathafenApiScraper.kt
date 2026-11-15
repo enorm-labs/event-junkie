@@ -110,13 +110,14 @@ class HeimathafenApiScraper(
         val genre = resolveGenre(classes)
         val subtitle = post.wpRendered("excerpt")?.let(::htmlToText)
         val (presale, boxOffice, priceNote) = parsePrices(acf.path("event_prices"))
+        val description = post.wpRendered("content")?.let(::descriptionTextOf)
 
         val shared =
             SharedPostFields(
                 title = title,
                 titleSoldOut = cleanedTitle.soldOut,
                 subtitle = subtitle,
-                description = post.wpRendered("content")?.let(::descriptionTextOf),
+                description = description,
                 eventType = eventType,
                 imageUrl = post.path("featured_images").path("large").asString(null),
                 sourceUrl = post.path("link").asString(""),
@@ -124,7 +125,7 @@ class HeimathafenApiScraper(
                 priceBoxOffice = boxOffice,
                 priceNote = priceNote,
                 genre = genre,
-                artists = castActs(acf.path("event_cast").asString(""), title) ?: buildArtistsForEventType(title, subtitle, eventType),
+                artists = castActs(acf.path("event_cast").asString(""), title) ?: buildArtistsForEventType(title, subtitle, eventType, description),
                 promoters = parsePromoters(acf.path("event_organiser").asString(""))
             )
 
