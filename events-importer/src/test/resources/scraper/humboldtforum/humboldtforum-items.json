@@ -1,7 +1,7 @@
 {
   "start": 0,
   "end": 0,
-  "count": 37,
+  "count": 40,
   "countAll": 1905,
   "terms": [],
   "post_type": [
@@ -8531,6 +8531,601 @@
       "marketing_topic": {
         "title": "Eröffnung Mein. Dein. Unser!?",
         "ID": 171634,
+        "reason": "belongsto"
+      }
+    },
+    {
+      "postId": 172913,
+      "title": "Canto Diáspora",
+      "excerpt": "",
+      "slug": "canto-diaspora",
+      "post_date": "2026-10-19T12:25",
+      "type": "event",
+      "permalink": "https://www.humboldtforum.org/de/programm/termin/konzert/canto-diaspora-172913/",
+      "genre": [
+        393
+      ],
+      "genre_details": [
+        {
+          "text": "Konzert",
+          "id": 393,
+          "icon": null,
+          "parent": 0
+        }
+      ],
+      "place": [
+        404,
+        1179
+      ],
+      "place_details": {
+        "place": "Humboldt Forum",
+        "map": "Humboldt Forum, Schlossplatz, Berlin",
+        "room": "Saal 1, EG"
+      },
+      "icon_overwrite": "",
+      "acf": {
+        "noindex": false,
+        "keywords": "",
+        "times": [
+          {
+            "start": "20261127 19:00",
+            "end": "20:00",
+            "status": "JOIN",
+            "info": "",
+            "shop": "",
+            "i": 0,
+            "start_hour": "19:00",
+            "start_HRF": "Fr, 27. November 2026",
+            "_date": {
+              "date": "2026-11-27 20:00:00.000000",
+              "timezone_type": 3,
+              "timezone": "Europe/Berlin"
+            },
+            "_fromdate": "20261127 19:00",
+            "start_TS": 1795802400,
+            "start_HRFSHORT": "27.11.26",
+            "start_HRFSHORT_WD": "Fr 27.11.2026",
+            "end_TS": 1795806000,
+            "can_purchase": false
+          }
+        ],
+        "planning": {
+          "price": "kostenfrei",
+          "admission": "",
+          "pause": "",
+          "duration": ""
+        },
+        "additional_info": {
+          "icon": "0",
+          "text": ""
+        },
+        "highlight_header": false,
+        "use_video_in_teasers": false,
+        "hyphenation": true,
+        "tipp": false,
+        "joker": false,
+        "live": false,
+        "hide_event_in_program": false,
+        "gomus_id": "",
+        "hashtag": "HumboldtForum",
+        "belongsto": [
+          171634
+        ],
+        "shorturl": "",
+        "featured_images": [
+          172887
+        ],
+        "hm_id": ""
+      },
+      "thumbnail": {
+        "width": 1280,
+        "height": 853,
+        "filesize": 288968,
+        "sizes": {
+          "medium": {
+            "file": "SHF_eb00270964-300x200.jpg",
+            "width": 300,
+            "height": 200,
+            "mime-type": "image/jpeg",
+            "filesize": 17367
+          },
+          "large": {
+            "file": "SHF_eb00270964-1024x682.jpg",
+            "width": 1024,
+            "height": 682,
+            "mime-type": "image/jpeg",
+            "filesize": 105240
+          },
+          "thumbnail": {
+            "file": "SHF_eb00270964-150x150.jpg",
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 7704
+          },
+          "medium_large": {
+            "file": "SHF_eb00270964-768x512.jpg",
+            "width": 768,
+            "height": 512,
+            "mime-type": "image/jpeg",
+            "filesize": 69538
+          },
+          "small": {
+            "file": "SHF_eb00270964-440x293.jpg",
+            "width": 440,
+            "height": 293,
+            "mime-type": "image/jpeg",
+            "filesize": 31089
+          },
+          "semi": {
+            "file": "SHF_eb00270964-580x387.jpg",
+            "width": 580,
+            "height": 387,
+            "mime-type": "image/jpeg",
+            "filesize": 47271
+          },
+          "mobile": {
+            "file": "SHF_eb00270964-720x480.jpg",
+            "width": 720,
+            "height": 480,
+            "mime-type": "image/jpeg",
+            "filesize": 63395
+          },
+          "original": {
+            "file": "SHF_eb00270964.jpg",
+            "width": 1280,
+            "height": 853
+          }
+        },
+        "alt": "Bunte Frauenchorgemeinschaft singt und tanzt voller Freude und Energie auf der Bühne bei einem Live-Auftritt.",
+        "label": "",
+        "description": "Auftritt des Canto Diáspora ",
+        "ratio": 66.640625,
+        "url": "/wp-content/uploads/2026/10/",
+        "webp": false,
+        "crop": {
+          "top": "50.00",
+          "left": "50.00"
+        },
+        "ID": 172887
+      },
+      "date": {
+        "NX": "20261127",
+        "NXX": "202611271900",
+        "NLAST": "202611271700",
+        "from_DATE": "20261127 19:00",
+        "from": 1795798800,
+        "to": 1795798800,
+        "to_DATE": "20261127 19:00",
+        "from_HRFSHORT": "27. Nov 2026",
+        "from_HRFSHORT_WD": "Fr 27.11.2026",
+        "to_HRFSHORT": "27. Nov 2026",
+        "to_HRFSHORT_WD": "Fr 27.11.2026",
+        "from_HRF": "Fr, 27. November 2026",
+        "to_HRF": "Fr, 27. November 2026",
+        "from_to_HRF": "Fr, 27. November – Fr, 27. November 2026",
+        "from_to_HRFSHORT": "27. Nov – 27. Nov 2026"
+      },
+      "alert": null,
+      "partof": [],
+      "marketing_topic": {
+        "title": "Eröffnung Mein. Dein. Unser!?",
+        "ID": 171634,
+        "reason": "belongsto"
+      }
+    },
+    {
+      "postId": 172926,
+      "title": "Der Gesang der Großmütter",
+      "excerpt": "",
+      "slug": "der-gesang-der-grossmuetter",
+      "post_date": "2026-10-19T12:34",
+      "type": "event",
+      "permalink": "https://www.humboldtforum.org/de/programm/termin/konzert/der-gesang-der-grossmuetter-172926/",
+      "genre": [
+        393
+      ],
+      "genre_details": [
+        {
+          "text": "Konzert",
+          "id": 393,
+          "icon": null,
+          "parent": 0
+        }
+      ],
+      "place": [
+        883
+      ],
+      "place_details": {
+        "place": "Humboldt Forum",
+        "map": "Humboldt Forum, Schlossplatz, Berlin",
+        "room": "Saal 2, EG"
+      },
+      "icon_overwrite": "",
+      "acf": {
+        "noindex": false,
+        "keywords": "",
+        "hashtag": "HumboldtForum",
+        "belongsto": [
+          171634
+        ],
+        "shorturl": "",
+        "times": [
+          {
+            "start": "20261128 16:30",
+            "end": "17:15",
+            "status": "JOIN",
+            "info": "",
+            "shop": "",
+            "i": 0,
+            "start_hour": "16:30",
+            "start_HRF": "Sa, 28. November 2026",
+            "_date": {
+              "date": "2026-11-28 17:15:00.000000",
+              "timezone_type": 3,
+              "timezone": "Europe/Berlin"
+            },
+            "_fromdate": "20261128 16:30",
+            "start_TS": 1795879800,
+            "start_HRFSHORT": "28.11.26",
+            "start_HRFSHORT_WD": "Sa 28.11.2026",
+            "end_TS": 1795882500,
+            "can_purchase": false
+          },
+          {
+            "start": "20261129 16:30",
+            "end": "17:15",
+            "status": "JOIN",
+            "info": "",
+            "shop": "",
+            "i": 1,
+            "start_hour": "16:30",
+            "start_HRF": "So, 29. November 2026",
+            "_date": {
+              "date": "2026-11-29 17:15:00.000000",
+              "timezone_type": 3,
+              "timezone": "Europe/Berlin"
+            },
+            "_fromdate": "20261129 16:30",
+            "start_TS": 1795966200,
+            "start_HRFSHORT": "29.11.26",
+            "start_HRFSHORT_WD": "So 29.11.2026",
+            "end_TS": 1795968900,
+            "can_purchase": false
+          }
+        ],
+        "planning": {
+          "price": "Eintritt frei",
+          "admission": "",
+          "pause": "",
+          "duration": ""
+        },
+        "subline": "Ein Konzert zwischen Wasser und Stein von Leonel Vásquez",
+        "additional_info": {
+          "icon": "icon-sprachen",
+          "text": "Spanisch (Übersetzung ins Deutsche und Portugiesische)"
+        },
+        "highlight_header": false,
+        "use_video_in_teasers": false,
+        "hyphenation": true,
+        "tipp": false,
+        "joker": false,
+        "live": false,
+        "hide_event_in_program": false,
+        "gomus_id": "",
+        "featured_images": [
+          172438
+        ],
+        "hm_id": ""
+      },
+      "thumbnail": {
+        "width": 853,
+        "height": 1280,
+        "filesize": 179879,
+        "sizes": {
+          "medium": {
+            "file": "SHF_eb00273129-200x300.jpg",
+            "width": 200,
+            "height": 300,
+            "mime-type": "image/jpeg",
+            "filesize": 12731
+          },
+          "large": {
+            "file": "SHF_eb00273129-682x1024.jpg",
+            "width": 682,
+            "height": 1024,
+            "mime-type": "image/jpeg",
+            "filesize": 83341
+          },
+          "thumbnail": {
+            "file": "SHF_eb00273129-150x150.jpg",
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 5703
+          },
+          "medium_large": {
+            "file": "SHF_eb00273129-768x1152.jpg",
+            "width": 768,
+            "height": 1152,
+            "mime-type": "image/jpeg",
+            "filesize": 99155
+          },
+          "small": {
+            "file": "SHF_eb00273129-293x440.jpg",
+            "width": 293,
+            "height": 440,
+            "mime-type": "image/jpeg",
+            "filesize": 23290
+          },
+          "semi": {
+            "file": "SHF_eb00273129-387x580.jpg",
+            "width": 387,
+            "height": 580,
+            "mime-type": "image/jpeg",
+            "filesize": 35843
+          },
+          "mobile": {
+            "file": "SHF_eb00273129-480x720.jpg",
+            "width": 480,
+            "height": 720,
+            "mime-type": "image/jpeg",
+            "filesize": 49092
+          },
+          "original": {
+            "file": "SHF_eb00273129.jpg",
+            "width": 853,
+            "height": 1280
+          }
+        },
+        "alt": "Mann mit Mikrofon steht im Wasser, hält einen Stock und schaut sich die Wellen unter einem bewölkten Himmel an.",
+        "label": "Der kolumbianische Klangkünstler Leonel Vásquez bei Aufnahmen im Meer",
+        "description": "",
+        "ratio": 150.0586166471278,
+        "url": "/wp-content/uploads/2026/10/",
+        "webp": false,
+        "crop": {
+          "top": "32.73",
+          "left": "52.34"
+        },
+        "ID": 172438
+      },
+      "date": {
+        "NX": "20261128",
+        "NXX": "202611281630",
+        "NLAST": "202611291430",
+        "from_DATE": "20261128 16:30",
+        "from": 1795876200,
+        "to": 1795962600,
+        "to_DATE": "20261129 16:30",
+        "from_HRFSHORT": "28. Nov 2026",
+        "from_HRFSHORT_WD": "Sa 28.11.2026",
+        "to_HRFSHORT": "29. Nov 2026",
+        "to_HRFSHORT_WD": "So 29.11.2026",
+        "from_HRF": "Sa, 28. November 2026",
+        "to_HRF": "So, 29. November 2026",
+        "from_to_HRF": "Sa, 28. November – So, 29. November 2026",
+        "from_to_HRFSHORT": "28. Nov – 29. Nov 2026"
+      },
+      "alert": null,
+      "partof": [],
+      "marketing_topic": {
+        "title": "Eröffnung Mein. Dein. Unser!?",
+        "ID": 171634,
+        "reason": "belongsto"
+      }
+    },
+    {
+      "postId": 173684,
+      "title": "Queer Pop bei BERLIN GLOBAL",
+      "excerpt": "",
+      "slug": "queer-pop-bei-berlin-global",
+      "post_date": "2026-10-30T15:04",
+      "type": "event",
+      "permalink": "https://www.humboldtforum.org/de/programm/termin/konzert/queer-pop-bei-berlin-global-173684/",
+      "genre": [
+        393
+      ],
+      "genre_details": [
+        {
+          "text": "Konzert",
+          "id": 393,
+          "icon": null,
+          "parent": 0
+        }
+      ],
+      "stakeholder": [
+        400
+      ],
+      "stakeholder_details": [
+        {
+          "text": "Berlin Museum",
+          "id": 400,
+          "icon": null,
+          "parent": 0
+        }
+      ],
+      "language": [
+        388,
+        384
+      ],
+      "language_details": [
+        {
+          "text": "Arabisch",
+          "id": 388,
+          "icon": null,
+          "parent": 0
+        },
+        {
+          "text": "Deutsch",
+          "id": 384,
+          "icon": null,
+          "parent": 0
+        }
+      ],
+      "age": [
+        1321
+      ],
+      "age_details": [
+        {
+          "text": "ab 16 Jahre",
+          "id": 1321,
+          "icon": null,
+          "parent": 0
+        }
+      ],
+      "icon_overwrite": "",
+      "acf": {
+        "noindex": false,
+        "keywords": "",
+        "hashtag": "HumboldtForum",
+        "shorturl": "",
+        "belongsto": [
+          163150,
+          14140
+        ],
+        "times": [
+          {
+            "start": "20261211 19:30",
+            "end": "22:00",
+            "status": "BUY",
+            "info": "15 EUR / ermäßigt 10 EUR",
+            "shop": "https://tickets.humboldtforum.org/#/product/event/638?date=2026-12-11&date_id=30837&lang=de",
+            "i": 0,
+            "start_hour": "19:30",
+            "start_HRF": "Fr, 11. Dezember 2026",
+            "_date": {
+              "date": "2026-12-11 22:00:00.000000",
+              "timezone_type": 3,
+              "timezone": "Europe/Berlin"
+            },
+            "_fromdate": "20261211 19:30",
+            "start_TS": 1797013800,
+            "start_HRFSHORT": "11.12.26",
+            "start_HRFSHORT_WD": "Fr 11.12.2026",
+            "end_TS": 1797022800,
+            "can_purchase": true
+          }
+        ],
+        "planning": {
+          "price": "15 EUR / ermäßigt 10 EUR",
+          "admission": "18:30",
+          "pause": "",
+          "duration": ""
+        },
+        "subline": "Mit FAYIM, OMAR KTD und SXCL",
+        "additional_info": {
+          "icon": "icon-ort",
+          "text": "Raum \"Verflechtung\" in BERLIN GLOBAL, 1.OG"
+        },
+        "highlight_header": false,
+        "use_video_in_teasers": false,
+        "hyphenation": true,
+        "tipp": false,
+        "joker": false,
+        "live": false,
+        "hide_event_in_program": false,
+        "gomus_id": "",
+        "featured_images": [
+          173793
+        ],
+        "hm_id": "",
+        "tickettext": "Bitte buchen Sie Ihr Ticket vorab online oder an der Kasse im Foyer."
+      },
+      "thumbnail": {
+        "width": 1280,
+        "height": 600,
+        "filesize": 82444,
+        "sizes": {
+          "medium": {
+            "file": "Design-ohne-Titel-77-300x141.jpg",
+            "width": 300,
+            "height": 141,
+            "mime-type": "image/jpeg",
+            "filesize": 9598
+          },
+          "large": {
+            "file": "Design-ohne-Titel-77-1024x480.jpg",
+            "width": 1024,
+            "height": 480,
+            "mime-type": "image/jpeg",
+            "filesize": 58745
+          },
+          "thumbnail": {
+            "file": "Design-ohne-Titel-77-150x150.jpg",
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 6352
+          },
+          "medium_large": {
+            "file": "Design-ohne-Titel-77-768x360.jpg",
+            "width": 768,
+            "height": 360,
+            "mime-type": "image/jpeg",
+            "filesize": 38426
+          },
+          "small": {
+            "file": "Design-ohne-Titel-77-440x206.jpg",
+            "width": 440,
+            "height": 206,
+            "mime-type": "image/jpeg",
+            "filesize": 16259
+          },
+          "semi": {
+            "file": "Design-ohne-Titel-77-580x272.jpg",
+            "width": 580,
+            "height": 272,
+            "mime-type": "image/jpeg",
+            "filesize": 24742
+          },
+          "mobile": {
+            "file": "Design-ohne-Titel-77-720x338.jpg",
+            "width": 720,
+            "height": 338,
+            "mime-type": "image/jpeg",
+            "filesize": 35055
+          },
+          "original": {
+            "file": "Design-ohne-Titel-77.jpg",
+            "width": 1280,
+            "height": 600
+          }
+        },
+        "alt": "Drei Porträts unterschiedlicher Personen vor einem bunten Hintergrund, jede mit eigenem Ausdruck und Stil.",
+        "label": "",
+        "description": "OMAR KTD, SXCL und FAYIM",
+        "ratio": 46.875,
+        "url": "/wp-content/uploads/2026/10/",
+        "webp": false,
+        "crop": {
+          "top": "50.00",
+          "left": "50.00"
+        },
+        "ID": 173793
+      },
+      "date": {
+        "NX": "20261211",
+        "NXX": "202612111930",
+        "NLAST": "202612111730",
+        "from_DATE": "20261211 19:30",
+        "from": 1797010200,
+        "to": 1797010200,
+        "to_DATE": "20261211 19:30",
+        "from_HRFSHORT": "11. Dez 2026",
+        "from_HRFSHORT_WD": "Fr 11.12.2026",
+        "to_HRFSHORT": "11. Dez 2026",
+        "to_HRFSHORT_WD": "Fr 11.12.2026",
+        "from_HRF": "Fr, 11. Dezember 2026",
+        "to_HRF": "Fr, 11. Dezember 2026",
+        "from_to_HRF": "Fr, 11. Dezember – Fr, 11. Dezember 2026",
+        "from_to_HRFSHORT": "11. Dez – 11. Dez 2026"
+      },
+      "alert": null,
+      "partof": [],
+      "marketing_topic": {
+        "title": "Time Machine Infinitum. Queeres migrantisches Berlin",
+        "ID": 163150,
         "reason": "belongsto"
       }
     }

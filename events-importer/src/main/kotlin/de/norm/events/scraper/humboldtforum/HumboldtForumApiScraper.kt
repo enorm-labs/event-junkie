@@ -31,6 +31,7 @@ import java.time.format.DateTimeFormatter
  * - **Every other item gives one row per `acf.times` entry**: `start` is `yyyyMMdd HH:mm`, `end` only `HH:mm`. An end before
  *   the start crosses midnight only before 06:00; a later one is a typing slip and is dropped.
  * - The children's series `Bilderbuchkino` and `Geschichtentheater` are named only through `partof`, an id of another item.
+ * - A concert's or a DJ night's acts come from `acf.subline` or the title ([actsOf]).
  */
 class HumboldtForumApiScraper {
     private val logger = KotlinLogging.logger {}
@@ -84,6 +85,12 @@ class HumboldtForumApiScraper {
     ): ScrapedEvent? {
         val title = item.stringOrNull("title")?.let(::plainText) ?: return null
         val excerpt = item.stringOrNull("excerpt")?.let(::plainText)
+        val subline =
+            item
+                .path("acf")
+                .stringOrNull("subline")
+                ?.let(::plainText)
+                ?.takeIf { it.isNotEmpty() }
         val series = item.path("partof").toList().mapNotNull { seriesTitles[it.asString("")] }
         val place = item.path("place_details")
         return ScrapedEvent(
@@ -94,7 +101,8 @@ class HumboldtForumApiScraper {
             room = place.stringOrNull("room") ?: place.stringOrNull("place")?.takeUnless { it == HOUSE_NAME },
             imageUrl = imageUrl(item.path("thumbnail")),
             sourceUrl = item.stringOrNull("permalink") ?: return null,
-            sourceId = "${EventSource.HUMBOLDT_FORUM.sourceIdPrefix}${item.path("postId").asLong()}"
+            sourceId = "${EventSource.HUMBOLDT_FORUM.sourceIdPrefix}${item.path("postId").asLong()}",
+            artists = actsOf(type, title, subline)
         ).forChildrenIf(childrensPhrase(title, excerpt, series))
     }
 
