@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineComponent, h } from 'vue'
+import { ApiError } from '@/api/client'
 import type { EventSummary, VenueSummary } from '@/api/types'
+import { i18n } from '@/i18n'
 import { todayIso } from '@/lib/format'
 import type { MapPin } from '@/lib/mapPins'
 
@@ -57,11 +59,15 @@ afterEach(() => {
   getMock.mockReset()
 })
 
-async function mountMap(url: string, events: EventSummary[], venues = [kater, berghain]) {
+async function mountMap(
+  url: string,
+  events: EventSummary[] | (() => Promise<unknown>),
+  venues = [kater, berghain],
+) {
   getMock.mockImplementation((path: string) => {
     if (path === '/api/venues') return Promise.resolve({ content: venues, totalPages: 1 })
     if (path === '/api/venues/{slug}') return Promise.resolve(kater)
-    return Promise.resolve(events)
+    return typeof events === 'function' ? events() : Promise.resolve(events)
   })
   const router = createRouter({
     history: createMemoryHistory(),
@@ -157,5 +163,22 @@ describe('MapView', () => {
     const hrefs = wrapper?.findAll('a').map((link) => link.attributes('href')) ?? []
     expect(hrefs).toContain('/en/events?family=techno')
     expect(hrefs.some((href) => href?.includes('focus='))).toBe(false)
+  })
+
+  it('says it is loading while the events request is open', async () => {
+    await mountMap('/en/map', () => new Promise(() => {}))
+
+    expect(wrapper?.text()).toContain(i18n.global.t('common.states.loading'))
+    expect(wrapper?.findComponent({ name: 'ErrorLine' }).exists()).toBe(false)
+  })
+
+  it('shows the map error line and no pins when the events request fails', async () => {
+    const map = await mountMap('/en/map', () => Promise.reject(new ApiError(400, 'bad range')))
+
+    expect(wrapper?.getComponent({ name: 'ErrorLine' }).text()).toContain(
+      i18n.global.t('errors.subject.map'),
+    )
+    expect(wrapper?.text()).not.toContain(i18n.global.t('common.states.loading'))
+    expect(map.props('pins')).toEqual([])
   })
 })
