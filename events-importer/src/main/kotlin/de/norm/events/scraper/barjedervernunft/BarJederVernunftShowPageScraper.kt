@@ -9,6 +9,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.performersListed
 import de.norm.events.scraper.textLinesAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -109,61 +110,123 @@ data class BarJederVernunftShow(
      * The type is resolved here, not in the calendar scraper, because the genre — the only signal
      * this venue gives — lives on the show page. It also decides the lineup:
      * [buildArtistsForEventType] mints the billed name as headliner for a `CONCERT` and nothing for
-     * a `SHOW`, unless the blurb names the show's performer. A `COMEDY` title shaped like a name is
-     * the comedian ([performerOfShow]). "Tim Fischer"
-     * (Chanson) is a performer; "Oh What A Night!" (Musik-Show) is a production and must not become an artist row.
+     * a `SHOW`. Then the title is read as an act ([performerOfShow]), and last the subtitle as a cast
+     * ([castOfSubtitle]). "Tim Fischer" (Chanson) is a performer; "Oh What A Night!" (Musik-Show) is a
+     * production and must not become an artist row.
      */
     fun applyTo(event: ScrapedEvent): ScrapedEvent {
         val eventType = resolveEventType(genre)
+        val blurb = description ?: event.description
         return event.copy(
             eventType = eventType,
             genre = genre ?: event.genre,
             pricePresale = pricePresale ?: event.pricePresale,
             priceNote = priceNote ?: event.priceNote,
-            description = description ?: event.description,
+            description = blurb,
             artists =
                 buildArtistsForEventType(event.title, event.subtitle, eventType)
-                    .ifEmpty { performerOfShow(event.title, eventType, description ?: event.description) }
+                    .ifEmpty { performerOfShow(event.title, eventType, genre, blurb) }
+                    .ifEmpty { castOfSubtitle(event.subtitle, eventType, blurb) }
         )
     }
 }
 
 /**
- * The performer a `SHOW` or a `COMEDY` night is named for. The calendar's title is the JSON-LD
- * `performer`, and the programme's name is the subtitle, so a comedy title shaped like a name is the
- * comedian: `Bodo Wartke` (event 12189). A `SHOW` also needs its blurb to open with that name,
- * `Rainald Grebe ist Autor, …` (event 11998), because a production can carry a name too. So
- * `Oh What A Night!` and `SAGO Song Salon` stay unbilled.
+ * The act a `SHOW`, `COMEDY` or `READING` title names. An unnamed band comes off, `Gitte Haenning & Band` bills
+ * `Gitte Haenning`, and a band in the act's own name stays: `Gustav Peter Wöhler Band`.
+ *
+ * The genre decides what vouches for the name. The programme is the subtitle, so a comedy title shaped like a name is
+ * the comedian: `Bodo Wartke` (event 12189). A `Musik-Show` or a reading needs the blurb to name the act by one of its
+ * names, so `Gitte` vouches for `Gitte Haenning`. Any other `SHOW` needs the blurb to open with the title, `Rainald
+ * Grebe ist Autor, …` (event 11998), because a production carries a name too. One word needs the blurb to name it:
+ * `Rock4` and `Ass-Dur`, not `Silvestergala`. `Oh What A Night!`, `SAGO Song Salon` and `CABARET` bill nobody.
  */
 private fun performerOfShow(
     title: String,
     eventType: String,
+    genre: String?,
     description: String?
 ): List<ScrapedArtist> {
-    val opensWithTitle = description?.startsWith("$title ") == true || description?.startsWith("$title,") == true
-    val named =
-        when (eventType) {
-            EventType.COMEDY.name -> true
-            EventType.SHOW.name -> opensWithTitle
+    val act = title.replace(UNNAMED_BAND, "")
+    val musicShow = genre.equals(MUSIC_SHOW_GENRE, ignoreCase = true)
+    val vouched =
+        when {
+            eventType == EventType.COMEDY.name -> true
+            eventType == EventType.READING.name || (eventType == EventType.SHOW.name && musicShow) -> namedInBlurb(act, description)
+            eventType == EventType.SHOW.name -> description?.startsWith("$title ") == true || description?.startsWith("$title,") == true
             else -> false
         }
-    if (!named || !(PERFORMER_NAME.matches(title) || PERFORMER_DUO.matches(title))) return emptyList()
-    return listOf(ScrapedArtist(name = title, role = ArtistRole.HEADLINER, titleDerived = true))
+    val actShaped = PERFORMER_NAME.matches(act) || PERFORMER_DUO.matches(act) || NAMED_BAND.matches(act)
+    val oneWordAct = ONE_WORD_NAME.matches(act) && namedInBlurb(act, description)
+    if (!vouched || !(actShaped || oneWordAct)) return emptyList()
+    return listOf(ScrapedArtist(name = act, role = ArtistRole.HEADLINER, titleDerived = true))
 }
+
+/**
+ * The cast a subtitle names when the title names none: `mit Sven Ratzke & Band` (Silvestergala), `Katharina Thalbach
+ * liest „…“` (event 8744), or a bare list of two or more names the blurb names too, `Martin Reinl & Carsten Haffke`
+ * (PUPPEN GUCKEN). A bare single name is refused, because `Die Neujahrsshow` is shaped like one.
+ */
+private fun castOfSubtitle(
+    subtitle: String?,
+    eventType: String,
+    description: String?
+): List<ScrapedArtist> {
+    if (subtitle == null || eventType !in CAST_EVENT_TYPES) return emptyList()
+    val line = subtitle.trim().replace(UNNAMED_BAND, "")
+    SUBTITLE_BILLED_WITH.find(line)?.let { return performersListed(it.groupValues[1]) }
+    if (eventType == EventType.READING.name) READER.find(line)?.let { return performersListed(it.groupValues[1]) }
+    return performersListed(line).takeIf { cast -> cast.size > 1 && cast.all { namedInBlurb(it.name, description) } }.orEmpty()
+}
+
+/** Whether [description] names [act] by one of its names, as a whole word. Articles and particles are no evidence. */
+private fun namedInBlurb(
+    act: String,
+    description: String?
+): Boolean {
+    if (description == null) return false
+    return act
+        .split(NAME_PARTS)
+        .filter { it.length >= MIN_EVIDENCE_LENGTH && it.lowercase() !in NAME_PARTICLES }
+        .any { Regex("""(?<![\p{L}\p{N}-])${Regex.escape(it)}(?![\p{L}\p{N}-])""").containsMatchIn(description) }
+}
+
+private const val MUSIC_SHOW_GENRE = "musik-show"
+
+private val CAST_EVENT_TYPES = setOf(EventType.SHOW.name, EventType.COMEDY.name, EventType.READING.name)
+
+/** A band, guests or an orchestra the title or subtitle does not name: `& Band`, `mit Band`, `& Gäste`. */
+private val UNNAMED_BAND = Regex("""\s+(?:&|und|mit)\s+(?:Band|Gäste|Friends|Ensemble|Orchester)$""")
+
+private val SUBTITLE_BILLED_WITH = Regex("""^[Mm]it\s+(.+)$""")
+
+private val READER = Regex("""^(.+?)\s+(?:liest|lesen)\s""")
+
+private val NAME_PARTS = Regex("""[\s&]+""")
+
+/** `Pe Werner` is evidenced by `Werner`, never by `Pe`. */
+private const val MIN_EVIDENCE_LENGTH = 3
+
+private val NAME_PARTICLES = setOf("the", "die", "der", "das", "von", "van", "und")
+
+private const val NAME_WORD = """\p{Lu}\p{Ll}[\p{L}'-]*"""
 
 /**
  * Two or three capitalised words, none of them shouted, with a name particle allowed between them:
  * `Katharine Mehrling`, `Eckart von Hirschhausen`, not `SAGO Song Salon`.
  */
-private val PERFORMER_NAME = Regex("""^\p{Lu}\p{Ll}[\p{L}'-]*(?:\s+(?:von\s+|van\s+|zu\s+)?\p{Lu}\p{Ll}[\p{L}'-]*){1,2}$""")
+private val PERFORMER_NAME = Regex("""^$NAME_WORD(?:\s+(?:von\s+|van\s+|zu\s+)?$NAME_WORD){1,2}$""")
 
-/**
- * Two performers billed as one act, `Siegfried & Joy` (event 13924). `Gitte Haenning & Band` is a
- * performer with a band, not a duo, so a band word after the `&` is refused.
- */
-private const val DUO_NAME = """\p{Lu}\p{Ll}[\p{L}'-]*(?:\s+\p{Lu}\p{Ll}[\p{L}'-]*)?"""
+/** Two performers billed as one act, one to three words a side: `Siegfried & Joy` (event 13924), `Christoph Maria Herbst & Moritz Netenjakob`. */
+private const val DUO_NAME = """$NAME_WORD(?:\s+$NAME_WORD){0,2}"""
 
-private val PERFORMER_DUO = Regex("""^$DUO_NAME\s+&\s+(?!(?:Band|Friends|Ensemble|Orchester)$)$DUO_NAME$""")
+private val PERFORMER_DUO = Regex("""^$DUO_NAME\s+&\s+$DUO_NAME$""")
+
+/** A band named for its leader, `Gustav Peter Wöhler Band`. */
+private val NAMED_BAND = Regex("""^$NAME_WORD(?:\s+$NAME_WORD){0,2}\s+Band$""")
+
+/** One capitalised word, digits allowed after the first two letters: `Rock4`, `Ass-Dur`. */
+private val ONE_WORD_NAME = Regex("""^\p{Lu}\p{Ll}[\p{L}\p{N}'-]*$""")
 
 /**
  * Maps a `Genre` label to an [EventType] name.

@@ -128,7 +128,7 @@ class BarJederVernunftShowPageScraperTest {
     }
 
     @Test
-    fun `applyTo bills a duo a show is named for, but not a performer with a band`() {
+    fun `applyTo bills a duo a show is named for, and a performer without the band the title leaves unnamed`() {
         // Event 13924: a magician duo, billed as one act.
         val show =
             BarJederVernunftShow(
@@ -140,7 +140,90 @@ class BarJederVernunftShowPageScraperTest {
 
         show.applyTo(occurrence(title = "Siegfried & Joy")).artists.map { it.name to it.role } shouldBe
             listOf("Siegfried & Joy" to ArtistRole.HEADLINER)
-        show.copy(description = "Gitte Haenning & Band spielen die Hits.").applyTo(occurrence(title = "Gitte Haenning & Band")).artists shouldHaveSize 0
+        show
+            .copy(description = "Gitte Haenning & Band spielen die Hits.")
+            .applyTo(occurrence(title = "Gitte Haenning & Band"))
+            .artists
+            .map { it.name } shouldBe
+            listOf("Gitte Haenning")
+    }
+
+    @Test
+    fun `applyTo bills the act a Musik-Show is named for when the blurb names it (#5119)`() {
+        val show = BarJederVernunftShow(genre = "Musik-Show", pricePresale = null, priceNote = null, description = null)
+
+        fun billed(
+            title: String,
+            blurb: String
+        ) = show
+            .copy(description = blurb)
+            .applyTo(occurrence(title = title))
+            .artists
+            .map { it.name }
+
+        billed("Gitte Haenning & Band", "Bereits als Achtjährige stand Gitte gemeinsam mit ihrem Vater auf der Bühne.") shouldBe
+            listOf("Gitte Haenning")
+        billed("Gustav Peter Wöhler Band", "Seit Jahren stehen der Sänger Gustav Peter Wöhler und seine Band auf der Bühne.") shouldBe
+            listOf("Gustav Peter Wöhler Band")
+        billed("Ursli & Toni Pfister", "In dieser Show dreht sich alles um Peter Alexander. Ursli & Toni Pfister sind lässig.") shouldBe
+            listOf("Ursli & Toni Pfister")
+        billed("Rock4", "50 Jahre „A Night At The Opera“. Rock4 zelebriert diesen Meilenstein.") shouldBe listOf("Rock4")
+        billed("Silvestergala", "Feiern Sie mit uns zusammen Silvester in Berlin!") shouldHaveSize 0
+        billed("Oh What A Night!", "Ein Abend wie Oh What A Night! mit Frankie Valli.") shouldHaveSize 0
+        billed("Katharine Mehrling & Band", "Die Show der Saison.") shouldHaveSize 0
+    }
+
+    @Test
+    fun `applyTo bills a one-word comedy act the blurb names, a duo of full names and a duo with an unnamed band`() {
+        val show =
+            BarJederVernunftShow(genre = "Musik-Comedy", pricePresale = null, priceNote = null, description = "Dann ist es soweit: Ass-Dur feiert Weihnachten.")
+
+        show.applyTo(occurrence(title = "Ass-Dur")).artists.map { it.name } shouldBe listOf("Ass-Dur")
+        show.applyTo(occurrence(title = "Lebefrau")).artists shouldHaveSize 0
+        show.applyTo(occurrence(title = "Christoph Maria Herbst & Moritz Netenjakob")).artists.map { it.name } shouldBe
+            listOf("Christoph Maria Herbst & Moritz Netenjakob")
+        show.applyTo(occurrence(title = "Pigor & Eichhorn mit Band")).artists.map { it.name } shouldBe listOf("Pigor & Eichhorn")
+    }
+
+    @Test
+    fun `applyTo bills the cast a subtitle names when the title names none`() {
+        val show = BarJederVernunftShow(genre = "Musik-Show", pricePresale = null, priceNote = null, description = "Mit dabei: Martin Reinl & Carsten Haffke.")
+
+        fun cast(
+            subtitle: String,
+            genre: String = "Musik-Show"
+        ) = show
+            .copy(genre = genre)
+            .applyTo(occurrence(title = "Silvestergala", subtitle = subtitle))
+            .artists
+            .map { it.name }
+
+        cast("mit Sven Ratzke & Band") shouldBe listOf("Sven Ratzke")
+        cast("mit Thomas Gansch, Sebastian Fuchsberger, Leonhard Paul & Michael Hornek") shouldBe
+            listOf("Thomas Gansch", "Sebastian Fuchsberger", "Leonhard Paul", "Michael Hornek")
+        cast("Martin Reinl & Carsten Haffke", genre = "Puppen-Comedy") shouldBe listOf("Martin Reinl", "Carsten Haffke")
+        cast("Die Neujahrsshow", genre = "Musik-Kabarett") shouldHaveSize 0
+        cast("Mit radioeins-Moderator Marco Seiffert", genre = "Talk") shouldHaveSize 0
+        cast("Das Berlin-Musical", genre = "Musical") shouldHaveSize 0
+    }
+
+    @Test
+    fun `applyTo bills the reader a reading's subtitle or title names`() {
+        // Event 8744: the series is the title, the reader the subtitle.
+        val show =
+            BarJederVernunftShow(
+                genre = "Lesung",
+                pricePresale = null,
+                priceNote = null,
+                description = "Geschichten über Mütter, gelesen von Wladimir Kaminer."
+            )
+
+        show
+            .applyTo(occurrence(title = "Literatur LIVE im TIPI AM KANZLERAMT", subtitle = "Katharina Thalbach liest „Miss Merkel“ von David Safier"))
+            .artists
+            .map { it.name } shouldBe listOf("Katharina Thalbach")
+        show.applyTo(occurrence(title = "Wladimir Kaminer", subtitle = "Müttertage")).artists.map { it.name } shouldBe listOf("Wladimir Kaminer")
+        show.applyTo(occurrence(title = "Literatur LIVE im TIPI AM KANZLERAMT")).artists shouldHaveSize 0
     }
 
     @Test
@@ -211,10 +294,11 @@ class BarJederVernunftShowPageScraperTest {
     /** A calendar occurrence as the overview scraper produces it, before show-page enrichment. */
     private fun occurrence(
         title: String,
-        description: String? = null
+        description: String? = null,
+        subtitle: String = "A sub-line"
     ) = ScrapedEvent(
         title = title,
-        subtitle = "A sub-line",
+        subtitle = subtitle,
         description = description,
         eventDate = LocalDate.of(2026, 8, 24),
         sourceUrl = SHOW_URL,

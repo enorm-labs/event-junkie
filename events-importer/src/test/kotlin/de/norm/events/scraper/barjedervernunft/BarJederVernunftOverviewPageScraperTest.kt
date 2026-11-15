@@ -127,6 +127,23 @@ class BarJederVernunftOverviewPageScraperTest {
         scraper.scrape(document).single().soldOut shouldBe true
     }
 
+    @Test
+    fun `scrape reads a non-breaking space in the performer as a space, so the show page can bill the act`() {
+        // Event 11852: TIPI's CMS writes "The Tiger Lillies", and the blurb opens with a plain space.
+        val json = DEFAULT_JSON_LD.replace("\"performer\":\"A Show\"", "\"performer\":\"The\\u00a0Tiger Lillies\"")
+        val event = scraper.scrape(Jsoup.parse(cardHtml(withJsonLd = true, json = json), sourceUrl)).single()
+        val show =
+            BarJederVernunftShow(
+                genre = "Musik-Show",
+                pricePresale = null,
+                priceNote = null,
+                description = "The Tiger Lillies mit ihrer Version des Dark Cabaret."
+            )
+
+        event.title shouldBe "The Tiger Lillies"
+        show.applyTo(event).artists.map { it.name } shouldBe listOf("The Tiger Lillies")
+    }
+
     /** A minimal calendar card, optionally followed by its JSON-LD sibling. */
     private fun cardHtml(
         withJsonLd: Boolean,
