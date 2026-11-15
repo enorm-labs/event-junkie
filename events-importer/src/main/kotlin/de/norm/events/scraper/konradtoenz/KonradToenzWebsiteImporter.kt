@@ -29,6 +29,11 @@ class KonradToenzWebsiteImporter(
 val KONRAD_TOENZ_LIMITATIONS =
     VenueLimitations(
         EventSource.KONRAD_TOENZ,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the jazz night is billed by the bar, and its DJ goes unnamed",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "the page prints a name and a style line per night, no text about it", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; every night is a record night", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night", verified = "2026-10-17"),

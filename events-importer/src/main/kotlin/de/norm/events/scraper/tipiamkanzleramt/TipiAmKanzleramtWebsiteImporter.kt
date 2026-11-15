@@ -26,6 +26,17 @@ class TipiAmKanzleramtWebsiteImporter(
 val TIPI_AM_KANZLERAMT_LIMITATIONS =
     VenueLimitations(
         EventSource.TIPI_AM_KANZLERAMT,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the cabaret, the revues and the award show are billed by their title, and the cast appears only in prose",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "a date whose presale has not opened shows only a notification form, a sold-out date shows no shop link, " +
+                "and the New Year's gala is booked by phone",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar and the show pages state one start time and never an Einlass", verified = "2026-10-16"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-16"),
         houseLanguage = SpokenLanguage.GERMAN

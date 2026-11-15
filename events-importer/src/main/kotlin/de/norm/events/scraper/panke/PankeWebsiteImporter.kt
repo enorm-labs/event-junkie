@@ -33,6 +33,11 @@ val PANKE_LIMITATIONS =
     VenueLimitations(
         EventSource.PANKE,
         AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "an upcoming night's post names no shop, and the nights sell on Resident Advisor or at the door",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.ARTISTS,
             "acts named only in free prose are not read; a Resident Advisor link, a `feat.` or tagged `+` title, or a presenter line bills them",
             verified = "2026-11-01"

@@ -7,6 +7,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -197,6 +198,21 @@ class TipiAmKanzleramtWebsiteImporterTest {
             gala.startTime shouldBe LocalTime.of(18, 0)
             gala.subtitle shouldBe "mit Sven Ratzke & Band"
             gala.ticketUrl shouldBe null
+        }
+
+    @Test
+    fun `importEvents stores no ticket link for a date whose presale has not opened, and never the notification form`() =
+        runTest {
+            stubFetcher("$batchUrl&currentPage=2" to "tipiamkanzleramt/tipiamkanzleramt-calendar-batch-2.html", fetcher = htmlFetcher)
+
+            val withoutLink = importedEvents().filter { it.ticketUrl == null }
+
+            // 16 "VVK-Benachrichtigung" dates, the phone-booked gala and one sold-out date.
+            withoutLink shouldHaveSize 18
+            withoutLink.map { it.title }.distinct() shouldContainExactlyInAnyOrder
+                listOf("Ass-Dur", "Pigor & Eichhorn mit Band", "PUPPEN GUCKEN", "Muttis Kinder", "Silvestergala", "Deutscher Musical Theater Preis")
+            withoutLink.single { it.title == "Deutscher Musical Theater Preis" }.soldOut shouldBe true
+            importedEvents().mapNotNull { it.ticketUrl }.forEach { it shouldStartWith "https://tickets.tipi-am-kanzleramt.de/webshop/" }
         }
 
     @Test

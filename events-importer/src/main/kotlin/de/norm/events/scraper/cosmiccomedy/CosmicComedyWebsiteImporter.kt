@@ -43,6 +43,11 @@ class CosmicComedyWebsiteImporter(
 val COSMIC_COMEDY_LIMITATIONS =
     VenueLimitations(
         EventSource.COSMIC_COMEDY,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the open mic and the later showcases list their acts as to be announced",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.PRICE, "`cost` and `cost_details` are empty on every event", verified = "2026-10-13"),
         AcceptedLimitation(LimitedAspect.GENRE, "the club names no genre", verified = "2026-10-13")
     )

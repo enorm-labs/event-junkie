@@ -28,6 +28,11 @@ class KuehlspotWebsiteImporter(
 val KUEHLSPOT_LIMITATIONS =
     VenueLimitations(
         EventSource.KUEHLSPOT,
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "a night's text block often lists only the musicians and their instruments, which become the line-up",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.SUBTITLE, "each night has a date line, a title and a line-up, no second title line", verified = "2026-10-16"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the site states a curfew for musicians, not an end per night", verified = "2026-10-16"),
         AcceptedLimitation(LimitedAspect.IMAGE, "the events section carries no pictures", verified = "2026-10-16"),

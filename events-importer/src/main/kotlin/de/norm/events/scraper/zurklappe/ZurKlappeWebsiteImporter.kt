@@ -28,6 +28,16 @@ class ZurKlappeWebsiteImporter(
 val ZUR_KLAPPE_LIMITATIONS =
     VenueLimitations(
         EventSource.ZUR_KLAPPE,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the DJ list stays empty until the timetable is out, and the title names only the party",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "the venue leaves each night's description field empty, so the page prints only a title, the times and the DJs",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.SUBTITLE, "the site states one title per night and no second line", verified = "2026-09-28"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes an opening time, not a separate doors time", verified = "2026-09-28"),
         AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night", verified = "2026-10-27"),

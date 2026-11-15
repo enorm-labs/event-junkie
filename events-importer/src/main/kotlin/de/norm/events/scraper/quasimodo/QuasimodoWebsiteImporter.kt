@@ -1,8 +1,10 @@
 package de.norm.events.scraper.quasimodo
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
@@ -55,4 +57,12 @@ class QuasimodoWebsiteImporter(
 }
 
 /** Nothing this source withholds needs declaring (#715). */
-val QUASIMODO_LIMITATIONS = VenueLimitations(EventSource.QUASIMODO)
+val QUASIMODO_LIMITATIONS =
+    VenueLimitations(
+        EventSource.QUASIMODO,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the theme parties name a decade or a season, and the DJs go unnamed",
+            verified = "2026-11-15"
+        )
+    )

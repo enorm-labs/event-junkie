@@ -61,6 +61,11 @@ val THEATER_IM_DELPHI_LIMITATIONS =
     VenueLimitations(
         EventSource.THEATER_IM_DELPHI,
         AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a production is billed by its title, and a Candlelight programme names no ensemble",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.GENRE,
             "the labels are formats; only Kammermusik, Klassik and Elektronische Musik name a style",
             verified = "2026-11-10"

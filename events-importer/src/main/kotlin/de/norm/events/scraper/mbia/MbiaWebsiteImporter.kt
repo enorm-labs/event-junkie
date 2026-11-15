@@ -26,6 +26,11 @@ class MbiaWebsiteImporter(
 val M_BIA_LIMITATIONS =
     VenueLimitations(
         EventSource.M_BIA,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a night's lineup fields stay empty until its promoter announces the acts",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.SUBTITLE, "a night carries only its name", verified = "2026-10-29"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; every night is a club night", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "most nights state no time", verified = "2026-10-30"),

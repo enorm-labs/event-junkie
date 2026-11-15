@@ -65,6 +65,11 @@ class ModusWebsiteImporter(
 val MODUS_LIMITATIONS =
     VenueLimitations(
         EventSource.MODUS,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the comedy night publishes its lineup only weeks ahead, so the later dates bill nobody",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.PRICE, "the event page prints no figure and sends buyers to the ticket shop", verified = "2026-10-13"),
         AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field; the style is only in the text", verified = "2026-10-13"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")

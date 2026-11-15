@@ -113,6 +113,11 @@ class MigasWebsiteImporter(
 val MIGAS_LIMITATIONS =
     VenueLimitations(
         EventSource.MIGAS,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "an album playback names the record's artist, who does not perform",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.PRICE, "most events state no entry arrangements; a stated free entry is read", verified = "2026-10-12"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the site links no ticket shop", verified = "2026-10-12"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries no door time", verified = "2026-08-25"),

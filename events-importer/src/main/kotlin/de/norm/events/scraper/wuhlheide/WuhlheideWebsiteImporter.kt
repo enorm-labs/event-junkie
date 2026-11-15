@@ -52,6 +52,11 @@ val WUHLHEIDE_LIMITATIONS =
     VenueLimitations(
         EventSource.WUHLHEIDE,
         AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "the show pages carry the times, the price and the promoter, and each repeats the same house rules",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.CANCELLATION,
             "the venue publishes no cancellations; its one badge, Ausverkauft, is a sold-out flag",
             verified = "2026-10-13"

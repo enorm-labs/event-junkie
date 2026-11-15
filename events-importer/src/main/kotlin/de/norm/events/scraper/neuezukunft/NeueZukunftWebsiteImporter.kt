@@ -44,6 +44,11 @@ class NeueZukunftWebsiteImporter(
 val NEUE_ZUKUNFT_LIMITATIONS =
     VenueLimitations(
         EventSource.NEUE_ZUKUNFT,
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "a show without a ticket button in the calendar widget names no shop, and the Jazz After Dark and Future Bash series nights carry none",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs", verified = "2026-09-30"),
         AcceptedLimitation(
             LimitedAspect.PRICE,

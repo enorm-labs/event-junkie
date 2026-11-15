@@ -28,6 +28,11 @@ class BarJederVernunftWebsiteImporter(
 val BAR_JEDER_VERNUNFT_LIMITATIONS =
     VenueLimitations(
         EventSource.BAR_JEDER_VERNUNFT,
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "a date whose presale has not opened shows only a notification form, and a sold-out date shows no shop link",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar and the show pages state one start time and never an Einlass", verified = "2026-10-27"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
         houseLanguage = SpokenLanguage.GERMAN
