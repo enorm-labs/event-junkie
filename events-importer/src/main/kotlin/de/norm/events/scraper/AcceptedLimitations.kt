@@ -54,6 +54,7 @@ import de.norm.events.scraper.eightmm.EIGHT_MM_LIMITATIONS
 import de.norm.events.scraper.erreichbar.ERREICHBAR_LIMITATIONS
 import de.norm.events.scraper.eschschloraque.ESCHSCHLORAQUE_LIMITATIONS
 import de.norm.events.scraper.festsaal.FESTSAAL_LIMITATIONS
+import de.norm.events.scraper.fez.FEZ_LIMITATIONS
 import de.norm.events.scraper.frachtkante.FRACHTKANTE_LIMITATIONS
 import de.norm.events.scraper.frannz.FRANNZ_LIMITATIONS
 import de.norm.events.scraper.friedrichstadtpalast.FRIEDRICHSTADTPALAST_LIMITATIONS
@@ -248,6 +249,7 @@ object AcceptedLimitations {
             ERREICHBAR_LIMITATIONS,
             ESCHSCHLORAQUE_LIMITATIONS,
             FESTSAAL_LIMITATIONS,
+            FEZ_LIMITATIONS,
             FITZROY_LIMITATIONS,
             FRACHTKANTE_LIMITATIONS,
             FRANNZ_LIMITATIONS,

@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "FEZ-Berlin",
+        "address": "Straße zum FEZ 2",
+        "city": "Berlin",
+        "postalCode": "12459",
+        "district": "koepenick",
+        "latitude": 52.46103,
+        "longitude": 13.54866,
+        "websiteUrl": "https://fez-berlin.de",
+        "description": "A children's and youth centre in the Wuhlheide park, whose Astrid-Lindgren-Bühne plays theatre, puppet shows and concerts for children on three stages.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Kinder- und Jugendzentrum im Park Wuhlheide, dessen Astrid-Lindgren-Bühne auf drei Bühnen Theater, Puppentheater und Konzerte für Kinder spielt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "FEZ-Berlin",
+            "url": "https://fez-berlin.de/orte/astrid-lindgren-buehne/spielplan",
+            "sourceType": "FEZ",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
