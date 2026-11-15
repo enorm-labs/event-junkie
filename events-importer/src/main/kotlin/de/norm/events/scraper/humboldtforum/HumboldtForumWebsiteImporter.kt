@@ -25,7 +25,11 @@ class HumboldtForumWebsiteImporter(
 val HUMBOLDT_FORUM_LIMITATIONS =
     VenueLimitations(
         EventSource.HUMBOLDT_FORUM,
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the API names no acts, and a title is often the name of a series or a programme", verified = "2026-11-15"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the API names no act for a reading, a talk or a show",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.GENRE, "the categories name a format, not a music style", verified = "2026-11-15"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the API gives one start time per date", verified = "2026-11-15"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the API gives one price line, with the concessions in it", verified = "2026-11-15"),

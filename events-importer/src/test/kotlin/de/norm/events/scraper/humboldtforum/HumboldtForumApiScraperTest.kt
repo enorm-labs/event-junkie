@@ -1,5 +1,6 @@
 package de.norm.events.scraper.humboldtforum
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.fixtureText
@@ -16,7 +17,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
-/** 37 items of the `/wp-json/humboldt/v1/event/items?lang=de` response saved on 2026-11-15, a few of each kind. */
+/** 40 items of the `/wp-json/humboldt/v1/event/items?lang=de` response saved on 2026-11-15, a few of each kind. */
 class HumboldtForumApiScraperTest {
     private val events = HumboldtForumApiScraper().scrape(fixtureText("humboldtforum/humboldtforum-items.json"), SOURCE_URL)
 
@@ -26,7 +27,7 @@ class HumboldtForumApiScraperTest {
 
     @Test
     fun `keeps one row per date of the stage, talk and screening programme and one per exhibition run`() {
-        events shouldHaveSize 66
+        events shouldHaveSize 70
         events.map { it.sourceId }.toSet().size shouldBe events.size
     }
 
@@ -214,6 +215,58 @@ class HumboldtForumApiScraperTest {
             """.trimIndent()
 
         HumboldtForumApiScraper().scrape(json, SOURCE_URL).shouldBeEmpty()
+    }
+
+    @ParameterizedTest(name = "{0} bills {1}")
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "170175-202611131900 | Dschingis Lab",
+            "172913-202611271900 | Canto Diáspora",
+            "172891-202611272000 | Nana Benz du Togo",
+            "172926-202611281630 | Leonel Vásquez",
+            "173684-202612111930 | FAYIM, OMAR KTD, SXCL"
+        ]
+    )
+    fun `bills a concert's acts from its subline or its title`(
+        id: String,
+        acts: String
+    ) {
+        val artists = row(id).artists
+
+        artists.map { it.name } shouldBe acts.split(", ")
+        artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
+    }
+
+    @Test
+    fun `bills a DJ night's DJ from its title`() {
+        val artists = row("174491-202611272100").artists
+
+        artists.map { it.name to it.role } shouldBe listOf("Maurício Fleury" to ArtistRole.DJ)
+    }
+
+    @Test
+    fun `bills nobody at a reading, a talk or a screening`() {
+        events.filter { it.eventType !in setOf(EventType.CONCERT.name, EventType.PARTY.name) }.flatMap { it.artists }.shouldBeEmpty()
+        actsOf(EventType.READING, "Ein Abend", "Mit Anna Muster und Bert Beispiel").shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills no act from a title that names the house`() {
+        actsOf(EventType.CONCERT, "Queer Pop bei BERLIN GLOBAL", null).shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills no composer from a subline crediting the music`() {
+        actsOf(EventType.CONCERT, "Nana Benz du Togo", "Mit Musik von Johann Sebastian Bach").map { it.name } shouldBe
+            listOf("Nana Benz du Togo")
+        actsOf(EventType.CONCERT, "Nana Benz du Togo", "Ein Abend mit Werken von Clara Schumann").map { it.name } shouldBe
+            listOf("Nana Benz du Togo")
+    }
+
+    @Test
+    fun `splits a comma list without a final conjunction into its names`() {
+        actsOf(EventType.CONCERT, "Abend", "Mit FAYIM, OMAR KTD").map { it.name } shouldBe listOf("FAYIM", "OMAR KTD")
     }
 
     @Test

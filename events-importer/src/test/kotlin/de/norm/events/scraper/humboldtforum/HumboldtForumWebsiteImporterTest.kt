@@ -24,7 +24,7 @@ class HumboldtForumWebsiteImporterTest {
 
             val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
 
-            result.events.size shouldBe 66
+            result.events.size shouldBe 70
             result.etag shouldBe null
             result.lastModified shouldBe null
         }
