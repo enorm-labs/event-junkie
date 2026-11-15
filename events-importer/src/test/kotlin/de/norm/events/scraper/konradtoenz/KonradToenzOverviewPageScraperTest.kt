@@ -67,11 +67,26 @@ class KonradToenzOverviewPageScraperTest {
     }
 
     @Test
-    fun `a night typed as one paragraph keeps its name and bills no one`() {
+    fun `a night typed as one paragraph bills its DJ up to the first style word (#5122)`() {
         val event = night("2026-11-20")
 
         event.title shouldBe "Gemütlicher Easy Listening Abend des Daumens mit DJ Herr Siebendaum Funk & Disco Spezial"
         event.subtitle.shouldBeNull()
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("DJ Herr Siebendaum" to ArtistRole.DJ)
+    }
+
+    @Test
+    fun `a to DJ tail bills its DJ without the exclamation mark (#5122)`() {
+        val event = night("2026-11-27")
+
+        event.title shouldBe "Say yes! to DJ Nonoyesnonono!"
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("DJ Nonoyesnonono" to ArtistRole.DJ)
+    }
+
+    @Test
+    fun `a one-paragraph night whose tail opens with a style word bills no one (#5122)`() {
+        val event = scraper.scrape(section("Freitag, den 16.10.2026 ab 21 Uhr", "Abend mit DJ Funk & Soul"), baseUrl).single()
+
         event.artists.shouldBeEmpty()
     }
 
