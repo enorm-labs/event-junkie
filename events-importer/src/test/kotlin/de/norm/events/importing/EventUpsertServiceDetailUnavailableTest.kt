@@ -285,6 +285,49 @@ class EventUpsertServiceDetailUnavailableTest {
         }
 
     @Test
+    fun `a stored scheduled row is cancelled by a notice in the re-imported description`() =
+        runTest {
+            val noticed = listingRow(detailUnavailable = false).copy(description = "Die Klubnacht muss leider abgesagt werden.")
+
+            upsertAndCapture(noticed).status shouldBe EventStatus.CANCELLED.name
+        }
+
+    @Test
+    fun `a cancellation read from the description survives a later listing that states nothing`() =
+        runTest {
+            val notice = "Die Klubnacht muss leider abgesagt werden."
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns
+                listOf(stored.copy(status = EventStatus.CANCELLED.name, description = notice)).asFlow()
+
+            val written = upsertAndCapture(listingRow(detailUnavailable = true))
+
+            written.status shouldBe EventStatus.CANCELLED.name
+            written.description shouldBe notice
+        }
+
+    @Test
+    fun `a notice in the listing's description is the listing's word over a stored postponement`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(status = EventStatus.POSTPONED.name)).asFlow()
+
+            val noticed = listingRow(detailUnavailable = true).copy(description = "Die Klubnacht wurde abgesagt.")
+
+            upsertAndCapture(noticed).status shouldBe EventStatus.CANCELLED.name
+        }
+
+    @Test
+    fun `an owned description still reads a cancellation from the listing's text`() =
+        runTest {
+            val noticed =
+                listingRow(detailUnavailable = true).copy(description = "Die Klubnacht wurde abgesagt.", detailPageOwns = setOf(ScrapedField.DESCRIPTION))
+
+            val written = upsertAndCapture(noticed)
+
+            written.description shouldBe "Three floors until the morning."
+            written.status shouldBe EventStatus.CANCELLED.name
+        }
+
+    @Test
     fun `a listing's own status wins over the stored one`() =
         runTest {
             coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(status = EventStatus.POSTPONED.name)).asFlow()

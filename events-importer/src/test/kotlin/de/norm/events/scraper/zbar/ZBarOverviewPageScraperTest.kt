@@ -171,6 +171,35 @@ class ZBarOverviewPageScraperTest {
     }
 
     @Test
+    fun `a struck date beside CANCELLED is a cancelled night, and the next night is not`() {
+        // The page on 2026-11-15: `<s>Sun. 15.11.2026, 06:30 pm</s> CANCELLED!` over a struck title (#5084).
+        val nights = scraper.scrape(fixtureDocument("zbar/zbar-overview-cancelled.html", baseUrl), baseUrl)
+
+        val cancelled = nights.single { it.eventDate == LocalDate.of(2026, 11, 15) }
+        cancelled.title shouldBe "Ah! My Kid’s A German – Stand Up Comedy in English"
+        cancelled.status shouldBe "CANCELLED"
+        nights.single { it.eventDate == LocalDate.of(2026, 11, 16) }.status shouldBe "SCHEDULED"
+        nights.filter { it.status == "CANCELLED" } shouldHaveSize 1
+    }
+
+    @Test
+    fun `only the struck date of a two-night line is cancelled`() {
+        val line = """<p class="has-secondary-background-color has-background"><s>Do. 29.10.</s> + Do. 26.11.2026, 20:00 <strong>ABGESAGT</strong></p>"""
+
+        val nights = scraper.scrape(page(line, "<h6>Lesebühne</h6>"), baseUrl)
+
+        nights.associate { it.eventDate to it.status } shouldBe
+            mapOf(LocalDate.of(2026, 10, 29) to "CANCELLED", LocalDate.of(2026, 11, 26) to "SCHEDULED")
+    }
+
+    @Test
+    fun `a struck date with no cancellation word beside it stays scheduled`() {
+        val line = """<p class="has-secondary-background-color has-background"><s>Fr. 20.11.2026, 20:00</s> Fr. 27.11.2026, 20:00</p>"""
+
+        scraper.scrape(page(line, "<h6>Lesebühne</h6>"), baseUrl).map { it.status }.distinct() shouldContainExactly listOf("SCHEDULED")
+    }
+
+    @Test
     fun `scrape returns no events for an empty page`() {
         scraper.scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
