@@ -45,13 +45,20 @@ made. `node-pin-reminder.yml` already reads that contract from `upstream-node-pi
 **`--site` compares venues, not sources**, because no source listing is public. A venue created
 without its source therefore reads as seeded here. The realistic failure creates neither: a source
 is created against its venue, and ROSA and Sisyphos were missing as pairs on both clusters.
+
+**A served venue that only holds Christmas markets is not drift.** The markets are entered by hand,
+on squares and parks no importer reads (#4972), so the file never carries them. `--site` lists them
+under `MARKET ONLY` and leaves them out of the exit code (#5070). A venue with no listed event counts
+too, because the markets leave the listing when they end. A venue with any other event is drift.
 """
 
 import argparse
 import json
 import pathlib
 import sys
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -65,6 +72,9 @@ EXIT_DRIFT = 1
 EXIT_CANNOT_CHECK = 2
 PAGE_SIZE = 100
 MAX_PAGES = 100
+MARKET_FEATURE = "christmas-market"
+# Two event counts per venue the file does not carry; paced so a sweep of 50 stays gentle.
+SWEEP_PAUSE_SECONDS = 0.2
 
 
 def read_seed(path):
@@ -197,6 +207,23 @@ def disable(args):
     print(f"\nDisabled {len(args.disable)} of {len(args.disable)}. Their rows and past events stay.")
 
 
+def market_only(site, venues):
+    """The names of the venues whose listed events all carry the Christmas-market feature (#5070).
+
+    The public listing hides a market unless the query names its venue or the feature, so the
+    venue filter alone counts every event, and the two totals agree only for a market-only venue."""
+    names = set()
+    for venue in venues:
+        slug = urllib.parse.quote(venue["slug"])
+        listed = request(f"{site}/api/events?venue={slug}&size=1")["totalElements"]
+        time.sleep(SWEEP_PAUSE_SECONDS)
+        markets = request(f"{site}/api/events?venue={slug}&feature={MARKET_FEATURE}&size=1")["totalElements"]
+        time.sleep(SWEEP_PAUSE_SECONDS)
+        if listed == markets:
+            names.add(venue["name"])
+    return names
+
+
 def compare_site(args):
     """Compare the seed file with the public site, and report through the exit code (#1782).
 
@@ -222,8 +249,10 @@ def compare_site(args):
     want_open = {venue["name"] for venue, _ in seed if not venue.get("closedOn")}
     want_closed = {venue["name"] for venue, _ in seed if venue.get("closedOn")}
     try:
-        have_open = {v["name"] for v in fetch_all(site, "/api/venues")}
+        served_open = fetch_all(site, "/api/venues")
+        have_open = {v["name"] for v in served_open}
         have_closed = {v["name"] for v in fetch_all(site, "/api/venues", "closed=true")}
+        markets = market_only(site, [v for v in served_open if v["name"] not in want_open])
     except ListingError as e:
         print(f"{e}", file=sys.stderr)
         return EXIT_CANNOT_CHECK
@@ -232,15 +261,17 @@ def compare_site(args):
         return EXIT_CANNOT_CHECK
 
     missing = sorted((want_open - have_open) | (want_closed - have_closed))
-    extra = sorted((have_open - want_open) | (have_closed - want_closed))
+    extra = sorted(((have_open - want_open) | (have_closed - want_closed)) - markets)
     print(f"{args.seed}: {len(want_open)} open and {len(want_closed)} closed venues")
     print(f"{site} serves {len(have_open)} open and {len(have_closed)} closed venues\n")
     for n in missing:
         print(f"  MISSING FROM THE SITE  {n}")
     for n in extra:
         print(f"  ONLY ON THE SITE       {n}")
+    for n in sorted(markets):
+        print(f"  MARKET ONLY            {n}")
     if not missing and not extra:
-        print("  No drift. Every venue in the seed file is served.")
+        print(f"\n  No drift. Every venue in the seed file is served; {len(markets)} market-only venue(s) are not.")
         return 0
     # A venue the file does not carry is drift to explain as well: it was created by hand, or the
     # file lost a row. Neither is removed here, by the same rule the admin dry run states.

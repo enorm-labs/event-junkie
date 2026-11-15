@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Asserts that seed-sources.py --enable leaves two kinds of disabled source off.
+"""Asserts that seed-sources.py --enable leaves two kinds of disabled source off, and what --site counts.
 
 A closed venue's source stays off (#4410), and so does a source with an import history (#5062).
+A served venue that only holds Christmas markets is not drift for --site (#5070).
 
 Usage:
     python3 scripts/test_seed_sources.py
@@ -57,6 +58,55 @@ def run_enable(module, sources, seed):
     return patched, out.getvalue()
 
 
+def run_site(module, served, events, seed):
+    """Runs compare_site() against a fake public API; answers (its exit code, its output, the swept slugs).
+
+    `events` maps a venue slug to (listed events, Christmas-market events)."""
+
+    swept = set()
+
+    def request(url, method="GET", body=None):
+        query = url.split("?", 1)[1]
+        params = dict(pair.split("=", 1) for pair in query.split("&"))
+        swept.add(params["venue"])
+        listed, markets = events.get(params["venue"], (0, 0))
+        return {"totalElements": markets if "feature" in params else listed}
+
+    module.fetch_all = lambda host, path, query="": [] if query else served
+    module.read_seed = lambda path: seed
+    module.request = request
+    module.SWEEP_PAUSE_SECONDS = 0
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        code = module.compare_site(argparse.Namespace(site="http://x", seed="seed"))
+    return code, out.getvalue(), swept
+
+
+def site_checks(module):
+    seed = [({"name": "Open Club"}, [{"name": "Open Club"}])]
+    club = {"slug": "open-club", "name": "Open Club"}
+    square = {"slug": "square", "name": "Square"}
+    ended = {"slug": "ended", "name": "Ended Square"}
+    hall = {"slug": "hall", "name": "Hall"}
+    events = {"open-club": (5, 0), "square": (2, 2), "ended": (0, 0), "hall": (3, 1)}
+    checks = []
+
+    code, out, _ = run_site(module, [club, square, ended], events, seed)
+    checks.append(("market-only venues are not drift", code == 0))
+    checks.append(("a market-only venue is listed as such", "MARKET ONLY            Square" in out))
+    checks.append(("a venue whose markets ended is market-only", "MARKET ONLY            Ended Square" in out))
+
+    code, out, swept = run_site(module, [club, square, hall], events, seed)
+    checks.append(("a venue with a market and another event is drift", code == module.EXIT_DRIFT))
+    checks.append(("that venue is named as only on the site", "ONLY ON THE SITE       Hall" in out))
+    checks.append(("a seeded venue is never swept", swept == {"square", "hall"}))
+
+    code, out, _ = run_site(module, [square], events, seed)
+    checks.append(("a seeded venue missing from the site is still drift", code == module.EXIT_DRIFT))
+    checks.append(("it is named as missing", "MISSING FROM THE SITE  Open Club" in out))
+    return checks
+
+
 def main():
     argparse.ArgumentParser(description=__doc__.splitlines()[0]).parse_args()
     module = load()
@@ -100,6 +150,8 @@ def main():
 
     patched, out = run_enable(module, [source("closed-club", "Closed Club", False)], seed)
     checks.append(("a closed source alone enables nothing", patched == [] and "Nothing to do." in out))
+
+    checks.extend(site_checks(load()))
 
     failed = [name for name, ok in checks if not ok]
     for name in failed:
