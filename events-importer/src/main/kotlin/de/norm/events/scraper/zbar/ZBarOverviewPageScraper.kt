@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zbar
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -11,6 +12,7 @@ import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
+import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.selectFirstOrSelf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -32,6 +34,8 @@ import java.time.LocalDate
  * Latin one repeats the date and has no Latin letter, so it opens no night. A night whose heading opens
  * with `Private Veranstaltung` or `Geschlossene Gesellschaft` is a private booking, and is skipped.
  * A title that ends `w/ <name>` bills that comedian ([performerIn]); every other night names its acts only in prose.
+ * A struck (`<s>`) date beside `CANCELLED!`, `ABGESAGT` or `FÄLLT AUS` is a cancelled night; a date on the same line that is
+ * not struck stays scheduled ([cancelledDays], #5084).
  */
 class ZBarOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -74,6 +78,7 @@ class ZBarOverviewPageScraper {
                 .joinToString("\n\n")
                 .blankToNull()
         val start = CLOCK.find(line)?.destructured?.let { (clock, meridiem) -> parseClock(clock, meridiem.ifEmpty { null }) }
+        val cancelled = cancelledDays(dateLine)
         return dates.map { date ->
             ScrapedEvent(
                 title = title,
@@ -86,6 +91,7 @@ class ZBarOverviewPageScraper {
                 sourceId = EventSource.Z_BAR.dateTitleId(date, title),
                 ticketUrl = ticketUrl,
                 free = detectFree(priceNote = description),
+                status = if ((date.dayOfMonth to date.monthValue) in cancelled) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
                 promoters = blocks.firstNotNullOfOrNull(::promotersIn).orEmpty(),
                 artists = performerIn(title)
             )
@@ -162,8 +168,6 @@ class ZBarOverviewPageScraper {
     private companion object {
         val LATIN = Regex("""\p{IsLatin}""")
 
-        /** `21.10.2026`, `14.11,2026` (a typo), or `29.10.` sharing the year of a later date on the line. */
-        val DATE = Regex("""(?<!\d)(\d{1,2})\.(\d{1,2})(?:[.,](\d{4}))?(?![\d:])""")
         const val YEAR = 3
 
         /**
@@ -189,3 +193,16 @@ class ZBarOverviewPageScraper {
         val SCREENING_TITLE = Regex("""kurzfilm|\bfilm""", RegexOption.IGNORE_CASE)
     }
 }
+
+/** The day and month of each struck date on [dateLine], when the rest of the line says the night is off. */
+private fun cancelledDays(dateLine: Element): Set<Pair<Int, Int>> {
+    val struck = dateLine.select(STRUCK).joinToString(" ") { it.text() }
+    val rest = dateLine.clone().apply { select(STRUCK).remove() }.text()
+    if (struck.isBlank() || parseEventStatus(rest) != EventStatus.CANCELLED.name) return emptySet()
+    return DATE.findAll(struck).map { it.groupValues[1].toInt() to it.groupValues[2].toInt() }.toSet()
+}
+
+/** `21.10.2026`, `14.11,2026` (a typo), or `29.10.` sharing the year of a later date on the line. */
+private val DATE = Regex("""(?<!\d)(\d{1,2})\.(\d{1,2})(?:[.,](\d{4}))?(?![\d:])""")
+
+private const val STRUCK = "s, strike, del"

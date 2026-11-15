@@ -27,10 +27,7 @@ internal fun ScrapedEvent.buildEventEntity(
     // Doors ≤ start: a source listing them the wrong way round (SO36's "Einlass: 19:30, Beginn:
     // 19:00") has transposed the labels.
     val (doors, start) = orderDoorsBeforeStart(doorsTime, startTime)
-    // A venue with no status badge writes the cancellation into the title (#1493); the title decides
-    // only where the scraper found nothing.
-    val badge = EventStatus.parseOrDefault(status)
-    val badgeStatus = if (badge == EventStatus.SCHEDULED) parseTitleStatus(title) ?: badge.name else badge.name
+    val badgeStatus = statedStatus()
     // A "verlegt" badge sits on both ends of a move; which end this row is, only this boundary knows
     // (#1551).
     val notes = listOfNotNull(statusNote, title, subtitle, description, descriptionAlt)
@@ -107,6 +104,17 @@ internal fun ScrapedEvent.buildEventEntity(
         free = free || detectFree(pricePresale, priceBoxOffice, priceNote, storedTitle)
     ).withSpokenLanguages(spokenLanguages(storedTitle))
         .withSecondLanguage(publisherAlt(storedDescription, detected), existing)
+}
+
+/**
+ * The badge's status. A venue with no status badge writes the cancellation into the title (#1493) or the description (#5084);
+ * they decide only where the scraper found nothing. The description is read even where the licence withholds it: the status
+ * is a fact, not the prose.
+ */
+private fun ScrapedEvent.statedStatus(): String {
+    val badge = EventStatus.parseOrDefault(status)
+    if (badge != EventStatus.SCHEDULED) return badge.name
+    return parseTitleStatus(title) ?: parseTextCancellation(description, eventDate) ?: badge.name
 }
 
 /**

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.columbiahalle
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
@@ -17,6 +18,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.parseTextCancellation
 import de.norm.events.scraper.performersBilledWith
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -25,6 +27,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -41,7 +44,7 @@ import java.util.Locale
  * Each card is self-contained: the act (`h2`), up to two `h3` lines — a tour name, a support
  * line, or both, the support line second (#1953) — an optional `p.teaser` line, the
  * booking agency (`.veranstalter`), `Einlass`/`Beginn` times (`.zeit`), `VVK`/`AK` prices
- * (`.preis`), a ticket-shop link, a poster, an optional `.stoerer` status sticker, and the
+ * (`.preis`), a ticket-shop link, a poster, an optional `.stoerer` status sticker ([cardStatus]), and the
  * untruncated blurb in the collapsed `.bandinfo` panel — no detail page is fetched (the
  * "Kalender-Eintrag" links serve an iCal file, not HTML).
  *
@@ -149,13 +152,26 @@ class ColumbiahalleOverviewPageScraper {
             priceBoxOffice = boxOffice,
             priceNote = priceNote,
             soldOut = sticker.contains(SOLD_OUT_TEXT, ignoreCase = true) || cleanedTitle.soldOut,
-            status = parseEventStatus(sticker),
+            status = cardStatus(sticker, teaser, eventDate),
             // A relocation sticker names the new house: "in das huxleys verlegt".
             statusNote = sticker.ifBlank { null },
             artists = billedArtists(title, subtitleLines, teaser, titleType, eventType),
             promoters = listOfNotNull(card.textAt(".veranstalter a"))
         )
     }
+
+    /**
+     * The status the sticker states, else a notice in the teaser line. Bleachers' second night said "nicht
+     * stattfinden wird" in its teaser, under a sticker that read only "Zusammengelegt mit dem 09.11." (#5084).
+     */
+    private fun cardStatus(
+        sticker: String,
+        teaser: String?,
+        eventDate: LocalDate
+    ): String =
+        parseEventStatus(sticker).takeUnless { it == EventStatus.SCHEDULED.name }
+            ?: parseTextCancellation(teaser, eventDate)
+            ?: EventStatus.SCHEDULED.name
 
     /**
      * The acts a card bills. The `p.teaser` line carries a notice, a credit or a billing: a support

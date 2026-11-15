@@ -42,6 +42,5 @@ val Z_BAR_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the page prints one time per night", verified = "2026-10-21"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the page prints no end time", verified = "2026-10-21"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page states no ticket status", verified = "2026-10-21"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the page has no status, so a cancelled night can only disappear", verified = "2026-10-21")
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the page states no ticket status", verified = "2026-10-21")
     )

@@ -6,6 +6,7 @@ import de.norm.events.event.EventType
 import de.norm.events.event.PUBLISHER_ORIGIN
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.parseTextCancellation
 import de.norm.events.scraper.parseTitleStatus
 import java.time.LocalDate
 
@@ -36,13 +37,15 @@ private fun ScrapedEvent.withPublisherAltFromStored(stored: EventEntity): Scrape
 
 /**
  * [withGapsFromStored] for the text and the type the detail page owns. A cancellation the
- * listing's title carries is read before the stored title replaces it.
+ * listing's title or description carries is read before the stored text replaces it.
  */
 private fun ScrapedEvent.withOwnedTextFromStored(stored: EventEntity): ScrapedEvent {
-    val titleStatus = if (ScrapedField.TITLE in detailPageOwns && status == EventStatus.SCHEDULED.name) parseTitleStatus(title) else null
+    val scheduled = status == EventStatus.SCHEDULED.name
+    val titleStatus = if (ScrapedField.TITLE in detailPageOwns && scheduled) parseTitleStatus(title) else null
+    val textStatus = if (ScrapedField.DESCRIPTION in detailPageOwns && scheduled) parseTextCancellation(description, eventDate) else null
     return copy(
         title = keep(ScrapedField.TITLE, title, stored.title),
-        status = titleStatus ?: status,
+        status = titleStatus ?: textStatus ?: status,
         subtitle = keep(ScrapedField.SUBTITLE, subtitle, stored.subtitle),
         description = keep(ScrapedField.DESCRIPTION, description, stored.description),
         imageUrl = keep(ScrapedField.IMAGE, imageUrl, stored.imageUrl),
@@ -54,12 +57,12 @@ private fun ScrapedEvent.withOwnedTextFromStored(stored: EventEntity): ScrapedEv
 
 /**
  * [withGapsFromStored] for the status and the sold-out and free flags, which a listing states only
- * when it has a cue: `SCHEDULED` and `false` are its silence (#2542). A cancellation in the title is the
- * listing's word. Free yields to a listing price. `RELOCATED` stays out: its destination is stored
- * beside it, and this row cannot carry it.
+ * when it has a cue: `SCHEDULED` and `false` are its silence (#2542). A cancellation in the title or
+ * the description is the listing's word. Free yields to a listing price. `RELOCATED` stays out: its
+ * destination is stored beside it, and this row cannot carry it.
  */
 private fun ScrapedEvent.withStatusAndFlagsFromStored(stored: EventEntity): ScrapedEvent {
-    val silent = status == EventStatus.SCHEDULED.name && parseTitleStatus(title) == null
+    val silent = status == EventStatus.SCHEDULED.name && parseTitleStatus(title) == null && parseTextCancellation(description, eventDate) == null
     val keepsStatus = silent && stored.status in REFILLED_STATUSES
     return copy(
         status = if (keepsStatus) stored.status else status,

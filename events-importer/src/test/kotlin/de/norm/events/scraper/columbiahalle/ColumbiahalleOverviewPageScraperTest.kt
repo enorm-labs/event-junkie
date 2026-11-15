@@ -234,4 +234,14 @@ class ColumbiahalleOverviewPageScraperTest {
         stored.status shouldBe "RELOCATED"
         stored.relocatedTo shouldBe "huxleys"
     }
+
+    @Test
+    fun `a notice in the teaser cancels its night and not the twin it moves the tickets to`() {
+        // The page saved 2026-10-06: Bleachers' second night says "nicht stattfinden wird" in its teaser, and the
+        // sticker only "Zusammengelegt mit dem 09.11." (#5084).
+        val nights = scraper.scrape(fixtureDocument("columbiahalle/columbiahalle-overview-de-pair.html", baseUrl), baseUrl)
+
+        nights.single { it.sourceId == "columbiahalle:9740" }.status shouldBe "CANCELLED"
+        nights.single { it.sourceId == "columbiahalle:9739" }.status shouldBe "SCHEDULED"
+    }
 }
