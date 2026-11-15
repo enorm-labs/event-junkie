@@ -141,8 +141,8 @@ class DelphiProgrammePageScraperTest {
     }
 
     @Test
-    fun `types a comedy tour from its Comedy label and bills no act`() {
-        // Event 12701, verbatim. Only a concert bills acts, so the title's `- <tour>` split never runs.
+    fun `types a comedy tour from its Comedy label and bills its performer (#5120)`() {
+        // Event 12701, verbatim.
         val tour =
             scrapedRow(
                 title = "Jordan Prince - Royal Highness Comedy Tour 2027",
@@ -153,7 +153,7 @@ class DelphiProgrammePageScraperTest {
                 label = "Comedy & Kabarett"
             )
         tour.eventType shouldBe EventType.COMEDY.name
-        tour.artists.shouldBeEmpty()
+        tour.artists.map { it.name to it.role } shouldBe listOf("Jordan Prince" to ArtistRole.HEADLINER)
     }
 
     @Test

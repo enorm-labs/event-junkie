@@ -47,10 +47,10 @@ import java.time.LocalDateTime
  * — so they drive the event type. Only the three naming a genre ([MUSIC_GENRE_LABELS]) are also
  * stored as one. A row without a label is typed from its title and teaser ([unlabelledRowType]).
  *
- * Only a concert bills acts. Its line-up comes from its `p.stabText` credit line, where the row has
- * one: the title there is often the programme (`Kunstlieder aus Lateinamerika`), not the act (#2899).
- * Any other row bills nothing. Its title names a production (`Happy Jubilee – Eine Tanzrevue`), not
- * a performer, and its credit line names the company (#3327).
+ * A concert bills its line-up from its `p.stabText` credit line, where the row has one: the title there
+ * is often the programme (`Kunstlieder aus Lateinamerika`), not the act (#2899). A comedy row bills the
+ * performer its title names. Any other row bills nothing. Its title names a production (`Happy Jubilee –
+ * Eine Tanzrevue`), not a performer, and its credit line names the company (#3327).
  *
  * @see DelphiProductionPageScraper for the per-production page (full description, bigger poster).
  * @see DelphiWebsiteImporter for the HTTP fetch orchestrator.
@@ -152,20 +152,37 @@ class DelphiProgrammePageScraper {
             priceNote = record?.priceNote,
             free = record?.free == true,
             soldOut = cleanedTitle.soldOut,
-            artists =
-                if (eventType == EventType.CONCERT.name) {
-                    creditedActs(row, teaser).ifEmpty {
-                        if (isCandlelightProgramme(title) || isFilmConcert(teaser)) {
-                            emptyList()
-                        } else {
-                            buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType) + guestActOf(title)
-                        }
-                    }
-                } else {
-                    emptyList()
-                }
+            artists = actsOf(row, title, teaser, eventType)
         )
     }
+
+    /** The acts a row bills: a concert's line-up, or the performer a comedy title names. */
+    private fun actsOf(
+        row: Element,
+        title: String,
+        teaser: String?,
+        eventType: String?
+    ): List<ScrapedArtist> =
+        when (eventType) {
+            EventType.CONCERT.name -> {
+                creditedActs(row, teaser).ifEmpty {
+                    if (isCandlelightProgramme(title) || isFilmConcert(teaser)) {
+                        emptyList()
+                    } else {
+                        buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType) + guestActOf(title)
+                    }
+                }
+            }
+
+            // `Jordan Prince - Royal Highness Comedy Tour 2027` bills Jordan Prince (#5120).
+            EventType.COMEDY.name -> {
+                buildArtistsForEventType(title, subtitle = null, eventType = eventType, description = teaser)
+            }
+
+            else -> {
+                emptyList()
+            }
+        }
 
     /**
      * The acts a row's `p.stabText` credit line bills, in order: `Ensemble Utak | Hannah Dienes-Williams`.
