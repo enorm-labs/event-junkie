@@ -6,6 +6,7 @@ package de.norm.events.genretag
  * Only the [GENRE_SYNONYMS] vocabulary counts, one word or two adjacent words at a time, so prose never mints a tag.
  * A sentence loses everything from a support or guest marker on, so "support for a metal band" tags nothing.
  * A key that is also an everyday word ([AMBIGUOUS_IN_PROSE]) is skipped, and so is a quoted title: "Whiskey Tango Foxtrot" is an album, not Tango.
+ * A key that is also a plain adjective ([GENRE_ONLY_IN_MUSIC_CONTEXT]) counts only beside a genre or a music word (#5089).
  * A `Sounds like:` line lists bands, so only its items made of genre words count: `70s Disco` does, `Panic! At The Disco` does not (#4359).
  */
 fun descriptionGenres(
@@ -48,14 +49,18 @@ private fun referenceListGenres(list: String): List<String> =
                 .map(::lookupKey)
                 .filter { it.isNotEmpty() }
                 .all { it in GENRE_SYNONYMS || it in LIST_DESCRIPTORS || DECADE.matches(it) }
-        }.flatMap { sentenceGenres(it) }
+        }.flatMap { sentenceGenres(it, genreList = true) }
 
 /**
  * Two adjacent words first, so "hip hop" is one genre and "punk rock" is not also Rock.
  * A pair with a function word is never a genre: "Reise in die Tausend" is not Indie.
+ * Every item of a [genreList] is genre words, so a contextual key there needs no music word beside it.
  */
-private fun sentenceGenres(sentence: String): List<String> {
-    val words = sentence.split(WORD_BREAK).map(::lookupKey).filter { it.isNotEmpty() }
+private fun sentenceGenres(
+    sentence: String,
+    genreList: Boolean = false
+): List<String> {
+    val words = sentence.split(WORD_BREAK).flatMap(::wordKeys).filter { it.isNotEmpty() }
     val genres = mutableListOf<String>()
     var i = 0
     while (i < words.size) {
@@ -68,14 +73,86 @@ private fun sentenceGenres(sentence: String): List<String> {
             genres += pair
             i += 2
         } else {
-            vocabularyGenre(words[i])?.let { genres += it }
+            vocabularyGenre(words[i])
+                ?.takeIf { genreList || words[i] !in GENRE_ONLY_IN_MUSIC_CONTEXT || inMusicContext(words, i) }
+                ?.let { genres += it }
             i++
         }
     }
     return genres
 }
 
-private fun vocabularyGenre(key: String): String? = if (key in AMBIGUOUS_IN_PROSE) null else GENRE_SYNONYMS[key]
+/**
+ * The lookup keys of one word. A hyphenated compound of a contextual key gives that key and the rest: `Industrial-Techno`, `Industrial-Pioniere`.
+ * The first key keeps its hyphen, which marks it as music.
+ */
+private fun wordKeys(word: String): List<String> {
+    val compound = CONTEXTUAL_COMPOUND.matchEntire(word) ?: return listOf(lookupKey(word))
+    return listOf(compound.groupValues[1].lowercase() + "-", lookupKey(compound.groupValues[2]))
+}
+
+/**
+ * A genre key or a music word is one of the two words on either side of [index], an `and` not counted.
+ * Two, so a list item the vocabulary lacks does not hide its neighbour: "Post-Punk, Batcave, Industrial".
+ */
+private fun inMusicContext(
+    words: List<String>,
+    index: Int
+): Boolean {
+    val before = words.subList(0, index).filter { it !in LIST_CONNECTIVES }.takeLast(CONTEXT_WINDOW)
+    val after = words.subList(index + 1, words.size).filter { it !in LIST_CONNECTIVES }.take(CONTEXT_WINDOW)
+    return (before + after + after.zipWithNext { a, b -> a + b }).any { it in GENRE_SYNONYMS || it in MUSIC_CONTEXT_WORDS }
+}
+
+/** How many words on each side of a contextual key [inMusicContext] reads. */
+private const val CONTEXT_WINDOW = 2
+
+private fun vocabularyGenre(key: String): String? =
+    when {
+        key.endsWith("-") -> GENRE_SYNONYMS[key.dropLast(1)]
+        key in AMBIGUOUS_IN_PROSE -> null
+        else -> GENRE_SYNONYMS[key]
+    }
+
+/** Vocabulary keys that prose also uses as a plain adjective: "the Steel City's industrial ghosts". */
+private val GENRE_ONLY_IN_MUSIC_CONTEXT = setOf("industrial")
+
+/** A hyphenated compound that starts with a [GENRE_ONLY_IN_MUSIC_CONTEXT] key. */
+private val CONTEXTUAL_COMPOUND = Regex("""(industrial)-(\p{L}.*)""", RegexOption.IGNORE_CASE)
+
+/** Words that put a contextual key in music: a music noun ("industrial sound"), or a genre the vocabulary lacks ("Noise, Industrial, Drone"). */
+private val MUSIC_CONTEXT_WORDS =
+    setOf(
+        "music",
+        "musik",
+        "sound",
+        "sounds",
+        "band",
+        "bands",
+        "act",
+        "acts",
+        "project",
+        "projekt",
+        "scene",
+        "szene",
+        "beats",
+        "grooves",
+        "textures",
+        "electronics",
+        "elektronik",
+        "touches",
+        "influences",
+        "elements",
+        "subculture",
+        "subcultures",
+        "noise",
+        "drone",
+        "electro",
+        "grime"
+    )
+
+/** Words that join the items of a genre list. */
+private val LIST_CONNECTIVES = setOf("and", "und", "&")
 
 /** Words that join into a key only by accident: `in` + `die` is `indie`, `go` + `a` is `goa`. */
 private val PAIR_FUNCTION_WORDS = setOf("in", "die", "go", "a")

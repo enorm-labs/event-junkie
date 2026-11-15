@@ -34,6 +34,43 @@ class DescriptionGenresTest {
     }
 
     @Test
+    fun `industrial in prose is an adjective, not a genre`() {
+        // #5089: feeble little horse at Kantine am Berghain, a noise-pop act, was tagged Industrial.
+        descriptionGenres("A study of a young woman born in the shadow of the Steel City’s industrial ghosts.").shouldBeEmpty()
+        descriptionGenres("INDUSTRIAL GHOSTS OF THE STEEL CITY").shouldBeEmpty()
+        descriptionGenres("Nach dem Studium der Industrial Engineering in Berlin wurde sie Musikerin.").shouldBeEmpty()
+        descriptionGenres("Sie spielen in einer alten Industrial Halle.").shouldBeEmpty()
+        descriptionGenres("Their sound is post-industrial.").shouldBeEmpty()
+    }
+
+    @Test
+    fun `industrial beside a genre or a music word is a genre`() {
+        descriptionGenres("A night of industrial techno") shouldBe listOf("Industrial", "Techno")
+        descriptionGenres("A night of INDUSTRIAL TECHNO") shouldBe listOf("Industrial", "Techno")
+        descriptionGenres("A night of Industrial-Techno") shouldBe listOf("Industrial", "Techno")
+        descriptionGenres("Pioneers of industrial music") shouldBe listOf("Industrial")
+        descriptionGenres("Twelve industrial metal songs and gale-force industrial pop") shouldBe listOf("Industrial", "Metal", "Pop")
+        descriptionGenres("Industrial noise from Leeds") shouldBe listOf("Industrial")
+        descriptionGenres("A fragile art folk with industrial touches") shouldBe listOf("Folk", "Industrial")
+        descriptionGenres("Noise, Industrial, Drone") shouldBe listOf("Industrial")
+        descriptionGenres("Drawing influence from 90s grunge and electro to industrial and dance-punk") shouldBe listOf("Industrial")
+        descriptionGenres("DJ-Set: Post-Punk, Batcave, Industrial, Electro") shouldBe listOf("Post-Punk", "Industrial")
+        descriptionGenres("The fusion of metal, industrial, goth and pop") shouldBe listOf("Metal", "Industrial", "Pop")
+        descriptionGenres("Fractured new wave, and industrial grime") shouldBe listOf("New Wave", "Industrial")
+        descriptionGenres("Raw electronic energy and industrial/post punk textures") shouldBe listOf("Electronic", "Industrial", "Post-Punk")
+        descriptionGenres("Sounds like: Industrial / Ambient") shouldBe listOf("Industrial", "Ambient")
+    }
+
+    @Test
+    fun `industrial in a German sentence counts beside a genre or a music word`() {
+        descriptionGenres("Er gilt als eine der prägenden Kräfte hinter dem frühen Industrial Rock.") shouldBe listOf("Industrial", "Rock")
+        descriptionGenres("Der Noise früher europäischer Industrial-Pioniere") shouldBe listOf("Industrial")
+        descriptionGenres("Ein Abend zwischen Industrial und Noise") shouldBe listOf("Industrial")
+        descriptionGenres("Eine Mischung aus Industrial Grooves und harten Riffs") shouldBe listOf("Industrial")
+        descriptionGenres("Mit ihrem Projekt machen Planta Industrial bereits im Titel deutlich, worum es geht.").shouldBeEmpty()
+    }
+
+    @Test
     fun `a genre word inside a quoted title is skipped`() {
         descriptionGenres("Kingstar präsentiert: \"Whiskey Tango Foxtrot”, zurück zum Punk") shouldBe listOf("Punk")
         descriptionGenres("Ihr Album „Soul Kitchen“ ist Rock") shouldBe listOf("Rock")
