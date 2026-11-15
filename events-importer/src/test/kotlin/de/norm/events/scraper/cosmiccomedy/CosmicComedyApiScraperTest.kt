@@ -167,6 +167,21 @@ class CosmicComedyApiScraperTest {
     }
 
     @Test
+    fun `names the performer from the title on a Solo Show too (#5123)`() {
+        // Event 3758: the API's title and categories, verbatim.
+        val json =
+            """{"events":[{"slug":"juampi-gonzalez-oveja-negra-%c2%b7-berlin","start_date":"2026-11-22 20:00:00",""" +
+                """"title":"Juampi Gonz\u00e1lez &#8211; Oveja Negra",""" +
+                """"categories":[{"name":"Solo Show"},{"name":"Spanish Language"},{"name":"Spanish Show"}]}]}"""
+        scraper
+            .scrapePage(json)
+            .events
+            .single()
+            .artists
+            .map { it.name } shouldBe listOf("Juampi González")
+    }
+
+    @Test
     fun `takes the ticket link from the event's website before the embedded widget`() {
         // One event links its promoter's own shop; the rest fall back to the Universe listing.
         event("cosmic_comedy:turbopaolo-il-poliziotto-del-formaggio-2026").ticketUrl shouldBe

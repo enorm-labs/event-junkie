@@ -81,7 +81,7 @@ class CosmicComedyApiScraper {
     }
 
     /**
-     * The performer, for nights filed as a `Comedy Special` — the club's marker for a named act
+     * The performer, for nights filed as a `Comedy Special` or `Solo Show` — the club's markers for a named act
      * rather than the house showcase. Those titles are all `"<Performer> – <Show>"`, so the part
      * before the dash is the act; a special without one yields no artist rather than a guess. The
      * recurring showcase and open-mic nights name no performer in the title; [billedActs] reads theirs.
@@ -134,9 +134,9 @@ class CosmicComedyApiScraper {
             .map { ScrapedArtist(name = it) }
     }
 
-    /** Whether [categories] mark a named act: a [SPECIAL_CATEGORY] that is not also a showcase. */
+    /** Whether [categories] mark a named act: a [PERFORMER_CATEGORIES] entry that is not also a showcase. */
     private fun namesAPerformer(categories: List<String>): Boolean =
-        categories.any { it.equals(SPECIAL_CATEGORY, ignoreCase = true) } &&
+        categories.any { category -> PERFORMER_CATEGORIES.any { it.equals(category, ignoreCase = true) } } &&
             categories.none { it.equals(SHOWCASE_CATEGORY, ignoreCase = true) }
 
     /**
@@ -154,8 +154,8 @@ class CosmicComedyApiScraper {
                 ?.let { "$UNIVERSE_EVENT_BASE$it" }
 }
 
-/** The category the club puts on a night with a named act rather than its house showcase. */
-private const val SPECIAL_CATEGORY = "Comedy Special"
+/** The categories the club puts on a night with a named act rather than its house showcase (#5123). */
+private val PERFORMER_CATEGORIES = listOf("Comedy Special", "Solo Show")
 
 /** The category of the club's recurring house night, which names a format and never an act. */
 private const val SHOWCASE_CATEGORY = "Showcase"
