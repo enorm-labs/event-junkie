@@ -66,6 +66,11 @@ val TRESOR_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.START_TIME, "a night without set times names no clock at all", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; every listing is a club night", verified = "2026-09-20"),
         AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme", verified = "2026-09-30"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "a collective is named only in the title, and read only where the title marks its host: hosted by, presents, invites, meets",
+            verified = "2026-11-15",
+            issue = 5080
+        ),
         houseGenre = "Techno"
     )

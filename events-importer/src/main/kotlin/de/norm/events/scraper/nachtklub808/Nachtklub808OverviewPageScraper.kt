@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -74,7 +75,7 @@ class Nachtklub808OverviewPageScraper {
             ticketUrl = node.value("url").ifBlank { null },
             soldOut = cleanedTitle.soldOut,
             artists = artistsOf(node.value("djs"))
-        )
+        ).withTitleCrews(NACHTKLUB_808_NAMES)
     }
 
     /** The weekdays and hours the club opens, from the `NightClub` JSON-LD's `openingHoursSpecification`. */
@@ -113,3 +114,5 @@ class Nachtklub808OverviewPageScraper {
         val HOST = Regex("""\(\s*host\s*\)""", RegexOption.IGNORE_CASE)
     }
 }
+
+private val NACHTKLUB_808_NAMES = setOf("808", "808 Nachtklub")

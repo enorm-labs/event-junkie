@@ -38,6 +38,11 @@ val ZENNER_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors times", verified = "2026-08-25"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue publishes no sold-out state", verified = "2026-08-25"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue publishes no per-event pages", verified = "2026-10-02"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "a collective is named only in the title, and read only where the title marks its host: hosted by, presents, invites, meets",
+            verified = "2026-11-15",
+            issue = 5080
+        ),
         houseGenre = "Electronic"
     )

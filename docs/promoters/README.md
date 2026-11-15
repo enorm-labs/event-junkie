@@ -63,6 +63,10 @@ the venue prints and a reader may search for. The kind is what a later enrichmen
 whether a row gets a description at all. Only `isNonPromoterName` refuses a credit for its kind. metal.de is the one
 media partner on its list (#2653).
 
+**Ten club sources credit the crew a title names** (#5080): `hosted by`, `presents`, `invites`, `meets`, and a few forms of one club
+only. Each crew arrives with no kind and no `reviewed_at`, so `promoter-duplicates.py --unreviewed` lists it. A person then gives it
+a row here, usually as a `collective`.
+
 **A row that no event credits is deleted.** `OrphanPromoterSweep` deletes it each night once the row is a day old.
 It keeps a row with a description or an image, because a person wrote that.
 

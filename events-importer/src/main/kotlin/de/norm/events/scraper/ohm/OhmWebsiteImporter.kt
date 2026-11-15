@@ -38,6 +38,11 @@ val OHM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the programme page carries no price", verified = "2026-08-25"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the programme page links no ticket shop", verified = "2026-08-25"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no categories; every night is a DJ programme", verified = "2026-09-30"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "a collective is named only in the title, and read only where the title marks its host or pairs two crews",
+            verified = "2026-11-15",
+            issue = 5080
+        ),
         houseGenre = "Techno"
     )

@@ -15,10 +15,12 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.crewPairFromTitle
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.headlinersFromTitle
+import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
@@ -29,6 +31,7 @@ import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.withTitleCrews
 import de.norm.events.scraper.wpRendered
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -220,10 +223,21 @@ internal class Bogen47ApiScraper(
                             artistsFrom(title, description, eventType)
                         },
                     promoters = organizers(acf.stringOrNull("event_organizer"))
-                ),
+                ).withCrewsOfFitzroy(),
             featuredMediaId = post.path("featured_media").asLong(0L).takeIf { it > 0 }
         )
     }
+
+    /**
+     * Fitzroy leaves `event_organizer` empty and names a night's crews in its title, `Bruits x Scam` (#5080). LARK credits
+     * its organiser, so only Fitzroy reads the title.
+     */
+    private fun ScrapedEvent.withCrewsOfFitzroy(): ScrapedEvent =
+        if (eventSource != EventSource.FITZROY) {
+            this
+        } else {
+            withTitleCrews(FITZROY_NAMES, hostingCrewsFromTitle(title, FITZROY_NAMES).ifEmpty { crewPairFromTitle(title, FITZROY_NAMES) })
+        }
 
     /**
      * The acts billed in a concert title, which names the act. A
@@ -474,3 +488,5 @@ internal fun organizers(field: String?): List<String> =
 
 /** A comma, a spaced `and` or a spaced `x` between two organisers. */
 private val ORGANIZER_SEPARATOR = Regex("""\s*,\s*|\s+(?:and|x)\s+""", RegexOption.IGNORE_CASE)
+
+private val FITZROY_NAMES = setOf("Fitzroy")

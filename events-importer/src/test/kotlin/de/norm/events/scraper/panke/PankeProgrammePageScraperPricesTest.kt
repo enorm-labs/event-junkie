@@ -72,4 +72,10 @@ class PankeProgrammePageScraperPricesTest {
     fun `takes the first price line of several`() {
         parsePankePrice(listOf("Doors 19:00", "Tickets: 20€", "ENTRY 10 EURO")).presale shouldBe BigDecimal("20")
     }
+
+    @Test
+    fun `credits the crew a presents title names`() {
+        // #5080
+        events.single { it.title.startsWith("Sherryaeri presents:") }.promoters shouldBe listOf("Sherryaeri")
+    }
 }

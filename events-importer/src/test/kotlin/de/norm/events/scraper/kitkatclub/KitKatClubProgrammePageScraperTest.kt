@@ -138,4 +138,10 @@ class KitKatClubProgrammePageScraperTest {
     fun `returns no events for a page without a programme`() {
         scraper.scrape(Jsoup.parse("<html><body></body></html>", sourceUrl), sourceUrl).shouldBeEmpty()
     }
+
+    @Test
+    fun `credits the crew a presents title names`() {
+        // #5080
+        night("2026-10-05").promoters shouldBe listOf("Electric Monday")
+    }
 }

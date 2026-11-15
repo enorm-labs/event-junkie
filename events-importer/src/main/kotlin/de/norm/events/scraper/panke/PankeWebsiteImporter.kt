@@ -62,5 +62,10 @@ val PANKE_LIMITATIONS =
             "most nights print no figure and sell on Resident Advisor; a figure in a sentence, with no label opening its line, is prose",
             verified = "2026-10-13"
         ),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13")
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "a collective is named only in the title, and read only where the title marks its host: hosted by, presents, invites, meets",
+            verified = "2026-11-15",
+            issue = 5080
+        )
     )

@@ -8,7 +8,9 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.crewPairFromTitle
 import de.norm.events.scraper.dateTitleId
+import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -18,6 +20,7 @@ import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
+import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -97,7 +100,7 @@ class OhmOverviewPageScraper(
             sourceId = EventSource.OHM.dateTitleId(eventDate, title),
             soldOut = cleanedTitle.soldOut,
             artists = parseLineup(item, title)
-        )
+        ).withTitleCrews(OHM_NAMES, hostingCrewsFromTitle(title, OHM_NAMES).ifEmpty { crewPairFromTitle(title, OHM_NAMES) })
     }
 
     /**
@@ -240,3 +243,6 @@ private val LIVE_ANNOTATION = Regex("""\([^()]*\blive\b[^()]*\)""", RegexOption.
 
 /** The year-less `DD/MM` date rendering, tolerating single-digit parts. */
 private val DAY_MONTH_PATTERN = Regex("""(\d{1,2})\s*/\s*(\d{1,2})""")
+
+/** Tresor shares the building and co-hosts nights here, so it is the house too (#5080). */
+private val OHM_NAMES = setOf("OHM", "Tresor")

@@ -293,4 +293,12 @@ class VoidClubOverviewPageScraperTest {
             appender.stop()
         }
     }
+
+    @Test
+    fun `credits the crews a pair title names, but not the club itself or the edition`() {
+        // #5080: every VOID night is billed by its crews.
+        events.single { it.title == "STOIC MUSIC X BREAKOUT DNB" }.promoters shouldBe listOf("STOIC MUSIC", "BREAKOUT DNB")
+        events.single { it.title == "VOID X VANTA.NYX VI" }.promoters shouldBe listOf("VANTA.NYX")
+        events.single { it.title == "STOIC MUSIC PRES. OVERVIEW BERLIN" }.promoters shouldBe listOf("STOIC MUSIC")
+    }
 }

@@ -45,4 +45,11 @@ class Nachtklub808OverviewPageScraperTest {
     fun `yields nothing for a page without the island`() {
         Nachtklub808OverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    @Test
+    fun `credits the presenting crew, and drops the club from a co-hosted credit`() {
+        // #5080
+        events.single { it.title == "Heartbreak Pres. Official Ufo361 Aftershowparty" }.promoters shouldBe listOf("Heartbreak")
+        events.single { it.title == "808 X Bout It pres. HEARTBREAK" }.promoters shouldBe listOf("Bout It")
+    }
 }

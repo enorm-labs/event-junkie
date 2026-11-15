@@ -128,4 +128,13 @@ class RenateOverviewPageScraperStartTimeTest {
             """.trimIndent()
         scrapeOne(html).startTime shouldBe LocalTime.of(21, 15)
     }
+
+    @Test
+    fun `credits each floor's crew a Klubnacht title names, less the DJs the line-up bills`() {
+        // #5080: `Mara Menace` is a billed DJ, so only the crews remain. A host who `invites…` and plays nowhere stays.
+        events.single { it.title == "Renate Klubnacht w/ SNC, Mara Menace & Loveshack" }.promoters shouldBe listOf("SNC", "Loveshack")
+        events.single { it.title.startsWith("Renate Klubnacht w/ Black.Is") }.promoters shouldBe listOf("Black.Is", "Moses Joses")
+        events.single { it.title.startsWith("Renate Klubnacht w/ HOUSE OF HIGHLIFE") }.promoters shouldBe
+            listOf("HOUSE OF HIGHLIFE", "ELSE", "SOUL EXPRESS")
+    }
 }

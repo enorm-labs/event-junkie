@@ -174,4 +174,12 @@ class TresorOverviewPageScraperTest {
     fun `returns no events for a page without a listing`() {
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    @Test
+    fun `credits the crew a hosted-by title names, and none where the house or its floor invites an act`() {
+        // #5080: the crew is the night's promoter. The line-up bills other DJs, so the host is not an act here.
+        events.single { it.title == "Tresor New Faces hosted by E2NMN" }.promoters shouldBe listOf("E2NMN")
+        events.first { it.title.startsWith("Globus Invites") }.promoters shouldBe emptyList()
+        events.first { it.title.startsWith("Tresor invites") }.promoters shouldBe emptyList()
+    }
 }

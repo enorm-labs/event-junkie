@@ -176,7 +176,8 @@ val FITZROY_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue types every event Party, a live show included", verified = "2026-10-01"),
         AcceptedLimitation(
             LimitedAspect.PROMOTERS,
-            "the organiser field is empty on every event; a collective is named only in the title",
-            verified = "2026-10-01"
+            "the organiser field is empty on every event; a collective is named only in the title, and read only where it marks its host or pairs two crews",
+            verified = "2026-11-15",
+            issue = 5080
         )
     )

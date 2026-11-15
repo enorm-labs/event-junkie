@@ -10,7 +10,9 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.crewPairFromTitle
 import de.norm.events.scraper.dateTitleId
+import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -19,6 +21,7 @@ import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -128,7 +131,7 @@ class VoidClubOverviewPageScraper(
             free = ticketLink?.text()?.startsWith("Free", ignoreCase = true) == true,
             room = roomOf(card),
             artists = parseLineup(billings.firstOrNull())
-        )
+        ).withTitleCrews(VOID_CLUB_NAMES, hostingCrewsFromTitle(title, VOID_CLUB_NAMES).ifEmpty { crewPairFromTitle(title, VOID_CLUB_NAMES) })
     }
 
     /** Whether a `.void-event-lineup` paragraph opens with a billing label rather than being a note. */
@@ -294,3 +297,6 @@ class VoidClubOverviewPageScraper(
         val MEMBERS_AS_ALIAS = Regex("""\S.*?\s(?:&|and|und|b2b|x)\s.*?\S\s+as\s+(\S.*)""", RegexOption.IGNORE_CASE)
     }
 }
+
+/** Every night here is billed by its crews, so a bare `INFECTED x TORQUE` names two of them (#5080). */
+private val VOID_CLUB_NAMES = setOf("VOID", "VOID Club")
