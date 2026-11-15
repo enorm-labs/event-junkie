@@ -557,6 +557,10 @@ class NonArtistNamesTest {
         isNonArtistName("3 Bands") shouldBe true
         isNonArtistName("12 Künstlerinnen") shouldBe true
         isNonArtistName("2 Many DJs") shouldBe false
+        isNonArtistName("DJS") shouldBe true
+        isNonArtistName("DJ's") shouldBe true
+        isNonArtistName("DJ") shouldBe false
+        isNonArtistName("Sound Metaphors DJs") shouldBe false
         isNonArtistName("2raumwohnung") shouldBe false
         isNonArtistName("UFO 361") shouldBe false
     }

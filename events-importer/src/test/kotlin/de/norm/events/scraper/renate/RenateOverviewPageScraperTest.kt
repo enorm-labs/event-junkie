@@ -274,6 +274,26 @@ class RenateOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a bare DJS line that heads a floor's acts`() {
+        // The 2026-09-03 RBL night stored `DJS` as its first GARDEN act; that page is gone, so this is cut to the shape.
+        val html =
+            """
+            <div class="prog-row">
+              <div class="prog-day">Thu.</div><div class="prog-date">03.09.</div>
+              <div class="prog-title">Renate Klubnacht + Open Air (Free Entry) x RBL</div>
+              <div class="prog-text">
+                <p><strong>GARDEN (from 16:00)</strong></p>
+                <p>DJS</p>
+                <p>LCAO</p>
+                <p>MATTE DTR</p>
+              </div>
+            </div>
+            """.trimIndent()
+        val night = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        stageOf(night, "GARDEN") shouldContainExactly listOf("LCAO", "MATTE DTR")
+    }
+
+    @Test
     fun `infers the year from the weekday and keeps the listing chronological`() {
         events.map { it.eventDate } shouldBe events.map { it.eventDate }.sorted()
         events.first().eventDate shouldBe LocalDate.of(2026, 8, 1)

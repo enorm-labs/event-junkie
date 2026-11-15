@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.stripArtistSuffix
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
@@ -120,6 +121,12 @@ class TresorOverviewPageScraperTest {
             "Listening Session - Borderland (Tresor.262)",
             "Globus Listening Session: The Fear Ratio 'Slinky'"
         ).forEach { splitActs(it).shouldBeEmpty() }
+    }
+
+    @Test
+    fun `a format note after a dash leaves no dash on the stored act`() {
+        // The 2026-09-19 Klubnacht's Globus slot; the dash stays here and comes off at sync.
+        splitActs("Ben Sims b2b Stevie Cox - All night long").map { stripArtistSuffix(it) } shouldBe listOf("Ben Sims", "Stevie Cox")
     }
 
     @Test
