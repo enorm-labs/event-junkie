@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
@@ -19,7 +20,14 @@ class KarakasCalendarScraperTest {
 
     private val scriptJs = "karakas/karakas-calendar-script.js"
 
-    private fun scrape() = scraper.scrape(fixtureText(scriptJs), pageUrl, EventType.COMEDY)!!
+    private val linkedTicketsJs = "karakas/karakas-calendar-script-2026-11.js"
+
+    private fun scrape(script: String = scriptJs) = scraper.scrape(fixtureText(script), pageUrl, EventType.COMEDY)!!
+
+    private fun linkedTicketsEvent(
+        date: LocalDate,
+        title: String
+    ) = scrape(linkedTicketsJs).single { it.eventDate == date && it.title.startsWith(title) }
 
     @Test
     fun `scrape reads every calendar entry`() {
@@ -50,6 +58,56 @@ class KarakasCalendarScraperTest {
 
         event.ticketUrl!! shouldStartWith "https://www.eventbrite.co.uk/e/dark-comedy-open-mic-262"
         event.description!! shouldNotContain "Tickets"
+    }
+
+    @Test
+    fun `scrape reads the ticket link from a LINK entity on the word Tickets (#5105)`() {
+        val event = linkedTicketsEvent(LocalDate.of(2026, 11, 15), "BAK14 DESI HINGLISH SHOW")
+
+        event.ticketUrl!! shouldStartWith "https://www.eventbrite.de/e/bak14-desi-hinglish-show-tickets-2003895179425"
+        event.description.orEmpty() shouldNotContain "Tickets"
+    }
+
+    @Test
+    fun `scrape reads a LINK entity that starts mid-block on its own line`() {
+        val event = linkedTicketsEvent(LocalDate.of(2026, 11, 25), "Sweetspot Comedy")
+
+        event.ticketUrl!! shouldStartWith "https://rausgegangen.de/en/events/sweetspot-comedy-14/"
+        event.description!! shouldEndWith "\nDie Gastgeber sind Kawus Kalantar und Sinan Kutscher."
+    }
+
+    @Test
+    fun `scrape picks the LINK entity on the word Tickets, not the first one in the description`() {
+        val event = linkedTicketsEvent(LocalDate.of(2027, 1, 9), "Chaos Kittens")
+
+        event.ticketUrl!! shouldStartWith "https://www.eventbrite.de/e/chaos-kittens-a-feral-open-mic-tickets-2004182258085"
+        event.description!! shouldStartWith "Welcome to the open mic"
+        event.description shouldNotContain "Tickets"
+    }
+
+    @Test
+    fun `scrape drops a stray scheme in front of a LINK entity's URL`() {
+        val event = linkedTicketsEvent(LocalDate.of(2026, 11, 16), "This Could Get Awkward")
+
+        event.ticketUrl!! shouldStartWith "https://www.eventbrite.de/e/this-could-get-awkward-english-stand-up-comedy"
+        event.description.orEmpty() shouldNotContain "Tickets"
+    }
+
+    @Test
+    fun `scrape reads the ticket line from the second line of a block`() {
+        val event = linkedTicketsEvent(LocalDate.of(2026, 11, 22), "La Parranda standup")
+
+        event.ticketUrl!! shouldStartWith "https://www.eventbrite.co.uk/e/la-parranda-standup-en-karakas-tickets-2003529049320"
+        event.description!! shouldEndWith "\nLatinos, hispanos, iberoamigos...todos son bienvenidos para echar cotorreo y desmadre en esta noche de comedia!"
+        event.description shouldNotContain "Tickets"
+    }
+
+    @Test
+    fun `scrape still reads a ticket URL written into the text`() {
+        val event = linkedTicketsEvent(LocalDate.of(2026, 11, 20), "FRIDAY FUNNIES")
+
+        event.ticketUrl!! shouldStartWith "https://www.eventbrite.co.uk/e/friday-funnies-english-comedy-showcase"
+        event.description.orEmpty() shouldNotContain "Tickets"
     }
 
     @Test
