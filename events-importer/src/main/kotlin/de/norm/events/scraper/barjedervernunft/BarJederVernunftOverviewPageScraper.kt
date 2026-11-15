@@ -106,7 +106,8 @@ class BarJederVernunftOverviewPageScraper(
             return null
         }
 
-        val title = eventNode.stringOrNull("performer") ?: card.textAt(".event-artist")
+        // The CMS can glue a name with a non-breaking space (`The Tiger Lillies`), which `\s` and the blurb's plain space do not match.
+        val title = eventNode.stringOrNull("performer")?.replace(NO_BREAK_SPACE, ' ') ?: card.textAt(".event-artist")
         if (title.isNullOrBlank()) {
             logger.warn { "Calendar card has no performer, skipping" }
             return null
@@ -176,5 +177,6 @@ class BarJederVernunftOverviewPageScraper(
         const val BATCH_LIST_SELECTOR = ".partial-render[data-render-partial-url]"
         const val BATCH_URL_ATTRIBUTE = "data-render-partial-url"
         const val CURRENT_PAGE_PARAMETER = "currentPage"
+        const val NO_BREAK_SPACE = ' '
     }
 }

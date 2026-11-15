@@ -99,7 +99,7 @@ class TipiAmKanzleramtWebsiteImporterTest {
         }
 
     @Test
-    fun `importEvents types a Musik-Show as SHOW with the show page's genre and price`() =
+    fun `importEvents types a Musik-Show as SHOW with the show page's genre and price, billing its singer without the band`() =
         runTest {
             val show = importedEvents().first { it.sourceUrl == MEHRLING_URL }
 
@@ -108,7 +108,7 @@ class TipiAmKanzleramtWebsiteImporterTest {
             show.pricePresale shouldBe BigDecimal("27.90")
             show.priceNote shouldBe "Ab 27,90 € bis 62,90 €"
             show.description.shouldNotBeNull() shouldContain "Marilyn Monroe"
-            show.artists.shouldBeEmpty()
+            show.artists.map { it.name } shouldBe listOf("Katharine Mehrling")
         }
 
     @Test
@@ -121,12 +121,13 @@ class TipiAmKanzleramtWebsiteImporterTest {
         }
 
     @Test
-    fun `importEvents types a Lesung as READING`() =
+    fun `importEvents types a Lesung as READING and bills the reader its subtitle names`() =
         runTest {
             val reading = importedEvents().single { it.sourceUrl == THALBACH_URL }
 
             reading.eventType shouldBe "READING"
             reading.genre shouldBe "Lesung"
+            reading.artists.map { it.name } shouldBe listOf("Katharina Thalbach")
         }
 
     @Test

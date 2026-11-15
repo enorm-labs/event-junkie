@@ -35,5 +35,10 @@ val BAR_JEDER_VERNUNFT_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar and the show pages state one start time and never an Einlass", verified = "2026-10-27"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a musical, a song salon or an award night is billed under the production's name, and the cast section is not read",
+            verified = "2026-11-15"
+        ),
         houseLanguage = SpokenLanguage.GERMAN
     )

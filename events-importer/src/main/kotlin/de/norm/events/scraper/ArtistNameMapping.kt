@@ -454,7 +454,15 @@ private val BILLED_WITH_SEPARATOR = Regex(""",\s*|\s+(?:und|&)\s+""")
  */
 fun performersBilledWith(line: String?): List<ScrapedArtist> {
     val tail = line?.let { BILLED_WITH.find(stripTitleStatusMarker(it).trim()) }?.groupValues?.get(1) ?: return emptyList()
-    val names = tail.split(BILLED_WITH_SEPARATOR).map { it.trim() }.filterNot { SHOW_FORMAT_PART.containsMatchIn(it) }
+    return performersListed(tail)
+}
+
+/**
+ * The performers a list of names bills, split on `,`, `und` and `&`: `Thomas Gansch, Leonhard Paul & Michael Hornek`.
+ * Every part must be a person's name, or the list bills nobody; see [performersBilledWith].
+ */
+fun performersListed(list: String): List<ScrapedArtist> {
+    val names = list.split(BILLED_WITH_SEPARATOR).map { it.trim() }.filterNot { SHOW_FORMAT_PART.containsMatchIn(it) }
     if (names.isEmpty() || !names.all { isPersonShaped(it) && !isNonArtistName(it) }) return emptyList()
     return names.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
 }
