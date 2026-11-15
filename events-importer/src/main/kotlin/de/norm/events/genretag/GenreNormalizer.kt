@@ -249,7 +249,9 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "streetpunk" to "Streetpunk",
         "top40" to "Top40",
         // Whole-token, so the `music` veto below keeps this one.
-        "brazilianmusic" to "Brazilian Music"
+        "brazilianmusic" to "Brazilian Music",
+        // Wild at Heart's "50`s Psycho"; [lookupKey] drops the backtick.
+        "50spsycho" to "Psychobilly"
     )
 
 /**
@@ -412,7 +414,10 @@ private val NON_GENRE_TOKENS: Set<String> =
         "movement",
         "groovy",
         "boston",
-        "singer"
+        "singer",
+        // Wild at Heart's "Playing Ramones" names a tribute set, and Schokoladen's "mmbrs milemarker" credits a band's members.
+        "playing",
+        "mmbrs"
     )
 
 /**
