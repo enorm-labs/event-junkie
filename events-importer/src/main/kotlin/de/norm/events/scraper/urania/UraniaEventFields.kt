@@ -48,7 +48,8 @@ internal fun isParticipationFormat(format: String?): Boolean = PARTICIPATION_MAR
 
 /**
  * The speakers of a talk, from the `"A, B, C und D"` billing line, stored as headliners: a
- * panellist is no support act, no DJ and no live set.
+ * panellist is no support act, no DJ and no live set. The host the line names after `bei` is billed as a speaker too
+ * (`"Jens Balzer und Victoria Reichelt bei Rabea Weihser"`, #5087). The note goes first, so a `bei` inside it names nobody.
  *
  * Two appended tails are removed rather than stored as people: a space-padded dash introducing
  * a note about the evening (`"Yoshua Yaffa - in englischer Sprache"`), and `"et al."` standing
@@ -62,13 +63,13 @@ internal fun uraniaSpeakers(
     billing
         ?.takeIf { eventType != EventType.OTHER.name && !isSchoolClassAudience(it) }
         ?.let { splitSupportActs(it) }
-        ?.map {
+        ?.flatMap {
             it
                 .substringBefore(NOTE_SEPARATOR)
                 .substringBefore(EN_DASH_NOTE_SEPARATOR)
-                .replace(ET_AL_TAIL, "")
-                .trim()
-        }?.filter { it.isNotBlank() && !isNonArtistName(it) }
+                .split(HOST_SEPARATOR)
+        }?.map { it.replace(ET_AL_TAIL, "").trim() }
+        ?.filter { it.isNotBlank() && !isNonArtistName(it) }
         ?.distinct()
         ?.map { ScrapedArtist(name = it) }
         .orEmpty()
@@ -122,6 +123,12 @@ private const val NOTE_SEPARATOR = " - "
 
 /** The same, typeset with an en dash. */
 private const val EN_DASH_NOTE_SEPARATOR = " – "
+
+/**
+ * The word introducing the evening's host. Lower-case and space-padded only, so a name that holds it (`Beier`) or
+ * is it (`Bei Dao`) stays whole.
+ */
+private val HOST_SEPARATOR = Regex("""\s+bei\s+""")
 
 /** The venue's stand-in for unnamed panellists, appended to the last one it did name. */
 private val ET_AL_TAIL = Regex("""\s+et\.?\s*al\.?\s*$""", RegexOption.IGNORE_CASE)
