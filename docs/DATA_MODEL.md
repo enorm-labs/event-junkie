@@ -683,6 +683,20 @@ The check sends an event to the model only when the hash differs from this row, 
 dismissed. A failed call writes no row, and the event stays a candidate. The check writes its proposals to
 `event_suggestion` and never writes to `event` (ADR-041).
 
+### event_flyer_check (Side Table)
+
+The stored flyers that the flyer-lineup check read (#5048, ADR-059). One row per event and image.
+
+| Field          | Type          | Nullable | Description                                                      | Example            |
+| -------------- | ------------- | -------- | ---------------------------------------------------------------- | ------------------ |
+| `event_id`     | `BIGINT` PK   | No       | References `event.id`. Deleting the event deletes the row        | `101`              |
+| `content_hash` | `TEXT` PK     | No       | The `cached_image.content_hash` of the image that the model read | `9f86d0…`          |
+| `model`        | `TEXT`        | No       | The model that answered                                          | `claude-haiku-4-5` |
+| `checked_at`   | `TIMESTAMPTZ` | No       | When the model answered                                          |                    |
+
+The check sends a flyer only when no row has its event and image hash. A new image for the same night is read again.
+A failed call or an answer that is no JSON writes no row, and the event stays a candidate.
+
 ### event_classification_usage (Side Table)
 
 The tokens the event-classification check used, per calendar month in UTC (#2996). One row per month.

@@ -20,6 +20,7 @@ import org.springframework.modulith.ApplicationModule
  * `PUT /api/admin/events/{id}` (ADR-041 rule 3). `common` supplies the paged envelope. The first
  * check that writes suggestions is `classification.EventClassificationCheck` (#3241). It asks the
  * model through the `ai` module's client (ADR-050).
+ * `flyer.FlyerLineupCheck` reads stored flyers through the `image` module's imgproxy client (ADR-059).
  */
-@ApplicationModule(allowedDependencies = ["event", "importing", "scraper", "common", "ai"])
+@ApplicationModule(allowedDependencies = ["event", "importing", "scraper", "common", "ai", "image"])
 class DataQualityModule

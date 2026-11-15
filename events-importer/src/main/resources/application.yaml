@@ -123,6 +123,14 @@ app:
         features: 0.7
         start-time: 0.7
         prices: 0.7
+    flyer:
+      # The flyer-lineup check (#5048, ADR-059): reads the stored flyer of a music night with no act, at the
+      # sources below, and proposes its acts and start time. It runs inside the classification pass, with
+      # that check's key, model and monthly token budget. Off until an operator sets it: it sends images to Anthropic.
+      enabled: ${APP_DATA_QUALITY_FLYER_ENABLED:false}
+      # Source slugs, comma-separated. Empty reads no flyer.
+      sources: ${APP_DATA_QUALITY_FLYER_SOURCES:}
+      max-per-run: ${APP_DATA_QUALITY_FLYER_MAX_PER_RUN:20}
   instagram:
     # Instagram drafts (ADR-048): the posts of a venue's business account, read through Business
     # Discovery, drafted by the model, approved by a person. Off until an operator sets it: it sends

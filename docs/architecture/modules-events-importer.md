@@ -37,6 +37,7 @@ flowchart TD
     dataquality --> ai
     dataquality --> common
     dataquality --> event
+    dataquality --> image
     dataquality --> importing
     dataquality --> scraper
     discogs --> artist

@@ -185,6 +185,14 @@ spec:
             - name: APP_DATA_QUALITY_CLASSIFICATION_MONTHLY_TOKEN_BUDGET
               value: {{ .Values.importer.eventClassification.monthlyTokenBudget | int64 | quote }}
             {{- end }}
+            {{- if and .Values.importer.eventClassification.enabled .Values.importer.flyerLineup.enabled }}
+            - name: APP_DATA_QUALITY_FLYER_ENABLED
+              value: "true"
+            - name: APP_DATA_QUALITY_FLYER_SOURCES
+              value: {{ join "," .Values.importer.flyerLineup.sources | quote }}
+            - name: APP_DATA_QUALITY_FLYER_MAX_PER_RUN
+              value: {{ .Values.importer.flyerLineup.maxPerRun | quote }}
+            {{- end }}
             {{- if .Values.importer.instagram.enabled }}
             - name: APP_INSTAGRAM_ENABLED
               value: "true"

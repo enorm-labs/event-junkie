@@ -311,6 +311,15 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
     check skips an event whose text did not change since its last answer. `app.data-quality.classification.enabled`
     switches it on. It is off by default.
 
+- **The flyer-lineup check** (`FlyerLineupCheck`, [#5048](https://github.com/enorm-labs/event-junkie/issues/5048),
+  [ADR-059](adr/ADR-059_THE_DATA_QUALITY_CHECK_READS_STORED_FLYERS.md)) runs after the classification check in the
+  same nightly pass. It reads the stored flyer of a scheduled, upcoming party, concert or festival with no act, at a
+  source in `app.data-quality.flyer.sources`. The model copies the flyer's text and returns the acts and the start
+  time. Each value and each evidence passage must occur in that text, and the text must name the event's day. The
+  check writes `artists` and `startTime` rows with `check_name = flyer-lineup`. `event_flyer_check` keeps the image
+  hash, so a flyer is read once. A withheld image is never read. `app.data-quality.flyer.enabled` switches it on,
+  beside the classification check, whose key and monthly budget it shares. It is off by default.
+
     A nightly pass runs the check at 04:00 UTC, after the 03:00 snapshot
     ([#2996](https://github.com/enorm-labs/event-junkie/issues/2996)). The pass takes the sources with a
     `data_quality_regression` first. Then it takes the sources with the most candidates. In each source it reads only

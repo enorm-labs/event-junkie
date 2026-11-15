@@ -3,6 +3,7 @@ package de.norm.events.dataquality.classification
 import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.dataquality.ClassificationRunInProgressException
 import de.norm.events.dataquality.DataQualityMetrics
+import de.norm.events.dataquality.flyer.FlyerLineupCheck
 import de.norm.events.importing.EventSourceNotFoundException
 import de.norm.events.importing.EventSourceRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -52,7 +53,9 @@ class ClassificationRunner(
     private val properties: ClassificationProperties,
     private val passMetrics: ClassificationMetrics,
     @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher,
-    private val clock: Clock = Clock.systemUTC()
+    private val clock: Clock = Clock.systemUTC(),
+    /** The flyer pass (ADR-059), present only while `app.data-quality.flyer.enabled` is set. */
+    private val flyerCheck: FlyerLineupCheck? = null
 ) : DisposableBean {
     private val logger = KotlinLogging.logger {}
     private val lock = Mutex()
@@ -155,7 +158,10 @@ class ClassificationRunner(
                 if (result.overBudget > 0) stop = PassStop.TOKEN_BUDGET
             }
         }
-        return NightlyPassResult(ran, calls, stop, notJson).also { report(it, order.size) }
+        val result = NightlyPassResult(ran, calls, stop, notJson).also { report(it, order.size) }
+        // The flyers share the month's budget, so a pass that spent it reads none (ADR-041 rule 5).
+        if (stop != PassStop.TOKEN_BUDGET) flyerCheck?.pass()
+        return result
     }
 
     private fun report(

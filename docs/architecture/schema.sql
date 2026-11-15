@@ -635,6 +635,17 @@ CREATE TABLE events.event_feature (
 );
 
 --
+-- Name: event_flyer_check; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.event_flyer_check (
+    event_id bigint NOT NULL,
+    content_hash text NOT NULL,
+    model text NOT NULL,
+    checked_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: event_genre_tag; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -1324,6 +1335,13 @@ ALTER TABLE ONLY events.event_enrichment
 
 ALTER TABLE ONLY events.event_feature
     ADD CONSTRAINT event_feature_pkey PRIMARY KEY (event_id, feature);
+
+--
+-- Name: event_flyer_check event_flyer_check_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_flyer_check
+    ADD CONSTRAINT event_flyer_check_pkey PRIMARY KEY (event_id, content_hash);
 
 --
 -- Name: event_genre_tag event_genre_tag_event_id_genre_tag_id_key; Type: CONSTRAINT; Schema: events; Owner: -
@@ -2050,6 +2068,13 @@ ALTER TABLE ONLY events.event_feature
 
 ALTER TABLE ONLY events.event
     ADD CONSTRAINT event_festival_id_fkey FOREIGN KEY (festival_id) REFERENCES events.festival(id) ON DELETE SET NULL;
+
+--
+-- Name: event_flyer_check event_flyer_check_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_flyer_check
+    ADD CONSTRAINT event_flyer_check_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
 
 --
 -- Name: event_genre_tag event_genre_tag_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

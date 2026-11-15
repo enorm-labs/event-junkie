@@ -219,6 +219,7 @@ disclosure, which is what [#1233](https://github.com/enorm-labs/event-junkie/iss
   not train models on Customer Content from Services"_.
 - **Three purposes, one processor.** Translation sends the description and the protected names. The data-quality check
   (#3241, ADR-041) sends the title, the subtitle and the description, and gets back suggestions that a person applies.
+  For some music nights with no act, it also sends the stored flyer image with the title and the date (ADR-059). It never sends a flyer the site withholds.
   The Instagram drafts (ADR-048, ADR-049) send the caption and the images of a venue's post, the venue's name and the
   post's date. They get back drafted events that a person approves. A flyer can show a photograph of an identifiable
   person. Anthropic receives it under the same DPA as the caption, and it is not stored on either side of the call. The legal basis of the check and of the drafts is Art. 6 (1) (f): correct

@@ -7,6 +7,8 @@ import ch.qos.logback.core.read.ListAppender
 import de.norm.events.dataquality.ClassificationRunInProgressException
 import de.norm.events.dataquality.DataQualityMetrics
 import de.norm.events.dataquality.DataQualityRegressionCheck
+import de.norm.events.dataquality.flyer.FlyerLineupCheck
+import de.norm.events.dataquality.flyer.FlyerPassResult
 import de.norm.events.importing.EventSourceEntity
 import de.norm.events.importing.EventSourceRepository
 import io.kotest.assertions.throwables.shouldThrow
@@ -229,20 +231,43 @@ class ClassificationRunnerTest {
             lastSuccess() shouldBe START.epochSecond.toDouble()
         }
 
+    @Test
+    fun `the flyer pass follows the text pass, and a pass the budget stopped reads no flyer`(): Unit =
+        runBlocking {
+            val flyer = mockk<FlyerLineupCheck> { coEvery { pass() } returns FlyerPassResult(0, 0, 0, 0, emptyMap()) }
+            candidates("a" to 1)
+            coEvery { check.checkSource("a", false, any()) } returns ClassificationRunResult(1, 1, 0, 0, 0, emptyMap())
+
+            runner(flyer = flyer).runNightly()
+
+            coVerifyOrder {
+                check.checkSource("a", false, any())
+                flyer.pass()
+            }
+
+            coEvery { check.checkSource("a", false, any()) } returns ClassificationRunResult(1, 1, 0, 0, 0, emptyMap(), overBudget = 1)
+            runner(flyer = flyer).runNightly()
+
+            coVerify(exactly = 1) { flyer.pass() }
+        }
+
     private fun lastSuccess() = registry.find("importer.classification.last_success").gauge()!!.value()
 
-    private fun runner(maxPerRun: Int = 50) =
-        ClassificationRunner(
-            check,
-            repository,
-            sources,
-            metrics,
-            ledger,
-            properties.copy(maxPerRun = maxPerRun),
-            passMetrics,
-            Dispatchers.IO,
-            clock
-        )
+    private fun runner(
+        maxPerRun: Int = 50,
+        flyer: FlyerLineupCheck? = null
+    ) = ClassificationRunner(
+        check,
+        repository,
+        sources,
+        metrics,
+        ledger,
+        properties.copy(maxPerRun = maxPerRun),
+        passMetrics,
+        Dispatchers.IO,
+        clock,
+        flyer
+    )
 
     private fun candidates(vararg counts: Pair<String, Int>) {
         coEvery { repository.countSourceCandidates() } returns counts.associate { (slug, n) -> slug to n.toLong() }
