@@ -56,7 +56,8 @@ class AlteKantineDetailPageScraper(
         }
         val postId = extractPostId(sourceUrl) ?: return null
 
-        val eventType = alteKantineEventType(detailField(content, "Was"), title)
+        val dj = detailField(content, "DJ")
+        val eventType = alteKantineEventType(detailField(content, "Was"), title, dj)
         val eintritt = detailField(content, "Eintritt")
         val door = parsePriceValue(eintritt)
         val earlyEntry = door?.let { earlyEntryTier(content, it) }
@@ -81,7 +82,7 @@ class AlteKantineDetailPageScraper(
                 earlyEntry?.note
                     ?: eintritt?.takeIf { boxOffice == null && it.any(Char::isLetterOrDigit) }
                     ?: freeEntryLine(content).takeIf { boxOffice == null },
-            artists = buildAlteKantineArtists(title, detailField(content, "DJ"), eventType)
+            artists = buildAlteKantineArtists(title, dj, eventType)
         )
     }
 }

@@ -152,15 +152,20 @@ private val READING_TITLE = Regex("""lesen(?!\p{L})|lesung""", RegexOption.IGNOR
  * "Konzert" → `CONCERT`); otherwise — a free-text label like "The Quiz Night Show", or the
  * label-less overview — the title is classified by keyword, defaulting to `OTHER` for this
  * mixed party/quiz venue (never `CONCERT`, so an unmarked party night is not minted as a
- * headliner concert). Shared by both.
+ * headliner concert). A detail page with an empty `Was:` that still names a [dj] is a party (#5125).
+ * Shared by both.
  */
 internal fun alteKantineEventType(
     was: String?,
-    title: String
+    title: String,
+    dj: String? = null
 ): String =
     EventType.READING.name.takeIf { READING_TITLE.containsMatchIn(title) }
         ?: mapEventType(was)
-        ?: inferUnmarkedTitleType(title)
+        ?: inferUnmarkedTitleType(title).let { inferred ->
+            val namesDj = was.isNullOrBlank() && !dj.isNullOrBlank() && !isNonArtistName(dj)
+            if (inferred == EventType.OTHER.name && namesDj) EventType.PARTY.name else inferred
+        }
 
 /**
  * The artist list keyed off the resolved [eventType]:

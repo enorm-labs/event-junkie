@@ -114,6 +114,35 @@ class AlteKantineDetailPageScraperTest {
     }
 
     @Test
+    fun `reads a night with an empty Was label as a party when its DJ field names someone (#5125)`() {
+        fun eventWith(
+            title: String,
+            dj: String
+        ) = scraper
+            .scrape(
+                Jsoup.parse(
+                    """
+                    <h2 class="heading-1">$title</h2>
+                    <ul class="list-style-6"><li><label>Wann:</label>02.12.</li><li><label>Was:</label></li><li><label>DJ:</label>$dj</li></ul>
+                    """.trimIndent()
+                ),
+                "https://alte-kantine.eu/?p=12516"
+            ).shouldNotBeNull()
+
+        // Verbatim from event 4660.
+        eventWith("Campus Kantine", "buttchin").run {
+            eventType shouldBe EventType.PARTY.name
+            artists.map { it.name to it.role } shouldBe listOf("buttchin" to ArtistRole.DJ)
+        }
+        eventWith("Campus Kantine", "").run {
+            eventType shouldBe EventType.OTHER.name
+            artists.shouldBeEmpty()
+        }
+        // A quiz title keeps its type, and its "DJ" is a format label.
+        eventWith("Quiz Night Show", "Pubquiz").eventType shouldBe EventType.QUIZ.name
+    }
+
+    @Test
     fun `classifies a quiz from the title when the Was label is free text`() {
         val event = parse("altekantine-detail-quiz.html", "https://alte-kantine.eu/?p=12281").shouldNotBeNull()
 
