@@ -211,6 +211,9 @@ enum class EventSource {
     /** House of Music Berlin – a stage hall, 23 rehearsal rooms and a café-bar on the RAW grounds, with release concerts and jam sessions. */
     HOUSE_OF_MUSIC,
 
+    /** Humboldt Forum – the rebuilt Berlin Palace on Schlossplatz, home of two state museums, with exhibitions, talks, concerts and dance nights of its own. */
+    HUMBOLDT_FORUM,
+
     /** Humboldthain Club Berlin – a techno club in Wedding with an indoor floor and a large garden, running collective-booked nights. */
     HUMBOLDTHAIN,
 

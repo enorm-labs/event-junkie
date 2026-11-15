@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Humboldt Forum",
+        "address": "Schloßplatz 1",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.515087,
+        "longitude": 13.401715,
+        "websiteUrl": "https://www.humboldtforum.org/",
+        "description": "The rebuilt Berlin Palace on Schlossplatz, home to the Ethnological Museum, the Museum of Asian Art and the BERLIN GLOBAL exhibition, with talks, concerts, dance and literature nights of its own.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das wiederaufgebaute Berliner Schloss am Schlossplatz mit dem Ethnologischen Museum, dem Museum für Asiatische Kunst und der Ausstellung BERLIN GLOBAL, dazu eigene Gespräche, Konzerte, Tanz- und Literaturabende.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre", "open-air"]
+    },
+    "sources": [
+        {
+            "name": "Humboldt Forum",
+            "url": "https://www.humboldtforum.org/wp-json/humboldt/v1/event/items?lang=de",
+            "sourceType": "HUMBOLDT_FORUM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   194 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   195 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -106,6 +106,7 @@ schema change.
 | Heimathafen Neukölln             | https://heimathafen-neukoelln.de/                                        | Concert Hall | WP REST + ACF; one post, many dated performances          |
 | Hole 44                          | https://hole-berlin.de/                                                  | Concert Hall | Events-Manager; "Abgesagt!" / "VERLEGT!" labels           |
 | House of Music Berlin            | https://www.houseofmusic.berlin/                                         | Concert Hall | Wix Events warmup JSON; acts from title shapes            |
+| Humboldt Forum                   | https://www.humboldtforum.org/de/programm/                               | Other        | Theme REST API; one row per date, exhibitions as runs     |
 | Humboldthain Club                | https://www.humboldthain.com/                                            | Techno Club  | Elfsight widget API; weekly night expanded                |
 | Huxleys Neue Welt                | https://huxleysneuewelt.de/events                                        | Concert Hall | Events-Manager; ISO slug date; genre/promoter tags        |
 | Interkosmos                      | https://www.interkosmos.cc/                                              | Bar          | WP REST `events`: dated range + monthly comedy rules      |
@@ -235,7 +236,7 @@ schema change.
 | Zosch                            | https://www.zosch-berlin.de/                                             | Bar          | Laravel start page; year from the body id                 |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-194 importer classes cover 194 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
+195 importer classes cover 195 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
 `EventSource` entries, the sources against the rows above. The two numbers are equal by chance. Kantine am Berghain is the
 only source without a class of its own. It shares the Berghain importer, and its rows have their own `sourceId` prefix,
 `kantine_am_berghain:`. Ballhaus Berlin is the opposite case. Its class exists, but it has no source, because its
@@ -271,7 +272,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-66 sources have a second language, 119 have none, and 4 are unknown. Fifteen translate the event text on a second page.
+67 sources have a second language, 119 have none, and 4 are unknown. Fifteen translate the event text on a second page.
 Twelve put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -362,6 +363,7 @@ the upsert stores none.
 | Heimathafen Neukölln             | No              | —                                                            | —                  |                                                                                                                                    |
 | Hole 44                          | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://hole-berlin.de/en/                                                                                                         |
 | House of Music Berlin            | No              | —                                                            | —                  |                                                                                                                                    |
+| Humboldt Forum                   | Yes             | `/de/` path, API `lang=` parameter                           | Unknown            | https://www.humboldtforum.org/de/programm/                                                                                         |
 | Humboldthain Club                | Yes             | One field: `English version above`                           | One field          | [captured page](../events-importer/src/test/resources/scraper/humboldthain/humboldthain-api.json)                                  |
 | Huxleys Neue Welt                | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://huxleysneuewelt.de/en/events/                                                                                              |
 | Jonny Knüppel                    | Yes             | One field: English, then `DE`                                | One field          | [captured page](../events-importer/src/test/resources/scraper/jonnyknuppel/jonnyknuppel-overview.html)                             |
