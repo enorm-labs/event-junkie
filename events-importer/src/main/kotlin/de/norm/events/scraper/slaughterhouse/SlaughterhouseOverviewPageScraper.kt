@@ -39,7 +39,8 @@ import java.nio.charset.StandardCharsets
  * names the series and bills the co-bill after the colon, less each act's genre and town.
  *
  * No entry has its own page, so the source id is the date. A ticket link the editor pasted through Facebook's
- * `l.php` redirect is unwrapped to its target.
+ * `l.php` redirect is unwrapped to its target. A `Tickets:` link comes first. A newer entry prints a bare shop link
+ * under its price line, so without a label the first link to a ticket shop is the ticket link.
  */
 class SlaughterhouseOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -81,14 +82,6 @@ class SlaughterhouseOverviewPageScraper {
         val bodyBlocks = blocks.filter { it.tagName() == "p" && it !== header }
         val paragraphs = bodyBlocks.map { it.textLines() }
         val lines = paragraphs.flatten()
-        val ticketLink =
-            blocks.flatMap { it.select("a[href]") }.firstOrNull { link ->
-                link
-                    .parent()
-                    ?.textLines()
-                    ?.firstOrNull { link.text() in it }
-                    ?.let { TICKETS.containsMatchIn(it) } == true
-            }
         val priceLine = lines.firstOrNull { PRICE_LINE.containsMatchIn(it) }
         val prices = parseLabelledPrices(priceLine)
         return ScrapedEvent(
@@ -106,7 +99,7 @@ class SlaughterhouseOverviewPageScraper {
                     ?.replace(OWN_HTTP, "https://"),
             sourceUrl = baseUrl,
             sourceId = "${EventSource.SLAUGHTERHOUSE.sourceIdPrefix}$date",
-            ticketUrl = ticketLink?.absUrl("href")?.let(::unwrapFacebookRedirect),
+            ticketUrl = ticketUrlOf(blocks),
             genre =
                 lines
                     .firstNotNullOfOrNull {
@@ -185,6 +178,26 @@ class SlaughterhouseOverviewPageScraper {
     private fun isFieldLine(line: String): Boolean =
         FIELD_LINE.containsMatchIn(line) || PRICE_LINE.containsMatchIn(line) || STYLE_LINE.matches(line) || DIVIDER.matches(line)
 
+    /** The link on a `Tickets:` line, or else the first link to a ticket shop, each unwrapped from Facebook's redirect. */
+    private fun ticketUrlOf(blocks: List<Element>): String? {
+        val links = blocks.flatMap { it.select("a[href]") }
+        val labelled =
+            links.firstOrNull { link ->
+                link
+                    .parent()
+                    ?.textLines()
+                    ?.firstOrNull { link.text() in it }
+                    ?.let { TICKETS.containsMatchIn(it) } == true
+            }
+        return labelled?.absUrl("href")?.let(::unwrapFacebookRedirect)
+            ?: links.map { unwrapFacebookRedirect(it.absUrl("href")) }.firstOrNull(::isTicketShop)
+    }
+
+    private fun isTicketShop(url: String): Boolean {
+        val host = runCatching { URI(url).host }.getOrNull()?.lowercase() ?: return false
+        return TICKET_SHOPS.any { host == it || host.endsWith(".$it") }
+    }
+
     private fun unwrapFacebookRedirect(url: String): String {
         val uri = runCatching { URI(url) }.getOrNull()?.takeIf { it.host?.endsWith("facebook.com") == true && it.path == "/l.php" }
         val target =
@@ -203,6 +216,9 @@ class SlaughterhouseOverviewPageScraper {
 
         val HEADING = Regex("""^((?:Konzert|Party)(?:\s*\+\s*(?:Konzert|Party))?)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
         val TICKETS = Regex("""^\s*Tickets?\b""", RegexOption.IGNORE_CASE)
+
+        /** The shops whose link is a ticket link without a `Tickets:` label; a band's site or Instagram is not. */
+        val TICKET_SHOPS = setOf("tixforgigs.com")
         val FIELD_LINE =
             Regex(
                 """^(?:(?:Beginn|Doors(?:\s+open)?|Einlass)(?:\s*:|\s+\d)|(?:Eintritt|Tickets?|Ticket Link|djs)\s*:|$TIME_FIRST(?:Einlass|Beginn)\b)""",

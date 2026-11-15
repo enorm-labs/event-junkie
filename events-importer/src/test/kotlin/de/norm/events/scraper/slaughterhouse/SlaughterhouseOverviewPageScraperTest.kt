@@ -257,6 +257,35 @@ class SlaughterhouseOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads events 13954 to 13956's bare tixforgigs link under the price line as the ticket link`() {
+        november.single { it.eventDate == LocalDate.of(2026, 11, 27) }.ticketUrl shouldBe
+            "https://www.tixforgigs.com/de-de/Event/78286/34-lange-nacht-der-indieschoenheiten-slaughterhouse-berlin"
+        november.single { it.eventDate == LocalDate.of(2026, 12, 4) }.ticketUrl shouldBe
+            "https://www.tixforgigs.com/de-de/Event/78287/santas-riot-vi-live-deshurance-the-irony-ravenpath-slaughterhouse-berlin"
+        november.single { it.eventDate == LocalDate.of(2026, 12, 11) }.ticketUrl shouldBe
+            "https://www.tixforgigs.com/de-de/Event/78291/lemur-yeniden-record-release-concert-slaughterhouse-berlin"
+    }
+
+    @Test
+    fun `takes a labelled ticket link over a bare shop link, and no bare link that is not a shop's`() {
+        val labelled =
+            entryOf(
+                "Konzert: Tyske Ludder",
+                """<a href="https://www.tixforgigs.com/Event/1">shop</a><br>Tickets: <a href="https://www.eventim-light.com/de/a/2/">eventim</a>"""
+            )
+        labelled.ticketUrl shouldBe "https://www.eventim-light.com/de/a/2/"
+        val bare =
+            entryOf(
+                "Konzert: Tyske Ludder",
+                """<a href="https://tyskeludder.de/">tyskeludder.de</a><br><a href="https://www.instagram.com/tyskeludder/">Instagram</a>"""
+            )
+        bare.ticketUrl.shouldBeNull()
+        val redirect = "https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.tixforgigs.com%2FEvent%2F3&amp;h=x"
+        val wrapped = entryOf("Konzert: Tyske Ludder", """<a href="$redirect">tixforgigs.com</a>""")
+        wrapped.ticketUrl shouldBe "https://www.tixforgigs.com/Event/3"
+    }
+
+    @Test
     fun `keeps every time the November page's older entries name`() {
         november.single { it.eventDate == LocalDate.of(2026, 11, 28) }.doorsTime shouldBe LocalTime.of(22, 0)
         november.single { it.eventDate == LocalDate.of(2026, 11, 28) }.startTime shouldBe LocalTime.of(22, 0)
