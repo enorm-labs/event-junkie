@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component
  * lineup, is the source: [HtmlFetcher] fetches it conditionally, [VoidClubOverviewPageScraper]
  * parses every `article.void-event-card`.
  *
+ * The start times appear only on the monthly flyer image (`img/flyer/<yyyy-mm>-both.jpg`). Nothing reads it:
+ * a model may only suggest (ADR-041), so the times are pinned by hand (#4822).
+ *
  * @see VoidClubOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.void-club.de/">VOID Club Berlin</a>
  */
@@ -30,8 +33,16 @@ class VoidClubWebsiteImporter(
 val VOID_CLUB_LIMITATIONS =
     VenueLimitations(
         EventSource.VOID_CLUB,
-        AcceptedLimitation(LimitedAspect.START_TIME, "the venue publishes no times; every night stores a bare date", verified = "2026-08-25"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no times; every night stores a bare date", verified = "2026-08-25"),
+        AcceptedLimitation(
+            LimitedAspect.START_TIME,
+            "the cards print no time; only the monthly flyer image does, so the times are pinned by hand (#4822)",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "the cards print no time; only the monthly flyer image does, so the times are pinned by hand (#4822)",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-27"),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text", verified = "2026-08-25"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page", verified = "2026-08-25"),

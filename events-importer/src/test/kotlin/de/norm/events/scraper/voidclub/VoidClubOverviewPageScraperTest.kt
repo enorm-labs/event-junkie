@@ -221,7 +221,7 @@ class VoidClubOverviewPageScraperTest {
     }
 
     @Test
-    fun `publishes no times, prices or statuses`() {
+    fun `the cards print no times, prices or statuses`() {
         events.all {
             it.doorsTime == null && it.startTime == null && it.pricePresale == null &&
                 it.priceBoxOffice == null && it.priceNote == null && !it.soldOut && it.status == "SCHEDULED"
