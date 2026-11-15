@@ -148,7 +148,10 @@ histories) and `scripts/version-test.sh` (snapshot versions still order — a ve
   prefix the call with `eval "$(scripts/jdk-env.sh)" &&`. No database needed (Testcontainers). No `NVD_API_KEY` needed (`dependencyCheckAggregate` is not in `build`).
 - **`Executable doesn't exist`** on the first e2e run: `npx playwright install chromium` from `events-frontend/`.
 - **Two Gradle daemons clobber `build/classes`**: a full test run while `dev-env.sh` is up fails with `NoClassDefFoundError` in untouched packages.
-  `./gradlew --stop`, then build from clean.
+  `scripts/dev-env.sh down`, then `./gradlew --no-daemon clean build …`. Never `./gradlew --stop`: it stops every session's build, and a hook
+  refuses it (#5140).
+- **Run the backend gate and the e2e suite one after the other.** Side by side, the e2e build starves the gate's Testcontainers, and an unrelated
+  importer test fails on an SSL handshake.
 - **A missing tool is a skipped check, never a passed one**: `brew install opentofu shellcheck helm yq fluxcd/tap/flux`; the chart plugins at the
   versions `scripts/plugin-parity.sh` prints.
 - **The chart gate proves nothing about a running cluster.** Report it as "renders and passes assertions"; [`/k3d-rehearsal`](k3d-rehearsal.prompt.md) is the

@@ -97,6 +97,10 @@ jobs:
       - name: Assert what migration-versions.sh refuses
         run: scripts/migration-versions-test.sh
 
+      # A hook that refuses nothing looks like one that works until another session's build dies (#5140).
+      - name: Assert what refuse-gradle-stop.sh refuses
+        run: scripts/refuse-gradle-stop-test.sh
+
       # A rule that passes every PR looks like one that works until a sibling merges its number (#2442).
       - name: Assert what migration-collisions.sh rules
         run: scripts/migration-collisions-test.sh
