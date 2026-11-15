@@ -493,6 +493,8 @@ jobs:
           # injection, whether or not this instance is exploitable.
           ACTOR: ${{ github.actor }}
         run: |
+          # Without `pipefail` the `if` below reads `tee`'s status, so a failed push never reaches the retry (#5035).
+          set -euo pipefail
           helm registry login ghcr.io \
             --username "$ACTOR" \
             --password "${{ secrets.GITHUB_TOKEN }}"
