@@ -169,6 +169,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Colosseum           | `MARKET_TITLE` (`ColosseumOverviewPageScraper.kt`)       | A title word that ends in `markt`, or the word `market`: the `Weihnachtsrodeo` design market                                         |
 | Badehaus            | `WORKSHOP_TITLE` (`BadehausOverviewPageScraper.kt`)      | A title that names a `Workshop`. A subtitle that names one is not enough: `Café com Samba` is a dance night                          |
 | Duncker Club        | `MARKET` (`DunckerOverviewPageScraper.kt`)               | A name or style line that names a `Market` or ends in `markt`: the `Dark Market` design and flea market                              |
+| Humboldt Forum      | `PARTICIPATION` (`HumboldtForumApiScraper.kt`)           | The `Führung`, `Workshop`, `Drop-In`, `Fortbildung` and `Meetup` categories, beside any other category                               |
 
 A market in a venue's feed stays out, a Christmas market too. Christmas markets get their own page, entered by hand
 (§3.7). The predicates above do not change for it.
@@ -185,7 +186,7 @@ Not modelled and not imported. Arena Berlin is the clearest case. All five of it
 deGUT, BUCHBERLIN, Einstieg Berlin. That is why it sits in _Blocked_ despite being trivially scrapable, and the blocker
 there was never the markup.
 
-Five imported venues mix one into their programme. Each drops it on the words its page uses:
+Seven imported venues mix one into their programme. Each drops it on the words its page uses:
 
 | Venue                | Predicate                                        | Signal                                                     |
 | -------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
@@ -195,6 +196,7 @@ Five imported venues mix one into their programme. Each drops it on the words it
 | Alte Münze           | `AlteMuenzeApiScraper.isProgramme`               | The `Tagung` category, or the same words in the title      |
 | ZK/U                 | `billsTradeFairOrConference`                     | The same words in the title or the subtitle                |
 | Pastiche             | `PasticheProgrammePageScraper.isOutOfScope`      | A `Record Fair` in the title or format line                |
+| Humboldt Forum       | `typeOf` (`HumboldtForumApiScraper.kt`)          | The `Konferenz/Symposium` category, which gives no type    |
 
 A bare `Messe` is not a fair: SO36 bills a band of that name.
 
@@ -226,19 +228,20 @@ A show with a minimum age of 10 or more, such as "ab 12 Jahren" or "ab 13 Jahre"
 not marked, such as `Deine Freunde` at Tempodrom or `Lichterkinder` at Uber Eats Music Hall. Nothing on those pages
 marks a show for small children, and adults go to these concerts too.
 
-| Venue                                                                                       | Predicate                                                                             | Signal                                                                                                                    |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Peter Edel, Wühlmäuse, SO36, Renaissance-Theater, BKA Theater, Volksbühne, Columbia Theater | `childrensShowPhrase` (`ChildrensShow.kt`), on title + subtitle                       | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`)                          |
-| ufaFabrik                                                                                   | `childrensPriceLabel` (`UfaFabrikMonthPageScraper.kt`)                                | A price per child, per Kita child or per Erzieher\*in                                                                     |
-| Showfenster Theater                                                                         | `ShowfensterOverviewPageScraper.childrensPhrase`                                      | The Eventfrog category `kinderveranstaltungen`, or `childrensShowPhrase` on title + description                           |
-| Brotfabrik                                                                                  | `BrotfabrikApiScraper.childrensPhrase`                                                | `childrensShowPhrase` on title + description, an age range such as `4 – 8 Jahren`, `Kindershow`                           |
-| Clärchens Ballhaus                                                                          | `childrensShowPhrase`, on the title and the calendar text                             | The same words as above                                                                                                   |
-| Kulturhaus Spandau                                                                          | `KulturhausSpandauApiScraper.childrensPhrase`                                         | The `Kinder und Familie` category, a `maximum_age` of 12 or less, or `childrensShowPhrase`                                |
-| Kesselhaus                                                                                  | `KesselhausCalendarScraper`                                                           | The calendar category `Kinder`                                                                                            |
-| ZIMMER 16                                                                                   | `Zimmer16OverviewPageScraper`, on the homepage and `programm-fuer-kinder-mikado-e-v/` | A title that ends in `(Kinder)`                                                                                           |
-| Zebrano-Theater                                                                             | `ZebranoTheaterKinderprogrammPageScraper`, on `kinderprogramm.html`                   | Every public performance on that page. The age is the phrase                                                              |
-| Pfefferberg Theater                                                                         | `PfefferbergTheaterCalendarPageScraper`, `CHILDRENS_CATEGORY`                         | The `Kindertheater` category, `childrensShowPhrase` on title + subtitle, or a fairy tale's family or school audience line |
-| LabSaal                                                                                     | `childrensShowPhrase`, on the title                                                   | `Theater für Kinder: …`                                                                                                   |
+| Venue                                                                                       | Predicate                                                                             | Signal                                                                                                                              |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Peter Edel, Wühlmäuse, SO36, Renaissance-Theater, BKA Theater, Volksbühne, Columbia Theater | `childrensShowPhrase` (`ChildrensShow.kt`), on title + subtitle                       | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`)                                    |
+| ufaFabrik                                                                                   | `childrensPriceLabel` (`UfaFabrikMonthPageScraper.kt`)                                | A price per child, per Kita child or per Erzieher\*in                                                                               |
+| Showfenster Theater                                                                         | `ShowfensterOverviewPageScraper.childrensPhrase`                                      | The Eventfrog category `kinderveranstaltungen`, or `childrensShowPhrase` on title + description                                     |
+| Brotfabrik                                                                                  | `BrotfabrikApiScraper.childrensPhrase`                                                | `childrensShowPhrase` on title + description, an age range such as `4 – 8 Jahren`, `Kindershow`                                     |
+| Clärchens Ballhaus                                                                          | `childrensShowPhrase`, on the title and the calendar text                             | The same words as above                                                                                                             |
+| Kulturhaus Spandau                                                                          | `KulturhausSpandauApiScraper.childrensPhrase`                                         | The `Kinder und Familie` category, a `maximum_age` of 12 or less, or `childrensShowPhrase`                                          |
+| Kesselhaus                                                                                  | `KesselhausCalendarScraper`                                                           | The calendar category `Kinder`                                                                                                      |
+| ZIMMER 16                                                                                   | `Zimmer16OverviewPageScraper`, on the homepage and `programm-fuer-kinder-mikado-e-v/` | A title that ends in `(Kinder)`                                                                                                     |
+| Zebrano-Theater                                                                             | `ZebranoTheaterKinderprogrammPageScraper`, on `kinderprogramm.html`                   | Every public performance on that page. The age is the phrase                                                                        |
+| Pfefferberg Theater                                                                         | `PfefferbergTheaterCalendarPageScraper`, `CHILDRENS_CATEGORY`                         | The `Kindertheater` category, `childrensShowPhrase` on title + subtitle, or a fairy tale's family or school audience line           |
+| LabSaal                                                                                     | `childrensShowPhrase`, on the title                                                   | `Theater für Kinder: …`                                                                                                             |
+| Humboldt Forum                                                                              | `HumboldtForumApiScraper.childrensPhrase`                                             | The series `Bilderbuchkino` or `Geschichtentheater` in `partof`, a `Bilderbuch…` title, or `childrensShowPhrase` on title + excerpt |
 
 `childrensShowPhrase` leaves a band named after children (`Muttis Kinder`) and a show for ten and up (`ab 12 Jahren`)
 unmarked. A new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it

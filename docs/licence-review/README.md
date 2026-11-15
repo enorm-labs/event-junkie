@@ -21,6 +21,8 @@ the record. `scripts/apply-licence-review.py` writes it to a database.
    It is `PROHIBITED`, and a person confirmed it. **ZK/U's images were confirmed `PROHIBITED` on 2026-10-20** (#3567). Its press page limits
    them to press about ZK/U. Its texts stay `UNCLEAR`. **Waldbühne's texts were confirmed `PROHIBITED` on 2026-11-02**, for its
    importer. Its imprint forbids any use of texts and images without permission. Its images stay `UNCLEAR` until a person decides.
+   **Humboldt Forum was read on 2026-11-15**, for its importer. Its imprint needs written consent to store content in a database,
+   with no statutory carve-out. It is `PROHIBITED` for texts and images, and a person confirmed it.
 2. **No source grants a reuse we can rely on.** `PERMITTED` is zero in this review, which reads what
    the venues published. It is not zero on the clusters: ADR-027 sets `translation_licence` to
    `PERMITTED` wherever a venue does not prohibit the description. That is our reading of silence,
