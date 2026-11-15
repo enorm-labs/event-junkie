@@ -1,7 +1,7 @@
 package de.norm.events.importing
 
 import de.norm.events.artist.UnbilledArtistStore
-import de.norm.events.common.rethrowIfCancelled
+import de.norm.events.common.runScheduled
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
@@ -30,16 +30,7 @@ class OrphanArtistSweep(
 
     /** 03:30 UTC, after the data-quality snapshot, so that day's snapshot still counts these rows. */
     @Scheduled(cron = $$"${app.artists.orphan-sweep-cron:0 30 3 * * *}")
-    // Intentional: an uncaught exception cancels the task and shares the import scheduler
-    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
-    suspend fun sweep() {
-        try {
-            runOnce()
-        } catch (e: Exception) {
-            rethrowIfCancelled()
-            logger.error(e) { "Orphan artist sweep failed" }
-        }
-    }
+    suspend fun sweep() = runScheduled("Orphan artist sweep", logger) { runOnce() }
 
     /** One pass: the number of rows deleted, or `null` when an import was running and nothing ran. */
     suspend fun runOnce(): Long? =

@@ -1,7 +1,7 @@
 package de.norm.events.importing
 
-import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.common.runCatchingCancellable
+import de.norm.events.common.runScheduled
 import de.norm.events.enrichment.DiscogsLookupService
 import de.norm.events.enrichment.MusicBrainzEnrichmentService
 import de.norm.events.enrichment.MusicBrainzLookupService
@@ -62,16 +62,9 @@ class ArtistLookupSweep(
      * Spring blocks a scheduler thread for the whole tick, which is why the pool has more than one.
      */
     @Scheduled(fixedDelayString = $$"${app.artists.lookup-tick-millis:300000}")
-    // Intentional: an exception escaping cancels the @Scheduled task for the life of the process
-    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     suspend fun tick() {
         if (!enabled) return
-        try {
-            sweep()
-        } catch (e: Exception) {
-            rethrowIfCancelled()
-            logger.error(e) { "Artist lookup tick failed" }
-        }
+        runScheduled("Artist lookup tick", logger) { sweep() }
     }
 
     /**

@@ -1,6 +1,6 @@
 package de.norm.events.instagram
 
-import de.norm.events.common.rethrowIfCancelled
+import de.norm.events.common.runScheduled
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -78,17 +78,8 @@ class InstagramDraftRunner(
     /** Starts a whole pass in the background, as the schedule would. */
     fun startPass(): Job = launchLocked("Instagram pass") { pass() }
 
-    /** The daily pass. Nothing escapes: an uncaught exception cancels a `@Scheduled` task for the life of the process. */
     @Scheduled(cron = $$"${app.instagram.cron:$${InstagramProperties.DEFAULT_CRON}}")
-    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: see the KDoc
-    suspend fun daily() {
-        try {
-            runDaily()
-        } catch (e: Exception) {
-            rethrowIfCancelled()
-            logger.error(e) { "The Instagram pass failed" }
-        }
-    }
+    suspend fun daily() = runScheduled("The Instagram pass", logger) { runDaily() }
 
     /** One pass, or `null` when another run held the lock. */
     suspend fun runDaily(): InstagramPassResult? {

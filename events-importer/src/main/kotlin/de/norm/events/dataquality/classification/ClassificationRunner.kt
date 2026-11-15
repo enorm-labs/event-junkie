@@ -1,6 +1,6 @@
 package de.norm.events.dataquality.classification
 
-import de.norm.events.common.rethrowIfCancelled
+import de.norm.events.common.runScheduled
 import de.norm.events.dataquality.ClassificationRunInProgressException
 import de.norm.events.dataquality.DataQualityMetrics
 import de.norm.events.dataquality.flyer.FlyerLineupCheck
@@ -100,17 +100,8 @@ class ClassificationRunner(
         }
     }
 
-    /** The nightly pass. Nothing escapes: an uncaught exception cancels a `@Scheduled` task for the life of the process. */
     @Scheduled(cron = $$"${app.data-quality.classification.cron:$${ClassificationProperties.DEFAULT_CRON}}")
-    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: see the KDoc
-    suspend fun nightly() {
-        try {
-            runNightly()
-        } catch (e: Exception) {
-            rethrowIfCancelled()
-            logger.error(e) { "Nightly event classification failed" }
-        }
-    }
+    suspend fun nightly() = runScheduled("Nightly event classification", logger) { runNightly() }
 
     /** One pass, or `null` when another run held the lock or the month's budget is spent. */
     suspend fun runNightly(): NightlyPassResult? {
