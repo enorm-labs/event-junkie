@@ -13,6 +13,7 @@ class PromoterControllerTest : BaseControllerTest() {
         runBlocking {
             insertPromoter("36 Concerts", "36-concerts")
             insertPromoter("Goodlive", "goodlive")
+            databaseClient.sql("UPDATE events.promoter SET kind = 'collective' WHERE slug = 'goodlive'").await()
 
             webTestClient
                 .get()
@@ -26,6 +27,10 @@ class PromoterControllerTest : BaseControllerTest() {
                 // default sort by name asc
                 .jsonPath("$.content[0].slug")
                 .isEqualTo("36-concerts")
+                .jsonPath("$.content[0].kind")
+                .doesNotExist()
+                .jsonPath("$.content[1].kind")
+                .isEqualTo("collective")
         }
 
     @Test

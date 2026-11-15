@@ -32,6 +32,22 @@ describe('PromoterCard', () => {
     expect(wrapper.findAll('span.whitespace-nowrap')).toHaveLength(2)
   })
 
+  it('opens the meta line with a collective, a label or a party series, and nothing for the rest', () => {
+    const line = (kind: PromoterListItem['kind']) =>
+      mount(PromoterCard, { props: { promoter: { ...promoter, kind } }, global: { stubs } })
+        .findAll('p')
+        .map((p) => p.text())
+        .find((text) => text.includes('upcoming overall'))
+
+    expect(line('collective')).toBe(
+      'Collective · 12 events in the next 30 days · 220 upcoming overall',
+    )
+    expect(line('party')).toBe(
+      'Party series · 12 events in the next 30 days · 220 upcoming overall',
+    )
+    expect(line('promoter')).toBe('12 events in the next 30 days · 220 upcoming overall')
+  })
+
   it('says so when nothing is upcoming', () => {
     const wrapper = mount(PromoterCard, {
       props: { promoter: { ...promoter, upcomingEventCount: 0, upcomingNext30DaysCount: 0 } },

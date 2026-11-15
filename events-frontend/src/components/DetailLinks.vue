@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 /**
  * A detail page's outbound links as one `·`-separated line, the shape the meta line has. The
- * caller decides whether a link carries the referral tag (lib/referral.ts).
+ * caller decides whether a link carries the referral tag (lib/referral.ts). [lead] is a plain
+ * fact that opens the line, such as a promoter's kind (#5080).
  */
 import { TEXT_LINK_CLASS } from '@/lib/utils'
 
@@ -10,13 +11,16 @@ export interface DetailLink {
   url: string
 }
 
-defineProps<{ links: DetailLink[] }>()
+defineProps<{ links: DetailLink[]; lead?: string | null }>()
 </script>
 
 <template>
-  <p v-if="links.length" class="text-body">
+  <p v-if="lead || links.length" class="text-body">
+    <span v-if="lead" class="text-muted-foreground">{{ lead }}</span>
     <template v-for="(link, index) in links" :key="link.url">
-      <span v-if="index > 0" aria-hidden="true" class="text-muted-foreground">&nbsp;· </span>
+      <span v-if="index > 0 || lead" aria-hidden="true" class="text-muted-foreground"
+        >&nbsp;·
+      </span>
       <a :href="link.url" :class="TEXT_LINK_CLASS" rel="noopener noreferrer" target="_blank">{{
         link.label
       }}</a>

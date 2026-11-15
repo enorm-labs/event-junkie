@@ -7,6 +7,7 @@ import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import type { Locale } from '@/i18n/locales'
 import { descriptionFor } from '@/lib/description'
+import { promoterKindKey } from '@/lib/promoterKinds'
 import { CARD_CLASS, TEXT_LINK_CLASS } from '@/lib/utils'
 
 const props = withDefaults(
@@ -18,16 +19,22 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const localePath = useLocalePath()
 
 // The same language choice the promoter page makes, so a card never contradicts its page.
 const description = computed(() => descriptionFor(props.promoter, locale.value as Locale))
 
 const { formatUpcoming } = useFormat()
-const upcoming = computed(() =>
-  formatUpcoming({ ...props.promoter, upcomingEventCount: props.promoter.upcomingEventCount ?? 0 }),
-)
+// The kind opens the meta line, the same word the promoter page shows (#5080).
+const upcoming = computed(() => {
+  const key = promoterKindKey(props.promoter.kind)
+  const counts = formatUpcoming({
+    ...props.promoter,
+    upcomingEventCount: props.promoter.upcomingEventCount ?? 0,
+  })
+  return key ? [t(key), ...counts] : counts
+})
 
 /** The site's host, which is what a reader recognises; the scheme and path are noise on a card. */
 const websiteHost = computed(() => {
