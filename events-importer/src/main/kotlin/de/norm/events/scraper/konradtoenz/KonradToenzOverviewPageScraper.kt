@@ -2,6 +2,7 @@ package de.norm.events.scraper.konradtoenz
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.genretag.isGenreLabel
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -25,8 +26,8 @@ import java.time.LocalTime
  *
  * The page is typed by hand. A date line the pattern cannot read (`23.10.20256`) is skipped with a
  * `WARN`, never repaired; a weekday that contradicts the date keeps the printed date. DJs come from the
- * `mit DJ …` tail, and only when a separate style line follows: a night typed as one paragraph runs the
- * styles into the name (`mit DJ Herr Siebendaum Funk & Disco Spezial`), so it bills no one.
+ * `mit DJ …` or `to DJ …` tail. A night typed as one paragraph runs the styles into the name
+ * (`mit DJ Herr Siebendaum Funk & Disco Spezial`), so there the name stops at the first genre word.
  */
 class KonradToenzOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -70,7 +71,7 @@ class KonradToenzOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.KONRAD_TOENZ.sourceIdPrefix}$date",
             genre = knownGenresInStyleTail(style),
-            artists = if (style == null) emptyList() else djsIn(title)
+            artists = djsIn(title, stylesInTitle = style == null)
         )
     }
 
@@ -96,16 +97,24 @@ class KonradToenzOverviewPageScraper {
             null
         }
 
-    private fun djsIn(title: String): List<ScrapedArtist> =
-        DJ_TAIL
-            .find(title)
-            ?.groupValues
-            ?.get(1)
-            .orEmpty()
+    private fun djsIn(
+        title: String,
+        stylesInTitle: Boolean
+    ): List<ScrapedArtist> {
+        val tail = DJ_TAIL.find(title)?.groupValues?.get(1) ?: return emptyList()
+        return (if (stylesInTitle) beforeFirstGenreWord(tail) else tail)
             .split(DJ_SEPARATOR)
-            .mapNotNull { it.trim().blankToNull() }
+            .mapNotNull { it.trim().replace(TRAILING_BANGS, "").blankToNull() }
             .filterNot(::isNonArtistName)
             .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+    }
+
+    /** `DJ Herr Siebendaum Funk & Disco Spezial` → `DJ Herr Siebendaum`; empty when no name precedes the styles. */
+    private fun beforeFirstGenreWord(tail: String): String {
+        val words = tail.split(' ')
+        val name = words.drop(1).takeWhile { !isGenreLabel(it) }
+        return if (name.isEmpty()) "" else (listOf(words.first()) + name).joinToString(" ")
+    }
 
     private fun String.clean(): String = replace(SPACES, " ").trim()
 
@@ -125,8 +134,11 @@ class KonradToenzOverviewPageScraper {
         /** `ab 21 Uhr`, `ab 21:30 Uhr`. */
         val START = Regex("""\bab\s+(\d{1,2})(?:[:.](\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
 
-        /** The acts after the last `mit DJ`: `Rillenrodeo @ Tönz mit DJ gina d`orio & DJ johnboyadonis`. */
-        val DJ_TAIL = Regex("""\bmit\s+(DJs?\s+.+)$""", RegexOption.IGNORE_CASE)
+        /** The acts after `mit DJ` or `to DJ`: `Rillenrodeo @ Tönz mit DJ gina d`orio & DJ johnboyadonis`, `Say yes! to DJ Nonoyesnonono!`. */
+        val DJ_TAIL = Regex("""\b(?:mit|to)\s+(DJs?\s+.+)$""", RegexOption.IGNORE_CASE)
+
+        /** The exclamation a title ends on, `DJ Nonoyesnonono!`, which is not part of the name. */
+        val TRAILING_BANGS = Regex("""!+$""")
         val DJ_SEPARATOR = Regex("""\s+(?:&|und|and)\s+|,\s*""", RegexOption.IGNORE_CASE)
     }
 }
