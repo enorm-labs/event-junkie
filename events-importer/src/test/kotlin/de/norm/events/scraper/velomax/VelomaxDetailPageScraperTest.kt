@@ -90,6 +90,33 @@ class VelomaxDetailPageScraperTest {
         show.eventDate shouldBe LocalDate.of(2026, 10, 23)
         show.sourceId shouldBe "max_schmeling_halle:die-nervigen-max-schmeling-halle-2026-10-23"
         show.startTime.shouldNotBeNull()
+        // The button's href is a bare host, with no scheme.
+        show.ticketUrl shouldBe "https://dienervigen.myticket.de"
+    }
+
+    @Test
+    fun `takes the hall's Tickets button whatever its shop, but no shop linked only in the prose (#5108)`() {
+        val url = "https://www.velodrom.de/events/event/x-2026-01-01"
+
+        fun ticketUrlOf(button: String): String? {
+            val html =
+                """
+                <html><body><div itemtype="https://schema.org/Event" itemscope>
+                  <h1 itemprop="name">Act</h1>
+                  <div class="eventSingle">
+                    <div class="ticket-link">$button</div>
+                    <div class="event-content"><p>Mehr unter <a href="https://www.myticket.de/de/act-tickets">myticket</a>.</p></div>
+                    <div itemprop="organizer"><meta itemprop="url" content="https://www.promoter.de"></div>
+                  </div>
+                </div></body></html>
+                """.trimIndent()
+            return scraper.scrape(Jsoup.parse(html, url), url, VelomaxHall.VELODROM)?.ticketUrl
+        }
+        ticketUrlOf("""<a class="event-ticket available" href="https://shop.myticket.de/selection/event/seat?perfId=1">Tickets</a>""") shouldBe
+            "https://shop.myticket.de/selection/event/seat?perfId=1"
+        ticketUrlOf("""<a class="event-ticket soldout" href="https://shop.paulahartmann.de/tickets">ausverkauft</a>""") shouldBe
+            "https://shop.paulahartmann.de/tickets"
+        ticketUrlOf("").shouldBeNull()
     }
 
     @Test

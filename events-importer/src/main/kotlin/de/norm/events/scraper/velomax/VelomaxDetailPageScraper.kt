@@ -115,17 +115,34 @@ class VelomaxDetailPageScraper {
         return runCatching { resolveUrl(sourceUrl, src) }.getOrNull()
     }
 
-    /** The external ticket-shop link, in the performance block beside the times. */
+    /**
+     * The hall's own Tickets button, whatever shop it names; a sold-out button keeps its link.
+     * Only a page without that button falls back to a known shop host in the block. That fallback
+     * stays narrow because the prose also links artist sites and the organizer's homepage (#5108).
+     */
     private fun parseTicketUrl(document: Document): String? =
-        document
-            .select(".eventSingle a[href]")
-            .firstOrNull { TICKET_HOST.containsMatchIn(it.attr("href")) }
-            ?.attr("href")
-            ?.takeIf { it.startsWith("http") }
+        document.selectFirst(".eventSingle .ticket-link a[href]")?.attr("href")?.let(::absoluteTicketUrl)
+            ?: document
+                .select(".eventSingle a[href]")
+                .firstOrNull { TICKET_HOST.containsMatchIn(it.attr("href")) }
+                ?.attr("href")
+                ?.takeIf { it.startsWith("http") }
+
+    /** The editors sometimes type a bare host such as `dienervigen.myticket.de`. */
+    private fun absoluteTicketUrl(href: String): String? {
+        val trimmed = href.trim()
+        return when {
+            trimmed.startsWith("http://") || trimmed.startsWith("https://") -> trimmed
+            BARE_HOST.containsMatchIn(trimmed) -> "https://$trimmed"
+            else -> null
+        }
+    }
 
     private companion object {
         /** Ticket-shop hosts the halls link to. */
         val TICKET_HOST = Regex("""eventim\.|ticketmaster\.|reservix\.|tickets\.""", RegexOption.IGNORE_CASE)
+
+        val BARE_HOST = Regex("""^[a-z0-9-]+(\.[a-z0-9-]+)+(/|$)""", RegexOption.IGNORE_CASE)
     }
 }
 
