@@ -3,9 +3,8 @@ import { LocateFixed, MapPin as MapPinIcon } from '@lucide/vue'
 import { computed, onMounted, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { type LocationQueryRaw, RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import type { EventSummary, VenueSummary } from '@/api/types'
-import { api, describeError, unwrap } from '@/api/client'
-import { retryTransient } from '@/api/retry'
+import type { VenueSummary } from '@/api/types'
+import { api, unwrap } from '@/api/client'
 import BaseSelect from '@/components/BaseSelect.vue'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
@@ -17,11 +16,11 @@ import ListPage from '@/components/ListPage.vue'
 import MapPanel from '@/components/MapPanel.vue'
 import LocateStatus from '@/components/LocateStatus.vue'
 import NearOriginControls from '@/components/NearOriginControls.vue'
+import { useAsync } from '@/composables/useAsync'
 import { fetchCalendarEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
-import { beginContentLoad } from '@/composables/useViewLoaded'
 import { fetchAllVenues } from '@/composables/useVenues'
 import { today } from '@/lib/dateRanges'
 import { addDays, isOnNow, isPastEvent, todayIso, venueLocationLine } from '@/lib/format'
@@ -64,46 +63,19 @@ const range = computed(() => {
   return { from, to: to > max ? max : to }
 })
 
-const events = shallowRef<EventSummary[]>([])
-const loading = ref(true)
-const retrying = ref(false)
-const error = ref<string | null>(null)
+const {
+  data,
+  error,
+  loading,
+  retrying,
+  run: load,
+} = useAsync(
+  () => fetchCalendarEvents(range.value.from, range.value.to, filters.value),
+  'errors.subject.map',
+)
+const events = computed(() => data.value ?? [])
 const unavailable = ref(false)
 const selected = ref<string | null>(null)
-
-let generation = 0
-
-async function load() {
-  const call = ++generation
-  loading.value = true
-  retrying.value = false
-  const done = beginContentLoad()
-  try {
-    const answer = await retryTransient(
-      () => fetchCalendarEvents(range.value.from, range.value.to, filters.value),
-      {
-        isStale: () => call !== generation,
-        onRetry: () => {
-          retrying.value = true
-          done()
-        },
-      },
-    )
-    if (call !== generation) return
-    events.value = answer
-    error.value = null
-  } catch (e) {
-    if (call !== generation) return
-    events.value = []
-    error.value = describeError(e, 'errors.subject.map')
-  } finally {
-    if (call === generation) {
-      loading.value = false
-      retrying.value = false
-    }
-    done()
-  }
-}
 
 // Keyed on what the request depends on, so a radius or "on now" change filters without a reload.
 watch(() => JSON.stringify([range.value, filters.value]), load, { immediate: true })
