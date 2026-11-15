@@ -156,7 +156,7 @@ class KesselhausCalendarScraper(
             genre = genreOf(topics, eventType),
             soldOut = SOLD_OUT in notes,
             status = statusOf(notes),
-            statusNote = subtitle?.takeIf { RELOCATED in notes },
+            statusNote = subtitle?.takeIf { RELOCATED in notes || POSTPONED in notes },
             artists =
                 if (ceilidh) {
                     ceilidhBand(subtitle)
@@ -241,7 +241,12 @@ class KesselhausCalendarScraper(
     private fun statusOf(notes: Set<String>): String =
         when {
             CANCELLED in notes -> EventStatus.CANCELLED.name
+
             RELOCATED in notes -> EventStatus.RELOCATED.name
+
+            // The note sits on the new date's row too, and the import's resolvePostponement turns that row back (#5099).
+            POSTPONED in notes -> EventStatus.POSTPONED.name
+
             else -> EventStatus.SCHEDULED.name
         }
 
@@ -332,6 +337,7 @@ class KesselhausCalendarScraper(
         private const val SOLD_OUT = "sold-out"
         private const val CANCELLED = "cancelled"
         private const val RELOCATED = "relocated"
+        private const val POSTPONED = "postponed"
 
         private val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
         private val MARKUP_TAG = Regex("""</?(?:h[1-6]|p|span|strong|em|b|i|u|div)(?:\s[^>]*)?>""", RegexOption.IGNORE_CASE)

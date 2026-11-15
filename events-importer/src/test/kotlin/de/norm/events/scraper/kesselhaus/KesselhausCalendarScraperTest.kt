@@ -1,11 +1,13 @@
 package de.norm.events.scraper.kesselhaus
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.isForChildren
+import de.norm.events.scraper.resolvePostponement
 import de.norm.events.scraper.stripFriendsTail
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -335,6 +337,29 @@ class KesselhausCalendarScraperTest {
         events.getValue("Global Sounds Festival").genre shouldBe "World, Blues"
     }
 
+    @Test
+    fun `marks a postponed show on the date it left and keeps the row it moved to (#5099)`() {
+        // Verbatim subtitle of RE6CE, calendar id -P3jNNUJlKQBoQEIt5tm. Every card here is dated 2027-01-09.
+        val left = "Die Show wird vom 09.01.27 auf den 27.05.27 verschoben!"
+        val arrived = "Die Show wird vom 25.11.26 auf den 09.01.27 verschoben!"
+        val page =
+            calendarPage(
+                Card("left", "RE6CE", left, venue = "maschinenhaus", notes = listOf("postponed")),
+                Card("arrived", "RE6CE Zusatz", arrived, venue = "maschinenhaus", notes = listOf("postponed"))
+            )
+
+        val events = maschinenhaus.scrape(Jsoup.parse(page, url), url).associateBy { it.title }
+
+        events.getValue("RE6CE").run {
+            status shouldBe EventStatus.POSTPONED.name
+            statusNote shouldBe left
+            resolvePostponement(status, listOfNotNull(statusNote, subtitle), eventDate) shouldBe EventStatus.POSTPONED.name
+        }
+        events.getValue("RE6CE Zusatz").run {
+            resolvePostponement(status, listOfNotNull(statusNote, subtitle), eventDate) shouldBe EventStatus.SCHEDULED.name
+        }
+    }
+
     /** One concert card on a calendar page of its own, with the transfer state the CMS writes, `&`-escaped as `&a;`. */
     private fun scrapeOne(
         title: String,
@@ -351,14 +376,16 @@ class KesselhausCalendarScraperTest {
         val tickets: String = "[]",
         val venue: String = "kesselhaus",
         val category: String = "Konzert",
-        val topics: List<String> = listOf("concerts")
+        val topics: List<String> = listOf("concerts"),
+        val notes: List<String> = emptyList()
     )
 
     private fun calendarPage(vararg cards: Card): String {
         val documents =
             cards.joinToString(",") { card ->
                 val topics = card.topics.joinToString(",", "[", "]") { "\"/categories//event-topics//subs//$it\"" }
-                val base = """{"venue":"/venues//${card.venue}","start":"2027-01-09T19:00:00.000Z","topics":$topics,"tickets":${card.tickets}}"""
+                val notes = card.notes.joinToString(",", "[", "]") { "\"/categories//event-notes//subs//$it\"" }
+                val base = """{"venue":"/venues//${card.venue}","start":"2027-01-09T19:00:00.000Z","topics":$topics,"notes":$notes,"tickets":${card.tickets}}"""
                 val text = """{"title":"${card.title}","subtitle":"${card.subtitle}"}"""
                 """"store.x.doc:/events//${card.id}/meta:base/1":$base,"store.x.doc:/events//${card.id}/meta:de/1":$text"""
             }
