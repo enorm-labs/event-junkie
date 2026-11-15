@@ -254,6 +254,65 @@ class BerghainWebsiteImporterTest {
             artists.getValue("Not On The Running Order").setStart.shouldBeNull()
         }
 
+    // Flowgeist at Kantine am Berghain, event 82079: the programme bills the visuals credit as an act (#5088).
+    @Test
+    fun `a concert's lineup drops the name its event page credits for the visuals`() =
+        runTest {
+            val kantineUrl = "https://www.berghain.berlin/de/program/kantine-am-berghain/"
+            val overview =
+                """<html><body><a href="/de/event/82079/"><p>Sonntag <span class="font-bold">01.11.2026</span> tür 19:00 beginn 20:00</p>""" +
+                    """<h2>Flowgeist</h2><h3>Kantine am Berghain</h3><h4>""" +
+                    """<span class="font-bold"><span>Flowgeist</span><span class="uppercase">Live</span>,</span>""" +
+                    """<span class="font-bold"><span>4C &amp; Stefano Canavese</span>,</span>""" +
+                    """<span class="font-bold"><span>Alex Palmieri</span>,</span>""" +
+                    """<span class="font-bold"><span>Pareal</span></span></h4></a></body></html>"""
+            coEvery { htmlFetcher.fetch(kantineUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(overview, kantineUrl), etag = null, lastModified = null)
+            stubFetcher("https://www.berghain.berlin/de/event/82079/" to "berghain/berghain-detail-visuals-credit.html", fetcher = htmlFetcher)
+
+            val result = importer.importEvents(kantineUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val event = result.events.single()
+
+            event.eventType shouldBe EventType.CONCERT.name
+            event.artists.map { it.name to it.role } shouldBe
+                listOf("Flowgeist" to ArtistRole.HEADLINER, "Alex Palmieri" to ArtistRole.HEADLINER, "Pareal" to ArtistRole.HEADLINER)
+        }
+
+    @Test
+    fun `a club night drops a lights credit and keeps its DJs, their roles and their set times`() =
+        runTest {
+            val overview =
+                """<html><body><a href="/de/event/80900/"><p>Samstag <span class="font-bold">05.12.2026</span> beginn 23:59</p>""" +
+                    """<h2>Klubnacht</h2><h3>Berghain</h3><h4>""" +
+                    """<span class="font-bold"><span>Ryan Elliott</span>,</span>""" +
+                    """<span class="font-bold"><span>Bad Light</span>,</span>""" +
+                    """<span class="font-bold"><span>Visuals</span><span class="uppercase">Live</span></span></h4></a></body></html>"""
+            val detailUrl = "https://www.berghain.berlin/de/event/80900/"
+
+            fun slot(
+                name: String,
+                label: String
+            ) = """<li data-set-item data-set-item-start="2026-12-05T23:59:00+01:00" data-set-item-end="2026-12-06T04:00:00+01:00">""" +
+                """<div class="running-order-set__info"><span class="font-bold">$name <span class="lowercase">$label</span></span></div></li>"""
+            val detail =
+                """<html><body><main><p>Samstag <span class="font-bold">05.12.2026</span> beginn 23:59</p><h1>Klubnacht</h1>""" +
+                    """<div data-set-floor="0"><h2>Berghain</h2><ul>""" +
+                    slot("Ryan Elliott", "Ostgut Ton") + slot("Bad Light", "lights") + slot("Visuals", "Mord") +
+                    """</ul></div></main></body></html>"""
+            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(overview, sourceUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns Jsoup.parse(detail, detailUrl)
+
+            val result = importer.importEvents(sourceUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val event = result.events.single()
+
+            event.eventType shouldBe EventType.PARTY.name
+            event.artists.map { it.name to it.role } shouldBe listOf("Ryan Elliott" to ArtistRole.DJ, "Visuals" to ArtistRole.LIVE)
+            event.artists.first().setStart shouldBe Instant.parse("2026-12-05T22:59:00Z")
+        }
+
     // The detail page types the club floor a party with its genre; the programme's all-Live lineup outranks it (#3151).
     @Test
     fun `a night of only live acts stays a concert after the detail page merges in`() =

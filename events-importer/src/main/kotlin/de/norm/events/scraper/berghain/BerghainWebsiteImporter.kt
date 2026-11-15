@@ -8,6 +8,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.collapseExhibitionRuns
@@ -76,6 +77,9 @@ class BerghainWebsiteImporter(
      *
      * The detail page types a club floor a party. When the overview's lineup made the night a
      * concert, because every act is billed `Live` (#3151), the overview's type and its empty genre win.
+     *
+     * The programme bills every name of the running order, the visuals too. The detail page labels a
+     * credit for the visuals or the lights ([ScrapedEvent.nonActCredits]), so that name leaves the lineup (#5088).
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -91,13 +95,28 @@ class BerghainWebsiteImporter(
                 if (primary.eventType == EventType.EXHIBITION.name) {
                     emptyList()
                 } else {
-                    fallback.artists.withSetTimesFrom(primary.artists) {
+                    fallback.artists.withoutCredits(primary.nonActCredits, fallback.sourceId).withSetTimesFrom(primary.artists) {
                         logger.warn { "Running-order slot '${it.name}' matches no act on the programme; its set time is dropped" }
                     }
                 },
             eventType = if (concertByActs) fallback.eventType else primary.eventType ?: fallback.eventType,
             genre = if (concertByActs) fallback.genre else primary.genre ?: fallback.genre
         )
+    }
+
+    private fun List<ScrapedArtist>.withoutCredits(
+        nonActCredits: Set<String>,
+        sourceId: String
+    ): List<ScrapedArtist> {
+        if (nonActCredits.isEmpty()) return this
+        val credits = nonActCredits.map(SlugGenerator::slugify).toSet()
+        val (dropped, acts) = partition { SlugGenerator.slugify(it.name) in credits }
+        if (dropped.isNotEmpty()) {
+            logger.info {
+                "Dropping ${dropped.map { it.name }} from the lineup of '$sourceId': the event page credits them for the visuals or the lights"
+            }
+        }
+        return acts
     }
 
     /**
