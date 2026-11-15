@@ -18,11 +18,14 @@ data class VolksbuehneEventPage(
     val imageUrl: String?,
     val eventType: EventType?,
     /** The names of the page's writer line, which names a director or an author on a staged work and the performers on a concert. */
-    val writers: List<String> = emptyList()
+    val writers: List<String> = emptyList(),
+    /** The house's ticket shop for this date; a sold-out category is a `<span>` with no link. */
+    val ticketUrl: String? = null
 ) {
     /**
      * The page's text and image; its schema.org type replaces the listing's only where the listing named no format. A concert
-     * only the page types bills its writer line when the listing billed nobody (#4438).
+     * only the page types bills its writer line when the listing billed nobody (#4438). A row's Tickets button often
+     * links this page itself, which is no shop, so the page's shop link replaces it (#5107).
      */
     fun applyTo(event: ScrapedEvent): ScrapedEvent {
         val confirmedType = eventType?.takeIf { event.typeIsFallback }
@@ -32,10 +35,13 @@ data class VolksbuehneEventPage(
             imageUrl = imageUrl ?: event.imageUrl,
             eventType = confirmedType?.name ?: event.eventType,
             typeIsFallback = event.typeIsFallback && confirmedType == null,
-            artists = event.artists.ifEmpty { writerActs }
+            artists = event.artists.ifEmpty { writerActs },
+            ticketUrl = event.ticketUrl?.takeIf { isShopLink(it) && it.trimEnd('/') != event.sourceUrl.trimEnd('/') } ?: ticketUrl
         )
     }
 }
+
+private fun isShopLink(url: String): Boolean = url.startsWith("https://") || url.startsWith("http://")
 
 /**
  * Pure parser for one Volksbühne performance page (`/produktionen/<slug>/<yyyyMMdd-HHmm>/` or a
@@ -49,6 +55,7 @@ class VolksbuehneEventPageScraper {
         val description = description(document)
         if (event == null && description == null) return null
         return VolksbuehneEventPage(
+            ticketUrl = document.select(".activity-detail__tickets a.ticket-button[href]").map { it.attr("href") }.firstOrNull(::isShopLink),
             writers = document.textAt("p.production__writer")?.let(VolksbuehneSpielplanScraper::splitNames).orEmpty(),
             description = description,
             imageUrl = event?.schemaImageUrl() ?: document.ogImageUrl(),
