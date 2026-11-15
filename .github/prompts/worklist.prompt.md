@@ -130,7 +130,7 @@ Write `temp/worklist-$TAG.md`, then `scripts/format-markdown.sh temp/worklist-$T
 4. **Not a defect**: each finding that did not hold, with what the page or the code showed.
 5. **Reported — `/fix-events`**: each entry whose event is in `temp/reported-$TAG.json`, with its admin id and title. No fix and no dismissal for it.
 6. **Proposed fixes and dismissals**, numbered, as Step 5 says, and the tally from Step 4.
-7. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone, and the `afk-ok` verdict by
+7. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels from its step 4 list, milestone, and the `afk-ok` verdict by
    `/new-issue` step 4 — `afk-ok: yes`, or `afk-ok: no — <the condition that fails>`. Each draft's heading ends in its state, `(unfiled)`; filing one
    rewrites it to `(filed #N)`. [`/maintain`](maintain.prompt.md) reads that marker.
 8. **Applied**: empty until Step 7 runs.

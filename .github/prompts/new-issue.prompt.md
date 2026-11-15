@@ -81,6 +81,9 @@ milestone and board fields.
     EOF
     ```
 
+    A draft from `/worklist`, `/daily-check`, `/log-check` or `/ui-check` can name a label that does not exist, such as `area:importer` or
+    `size:XS`. Check every label of a draft against step 4 before you file it. `gh issue create` refuses an unknown label and files nothing.
+
 6. **Set the board fields.** Status and Priority are project fields, not labels:
 
     ```sh
