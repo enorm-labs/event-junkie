@@ -56,5 +56,10 @@ val VOID_CLUB_LIMITATIONS =
             "event cards carry no image; the hero slider shows other events than the listed nights",
             verified = "2026-10-13"
         ),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13")
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "a collective is named only in the title, and read only where the title marks its host or pairs two crews",
+            verified = "2026-11-15",
+            issue = 5080
+        )
     )

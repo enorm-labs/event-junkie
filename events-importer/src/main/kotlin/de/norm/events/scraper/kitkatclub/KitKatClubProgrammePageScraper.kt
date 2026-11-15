@@ -19,6 +19,7 @@ import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
+import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -98,7 +99,7 @@ class KitKatClubProgrammePageScraper(
             ticketUrl = special.firstNotNullOfOrNull { RA_EVENT_URL.find(it)?.value },
             genre = fields["style"]?.joinToString(" ")?.takeIf { it.isNotBlank() },
             artists = fields["line up"]?.joinToString(" ")?.let(::parseLineup).orEmpty()
-        )
+        ).withTitleCrews(KITKATCLUB_NAMES)
     }
 
     /** The `Mi.` / `30. Sep` pair, year from the weekday ([inferYearForWeekday]). */
@@ -240,3 +241,5 @@ class KitKatClubProgrammePageScraper(
         val PROSE_MARK = Regex("""[„“"]|\bUhr\b|\d{1,2}:\d{2}""")
     }
 }
+
+private val KITKATCLUB_NAMES = setOf("KitKat", "KitKatClub", "KitKat Club")

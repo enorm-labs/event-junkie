@@ -26,6 +26,7 @@ import de.norm.events.scraper.parseOffsetToBerlin
 import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.splitHeadlinerTitle
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import java.time.Clock
@@ -177,7 +178,7 @@ class ZennerApiScraper(
             status = description?.let { parseEventStatus(it) } ?: EventStatus.SCHEDULED.name,
             soldOut = cleanedTitle.soldOut,
             artists = buildArtists(title, eventType)
-        )
+        ).withTitleCrews(ZENNER_NAMES)
     }
 
     /**
@@ -435,3 +436,5 @@ private data class ZennerPlaceVisibility(
         val ALL_VISIBLE = ZennerPlaceVisibility()
     }
 }
+
+private val ZENNER_NAMES = setOf("Zenner", "Club Zenner")

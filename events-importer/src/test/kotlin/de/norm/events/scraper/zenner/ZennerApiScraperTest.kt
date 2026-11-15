@@ -327,4 +327,12 @@ class ZennerApiScraperTest {
         /** 19 July 2026 — the snapshot's own "today", keeping its one cancelled event in scope. */
         val CUTOFF_CLOCK: Clock = fixedClock("2026-07-19T09:00:00Z")
     }
+
+    @Test
+    fun `credits the crew a presents title names, and not an act it presents`() {
+        // #5080: the act after the colon is billed; the presenter is the promoter.
+        val event = scrape().single { it.title == "Trinity presents: Nathan Fake" }
+        event.promoters shouldBe listOf("Trinity")
+        event.artists.map { it.name } shouldBe listOf("Nathan Fake")
+    }
 }

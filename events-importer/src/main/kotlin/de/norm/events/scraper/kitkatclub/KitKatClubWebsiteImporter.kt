@@ -36,7 +36,12 @@ val KITKATCLUB_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "the club prints no admission and refers to each night's organiser", verified = "2026-10-04"),
         AcceptedLimitation(LimitedAspect.IMAGE, "the programme rows carry no flyer", verified = "2026-10-04"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the programme names each series but not the collective behind it", verified = "2026-10-04"),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "the programme names each series but rarely the collective behind it; a title that marks its host is read",
+            verified = "2026-11-15",
+            issue = 5080
+        ),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "a night links tickets only where its notes carry a Resident Advisor URL", verified = "2026-10-04"),
         houseGenre = "Techno, House"
     )

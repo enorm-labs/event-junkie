@@ -8,12 +8,15 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
+import de.norm.events.scraper.crewNames
+import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.stripLineupBracket
+import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -92,7 +95,7 @@ class BeateUweOverviewPageScraper {
                     ?.absUrl("href")
                     ?.blankToNull(),
             artists = lineup?.let(::parseLineup).orEmpty()
-        )
+        ).withTitleCrews(BEATE_UWE_NAMES, invitedCrews(title).ifEmpty { hostingCrewsFromTitle(title, BEATE_UWE_NAMES) })
     }
 
     /** `FR, 09.10.26 OKT`: the year is printed, two digits. */
@@ -133,3 +136,16 @@ class BeateUweOverviewPageScraper {
         const val MILLENNIUM = 2000
     }
 }
+
+private val BEATE_UWE_NAMES = setOf("Beate", "Beate Uwe")
+
+/** The crew a `Beate Invites /// House Queens` title names: the club invites, so the guest after the slashes hosts (#5080). */
+internal fun invitedCrews(title: String): List<String> =
+    BEATE_INVITES
+        .find(title)
+        ?.groupValues
+        ?.get(1)
+        ?.let { crewNames(it) { name -> name in BEATE_UWE_NAMES } }
+        .orEmpty()
+
+private val BEATE_INVITES = Regex("""^Beate\s+Invites\s*///\s*(.+)$""", RegexOption.IGNORE_CASE)

@@ -129,4 +129,13 @@ class BeateUweOverviewPageScraperTest {
     fun `a page without a programme yields nothing`() {
         scraper.scrape(Jsoup.parse("<html><body><p>Closed</p></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    @Test
+    fun `credits the crew the club invites, and a presenting crew`() {
+        // #5080: `& Friends` names nobody; the night's own words after `w/` are not part of the crew.
+        events.single { it.title == "Beate Invites /// Jackfruit Records & Friends" }.promoters shouldBe listOf("Jackfruit Records")
+        events.single { it.title == "Beate Invites /// Früher Feiern w/ AKA AKA" }.promoters shouldBe listOf("Früher Feiern")
+        events.single { it.title == "Staygold presents: Skins & Prints" }.promoters shouldBe listOf("Staygold")
+        events.single { it.title == "Beate Barfuß" && it.eventDate.toString() == "2026-10-18" }.promoters shouldBe emptyList()
+    }
 }

@@ -498,4 +498,21 @@ class Bogen47ApiScraperTest {
         organizers("Greyzone Concerts") shouldBe listOf("Greyzone Concerts")
         organizers(null) shouldBe emptyList()
     }
+
+    @Test
+    fun `credits Fitzroy's crews from a pair title, and leaves LARK's credits alone`() {
+        // #5080: Fitzroy leaves its organiser field empty; LARK fills it, so LARK reads no title.
+        fitzroy.single { it.title == "Dissident x Miss Dreamz" }.promoters shouldBe listOf("Dissident", "Miss Dreamz")
+
+        val asLark =
+            Bogen47ApiScraper(
+                EventSource.LARK,
+                "https://lark.berlin/events/",
+                emptyMap(),
+                Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay(BERLIN).toInstant(), BERLIN)
+            ).scrapePage(fixtureText("bogen47/fitzroy-events.json"))
+                .entries
+                .map { it.event }
+        asLark.single { it.title == "Dissident x Miss Dreamz" }.promoters shouldBe emptyList()
+    }
 }

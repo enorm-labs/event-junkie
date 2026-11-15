@@ -47,6 +47,11 @@ val RENATE_LIMITATIONS =
             verified = "2026-09-20"
         ),
         AcceptedLimitation(LimitedAspect.IMAGE, "the programme rows carry no flyer, only icons and a Resident Advisor ticket link", verified = "2026-09-30"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "a collective is named only in the title, and read only from a Klubnacht's `w/` list or where the title marks its host",
+            verified = "2026-11-15",
+            issue = 5080
+        ),
         houseGenre = "Techno, House"
     )

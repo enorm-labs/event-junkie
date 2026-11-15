@@ -24,6 +24,7 @@ import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
+import de.norm.events.scraper.withTitleCrews
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -134,7 +135,7 @@ class PankeProgrammePageScraper {
             sourceId = "${EventSource.PANKE.sourceIdPrefix}$postId",
             soldOut = cleanedTitle.soldOut,
             artists = lineup
-        )
+        ).withTitleCrews(PANKE_NAMES)
     }
 
     /**
@@ -491,3 +492,5 @@ private val HEADLINER_ROLE = ArtistRole.HEADLINER
 
 /** Every act the venue links on Resident Advisor is billed there as a DJ. */
 private val DJ_ROLE = ArtistRole.DJ
+
+private val PANKE_NAMES = setOf("Panke", "Panke Culture", "Panke Gallery")

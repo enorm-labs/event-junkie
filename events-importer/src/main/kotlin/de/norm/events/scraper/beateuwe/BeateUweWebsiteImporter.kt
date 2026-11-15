@@ -36,7 +36,12 @@ val BEATE_UWE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.IMAGE, "the list carries no pictures", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-17"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a hosting collective is named only in the title", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "a hosting collective is named only in the title, and read only from a `Beate Invites ///` title or where the title marks its host",
+            verified = "2026-11-15",
+            issue = 5080
+        ),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site publishes no page per night, so every night points at the homepage", verified = "2026-10-17")

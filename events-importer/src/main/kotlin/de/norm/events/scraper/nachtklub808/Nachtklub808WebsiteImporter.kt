@@ -30,5 +30,10 @@ val NACHTKLUB_808_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "each night is a name and a DJ list, with no text", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.GENRE, "no night names a style", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a night has no page of its own", verified = "2026-10-13"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13")
+        AcceptedLimitation(
+            LimitedAspect.PROMOTERS,
+            "a collective is named only in the title, and read only where the title marks its host: hosted by, presents, invites, meets",
+            verified = "2026-11-15",
+            issue = 5080
+        )
     )

@@ -47,6 +47,10 @@ One verdict per row, with the evidence in a few words:
 | low     | Nothing found, or only a listing (Eventbrite, Bandsintown, a ticket shop, a venue page)                                       |
 | other   | Not a promoter: a band billed as its own promoter, a magazine, a party series, a parser fragment. Record its `kind`, and stop |
 
+**Record the `kind` on every row you write** (#5080): `promoter` for a business that books other acts, `collective` for DJs who host
+their own nights, `label` for a record label. A collective or a label is enriched like a promoter: it gets a site, an Instagram link and
+a description. [`docs/promoters/README.md`](../../docs/promoters/README.md) gives the order to decide the kind in.
+
 An Instagram link counts only when the promoter's own site links it. An About page on that site is where a description comes from. Up to four subagents
 may split the rows. Give each the rules in [Important](#important), and tell them the budget is shared.
 

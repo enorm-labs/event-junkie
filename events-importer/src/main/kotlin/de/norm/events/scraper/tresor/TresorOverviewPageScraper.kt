@@ -17,6 +17,7 @@ import de.norm.events.scraper.parseBasicIsoDatePrefix
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistPrefix
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -94,7 +95,7 @@ class TresorOverviewPageScraper {
             sourceId = "${EventSource.TRESOR.sourceIdPrefix}$slug",
             // `Tresor New Faces hosted by <DJ>` with no line-up bills its host; `hosted by Tresor` is the house itself.
             artists = lineup.ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ).filterNot { it.name.equals("Tresor", ignoreCase = true) } }
-        )
+        ).withTitleCrews(TRESOR_NAMES)
     }
 }
 
@@ -204,3 +205,6 @@ private fun isUnannouncedAct(name: String): Boolean = UNANNOUNCED_SLOT.matches(n
 
 /** `???` — the venue's own "act to be announced" billing. */
 private val UNANNOUNCED_SLOT = Regex("""\?{2,}""")
+
+/** The house and its floors, never a crew: `Tresor invites Surgeon` and `Globus Invites: The Ghost` bill an act (#5080). */
+private val TRESOR_NAMES = setOf("Tresor", "Globus", "Tresor.West", "Ohm")

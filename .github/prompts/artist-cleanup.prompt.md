@@ -86,14 +86,18 @@ Keep a pull request reviewable: one family of fixes, or up to about ten sources.
 `--kind promoters` runs the same four steps. A promoter goes wrong in its own ways, and its rules live in
 `events-importer/…/promoter/PromoterNormalizer.kt`, not in the artist-name rules:
 
-| Decision | When                                                                                                                              | The parser half                      | The migration half                                      |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------- |
-| `DROP`   | Not a promoter: a party or show name, a performer, a sponsor's URL, the venue crediting its own night                             | `NON_PROMOTER_NAMES`, or the scraper | Unlink it from that source; the orphan sweep deletes it |
-| `RENAME` | A promoter with a descriptor the normalizer does not strip: `Entertain the World – Etw Management`                                | `STRIP_WORDS`, or `NAME_CORRECTIONS` | The merge shape onto the clean slug (V103)              |
-| `SPLIT`  | Several promoters on one row: `Homebound Music, Bandu, Bedroomdisco and FluxFM`                                                   | The scraper's credit split           | Link each, drop the row                                 |
-| `MERGE`  | One promoter stored twice: `d2mberlin` beside `d2m berlin`, `Concert Concept Veranstaltungs-GmbH Berlin` beside `Concert Concept` | A `NAME_CORRECTIONS` entry           | The four-step merge of V031, keyed on slug (V103)       |
-| `KEEP`   | A real promoter whose name only looks odd: `Concert Concept`, `AEG Presents`, `CTM Festival`                                      | None                                 | None                                                    |
+| Decision | When                                                                                                                                                  | The parser half                      | The migration half                                      |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------- |
+| `DROP`   | Not a promoter: a party or show name, a performer, a sponsor's URL, the venue crediting its own night                                                 | `NON_PROMOTER_NAMES`, or the scraper | Unlink it from that source; the orphan sweep deletes it |
+| `RENAME` | A promoter with a descriptor the normalizer does not strip: `Entertain the World – Etw Management`                                                    | `STRIP_WORDS`, or `NAME_CORRECTIONS` | The merge shape onto the clean slug (V103)              |
+| `SPLIT`  | Several promoters on one row: `Homebound Music, Bandu, Bedroomdisco and FluxFM`                                                                       | The scraper's credit split           | Link each, drop the row                                 |
+| `MERGE`  | One promoter stored twice: `d2mberlin` beside `d2m berlin`, `Concert Concept Veranstaltungs-GmbH Berlin` beside `Concert Concept`                     | A `NAME_CORRECTIONS` entry           | The four-step merge of V031, keyed on slug (V103)       |
+| `KEEP`   | A real promoter whose name only looks odd: `Concert Concept`, `AEG Presents`, `CTM Festival`; a collective or a label: `Grab The Groove`, `Audiolith` | None                                 | None                                                    |
 
+- **A collective, a label or a party series is a `KEEP`, and its kind goes into `docs/promoters/REVIEWED.tsv`** (#5080). The
+  importer credits the crew a club night's title names (`hosted by`, `presents`, `invites`, `meets`, a Klubnacht's `w/` list), so a
+  crew name is the expected case at Tresor, Renate, Beate Uwe, VOID, OHM, Fitzroy, Panke, 808, KitKat and Zenner. A `DROP` there is
+  a DJ the title names as host who also plays, or a word the rule misread (`Friends`).
 - **The venue as its own promoter is a `DROP` only where it credits its own night.** `Festsaal Kreuzberg` crediting a night at SO36 is a promoter;
   `Badehaus` crediting a Badehaus night says nothing a visitor does not already see.
 - **A `MERGE` is a person's call** (`PromoterNormalizer`'s file header): a wrong `NAME_CORRECTIONS` entry folds two real promoters together. Run

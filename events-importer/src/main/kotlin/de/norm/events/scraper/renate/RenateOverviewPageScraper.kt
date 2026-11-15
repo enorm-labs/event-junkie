@@ -9,8 +9,10 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.crewNames
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hostedActsFromTitle
+import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -22,6 +24,7 @@ import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
+import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -119,7 +122,7 @@ class RenateOverviewPageScraper(
             sourceId = EventSource.RENATE.dateTitleId(eventDate, title),
             ticketUrl = row.hrefAt(".ticket-link"),
             artists = artists
-        )
+        ).withTitleCrews(RENATE_NAMES, klubnachtCrews(title).ifEmpty { hostingCrewsFromTitle(title, RENATE_NAMES) })
     }
 
     /**
@@ -332,3 +335,18 @@ private fun timeOf(
 
 /** Sort key for a night's times: one before noon is past midnight, so `01:00` sorts after `22:00`. */
 private fun nightOrder(time: LocalTime): Int = if (time < LocalTime.NOON) time.toSecondOfDay() + SECONDS_PER_DAY else time.toSecondOfDay()
+
+private val RENATE_NAMES = setOf("Renate", "Salon zur wilden Renate")
+
+/**
+ * The crews a `Renate Klubnacht w/ HOUSE OF HIGHLIFE & ELSE X SOUL EXPRESS` title names, one per floor (#5080). A DJ who
+ * `invites…` a floor is named too; `withTitleCrews` drops one the line-up bills.
+ */
+internal fun klubnachtCrews(title: String): List<String> {
+    val hosts = KLUBNACHT_HOSTS.find(title)?.groupValues?.get(1) ?: return emptyList()
+    return hosts.split(KLUBNACHT_SEPARATOR).flatMap { crewNames(it) { name -> name.equals("Renate", ignoreCase = true) } }
+}
+
+private val KLUBNACHT_HOSTS = Regex("""^Renate\s+Klubnacht\s+w/\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+private val KLUBNACHT_SEPARATOR = Regex("""\s+[x×&]\s+|,\s*""", RegexOption.IGNORE_CASE)

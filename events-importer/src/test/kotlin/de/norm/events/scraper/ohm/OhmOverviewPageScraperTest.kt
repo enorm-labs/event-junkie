@@ -470,4 +470,12 @@ class OhmOverviewPageScraperTest {
         ouch.artists.takeLast(2) shouldBe
             listOf(ScrapedArtist("Harba", ArtistRole.LIVE, stage = "Vorraum"), ScrapedArtist("Delta Division", ArtistRole.LIVE, stage = "Vorraum"))
     }
+
+    @Test
+    fun `credits the crews a pair title names, but not Tresor, which shares the house`() {
+        // #5080
+        disciplines.single { it.title == "Last Resort x Radical Sounds Latin America" }.promoters shouldBe
+            listOf("Last Resort", "Radical Sounds Latin America")
+        disciplines.single { it.title == "Tresor x RA25" }.promoters shouldBe listOf("RA25")
+    }
 }
