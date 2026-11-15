@@ -465,7 +465,7 @@ private fun isUnbilledSlot(name: String): Boolean = isGuestSlotLabel(name) || PR
  * True when [name] must never be stored as an artist: a placeholder ("TBA"), a bare role label
  * ("Special Guest"), a segment ("Acid Aftershow"), an event ("Shred Fest"), a "DJ set" label, a
  * guest slot ("+ Guest"), a programme item ("+ Darkroom"), a curated title ("The Revival Tour"), a
- * head-count ("20 DJ's"), a record label ("Lada Recordings"), a night name ("Autumn Bash 2026"), or a name that slugs to
+ * head-count ("20 DJ's", "DJs"), a record label ("Lada Recordings"), a night name ("Autumn Bash 2026"), or a name that slugs to
  * nothing ("-"). The single predicate applied wherever names are resolved.
  */
 fun isNonArtistName(name: String): Boolean =
@@ -498,9 +498,11 @@ private fun isHeadCountOrLabel(name: String): Boolean =
 
 /**
  * A number of performers rather than a performer: Gretchen bills `Afro Haus Soundsystem / + 20 DJ's`
- * (#2270). The number comes first and the noun directly after, so `2 Many DJs` is still an act.
+ * (#2270). The number comes first and the noun directly after, so `2 Many DJs` is still an act. A bare
+ * plural `DJs` counts nobody either: Renate, L.U.X. and Säälchen head a run of acts with it.
  */
-private val HEAD_COUNT = Regex("""\d+\s*(?:dj'?s?|djanes?|acts?|bands?|artists?|künstler(?:innen)?|musiker(?:innen)?)""", RegexOption.IGNORE_CASE)
+private val HEAD_COUNT =
+    Regex("""\d+\s*(?:dj'?s?|djanes?|acts?|bands?|artists?|künstler(?:innen)?|musiker(?:innen)?)|dj'?s""", RegexOption.IGNORE_CASE)
 
 /** Whether [name] is only a [HEAD_COUNT]. */
 private fun isHeadCount(name: String): Boolean = HEAD_COUNT.matches(name.trim())
