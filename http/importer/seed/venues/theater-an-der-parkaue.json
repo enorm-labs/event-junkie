@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Theater an der Parkaue",
+        "address": "Parkaue 29",
+        "city": "Berlin",
+        "postalCode": "10367",
+        "district": "lichtenberg",
+        "latitude": 52.51699,
+        "longitude": 13.4772,
+        "websiteUrl": "https://www.parkaue.de",
+        "description": "Berlin's Junges Staatstheater in Lichtenberg, the state theatre for young audiences, playing for children and teenagers on three stages.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Junge Staatstheater Berlin in Lichtenberg, das Staatstheater für junges Publikum, spielt auf drei Bühnen für Kinder und Jugendliche.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "Theater an der Parkaue",
+            "url": "https://www.parkaue.de/spielplan/",
+            "sourceType": "PARKAUE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

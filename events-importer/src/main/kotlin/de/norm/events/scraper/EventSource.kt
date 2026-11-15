@@ -381,6 +381,9 @@ enum class EventSource {
     /** Panke Culture Berlin – a club, café and gallery in a Wedding backyard: club nights, live music, markets and exhibitions. */
     PANKE,
 
+    /** Theater an der Parkaue – Berlin's state theatre for young audiences in Lichtenberg, playing for children and teenagers on three stages. */
+    PARKAUE,
+
     /** PAS – Petersburg Art Space, a non-profit art space and artist residency on the Spree in Moabit, for free improvisation and experimental music. */
     PAS,
 
