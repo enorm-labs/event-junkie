@@ -16,6 +16,10 @@
 #     --label <name>         added to the file names, so a second run with --click does not overwrite the first
 #     --full-page            the whole page instead of the viewport
 #     --signed-in            signed in as a test account: scripts/pr-screenshots-account.mjs answers /api/auth and /api/me
+#     --stub <slug>.<field>=<value>
+#                            set <field> on every JSON object with that slug in an /api response, on both sides: a field
+#                            the branch adds and production does not send yet (#5141). <value> is JSON when it parses,
+#                            else a string. Repeatable; say in the pull request that the field is stubbed.
 #     --out <dir>            default build/pr-screenshots
 #   Then, from the repository root: gh pr edit <n> --body-file <body.md> --attach <png>...
 #   Without --signed-in, an account page such as /en/following shows sign-in: production's API sees no session.
@@ -55,6 +59,7 @@ FOCUS=""
 LABEL=""
 FULL_PAGE="false"
 SIGNED_IN="false"
+STUBS=()
 PATHS=()
 
 die() {
@@ -111,6 +116,11 @@ while (($#)); do
         --signed-in)
             SIGNED_IN="true"
             shift
+            ;;
+        --stub)
+            [[ "${2:-}" =~ ^[^.=]+\.[^=]+=.* ]] || die "--stub takes <slug>.<field>=<value>, got '${2:-}'"
+            STUBS+=("$2")
+            shift 2
             ;;
         -*) die "unknown option $1 (see --help)" ;;
         /*)
@@ -172,10 +182,61 @@ fi
 [[ "$AFTER_KEY" != "$AFTER_SHA" || ! -f "$AFTER_DIST/index.html" ]] && build "$TREE" "$AFTER_DIST"
 
 # Plain object, no imports: it lives outside the frontend, where no package resolves.
-cat >"$OUT/preview.config.mjs" <<EOF
+if ((${#STUBS[@]} == 0)); then
+    cat >"$OUT/preview.config.mjs" <<EOF
 const target = { target: '$ORIGIN', changeOrigin: true }
 export default { preview: { proxy: { '/api': target, '^/map/': target } } }
 EOF
+else
+    # {slug: {field: value}}, built by Node so no value passes through shell quoting.
+    STUB_JSON="$(node -e '
+        const stubs = {}
+        for (const arg of process.argv.slice(1)) {
+            const dot = arg.indexOf("."), eq = arg.indexOf("=")
+            let value = arg.slice(eq + 1)
+            try { value = JSON.parse(value) } catch {}
+            ;(stubs[arg.slice(0, dot)] ??= {})[arg.slice(dot + 1, eq)] = value
+        }
+        console.log(JSON.stringify(stubs))' "${STUBS[@]}")"
+    # The proxy answers /api itself: it asks for an uncompressed body, sets the stubbed fields, and passes anything else through.
+    cat >"$OUT/preview.config.mjs" <<EOF
+const STUBS = $STUB_JSON
+const stub = (node) => {
+  if (Array.isArray(node)) return node.forEach(stub)
+  if (!node || typeof node !== 'object') return
+  if (typeof node.slug === 'string' && STUBS[node.slug]) Object.assign(node, STUBS[node.slug])
+  Object.values(node).forEach(stub)
+}
+const api = {
+  target: '$ORIGIN',
+  changeOrigin: true,
+  selfHandleResponse: true,
+  configure: (proxy) => {
+    proxy.on('proxyReq', (request) => request.setHeader('accept-encoding', 'identity'))
+    proxy.on('proxyRes', (response, _request, reply) => {
+      const chunks = []
+      response.on('data', (chunk) => chunks.push(chunk))
+      response.on('end', () => {
+        let body = Buffer.concat(chunks)
+        if (/json/.test(response.headers['content-type'] ?? '') && !response.headers['content-encoding']) {
+          try {
+            const data = JSON.parse(body.toString('utf8'))
+            stub(data)
+            body = Buffer.from(JSON.stringify(data))
+          } catch {}
+        }
+        const headers = { ...response.headers, 'content-length': String(body.length) }
+        delete headers['transfer-encoding']
+        reply.writeHead(response.statusCode ?? 502, headers)
+        reply.end(body)
+      })
+    })
+  },
+}
+const target = { target: '$ORIGIN', changeOrigin: true }
+export default { preview: { proxy: { '/api': api, '^/map/': target } } }
+EOF
+fi
 
 free_port() {
     local port
