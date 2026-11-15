@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Asserts that seed-sources.py --enable leaves the source of a closed venue off (#4410).
+"""Asserts that seed-sources.py --enable leaves two kinds of disabled source off.
+
+A closed venue's source stays off (#4410), and so does a source with an import history (#5062).
 
 Usage:
     python3 scripts/test_seed_sources.py
@@ -26,8 +28,15 @@ def load():
     return module
 
 
-def source(slug, name, enabled):
-    return {"slug": slug, "name": name, "enabled": enabled, "descriptionLicence": "ALLOWED", "imageLicence": "ALLOWED"}
+def source(slug, name, enabled, last_import_at=None):
+    return {
+        "slug": slug,
+        "name": name,
+        "enabled": enabled,
+        "lastImportAt": last_import_at,
+        "descriptionLicence": "ALLOWED",
+        "imageLicence": "ALLOWED",
+    }
 
 
 def run_enable(module, sources, seed):
@@ -55,6 +64,7 @@ def main():
         ({"name": "Open Club"}, [{"name": "Open Club"}]),
         ({"name": "Closed Club", "closedOn": "2026-10-31"}, [{"name": "Closed Club"}]),
         ({"name": "Running Club"}, [{"name": "Running Club"}]),
+        ({"name": "Quiet Club"}, [{"name": "Quiet Club"}]),
     ]
     checks = []
 
@@ -62,13 +72,31 @@ def main():
         source("open-club", "Open Club", False),
         source("closed-club", "Closed Club", False),
         source("running-club", "Running Club", True),
+        source("quiet-club", "Quiet Club", False, "2026-10-28T21:04:11.123Z"),
     ]
     patched, out = run_enable(module, sources, seed)
     checks.append(("only the open venue's disabled source is enabled", patched == ["open-club"]))
     checks.append(
         ("the closed venue's source is named as skipped", "SKIPPED  closed-club (venue closed 2026-10-31)" in out)
     )
-    checks.append(("the count leaves the skipped source out", "Enabled 1 of 1." in out))
+    checks.append(
+        (
+            "a disabled source with an import history is named as kept off",
+            "KEPT OFF  quiet-club (disabled after its last import, 2026-10-28)" in out,
+        )
+    )
+    checks.append(("the count leaves the skipped and kept-off sources out", "Enabled 1 of 1." in out))
+
+    patched, out = run_enable(module, [source("quiet-club", "Quiet Club", False, "2026-10-28T21:04:11Z")], seed)
+    checks.append(("a kept-off source alone enables nothing", patched == [] and "Nothing to do." in out))
+
+    patched, out = run_enable(module, [source("closed-club", "Closed Club", False, "2026-10-30T20:00:00Z")], seed)
+    checks.append(
+        (
+            "a closed venue's source with a history is skipped, not kept off",
+            patched == [] and "SKIPPED  closed-club" in out and "KEPT OFF" not in out,
+        )
+    )
 
     patched, out = run_enable(module, [source("closed-club", "Closed Club", False)], seed)
     checks.append(("a closed source alone enables nothing", patched == [] and "Nothing to do." in out))
