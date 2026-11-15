@@ -17,20 +17,41 @@ attention — and separate them from limitations already accepted. Two registers
 
 A finding matching either is **known/accepted**, reported separately, and not re-litigated.
 
+## Arguments
+
+```text
+/data-quality-audit [production|staging|local]
+```
+
+- **environment** — defaults to `production`, where the pages people read are. `local` audits the dev database, which holds only what you imported.
+
 ## Connecting to the database
 
-Dev PostgreSQL runs via Docker Compose (`compose.yaml`). The tables live in the `events` schema (not `public`). Default local connection:
+The tables live in the `events` schema (not `public`). **Every session is read-only**: `PGOPTIONS='-c default_transaction_read_only=on'`, and the first
+query selects `current_setting('transaction_read_only')` to prove it.
 
-- host `localhost`, port `56298` (override: `POSTGRES_HOST_PORT`), database `event_junkie`, user `admin`, password `admin`, schema `events`.
+**`production` and `staging`** need the WireGuard tunnel and the database forward. `scripts/ej.sh status` says whether they are up. If they are down,
+say so and stop: bringing them up takes `sudo`. `ej.sh up` forwards staging to `15432` and production to `15433`:
 
 ```bash
-PGPASSWORD=admin psql -h localhost -p 56298 -U admin -d event_junkie \
+PGPASSWORD="$(kubectl --context event-junkie-production get secret events-db -n event-junkie -o jsonpath='{.data.password}' | base64 -d)" \
+  PGOPTIONS='-c default_transaction_read_only=on' psql -h 127.0.0.1 -p 15433 -U events -d events -X \
   -c "SET search_path TO events; <QUERY>"
 ```
 
-First verify connectivity and that the DB is seeded (`SELECT count(*) FROM event;`). If the container isn't running or the DB is empty, say so and stop —
-suggest the user start the importer (`./gradlew :events-importer:bootRun`) and trigger imports so there's data to audit. If the port is taken and remapped, ask
-for the actual port or read it from the running container (`docker compose ps`).
+If the session refuses the tunnel or the `psql` call, ask the operator for a `/permissions` approval. Do not fall back to the local database without
+saying so in the report.
+
+**`local`** is the Docker Compose database (`compose.yaml`): host `localhost`, port `56298` (override: `POSTGRES_HOST_PORT`), database `event_junkie`,
+user `admin`, password `admin`. If the container is down or the database is empty, say so and stop. If the port is remapped, read it from
+`docker compose ps`.
+
+```bash
+PGPASSWORD=admin PGOPTIONS='-c default_transaction_read_only=on' psql -h localhost -p 56298 -U admin -d event_junkie \
+  -c "SET search_path TO events; <QUERY>"
+```
+
+First verify connectivity and that the database holds events (`SELECT count(*) FROM event;`).
 
 Prefer batching related checks into a single `psql` invocation. Always `SET search_path TO events;`. Quote every count with a few concrete sample rows (id,
 title/name, venue) so findings are verifiable — never report a bare number.
@@ -82,9 +103,10 @@ useful — a problem concentrated at one venue usually points at that importer. 
 
 ### 3. Mis-parsed artist & promoter names
 
-- `ARTISTS` — Non-artist strings sitting in `artist.name`: event-format words (`Quiz`, `Karaoke`, `Open Mic`,
-  `Festival`, `Special`, `Tour`, `Support`, `Live`, `Warm Up`, `Aftershow`, `w/`, `presents`, `vs`), standalone symbols, pure numbers, or very long strings (a
-  whole title parsed as one artist).
+- `ARTISTS` / `PROMOTERS` — Names that are not acts or promoters: a format word, a catalogue number, two acts on one row, a date, a URL, a whole title, a
+  near-duplicate. **[`/artist-cleanup`](artist-cleanup.prompt.md) owns these**: it flags, judges and fixes them weekly. Do not judge them again here. Report
+  the date and the count per flag of the newest `temp/artist-cleanup-<env>-*.json` and `temp/promoter-cleanup-<env>-*.json`. A file older than 7 days is
+  a finding: the weekly sweep has stopped.
 - `ARTISTS` — An artist with exactly one event whose `name` equals that event's `title`, case-insensitively — the series-as-artist signature every
   `NON_ARTIST_NAMES` entry so far has shared (#1110, #1135). A real act with one Berlin date also matches, so this ranks candidates rather than
   convicting them; the venue's page settles each one. The importer keeps this list itself since #1145: `event_artist.title_derived` says the name was
@@ -136,8 +158,8 @@ useful — a problem concentrated at one venue usually points at that importer. 
 ### 5. Dates, times & prices
 
 - `EVENT_DATE` — `event_date` in the far past (stale listings) or implausibly far future — the usual cause is year inference on a year-less date, and a
-  venue declaring `EVENT_DATE` has dates that are derived rather than announced. Bucket by how far from today
-  (`2026-07-07`).
+  venue declaring `EVENT_DATE` has dates that are derived rather than announced. Bucket by how far from
+  `current_date`, never from a date written into this prompt.
 - `DOORS_TIME` — `start_time` earlier than `doors_time` (doors should be ≤ start).
 - `PRICE_PRESALE` / `PRICE_BOX_OFFICE` — Negative or absurd prices; `price_presale`/`price_box_office` with `free = true`; `price_currency` other than
   `EUR`.
@@ -159,7 +181,7 @@ useful — a problem concentrated at one venue usually points at that importer. 
 
 ## Output
 
-Write the report to `temp/data-quality-<YYYY-MM-DD>.md`, then run `scripts/format-markdown.sh` on it by name. Never commit it. Structure it as:
+Write the report to `temp/data-quality-<env>-<YYYY-MM-DD>.md`, then run `scripts/format-markdown.sh` on it by name. Never commit it. Structure it as:
 
 1. **Summary** — total rows per table, and a one-line-per-category verdict (clean / N issues).
 2. **Findings**, grouped by category and ordered by severity:
