@@ -84,6 +84,8 @@ local `CLAUDE.md` holding just `@AGENTS.md`.
   `git worktree add ../event-junkie-<slug> -b <type>/<slug> origin/main`. In the main checkout an agent reads and runs gates, and never switches the
   branch or commits. Before `git add`, check that `git branch --show-current` names the branch the session cut. [docs/WORKTREES.md](docs/WORKTREES.md)
   has the setup and the shared-runtime traps.
+- **Never `./gradlew --stop`.** It stops every Gradle daemon on the machine, so it kills the builds of every other session. For a run that needs a
+  fresh JVM, `./gradlew --no-daemon <tasks>`. Claude Code's `PreToolUse` hook refuses the command (`scripts/refuse-gradle-stop.sh`, #5140).
 - **No unsolicited git commits, pushes or rebases.** Only when the user asks.
 - **Amend by default on a feature branch, and land one commit.** Once the branch carries a commit of yours, the next change amends it; push with
   `git push --force-with-lease`, never bare `--force`. `main` allows only **Rebase and merge**, so every branch commit lands on `main` as written. A branch

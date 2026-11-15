@@ -375,7 +375,8 @@ forward on exit, so a survivor came from a hand-typed command.
 
 **Check:** `./gradlew --status` shows two daemons, one from `scripts/dev-env.sh up` and one from your test run.
 
-**Fix:** `scripts/dev-env.sh down`, `./gradlew --stop`, then `clean` and the test. Two daemons share `build/` and clobber each other's output.
+**Fix:** `scripts/dev-env.sh down`, then `./gradlew --no-daemon clean <test>`. Two daemons share `build/` and clobber each other's output.
+The `--no-daemon` run has a JVM of its own. Do not use `./gradlew --stop`: it stops the builds of all other sessions too (#5140).
 
 **Why:** [WORKTREES.md §4](../WORKTREES.md#4-take-turns-on-the-stack).
 

@@ -44,8 +44,9 @@ Lint enforces the mechanical half of this; the rest is review.
       70% comment once it carries 25 comment lines; `CommentSmell` reports a date, a markdown heading, a comment narrating its own history, or a `TODO`. **A
       date inside backticks, quotes or a fenced block is left alone** (parsers are documented with `"2026-05-16T20:00"` far more often than decisions are
       dated), test sources are excluded, and "used to" after a form of _be_ is the passive verb, not narration. Over the cap is `@Suppress(…)` **with a
-      reason**. **Adding or editing a rule in `:detekt-rules` needs `./gradlew --stop`** — the daemon caches the plugin classloader, so a new rule is silently
-      absent and an edited one keeps its old verdict; no `--rerun-tasks` clears it.
+      reason**. **Adding or editing a rule in `:detekt-rules` needs a fresh daemon: `./gradlew --no-daemon detekt …`** — the daemon caches the plugin
+      classloader, so a new rule is silently absent and an edited one keeps its old verdict; no `--rerun-tasks` clears it. Never `--stop`, which
+      stops every session's build (#5140).
     - **TS and Vue**: `event-junkie/max-comment-lines` (15, measured from this tree), `comment-density` and `comment-smell` in `events-frontend/eslint-rules/`,
       the same semantics; `// eslint-disable-next-line` with a reason.
     - **Terraform, shell, YAML, Python**: `scripts/comment-lint.sh check` fails on **any** violation, no baseline. Density is **55% for the declarative
