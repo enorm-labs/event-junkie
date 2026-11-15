@@ -28,6 +28,8 @@ class KuehlspotOverviewPageScraperTest {
 
     private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("kuehlspot/kuehlspot-overview.html", baseUrl), baseUrl) }
 
+    private val november: List<ScrapedEvent> by lazy { scraper.scrape(fixtureDocument("kuehlspot/kuehlspot-overview-2026-11.html", baseUrl), baseUrl) }
+
     private fun night(date: String) = events.single { it.eventDate == LocalDate.parse(date) }
 
     private fun acts(date: String) = night(date).artists.map { it.name }
@@ -94,6 +96,46 @@ class KuehlspotOverviewPageScraperTest {
         event.promoters shouldContainExactly listOf("Jazzkeller 69")
         event.description.shouldBeNull()
         acts("2026-10-19") shouldContainExactly listOf("Ulrich Gumpert", "Chris Pitsiokos", "Jan Roder", "Willi Kellers")
+    }
+
+    // Events 13818, 13820, 13822 and 13824: the show's own credit line names who runs it.
+    @Test
+    fun `an organized-and-produced-by credit is the promoter and leaves the description`() {
+        val shows = november.filter { it.title == "DIE COOLEN 20 ER" }
+
+        shows.map { it.eventDate.toString() } shouldContainExactly listOf("2026-11-14", "2026-11-15", "2026-11-20", "2026-11-22")
+        shows.forEach { show ->
+            show.promoters shouldContainExactly listOf("Rachel D Clarke")
+            show.description shouldBe "Includes live music, storytelling, live collage, spoken word, and dance"
+            show.artists.map { it.name } shouldContainExactly listOf("Rachel D Clarke", "Christoph Kühl")
+        }
+    }
+
+    // Event 13823: the `+TBA` under the line-up was its whole description.
+    @Test
+    fun `a TBA placeholder under the line-up is no description`() {
+        val event = november.single { it.title == "CONCORS + TBA" }
+
+        event.description.shouldBeNull()
+        event.artists.map { it.name } shouldContainExactly listOf("Rob Burke", "Dag Magnus Narvesen")
+    }
+
+    @Test
+    fun `a TBA line inside prose stays in the description`() {
+        val page =
+            """
+            <div id="events">
+              <div class="e-con e-child">
+                <h2 class="elementor-heading-title">Saturday, 21 November 2026</h2>
+                <h2 class="elementor-heading-title">CONCORS</h2>
+                <div class="elementor-widget-text-editor">
+                  <p>Rob Burke – tenor saxophone<br>+TBA<br>The second set is TBA.</p>
+                </div>
+              </div>
+            </div>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl).single().description shouldBe "The second set is TBA."
     }
 
     @Test
@@ -183,8 +225,7 @@ class KuehlspotOverviewPageScraperTest {
             </div>
             """.trimIndent()
 
-        scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl).single().description shouldBe
-            "Event organized and produced by Rachel D Clarke\nFurther information on the dance workshop follows soon."
+        scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl).single().description shouldBe "Further information on the dance workshop follows soon."
     }
 
     // #4932: the outer container holds two nights and no heading of its own.
