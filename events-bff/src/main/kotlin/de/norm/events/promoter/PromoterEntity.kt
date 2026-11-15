@@ -25,6 +25,7 @@ data class PromoterEntity(
     val descriptionLanguage: String? = null,
     val descriptionAlt: String? = null,
     val descriptionAltLanguage: String? = null,
+    val kind: String? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
 ) {

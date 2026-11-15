@@ -34,6 +34,7 @@ const concerts: PromoterDetail = {
   descriptionLanguage: null,
   descriptionAlt: null,
   descriptionAltLanguage: null,
+  kind: null,
 }
 
 let wrapper: VueWrapper | undefined
@@ -100,5 +101,27 @@ describe.each(['en', 'de'] as const)('PromoterDetailView in %s', (locale) => {
     expect(view.findAll('a').some((a) => a.text() === 'Website' || a.text() === 'Instagram')).toBe(
       false,
     )
+  })
+})
+
+describe('PromoterDetailView kind line', () => {
+  it.each([
+    ['en', 'collective', 'Collective'],
+    ['en', 'label', 'Label'],
+    ['en', 'party', 'Party series'],
+    ['de', 'collective', 'Kollektiv'],
+    ['de', 'label', 'Label'],
+    ['de', 'party', 'Partyreihe'],
+  ] as const)('names a %s %s as "%s"', async (locale, kind, label) => {
+    const view = await mountPromoter({ ...concerts, kind }, locale)
+
+    expect(view.findAll('p').map((p) => p.text())).toContain(label)
+  })
+
+  it.each(['promoter', 'media', null] as const)('says nothing for the kind %s', async (kind) => {
+    const view = await mountPromoter({ ...concerts, kind })
+
+    expect(view.findAll('p').map((p) => p.text())).not.toContain('Promoter')
+    expect(view.find('p.text-meta').exists()).toBe(false)
   })
 })

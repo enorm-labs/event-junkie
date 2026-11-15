@@ -65,6 +65,35 @@ class PromoterControllerTest : BaseControllerTest() {
         }
     }
 
+    @Test
+    fun `stores the kind, and a PUT without it clears it`() {
+        val created = createPromoter(PromoterRequestFixtures.create(name = "Kind Collective").copy(kind = PromoterKind.COLLECTIVE))
+        created.kind shouldBe "collective"
+
+        webTestClient
+            .put()
+            .uri("/api/admin/promoters/${created.id}")
+            .bodyValue(PromoterRequestFixtures.create(name = "Kind Collective"))
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.kind")
+            .doesNotExist()
+    }
+
+    @Test
+    fun `refuses a kind outside the vocabulary`() {
+        webTestClient
+            .post()
+            .uri("/api/admin/promoters")
+            .header("Content-Type", "application/json")
+            .bodyValue("""{"name": "Unknown Kind", "kind": "unverified"}""")
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+    }
+
     private fun deletePromoter(id: Long) {
         webTestClient
             .delete()

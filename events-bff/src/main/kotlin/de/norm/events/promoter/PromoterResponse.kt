@@ -109,7 +109,13 @@ data class PromoterDetailResponse(
     )
     val descriptionAlt: String?,
     @Schema(description = DESCRIPTION_ALT_LANGUAGE_DESCRIPTION, example = "de")
-    val descriptionAltLanguage: String?
+    val descriptionAltLanguage: String?,
+    @Schema(
+        description = "What the promoter is: a booking business, a collective, a label, a party series and so on. Null where nobody decided (#5080).",
+        example = "collective",
+        implementation = PromoterKind::class
+    )
+    val kind: String?
 ) {
     companion object {
         fun fromEntity(
@@ -132,7 +138,8 @@ data class PromoterDetailResponse(
                 description = entity.description,
                 descriptionLanguage = entity.descriptionLanguage,
                 descriptionAlt = entity.descriptionAlt,
-                descriptionAltLanguage = entity.descriptionAltLanguage
+                descriptionAltLanguage = entity.descriptionAltLanguage,
+                kind = entity.kind
             )
     }
 }

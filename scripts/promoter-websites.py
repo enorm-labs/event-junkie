@@ -20,6 +20,10 @@ An empty `website` keeps the stored link. `none` means the promoter has no site,
 link: the PUT sends `websiteUrl: null` (#2601). The `instagram` column works the same way on
 `instagramUrl`. Replacing or clearing a link needs `--force`.
 
+The `kind` column is written as the promoter's `kind` (#5080), and the table is its only source, so a
+changed kind needs no `--force`. `unverified` leaves the stored kind alone. Every PUT carries the stored
+kind back, because a PUT without it clears it.
+
 Every row in the table is a review, so every row the target holds under a matching name gets
 `reviewed_at` stamped with the time of the run, whether or not another field changes (#1336).
 A row already stamped and otherwise unchanged is left alone; `--restamp` moves the date on all.
@@ -43,6 +47,7 @@ import urllib.request
 
 REVIEWED = "docs/promoters/REVIEWED.tsv"
 NO_WEBSITE = "none"
+KINDS = {"promoter", "collective", "label", "party", "media", "artist", "sponsor", "venue"}
 LOCAL_HOST = "http://localhost:18081"
 PAGE_SIZE = 100
 MAX_PAGES = 100
@@ -108,6 +113,8 @@ def changes(promoter, row, stamp, restamp=False):
             wanted[field] = None
         elif row.get(column):
             wanted[field] = row[column]
+    if row.get("kind") in KINDS:
+        wanted["kind"] = row["kind"]
     changed = {field: (promoter.get(field), value) for field, value in wanted.items() if promoter.get(field) != value}
     if changed or restamp or not promoter.get("reviewedAt"):
         changed["reviewedAt"] = (promoter.get("reviewedAt"), stamp)
@@ -172,7 +179,7 @@ def main():
             print(f"  skip  {row['slug']}: the target has no {', '.join(missing)} field yet")
             skipped += 1
             continue
-        replaced = [field for field, (current, _) in changed.items() if current and field != "reviewedAt"]
+        replaced = [field for field, (current, _) in changed.items() if current and field not in ("reviewedAt", "kind")]
         if replaced and not args.force:
             print(f"  skip  {row['slug']}: already has {', '.join(replaced)} (--force replaces it)")
             skipped += 1
@@ -189,6 +196,7 @@ def main():
             "descriptionLanguage": promoter.get("descriptionLanguage"),
             "descriptionAlt": promoter.get("descriptionAlt"),
             "descriptionAltLanguage": promoter.get("descriptionAltLanguage"),
+            "kind": promoter.get("kind"),
             "reviewedAt": promoter.get("reviewedAt"),
         }
         body.update({field: wanted for field, (_, wanted) in changed.items()})
