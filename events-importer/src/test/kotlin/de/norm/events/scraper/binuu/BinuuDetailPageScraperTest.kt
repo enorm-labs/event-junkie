@@ -11,6 +11,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -98,6 +100,63 @@ class BinuuDetailPageScraperTest {
             )
         // No tickets array on this page → no ticket URL.
         shadowplay.ticketUrl.shouldBeNull()
+    }
+
+    private val bedoUrl = "https://binuu.de/de/events/nlahevqk44ms4wa"
+    private val bedoHtml: String by lazy { fixtureText("binuu/binuu-detail-bedo-patron.html") }
+
+    /** The Bedo & Patron page (2026-11-15) with [performer] billed and its blurb's `Die beiden` swapped for [pairWording]. */
+    private fun bedoWith(
+        performer: String = "Bedo & Patron",
+        pairWording: String = "Die beiden",
+        statusCode: String = "c"
+    ): ScrapedEvent {
+        val changed =
+            bedoHtml
+                .replace("performers:[\"Bedo & Patron\"]", "performers:[\"$performer\"]")
+                .replace("Die beiden", pairWording)
+                .replace("eventStatus:\"c\"", "eventStatus:\"$statusCode\"")
+        return scraper.scrape(Jsoup.parse(changed, bedoUrl), bedoUrl)!!
+    }
+
+    @Test
+    fun `splits one performer into two headliners when the blurb calls them a pair`() {
+        // Event nlahevqk44ms4wa: performers ["Bedo & Patron"], blurb "Die beidenerfolgreichen Rap-Künstler …" (#5086).
+        val bedo = parseFixture("binuu-detail-bedo-patron.html", bedoUrl)
+        bedo.status shouldBe "CANCELLED"
+        bedo.artists shouldContainExactly
+            listOf(ScrapedArtist("Bedo", ArtistRole.HEADLINER), ScrapedArtist("Patron", ArtistRole.HEADLINER))
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["Beide ", "The two ", "the duo of "])
+    fun `reads the other pair wordings as a pair`(wording: String) {
+        bedoWith(pairWording = wording).artists.map { it.name } shouldContainExactly listOf("Bedo", "Patron")
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["Die ", "Beiderseits ", "The twofold "])
+    fun `keeps an ampersand act whole when the blurb has no pair wording`(wording: String) {
+        bedoWith(pairWording = wording).artists shouldContainExactly listOf(ScrapedArtist("Bedo & Patron", ArtistRole.HEADLINER))
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["Simon & Garfunkel", "Bedo & Friends", "Bedo & The Band", "Bedo & Patron & Ezhel", "Bedo&Patron"])
+    fun `keeps a known duo, a band tail, a three-act line and an unpadded ampersand whole despite the pair wording`(performer: String) {
+        bedoWith(performer = performer).artists shouldContainExactly listOf(ScrapedArtist(performer, ArtistRole.HEADLINER))
+    }
+
+    @Test
+    fun `splits a pair of long names`() {
+        val left = "Das Ensemble der außerordentlich langen Künstlernamen aus Berlin-Friedrichshain"
+        val right = "Ein Zweiter Sehr Langer Name Für Den Zweiten Rapper Des Abends"
+        bedoWith(performer = "$left & $right").artists.map { it.name } shouldContainExactly listOf(left, right)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["", "c", "p", "r", "rp"])
+    fun `splits the pair whatever the status`(statusCode: String) {
+        bedoWith(statusCode = statusCode).artists.map { it.name } shouldContainExactly listOf("Bedo", "Patron")
     }
 
     @Test
