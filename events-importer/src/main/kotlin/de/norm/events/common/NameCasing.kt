@@ -16,7 +16,7 @@ package de.norm.events.common
 //     when a whole name is an initialism instead, via [isShortInitialism].
 //
 // The artist normalizer also reads the whole billing, via [isMixedCase] and [isCapitals], and keeps
-// "HB&P Soundsystem" as written, and keeps a one-word name without a vowel ([isVowellessInitialism]).
+// "HB&P Soundsystem" as written, and keeps a one-word initialism, symbols aside ([isStyledInitialism]).
 // Otherwise a genuine all-caps name of three or more letters that is not in [ACRONYMS] ("MUNA",
 // "NAFT") is title-cased here like any shouted word, since nothing here tells the two apart.
 // MusicBrainz is the lookup table: an artist with an EXACT match takes MusicBrainz's spelling when it
@@ -64,12 +64,16 @@ private fun String.deshoutPart(): String {
 fun String.isShortInitialism(): Boolean = length <= SHORT_INITIALISM_MAX_LEN && any { it.isLetter() } && none { it.isLowerCase() || it.isDigit() }
 
 /**
- * Whether the token is a vowelless initialism to keep verbatim: only capital letters, at most
- * [VOWELLESS_INITIALISM_MAX_LEN] of them, and none a vowel ("CCTV", "TZK", "BTMK"). A name with a
- * vowel can be a word ("MUNA", "SIND") and stays a shouted one. Like [isShortInitialism], callers
- * apply it to a whole name, never to every token.
+ * Whether a one-word name is an initialism to keep verbatim, its symbols set aside: `D@W` reads as `DW`, `F*CD` as `FCD` (#5126).
+ * Its letters are a [isShortInitialism], or up to [VOWELLESS_INITIALISM_MAX_LEN] capitals with no vowel ("CCTV", "TZK"). A name
+ * with a vowel can be a word ("MUNA", `FUNK@DELIC`) and stays a shouted one. Callers apply it to a whole name, never to every token.
  */
-fun String.isVowellessInitialism(): Boolean = length <= VOWELLESS_INITIALISM_MAX_LEN && all { it.isLetter() && it.isUpperCase() && it !in VOWELS }
+fun String.isStyledInitialism(): Boolean {
+    if (any { it.isLowerCase() || it.isDigit() }) return false
+    val letters = filter(Char::isLetter)
+    val vowelless = letters.length <= VOWELLESS_INITIALISM_MAX_LEN && letters.all { it.isUpperCase() && it !in VOWELS }
+    return letters.isNotEmpty() && (letters.isShortInitialism() || vowelless)
+}
 
 /**
  * Whether the token has a capital and a lowercase letter ("Soundsystem", "GreyZone"): a billing that

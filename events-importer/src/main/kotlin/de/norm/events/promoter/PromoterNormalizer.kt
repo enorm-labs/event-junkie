@@ -2,6 +2,7 @@ package de.norm.events.promoter
 
 import de.norm.events.common.deshoutWord
 import de.norm.events.common.foldTypedApostrophes
+import de.norm.events.common.isStyledInitialism
 import de.norm.events.slug.SlugGenerator
 
 // Promoter-name canonicalization. One promoter is written many ways ("LOFT", "Loft Concerts
@@ -65,6 +66,8 @@ private fun strippedPromoterName(raw: String): String {
         }
     } while (shortened)
 
+    // A one-word initialism keeps its capitals, symbols included ("D@W", "F*CD", #5126), as an artist's does.
+    if (tokens.size == 1 && tokens.first().isStyledInitialism()) return tokens.first()
     // The initialism the guard kept a descriptor for keeps its capitals ("HB Music", not "Hb
     // Music").
     val keepFirst = tokens.first().isLoneInitialism() && tokens.drop(1).all { it.isStrippableTrailingWord() }
