@@ -14,13 +14,14 @@ import org.springframework.stereotype.Component
  * 1. [HtmlFetcher] fetches the unpaginated `/events` listing conditionally (ETag / Last-Modified).
  * 2. [RitterButzkeOverviewPageScraper] discovers every grid card — title, rendered date and poster.
  * 3. Each `/event/DDMMYY-<Name>` page via [RitterButzkeDetailPageScraper] — the only source for
- * start time, ticket shop and DJ lineup. The lineup is the page's JSON-LD `performer` list, without
- * the `live` notes of the rendered rows.
+ * start time, ticket shop, DJ lineup and description. The lineup is the page's JSON-LD `performer` list, without
+ * the `live` notes of the rendered rows. The description is the night's blurb and the act bios, without the
+ * club's refund terms (see #5112).
  *
  * The `/calendarfile/<id>` links beside each date are `Disallow`ed by robots.txt and never fetched.
  *
  * @see RitterButzkeOverviewPageScraper for listing parsing (discovery, date, poster).
- * @see RitterButzkeDetailPageScraper for detail parsing (start time, ticket, lineup).
+ * @see RitterButzkeDetailPageScraper for detail parsing (start time, ticket, lineup, description).
  * @see <a href="https://club.ritterbutzke.com/events">Ritter Butzke event listing</a>
  */
 @Component
@@ -29,7 +30,7 @@ class RitterButzkeWebsiteImporter(
 ) : AbstractTwoPageWebsiteImporter(
         htmlFetcher,
         RitterButzkeOverviewPageScraper()::scrape,
-        RitterButzkeDetailPageScraper(lineupFromJsonLd = true)::scrape
+        RitterButzkeDetailPageScraper(readsDescription = true, lineupFromJsonLd = true)::scrape
     ) {
     override val eventSource: EventSource = EventSource.RITTER_BUTZKE
     override val listsWholeProgramme: Boolean = true
