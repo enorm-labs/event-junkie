@@ -110,7 +110,10 @@ private val SOURCE_ARTIST_SLUG_OVERRIDES: Map<String, Map<String, String>> =
         "admiralspalast:" to mapOf("maschine" to "maschine-2"),
         // The opera act `V.` in OHM's LA CASITA line-up (V229). The dark-wave act `V` at Schokoladen and Lido keeps `v`,
         // and the dot folds away in the slug.
-        "ohm:" to mapOf("v." to "v-2")
+        "ohm:" to mapOf("v." to "v-2"),
+        // The hard-techno DJ `Vero_` at VOID Club (V255). The Berlin rapper Vero, billed at ÆDEN and Ritter Butzke, keeps
+        // `vero`.
+        "void_club:" to mapOf("vero_" to "vero-2")
     )
 
 /**
