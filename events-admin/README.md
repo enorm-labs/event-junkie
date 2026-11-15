@@ -66,7 +66,7 @@ day is the day the site began to fail. Each action reads the venue and sends it 
 "Check now" starts one pass of the site check in the background.
 
 Manual venues (`src/views/ManualVenuesView.vue`, `/manual-venues`) lists `GET /api/admin/venues/manual`: the open venues without an importer, whose events
-a person enters by hand (#2993). A venue is due `PROGRAMME_CHECK_DAYS` (14) days after its last check, so about 8 of 110 venues are due each day. The never
+a person enters by hand (#2993), less a venue whose every event is a Christmas market and that has no programme link (#5039). A venue is due `PROGRAMME_CHECK_DAYS` (14) days after its last check, so about 8 of 110 venues are due each day. The never
 checked come first, then the oldest check, and a due row carries a Due badge. A row links the programme and shows the day its newest event was entered.
 New event opens the New event form with `?venue=<id>`, which chooses the venue. The form suggests a genre at a venue with exactly one programme family, for a concert, a party or a festival (`src/api/genreSuggestion.ts`). Checked calls `PUT /api/admin/venues/{id}/programme-checked`, and the row
 moves to the end.

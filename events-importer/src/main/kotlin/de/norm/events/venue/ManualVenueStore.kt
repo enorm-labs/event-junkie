@@ -10,7 +10,7 @@ import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Repository
 import java.time.Instant
 
-/** One venue on the "Manual venues" list: open, and no event source points at it. */
+/** One venue on the "Manual venues" list: open, no event source points at it, and a programme or more than Christmas markets. */
 @Schema(description = "An open venue without an importer, whose new events a person enters by hand")
 data class ManualVenueResponse(
     @Schema(description = "Database ID of the venue.", example = "42")
@@ -35,7 +35,11 @@ data class ManualVenueResponse(
 class ManualVenueStore(
     private val databaseClient: DatabaseClient
 ) {
-    /** Open venues no event source points at: the never-checked first, then the oldest check, then by name. */
+    /**
+     * Open venues no event source points at: the never-checked first, then the oldest check, then by name. A venue
+     * whose every event is a Christmas market and that has no programme URL is left out, because a square or a park has
+     * no programme to read (#5039). A venue with no event at all stays.
+     */
     suspend fun findManual(): List<ManualVenueResponse> =
         databaseClient
             .sql(
@@ -45,9 +49,21 @@ class ManualVenueStore(
                 FROM $EVENTS_SCHEMA.venue v
                 WHERE v.closed_on IS NULL
                   AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_source es WHERE es.venue_id = v.id)
+                  AND (
+                    v.programme_url IS NOT NULL
+                    OR NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.venue_id = v.id)
+                    OR EXISTS (
+                      SELECT 1 FROM $EVENTS_SCHEMA.event e
+                      WHERE e.venue_id = v.id
+                        AND NOT EXISTS (
+                          SELECT 1 FROM $EVENTS_SCHEMA.event_feature ef WHERE ef.event_id = e.id AND ef.feature = :market
+                        )
+                    )
+                  )
                 ORDER BY v.programme_checked_at NULLS FIRST, v.name, v.id
                 """.trimIndent()
-            ).map { row, _ ->
+            ).bind("market", CHRISTMAS_MARKET)
+            .map { row, _ ->
                 ManualVenueResponse(
                     id = requireNotNull(row.get("id", Number::class.java)).toLong(),
                     slug = row.string("slug"),
@@ -69,4 +85,9 @@ class ManualVenueStore(
             .awaitSingle() > 0
 
     private fun Readable.string(name: String): String = requireNotNull(get(name, String::class.java))
+
+    private companion object {
+        // EventFeature.CHRISTMAS_MARKET's slug; the venue module may not depend on the event module.
+        const val CHRISTMAS_MARKET = "christmas-market"
+    }
 }

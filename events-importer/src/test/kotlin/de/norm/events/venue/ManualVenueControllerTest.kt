@@ -1,6 +1,8 @@
 package de.norm.events.venue
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.event.EventFeature
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -58,6 +60,22 @@ class ManualVenueControllerTest : BaseControllerTest() {
 
             rows.getValue("with-events").newestEventCreatedAt shouldBe Instant.parse("2026-10-14T19:30:00Z")
             rows.getValue("no-events").newestEventCreatedAt.shouldBeNull()
+        }
+
+    @Test
+    fun `leaves out a venue whose every event is a christmas market, and keeps a mixed venue, an empty one and one with a programme`(): Unit =
+        runBlocking {
+            val square = insertVenue("market-square")
+            val hall = insertVenue("market-and-concert")
+            insertVenue("no-events")
+            val brewery = insertVenue("market-with-programme", programme = "https://example.de/programm")
+            insertFeature(insertEvent(brewery, "manual:market-4", Instant.parse("2026-11-14T10:20:00Z")), EventFeature.CHRISTMAS_MARKET.slug)
+            insertFeature(insertEvent(square, "manual:market-1", Instant.parse("2026-11-14T10:00:00Z")), EventFeature.CHRISTMAS_MARKET.slug)
+            insertFeature(insertEvent(square, "manual:market-2", Instant.parse("2026-11-14T10:05:00Z")), EventFeature.CHRISTMAS_MARKET.slug)
+            insertFeature(insertEvent(hall, "manual:market-3", Instant.parse("2026-11-14T10:10:00Z")), EventFeature.CHRISTMAS_MARKET.slug)
+            insertFeature(insertEvent(hall, "manual:concert", Instant.parse("2026-11-14T10:15:00Z")), EventFeature.QUEER.slug)
+
+            manual().map { it.slug } shouldContainExactlyInAnyOrder listOf("market-and-concert", "no-events", "market-with-programme")
         }
 
     @Test
@@ -135,14 +153,25 @@ class ManualVenueControllerTest : BaseControllerTest() {
         venueId: Long,
         sourceId: String,
         createdAt: Instant
-    ) {
+    ): Long =
         databaseClient
             .sql(
                 "INSERT INTO events.event (venue_id, title, slug, event_date, source_id, created_at) " +
-                    "VALUES (:venueId, :sourceId, :sourceId, DATE '2026-11-01', :sourceId, :createdAt)"
+                    "VALUES (:venueId, :sourceId, :sourceId, DATE '2026-11-01', :sourceId, :createdAt) RETURNING id"
             ).bind("venueId", venueId)
             .bind("sourceId", sourceId)
             .bind("createdAt", createdAt)
+            .map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
+            .awaitSingle()
+
+    private suspend fun insertFeature(
+        eventId: Long,
+        feature: String
+    ) {
+        databaseClient
+            .sql("INSERT INTO events.event_feature (event_id, feature, matched_phrase) VALUES (:eventId, :feature, 'entered by hand')")
+            .bind("eventId", eventId)
+            .bind("feature", feature)
             .await()
     }
 }
