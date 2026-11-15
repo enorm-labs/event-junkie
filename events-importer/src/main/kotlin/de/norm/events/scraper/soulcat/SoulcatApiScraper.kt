@@ -2,6 +2,7 @@ package de.norm.events.scraper.soulcat
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -21,8 +22,10 @@ import tools.jackson.databind.JsonNode
  * website, venue or organizer. So the title is read for everything:
  *
  * - **`DJ Krawallisch – 60s RnB, Soul & Blues`**: the part before the first dash names the DJs, split
- * on `&`, and the parts after it are the genre. The `DJ` is a role, except for a DJ whose alias
+ * on `&`, and the parts after it give the genre. The `DJ` is a role, except for a DJ whose alias
  * carries it ([DJ_IN_ALIAS]).
+ * - **The genre is the tags of that tail**, from [normalizeGenre], not the tail itself: the tail is a
+ * phrase as often as a list (`Rocksteady Got Soul 60s`, #5055). A night's name ([NIGHT_NAMES]) is no style.
  * - **`60s RnB & Soul & Blues & RocknRoll – Bartenders Choice`**: a head without `DJ` names no act, and
  * is itself the genre, unless it is the whole title (`60s RnB & Soul`). The house genre `Soul` covers that.
  * - **The tail markers** `VINYL ONLY!`, `FREE ENTRY!` and `Dancers Welcome :)` are cut from the title, and so is a run of
@@ -66,19 +69,22 @@ class SoulcatApiScraper {
     }
 
     /**
-     * The segments after the DJs, or the head of a night with none. A head that is the whole title
-     * gives none: the upsert drops a genre that repeats the title, and the house genre fills it.
+     * The tags of the segments after the DJs, or of the head of a night with none. A head that is the
+     * whole title gives none, and the house genre fills it.
      */
     private fun genreOf(
         title: String,
         parts: List<String>,
         namesDjs: Boolean
-    ): String? =
-        (if (namesDjs) parts.drop(1) else parts.take(1))
-            .map { it.replace(VINYL_SESSION, "").trim() }
-            .filter { it.isNotBlank() }
-            .joinToString(", ")
-            .takeIf { it.isNotBlank() && it != title }
+    ): String? {
+        val tail =
+            (if (namesDjs) parts.drop(1) else parts.take(1))
+                .map { it.replace(VINYL_SESSION, "").replace(NIGHT_NAMES, "").trim() }
+                .filter { it.isNotBlank() }
+                .joinToString(", ")
+        if (tail.isBlank() || tail == title) return null
+        return normalizeGenre(tail).joinToString(", ").ifBlank { null }
+    }
 
     /** [title] without the tail markers, and without the dashes and dots they leave at its end. */
     private fun withoutMarkers(title: String): String =
@@ -100,6 +106,9 @@ private val ASTERISKS = Regex("""\*+""")
 
 /** `VINYL-SESSION` names the format of the night, not a style. */
 private val VINYL_SESSION = Regex("""(?i)\bvinyl[\s-]?session\b""")
+
+/** The names of recurring nights a tail carries beside its styles: `50’s Heartbreakers` (event 13266). */
+private val NIGHT_NAMES = Regex("""(?i)\b50['’]?s\s+heartbreakers\b""")
 
 private val FREE_ENTRY = Regex("""(?i)free entry""")
 

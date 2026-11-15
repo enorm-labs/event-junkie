@@ -36,7 +36,7 @@ class SoulcatApiScraperTest {
         night.startTime shouldBe LocalTime.of(18, 30)
         night.endDate shouldBe LocalDate.of(2026, 10, 14)
         night.endTime shouldBe LocalTime.of(1, 0)
-        night.genre shouldBe "60s RnB, Soul & Blues"
+        night.genre shouldBe "R&B, Soul, Blues"
         night.artists shouldContainExactly listOf(ScrapedArtist(name = "Krawallisch", role = ArtistRole.DJ))
         night.sourceUrl shouldBe "https://soulcat-berlin.com/events/dj-krawallisch-60s-rnb-soul-blues/"
     }
@@ -55,7 +55,7 @@ class SoulcatApiScraperTest {
         val night = event("dj-amok77-soul-rocknroll")
 
         night.title shouldBe "DJs DC Reverend & DCO – Working Class Dub – Roots & Dub"
-        night.genre shouldBe "Working Class Dub, Roots & Dub"
+        night.genre shouldBe "Roots, Dub"
         night.artists.map { it.name } shouldContainExactly listOf("DC Reverend", "DCO")
         night.free shouldBe true
     }
@@ -65,7 +65,7 @@ class SoulcatApiScraperTest {
         val night = event("60s-rnb-soul-blues-rocknroll-bartenders-choice-vinyl-only-6")
 
         night.title shouldBe "60s RnB & Soul & Blues & RocknRoll – Bartenders Choice"
-        night.genre shouldBe "60s RnB & Soul & Blues & RocknRoll"
+        night.genre shouldBe "R&B, Soul, Blues, Rock'n'Roll"
         night.artists.shouldBeEmpty()
         night.free shouldBe false
     }
@@ -79,11 +79,11 @@ class SoulcatApiScraperTest {
     }
 
     @Test
-    fun `keeps a descriptive genre segment for the normalizer`() {
+    fun `keeps only the tags of a descriptive genre segment`() {
         val night = event("dj-stulle-scruffy-indie-anthems-some-underground-gems-vinyl-only")
 
         night.title shouldBe "DJ Stulle – Scruffy Indie Anthems & some Underground Gems"
-        night.genre shouldBe "Scruffy Indie Anthems & some Underground Gems"
+        night.genre shouldBe "Indie"
         night.artists.map { it.name } shouldContainExactly listOf("Stulle")
     }
 
@@ -104,26 +104,53 @@ class SoulcatApiScraperTest {
         page.events.single().artists shouldContainExactly listOf(ScrapedArtist(name = "DJ Kassettendeck", role = ArtistRole.DJ))
     }
 
+    private fun scrapeTitles(vararg titles: String) =
+        SoulcatApiScraper()
+            .scrapePage(
+                titles.withIndex().joinToString(",", """{ "events": [""", "] }") { (index, title) ->
+                    """{ "slug": "night-$index", "title": "$title", "start_date": "2026-11-20 18:30:00",
+                         "url": "https://soulcat-berlin.com/events/night-$index/" }"""
+                }
+            ).events
+
     // Events 13268 and 13266: asterisk runs in the title, and VINYL-SESSION read as a genre.
     @Test
     fun `cuts asterisk runs from the title and keeps VINYL-SESSION out of the genre`() {
-        fun night(
-            slug: String,
-            title: String
-        ) = """{ "slug": "$slug", "title": "$title", "start_date": "2026-11-20 18:30:00", "url": "https://soulcat-berlin.com/events/$slug/" }"""
-
-        val page =
-            SoulcatApiScraper().scrapePage(
-                """{ "events": [${night("lobotomy", "DJ LOBOTOMY – VINYL-SESSION – Rocksteady Got Soul **60s **")},
-                    ${night("cat", "DJ CAT – 50’s Heartbreakers, Soul & Popcorn *** ***")}] }"""
-            )
-        val (lobotomy, cat) = page.events
+        val (lobotomy, cat) =
+            scrapeTitles("DJ LOBOTOMY – VINYL-SESSION – Rocksteady Got Soul **60s **", "DJ CAT – 50’s Heartbreakers, Soul & Popcorn *** ***")
 
         lobotomy.title shouldBe "DJ LOBOTOMY – VINYL-SESSION – Rocksteady Got Soul 60s"
-        lobotomy.genre shouldBe "Rocksteady Got Soul 60s"
         lobotomy.artists.map { it.name } shouldContainExactly listOf("LOBOTOMY")
         cat.title shouldBe "DJ CAT – 50’s Heartbreakers, Soul & Popcorn"
-        cat.genre shouldBe "50’s Heartbreakers, Soul & Popcorn"
+    }
+
+    // Events 13266, 13267/13268 and 12192 (#5055): the tail is a phrase or carries a night's name.
+    @Test
+    fun `builds the genre from the tail's tags, without a night's name`() {
+        val (cat, rocksteady, sixties) =
+            scrapeTitles(
+                "DJ CAT – 50’s Heartbreakers, Soul & Popcorn",
+                "DJ LOBOTOMY – VINYL-SESSION – Rocksteady Got Soul 60s",
+                "DJ LOBOTOMY – VINYL-SESSION 60s"
+            )
+
+        cat.genre shouldBe "Soul, Popcorn"
+        rocksteady.genre shouldBe "Soul"
+        sixties.genre shouldBe "60s"
+    }
+
+    @Test
+    fun `gives no genre to a night whose tail is missing or only its format`() {
+        val (noTail, formatOnly) = scrapeTitles("DJ Krawallisch", "DJ LOBOTOMY – VINYL-SESSION")
+
+        noTail.genre.shouldBeNull()
+        noTail.artists.map { it.name } shouldContainExactly listOf("Krawallisch")
+        formatOnly.genre.shouldBeNull()
+    }
+
+    @Test
+    fun `keeps every style of a real genre list`() {
+        scrapeTitles("DJ Preon der Lofi – Kitchen Jazz, Psychedelic & Indie Rock").single().genre shouldBe "Jazz, Psychedelic, Indie"
     }
 
     @Test
