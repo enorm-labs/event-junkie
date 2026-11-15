@@ -150,9 +150,10 @@ describe('robots.txt', () => {
     expect(robotsTxt()).toContain(`Sitemap: ${SITE_URL}/sitemap.xml`)
   })
 
-  it('lets crawlers in', () => {
+  it('lets crawlers in, but not into the sign-in pages', () => {
+    // Every event links to sign-in twice, and a crawler loaded each link (#5037).
     const everyone = robotsTxt().split('\n\n')[0]
-    expect(everyone).toBe('User-agent: *\nAllow: /')
+    expect(everyone).toBe('User-agent: *\nAllow: /\nDisallow: /en/sign-in\nDisallow: /de/sign-in')
   })
 
   it('keeps the AI training crawlers out, and only those', () => {
@@ -168,7 +169,7 @@ describe('robots.txt', () => {
     ]) {
       expect(robotsTxt()).not.toContain(retrieval)
     }
-    expect(robotsTxt().match(/Disallow: \//g)).toHaveLength(AI_TRAINING_CRAWLERS.length)
+    expect(robotsTxt().match(/Disallow: \/\n/g)).toHaveLength(AI_TRAINING_CRAWLERS.length)
   })
 })
 

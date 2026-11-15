@@ -95,6 +95,7 @@ describe('FollowButton', () => {
     expect(view.find('a').attributes('href')).toBe(
       '/en/sign-in?next=/en/venues/sisyphos?do=follow&intent=follow',
     )
+    expect(view.find('a').attributes('rel')).toBe('nofollow')
     expect(account.fetchFollowNotify).not.toHaveBeenCalled()
   })
 

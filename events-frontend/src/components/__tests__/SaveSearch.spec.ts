@@ -63,6 +63,7 @@ describe('SaveSearch', () => {
     expect(view.find('a').attributes('href')).toBe(
       '/en/sign-in?next=/en/events?genre=techno%26do=save&intent=save',
     )
+    expect(view.find('a').attributes('rel')).toBe('nofollow')
   })
 
   it('signed out, carries the list as the visitor sees it, dates and free text included', async () => {

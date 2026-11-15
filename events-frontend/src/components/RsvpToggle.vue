@@ -2,7 +2,8 @@
 /**
  * "Interested" and "Going" on the event page (#3892). Private: only the account sees them. A press
  * on the chosen one withdraws it. Signed out, both lead to sign-in and back to this event, which
- * then sets the status pressed (#4969).
+ * then sets the status pressed (#4969). The links are `nofollow`, so a crawler does not load a
+ * sign-in page per event (#5037).
  */
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -78,6 +79,7 @@ watch(
         <Button v-for="option in OPTIONS" :key="option.status" as-child variant="outline">
           <RouterLink
             :title="t('account.rsvp.signIn')"
+            rel="nofollow"
             :to="{
               path: localePath('/sign-in'),
               query: {

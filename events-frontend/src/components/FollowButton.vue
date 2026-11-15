@@ -142,6 +142,7 @@ async function toggle() {
           path: localePath('/sign-in'),
           query: { next: signInReturn(route.path, 'follow'), intent: 'follow' },
         }"
+        rel="nofollow"
       >
         <Plus data-icon="inline-start" />
         {{ t('account.follow.follow') }}

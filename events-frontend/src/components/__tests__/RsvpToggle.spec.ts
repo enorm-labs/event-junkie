@@ -60,6 +60,7 @@ describe('RsvpToggle', () => {
       '/en/sign-in?next=/en/events/tonight?do=rsvp-interested&intent=rsvp',
       '/en/sign-in?next=/en/events/tonight?do=rsvp-going&intent=rsvp',
     ])
+    expect(view.findAll('a').map((a) => a.attributes('rel'))).toEqual(['nofollow', 'nofollow'])
   })
 
   it('back from the sign-in a press led to, sets that status once and drops `do`', async () => {

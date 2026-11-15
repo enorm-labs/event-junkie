@@ -105,6 +105,7 @@ async function save(chosen: string) {
       :title="t('account.search.signIn')"
       :to="{ path: localePath('/sign-in'), query: { next: signInNext, intent: 'save' } }"
       :class="['inline-flex items-center gap-1', TEXT_LINK_CLASS]"
+      rel="nofollow"
     >
       <Bookmark aria-hidden="true" class="size-4" />
       {{ t('account.search.save') }}

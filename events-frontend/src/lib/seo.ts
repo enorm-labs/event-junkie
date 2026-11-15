@@ -274,11 +274,14 @@ export const AI_TRAINING_CRAWLERS = [
 /**
  * `robots.txt`: open to every crawler but the training crawlers. A hazard for any environment that
  * is not the public site; the chart overrides both files for non-production (`ingress.noindex`, #286).
+ * The sign-in pages are closed to all: every event links to them, and a crawler loaded one per
+ * link (#5037).
  */
 export function robotsTxt(): string {
   return [
     'User-agent: *',
     'Allow: /',
+    ...LOCALES.map((locale) => `Disallow: /${locale}/sign-in`),
     '',
     ...AI_TRAINING_CRAWLERS.flatMap((crawler) => [`User-agent: ${crawler}`, 'Disallow: /', '']),
     `Sitemap: ${SITE_URL}/sitemap.xml`,
