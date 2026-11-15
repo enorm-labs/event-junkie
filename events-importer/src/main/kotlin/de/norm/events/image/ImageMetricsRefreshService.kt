@@ -1,7 +1,7 @@
 package de.norm.events.image
 
+import de.norm.events.common.rethrowIfCancelled
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CancellationException
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
@@ -39,14 +39,13 @@ class ImageMetricsRefreshService(
      * this line says why it froze.
      */
     @Scheduled(fixedDelayString = $$"${app.metrics.refresh-interval-ms:60000}")
-    @Suppress("TooGenericExceptionCaught") // Intentional: monitoring must not be able to fail the application
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: monitoring must not be able to fail the application
     suspend fun refreshGauges() {
         try {
             metrics.updateUrlStates(repository.countUrlStates())
             metrics.updateDerivativeBacklog(repository.countNeedingDerivatives(imgproxyProperties.expectedVariants))
-        } catch (e: CancellationException) {
-            throw e
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.warn(e) { "Could not refresh the image cache gauges; they keep their previous values" }
         }
     }
