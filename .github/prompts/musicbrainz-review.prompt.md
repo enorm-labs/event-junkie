@@ -7,6 +7,7 @@ of proposals to check. **It writes nothing to a cluster on its own.** `scripts/m
 
 ## Important
 
+- **`/artist-cleanup` runs first.** A name that is not an act gets a wrong MBID here, and a SPLIT here is an artist-cleanup row. Step 1 checks the order.
 - **Needs the WireGuard tunnel and the `ej.sh` forwards** for the importer and the BFF. A GitHub runner has neither, which is why this is not an
   `agent-*.yml` workflow. `scripts/ej.sh status` says whether they are up. If they are down, say so and stop: bringing them up takes `sudo`.
 - **A wrong MBID is worse than none.** The enrichment then writes another person's description, photo and links onto a real artist's page. Propose an MBID
@@ -31,8 +32,13 @@ of proposals to check. **It writes nothing to a cluster on its own.** `scripts/m
 
 ```sh
 scripts/ej.sh status
+ls -t temp/artist-cleanup-<env>-*.json 2>/dev/null | head -1      # the last artist cleanup
 python3 scripts/musicbrainz-review.py collect <env> --days <N>
 ```
+
+**If no artist-cleanup file is from the last 7 days**, stop before the collect. Say "Run `/artist-cleanup <env>` first: its newest file is from
+<date>, or there is none." Go on only when the operator says so, and say in the report that the names were not cleaned first.
+[`/admin-review`](admin-review.prompt.md) Step 5 does not stop: it collects, and puts the same sentence in its action list.
 
 It writes `temp/musicbrainz-review-<env>-<date>.tsv`, with empty `decision` and `mbid` columns, and a `.json` with the same rows unflattened. It takes about
 one second per artist. Run it in the background and wait for it to finish.
