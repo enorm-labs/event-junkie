@@ -99,6 +99,23 @@ class UraniaEventPageScraperTest {
         opening.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
+    @Test
+    fun `bills the host named after bei as a speaker`() {
+        val sourceUrl = "https://www.urania.de/event/schoenheitssalon-wie-du-wieder-aussiehst/"
+        val html =
+            """
+            <h6 class="c-event-article_content_format o-h6">Schönheitssalon</h6>
+            <h1 class="c-event-article_content_title o-h1">Wie du wieder aussiehst! Hässlichkeit und Subversion</h1>
+            <p class="c-event-article_content_artist"><strong>Jens Balzer und Victoria Reichelt bei Rabea Weihser</strong></p>
+            <h4 class="c-event-article_content_date-time"><strong>Mi, 11.11.2026</strong> | 19:30 Uhr</h4>
+            """.trimIndent()
+        val salon = scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+
+        salon.title shouldBe "Wie du wieder aussiehst! Hässlichkeit und Subversion"
+        salon.artists.map { it.name } shouldBe listOf("Jens Balzer", "Victoria Reichelt", "Rabea Weihser")
+        salon.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
+    }
+
     // Events 13274 and 13275: the billing line names the audience; 13274 has no format label and was typed a talk.
     @Test
     fun `bills nobody at a school-class screening and types it from the audience line`() {

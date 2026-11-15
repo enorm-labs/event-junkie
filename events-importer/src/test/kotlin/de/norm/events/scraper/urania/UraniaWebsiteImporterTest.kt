@@ -140,6 +140,52 @@ class UraniaWebsiteImporterTest {
             leibspeisen.pricePresale.shouldBeNull()
         }
 
+    // The calendar and the event page both bill the host; the merge keeps the page's three speakers, and the calendar's when the page fails.
+    @Test
+    fun `bills the host named after bei through the merge and the fallback`() =
+        runTest {
+            val slug = "schoenheitssalon-wie-du-wieder-aussiehst"
+            val billing = "Jens Balzer und Victoria Reichelt bei Rabea Weihser"
+            val calendar =
+                """
+                <div class="c-event-calendar_day js-day" data-day="11-mi-11-2026">
+                  <div class="c-event-calendar-item js-calendar-event-item">
+                    <div class="c-event-calendar-item_time"><span>19:30 Uhr</span></div>
+                    <a class="c-event-calendar-item_content" href="${eventUrl(slug)}">
+                      <h3 class="o-h3">Wie du wieder aussiehst! Hässlichkeit und Subversion</h3>
+                      <h6 class="o-h6">Schönheitssalon</h6>
+                      <div class="c-event-calendar-item_content_text"><p><strong>$billing</strong></p></div>
+                    </a>
+                  </div>
+                </div>
+                """.trimIndent()
+            val page =
+                """
+                <h6 class="c-event-article_content_format o-h6">Schönheitssalon</h6>
+                <h1 class="c-event-article_content_title o-h1">Wie du wieder aussiehst! Hässlichkeit und Subversion</h1>
+                <p class="c-event-article_content_artist"><strong>$billing</strong></p>
+                <h4 class="c-event-article_content_date-time"><strong>Mi, 11.11.2026</strong> | 19:30 Uhr</h4>
+                """.trimIndent()
+            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(calendar, sourceUrl), etag = null, lastModified = null)
+            val speakers = listOf("Jens Balzer", "Victoria Reichelt", "Rabea Weihser")
+
+            val fallback = importer.importEvents(sourceUrl)
+            fallback.shouldBeInstanceOf<ImportResult.Success>()
+            fallback.events
+                .single()
+                .artists
+                .map { it.name } shouldBe speakers
+
+            coEvery { htmlFetcher.fetchDocument(eventUrl(slug)) } returns Jsoup.parse(page, eventUrl(slug))
+            val merged = importer.importEvents(sourceUrl)
+            merged.shouldBeInstanceOf<ImportResult.Success>()
+            merged.events
+                .single()
+                .artists
+                .map { it.name } shouldBe speakers
+        }
+
     @Test
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.URANIA
