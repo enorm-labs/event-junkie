@@ -27,6 +27,8 @@ A venue that closes for good (ADR-046) keeps its source and stops importing:
     python3 scripts/seed-sources.py --host <host> --disable <slug> --yes
 
 `--enable` leaves that source off: it skips every source whose venue file carries `closedOn` (#4410).
+It also enables only a source that has never been imported, because a disabled source with an import
+history was turned off by a person (#5062).
 
 **This never triggers an import.** The generated `dev-seed.http` does, for a local run; this does not.
 Step 3 hands the sources to the scheduler, which picks them up on its next tick.
@@ -129,14 +131,19 @@ def enable(args):
         sys.exit(f"Cannot read {args.seed}: {e}")
 
     unreviewed = [s["name"] for s in sources if not s.get("descriptionLicence") and not s.get("imageLicence")]
+    off = [s for s in sources if not s.get("enabled")]
     # A venue that closed was disabled on purpose (ADR-046); enabling every disabled source re-opened it (#4410).
-    skipped = [s for s in sources if not s.get("enabled") and s["name"] in closed]
-    disabled = [s for s in sources if not s.get("enabled") and s["name"] not in closed]
+    skipped = [s for s in off if s["name"] in closed]
+    # Step 1 creates a source with no import history, so one that has a history was turned off by a person (#5062).
+    kept_off = [s for s in off if s["name"] not in closed and s.get("lastImportAt")]
+    disabled = [s for s in off if s["name"] not in closed and not s.get("lastImportAt")]
     print(f"{args.host}: {len(sources)} sources, {len(disabled)} disabled, {len(unreviewed)} unreviewed")
     for n in unreviewed:
         print(f"  UNREVIEWED  {n}")
     for s in skipped:
         print(f"  SKIPPED  {s['slug']} (venue closed {closed[s['name']]})")
+    for s in kept_off:
+        print(f"  KEPT OFF  {s['slug']} (disabled after its last import, {s['lastImportAt'][:10]})")
     if unreviewed and not args.allow_unreviewed:
         sys.exit(
             "\nRefusing to enable while a source is unreviewed.\n"
