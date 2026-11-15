@@ -8,6 +8,7 @@ import errors from './errors.json'
 import eventType from './eventType.json'
 import events from './events.json'
 import footer from './footer.json'
+import forChildren from './forChildren.json'
 import home from './home.json'
 import map from './map.json'
 import legal from './legal.json'
@@ -37,6 +38,7 @@ export default {
   eventType,
   events,
   footer,
+  forChildren,
   home,
   map,
   legal,

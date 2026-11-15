@@ -27,6 +27,7 @@ export const STATIC_PAGE_KEYS: Record<
   '/venues': { title: 'venues', description: 'venues' },
   '/promoters': { title: 'promoters', description: 'promoters' },
   '/christmas-markets': { title: 'christmasMarkets', description: 'christmasMarkets' },
+  '/for-children': { title: 'forChildren', description: 'forChildren' },
   '/calendar': { title: 'calendar', description: 'calendar' },
   '/map': { title: 'map', description: 'map' },
   '/about': { title: 'about', description: 'about' },

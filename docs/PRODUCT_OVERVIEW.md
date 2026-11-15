@@ -134,6 +134,7 @@ the first column. It fails in two cases:
 | `/artists/:slug`                       | Artist page                                                                                             |
 | `/promoters`                           | Promoters list                                                                                          |
 | `/christmas-markets`                   | The Christmas markets of the season, as a list and on a map (EVENT_SCOPE.md §3.7)                       |
+| `/for-children`                        | Every upcoming children's event, linked from the footer (EVENT_SCOPE.md §3.5)                           |
 | `/promoters/:slug`                     | Promoter page                                                                                           |
 | `/search`                              | All results for a header search, not indexed                                                            |
 | `/about`                               | About page                                                                                              |

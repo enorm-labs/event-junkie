@@ -4,7 +4,7 @@
  * (docs/LEGAL.md §2). The disclaimer sits here rather than only on a legal page because it is the
  * single most useful sentence for a user of an aggregator, and nobody clicks through (§7.6).
  */
-import { CalendarRange, Download, Rss } from '@lucide/vue'
+import { Balloon, CalendarRange, Download, Rss } from '@lucide/vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
@@ -81,8 +81,8 @@ function onInstallClick(event: MouseEvent) {
           <p class="text-body text-muted-foreground">{{ t('footer.tagline') }}</p>
           <!-- "Alle Angaben ohne Gewähr", in the register the brand actually speaks (§7.6). -->
           <p class="max-w-prose text-body text-muted-foreground">{{ t('footer.disclaimer') }}</p>
-          <!-- Beside the visitor-facing text, not under Project: a subscription and a shareable
-               week, not project links. -->
+          <!-- Beside the visitor-facing text, not under Project: a subscription, a shareable week and
+               the children's page (#5079), not project links. -->
           <div class="flex flex-wrap gap-x-4 gap-y-2">
             <a
               :class="[linkClass, 'inline-flex items-center gap-1.5 text-body']"
@@ -99,6 +99,14 @@ function onInstallClick(event: MouseEvent) {
             >
               <CalendarRange aria-hidden="true" class="size-4" />
               {{ t('footer.thisWeek') }}
+            </RouterLink>
+            <RouterLink
+              :class="[linkClass, 'inline-flex items-center gap-1.5 text-body']"
+              :to="localePath('/for-children')"
+              data-testid="footer-for-children"
+            >
+              <Balloon aria-hidden="true" class="size-4" />
+              {{ t('footer.forChildren') }}
             </RouterLink>
             <a
               v-if="!installedApp"

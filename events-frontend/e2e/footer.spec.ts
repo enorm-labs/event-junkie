@@ -1,3 +1,4 @@
+import { json, page1 } from './bff-mocks'
 import { expect, test } from './test'
 
 /**
@@ -60,6 +61,38 @@ test('links the repository, the mailbox, the tracker, the releases and the feed'
     'href',
     '/feed.xml?locale=en',
   )
+})
+
+test("opens the children's page from the footer, which lists only children's events (#5079)", async ({
+  page,
+}) => {
+  const features: (string | null)[] = []
+  await page.route(/\/api\/events(\?|$)/, (route) => {
+    features.push(new URL(route.request().url()).searchParams.get('feature'))
+    return json(
+      route,
+      page1(
+        [
+          {
+            slug: 'pettersson',
+            title: 'Pettersson kriegt Weihnachtsbesuch',
+            eventDate: '2099-11-27',
+          },
+        ],
+        20,
+      ),
+    )
+  })
+
+  await page.goto('/de/about')
+  await page.getByRole('contentinfo').getByRole('link', { name: 'Für Kinder' }).click()
+
+  await expect(page).toHaveURL(/\/de\/for-children$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Für Kinder' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Pettersson kriegt Weihnachtsbesuch' }),
+  ).toBeVisible()
+  expect(features).toContain('for-children')
 })
 
 test('distinguishes the copyright from the code licence', async ({ page }) => {

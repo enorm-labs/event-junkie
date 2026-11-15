@@ -136,6 +136,15 @@ const router = createRouter({
           component: () => import('../views/ChristmasMarketsView.vue'),
         },
         {
+          path: 'for-children',
+          name: 'for-children',
+          meta: {
+            titleKey: 'pageTitle.forChildren',
+            descriptionKey: 'pageDescription.forChildren',
+          },
+          component: () => import('../views/ForChildrenView.vue'),
+        },
+        {
           path: 'promoters/:slug',
           name: 'promoter',
           component: () => import('../views/PromoterDetailView.vue'),

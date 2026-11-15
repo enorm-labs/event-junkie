@@ -25,7 +25,7 @@ import { useEventChanges } from '@/composables/useEventChanges'
 import { useRelatedEvents } from '@/composables/useRelatedEvents'
 import { descriptionFor } from '@/lib/description'
 import { CHRISTMAS_MARKET } from '@/lib/christmasMarkets'
-import { inFeatureOrder, MARKET_KIND_PREFIX } from '@/lib/eventFeatures'
+import { FOR_CHILDREN, inFeatureOrder, MARKET_KIND_PREFIX } from '@/lib/eventFeatures'
 import { withReferral } from '@/lib/referral'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
@@ -107,9 +107,11 @@ const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null
 const spokenLanguage = computed(() => formatSpokenLanguage(event.value?.spokenLanguages, null))
 const subtitles = computed(() => formatSpokenLanguage(null, event.value?.subtitleLanguage))
 // What kind of night it is, as its own text says (#2631); each pill opens the list filtered by it,
-// and a market's pills open the markets page, the one place markets are browsed (#5019).
+// a market's pills open the markets page, the one place markets are browsed (#5019), and a children's
+// show opens the children's page (#5079).
 function featureLink(slug: string) {
   if (slug === CHRISTMAS_MARKET) return { path: localePath('/christmas-markets') }
+  if (slug === FOR_CHILDREN) return { path: localePath('/for-children') }
   if (slug.startsWith(MARKET_KIND_PREFIX)) {
     return {
       path: localePath('/christmas-markets'),

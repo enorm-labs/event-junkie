@@ -912,10 +912,11 @@ Where candidates come from, and what is deliberately left out:
   were not opened. Most Berlin venues on these pages are already recorded. The sweep gave the eleven rows above. Many
   sites render their dates in JavaScript or give only a city, so they named no venue. These places were left out as
   out of scope: a cinema (Kino International) and the classical halls (Philharmonie, Kammermusiksaal, UdK
-  Konzertsaal). Also the children's venues FEZ and Theater an der Parkaue (see `docs/EVENT_SCOPE.md` §3.5). Also a
-  hotel, two radio studios and the event grounds at Tempelhof and the Olympiapark. A media calendar with one event
-  was not enough for a row: BLO Kantine and OGH (one each). Milchsalon's "Audimax" date is a children's show, so it is
-  out of scope as well.
+  Konzertsaal). Also a hotel, two radio studios and the event grounds at Tempelhof and the Olympiapark. A media
+  calendar with one event was not enough for a row: BLO Kantine and OGH (one each). The sweep also named two venues
+  that play only for children, FEZ and Theater an der Parkaue. They are in scope (`docs/EVENT_SCOPE.md` §3.5), and
+  #5077 and #5078 import them.
+  Milchsalon's "Audimax" date is one children's show, which is not enough for a row.
 
 **Excluded on purpose, so a later sweep does not re-litigate them.** An RA venue with a single event in the window,
 unless a promoter listed it too. A one-off booking is not evidence of a programme, and the

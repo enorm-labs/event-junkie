@@ -487,6 +487,13 @@ describe('EventDetailView', () => {
     expect(hrefOf(view, 'Queer')).toBe('/de/events?feature=queer')
   })
 
+  it("links the children's pill to the children's page (#5079)", async () => {
+    const view = await mountEvent({ ...night, features: ['for-children', 'open-stage'] }, 'de')
+
+    expect(hrefOf(view, 'Für Kinder')).toBe('/de/for-children')
+    expect(hrefOf(view, 'Offene Bühne')).toBe('/de/events?feature=open-stage')
+  })
+
   it('shows the type and the genre tags under the date and venue line', async () => {
     const view = await mountEvent({
       ...night,

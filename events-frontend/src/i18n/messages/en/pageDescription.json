@@ -11,5 +11,6 @@
   "notices": "The open-source components Event Junkie is built on, grouped by licence, generated from the build.",
   "forVenues": "How Event Junkie reads a venue's event page, how politely, and how a venue operator gets their listings taken down.",
   "week": "{range}: concerts, club nights and more in Berlin, day by day.",
-  "christmasMarkets": "Every Christmas market in Berlin this season, on one map: dates, opening hours and entry."
+  "christmasMarkets": "Every Christmas market in Berlin this season, on one map: dates, opening hours and entry.",
+  "forChildren": "Concerts, puppet theatre and shows for children in Berlin, with dates and tickets."
 }

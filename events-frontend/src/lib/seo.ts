@@ -30,6 +30,7 @@ export const INDEXABLE_PATHS = [
   '/venues',
   '/promoters',
   '/christmas-markets',
+  '/for-children',
   '/calendar',
   '/map',
   '/about',
