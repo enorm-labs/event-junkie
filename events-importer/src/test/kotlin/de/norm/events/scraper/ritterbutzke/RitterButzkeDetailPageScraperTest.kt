@@ -7,6 +7,8 @@ import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -21,7 +23,7 @@ import java.time.LocalTime
  * lineups come from the rendered rows.
  */
 class RitterButzkeDetailPageScraperTest {
-    private val scraper = RitterButzkeDetailPageScraper(lineupFromJsonLd = true)
+    private val scraper = RitterButzkeDetailPageScraper(readsDescription = true, lineupFromJsonLd = true)
 
     private fun scrape(
         fixture: String,
@@ -108,8 +110,57 @@ class RitterButzkeDetailPageScraperTest {
     }
 
     @Test
-    fun `leaves the description out, because the first block can be the refund terms`() {
-        scrape("extrawelt", "100427-WeltauswahlbyExtrawelt").description.shouldBeNull()
+    fun `reads the night's blurb and cuts the refund terms after it in the same block`() {
+        scrape("unison", "070826-Unisonw-ZappedRecords-NizarSarakbi-JosefinaTapia").description!!.let {
+            it shouldStartWith "We are the union of creatives.\n\nUnison invites Zapped Records"
+            it shouldEndWith "*+ Selector policy*\n\nGet love and give love."
+        }
+    }
+
+    @Test
+    fun `reads the blurb, then one bio per act, and skips the video embeds`() {
+        val description = scrape("deeportament", "310726-DeeportamentCommunityw-NicoMorano-OpenAir-Indoor").description!!
+        val paragraphs = description.split("\n\n")
+        paragraphs.first() shouldStartWith "Deeportament Community is a cult event series from sunny Odessa"
+        paragraphs[1] shouldStartWith "Now, Deeportament takes its next step onto the international stage"
+        paragraphs[2] shouldStartWith "Belgian DJ and producer Nico Morano"
+        paragraphs.last() shouldStartWith "Vlad Yaki – High-Energy House & Tech"
+        description shouldNotContain "Cookies"
+    }
+
+    @Test
+    fun `stores the act's bio without the refund terms and the ticket desk's address (#5112)`() {
+        val description = scrape("extrawelt", "100427-WeltauswahlbyExtrawelt").description!!
+        description shouldStartWith "Extrawelt – German Techno Pioneers & Live Innovators"
+        description shouldEndWith "For fans of: Stephan Bodzin, Dominik Eulberg, Gui Boratto, progressive & melodic techno"
+        listOf("Bei Fragen", "Mindestalter", "@", "(at)", "Cookies").forEach { description shouldNotContain it }
+    }
+
+    @Test
+    fun `cuts the doors-and-timetable note, a presale line before it and a stray byte-order mark`() {
+        val sourceUrl = "https://club.ritterbutzke.com/event/281126-Lexy-K-Paul-live"
+        val html =
+            """
+            <html><body><h1>Lexy &amp; K-Paul</h1><div class="row"><div>
+            <div class="mt-3"><p>Tickets on sale at 11am CET on Friday</p><p>Einlass ab 22 Uhr // Grundsätzlich veröffentlichen wir
+            den timetable vorab nicht.</p><p>Doors open at 10pm // We do not publish the timetable in advance.</p></div>
+            <div class="youtube-embedding mt-3"><p>Um dieses Video zu sehen, müssen Sie Cookies akzeptieren.</p></div>
+            <div class="mt-3"><p>Lexy &amp; K-Paul – German Club Legends</p><p>&#xFEFF;</p></div>
+            </div></div></body></html>
+            """.trimIndent()
+        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.description shouldBe "Lexy & K-Paul – German Club Legends"
+    }
+
+    @Test
+    fun `leaves the description out when the page carries only house text`() {
+        val sourceUrl = "https://club.ritterbutzke.com/event/200227-REWI"
+        val html =
+            """
+            <html><body><h1>REWI</h1><div class="row"><div class="mt-3">
+            <p>Bei Fragen schreibt bitte eine Mail an <a href="mailto:t-masked@example.de">tickets(at)ritter-butzke.de</a></p>
+            <p>Mindestalter 18+</p></div></div></body></html>
+            """.trimIndent()
+        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.description.shouldBeNull()
     }
 
     @Test

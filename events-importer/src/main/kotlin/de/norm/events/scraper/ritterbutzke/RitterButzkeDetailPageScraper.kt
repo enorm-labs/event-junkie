@@ -25,8 +25,9 @@ import java.time.LocalTime
 
 /**
  * Pure HTML parser for Ritter Butzke event detail pages (`/event/DDMMYY-<Name>`). KREUZWERK's
- * pages are the same template, so [eventSource] names the venue. With [readsDescription] the
- * first `div.mt-3` below the lineup is the blurb; Ritter Butzke mixes it with artist bios and refund terms.
+ * pages are the same template, so [eventSource] names the venue. With [readsDescription] every
+ * `div.mt-3` below the lineup is a text block: a night blurb, then one bio per act. Ritter Butzke ends
+ * the first block with house text, and [parseDescription] cuts it.
  * With [lineupFromJsonLd], on for both venues, the acts come from the JSON-LD `performer` list, which
  * drops the notes the rendered rows append (`131bpm LIVE DEBUT`, `NINSA hybrid live`). A page whose
  * JSON-LD names no performer falls back to the rendered rows, as the pages captured before the
@@ -80,9 +81,32 @@ class RitterButzkeDetailPageScraper(
             sourceId = "${eventSource.sourceIdPrefix}$slug",
             ticketUrl = parseTicketUrl(document),
             soldOut = cleanedTitle.soldOut,
-            description = if (readsDescription) htmlParagraphText(document.selectFirst(DESCRIPTION_SELECTOR)?.html()) else null,
+            description = if (readsDescription) parseDescription(document) else null,
             artists = if (lineupFromJsonLd) parseJsonLdLineup(document).ifEmpty { parseLineup(document) } else parseLineup(document)
         )
+    }
+
+    /**
+     * The blurb and the act bios, one paragraph run per text block. The first block ends with house text: the refund
+     * terms with the ticket desk's address, or the doors-and-timetable note. The cut starts at its opening phrase,
+     * because a night's blurb can come before it in the same block. A ticket on-sale note before it goes too.
+     */
+    private fun parseDescription(document: Document): String? =
+        document
+            .select(DESCRIPTION_SELECTOR)
+            .mapNotNull { block -> htmlParagraphText(block.html().replace(INVISIBLE_CHARS, ""))?.let(::withoutHouseText) }
+            .joinToString("\n\n")
+            .ifBlank { null }
+
+    private fun withoutHouseText(text: String): String? {
+        val houseText = HOUSE_TEXT_START.find(text) ?: return text
+        return text
+            .substring(0, houseText.range.first)
+            .lines()
+            .filterNot { ON_SALE_NOTE.containsMatchIn(it) }
+            .joinToString("\n")
+            .trim()
+            .ifEmpty { null }
     }
 
     /**
@@ -149,8 +173,25 @@ class RitterButzkeDetailPageScraper(
 /** The detail header's date cell, rendered with a four-digit year. */
 private const val DATE_SELECTOR = "h2.text-center.mb-0"
 
-/** The blurb block below the lineup, inside the grid row: the page container also carries `mt-3`. */
-private const val DESCRIPTION_SELECTOR = ".row div.mt-3"
+/**
+ * A text block below the lineup, inside the grid row: the page container also carries `mt-3`. A video embed
+ * carries it too, and holds only a cookie notice.
+ */
+private const val DESCRIPTION_SELECTOR = ".row div.mt-3:not(.youtube-embedding)"
+
+/** The opening phrases of Ritter Butzke's house text: the refund terms, and the doors-and-timetable note. */
+private val HOUSE_TEXT_START =
+    Regex(
+        """Bei Fragen schreibt bitte|Die Ritter Butzke Production GmbH akzeptier|Einlass ab \d{1,2}(?::\d{2})? Uhr\s*//|""" +
+            """Grundsätzlich veröffentlichen wir den timetable""",
+        RegexOption.IGNORE_CASE
+    )
+
+/** A presale line, stale once the sale opens: "Presale tickets on sale on 17th November", "VVK ab …". */
+private val ON_SALE_NOTE = Regex("""\bon sale\b|^\s*(?:VVK|Vorverkauf)\b""", RegexOption.IGNORE_CASE)
+
+/** Zero-width characters and the byte-order mark, which an editor leaves on otherwise empty lines. */
+private val INVISIBLE_CHARS = Regex("""[\u200B-\u200D\uFEFF]""")
 
 /** The detail header's opening-time line. */
 private const val TIME_SELECTOR = "h5.text-center"
