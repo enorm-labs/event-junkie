@@ -121,6 +121,7 @@ class RenateOverviewPageScraper(
             sourceUrl = baseUrl,
             sourceId = EventSource.RENATE.dateTitleId(eventDate, title),
             ticketUrl = row.hrefAt(".ticket-link"),
+            description = row.selectFirst(".prog-text")?.let(::proseOf),
             artists = artists
         ).withTitleCrews(RENATE_NAMES, klubnachtCrews(title).ifEmpty { hostingCrewsFromTitle(title, RENATE_NAMES) })
     }
@@ -260,17 +261,6 @@ class RenateOverviewPageScraper(
             .filter { it.isNotBlank() && !isNonArtistName(it) }
 
     private companion object {
-        /**
-         * The actual floor names, matched at the start of a `<strong>` heading. Curated because
-         * `<strong>` is also the slogan (`Garten für alle!` — the garden floor is spelled `GARDEN`, so
-         * the German spelling is deliberately absent), a continuation line (`hosted by Neer`) and
-         * festival prose. `TOP SECRET` precedes `SECRET` so the longer name wins.
-         */
-        val FLOOR_HEADING = Regex("""^(top secret|secret|garden|green|black|red)\b""", RegexOption.IGNORE_CASE)
-
-        /** Longest an act line may be before it reads as prose rather than a name. */
-        const val MAX_ACT_WORDS = 6
-
         /** Fewer lines than this under a bare badge is a note, not a line-up. */
         const val MIN_BARE_LINEUP_LINES = 3
 
@@ -294,6 +284,34 @@ class RenateOverviewPageScraper(
 }
 
 private const val SECONDS_PER_DAY = 86_400
+
+/**
+ * The actual floor names, matched at the start of a `<strong>` heading. Curated because
+ * `<strong>` is also the slogan (`Garten für alle!` — the garden floor is spelled `GARDEN`, so
+ * the German spelling is deliberately absent), a continuation line (`hosted by Neer`) and
+ * festival prose. `TOP SECRET` precedes `SECRET` so the longer name wins.
+ */
+private val FLOOR_HEADING = Regex("""^(top secret|secret|garden|green|black|red)\b""", RegexOption.IGNORE_CASE)
+
+/** Longest an act line may be before it reads as prose rather than a name. */
+private const val MAX_ACT_WORDS = 6
+
+/**
+ * The night's own text, one paragraph per `<p>`, or `null` for a block of names only (#5104). A line counts when it is
+ * longer than [MAX_ACT_WORDS] words, names no floor and opens with no running-order slot. The `.info-text` repeats the
+ * same policy and ticket notes on every row, so it stays out.
+ */
+private fun proseOf(text: Element): String? =
+    text
+        .select("p")
+        .filter { it.closest(".info-text") == null }
+        .map { paragraph -> paragraph.textLines().filter(::isProse).joinToString("\n") }
+        .filter { it.isNotBlank() }
+        .joinToString("\n\n")
+        .ifBlank { null }
+
+private fun isProse(line: String): Boolean =
+    line.split(WHITESPACE).size > MAX_ACT_WORDS && FLOOR_HEADING.find(line) == null && !RUNNING_ORDER_SLOT.containsMatchIn(line)
 
 /** The info block's `Renate Klubnacht opens from 22:00`; `We open from` is the Hot Tip and stays out. */
 private val OPENS_FROM = Regex("""\bopens\s+from\s+(\d{1,2}):(\d{2})\b""", RegexOption.IGNORE_CASE)
