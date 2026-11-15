@@ -82,6 +82,7 @@ class TresorDetailPageScraper {
             // No doors or start time is stated; the night's opening set is the only clock.
             startTime = parseTime(OPENING_TIME.find(content.textAt(".lineup-time").orEmpty())?.value),
             imageUrl = parsePoster(document),
+            ticketUrl = parseTicketUrl(content),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.TRESOR.sourceIdPrefix}$slug",
             artists = parseRunningOrder(content, eventDate)
@@ -162,6 +163,17 @@ class TresorDetailPageScraper {
             ?.joinToString("\n")
             ?.takeIf { it.isNotBlank() }
 
+    /**
+     * The night's Resident Advisor event, linked as "Tickets via RA" in the policy text below the
+     * blurb (#5106). Every page also links the club's generic RA page, and one page links the
+     * placeholder `ra.co/events/XXXXX`; only a numbered event counts.
+     */
+    private fun parseTicketUrl(content: Element): String? =
+        content
+            .select(".main-text a[href]")
+            .map { it.attr("href").trim() }
+            .firstOrNull { RA_EVENT_URL.matches(it) }
+
     private companion object {
         /** The event's own section; the page's footer repeats the whole programme below it. */
         const val MAIN_CONTENT = "main.main-content"
@@ -186,5 +198,8 @@ class TresorDetailPageScraper {
 
         /** The underscore rule separating the event's blurb from the standing policy text. */
         val POLICY_RULE = Regex("""_{5,}""")
+
+        /** A numbered Resident Advisor event page. */
+        val RA_EVENT_URL = Regex("""^https://(www\.)?ra\.co/events/\d+/?$""")
     }
 }

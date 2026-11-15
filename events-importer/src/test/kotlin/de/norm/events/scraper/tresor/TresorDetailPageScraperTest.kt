@@ -137,4 +137,41 @@ class TresorDetailPageScraperTest {
         // Tresor answers every event URL with a 302 to its home page (#2000); the listing's data must stand.
         scrape("tresor-home.html", "20261010-tresor-klubnacht").shouldBeNull()
     }
+
+    @Test
+    fun `reads the ticket link to the night's Resident Advisor event from the policy text (#5106)`() {
+        scrape("tresor-detail-blurb.html", "20260807-tresor-aquabahn-x-mechatronica").shouldNotBeNull().ticketUrl shouldBe
+            "https://ra.co/events/2479447"
+        scrape("tresor-detail-globus-session.html", "20260905-tresor-invites-o-v-r").shouldNotBeNull().ticketUrl shouldBe
+            "https://ra.co/events/2499789"
+        scrape("tresor-detail-klubnacht.html", "20260801-tresor-klubnacht").shouldNotBeNull().ticketUrl shouldBe
+            "https://ra.co/events/2479377"
+    }
+
+    @Test
+    fun `stores no ticket link for a placeholder or the club's generic Resident Advisor page`() {
+        val url = "https://tresorberlin.com/event/20260801-x/"
+
+        fun page(links: String) =
+            Jsoup.parse(
+                """
+                <html><head><title>Night | Tresor</title></head><body class="single-event">
+                <main class="main-content"><div class="main-text">Blurb<br>_____<p>$links</p></div></main>
+                </body></html>
+                """.trimIndent(),
+                url
+            )
+
+        val placeholder = """<a href="https://ra.co/events/XXXXX">Tickets via RA</a> <a href="https://ra.co/clubs/5494">RA</a>"""
+        scraper
+            .scrape(page(placeholder), url)
+            .shouldNotBeNull()
+            .ticketUrl
+            .shouldBeNull()
+        scraper
+            .scrape(page("""<a href="https://ra.co/clubs/5494">RA</a>"""), url)
+            .shouldNotBeNull()
+            .ticketUrl
+            .shouldBeNull()
+    }
 }
