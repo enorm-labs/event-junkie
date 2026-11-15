@@ -282,7 +282,8 @@ links to `programme_url`, which is never fetched. A person sets `reviewed_at` th
 venue's facts. An import never sets it. The site check in `venue_site_check` reads it.
 
 **A person enters the events of a venue we do not import by hand (#2993).** `GET /api/admin/venues/manual` lists every
-open venue that no `event_source` row points at. Each row carries `programme_checked_at` and the `created_at` of the
+open venue that no `event_source` row points at. The list leaves out a venue whose every event has the
+`christmas-market` feature, because a square or a park has no programme (#5039). A venue with a `programme_url` stays. A venue with no event stays on the list. Each row carries `programme_checked_at` and the `created_at` of the
 newest event at the venue. The list starts with the venues nobody checked, then the oldest check.
 `PUT /api/admin/venues/{id}/programme-checked` sets `programme_checked_at` to now. A venue PUT keeps the column, and an
 import never sets it. It is not `reviewed_at`: that column records the review of the venue's facts.

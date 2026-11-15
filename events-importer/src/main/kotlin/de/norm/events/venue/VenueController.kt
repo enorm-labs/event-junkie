@@ -41,7 +41,8 @@ class VenueController(
 
     /**
      * The open venues no event source points at, whose events a person enters by hand (#2993): never checked
-     * first, then the oldest check. Each carries when its newest event was entered.
+     * first, then the oldest check. Each carries when its newest event was entered. A venue that holds only
+     * Christmas markets and has no programme URL is left out (#5039).
      */
     @GetMapping("/manual")
     @Operation(summary = "List the open venues without an importer, the longest unchecked first")
