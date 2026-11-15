@@ -52,6 +52,57 @@ class VolksbuehneEventPageScraperTest {
     }
 
     @Test
+    fun `reads the shop link from the page's ticket block`() {
+        val shop = "https://ticket.volksbuehne-berlin.de/eventim.webshop/webticket/shop?event=23750"
+
+        scraper.scrape(fixtureDocument(spaceAfrika, baseUri)).shouldNotBeNull().ticketUrl shouldBe shop
+        scraper.scrape(fixtureDocument(spaceAfrikaEn, baseUri)).shouldNotBeNull().ticketUrl shouldBe shop
+        scraper
+            .scrape(fixtureDocument(yearWithoutSummer, baseUri))
+            .shouldNotBeNull()
+            .ticketUrl
+            .shouldBeNull()
+    }
+
+    @Test
+    fun `skips a sold-out category and reads the next one with a link`() {
+        val html =
+            """<section class="texts"><section class="block text-block"><div class="text"><p>Text</p></div></section></section>""" +
+                """<div class="activity-detail__tickets"><span class="ticket-button">TICKETS</span>""" +
+                """<a class="ticket-button" href="/produktionen/row/20261103-1830/">TICKETS</a>""" +
+                """<a class="ticket-button" href="https://ticket.volksbuehne-berlin.de/eventim.webshop/webticket/shop?event=1">TICKETS</a></div>"""
+        val soldOut =
+            """<section class="texts"><section class="block text-block"><div class="text"><p>Text</p></div></section></section>""" +
+                """<div class="activity-detail__tickets"><span class="ticket-button">TICKETS</span></div>"""
+
+        scraper.scrape(Jsoup.parse(html, baseUri)).shouldNotBeNull().ticketUrl shouldBe
+            "https://ticket.volksbuehne-berlin.de/eventim.webshop/webticket/shop?event=1"
+        scraper
+            .scrape(Jsoup.parse(soldOut, baseUri))
+            .shouldNotBeNull()
+            .ticketUrl
+            .shouldBeNull()
+    }
+
+    @Test
+    fun `replaces a row's Tickets link to its own page with the page's shop (#5107)`() {
+        val shop = "https://ticket.volksbuehne-berlin.de/eventim.webshop/webticket/shop?event=23931"
+        val page = VolksbuehneEventPage(description = null, imageUrl = null, eventType = null, ticketUrl = shop)
+        val row = event(EventType.SHOW, typeIsFallback = false)
+        val ownShop = "https://ticket.volksbuehne-berlin.de/eventim.webshop/webticket/shop?event=1"
+
+        page.applyTo(row.copy(ticketUrl = "/produktionen/row/20261103-1830/")).ticketUrl shouldBe shop
+        page.applyTo(row.copy(ticketUrl = row.sourceUrl)).ticketUrl shouldBe shop
+        page.applyTo(row).ticketUrl shouldBe shop
+        page.applyTo(row.copy(ticketUrl = ownShop)).ticketUrl shouldBe ownShop
+        page
+            .copy(ticketUrl = null)
+            .applyTo(row.copy(ticketUrl = "/produktionen/row/20261103-1830/"))
+            .ticketUrl
+            .shouldBeNull()
+    }
+
+    @Test
     fun `reads the writer line's names`() {
         scraper.scrape(fixtureDocument(yearWithoutSummer, baseUri)).shouldNotBeNull().writers shouldContainExactly listOf("Florentina Holzinger")
     }
