@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -20,7 +21,8 @@ import tools.jackson.databind.JsonNode
  * Roles come from the structured data: every performer is kept, tagged `SUPPORT` when it appears
  * in the `subtitle_2` support/guest line, else `HEADLINER`; if every performer is support, the
  * first is promoted. A party that lists its own name as its performer ("Cheers!", event 12478) bills nobody: the name is
- * the night's, not a DJ's.
+ * the night's, not a DJ's. One performer `X & Y` is two acts when the blurb calls them a pair ("Die beiden …", #5086);
+ * any other `&` is part of one act's name.
  *
  * @see BinuuOverviewPageScraper for overview parsing (discovery, fallback).
  * @see BinuuWebsiteImporter for the HTTP fetch orchestrator.
@@ -77,7 +79,7 @@ class BinuuDetailPageScraper {
             soldOut = item.path("soldout").asBoolean(),
             status = mapBinuuStatus(item.stringOrNull("eventStatus"), item.stringOrNull("startOld")),
             statusNote = binuuRelocationNote(item.stringOrNull("eventStatus"), item.stringOrNull("locationNew"), item.stringOrNull("locationArticle")),
-            artists = parseArtists(item, title, eventType),
+            artists = parseArtists(item, title, eventType, description),
             promoters = parsePromoters(item),
             promoterWebsites = parsePromoterWebsites(item)
         )
@@ -128,15 +130,21 @@ class BinuuDetailPageScraper {
     /**
      * The roster from `performers`, `SUPPORT` when the name appears in `subtitle_2`, else
      * `HEADLINER`; non-artist names dropped; the first promoted if every one was support. At a party, a performer named
-     * as the title is the party's name.
+     * as the title is the party's name. A pair billed as one performer splits ([pairActs]).
      */
     private fun parseArtists(
         item: JsonNode,
         title: String,
-        eventType: String
+        eventType: String,
+        description: String?
     ): List<ScrapedArtist> {
         val partyName = if (eventType == EventType.PARTY.name) folded(title) else null
-        val performers = item.stringList("performers").filterNot { isNonArtistName(it) || folded(it) == partyName }
+        val performers =
+            item
+                .stringList("performers")
+                .filterNot { isNonArtistName(it) || folded(it) == partyName }
+                .flatMap { pairActs(it, description) }
+                .distinct()
         if (performers.isEmpty()) return emptyList()
 
         val supportLine = item.stringOrNull("subtitle_2")?.lowercase().orEmpty()
@@ -157,6 +165,28 @@ class BinuuDetailPageScraper {
         }
     }
 
+    /**
+     * [performer] as its two acts when it joins two names with ` & ` and [description] calls them a pair, else whole.
+     * The split honours [splitSegmentOnConjunctions]'s guards, so `Simon & Garfunkel` and `X & Friends` stay whole.
+     */
+    private fun pairActs(
+        performer: String,
+        description: String?
+    ): List<String> {
+        if (!performer.contains(" & ") || description == null || !PAIR_WORDING.containsMatchIn(description)) return listOf(performer)
+        val acts = splitSegmentOnConjunctions(performer)
+        return if (acts.size == 2) acts else listOf(performer)
+    }
+
     /** Case, spacing and punctuation folded away, so `Cheers!` matches `cheers`. */
     private fun folded(name: String): String = name.lowercase().filter { it.isLetterOrDigit() }
+
+    private companion object {
+        /**
+         * Blurb wording that names two people as a pair. The venue's text can glue a word to the next
+         * (`Die beidenerfolgreichen`), so `die beiden` and `the duo of` need no boundary after them.
+         */
+        val PAIR_WORDING =
+            Regex("""(?<!\p{L})(?:die beiden|the duo of)|(?<!\p{L})(?:beide|the two)(?!\p{L})""", RegexOption.IGNORE_CASE)
+    }
 }
