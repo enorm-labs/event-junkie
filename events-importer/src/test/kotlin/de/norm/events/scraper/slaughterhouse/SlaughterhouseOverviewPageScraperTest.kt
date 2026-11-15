@@ -19,6 +19,9 @@ class SlaughterhouseOverviewPageScraperTest {
     private val baseUrl = "https://slaughterhouse-berlin.de/konzerte/"
     private val events = SlaughterhouseOverviewPageScraper().scrape(fixtureDocument("slaughterhouse/slaughterhouse-konzerte.html", baseUrl), baseUrl)
 
+    private val november =
+        SlaughterhouseOverviewPageScraper().scrape(fixtureDocument("slaughterhouse/slaughterhouse-konzerte-2026-11.html", baseUrl), baseUrl)
+
     private fun on(day: Int) = events.first { it.eventDate == LocalDate.of(2026, 10, day) }
 
     private fun on(
@@ -225,6 +228,97 @@ class SlaughterhouseOverviewPageScraperTest {
         night.artists.map { it.name to it.role } shouldBe
             listOf("Tyske Ludder" to ArtistRole.HEADLINER, "terrorwave" to ArtistRole.DJ, "karocky" to ArtistRole.DJ)
     }
+
+    @Test
+    fun `reads event 13953's time-first doors and free entry from the November page`() {
+        val night = november.single { it.eventDate == LocalDate.of(2026, 11, 20) }
+        night.doorsTime shouldBe LocalTime.of(19, 0)
+        night.startTime.shouldBeNull()
+        night.free shouldBe true
+        night.pricePresale.shouldBeNull()
+        night.priceBoxOffice.shouldBeNull()
+        night.description!! shouldNotContain "Einlass"
+        night.description shouldNotContain "Eintritt frei"
+    }
+
+    @Test
+    fun `reads event 13956's doors and start on one line, and its VVK and Abendkasse in Euro`() {
+        val night = november.single { it.eventDate == LocalDate.of(2026, 12, 11) }
+        night.doorsTime shouldBe LocalTime.of(20, 0)
+        night.startTime shouldBe LocalTime.of(21, 0)
+        night.pricePresale shouldBe BigDecimal("12")
+        night.priceBoxOffice shouldBe BigDecimal("15")
+        night.free shouldBe false
+        night.description.orEmpty() shouldNotContain "VVK"
+        night.description.orEmpty() shouldNotContain "Beginn"
+        val indie = november.single { it.eventDate == LocalDate.of(2026, 11, 27) }
+        indie.pricePresale shouldBe BigDecimal("7")
+        indie.priceBoxOffice shouldBe BigDecimal("10")
+    }
+
+    @Test
+    fun `keeps every time the November page's older entries name`() {
+        november.single { it.eventDate == LocalDate.of(2026, 11, 28) }.doorsTime shouldBe LocalTime.of(22, 0)
+        november.single { it.eventDate == LocalDate.of(2026, 11, 28) }.startTime shouldBe LocalTime.of(22, 0)
+        november.single { it.eventDate == LocalDate.of(2026, 12, 12) }.startTime shouldBe LocalTime.of(21, 0)
+        november.single { it.eventDate == LocalDate.of(2026, 12, 19) }.startTime shouldBe LocalTime.of(22, 0)
+        november.single { it.eventDate == LocalDate.of(2026, 12, 31) }.startTime shouldBe LocalTime.of(22, 0)
+    }
+
+    @Test
+    fun `reads a time-first line of either keyword, alone or in either order, and over midnight`() {
+        timesOf("21:00 Beginn") shouldBe (null to LocalTime.of(21, 0))
+        timesOf("19 Uhr Einlass") shouldBe (LocalTime.of(19, 0) to null)
+        timesOf("Einlass: 19:30") shouldBe (LocalTime.of(19, 30) to null)
+        timesOf("23:00 Einlass - 0:30 Beginn") shouldBe (LocalTime.of(23, 0) to LocalTime.of(0, 30))
+        timesOf("21.00 Beginn / 20.00 Einlass") shouldBe (LocalTime.of(20, 0) to LocalTime.of(21, 0))
+        timesOf("Die Band spielt um 20:00 Beginn der Tour") shouldBe (null to null)
+    }
+
+    @Test
+    fun `reads a price line's presale and box office in euro signs and words, and leaves a bare Abendkasse unpriced`() {
+        priceOf("VVK 7€ (+Gebühren) / Abendkasse 10€") shouldBe Triple(BigDecimal("7"), BigDecimal("10"), false)
+        priceOf("VVK 12 Euro (+Gebühren) / Abendkasse 15 Euro") shouldBe Triple(BigDecimal("12"), BigDecimal("15"), false)
+        priceOf("VVK 9,50 €") shouldBe Triple(BigDecimal("9.50"), null, false)
+        priceOf("Abendkasse 8 Euro") shouldBe Triple(null, BigDecimal("8"), false)
+        priceOf("Eintritt: 10€") shouldBe Triple(null, BigDecimal("10"), false)
+        priceOf("Eintritt frei") shouldBe Triple(null, null, true)
+        priceOf("Abendkasse") shouldBe Triple(null, null, false)
+    }
+
+    @Test
+    fun `keeps the time and price of an entry with a long title or a cancelled or sold-out marker`() {
+        val title = "Konzert: " + "Sehr Lange Nacht der Indieschönheiten ".repeat(8).trim()
+        for (heading in listOf(title, "Konzert: ABGESAGT – Tyske Ludder", "Konzert: Tyske Ludder (ausverkauft)", "Konzert: VERSCHOBEN: Tyske Ludder")) {
+            val night = entryOf(heading, "20:00 Einlass – 21:00 Beginn<br>VVK 12 Euro (+Gebühren) / Abendkasse 15 Euro")
+            night.doorsTime shouldBe LocalTime.of(20, 0)
+            night.startTime shouldBe LocalTime.of(21, 0)
+            night.pricePresale shouldBe BigDecimal("12")
+            night.priceBoxOffice shouldBe BigDecimal("15")
+        }
+        entryOf("Konzert: Tyske Ludder (ausverkauft)", "19:00 Einlass").soldOut shouldBe true
+    }
+
+    private fun entryOf(
+        heading: String,
+        body: String
+    ) = SlaughterhouseOverviewPageScraper()
+        .scrape(
+            Jsoup.parse(
+                """
+                <div class="entry-content">
+                <p class="wp-block-paragraph">13.11.2026<br><strong>$heading</strong></p>
+                <p class="wp-block-paragraph">$body</p>
+                </div>
+                """.trimIndent(),
+                baseUrl
+            ),
+            baseUrl
+        ).single()
+
+    private fun timesOf(line: String) = entryOf("Konzert: Tyske Ludder", line).let { it.doorsTime to it.startTime }
+
+    private fun priceOf(line: String) = entryOf("Konzert: Tyske Ludder", line).let { Triple(it.pricePresale, it.priceBoxOffice, it.free) }
 
     @Test
     fun `yields nothing for a page without the post`() {

@@ -7,7 +7,9 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textLines
@@ -24,8 +26,12 @@ import java.nio.charset.StandardCharsets
  * whose kind is `Konzert`, `Party` or `Konzert+Party`. A `Beginn:` or `Doors:` line, a `Tickets:` link and an
  * `Eintritt:` price follow, and a party adds a `: minimal : synth : wave :` style line and its DJs ([SlaughterhouseLineup]).
  *
- * The time line's colon is optional (`Beginn 22 Uhr`, `doors open 21:00 Uhr`). The Factory nights name only doors, with
- * `um 22 Uhr Beginn` in the caption, so a `<time> Uhr Beginn` phrase sets the start when no `Beginn` line does.
+ * The time line's colon is optional (`Beginn 22 Uhr`, `doors open 21:00 Uhr`). A newer entry writes the time first, on one
+ * line with a dash when it names both: `19:00 Einlass`, `20:00 Einlass – 21:00 Beginn`. The Factory nights name only doors,
+ * with `um 22 Uhr Beginn` in the caption, so a `<time> Uhr Beginn` phrase sets the start when no `Beginn` line does.
+ *
+ * The price line is `Eintritt: 10€`, `VVK 7€ (+Gebühren) / Abendkasse 10€` or `Eintritt frei`. A labelled amount goes to
+ * presale or box office, and an unlabelled one is the door price.
  *
  * A title's dash reads two ways. `Blutgott – Blutfest 2026` names the band and its festival, so the band is on the
  * left. `Stoner’s Fall – Sheev + Ghostones + Caosonora` names the night and its `+` co-bill, so the acts are on the right.
@@ -83,14 +89,15 @@ class SlaughterhouseOverviewPageScraper {
                     ?.firstOrNull { link.text() in it }
                     ?.let { TICKETS.containsMatchIn(it) } == true
             }
-        val entry = lines.firstOrNull { it.startsWith("Eintritt:") }
+        val priceLine = lines.firstOrNull { PRICE_LINE.containsMatchIn(it) }
+        val prices = parseLabelledPrices(priceLine)
         return ScrapedEvent(
             title = title,
             description = descriptionOf(bodyBlocks),
             eventType = type,
             eventDate = date,
-            doorsTime = labelledTime(lines, DOORS_LINE),
-            startTime = labelledTime(lines, START_LINE) ?: labelledTime(lines, START_PHRASE),
+            doorsTime = labelledTime(lines, DOORS_LINE) ?: labelledTime(lines, TIME_FIRST_DOORS),
+            startTime = labelledTime(lines, START_LINE) ?: labelledTime(lines, TIME_FIRST_START) ?: labelledTime(lines, START_PHRASE),
             imageUrl =
                 blocks
                     .firstNotNullOfOrNull { it.selectFirst("figure img") }
@@ -110,7 +117,9 @@ class SlaughterhouseOverviewPageScraper {
                     ?.map { it.trim() }
                     ?.filter { it.isNotEmpty() }
                     ?.joinToString(", "),
-            priceBoxOffice = entry?.let(::parsePriceValue),
+            pricePresale = prices.presale,
+            priceBoxOffice = prices.boxOffice ?: priceLine?.takeIf { prices.presale == null }?.let(::parsePriceValue),
+            free = hasFreeEntryPhrase(priceLine),
             soldOut = cleanedTitle.soldOut,
             artists = actsOf(title, type, SlaughterhouseLineup.of(paragraphs))
         )
@@ -119,7 +128,11 @@ class SlaughterhouseOverviewPageScraper {
     private fun labelledTime(
         lines: List<String>,
         pattern: Regex
-    ): java.time.LocalTime? = lines.firstNotNullOfOrNull { pattern.find(it) }?.let { parseTime("${it.groupValues[1]}:${it.groupValues[2].ifEmpty { "00" }}") }
+    ): java.time.LocalTime? =
+        lines
+            .firstNotNullOfOrNull {
+                pattern.find(it)
+            }?.let { parseTime("${it.groupValues[1].padStart(2, '0')}:${it.groupValues[2].ifEmpty { "00" }}") }
 
     /**
      * The acts the entry's lines name ([SlaughterhouseLineup]), and the title's acts only for a concert whose lines name none.
@@ -169,7 +182,8 @@ class SlaughterhouseOverviewPageScraper {
             .joinToString("\n\n")
             .ifEmpty { null }
 
-    private fun isFieldLine(line: String): Boolean = FIELD_LINE.containsMatchIn(line) || STYLE_LINE.matches(line) || DIVIDER.matches(line)
+    private fun isFieldLine(line: String): Boolean =
+        FIELD_LINE.containsMatchIn(line) || PRICE_LINE.containsMatchIn(line) || STYLE_LINE.matches(line) || DIVIDER.matches(line)
 
     private fun unwrapFacebookRedirect(url: String): String {
         val uri = runCatching { URI(url) }.getOrNull()?.takeIf { it.host?.endsWith("facebook.com") == true && it.path == "/l.php" }
@@ -183,15 +197,27 @@ class SlaughterhouseOverviewPageScraper {
     }
 
     private companion object {
+        const val TIME_FIRST = """\d{1,2}(?:[:.]\d{2})?\s*(?:Uhr\s+)?"""
+        const val TIME_FIRST_CAPTURE = """(\d{1,2})(?:[:.](\d{2}))?"""
         val BLANK_RUN = Regex("""\n{3,}""")
 
         val HEADING = Regex("""^((?:Konzert|Party)(?:\s*\+\s*(?:Konzert|Party))?)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
         val TICKETS = Regex("""^\s*Tickets?\b""", RegexOption.IGNORE_CASE)
         val FIELD_LINE =
-            Regex("""^(?:(?:Beginn|Doors(?:\s+open)?|Einlass)(?:\s*:|\s+\d)|(?:Eintritt|Tickets?|Ticket Link|djs)\s*:)""", RegexOption.IGNORE_CASE)
+            Regex(
+                """^(?:(?:Beginn|Doors(?:\s+open)?|Einlass)(?:\s*:|\s+\d)|(?:Eintritt|Tickets?|Ticket Link|djs)\s*:|$TIME_FIRST(?:Einlass|Beginn)\b)""",
+                RegexOption.IGNORE_CASE
+            )
+
+        /** `Eintritt: 10€`, `Eintritt frei`, `VVK 12 Euro (+Gebühren) / Abendkasse 15 Euro`; a bare `Abendkasse` names no price. */
+        val PRICE_LINE = Regex("""^(?:Eintritt\s*:|Eintritt\s+frei\b|(?:VVK|Vorverkauf)\b|Abendkasse\b.*\d)""", RegexOption.IGNORE_CASE)
         val STYLE_LINE = Regex("""^:\s*(.+?)\s*:$""")
         val START_LINE = Regex("""^Beginn(?:\s*:\D*|\s+)(\d{1,2})(?:[:.](\d{2}))?""", RegexOption.IGNORE_CASE)
-        val DOORS_LINE = Regex("""^Doors(?:\s+open)?(?:\s*:\D*|\s+)(\d{1,2})(?:[:.](\d{2}))?""", RegexOption.IGNORE_CASE)
+        val DOORS_LINE = Regex("""^(?:Doors(?:\s+open)?|Einlass)(?:\s*:\D*|\s+)(\d{1,2})(?:[:.](\d{2}))?""", RegexOption.IGNORE_CASE)
+
+        /** `20:00 Einlass – 21:00 Beginn`: a line that opens with a time, then its keyword, and maybe a second pair after a dash. */
+        val TIME_FIRST_DOORS = Regex("""^(?:$TIME_FIRST\p{L}+\s*[–—/|-]\s*)?$TIME_FIRST_CAPTURE\s*(?:Uhr\s+)?Einlass\b""", RegexOption.IGNORE_CASE)
+        val TIME_FIRST_START = Regex("""^(?:$TIME_FIRST\p{L}+\s*[–—/|-]\s*)?$TIME_FIRST_CAPTURE\s*(?:Uhr\s+)?Beginn\b""", RegexOption.IGNORE_CASE)
 
         /** The Factory caption's `um 22 Uhr Beginn`: the time before the keyword. */
         val START_PHRASE = Regex("""\b(\d{1,2})(?:[:.](\d{2}))?\s*Uhr\s+Beginn\b""", RegexOption.IGNORE_CASE)
