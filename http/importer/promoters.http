@@ -43,7 +43,8 @@ Content-Type: application/json
 
 {
     "name": "36 Concerts",
-    "websiteUrl": "https://www.facebook.com/36Concerts/"
+    "websiteUrl": "https://www.facebook.com/36Concerts/",
+    "kind": "promoter"
 }
 
 > {%
@@ -77,7 +78,8 @@ Content-Type: application/json
 {
     "name": "36 Concerts",
     "websiteUrl": "https://www.facebook.com/36Concerts/",
-    "imageUrl": "https://example.com/36-concerts-logo.jpg"
+    "imageUrl": "https://example.com/36-concerts-logo.jpg",
+    "kind": "promoter"
 }
 
 > {%

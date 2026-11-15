@@ -76,6 +76,12 @@ data class PromoterRequest(
     @field:Pattern(regexp = "de|en", message = "Alternate description language must be 'de' or 'en'")
     @Schema(description = "Language of `descriptionAlt`: `de` or `en`", example = "de")
     val descriptionAltLanguage: String? = null,
+    // Typed, so an unknown kind is a 400. A PUT replaces every field: a client that leaves this out clears the kind.
+    @Schema(
+        description = "What the row is: a booking business, a collective, a label, a party series and so on. Null for a row nobody decided (#5080).",
+        example = "collective"
+    )
+    val kind: PromoterKind? = null,
     @Schema(
         description =
             "When a person last reviewed this row: name as the promoter spells it, kind decided, website recorded or absent " +
@@ -102,6 +108,7 @@ data class PromoterRequest(
             descriptionLanguage = descriptionLanguage,
             descriptionAlt = descriptionAlt,
             descriptionAltLanguage = descriptionAltLanguage,
+            kind = kind?.slug,
             reviewedAt = reviewedAt
         )
 }

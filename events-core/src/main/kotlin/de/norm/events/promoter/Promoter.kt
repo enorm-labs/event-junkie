@@ -34,6 +34,8 @@ data class Promoter(
     val descriptionAlt: String? = null,
     /** Language of [descriptionAlt]: `de` or `en`. Null exactly when [descriptionAlt] is. */
     val descriptionAltLanguage: String? = null,
+    /** What the row is, as a [PromoterKind] slug. Null for a row nobody decided. */
+    val kind: String? = null,
     /**
      * When a person last reviewed this row: name as the promoter spells it, kind decided, website
      * recorded or absent on purpose. Null for every row an import minted and nobody looked at.

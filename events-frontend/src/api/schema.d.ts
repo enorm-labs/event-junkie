@@ -2114,6 +2114,12 @@ export interface components {
              * @example de
              */
             descriptionAltLanguage?: string | null;
+            /**
+             * @description What the promoter is: a booking business, a collective, a label, a party series and so on. Null where nobody decided (#5080).
+             * @example collective
+             * @enum {string|null}
+             */
+            kind?: "promoter" | "collective" | "label" | "party" | "media" | "artist" | "sponsor" | "venue" | null;
         };
         /** @description Version and commit of the running backend, for the frontend footer */
         MetaResponse: {

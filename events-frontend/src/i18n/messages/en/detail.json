@@ -41,6 +41,11 @@
     "kind": "Promoter",
     "notFound": "This promoter isn't in our books.",
     "empty": "Nothing on their calendar yet. Check back soon.",
-    "report": "Something wrong with this promoter? Report it by email:"
+    "report": "Something wrong with this promoter? Report it by email:",
+    "type": {
+      "collective": "Collective",
+      "label": "Label",
+      "party": "Party series"
+    }
   }
 }

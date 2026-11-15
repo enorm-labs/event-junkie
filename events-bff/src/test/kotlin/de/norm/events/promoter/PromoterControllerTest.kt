@@ -260,7 +260,7 @@ class PromoterControllerTest : BaseControllerTest() {
                 descriptionAltLanguage = "de"
             )
             databaseClient
-                .sql("UPDATE events.promoter SET instagram_url = 'https://www.instagram.com/36concerts/' WHERE slug = '36-concerts'")
+                .sql("UPDATE events.promoter SET instagram_url = 'https://www.instagram.com/36concerts/', kind = 'promoter' WHERE slug = '36-concerts'")
                 .await()
 
             webTestClient
@@ -284,6 +284,8 @@ class PromoterControllerTest : BaseControllerTest() {
                 .isEqualTo("de")
                 .jsonPath("$.instagramUrl")
                 .isEqualTo("https://www.instagram.com/36concerts/")
+                .jsonPath("$.kind")
+                .isEqualTo("promoter")
         }
 
     @Test

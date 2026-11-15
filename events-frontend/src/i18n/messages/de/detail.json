@@ -41,6 +41,11 @@
     "kind": "Veranstalter",
     "notFound": "Diesen Veranstalter haben wir nicht in den Büchern.",
     "empty": "Noch nichts im Kalender. Schau bald wieder vorbei.",
-    "report": "Stimmt bei diesem Veranstalter etwas nicht? Melde es per E-Mail:"
+    "report": "Stimmt bei diesem Veranstalter etwas nicht? Melde es per E-Mail:",
+    "type": {
+      "collective": "Kollektiv",
+      "label": "Label",
+      "party": "Partyreihe"
+    }
   }
 }
