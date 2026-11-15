@@ -264,6 +264,8 @@ an evening on a stage, so no list shows it. But visitors look for the markets in
 - **One market is one event**, from its first day to its last (`endDate`), at a venue of its own. The opening hours change
   per weekday, so they go into the description. The entry fee goes into the price fields, or into the price note when it
   depends on the day or the hour.
+- **A market has the type `OTHER`, no start time and no genre.** The data-quality checks of these three fields do not
+  count it (#5038). All other checks count it.
 - **The facts come from each market's own site**, or from its organiser. A list of markets in the press is for discovery
   only. Its text is not copied.
 - **The page lists the season's public markets**: Christmas markets, winter craft markets and Christmas funfairs. A

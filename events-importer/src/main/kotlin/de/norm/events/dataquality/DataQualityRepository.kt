@@ -41,13 +41,13 @@ interface DataQualityRepository : CoroutineCrudRepository<EventEntity, Long> {
             COUNT(*) FILTER (WHERE e.event_type = 'CONCERT'
                 AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea WHERE ea.event_id = e.id))
                                                                            AS concerts_without_artist,
-            COUNT(*) FILTER (WHERE e.event_type = 'OTHER')                 AS events_typed_other,
-            COUNT(*) FILTER (WHERE e.genre IS NULL OR e.genre = '')        AS missing_genre,
+            COUNT(*) FILTER (WHERE $TYPED_OTHER_PREDICATE)                 AS events_typed_other,
+            COUNT(*) FILTER (WHERE $MISSING_GENRE_PREDICATE)               AS missing_genre,
             COUNT(*) FILTER (WHERE NOT EXISTS
                 (SELECT 1 FROM $EVENTS_SCHEMA.event_promoter ep WHERE ep.event_id = e.id))
                                                                            AS missing_promoter,
             COUNT(*) FILTER (WHERE $MISSING_PRICE_PREDICATE)               AS missing_price,
-            COUNT(*) FILTER (WHERE e.start_time IS NULL)                   AS missing_start_time,
+            COUNT(*) FILTER (WHERE $MISSING_START_TIME_PREDICATE)          AS missing_start_time,
             COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_source es
                 WHERE es.id = e.event_source_id AND es.licence_reviewed_at IS NULL))
                                                                            AS unreviewed_licence,
