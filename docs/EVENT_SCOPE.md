@@ -244,11 +244,12 @@ marks a show for small children, and adults go to these concerts too.
 | LabSaal                                                                                     | `childrensShowPhrase`, on the title                                                   | `Theater für Kinder: …`                                                                                                             |
 | Humboldt Forum                                                                              | `HumboldtForumApiScraper.childrensPhrase`                                             | The series `Bilderbuchkino` or `Geschichtentheater` in `partof`, a `Bilderbuch…` title, or `childrensShowPhrase` on title + excerpt |
 | FEZ-Berlin                                                                                  | `FezSpielplanPageScraper`                                                             | Every performance: FEZ plays only for children. The age line is the phrase                                                          |
+| Theater an der Parkaue                                                                      | `ParkaueMonthPageScraper`                                                             | An age under 10 (`(6+)`); without an age, `childrensShowPhrase` on the subtitle (`Familienkonzert`). A 10+ play stays unmarked      |
 
 `childrensShowPhrase` leaves a band named after children (`Muttis Kinder`) and a show for ten and up (`ab 12 Jahren`)
 unmarked. A new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it
-here. A venue that plays only for children is in scope too, such as FEZ or Theater an der Parkaue (#5076). Its
-importer marks every event.
+here. A venue that plays only for young audiences is in scope too (#5076). FEZ plays only for children, so its importer
+marks every event. Theater an der Parkaue also plays for teenagers, so the age decides there, as above.
 
 ### 3.6 Programme announcements
 

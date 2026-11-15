@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   196 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   197 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -203,6 +203,7 @@ schema change.
 | The Cloud                        | https://thecloud.berlin/events/                                          | Bar          | TEC REST API; live act from the title; no prices          |
 | The Door                         | https://thedoor.club/events/                                             | Club         | Oxygen grid; date is the ID; skips placeholders           |
 | The Wall Comedy Club             | https://thewallcomedy.com/                                               | Comedy Club  | Spotagig JSON-LD; HTMX "Show more" partials               |
+| Theater an der Parkaue           | https://www.parkaue.de/spielplan/                                        | Theater      | Month pages + production pages; under 10 for children     |
 | Theater im Delphi                | https://theater-im-delphi.de/programm/                                   | Concert Hall | One row per performance; prices only in a leak            |
 | Tiffany Club                     | https://tiffany-berlin.de/upcoming-events/                               | Club         | Elementor; year from the weekday; blurb per event page    |
 | TIPI am Kanzleramt               | https://www.tipi-am-kanzleramt.de/de/programm/kalender.html              | Theater      | Bar jeder Vernunft parser; per-date JSON-LD               |
@@ -237,7 +238,7 @@ schema change.
 | Zosch                            | https://www.zosch-berlin.de/                                             | Bar          | Laravel start page; year from the body id                 |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-196 importer classes cover 196 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
+197 importer classes cover 197 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
 `EventSource` entries, the sources against the rows above. The two numbers are equal by chance. Kantine am Berghain is the
 only source without a class of its own. It shares the Berghain importer, and its rows have their own `sourceId` prefix,
 `kantine_am_berghain:`. Ballhaus Berlin is the opposite case. Its class exists, but it has no source, because its
@@ -459,6 +460,7 @@ the upsert stores none.
 | The Cloud                        | No              | GTranslate widget, machine translation only                  | —                  |                                                                                                                                    |
 | The Door                         | No              | —                                                            | —                  |                                                                                                                                    |
 | The Wall Comedy Club             | No              | —                                                            | —                  |                                                                                                                                    |
+| Theater an der Parkaue           | No              | —                                                            | —                  |                                                                                                                                    |
 | Theater im Delphi                | Yes             | `/en/` path                                                  | Translated         | https://theater-im-delphi.de/en/programm/                                                                                          |
 | Tiffany Club                     | No              | —                                                            | —                  |                                                                                                                                    |
 | TIPI am Kanzleramt               | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.tipi-am-kanzleramt.de/en/whats-on/calendar.html                                                                        |
@@ -916,7 +918,7 @@ Where candidates come from, and what is deliberately left out:
   out of scope: a cinema (Kino International) and the classical halls (Philharmonie, Kammermusiksaal, UdK
   Konzertsaal). Also a hotel, two radio studios and the event grounds at Tempelhof and the Olympiapark. A media
   calendar with one event was not enough for a row: BLO Kantine and OGH (one each). The sweep also named two venues
-  that play only for children, FEZ and Theater an der Parkaue. They are in scope (`docs/EVENT_SCOPE.md` §3.5), and
+  for young audiences, FEZ and Theater an der Parkaue. They are in scope (`docs/EVENT_SCOPE.md` §3.5), and
   #5077 and #5078 import them.
   Milchsalon's "Audimax" date is one children's show, which is not enough for a row.
 

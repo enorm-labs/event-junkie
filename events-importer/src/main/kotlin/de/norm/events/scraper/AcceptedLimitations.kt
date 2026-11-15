@@ -122,6 +122,7 @@ import de.norm.events.scraper.orwohaus.ORWOHAUS_LIMITATIONS
 import de.norm.events.scraper.paloma.PALOMA_LIMITATIONS
 import de.norm.events.scraper.pandaplatforma.PANDA_PLATFORMA_LIMITATIONS
 import de.norm.events.scraper.panke.PANKE_LIMITATIONS
+import de.norm.events.scraper.parkaue.PARKAUE_LIMITATIONS
 import de.norm.events.scraper.pas.PAS_LIMITATIONS
 import de.norm.events.scraper.passionskirche.PASSIONSKIRCHE_LIMITATIONS
 import de.norm.events.scraper.pastiche.PASTICHE_LIMITATIONS
@@ -319,6 +320,7 @@ object AcceptedLimitations {
             PALOMA_LIMITATIONS,
             PANDA_PLATFORMA_LIMITATIONS,
             PANKE_LIMITATIONS,
+            PARKAUE_LIMITATIONS,
             PAS_LIMITATIONS,
             PASSIONSKIRCHE_LIMITATIONS,
             PASTICHE_LIMITATIONS,
