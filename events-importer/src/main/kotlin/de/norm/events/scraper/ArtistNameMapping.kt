@@ -345,7 +345,7 @@ private fun billedSideOfPres(
 private val WITH_FRAME_PATTERN = Regex("""^.+?(?:\bw/\s*|\smit\s+)""", RegexOption.IGNORE_CASE)
 
 /** The acts a [WITH_FRAME_PATTERN] title bills, or `null` when the title carries no such frame. */
-private fun withFrameActs(title: String): List<ScrapedArtist>? {
+fun withFrameActs(title: String): List<ScrapedArtist>? {
     val frame = WITH_FRAME_PATTERN.find(title) ?: return null
     val tail = title.substring(frame.range.last + 1)
     if (tail.trimStart().substringBefore(' ').lowercase() in CONJUNCTION_TAIL_MARKERS) return null

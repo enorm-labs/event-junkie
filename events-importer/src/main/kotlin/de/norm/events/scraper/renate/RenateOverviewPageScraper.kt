@@ -21,9 +21,11 @@ import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.scraper.splitSegmentOnConjunctions
+import de.norm.events.scraper.stripFriendsTail
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
+import de.norm.events.scraper.withFrameActs
 import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -101,7 +103,10 @@ class RenateOverviewPageScraper(
             return null
         }
         val lines = row.selectFirst(".prog-text")?.let(::lineupLines).orEmpty()
-        val artists = parseLineup(row, lines).ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
+        val artists =
+            parseLineup(row, lines)
+                .ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
+                .ifEmpty { titleLineup(title) }
         if (artists.isEmpty() && SERIES_ANNOUNCEMENT.containsMatchIn(title)) {
             logger.info { "Renate row '$title' announces a series, not a night, skipping" }
             return null
@@ -364,6 +369,33 @@ internal fun klubnachtCrews(title: String): List<String> {
     val hosts = KLUBNACHT_HOSTS.find(title)?.groupValues?.get(1) ?: return emptyList()
     return hosts.split(KLUBNACHT_SEPARATOR).flatMap { crewNames(it) { name -> name.equals("Renate", ignoreCase = true) } }
 }
+
+/**
+ * The acts of a night whose block bills nobody, read from its `<night> w/ <acts>` title by the shared [withFrameActs]:
+ * `OUR HOUSE IS YOUR HOUSE w/ JOHN LOVELESS & FRIENDS` bills `JOHN LOVELESS`, and the import de-shouts it. A co-host's ` x `
+ * splits two acts (`xcuse:u x CRUSH`), and a dash after the acts opens the night's own words (`Renate Garten w/ Dub & Dal –
+ * Build a beat workshop`). Nobody comes from a `Renate Klubnacht w/ …` title, which names the crews hosting its floors
+ * (#5080), from a name that ends in `Night`, which is a series (`QUEER VINYL NIGHT`), or from the house's `Residents`.
+ */
+internal fun titleLineup(title: String): List<ScrapedArtist> {
+    if (KLUBNACHT.containsMatchIn(title)) return emptyList()
+    return withFrameActs(title.replace(DASHED_TAIL, ""))
+        .orEmpty()
+        .flatMap { act -> act.name.split(CO_HOST).map { act.copy(name = stripFriendsTail(it.trim()), role = ArtistRole.DJ) } }
+        .filterNot { it.name.isBlank() || isNonArtistName(it.name) || SERIES_NIGHT.containsMatchIn(it.name) || RESIDENTS.matches(it.name) }
+        .distinctBy { it.name.lowercase() }
+}
+
+private val KLUBNACHT = Regex("""^Renate\s+Klubnacht\b""", RegexOption.IGNORE_CASE)
+
+/** A spaced dash after the `w/` and everything behind it. */
+private val DASHED_TAIL = Regex("""(?<=\bw/\s.{1,80}?)\s+[-–—]\s+.*$""", RegexOption.IGNORE_CASE)
+
+private val CO_HOST = Regex("""\s+[x×]\s+""", RegexOption.IGNORE_CASE)
+
+private val SERIES_NIGHT = Regex("""\b(?:night|nacht)$""", RegexOption.IGNORE_CASE)
+
+private val RESIDENTS = Regex("""(?:renate\s+)?residents?""", RegexOption.IGNORE_CASE)
 
 private val KLUBNACHT_HOSTS = Regex("""^Renate\s+Klubnacht\s+w/\s+(.+)$""", RegexOption.IGNORE_CASE)
 
