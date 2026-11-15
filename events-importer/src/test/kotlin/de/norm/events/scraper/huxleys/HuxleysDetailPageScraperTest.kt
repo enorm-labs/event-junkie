@@ -202,6 +202,16 @@ class HuxleysDetailPageScraperTest {
     }
 
     @Test
+    fun `types a night tagged podcast as a show, billing the host`() {
+        // Event 14046: a football talk tour, tagged only `podcast`.
+        val event = scrapeInline(slug = "2027-12-07-arnd-zeigler", dateLine = null, tags = "event-tags-podcast", title = "Arnd Zeigler")
+        event.shouldNotBeNull()
+        event.eventType shouldBe "SHOW"
+        event.genre shouldBe "Podcast"
+        event.artists.map { it.name } shouldContainExactly listOf("Arnd Zeigler")
+    }
+
+    @Test
     fun `keeps a concert tagged with a genre a concert`() {
         scrapeInline(slug = "2026-09-05-some-act", dateLine = null, tags = "event-tags-indie-pop").shouldNotBeNull().eventType shouldBe "CONCERT"
     }
@@ -210,13 +220,14 @@ class HuxleysDetailPageScraperTest {
         slug: String,
         dateLine: String?,
         times: String = "<b>Beginn:</b> 20:00",
-        tags: String = ""
+        tags: String = "",
+        title: String = "Some Act"
     ): ScrapedEvent? {
         val url = "https://huxleysneuewelt.de/event/$slug"
         val datum = dateLine?.let { "<b>Datum:</b> $it<br>" }.orEmpty()
         val html =
             """
-            <html><head><meta property="og:title" content="Some Act - Huxleys Neue Welt"></head>
+            <html><head><meta property="og:title" content="$title - Huxleys Neue Welt"></head>
             <body><article class="event $tags"><div class="event-info"><p>$datum$times</p></div></article></body></html>
             """.trimIndent()
         return scraper.scrape(Jsoup.parse(html, url), url)
