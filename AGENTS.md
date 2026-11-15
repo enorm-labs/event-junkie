@@ -251,18 +251,18 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/commit-message` — a commit message from the staged changes
 - `/compact-comments` — classify each comment block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, measure the drop
 - `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs, traffic, `/admin-review`; merges the ready bot PRs, drafts the rest
-- `/data-quality-audit` — read-only audit of the whole `events` database
+- `/data-quality-audit [<env>]` — read-only audit of the whole `events` database, production by default; leaves the names to `/artist-cleanup`
 - `/enrich [--count N] [--venues]` — websites, Instagram links and descriptions for the promoters with the most upcoming events, from their own sites, into `docs/promoters/REVIEWED.tsv` and one PR; 35 rows a run, the search budget's size
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
 - `/fix-events [<url> ["<note>"]…]` — events the operator saw wrong on the site, or with no argument the "Report a problem" queue (#4399), each to a verdict: a parser fix with a test in one PR, a scope rule, an accepted limitation, or a numbered hand fix applied only on the operator's word
 - `/git-cleanup` — worktrees and local branches sorted into safe, ask first and keep by PR state and `git cherry`; removes only what the operator confirms
 - `/importer-smoke` — seed, import, inspect the rows and check for regressions, for one importer
 - `/log-check` — both clusters' logs, Kubernetes events and alerts for the last day, sorted into noise, known, explained and new; drafts issues, files none
-- `/maintain [--dry-run]` — the maintenance loop in one command: reads the state, names the next of `/daily-check`, filing, `/afk`, `/afk merge`, a cut, `/post-release` and the weekly `/musicbrainz-review`, and runs the safe ones
+- `/maintain [--dry-run]` — the maintenance loop in one command: reads the state, names the next of `/daily-check`, filing, `/afk`, `/afk merge`, a cut, `/post-release`, the weekly `/artist-cleanup` and the monthly `/data-quality-audit`, and runs the safe ones
 - `/k3d-rehearsal` — the chart and all three images on a local k3d cluster, end to end, then torn down
 - `/improve-test-coverage` — find and fill coverage gaps
 - `/milestone-plan` — a milestone from a list of open issues to an ordered plan
-- `/musicbrainz-review [<env>]` — the AMBIGUOUS MusicBrainz matches of the next two weeks' artists, judged from the billing into a file of proposals; writes only on the operator's word
+- `/musicbrainz-review [<env>]` — the AMBIGUOUS MusicBrainz matches of the next two weeks' artists, judged from the billing into a file of proposals; writes only on the operator's word. `/admin-review` runs it daily
 - `/new-issue` — file an issue: duplicate check, the right form, labels, milestone, board fields
 - `/next-importer` — one venue from 🔨 Ready in `docs/EVENT_DATA_SOURCES.md` to an open PR; repeat, or run under `/loop`
 - `/next-issue` — what to work on next, and why
