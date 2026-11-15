@@ -666,4 +666,16 @@ class PromoterNormalizerTest {
             canonicalPromoterName("Loft & GmbH") shouldBe "Loft Concerts"
         }
     }
+
+    // #5126: VOID's `D@W x RUTA` and Beate Uwe's `F*CD (FLINTA* Club Deck)` were stored as `D@w` and `F*cd`.
+    @Test
+    fun `keeps a one-word styled initialism as written, and still de-shouts a longer name`() {
+        assertSoftly {
+            canonicalPromoterName("D@W") shouldBe "D@W"
+            canonicalPromoterName("F*CD") shouldBe "F*CD"
+            canonicalPromoterName("HB Music") shouldBe "HB Music"
+            canonicalPromoterName("SIMPLY QUIZ") shouldBe "Simply Quiz"
+            canonicalPromoterName("FLIGHT MODE") shouldBe "Flight Mode"
+        }
+    }
 }

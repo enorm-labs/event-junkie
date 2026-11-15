@@ -343,6 +343,8 @@ class ArtistNormalizerTest {
             canonicalArtistName("DOSIS") shouldBe "DOSIS"
             canonicalArtistName("MR. HURLEY UND DIE PULVERAFFEN") shouldBe "Mr. Hurley & Die Pulveraffen"
             canonicalArtistName("D*B*S") shouldBe "DxBxSx"
+            canonicalArtistName("Z@P") shouldBe "Z@P"
+            canonicalArtistName("FUNK@DELIC") shouldBe "Funk@delic"
             canonicalArtistName("D*B*S*") shouldBe "DxBxSx"
             canonicalArtistName("TOKTOK VS. SOFFY O") shouldBe "Toktok vs. Soffy O."
             // The word stays a word inside a longer name.

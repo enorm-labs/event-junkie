@@ -42,18 +42,18 @@ class NameCasingTest {
     @Test
     fun `calls a one-word name of up to five capitals without a vowel an initialism`() {
         assertSoftly {
-            "CCTV".isVowellessInitialism() shouldBe true
-            "TZK".isVowellessInitialism() shouldBe true
-            "BTMK".isVowellessInitialism() shouldBe true
-            "KMFDM".isVowellessInitialism() shouldBe true
+            "CCTV".isStyledInitialism() shouldBe true
+            "TZK".isStyledInitialism() shouldBe true
+            "BTMK".isStyledInitialism() shouldBe true
+            "KMFDM".isStyledInitialism() shouldBe true
             // A vowel, a sixth letter, a lowercase letter or a digit makes it something else.
-            "MUNA".isVowellessInitialism() shouldBe false
-            "LYNX".isVowellessInitialism() shouldBe false
-            "TÝR".isVowellessInitialism() shouldBe false
-            "GŒRNS".isVowellessInitialism() shouldBe false
-            "SCHMRZ".isVowellessInitialism() shouldBe false
-            "Cctv".isVowellessInitialism() shouldBe false
-            "SBP4".isVowellessInitialism() shouldBe false
+            "MUNA".isStyledInitialism() shouldBe false
+            "LYNX".isStyledInitialism() shouldBe false
+            "TÝR".isStyledInitialism() shouldBe false
+            "GŒRNS".isStyledInitialism() shouldBe false
+            "SCHMRZ".isStyledInitialism() shouldBe false
+            "Cctv".isStyledInitialism() shouldBe false
+            "SBP4".isStyledInitialism() shouldBe false
         }
     }
 
@@ -106,6 +106,22 @@ class NameCasingTest {
             "Soundsystem".isCapitals() shouldBe false
             "b2b".isCapitals() shouldBe false
             "&".isCapitals() shouldBe false
+        }
+    }
+
+    // #5126: a crew writes `D@W`; the letters alone decide, so a longer shouted word with a symbol still de-shouts.
+    @Test
+    fun `reads a one-word initialism by its letters, symbols set aside`() {
+        assertSoftly {
+            "D@W".isStyledInitialism() shouldBe true
+            "F*CD".isStyledInitialism() shouldBe true
+            "HB".isStyledInitialism() shouldBe true
+            "CCTV".isStyledInitialism() shouldBe true
+            "FUNK@DELIC".isStyledInitialism() shouldBe false
+            "MUNA".isStyledInitialism() shouldBe false
+            "D@w".isStyledInitialism() shouldBe false
+            "MC5".isStyledInitialism() shouldBe false
+            "@".isStyledInitialism() shouldBe false
         }
     }
 }
