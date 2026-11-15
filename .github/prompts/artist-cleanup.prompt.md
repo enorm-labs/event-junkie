@@ -114,3 +114,6 @@ Keep a pull request reviewable: one family of fixes, or up to about ten sources.
 
 ### Kept on purpose   ← the flagged names that are acts, one line each, so the next run's reader skips them
 ```
+
+For `--kind artists`, end with the next step: `/musicbrainz-review <env>`, which matches the names this run cleaned. It runs after the cleanup,
+never before.
