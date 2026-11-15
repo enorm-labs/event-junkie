@@ -245,4 +245,51 @@ class BerghainDetailPageScraperTest {
 
         event.artists.map { it.name } shouldBe listOf("Another Nguyen", "Thérèse")
     }
+
+    // Flowgeist at Kantine am Berghain, event 82079, fetched 2026-11-15 (#5088).
+    @Test
+    fun `a slot labelled visuals is a credit, before the venue publishes the set times`() {
+        val url = "https://www.berghain.berlin/de/event/82079/"
+        val event = scraper.scrape(fixtureDocument("berghain/berghain-detail-visuals-credit.html", url), url)!!
+
+        // The four slots carry no set times yet, so the running order bills nobody and the credit still counts.
+        event.artists.shouldBeEmpty()
+        event.nonActCredits shouldBe setOf("4C & Stefano Canavese")
+    }
+
+    @Test
+    fun `only the label span makes a credit, so an act called Visuals stays billed`() {
+        fun slot(
+            name: String,
+            label: String? = null
+        ): String {
+            val labelSpan = label?.let { """<span class="font-normal text-sm md:text-md lowercase">$it</span>""" }.orEmpty()
+            return """<li data-set-item data-set-item-start="2026-11-18T20:00:00+01:00">
+                <div class="running-order-set__info"><span class="font-bold">$name $labelSpan</span></div></li>"""
+        }
+        val longName = "The Very Long Name Of A Light Design Collective From Leipzig And Friends"
+        val slots =
+            listOf(
+                slot("Visuals"),
+                slot("Lightshow Orchestra", "Ostgut Ton"),
+                slot("Rashad Becker", "live"),
+                slot("Bad Light", " VJ "),
+                slot(longName, "Lights"),
+                slot("Lumen", "lightshow")
+            ).joinToString("")
+        val html =
+            """
+            <html><body><main>
+              <p>Mittwoch <span class="font-bold">18.11.2026</span> beginn 20:00</p>
+              <h2>Kantine am Berghain</h2>
+              <h1>Visuals</h1>
+              <div data-set-floor="0"><ul>$slots</ul></div>
+            </main></body></html>
+            """.trimIndent()
+        val url = "https://www.berghain.berlin/de/event/1/"
+        val event = scraper.scrape(Jsoup.parse(html, url), url)!!
+
+        event.artists.map { it.name } shouldBe listOf("Visuals", "Lightshow Orchestra", "Rashad Becker")
+        event.nonActCredits shouldBe setOf("Bad Light", longName, "Lumen")
+    }
 }

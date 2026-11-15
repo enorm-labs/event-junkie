@@ -95,6 +95,7 @@ class BerghainDetailPageScraper {
             priceBoxOffice = tickets.boxOffice,
             soldOut = tickets.soldOut,
             artists = parseRunningOrder(content),
+            nonActCredits = slotNames(content, credits = true).toSet(),
             promoters = parsePromoters(content, title)
         )
     }
@@ -116,17 +117,35 @@ class BerghainDetailPageScraper {
                 ?.let(::splitPromoterCredit)
                 .orEmpty()
         if (credited.isEmpty()) return credited
-        val acts = (billedActs(content) + title).map(::comparable).toSet()
+        val acts = (slotNames(content) + title).map(::comparable).toSet()
         val (dropped, kept) = credited.partition { comparable(it) in acts }
         if (dropped.isNotEmpty()) logger.debug { "Dropping organiser $dropped of '$title': a billed act or the title" }
         return kept
     }
 
-    /** Every act of the running order, with or without a published set time. */
-    private fun billedActs(content: Element): List<String> =
+    /**
+     * The names of the running order's slots, with or without a published set time: its acts, or with
+     * [credits] the names a slot credits for the visuals or the lights, not for a set (#5088). The page
+     * prints that role in the slot's label span, where a club night prints the act's record label:
+     * `4C & Stefano Canavese <span class="lowercase">visuals</span>`. The programme page prints no role,
+     * so it bills these names, and [BerghainWebsiteImporter] drops them from its lineup. A slot labelled
+     * `performance`, `hybrid set` or with a record label is an act.
+     */
+    private fun slotNames(
+        content: Element,
+        credits: Boolean = false
+    ): List<String> =
         content
             .select("[data-set-floor] li[data-set-item]")
+            .filter { isNonActSlot(it) == credits }
             .flatMap { splitSlot(it.selectFirst(SLOT_NAME_SELECTOR)?.ownText().orEmpty()) }
+
+    private fun isNonActSlot(slot: Element): Boolean =
+        slot
+            .selectFirst(SLOT_LABEL_SELECTOR)
+            ?.text()
+            ?.collapseWhitespace()
+            ?.lowercase() in NON_ACT_ROLES
 
     private fun comparable(name: String): String = name.collapseWhitespace().lowercase()
 
@@ -135,7 +154,7 @@ class BerghainDetailPageScraper {
      * publishes it. Until then the page lists the same slots without `data-set-item-start`, which the
      * programme's lineup already covers. Each `[data-set-floor]` block is a floor named by its `<h2>`;
      * a slot's performers are the own text of its bold name span, whose nested `Live` marker and
-     * label span are not part of the name:
+     * label span are not part of the name. A slot whose label credits the visuals is no act ([slotNames]):
      *
      * ```html
      * <li data-set-item data-set-item-start="2026-09-27T04:30:00+02:00" data-set-item-end="2026-09-27T08:30:00+02:00">
@@ -147,7 +166,7 @@ class BerghainDetailPageScraper {
     private fun parseRunningOrder(content: Element): List<ScrapedArtist> =
         content.select("[data-set-floor]").flatMap { floor ->
             val stage = floor.textAt("h2")
-            floor.select("li[data-set-item-start]").flatMap { slot ->
+            floor.select("li[data-set-item-start]").filterNot(::isNonActSlot).flatMap { slot ->
                 val start = parseInstant(slot.attr("data-set-item-start")) ?: return@flatMap emptyList()
                 val end = parseInstant(slot.attr("data-set-item-end"))
                 splitSlot(slot.selectFirst(SLOT_NAME_SELECTOR)?.ownText().orEmpty())
@@ -223,6 +242,12 @@ class BerghainDetailPageScraper {
 
         /** A running-order slot's name span; its own text is the performers. */
         private const val SLOT_NAME_SELECTOR = ".running-order-set__info span.font-bold"
+
+        /** The label span inside a slot's name span: a record label, or the role of a slot that is no set. */
+        private const val SLOT_LABEL_SELECTOR = "$SLOT_NAME_SELECTOR > span.lowercase"
+
+        /** The labels that credit a slot for the visuals or the lights rather than a set (#5088). */
+        private val NON_ACT_ROLES = setOf("visuals", "visual", "vj", "lights", "light", "lightshow")
 
         /** German sold-out marker used in the ticket block. */
         private const val SOLD_OUT_MARKER = "ausverkauft"

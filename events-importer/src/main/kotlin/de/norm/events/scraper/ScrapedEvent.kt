@@ -92,6 +92,11 @@ data class ScrapedEvent(
      */
     val artists: List<ScrapedArtist> = emptyList(),
     /**
+     * The names an event page credits for a role that is not a performance, such as the visuals
+     * (#5088). Never stored: a venue whose listing bills the lineup drops these names from it in its merge.
+     */
+    val nonActCredits: Set<String> = emptySet(),
+    /**
      * Raw promoter names, resolved and auto-created by the service layer.
      */
     val promoters: List<String> = emptyList(),
