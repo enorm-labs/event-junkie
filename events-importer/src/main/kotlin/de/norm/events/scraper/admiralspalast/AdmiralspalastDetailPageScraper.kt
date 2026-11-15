@@ -89,7 +89,9 @@ class AdmiralspalastDetailPageScraper {
         val description = document.select("$DESCRIPTION > *").paragraphText()
 
         return rows.mapSkippingFailures(logger, "an Admiralspalast performance on $sourceUrl") { row ->
-            parsePerformance(row, sourceUrl, slug, category, promoters)?.copy(description = description)
+            parsePerformance(row, sourceUrl, slug, category, promoters)?.let { event ->
+                event.copy(description = description, artists = billedActs(event.title, event.eventType ?: EventType.SHOW.name, description))
+            }
         }
     }
 
@@ -149,7 +151,6 @@ class AdmiralspalastDetailPageScraper {
             sourceId =
                 "${EventSource.ADMIRALSPALAST.sourceIdPrefix}$slug-$eventDate" +
                     startTime?.format(FOUR_DIGIT_CLOCK)?.let { "-$it" }.orEmpty(),
-            artists = billedActs(title, eventType),
             promoters = promoters
         )
     }
@@ -166,11 +167,12 @@ class AdmiralspalastDetailPageScraper {
      */
     private fun billedActs(
         title: String,
-        eventType: String
+        eventType: String,
+        description: String?
     ): List<ScrapedArtist> {
         if (SLAM.containsMatchIn(title)) return emptyList()
         if (BALLET_AFTER_WORK.containsMatchIn(title)) return balletCompany(title)
-        if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+        if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle = null, eventType = eventType, description = description)
         ensembleAfterMit(title)?.let { return listOf(it) }
         TRIBUTE_FRAME.find(title)?.let { frame -> return ensembleAfter(title.substring(frame.range.last + 1)) }
         // The shared builder still decides on the whole title whether it bills anyone: `Top Gun: Maverick – in Concert`.

@@ -122,17 +122,19 @@ class UfaFabrikMonthPageScraper {
  * (`Balkan Christmas Night`), and a `Karaoke` label bills nobody (#3731). Nor does a show about someone, whose subtitle
  * reads `Ein musikalischer Abend über …` (events 12457, 12458): its title names the subject, and the house names the
  * performers only in the blurb. A title act ending in `Party`, `Show`, `Revue` or `Gala` is the show's name, not an act
- * (`Gretchens Christmas Party`, #4419); a subtitle's acts and a special guest still count.
+ * (`Gretchens Christmas Party`, #4419); a subtitle's acts and a special guest still count. The show page's
+ * [description] can confirm that a show's title is its performer's name.
  */
 internal fun ufaFabrikArtists(
     title: String,
     subtitle: String?,
     eventType: String,
-    label: String? = null
+    label: String? = null,
+    description: String? = null
 ): List<ScrapedArtist> {
     if (label?.contains(KARAOKE, ignoreCase = true) == true) return emptyList()
     if (subtitle != null && SHOW_ABOUT.containsMatchIn(subtitle)) return emptyList()
-    if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle, eventType)
+    if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle, eventType, description)
     if (subtitle != null && SPECIAL_GUEST.find(title) == null && (SPECIAL_GUEST.find(subtitle)?.range?.first ?: 0) > 0) {
         return ufaFabrikArtists(subtitle, null, eventType)
     }

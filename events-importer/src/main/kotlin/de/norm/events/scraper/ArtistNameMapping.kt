@@ -484,9 +484,108 @@ private fun soloActNamedInDescription(
 }
 
 /**
+ * The name a show or reading title opens with: the whole title, or the head before a dash, a colon or
+ * `präsentiert`. The show after a dash or colon is kept for [STAGING_FORMAT].
+ */
+private val NAME_TITLE = Regex("""^(.+?)(?:(?:\s+[-–—]|:)\s+(\S.*)|\s+präsentier(?:t|en)\b.*)?$""", RegexOption.IGNORE_CASE)
+
+/** One to four words of a name, without digits or a dangling hyphen: `JEAN-PHILIPPE KINDLER`, `die feisten`; not `KACK-`. */
+private val NAME_WORDS = Regex("""^[\p{L}'’.]+(?:-[\p{L}'’.]+)*(?:\s+[\p{L}'’.]+(?:-[\p{L}'’.]+)*){0,3}$""")
+
+/** A format a name never ends a word with: `Songslam Neukölln`, `Liederabend`. */
+private val FORMAT_WORD_END = Regex("""(?:slam|show|podcast|lesung|gala|award|abend|quiz)(?!\p{L})""", RegexOption.IGNORE_CASE)
+
+/** A name in quotes is a work's title: `»Hip Hop Lebt«`, `»the spark«`. */
+private val OPENING_QUOTE = setOf('»', '«', '„', '“', '"', '‚', '‘')
+
+private val NAME_JOIN = Regex("""\s+(?:&|und)\s+""", RegexOption.IGNORE_CASE)
+
+/** Lower-case words inside a person's name: `Ursula von der Leyen`, `Leonardo da Vinci`. */
+private val NAME_PARTICLES =
+    setOf("von", "van", "vom", "zu", "der", "den", "de", "del", "della", "di", "da", "du", "dos", "la", "le", "ten", "ter", "y", "bin", "al")
+
+/** A word that opens a thing's name rather than a person's: `Die Rixdorfer Perlen`, `The Spark`. */
+private val LEADING_ARTICLES = setOf("der", "die", "das", "the", "ein", "eine", "a", "an", "le", "la", "les", "el", "il")
+
+/**
+ * Whether [spelling], as the description writes it, reads as a name: every word capitalised but a
+ * [NAME_PARTICLES] word, and no [LEADING_ARTICLES] word first. A shouted spelling hides the case the
+ * rule reads; an all-lower-case one passes only for a brand the title writes so too (`die feisten`).
+ */
+private fun isNameSpelling(
+    spelling: String,
+    lowerCaseBrand: Boolean
+): Boolean =
+    spelling.split(NAME_JOIN).all { side ->
+        val words = side.split(WHITESPACE)
+        when {
+            side.none { it.isUpperCase() } -> lowerCaseBrand
+            side.none { it.isLowerCase() } || words.first().lowercase() in LEADING_ARTICLES -> false
+            else -> words.all { it.first().isUpperCase() || it in NAME_PARTICLES }
+        }
+    }
+
+/**
+ * The first spelling of [name] in [description] that [isNameSpelling] accepts, matched without case;
+ * `&` matches `und`. None when the description quotes the name anywhere.
+ */
+private fun nameSpelledIn(
+    name: String,
+    description: String
+): String? {
+    val pattern = name.split(NAME_JOIN).joinToString(NAME_JOIN.pattern) { side -> side.split(WHITESPACE).joinToString("""\s+""") { Regex.escape(it) } }
+    val found = Regex("""(?<![\p{L}\p{N}])$pattern(?![\p{L}\p{N}])""", RegexOption.IGNORE_CASE).findAll(description).toList()
+    if (found.any { description.getOrNull(it.range.first - 1) in OPENING_QUOTE }) return null
+    val lowerCaseBrand = name.none { it.isUpperCase() }
+    return found.map { it.value.replace(WHITESPACE, " ") }.firstOrNull { isNameSpelling(it, lowerCaseBrand) }
+}
+
+/**
+ * The acts of a show or reading titled with its performer's name, when the description repeats that
+ * name (#5118): Heimathafen's `CAROLIN EMCKE`, Admiralspalast's `Alexander Stevens & Constantin
+ * Schreiber - Neues Programm 2026`. A production's title is repeated too, so [isNameSpelling] reads
+ * the case the description gives the name.
+ *
+ * Two single words joined by `&` are one duo (`Siegfried & Joy`); otherwise each side is its own act.
+ * A bare one-word title bills nobody, because it is far more often a production (`Hamlet`).
+ */
+private fun nameTitleActs(
+    title: String,
+    description: String?
+): List<ScrapedArtist> {
+    if (description.isNullOrBlank()) return emptyList()
+    val names = namesOfTitle(title)?.takeUnless { it.any(::isFormatName) } ?: return emptyList()
+    val spellings = names.map { nameSpelledIn(it, description) }
+    if (spellings.any { it == null }) return emptyList()
+    // The description's case wins, the title's `&` too: `Ulan und Bator` in the blurb is the act `Ulan & Bator`.
+    return names.zip(spellings.filterNotNull()).map { (name, spelled) ->
+        val join = NAME_JOIN.find(name)?.value
+        ScrapedArtist(name = join?.let { spelled.replace(NAME_JOIN, it) } ?: spelled, role = ArtistRole.HEADLINER, titleDerived = true)
+    }
+}
+
+/** The one or two names a [NAME_TITLE] title opens with, or `null` when its head is not name-shaped. */
+@Suppress("ReturnCount") // Each guard rejects one shape; nesting them hides which.
+private fun namesOfTitle(title: String): List<String>? {
+    val text = stripTitleStatusMarker(title).trim()
+    val match = NAME_TITLE.find(text) ?: return null
+    val head = match.groupValues[1].trim()
+    if (STAGING_FORMAT.containsMatchIn(match.groupValues[2])) return null
+    val sides = head.split(NAME_JOIN)
+    if (sides.size > 2 || !sides.all { NAME_WORDS.matches(it) }) return null
+    val oneWordSides = sides.none { it.contains(WHITESPACE) }
+    if (sides.size == 1 && oneWordSides && head == text) return null
+    return if (oneWordSides) listOf(head) else sides
+}
+
+/** A format word (`SCIENCE SLAM`, `Quiz Night`): a stop-list entry, a title-keyword type cue or a [FORMAT_WORD_END]. */
+private fun isFormatName(name: String): Boolean = isNonArtistName(name) || classifyByTitleKeyword(name) != null || FORMAT_WORD_END.containsMatchIn(name)
+
+/**
  * Builds an artist list from the source's own event type, for venues with a clean `kind` label
  * (Astra, Lido): festivals and parties extract none; a show or comedy night with no support line
- * bills its solo act via [SOLO_BILL] (#315); concerts always add the title plus the subtitle's support acts;
+ * bills its solo act via [SOLO_BILL] (#315), and like a reading its title's name when the description
+ * repeats it ([nameTitleActs]); concerts always add the title plus the subtitle's support acts;
  * unknown falls back to [buildArtistList]. An ice show ([isIceShow]) of any type keeps only its
  * support acts: its title names a production, never a performer.
  *
@@ -522,7 +621,9 @@ fun buildArtistsForEventType(
         return soloBillOf(title)
             .ifEmpty { performersBilledWith(title) }
             .ifEmpty { soloActNamedInDescription(title, description) }
+            .ifEmpty { nameTitleActs(title, description) }
     }
+    if (eventType == EventType.READING.name && supportNames.isEmpty()) return nameTitleActs(title, description)
     if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames, subtitle, description)
 
     // Concert: the title carries the headliner(s) (co-bills split out), then support acts in listing order.

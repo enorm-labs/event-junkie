@@ -1,5 +1,6 @@
 package de.norm.events.scraper.ufafabrik
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
@@ -40,11 +41,19 @@ class UfaFabrikWebsiteImporter(
         return months.getOrNull(shown + 1)?.absUrl("href")?.ifEmpty { null }
     }
 
-    /** The month row wins: the show page has only the blurb, which fills the row's gap. */
+    /**
+     * The month row wins: the show page has only the blurb, which fills the row's gap. A show the row bills
+     * nobody for is read again with the blurb, which can confirm its title as the performer's name (#5118).
+     */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
-    ): ScrapedEvent = fallback.withGapsFrom(primary)
+    ): ScrapedEvent {
+        val merged = fallback.withGapsFrom(primary)
+        val type = merged.eventType
+        if (merged.artists.isNotEmpty() || type == null || type == EventType.CONCERT.name) return merged
+        return merged.copy(artists = ufaFabrikArtists(merged.title, merged.subtitle, type, description = merged.description))
+    }
 
     private companion object {
         const val MONTH_PAGE = "/program/"

@@ -990,6 +990,68 @@ class ArtistNameMappingTest {
         buildArtistsForEventType("Der Kirschgarten", null, "SHOW", description = "Tschechows Der Kirschgarten in neuer Regie.").shouldBeEmpty()
     }
 
+    private fun billed(
+        title: String,
+        type: String,
+        description: String?,
+        subtitle: String? = null
+    ) = buildArtistsForEventType(title, subtitle, type, description).map { it.name }
+
+    @Test
+    fun `a show or reading titled with the performer's name bills it when the description repeats it (#5118)`() {
+        billed("CAROLIN EMCKE", "READING", "Seit über 20 Jahren reist Carolin Emcke nach Israel-Palästina.") shouldBe listOf("Carolin Emcke")
+        billed("MICKY OVERMAN", "COMEDY", "Wie sie es eben macht: Micky Overman kommt mit sechs neuen Shows.") shouldBe listOf("Micky Overman")
+        billed("JEAN-PHILIPPE KINDLER", "SHOW", "Jean-Philippe Kindler ist zurück.") shouldBe listOf("Jean-Philippe Kindler")
+        billed("Lennart Schilgen", "SHOW", "Lennart Schilgen singt neue Lieder.", subtitle = "Abwesenheitsnotizen") shouldBe listOf("Lennart Schilgen")
+        billed("YANN YURO", "COMEDY", "Mit Yann Yuro wird es laut.") shouldBe listOf("Yann Yuro")
+        // Without a description, or when it never repeats the name, nobody is billed.
+        billed("CAROLIN EMCKE", "READING", null).shouldBeEmpty()
+        billed("MICKY OVERMAN", "COMEDY", "Overman kommt mit sechs neuen Shows.").shouldBeEmpty()
+    }
+
+    @Test
+    fun `a name title joined by an ampersand bills a duo whole and two people apart`() {
+        billed("SIEGFRIED & JOY", "SHOW", "Endlich bringen Siegfried & Joy den Heimathafen wieder mit Magie.") shouldBe listOf("Siegfried & Joy")
+        billed("Ulan & Bator", "COMEDY", "Ulan und Bator sind zurück.") shouldBe listOf("Ulan & Bator")
+        billed("Alexander Stevens & Constantin Schreiber - Neues Programm 2026", "SHOW", "Alexander Stevens und Constantin Schreiber gehen auf Tour.") shouldBe
+            listOf("Alexander Stevens", "Constantin Schreiber")
+        billed("Felix Römer & Nachtfarben", "READING", "Felix Römer liest, Nachtfarben spielen dazu.") shouldBe listOf("Felix Römer", "Nachtfarben")
+        // Every act must be repeated.
+        billed("Felix Römer & Nachtfarben", "READING", "Felix Römer liest.").shouldBeEmpty()
+    }
+
+    @Test
+    fun `a name before a show part bills a one-word or lower-case name the description repeats`() {
+        billed("Brauseboys: Auf Nimmerwiedersehen 2026", "SHOW", "Die Brauseboys lesen zum letzten Mal.") shouldBe listOf("Brauseboys")
+        billed("die feisten - „Familienfest“", "COMEDY", "Seit Jahren touren die feisten durch das Land.") shouldBe listOf("die feisten")
+        billed("Heiner Lauterbach präsentiert „Like a Hobo“", "READING", "Heiner Lauterbach liest aus seinem Buch.") shouldBe listOf("Heiner Lauterbach")
+        // A bare one-word title is far more often a production.
+        billed("Hamlet", "SHOW", "Hamlet ist der Prinz von Dänemark.").shouldBeEmpty()
+        // A staging format after the dash makes the head the production.
+        billed("Die Bettwurst – Das Musical!", "SHOW", "Die Bettwurst ist zurück.").shouldBeEmpty()
+    }
+
+    @Test
+    fun `a production or format title bills nobody even when the description repeats it`() {
+        // An article opens a thing's name, and the description writes it so.
+        billed("DIE RIXDORFER PERLEN", "SHOW", "In ihrem neuen Stück wagen sich die Rixdorfer Perlen mitten hinein.").shouldBeEmpty()
+        billed("DIE RIXDORFER PERLEN", "SHOW", "Die Rixdorfer Perlen sind zurück.").shouldBeEmpty()
+        // A lower-case word inside the name that is no name particle.
+        billed("Café am Nil", "SHOW", "Das Café am Nil öffnet wieder. Café am Nil ist Kult.").shouldBeEmpty()
+        // A format word, through the shared stop lists.
+        billed("SCIENCE SLAM", "SHOW", "Beim Science Slam treten Forschende gegeneinander an.").shouldBeEmpty()
+        // A description that only shouts the name gives no case to read.
+        billed("TOXISCHE POMMES", "SHOW", "Ein Abend mit TOXISCHE POMMES.").shouldBeEmpty()
+        billed("TOXISCHE POMMES", "SHOW", "Toxische Pommes heißt im wahren Leben Irina.") shouldBe listOf("Toxische Pommes")
+        // Heimathafen shows the fixture diff caught: a quoted work, a format word's tail, a hyphenated half, a lower-case title.
+        billed("HIP HOP LEBT", "SHOW", "Bei den Live-Shows von »Hip Hop Lebt« erwartet euch Hip Hop Lebt.").shouldBeEmpty()
+        billed("SONGSLAM NEUKÖLLN", "SHOW", "Übrigens: Beim Songslam Neukölln gibt es Wein.").shouldBeEmpty()
+        billed("KACK- UND SACHGESCHICHTEN", "SHOW", "Kack und Sachgeschichten.").shouldBeEmpty()
+        billed("THE SPARK", "SHOW", "the spark nähert sich dem Spontanen.").shouldBeEmpty()
+        // A concert keeps its own path, and a party bills nobody.
+        billed("Café am Nil", "PARTY", "Café am Nil").shouldBeEmpty()
+    }
+
     @Test
     fun `knownSoloPerformer bills a pinned one-word name at the head of a title and nothing else`() {
         knownSoloPerformer("FIL - MIT NEUER SHOW").map { it.name } shouldBe listOf("FIL")
