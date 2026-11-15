@@ -1,6 +1,7 @@
 package de.norm.events.scraper.hau
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -111,6 +112,64 @@ class HauScheduleScraperTest {
         slots.map { it.sourceId }.toSet() shouldHaveSize 8
         slots.first().sourceId shouldBe "hau3:kubra-khademi-afghan-women-a-desperate-vitality-2026-10-09-1900"
     }
+
+    @Test
+    fun `keeps the open entry of a slot listed twice, one cancelled`() {
+        // 2026-11-05: the page lists the cancelled 17:00 entry first.
+        val events = hau3.scrape(startlevel("Cancelled", null), url)
+
+        events.map { it.sourceId to it.status } shouldBe
+            listOf(
+                "hau3:houseclub-machina-ex-startlevel-2026-11-05-1700" to EventStatus.SCHEDULED.name,
+                "hau3:houseclub-machina-ex-startlevel-2026-11-05-1830" to EventStatus.SCHEDULED.name
+            )
+        events.first().room shouldBe "Houseclub"
+        hau3.scrape(startlevel(null, "Cancelled"), url).first().status shouldBe EventStatus.SCHEDULED.name
+    }
+
+    @Test
+    fun `keeps a postponed or relocated entry over its cancelled twin, in either order`() {
+        mapOf("Postponed" to EventStatus.POSTPONED, "Relocated" to EventStatus.RELOCATED).forEach { (tag, status) ->
+            hau3.scrape(startlevel("Cancelled", tag), url).first().status shouldBe status.name
+            hau3.scrape(startlevel(tag, "Cancelled"), url).first().status shouldBe status.name
+        }
+    }
+
+    @Test
+    fun `cancels a slot listed twice only when every entry is cancelled`() {
+        hau3.scrape(startlevel("Cancelled", "Cancelled"), url).first().status shouldBe EventStatus.CANCELLED.name
+        hau3.scrape(startlevel(null, null), url).map { it.status } shouldBe List(2) { EventStatus.SCHEDULED.name }
+    }
+
+    /** The Houseclub's 2026-11-05 day as the live page lists it: two 17:00 entries with the given tags, then 18:30. */
+    private fun startlevel(
+        firstTag: String?,
+        secondTag: String?
+    ) = Jsoup.parse(
+        """
+        <div class="month"><div class="month-box"><h3>November 2026</h3></div>
+        <ul><li class="day" data-filterDate="5-11"><ul>
+        ${startlevelRow("17:00", firstTag)}
+        ${startlevelRow("17:00", secondTag)}
+        ${startlevelRow("18:30", null)}
+        </ul></li></ul></div>
+        """.trimIndent(),
+        url
+    )
+
+    private fun startlevelRow(
+        time: String,
+        tag: String?
+    ) = """
+        <li class="item">
+          <div class="floats"><strong>$time</strong></div>
+          <a class="event-venue" data-venue="HAU3 Houseclub">HAU3 Houseclub</a>
+          <div class="tagBox">${tag?.let { "<span class=\"tag\">$it</span>" }.orEmpty()}</div>
+          <div class="info-wrap"><h3>Houseclub / machina eX</h3><h4>Startlevel</h4>
+            <div class="cat-box"><ul><li class="cat">Game</li><li class="cat">Performance</li></ul></div></div>
+          <a class="show-btn" href="/en/programme/pdetail/houseclub-machina-ex-startlevel/">Details</a>
+        </li>
+    """
 
     @Test
     fun `puts the Houseclub rows in their room and drops workshops`() {
