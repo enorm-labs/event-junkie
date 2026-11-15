@@ -611,6 +611,14 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `the one-off labels found on production after the stop-key pass are dropped or folded`() {
+        normalizeGenre("Playing Ramones").shouldBeEmpty()
+        normalizeGenre("Devils Music").shouldBeEmpty()
+        normalizeGenre("indie-rock/post-punk, weirdo mutant punk, mmbrs milemarker").shouldContainExactly("Indie", "Post-Punk", "Punk")
+        normalizeGenre("50`s Psycho").shouldContainExactly("Psychobilly")
+    }
+
+    @Test
     fun `the music veto keeps a style whose name ends in Music`() {
         normalizeGenre("World Music").shouldContainExactly("World Music")
         normalizeGenre("Brazilian Music").shouldContainExactly("Brazilian Music")

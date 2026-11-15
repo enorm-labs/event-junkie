@@ -149,6 +149,8 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "alternative" to ROCK,
         "shoegaze" to ROCK,
         "garage-rock" to ROCK,
+        // One word, so the trailing-word rule cannot find `rock` in it.
+        "teufelrock" to ROCK,
         // The bare word bills garage rock ("BluesRock, Garage"). A synonym would turn "UK Garage" into rock word by word.
         "garage" to ROCK,
         "krautrock" to ROCK,
