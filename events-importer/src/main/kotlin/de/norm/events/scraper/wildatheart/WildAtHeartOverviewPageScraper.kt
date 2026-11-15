@@ -193,8 +193,15 @@ class WildAtHeartOverviewPageScraper(
     /** Strips the decorative surrounding double-quotes and whitespace a band/support name is wrapped in. */
     private fun stripQuotes(text: String): String = text.trim().trim('"').trim()
 
-    /** Cleans a `.headlines` banner for use as a subtitle — drops any embedded presale link. */
-    private fun cleanBanner(headline: String?): String? = headline?.replace(TICKETS_PATTERN, "").blankToNull()
+    /**
+     * Cleans a `.headlines` banner for use as a subtitle — drops any embedded presale link. The weekly
+     * Wild Wednesday banner is series boilerplate, so it is no subtitle; its free entry and start are read off it.
+     */
+    private fun cleanBanner(headline: String?): String? =
+        headline
+            ?.takeUnless { WILD_WEDNESDAY_BANNER.containsMatchIn(it) }
+            ?.replace(TICKETS_PATTERN, "")
+            .blankToNull()
 
     companion object {
         /** The doors the venue's `info.htm` states for concerts and events: "von 20 Uhr bis Open End". */
@@ -205,6 +212,9 @@ class WildAtHeartOverviewPageScraper(
 
         /** A presale link in a `.headlines` banner: `Tickets:<url>`, `Tickets unter <url>` or `Tickets unter: <url>` (#3283). */
         private val TICKETS_PATTERN = Regex("""Tickets(?:\s+unter)?:?\s*(https?://\S+)""", RegexOption.IGNORE_CASE)
+
+        /** The weekly series banner: `WILD WEDNESDAY! DISCOVER NEWCOMER BANDS FOR FREE! … Eintritt frei! Beginn 21:00`. */
+        private val WILD_WEDNESDAY_BANNER = Regex("""^\s*WILD WEDNESDAY\b""", RegexOption.IGNORE_CASE)
 
         /** An "ab HH Uhr" / "ab HH:MM Uhr" start time in a `.headlines` banner. */
         private val AB_UHR_PATTERN = Regex("""\bab\s+(\d{1,2})(?:[:.](\d{2}))?\s*Uhr\b""", RegexOption.IGNORE_CASE)

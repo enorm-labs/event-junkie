@@ -2,11 +2,11 @@ package de.norm.events.scraper.wildatheart
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.fixtureDocument
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -99,14 +99,22 @@ class WildAtHeartOverviewPageScraperTest {
     }
 
     @Test
-    fun `flags a Wild Wednesday free-entry night and starts it from the banner time`() {
+    fun `flags a Wild Wednesday free-entry night and starts it from the banner, which is no subtitle`() {
         val event = scraper.scrape(fixtureDocument(programme, baseUrl), baseUrl).first { it.title == "La Retraite de la Peur" }
 
         event.eventDate shouldBe LocalDate.of(2026, 9, 9)
         event.free shouldBe true
         event.startTime shouldBe LocalTime.of(21, 0)
         event.doorsTime.shouldBeNull()
-        event.subtitle.shouldNotBeNull() shouldContain "WILD WEDNESDAY"
+        event.subtitle.shouldBeNull()
+    }
+
+    @Test
+    fun `stores no Wild Wednesday banner as a subtitle, with or without its start`() {
+        val events = scraper.scrape(fixtureDocument(programme, baseUrl), baseUrl)
+
+        events.mapNotNull { it.subtitle }.filter { "WILD WEDNESDAY" in it.uppercase() }.shouldBeEmpty()
+        events.mapNotNull { it.subtitle } shouldContain "Rebel DNA Tour 2026"
     }
 
     @Test
