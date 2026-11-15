@@ -16,6 +16,22 @@ private const val TITLE_DERIVED_UNMATCHED_PREDICATE = "EXISTS ($ONE_EVENT_TITLE_
 internal const val MISSING_PRICE_PREDICATE =
     "e.price_presale IS NULL AND e.price_box_office IS NULL AND e.free = false AND e.price_note IS NULL"
 
+/** The slug of `EventFeature.CHRISTMAS_MARKET`, as a constant because `DataQualityRepository`'s `@Query` needs one. */
+internal const val CHRISTMAS_MARKET_FEATURE = "christmas-market"
+
+/**
+ * A Christmas market is typed `OTHER`, with no start time and no genre, on purpose (#4972), so those three checks leave it out (#5038).
+ * Every other check still counts it.
+ */
+private const val NOT_A_CHRISTMAS_MARKET =
+    "NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_feature ef WHERE ef.event_id = e.id AND ef.feature = '$CHRISTMAS_MARKET_FEATURE')"
+
+internal const val TYPED_OTHER_PREDICATE = "e.event_type = 'OTHER' AND $NOT_A_CHRISTMAS_MARKET"
+
+internal const val MISSING_GENRE_PREDICATE = "(e.genre IS NULL OR e.genre = '') AND $NOT_A_CHRISTMAS_MARKET"
+
+internal const val MISSING_START_TIME_PREDICATE = "e.start_time IS NULL AND $NOT_A_CHRISTMAS_MARKET"
+
 private const val FLAGGED_AT_IMPORT_PREDICATE = "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_quality_flag f WHERE f.event_id = e.id)"
 
 /** The title-derived acts of `e` with their MusicBrainz verdicts, in a stable order. */
@@ -65,9 +81,9 @@ enum class QualityIssue(
     ),
 
     /** `OTHER` is what the classifier falls back to, so a rising count is a classifier losing ground. */
-    EVENTS_TYPED_OTHER(Dimension.VALIDITY, "e.event_type = 'OTHER'", "json_build_array(e.title, e.event_type)"),
+    EVENTS_TYPED_OTHER(Dimension.VALIDITY, TYPED_OTHER_PREDICATE, "json_build_array(e.title, e.event_type)"),
 
-    MISSING_GENRE(Dimension.COMPLETENESS, "e.genre IS NULL OR e.genre = ''", "json_build_array(e.title, e.genre)"),
+    MISSING_GENRE(Dimension.COMPLETENESS, MISSING_GENRE_PREDICATE, "json_build_array(e.title, e.genre)"),
 
     MISSING_PROMOTER(
         Dimension.COMPLETENESS,
@@ -87,7 +103,7 @@ enum class QualityIssue(
         "json_build_array(e.title, e.price_presale, e.price_box_office, e.free, e.price_note)"
     ),
 
-    MISSING_START_TIME(Dimension.COMPLETENESS, "e.start_time IS NULL", "json_build_array(e.title, e.start_time)"),
+    MISSING_START_TIME(Dimension.COMPLETENESS, MISSING_START_TIME_PREDICATE, "json_build_array(e.title, e.start_time)"),
 
     /**
      * Events whose source has never had its copyright position reviewed (#283).

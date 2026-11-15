@@ -183,7 +183,9 @@ The keystone. Everything else is judged against these numbers.
 - **Data-quality report.** A `GET /api/admin/data-quality` endpoint, plus a scheduled summary log and Micrometer
   gauges. Per event source it reports concerts with no artist, events typed `OTHER`, and events missing genre,
   promoter, price or start time. It also reports titles that look like non-artist names and are still stored as
-  artists. A last metric counts events whose source has no copyright position yet.
+  artists. A last metric counts events whose source has no copyright position yet. A Christmas market has the type
+  `OTHER`, no start time and no genre on purpose (#4972). The report, the snapshot and the worklist do not count it in
+  these three metrics. All other metrics count it (#5038).
 - **Curation queue (API-first).** Promote the existing drop and degrade signals into an explicit, queryable **worklist
   endpoint** — `Dropping non-genre token`, artist-less events, detail-fetch fallbacks. That is the raw material for
   growing `NON_ARTIST_NAMES`, `NAME_CORRECTIONS` and the genre synonym map. A steward acts on the worklist in
