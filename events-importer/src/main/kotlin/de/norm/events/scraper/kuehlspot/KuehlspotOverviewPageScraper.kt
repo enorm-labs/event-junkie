@@ -84,8 +84,10 @@ class KuehlspotOverviewPageScraper {
         val promoter = lines.firstNotNullOfOrNull { PROMOTER.find(it)?.groupValues?.get(1) }
         val description =
             lines
-                .filterNot { musician(it) != null || FEATURING.matches(it) || PROMOTER.containsMatchIn(it) || LINK_POINTER.matches(it) || it.endsWith(':') }
-                .joinToString("\n")
+                .filterNot {
+                    musician(it) != null || FEATURING.matches(it) || PROMOTER.containsMatchIn(it) || LINK_POINTER.matches(it) || UNNAMED_ACT.matches(it) ||
+                        it.endsWith(':')
+                }.joinToString("\n")
                 .blankToNull()
         return ScrapedEvent(
             title = title,
@@ -171,8 +173,14 @@ class KuehlspotOverviewPageScraper {
         val MUSICIAN = Regex("""^(.+?)(?:\s[–-]|[–-]\s)\s*\p{Ll}.*$""")
         const val MAX_NAME_WORDS = 5
 
-        /** `Eigenveranstaltung vom Jazzkeller 69 e.V.` or `Event organized by Jazzkeller 69 e.V.`: a night another association runs. */
-        val PROMOTER = Regex("""(?:Eigenveranstaltung (?:vom|von|der|des)|Event organi[sz]ed by)\s+(.+?)(?:\s+e\.\s?V\.)?\s*$""")
+        /**
+         * `Eigenveranstaltung vom Jazzkeller 69 e.V.`, `Event organized by Jazzkeller 69 e.V.` or `Event organized and produced by Rachel D Clarke`:
+         * a night someone other than the club runs.
+         */
+        val PROMOTER = Regex("""(?:Eigenveranstaltung (?:vom|von|der|des)|Event organi[sz]ed(?: and produced)? by)\s+(.+?)(?:\s+e\.\s?V\.)?\s*$""")
+
+        /** `+TBA` under a line-up (event 13823): an act still to be named, which says nothing as text. */
+        val UNNAMED_ACT = Regex("""^[+&]?\s*(?:TBA|TBC|t\.b\.a\.)$""", RegexOption.IGNORE_CASE)
 
         /** `Featuring artist Rachel D Clarke & artist Christoph Kühl`: the acts of a night with no instrument list. */
         val FEATURING = Regex("""^featuring\s+(.+)$""", RegexOption.IGNORE_CASE)
