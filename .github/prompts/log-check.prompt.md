@@ -113,7 +113,7 @@ Write `temp/log-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/lo
 
 1. **Verdict**, one line per environment: healthy, degraded or failing, with the running version.
 2. **New**, most severe first. One paragraph each: what, how many, since when, where in the code, the cost. Then a draft issue in the house style of
-   `/new-issue`: title, the What happens / Why / The fix / Done when sections, and the type, labels and milestone you would set.
+   `/new-issue`: title, the What happens / Why / The fix / Done when sections, and the type, labels (from its step 4 list) and milestone you would set.
 3. **Alerts**, one row per firing: rule, time, value, real or false, and why.
 4. **Known and explained**, one line each with the issue number or the event.
 5. **Noise**, counts only.

@@ -133,8 +133,8 @@ Write `temp/ui-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/ui-
 
 1. **Header**: origin, site version and commit, time in UTC, the slugs Step 1 chose, and the shapes it could not find.
 2. **New**, grouped by page, most visible first. Per finding: what, which locales, widths and themes, the rule it breaks, the component, and the screenshot
-   path. Then a draft issue in the house style of `/new-issue`: title, the What happens / Why / The fix / Done when sections, and the type, labels and
-   milestone you would set.
+   path. Then a draft issue in the house style of `/new-issue`: title, the What happens / Why / The fix / Done when sections, and the type, labels (from its step 4 list)
+   and milestone you would set.
 3. **Known and data**, one line each with the issue number or the reason.
 4. **Probe counts** per check: how many combinations it fired on, and how many of those became findings.
 5. **What this run could not check**: shapes the data did not have, pages that failed to load, probes you disabled and why.

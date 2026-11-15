@@ -250,7 +250,7 @@ Write `temp/daily-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/
 3. **Merged**: each pull request merged in Step 6, with its subject.
 4. **Data**: the flagged new artists and promoters with their verdicts, the `/admin-review` lines with the link to its report, the manual venues: the overdue
    line and one line per checked venue with its verdict and the link to its file, the open problem reports line, one line per failed source with its verdict, and the two coverage lines.
-5. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone, and the `afk-ok` verdict
+5. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels from its step 4 list, milestone, and the `afk-ok` verdict
    by `/new-issue` step 4 — `afk-ok: yes`, or `afk-ok: no — <the condition that fails>`. Each draft's heading ends in its state, `(unfiled)`; filing
    one rewrites it to `(filed #N)`. [`/maintain`](maintain.prompt.md) reads that marker.
 6. **Everything else**, one line per signal with its verdict, grouped by the Step 2 keys; the `/log-check` verdicts and a link to its report.
