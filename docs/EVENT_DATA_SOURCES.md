@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   195 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   196 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -86,6 +86,7 @@ schema change.
 | Erreichbar                       | https://radar.squat.net/en/node/6653                                     | Bar          | radar group API; Punkrocktresen only                      |
 | Eschschloraque Rümschrümp        | https://www.eschschloraque.de/                                           | Bar          | Drupal 7; front page = full nodes; RDFa datetimes         |
 | Festsaal Kreuzberg               | https://festsaal-kreuzberg.de/de                                         | Concert Hall | Nuxt/Wagtail SSR; `ld+json` empty; no prices              |
+| FEZ-Berlin                       | https://fez-berlin.de/orte/astrid-lindgren-buehne/spielplan              | Theater      | TYPO3 list, 4 pages by `cHash` link; all for children     |
 | Fitzroy                          | https://fitzroy-berlin.de/events/                                        | Club         | Shares the LARK parser; every event typed `Party`         |
 | Frachtkante                      | https://frachtkante.de/de/                                               | Open Air     | ProcessWire one-pager; no event pages; typed by title     |
 | Frannz Club                      | https://frannz.eu/                                                       | Club         |                                                           |
@@ -236,7 +237,7 @@ schema change.
 | Zosch                            | https://www.zosch-berlin.de/                                             | Bar          | Laravel start page; year from the body id                 |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-195 importer classes cover 195 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
+196 importer classes cover 196 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
 `EventSource` entries, the sources against the rows above. The two numbers are equal by chance. Kantine am Berghain is the
 only source without a class of its own. It shares the Berghain importer, and its rows have their own `sourceId` prefix,
 `kantine_am_berghain:`. Ballhaus Berlin is the opposite case. Its class exists, but it has no source, because its
@@ -343,6 +344,7 @@ the upsert stores none.
 | Erreichbar                       | Unknown         | radar.squat.net sent a bot challenge                         | —                  |                                                                                                                                    |
 | Eschschloraque Rümschrümp        | No              | —                                                            | —                  |                                                                                                                                    |
 | Festsaal Kreuzberg               | Yes             | `/en` path                                                   | Not on the listing | https://festsaal-kreuzberg.de/en                                                                                                   |
+| FEZ-Berlin                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Fitzroy                          | No              | —                                                            | —                  |                                                                                                                                    |
 | Frachtkante                      | No              | —                                                            | —                  |                                                                                                                                    |
 | Frannz Club                      | No              | —                                                            | —                  |                                                                                                                                    |

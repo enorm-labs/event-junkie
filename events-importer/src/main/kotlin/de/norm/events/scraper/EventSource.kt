@@ -151,6 +151,9 @@ enum class EventSource {
     /** Festsaal Kreuzberg Berlin – a concert hall and event space by the Flutgraben, with a wide-ranging concert and club programme. */
     FESTSAAL,
 
+    /** FEZ-Berlin – the children's and youth centre in the Wuhlheide park, whose Astrid-Lindgren-Bühne plays theatre and concerts for children. */
+    FEZ,
+
     /** Fitzroy Berlin – LARK's sister club, opened in 2018 in a former warehouse on the Spree next to it. */
     FITZROY,
 
