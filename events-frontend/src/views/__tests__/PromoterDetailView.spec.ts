@@ -104,24 +104,31 @@ describe.each(['en', 'de'] as const)('PromoterDetailView in %s', (locale) => {
   })
 })
 
-describe('PromoterDetailView kind line', () => {
+describe('PromoterDetailView kind', () => {
   it.each([
-    ['en', 'collective', 'Collective'],
-    ['en', 'label', 'Label'],
-    ['en', 'party', 'Party series'],
-    ['de', 'collective', 'Kollektiv'],
-    ['de', 'label', 'Label'],
-    ['de', 'party', 'Partyreihe'],
-  ] as const)('names a %s %s as "%s"', async (locale, kind, label) => {
+    ['en', 'collective', 'Collective · Website'],
+    ['en', 'label', 'Label · Website'],
+    ['en', 'party', 'Party series · Website'],
+    ['de', 'collective', 'Kollektiv · Website'],
+    ['de', 'label', 'Label · Website'],
+    ['de', 'party', 'Partyreihe · Website'],
+  ] as const)('opens the link line in %s for a %s: "%s"', async (locale, kind, line) => {
     const view = await mountPromoter({ ...concerts, kind }, locale)
 
-    expect(view.findAll('p').map((p) => p.text())).toContain(label)
+    const links = view.get('a[href="https://www.36-tickets.de/"]').element.parentElement!
+    expect(links.textContent?.replace(/\s+/g, ' ').trim()).toBe(line)
+  })
+
+  it('stands alone for a promoter with no link', async () => {
+    const view = await mountPromoter({ ...concerts, websiteUrl: null, kind: 'collective' })
+
+    expect(view.findAll('p').map((p) => p.text())).toContain('Collective')
   })
 
   it.each(['promoter', 'media', null] as const)('says nothing for the kind %s', async (kind) => {
     const view = await mountPromoter({ ...concerts, kind })
 
-    expect(view.findAll('p').map((p) => p.text())).not.toContain('Promoter')
-    expect(view.find('p.text-meta').exists()).toBe(false)
+    const links = view.get('a[href="https://www.36-tickets.de/"]').element.parentElement!
+    expect(links.textContent?.trim()).toBe('Website')
   })
 })

@@ -173,7 +173,13 @@ data class PromoterListItemResponse(
         description = "Events crediting this promoter that start within the next 30 days, Berlin time. The list's `upcomingEvents` sort orders by this count.",
         example = "12"
     )
-    val upcomingNext30DaysCount: Int
+    val upcomingNext30DaysCount: Int,
+    @Schema(
+        description = "What the promoter is, as on the detail. Null where nobody decided (#5080).",
+        example = "collective",
+        implementation = PromoterKind::class
+    )
+    val kind: String?
 ) {
     companion object {
         fun fromEntity(
@@ -190,7 +196,8 @@ data class PromoterListItemResponse(
                 descriptionAlt = entity.descriptionAlt,
                 descriptionAltLanguage = entity.descriptionAltLanguage,
                 upcomingEventCount = row.upcomingEventCount,
-                upcomingNext30DaysCount = row.upcomingNext30DaysCount
+                upcomingNext30DaysCount = row.upcomingNext30DaysCount,
+                kind = entity.kind
             )
     }
 }

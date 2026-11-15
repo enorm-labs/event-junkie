@@ -1844,6 +1844,12 @@ export interface components {
              * @example 12
              */
             upcomingNext30DaysCount?: number;
+            /**
+             * @description What the promoter is, as on the detail. Null where nobody decided (#5080).
+             * @example collective
+             * @enum {string|null}
+             */
+            kind?: "promoter" | "collective" | "label" | "party" | "media" | "artist" | "sponsor" | "venue" | null;
         };
         /** @description The first matches of one kind, and how many there are in all */
         SearchGroupArtistSummaryResponse: {
