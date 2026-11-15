@@ -239,7 +239,17 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "mod" to "Mod",
         // Oldschool / Newschool
         "oldschool" to "Old School",
-        "newschool" to "New School"
+        "newschool" to "New School",
+        // Spelling pairs that reached production as two tags each. [lookupKey] already gives each pair one key.
+        "dreampop" to "Dreampop",
+        "electropop" to "Electropop",
+        "indiepunk" to "Indie-Punk",
+        "lofi" to "Lofi",
+        "powerpop" to "Power-Pop",
+        "streetpunk" to "Streetpunk",
+        "top40" to "Top40",
+        // Whole-token, so the `music` veto below keeps this one.
+        "brazilianmusic" to "Brazilian Music"
     )
 
 /**
@@ -388,7 +398,21 @@ private val NON_GENRE_TOKENS: Set<String> =
         "vollplaybacktheater",
         "wine",
         "workshop",
-        "workshops"
+        "workshops",
+        // Formats, audiences, empty words and split fragments that reached genre_tag on production. "Musical" is a staging
+        // format the `SHOW` type already carries; "Boston", "Singer" and "Emotion" are halves of "Boston/Garagerock",
+        // "singer/solar-punk" and "math & emotion".
+        "musical",
+        "music",
+        "queer",
+        "dragshow",
+        "impro",
+        "underground",
+        "emotion",
+        "movement",
+        "groovy",
+        "boston",
+        "singer"
     )
 
 /**

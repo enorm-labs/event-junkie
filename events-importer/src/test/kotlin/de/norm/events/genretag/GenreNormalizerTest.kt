@@ -600,6 +600,37 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `formats, audiences and split fragments found in genre_tag on production are dropped`() {
+        listOf("Musical", "Queer", "Music", "Impro", "Underground", "Groovy", "Movement").forEach { normalizeGenre(it).shouldBeEmpty() }
+        normalizeGenre("Drag-Show & Comedy").shouldBeEmpty()
+        normalizeGenre("Boston/Garagerock").shouldContainExactly("Garage-Rock")
+        normalizeGenre("rap, singer/solar-punk").shouldContainExactly("Hip Hop", "Solar-punk")
+        normalizeGenre("math & emotion, minimal & electro").shouldContainExactly("Math", "Minimal", "Electro")
+        normalizeGenre("House & Movement").shouldContainExactly("House")
+        nonGenreTokens("Musical, Queer, Drag-Show").shouldBeEmpty()
+    }
+
+    @Test
+    fun `the music veto keeps a style whose name ends in Music`() {
+        normalizeGenre("World Music").shouldContainExactly("World Music")
+        normalizeGenre("Brazilian Music").shouldContainExactly("Brazilian Music")
+        normalizeGenre("Elektronische Musik").shouldContainExactly("Electronic")
+    }
+
+    @Test
+    fun `a spelling pair folds onto one tag`() {
+        listOf(
+            "Dreampop" to "Dream-Pop",
+            "Electropop" to "Electro-Pop",
+            "Indie-Punk" to "IndiePunk",
+            "Lofi" to "Lo Fi",
+            "Power-Pop" to "Powerpop",
+            "Street-Punk" to "Streetpunk",
+            "Top40" to "Top 40"
+        ).forEach { (first, second) -> normalizeGenre(first) shouldBe normalizeGenre(second) }
+    }
+
+    @Test
     fun `core vetoes the bare fragment only, never a compound genre`() {
         normalizeGenre("Metalcore").shouldContainExactly("Metalcore")
         normalizeGenre("Deathcore").shouldContainExactly("Deathcore")

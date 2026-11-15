@@ -101,7 +101,7 @@ class PfefferbergTheaterCalendarPageScraperTest {
 
     @Test
     fun `stores no format label of the house as a genre`() {
-        (events + maerchen).flatMap { normalizeGenre(it.genre) }.distinct() shouldContainExactly listOf("Queer")
+        (events + maerchen).flatMap { normalizeGenre(it.genre) }.shouldBeEmpty()
         events.mapNotNull { it.genre }.distinct() shouldContainExactlyInAnyOrder listOf("Comedy", "Visual Comedy", "Tanz", "Queer")
     }
 

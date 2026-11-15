@@ -149,6 +149,8 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "alternative" to ROCK,
         "shoegaze" to ROCK,
         "garage-rock" to ROCK,
+        // The bare word bills garage rock ("BluesRock, Garage"). A synonym would turn "UK Garage" into rock word by word.
+        "garage" to ROCK,
         "krautrock" to ROCK,
         "deutschrock" to ROCK,
         "mittelalterrock" to ROCK,
@@ -195,6 +197,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "punkabilly" to PUNK,
         "screamo" to PUNK,
         "stench-crust" to PUNK,
+        "stench" to PUNK,
         "streetpunk" to PUNK,
         "horrorpunk" to PUNK,
         "surf-punk" to PUNK,
@@ -254,6 +257,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "brass" to JAZZ_BLUES,
         // Folk & Songwriter
         "folk" to FOLK,
+        "roots" to FOLK,
         "antifolk" to FOLK,
         "songwriter" to FOLK,
         "indie-folk" to FOLK,

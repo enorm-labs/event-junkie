@@ -47,6 +47,15 @@ class GenreFamiliesTest {
     }
 
     @Test
+    fun `the real styles production held without a family now have one`() {
+        genreFamily("roots") shouldBe GenreFamily.FOLK
+        genreFamily("stench") shouldBe GenreFamily.PUNK
+        genreFamily("garage") shouldBe GenreFamily.ROCK
+        // The explicit entry is for the bare word only.
+        genreFamily("uk-garage") shouldBe GenreFamily.ELECTRONIC
+    }
+
+    @Test
     fun `a slug the map does not name has no family`() {
         // The formats that reach genre_tag by the looksLikeGenre fall-through stay out of the filter.
         genreFamily("ping-pong").shouldBeNull()
