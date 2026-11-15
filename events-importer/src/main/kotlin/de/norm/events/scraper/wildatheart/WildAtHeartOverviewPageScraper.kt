@@ -210,8 +210,11 @@ class WildAtHeartOverviewPageScraper(
         /** A `.datum` cell "Weekday DD.MM.", capturing the German weekday abbreviation, day and month. */
         private val DATUM_PATTERN = Regex("""(Mo|Di|Mi|Do|Fr|Sa|So)\s*(\d{1,2})\.(\d{1,2})\.""", RegexOption.IGNORE_CASE)
 
-        /** A presale link in a `.headlines` banner: `Tickets:<url>`, `Tickets unter <url>` or `Tickets unter: <url>` (#3283). */
-        private val TICKETS_PATTERN = Regex("""Tickets(?:\s+unter)?:?\s*(https?://\S+)""", RegexOption.IGNORE_CASE)
+        /**
+         * A presale link in a `.headlines` banner: `Tickets:<url>`, `Tickets unter <url>` or `Tickets unter: <url>` (#3283), or `Online: <url>`
+         * after a line that names the shops (event 12047).
+         */
+        private val TICKETS_PATTERN = Regex("""(?:Tickets(?:\s+unter)?:?|Online:)\s*(https?://\S+)""", RegexOption.IGNORE_CASE)
 
         /** The weekly series banner: `WILD WEDNESDAY! DISCOVER NEWCOMER BANDS FOR FREE! … Eintritt frei! Beginn 21:00`. */
         private val WILD_WEDNESDAY_BANNER = Regex("""^\s*WILD WEDNESDAY\b""", RegexOption.IGNORE_CASE)
