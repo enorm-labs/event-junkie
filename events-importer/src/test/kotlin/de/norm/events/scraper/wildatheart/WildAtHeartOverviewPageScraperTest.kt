@@ -99,6 +99,36 @@ class WildAtHeartOverviewPageScraperTest {
     }
 
     @Test
+    fun `lifts an Online link out of the banner as the ticket link`() {
+        // Event 12047, the 15 November 2026 programme: "Tickets gibts im Coretex oder an der Abendkasse!", then "Online: <url>".
+        val novemberClock = Clock.fixed(Instant.parse("2026-11-15T10:00:00Z"), ZoneOffset.UTC)
+        val events = WildAtHeartOverviewPageScraper(novemberClock).scrape(fixtureDocument("wildatheart/wildatheart-concerts-november.html", baseUrl), baseUrl)
+
+        val mess = events.single { it.title == "Mess" }
+        mess.eventDate shouldBe LocalDate.of(2026, 11, 15)
+        mess.ticketUrl shouldBe "https://coretexrecords.com/Mess-15112026"
+        mess.subtitle shouldBe "Tickets gibts im Coretex oder an der Abendkasse!"
+    }
+
+    @Test
+    fun `reads no ticket link from an Online word without a link`() {
+        val row =
+            """
+            <table><tr>
+              <td><span class="datum">So<br>15.11.</span></td>
+              <td><p class="headlines">Online im Vorverkauf!</p><span class="band">"Mess"</span></td>
+            </tr></table>
+            """.trimIndent()
+        val novemberClock = Clock.fixed(Instant.parse("2026-11-15T10:00:00Z"), ZoneOffset.UTC)
+
+        WildAtHeartOverviewPageScraper(novemberClock)
+            .scrape(Jsoup.parse(row, baseUrl), baseUrl)
+            .single()
+            .ticketUrl
+            .shouldBeNull()
+    }
+
+    @Test
     fun `flags a Wild Wednesday free-entry night and starts it from the banner, which is no subtitle`() {
         val event = scraper.scrape(fixtureDocument(programme, baseUrl), baseUrl).first { it.title == "La Retraite de la Peur" }
 
