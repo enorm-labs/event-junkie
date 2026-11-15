@@ -200,6 +200,9 @@ data class ScrapedEvent(
      */
     fun storedGenre(): String? = genre?.takeUnless { genreRepeatsTitle() }
 
+    /** The subtitle as stored: null when it only repeats [storedTitle], ignoring case and spacing, which adds nothing to it. */
+    fun storedSubtitle(): String? = subtitle?.takeUnless { comparable(it) == comparable(storedTitle()) }
+
     /** Whether [genre] is [storedTitle] again, ignoring case and spacing. */
     fun genreRepeatsTitle(): Boolean {
         val stated = genre?.let(::comparable)

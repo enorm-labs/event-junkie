@@ -68,7 +68,7 @@ internal fun ScrapedEvent.buildEventEntity(
         room = room,
         eventSourceId = eventSourceId,
         title = storedTitle,
-        subtitle = subtitle,
+        subtitle = storedSubtitle(),
         // A source that forbids its prose gets none of it stored, not merely hidden (#807): blanking on
         // read would leave the § 16 reproduction in place.
         description = storedDescription,
