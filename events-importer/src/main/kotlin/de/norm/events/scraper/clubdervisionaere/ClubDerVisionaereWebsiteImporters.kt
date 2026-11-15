@@ -136,6 +136,11 @@ val CLUB_DER_VISIONAERE_LIMITATIONS =
         limitations =
             listOf(
                 AcceptedLimitation(
+                    LimitedAspect.DESCRIPTION,
+                    "the programme prints a title and the line-up per night, no text about it",
+                    verified = "2026-11-15"
+                ),
+                AcceptedLimitation(
                     LimitedAspect.START_TIME,
                     "the listing prints one only where an act line carries a slot time; the homepage's NEXT box prints the rest, " +
                         "for the ten nights it shows",

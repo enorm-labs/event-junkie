@@ -45,6 +45,11 @@ val TIFFANY_CLUB_LIMITATIONS =
     VenueLimitations(
         EventSource.TIFFANY_CLUB,
         AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the comedy nights bill a brand and an unnamed mix of comedians, and the parties are brands",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
             "the site names no category; the type is read from the title and defaults to a party",
             verified = "2026-10-01"

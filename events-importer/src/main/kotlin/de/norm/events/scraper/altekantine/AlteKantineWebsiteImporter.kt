@@ -62,6 +62,11 @@ class AlteKantineWebsiteImporter(
 val ALTE_KANTINE_LIMITATIONS =
     VenueLimitations(
         EventSource.ALTE_KANTINE,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the series nights leave the DJ field empty, and the reading series names its stages, not its readers",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the night states a door price, and the venue sells no tickets online", verified = "2026-10-19"),
         AcceptedLimitation(
             LimitedAspect.PRICE,

@@ -63,6 +63,11 @@ val BALLHAUS_WEDDING_LIMITATIONS =
     VenueLimitations(
         EventSource.BALLHAUS_WEDDING,
         AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "an entry links its ticket page only once the house opens the sale, and a dance social takes bookings by e-mail or at the door",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
             "the venue names no category, so the type comes from words in the title, and a night without one is typed other",
             verified = "2026-10-08"

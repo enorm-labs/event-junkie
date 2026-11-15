@@ -35,6 +35,16 @@ class WildAtHeartWebsiteImporter(
 val WILD_AT_HEART_LIMITATIONS =
     VenueLimitations(
         EventSource.WILD_AT_HEART,
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "the club sells at the door, and only a few touring shows name a presale shop in their banner",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "the hand-coded page gives a night at most a one-line note, and most nights none",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page", verified = "2026-08-25"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,

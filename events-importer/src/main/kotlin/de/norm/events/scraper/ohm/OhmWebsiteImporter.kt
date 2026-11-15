@@ -34,6 +34,11 @@ class OhmWebsiteImporter(
 val OHM_LIMITATIONS =
     VenueLimitations(
         EventSource.OHM,
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "the programme lists a date, a time, a title and the line-up per night, no text about it",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue's whole programme is one page", verified = "2026-08-25"),
         AcceptedLimitation(LimitedAspect.PRICE, "the programme page carries no price", verified = "2026-08-25"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the programme page links no ticket shop", verified = "2026-08-25"),

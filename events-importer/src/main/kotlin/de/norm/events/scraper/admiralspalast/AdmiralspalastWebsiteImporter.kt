@@ -104,6 +104,11 @@ val ADMIRALSPALAST_LIMITATIONS =
     VenueLimitations(
         EventSource.ADMIRALSPALAST,
         AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a musical, a ballet or a tribute is billed by the work or the tribute, and the performers appear only in prose",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.GENRE,
             "the house classifies by staging format (Konzert, Lesung) and names no musical style anywhere",
             verified = "2026-09-30"

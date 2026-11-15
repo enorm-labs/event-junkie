@@ -74,6 +74,11 @@ val HAVANNA_LIMITATIONS =
     VenueLimitations(
         EventSource.HAVANNA,
         AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the weekly programme names a dance style and a night, never a DJ",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.EVENT_DATE,
             "the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule",
             verified = "2026-08-25"

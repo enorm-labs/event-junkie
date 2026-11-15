@@ -26,6 +26,11 @@ val HUMBOLDT_FORUM_LIMITATIONS =
     VenueLimitations(
         EventSource.HUMBOLDT_FORUM,
         AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "the programme names a shop only once a date's sale opens, and a talk inside an exhibition is entered with the exhibition ticket",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.ARTISTS,
             "the API names no act for a reading, a talk or a show",
             verified = "2026-11-15"

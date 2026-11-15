@@ -28,6 +28,11 @@ class ZBarWebsiteImporter(
 val Z_BAR_LIMITATIONS =
     VenueLimitations(
         EventSource.Z_BAR,
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "a night links its own shop page only when the host sells through Eventbrite or Ticket Souq, and the others link the host's profile or are free",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the nights have no page of their own, so each points at the programme page", verified = "2026-10-21"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,

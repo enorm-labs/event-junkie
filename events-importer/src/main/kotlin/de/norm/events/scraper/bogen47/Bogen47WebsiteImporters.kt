@@ -166,6 +166,11 @@ val LARK_LIMITATIONS =
 val FITZROY_LIMITATIONS =
     VenueLimitations(
         EventSource.FITZROY,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a party without a running order names its DJs only in prose or as handles, or not before the reveal",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.START_TIME, "the venue renders its one time as Doors and publishes no separate start time", verified = "2026-10-01"),
         AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets link to Resident Advisor", verified = "2026-10-01"),
         AcceptedLimitation(

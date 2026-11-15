@@ -67,6 +67,11 @@ val UFA_FABRIK_LIMITATIONS =
     VenueLimitations(
         EventSource.UFA_FABRIK,
         AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a production or a participatory night is billed by its title, and the cast appears only in prose",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.PAGINATION,
             "the calendar is one page per month, and only this month and the next two are read",
             verified = "2026-10-22"

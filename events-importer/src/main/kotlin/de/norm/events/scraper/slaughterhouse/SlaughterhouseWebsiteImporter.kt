@@ -28,6 +28,11 @@ val SLAUGHTERHOUSE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.START_TIME, "a party entry may name only doors, and a festival no time", verified = "2026-10-29"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the page names a start or doors, no end", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.PRICE, "most entries name no price", verified = "2026-11-15"),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "only some concerts print a shop link, and parties and the Factory nights name only a price",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.GENRE, "only a party's style line names one", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night is one entry on the programme page", verified = "2026-10-13"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")

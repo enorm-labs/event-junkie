@@ -29,6 +29,11 @@ val CLAERCHENS_BALLHAUS_LIMITATIONS =
     VenueLimitations(
         EventSource.CLAERCHENS_BALLHAUS,
         AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "the dance nights are paid at the door with no booking, and the concert series link only their organisers' pages",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
             "the calendar names no category, so the type comes from the words under the title",
             verified = "2026-10-23"

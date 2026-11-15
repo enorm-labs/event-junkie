@@ -51,6 +51,16 @@ class InterkosmosWebsiteImporter(
 val INTERKOSMOS_LIMITATIONS =
     VenueLimitations(
         EventSource.INTERKOSMOS,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the comedy nights are open mics, and a party's hosts appear only in prose",
+            verified = "2026-11-15"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "a night links a ticket shop only when the house fills its shop field, and the others sell at the door",
+            verified = "2026-11-15"
+        ),
         AcceptedLimitation(LimitedAspect.GENRE, "the event types name a format, not a music style", verified = "2026-10-23"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "an event has a start and an end time, no doors", verified = "2026-10-23"),
         AcceptedLimitation(LimitedAspect.PRICE, "`ik_price` is empty on most one-off events", verified = "2026-10-23"),
