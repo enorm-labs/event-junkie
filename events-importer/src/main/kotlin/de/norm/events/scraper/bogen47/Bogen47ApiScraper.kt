@@ -91,7 +91,7 @@ data class Bogen47Page(
  *
  * **A party bills only what its description names as DJs** ([partyLineup]): a timetable of `23:00–02:00: A b2b B (label)` lines,
  * each act with its set, a run of `<name> @handle` lines (#4394), or a `Joining us are A and B` sentence. Its title names the night,
- * unless the description names nobody and the title is a `TEMPO GALLERY presents: A, B, and C` bill ([presentsFrameNames]).
+ * unless the description names nobody and the title bills acts ([titleBill]).
  *
  * The remaining ACF fields are unused defaults: `event_entrance_fee` is `None` throughout, and
  * `event_music_genre`, `event_card_subtitle` and the act repeater are all but always empty. A
@@ -303,9 +303,6 @@ internal class Bogen47ApiScraper(
         /** An epithet in typographic or straight single quotes, eight characters or more. */
         val QUOTED_EPITHET = Regex("""\s*[’‘'][^’‘']{8,}[’‘']\s*""")
 
-        /** Two acts and the night's name: `HONKY DONK vs Mordorkore: Battle of the Jesterz`. Without the colon, `vs` can sit inside a band's name. */
-        val VERSUS_NIGHT = Regex("""(.+?)\s+vs\.?\s+([^:]+?)\s*:\s+\S.*""", RegexOption.IGNORE_CASE)
-
         /** What joins two acts inside one name: `Kyle Hall b2b K15`, `Mamalia ft.Mauricio Fleury`. */
         val NAME_JOINER = Regex("""\s+b2b\s+|\s*\bft\.\s*""", RegexOption.IGNORE_CASE)
     }
@@ -314,7 +311,7 @@ internal class Bogen47ApiScraper(
 /**
  * The DJs a party's description names, in the venue's order: a timetable of two or more `HH:MM–HH:MM: <acts>` lines, each act
  * with its set, or else the names after `Joining us are`, up to `, alongside` or the sentence's end. A party without either bills
- * the acts of a `<promoter> presents: <bill>` title, or none. A timetable line splits at `b2b` only, because `Manolito & Sons` is
+ * the acts of its [titleBill], or none. A timetable line splits at `b2b` only, because `Manolito & Sons` is
  * one act, and its trailing parenthesis is a label.
  */
 private fun partyLineup(
@@ -323,8 +320,40 @@ private fun partyLineup(
     night: LocalDate
 ): List<ScrapedArtist> =
     descriptionLineup(description, night).ifEmpty {
-        presentsFrameNames(title).orEmpty().map { ScrapedArtist(name = it, role = ArtistRole.DJ, titleDerived = true) }
+        titleBill(title).map { ScrapedArtist(name = it, role = ArtistRole.DJ, titleDerived = true) }
     }
+
+/**
+ * The acts a title bills: a `TEMPO GALLERY presents: A, B, and C` bill ([presentsFrameNames]), the two sides of a
+ * [VERSUS_NIGHT], or the acts after a [STAR_BILL]'s star. Any other title names the night, so it bills nobody.
+ */
+private fun titleBill(title: String): List<String> =
+    presentsFrameNames(title)
+        ?: VERSUS_NIGHT.matchEntire(title)?.let { listOf(it.groupValues[1], it.groupValues[2]) }
+        ?: STAR_BILL
+            .matchEntire(title.trim())
+            ?.groupValues
+            ?.get(1)
+            ?.split(BILL_SEPARATOR)
+            ?.map { it.trim() }
+            ?.filterNot { it.isBlank() || isNonArtistName(it) || RESIDENTS_SLOT.matches(it) }
+            ?.takeIf { it.size >= MIN_STAR_BILL_ACTS }
+            .orEmpty()
+
+/** Two acts and the night's name: `HONKY DONK vs Mordorkore: Battle of the Jesterz`. Without the colon, `vs` can sit inside a band's name. */
+private val VERSUS_NIGHT = Regex("""(.+?)\s+vs\.?\s+([^:]+?)\s*:\s+\S.*""", RegexOption.IGNORE_CASE)
+
+/** `tm8.club x Dissident ★ Mama Snake, Jan Loup + residents`: the hosts, one star, then the acts. */
+private val STAR_BILL = Regex("""[^★]+★\s*([^★]+)""")
+
+/** A comma or a spaced `+` between two acts of a [STAR_BILL]. */
+private val BILL_SEPARATOR = Regex("""\s*,\s*|\s+\+\s+""")
+
+/** The unnamed residents closing a bill: `+ residents`. */
+private val RESIDENTS_SLOT = Regex("""residents?(?:\s+djs?)?""", RegexOption.IGNORE_CASE)
+
+/** One name after the star can be the night's subtitle, not its bill. */
+private const val MIN_STAR_BILL_ACTS = 2
 
 private fun descriptionLineup(
     description: String?,
