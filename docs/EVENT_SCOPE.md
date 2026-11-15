@@ -221,6 +221,7 @@ an evening on a stage for an adult audience. The same is true for a family sing-
 parent looks for these shows, so the importers keep them and set the `for-children` event feature (#3796). The public
 API lists such an event only when the request asks for it. A request asks for it with `feature=for-children`, or with
 a venue, artist, promoter, festival or text filter. The event page and the venue page always show it.
+The page `/for-children` lists them all, and the footer links to it (#5079).
 
 The feature does not change the type. A children's concert is a `CONCERT`, and a puppet show is a `SHOW`.
 
@@ -245,7 +246,8 @@ marks a show for small children, and adults go to these concerts too.
 
 `childrensShowPhrase` leaves a band named after children (`Muttis Kinder`) and a show for ten and up (`ab 12 Jahren`)
 unmarked. A new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it
-here. No source is a venue that plays only for children, such as FEZ or Theater an der Parkaue.
+here. A venue that plays only for children is in scope too, such as FEZ or Theater an der Parkaue (#5076). Its
+importer marks every event.
 
 ### 3.6 Programme announcements
 

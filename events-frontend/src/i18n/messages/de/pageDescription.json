@@ -11,5 +11,6 @@
   "notices": "Die Open-Source-Komponenten, auf denen Event Junkie aufbaut, nach Lizenz gruppiert und aus dem Build erzeugt.",
   "forVenues": "Wie Event Junkie die Veranstaltungsseite einer Location liest, welche Rücksicht es dabei nimmt und wie eine Location ihre Einträge wieder loswird.",
   "week": "{range}: Konzerte, Clubnächte und mehr in Berlin, Tag für Tag.",
-  "christmasMarkets": "Alle Weihnachtsmärkte in Berlin dieser Saison auf einer Karte: Termine, Öffnungszeiten und Eintritt."
+  "christmasMarkets": "Alle Weihnachtsmärkte in Berlin dieser Saison auf einer Karte: Termine, Öffnungszeiten und Eintritt.",
+  "forChildren": "Konzerte, Puppentheater und Shows für Kinder in Berlin, mit Terminen und Tickets."
 }

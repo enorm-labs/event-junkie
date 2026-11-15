@@ -73,6 +73,12 @@ describe('AppFooter', () => {
     for (const link of legal) expect(link.attributes('target')).toBeUndefined()
   })
 
+  it("links the children's page in the app (#5079)", () => {
+    const link = mount_().get('[data-testid="footer-for-children"]')
+    expect(link.attributes('href')).toBe('/en/for-children')
+    expect(link.text()).toBe('For children')
+  })
+
   it('offers feedback by mail, which needs no GitHub account', () => {
     const wrapper = mount_()
     const mail = wrapper.get(`a[href^="mailto:${CONTROLLER.email}"]`)

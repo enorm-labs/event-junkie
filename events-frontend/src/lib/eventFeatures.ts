@@ -28,6 +28,9 @@ const DISPLAY_ORDER: Record<EventFeature, true> = {
 
 export const EVENT_FEATURES: readonly string[] = Object.keys(DISPLAY_ORDER)
 
+/** A children's show (EVENT_SCOPE.md §3.5): hidden from the default lists, listed on its own page (#5079). */
+export const FOR_CHILDREN = 'for-children'
+
 /** A Christmas market's kind is the feature `christmas-market-<kind>`; only the markets page filters by it. */
 export const MARKET_KIND_PREFIX = 'christmas-market-'
 

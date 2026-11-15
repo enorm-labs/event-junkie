@@ -23,6 +23,7 @@ const PATHS = [
   '/events',
   '/venues',
   '/promoters',
+  '/for-children',
   '/calendar',
   '/map',
   '/about',
