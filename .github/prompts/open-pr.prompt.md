@@ -65,7 +65,8 @@ This is the standard "ship it" flow — the manual equivalent of
       `./build/pr-screenshots/<file>.png` with `--attach`, from the repository root; `gh` uploads the file and rewrites the link. `--click` opens a menu,
       `--scroll` brings a list end into view, and `--label` keeps a second run from overwriting the first. A map panel opens only on a pin click, never from
       a query: `--click '.venue-map [aria-label^="<Name>"]' --scroll '.venue-map'` on `/en/map` or `/en/venues?view=map&q=<slug>`. The filter sheet below 768 px opens with `--click 'main button[aria-haspopup="dialog"]'`: without `main` the header's search button matches first. Open one shot before you
-      trust an identical pair, because a page that never loaded compares identical too. A design rule change needs the picture
+      trust an identical pair, because a page that never loaded compares identical too. **A field the branch adds to an API response** is
+      absent from production until the deploy: `--stub '<slug>.<field>=<value>'` sets it on both sides (#5141), and the PR says the field is stubbed. A design rule change needs the picture
       ([design.instructions.md](../instructions/design.instructions.md) § How a rule leaves this list). Mechanics: the [`gh` skill](../../.claude/skills/gh/SKILL.md).
       **A state that depends on the clock or on data production lacks** — a set playing now, a night on now, a cancelled event — is out of the script's
       reach. Write a short Playwright script instead: build both sides with `vite build --outDir`, serve each with `vite preview`, answer the event's
