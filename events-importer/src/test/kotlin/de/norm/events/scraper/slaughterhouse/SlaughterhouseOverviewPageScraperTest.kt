@@ -264,6 +264,10 @@ class SlaughterhouseOverviewPageScraperTest {
             "https://www.tixforgigs.com/de-de/Event/78287/santas-riot-vi-live-deshurance-the-irony-ravenpath-slaughterhouse-berlin"
         november.single { it.eventDate == LocalDate.of(2026, 12, 11) }.ticketUrl shouldBe
             "https://www.tixforgigs.com/de-de/Event/78291/lemur-yeniden-record-release-concert-slaughterhouse-berlin"
+        listOf(LocalDate.of(2026, 11, 27), LocalDate.of(2026, 12, 4), LocalDate.of(2026, 12, 11)).forEach { date ->
+            november.single { it.eventDate == date }.description!! shouldNotContain "tixforgigs"
+        }
+        november.single { it.eventDate == LocalDate.of(2026, 11, 27) }.description!! shouldStartWith "34. Lange Nacht der Indieschoenheit"
     }
 
     @Test
@@ -280,6 +284,9 @@ class SlaughterhouseOverviewPageScraperTest {
                 """<a href="https://tyskeludder.de/">tyskeludder.de</a><br><a href="https://www.instagram.com/tyskeludder/">Instagram</a>"""
             )
         bare.ticketUrl.shouldBeNull()
+        bare.description!! shouldContain "tyskeludder.de"
+        val sentence = entryOf("Konzert: Tyske Ludder", "Karten bei https://www.tixforgigs.com/Event/4 und an der Abendkasse.")
+        sentence.description!! shouldContain "tixforgigs.com/Event/4"
         val redirect = "https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.tixforgigs.com%2FEvent%2F3&amp;h=x"
         val wrapped = entryOf("Konzert: Tyske Ludder", """<a href="$redirect">tixforgigs.com</a>""")
         wrapped.ticketUrl shouldBe "https://www.tixforgigs.com/Event/3"

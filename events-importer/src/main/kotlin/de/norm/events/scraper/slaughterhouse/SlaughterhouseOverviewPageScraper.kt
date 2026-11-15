@@ -40,7 +40,8 @@ import java.nio.charset.StandardCharsets
  *
  * No entry has its own page, so the source id is the date. A ticket link the editor pasted through Facebook's
  * `l.php` redirect is unwrapped to its target. A `Tickets:` link comes first. A newer entry prints a bare shop link
- * under its price line, so without a label the first link to a ticket shop is the ticket link.
+ * under its price line, so without a label the first link to a ticket shop is the ticket link, and that line leaves the
+ * description.
  */
 class SlaughterhouseOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -175,8 +176,10 @@ class SlaughterhouseOverviewPageScraper {
             .joinToString("\n\n")
             .ifEmpty { null }
 
+    /** A field line, or a line that is only a ticket shop's link, which [ticketUrlOf] reads. */
     private fun isFieldLine(line: String): Boolean =
-        FIELD_LINE.containsMatchIn(line) || PRICE_LINE.containsMatchIn(line) || STYLE_LINE.matches(line) || DIVIDER.matches(line)
+        FIELD_LINE.containsMatchIn(line) || PRICE_LINE.containsMatchIn(line) || STYLE_LINE.matches(line) || DIVIDER.matches(line) ||
+            (BARE_LINK.matches(line) && isTicketShop(line.trim().let { if ("://" in it) it else "https://$it" }))
 
     /** The link on a `Tickets:` line, or else the first link to a ticket shop, each unwrapped from Facebook's redirect. */
     private fun ticketUrlOf(blocks: List<Element>): String? {
@@ -213,6 +216,9 @@ class SlaughterhouseOverviewPageScraper {
         const val TIME_FIRST = """\d{1,2}(?:[:.]\d{2})?\s*(?:Uhr\s+)?"""
         const val TIME_FIRST_CAPTURE = """(\d{1,2})(?:[:.](\d{2}))?"""
         val BLANK_RUN = Regex("""\n{3,}""")
+
+        /** A line that is one link and nothing else: `https://www.tixforgigs.com/…` or `tixforgigs.com`. */
+        val BARE_LINK = Regex("""^\s*(?:https?://)?[\w.-]+\.\p{L}{2,}(?:/\S*)?\s*$""")
 
         val HEADING = Regex("""^((?:Konzert|Party)(?:\s*\+\s*(?:Konzert|Party))?)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
         val TICKETS = Regex("""^\s*Tickets?\b""", RegexOption.IGNORE_CASE)
