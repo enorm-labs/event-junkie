@@ -634,6 +634,26 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `a spaced hip hop inside a longer label gives Hip Hop (#5054)`() {
+        normalizeGenre("Instrumental Hip Hop & Trip Hop").shouldContainExactly("Hip Hop", "Trip-Hop")
+        nonGenreTokens("Instrumental Hip Hop & Trip Hop").shouldBeEmpty()
+        normalizeGenre("Alternative Hip Hop").shouldContainExactly("Alternative", "Hip Hop")
+        normalizeGenre("Instrumental hip  hop").shouldContainExactly("Hip Hop")
+    }
+
+    @Test
+    fun `every spelling of hip hop is one tag`() {
+        listOf("Hip Hop", "Hip-Hop", "HipHop", "hip  hop", "HIP HOP").forEach { normalizeGenre(it).shouldContainExactly("Hip Hop") }
+    }
+
+    @Test
+    fun `a word that only contains hip or hop is not Hip Hop`() {
+        normalizeGenre("Chip Hop").shouldContainExactly("Chip Hop")
+        normalizeGenre("Hip Hopper").shouldContainExactly("Hip Hopper")
+        normalizeGenre("Worship, Bebop").shouldContainExactly("Worship", "Bebop")
+    }
+
+    @Test
     fun `the labels around the new genres stay dropped`() {
         normalizeGenre("Party").shouldBeEmpty()
         normalizeGenre("Core").shouldBeEmpty()
