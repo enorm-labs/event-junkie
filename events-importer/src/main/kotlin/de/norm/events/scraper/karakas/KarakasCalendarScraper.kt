@@ -20,7 +20,8 @@ import java.time.LocalDate
  * calendar is entered by hand, and the script passes its props as one escaped JSON string:
  * `componentName:'@widget/CALENDAR/bs-calendar',props:JSON.parse("…")`. Each `manualEvents` entry
  * has an `id`, a `dd.MM.yyyy` date, start and end as `20:30 Uhr`, and a Draft.js description whose
- * "Tickets 👉 <url>" line names the shop. Hand entry has typos: `20:300 Uhr` reads as 20:30.
+ * "Tickets 👉 <url>" line names the shop. The shop link can instead sit on the word "Tickets" as a
+ * LINK entity, with no URL in the text. Hand entry has typos: `20:300 Uhr` reads as 20:30.
  */
 class KarakasCalendarScraper {
     private val logger = KotlinLogging.logger {}
@@ -69,10 +70,10 @@ class KarakasCalendarScraper {
         val start = parseClockPrefix(node.stringOrNull("start"))
         val end = parseClockPrefix(node.stringOrNull("end"))
         val lines = draftLines(node.stringOrNull("desc"))
-        val ticketLine = lines.firstOrNull { TICKET_LINE.matches(it) }
+        val ticketLine = lines.firstOrNull { it.ticketUrl() != null }
         return ScrapedEvent(
             title = title,
-            description = lines.filterNot { it == ticketLine }.joinToString("\n").ifBlank { null },
+            description = lines.filterNot { it == ticketLine }.joinToString("\n") { it.text }.ifBlank { null },
             eventType = eventType.name,
             eventDate = date,
             startTime = start,
@@ -80,24 +81,86 @@ class KarakasCalendarScraper {
             endTime = end,
             sourceUrl = pageUrl,
             sourceId = "${EventSource.KARAKAS.sourceIdPrefix}$id",
-            ticketUrl = ticketLine?.let { TICKET_LINE.find(it)?.groupValues?.get(1) },
+            ticketUrl = ticketLine?.ticketUrl(),
             soldOut = cleanedTitle.soldOut
         )
     }
 
-    /** The non-blank lines of a Draft.js document, one per block. */
-    private fun draftLines(desc: String?): List<String> =
-        desc
-            ?.let { SCRAPER_JSON.readTree(it).path("blocks") }
-            ?.takeIf { it.isArray }
-            ?.toList()
+    /** The trimmed non-blank lines of a Draft.js document, each with the links whose range overlaps it. */
+    private fun draftLines(desc: String?): List<DraftLine> {
+        val doc = desc?.let { SCRAPER_JSON.readTree(it) } ?: return emptyList()
+        val entityMap = doc.path("entityMap")
+        return doc
+            .path("blocks")
+            .takeIf { it.isArray }
+            ?.flatMap { blockLines(it, entityMap) }
             .orEmpty()
-            .mapNotNull { it.stringOrNull("text")?.trim() }
+    }
+
+    // The block text is read untrimmed, because entity offsets count from its first character.
+    private fun blockLines(
+        block: JsonNode,
+        entityMap: JsonNode
+    ): List<DraftLine> {
+        val text = block.path("text").asString("")
+        val links = block.path("entityRanges").mapNotNull { linkRange(it, entityMap) }
+        return LINE
+            .findAll(text)
+            .mapNotNull { match ->
+                val line = match.value.trim()
+                if (line.isEmpty()) return@mapNotNull null
+                val start = match.range.first + match.value.indexOf(line)
+                val lineRange = start until start + line.length
+                DraftLine(
+                    text = line,
+                    links = links.filter { (range) -> range.overlaps(lineRange) }.map { (range, url) -> range.shift(-start) to url }
+                )
+            }.toList()
+    }
+
+    private fun linkRange(
+        range: JsonNode,
+        entityMap: JsonNode
+    ): Pair<IntRange, String>? {
+        val entity = entityMap.path(range.path("key").asString(""))
+        if (entity.stringOrNull("type") != "LINK") return null
+        val url = entity.path("data").stringOrNull("url")?.let(::lastUrl) ?: return null
+        val offset = range.path("offset").asInt(-1).takeIf { it >= 0 } ?: return null
+        val length = range.path("length").asInt(0).takeIf { it > 0 } ?: return null
+        return offset until offset + length to url
+    }
+
+    /** A line of a Draft.js block, with each LINK entity's range relative to the line. */
+    private data class DraftLine(
+        val text: String,
+        val links: List<Pair<IntRange, String>>
+    ) {
+        fun ticketUrl(): String? {
+            TICKET_LINE.find(text)?.let { return it.groupValues[1] }
+            val word =
+                TICKET_WORD
+                    .find(text)
+                    ?.groups
+                    ?.get(1)
+                    ?.range ?: return null
+            return links.firstOrNull { (range) -> range.overlaps(word) }?.second
+        }
+    }
 
     private companion object {
         const val CALENDAR_WIDGET = "componentName:'@widget/CALENDAR/bs-calendar'"
         const val PROPS_CALL = "props:JSON.parse("
         const val HOUSE_STREET = "Kurfürsten"
         val TICKET_LINE = Regex("""^\s*tickets?\b[^\p{L}\d]*(https?://\S+)\s*$""", RegexOption.IGNORE_CASE)
+        val TICKET_WORD = Regex("""^\s*(tickets?)\b""", RegexOption.IGNORE_CASE)
+        val LINE = Regex("""[^\n]+""")
+        val WHITESPACE = Regex("""\s+""")
+
+        // One entry reads `http:// https://…`; a whole-word split leaves a URL in a query parameter intact.
+        fun lastUrl(url: String): String = url.trim().split(WHITESPACE).last()
+
+        fun IntRange.overlaps(other: IntRange): Boolean = first <= other.last && other.first <= last
+
+        fun IntRange.shift(by: Int): IntRange = first + by..last + by
     }
 }
