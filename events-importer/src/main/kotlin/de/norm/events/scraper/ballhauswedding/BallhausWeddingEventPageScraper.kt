@@ -38,4 +38,7 @@ class BallhausWeddingEventPageScraper {
             status = if (event.status == EventStatus.SCHEDULED.name) node.schemaStatus() else event.status
         )
     }
+
+    /** Whether the page's `Event` is cancelled: a night the venue made anew keeps its first page, marked so. */
+    fun isCancelled(document: Document): Boolean = document.jsonLdEvents().firstOrNull()?.schemaStatus() == EventStatus.CANCELLED.name
 }
