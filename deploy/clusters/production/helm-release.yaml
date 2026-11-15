@@ -71,6 +71,12 @@ spec:
       eventClassification:
         enabled: true
         maxPerRun: 50
+      # Reads the stored flyers of music nights with no act at these sources, inside the 04:00 pass and its
+      # budget (ADR-059). A small cap first: #5052 widens the list by the accepted share of its suggestions.
+      flyerLineup:
+        enabled: true
+        sources: ["badehaus", "club-ost", "frannz-club", "maxxim", "m-bia", "slaughterhouse"]
+        maxPerRun: 5
       discogs:
         enabled: true
       # Drafts events from venue posts (ADR-048); the token is the hand-made Secret event-junkie-instagram.
