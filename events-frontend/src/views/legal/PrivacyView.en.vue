@@ -264,8 +264,10 @@ const { t } = useI18n()
         by machine, to find errors made during the import. An example is a wrong type of event, or a
         title stored as a performing artist. The result is only a suggestion, and I decide whether
         it is applied. The texts are sent to the same service provider as for translation (section
-        5). The legal basis is Art. 6 (1) (f) GDPR. The legitimate interest is correct information
-        about the events.
+        5). For a music night with no performing artist at some venues, the stored flyer image goes
+        as well, so that the line-up and the start time can be read from it. A flyer this site may
+        not show is not read. The legal basis is Art. 6 (1) (f) GDPR. The legitimate interest is
+        correct information about the events.
       </p>
       <p>
         <strong>If you are an artist</strong> and would like your name, or a description that names
@@ -298,10 +300,11 @@ const { t } = useI18n()
           Francisco, USA. An event's description is sent there so that it can be translated. For the
           check (section 4), its title and subtitle go as well. Where these texts name performing
           artists, those names go with them, and the names of the line-up and the venue are sent
-          explicitly as well, so that the translation leaves them unchanged. For events from
-          Instagram posts (section 4), the post's text and images go there, with the venue's name
-          and the post's date. Where a post names people, their names go with it, and an image can
-          show a person. Nothing else reaches this service: no log data, and nothing about you.
+          explicitly as well, so that the translation leaves them unchanged. For the check, an
+          event's flyer image can go as well, with its title and date. For events from Instagram
+          posts (section 4), the post's text and images go there, with the venue's name and the
+          post's date. Where a post names people, their names go with it, and an image can show a
+          person. Nothing else reaches this service: no log data, and nothing about you.
         </li>
       </ul>
       <p>

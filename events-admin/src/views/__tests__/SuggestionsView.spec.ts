@@ -174,6 +174,17 @@ describe('SuggestionsView', () => {
     )
   })
 
+  it('offers the flyer-lineup check in the filter and passes it on', async () => {
+    const wrapper = await mountView('/suggestions?check=flyer-lineup')
+    const options = wrapper
+      .findAll('#suggestions-check option')
+      .map((option) => option.attributes('value'))
+    expect(options).toEqual(['', 'event-classification', 'flyer-lineup'])
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+      '/api/admin/data-quality/suggestions?status=OPEN&page=0&size=20&checkName=flyer-lineup',
+    )
+  })
+
   it('says so when nothing is open, and shows a failed list plainly', async () => {
     const empty = await mountView()
     expect(empty.find('[data-testid="no-suggestions"]').exists()).toBe(true)

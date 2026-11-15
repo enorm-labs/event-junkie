@@ -288,9 +288,11 @@ const { t } = useI18n()
         Veranstaltung werden maschinell geprüft, um Fehler beim Import zu finden. Ein Beispiel ist
         eine falsche Veranstaltungsart oder ein Titel, der als Künstler*in gespeichert wurde. Das
         Ergebnis ist nur ein Vorschlag. Ob er übernommen wird, entscheide ich. Dafür werden diese
-        Texte an denselben Dienstleister übermittelt wie für die Übersetzung (Abschnitt 5).
-        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Das berechtigte Interesse sind richtige
-        Angaben zu den Veranstaltungen.
+        Texte an denselben Dienstleister übermittelt wie für die Übersetzung (Abschnitt 5). Für
+        einen Musikabend ohne Künstler*innen einiger Locations geht auch das gespeicherte Flyerbild
+        mit, damit das Line-up und die Startzeit daraus gelesen werden können. Ein Flyer, den diese
+        Seite nicht zeigen darf, wird nicht gelesen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO.
+        Das berechtigte Interesse sind richtige Angaben zu den Veranstaltungen.
       </p>
       <p>
         <strong>Wenn du Künstler*in bist</strong> und möchtest, dass dein Name oder eine
@@ -325,7 +327,8 @@ const { t } = useI18n()
           übermittelt, damit er übersetzt werden kann. Für die Prüfung (Abschnitt 4) gehen
           zusätzlich Titel und Untertitel mit. Nennen diese Texte Künstler*innen, werden diese Namen
           mit übermittelt; die Namen des Line-ups und der Location werden zusätzlich ausdrücklich
-          mitgesendet, damit die Übersetzung sie unverändert lässt. Für Veranstaltungen aus
+          mitgesendet, damit die Übersetzung sie unverändert lässt. Für die Prüfung kann auch das
+          Flyerbild einer Veranstaltung mitgehen, mit ihrem Titel und Datum. Für Veranstaltungen aus
           Instagram-Beiträgen (Abschnitt 4) gehen Text und Bilder des Beitrags dorthin, mit dem
           Namen der Location und dem Datum des Beitrags. Nennt ein Beitrag Personen, gehen ihre
           Namen mit, und ein Bild kann eine Person zeigen. Andere Daten erreichen diesen Dienst

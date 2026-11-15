@@ -289,6 +289,37 @@
           },
           "additionalProperties": false
         },
+        "flyerLineup": {
+          "type": "object",
+          "description": "The flyer-lineup data-quality check (#5048, ADR-059). Off by default. Runs inside the eventClassification pass and needs it enabled.",
+          "required": [
+            "enabled",
+            "sources",
+            "maxPerRun"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "false reads no flyer and sends no image to Anthropic."
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+              },
+              "uniqueItems": true,
+              "description": "Source slugs whose flyers are read. Empty reads none."
+            },
+            "maxPerRun": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "description": "Flyers one nightly pass reads."
+            }
+          },
+          "additionalProperties": false
+        },
         "instagram": {
           "type": "object",
           "description": "Event drafts from the Instagram posts of venues with no website (#3366, ADR-048). Off by default. Reads the Anthropic key from importer.anthropic.existingSecret.",

@@ -59,7 +59,7 @@ export interface ShowDatesResult {
 export type SuggestionPage = Page<Suggestion>
 
 /** The checks that write suggestions, for the filter. */
-export const SUGGESTION_CHECKS = ['event-classification'] as const
+export const SUGGESTION_CHECKS = ['event-classification', 'flyer-lineup'] as const
 
 export const SUGGESTION_PAGE_SIZE = 20
 

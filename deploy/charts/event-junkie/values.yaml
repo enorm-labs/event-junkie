@@ -190,6 +190,15 @@ importer:
     cron: "0 0 4 * * *"
     # Input plus output tokens per calendar month. At the limit every run stops before its next call.
     monthlyTokenBudget: 3000000
+  # importer.flyerLineup reads the stored flyer of a music night with no act and proposes its acts and
+  # start time (#5048, ADR-059). It runs inside the eventClassification pass and needs it enabled. Off by
+  # default: it sends event images to Anthropic.
+  flyerLineup:
+    enabled: false
+    # Source slugs whose flyers are read. Empty reads none.
+    sources: []
+    # Flyers one nightly pass reads.
+    maxPerRun: 20
   # importer.instagram drafts events from the Instagram posts of venues with no website (ADR-048,
   # #3366). Off by default: it reads Meta's Graph API and sends captions to Anthropic. The Anthropic key
   # comes from importer.anthropic.existingSecret, the Meta token from existingSecret below.

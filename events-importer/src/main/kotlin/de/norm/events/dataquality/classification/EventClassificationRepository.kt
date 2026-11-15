@@ -172,7 +172,10 @@ class EventClassificationRepository(
      * An OPEN one with the same field, value and stored value on another upcoming date of the show also skips it,
      * so the operator decides a show once (#4736). A date that holds another value gets its own suggestion.
      */
-    suspend fun insertUnlessOpen(suggestion: NewSuggestion): SuggestionInsert =
+    suspend fun insertUnlessOpen(
+        suggestion: NewSuggestion,
+        checkName: String = EventClassificationCheck.CHECK_NAME
+    ): SuggestionInsert =
         template.databaseClient
             .sql(
                 """
@@ -214,7 +217,7 @@ class EventClassificationRepository(
             .bind("proposedValue", suggestion.proposedValue)
             .bind("evidence", suggestion.evidence)
             .bind("confidence", suggestion.confidence)
-            .bind("checkName", EventClassificationCheck.CHECK_NAME)
+            .bind("checkName", checkName)
             .bindNullable("model", suggestion.model)
             .map { row, _ ->
                 when {
