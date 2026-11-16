@@ -147,14 +147,9 @@ useful — a problem concentrated at one venue usually points at that importer. 
 ### 4. Event type & genre correctness
 
 - `—` — `event_type` / `status` / `event_artist.role` values outside the valid enum sets above.
-- `GENRE` — `genre_tag.name` values that aren't really genres (event-format labels, series names, freeform fragments) that leaked past `GenreNormalizer`'s stop-list —
-  cross-check against the `NON_GENRE_TOKENS` stop-list's intent.
-- `GENRE` — Genre tags that are near-duplicates of each other (`Drum & Bass` vs `Drum and Bass` vs `DnB`). The common shape is a hyphen or space
-  variant: `Dream-Pop`/`Dreampop`, `Top 40`/`Top40`, `Lo Fi`/`Lofi`, `Street-Punk`/`Streetpunk`. The fix is a `GENRE_SYNONYMS` entry plus a fold
-  migration that moves the links onto the canonical tag, as V233 and V242 do.
-- `GENRE` — Tags with `family IS NULL` (V022), ranked by event count. The genre filter shows such a tag in no family. `GenreFamilyReconciler` rewrites
-  the column from `GenreFamilies.kt` on every importer start and logs the tags it leaves without one. Most are not genres (`Art Workshop`,
-  `Kneipenquiz`, `Musical`, `Panel`, `DJ Sets`). Each one becomes a `NON_GENRE_TOKENS` entry in `GenreNormalizer.kt` or a `GENRE_FAMILIES` entry.
+- `GENRE` — Tags that are not genres, spelling variants of another tag, and tags with no family. **[`/genre-cleanup`](genre-cleanup.prompt.md) owns
+  these**: it flags, judges and fixes them monthly. Do not judge them again here. Report the date and the count per flag of the newest
+  `temp/genre-cleanup-<env>-*.json`. A file older than 31 days is a finding: the monthly sweep has stopped.
 - `GENRE` — Mismatch between raw `event.genre` text and the linked `event_genre_tag` rows (raw genre present but no tags extracted, or tags present that don't relate to
   the raw text).
 - `EVENT_TYPE` — Type heuristic sanity: titles containing `Quiz`/`Karaoke`/`Party` mapped to a surprising `event_type`, or festivals (multi-day, `Festival` in title) typed as

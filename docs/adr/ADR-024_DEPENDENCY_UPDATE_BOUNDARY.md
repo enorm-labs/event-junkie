@@ -109,7 +109,8 @@ Empty output means the bump is complete. Any output is what the string edit coul
 - **Twelve dependencies that nothing watched are now watched.** They are Flux, cert-manager, the observability stack, the DNS-01 webhook, three cluster
   images, gitleaks and the Gradle wrapper. `cert-manager` is grouped across both clusters, and the observability charts as a set. A merge therefore cannot
   leave staging and production on different versions.
-- **`/update-dependencies` Step 13 no longer sweeps.** It became a review checklist of what a person must check and Renovate cannot know. ADR-015's footprint
+- **`/update-dependencies` no longer sweeps cluster components.** Its appendix, _Reviewing a Renovate pull request against a cluster component_, is a
+  review checklist of what a person must check and Renovate cannot know. ADR-015's footprint
   measurement is pinned to OpenObserve 0.92.2. The `ZO_*` defaults move between releases. Digest-pinned images need the tag and the digest moved together. A
   Flux upgrade needs the Pod Security Admission re-check.
 - **Every Renovate pull request needs a human.** With no automerge, the review is the control. For Flux that review is not a diff read. It is the export diff
