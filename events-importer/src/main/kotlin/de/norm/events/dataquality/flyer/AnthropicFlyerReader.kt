@@ -29,10 +29,10 @@ sealed interface FlyerReadResult {
         override val usage: TokenUsage
     ) : FlyerReadResult
 
-    /** The model answered, and the answer failed a check or was a refusal. Asking again gives the same answer, unless it was [notJson]. */
+    /** The model answered, and the answer failed a check or was a refusal. Asking again gives the same answer, unless it was not JSON. */
     data class Rejected(
         override val usage: TokenUsage,
-        val notJson: Boolean = false
+        val reason: FlyerRejection
     ) : FlyerReadResult
 
     /** No answer came back: the call failed, or there is no key. The event stays a candidate. */
@@ -87,12 +87,15 @@ class AnthropicFlyerReader(
     ): FlyerReadResult {
         val usage = TokenUsage(reply.promptTokens, reply.completionTokens)
         if (reply.refused) logger.warn { "The model declined to read a flyer" }
-        val text = reply.text ?: return FlyerReadResult.Rejected(usage)
+        val text = reply.text ?: return FlyerReadResult.Rejected(usage, if (reply.refused) FlyerRejection.REFUSED else FlyerRejection.NO_TEXT)
         return try {
-            FlyerAnswerValidator.parse(text, input.eventDate)?.let { FlyerReadResult.Answered(it, usage) } ?: FlyerReadResult.Rejected(usage)
+            when (val verdict = FlyerAnswerValidator.parse(text, input.eventDate)) {
+                is FlyerVerdict.Accepted -> FlyerReadResult.Answered(verdict.answer, usage)
+                is FlyerVerdict.Rejected -> FlyerReadResult.Rejected(usage, verdict.reason)
+            }
         } catch (e: UnparseableAnswer) {
             logger.warn(e) { "The flyer answer is not JSON: ${e.unparseable}" }
-            FlyerReadResult.Rejected(usage, notJson = true)
+            FlyerReadResult.Rejected(usage, FlyerRejection.NOT_JSON)
         }
     }
 
