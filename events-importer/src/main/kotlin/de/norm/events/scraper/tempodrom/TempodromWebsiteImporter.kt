@@ -17,9 +17,10 @@ import org.springframework.stereotype.Component
  * HTML fetch whose *payload* is structured data, parsed by [TempodromOverviewPageScraper]. The
  * JSON-LD names no organizer, and every event page credits one under "Veranstalter", so each
  * event's page is read for its promoter ([TempodromDetailPageScraper], #2711), and for the comedy a
- * fallback night's blurb names (#3380), for the band a tribute night's blurb names (#3828), and for the first show a run's
- * schedule lists (#4821). That costs one GET per event and stops the listing's `Last-Modified` 304 skipping a run: a promoter can change on a
- * page while the listing stays the same. A failed page flags the row, and the upsert keeps the stored promoter.
+ * fallback night's blurb names (#3380), for the band a tribute night's blurb names (#3828), for the act a production's
+ * tagline features (#5193), and for the first show a run's schedule lists (#4821). That costs one GET per event and stops
+ * the listing's `Last-Modified` 304 skipping a run: a promoter can change on a page while the listing stays the same.
+ * A failed page flags the row, and the upsert keeps the stored promoter.
  *
  * @see TempodromOverviewPageScraper for the JSON-LD parsing logic.
  * @see TempodromDetailPageScraper for the promoter credit, the comedy cue and a run's schedule.
@@ -56,8 +57,8 @@ val TEMPODROM_LIMITATIONS =
         ),
         AcceptedLimitation(
             LimitedAspect.DESCRIPTION,
-            "the detail page's `Beschreibung` region is read only to classify a comedy night, name a tribute band and find a run's first show, " +
-                "and is never stored",
-            verified = "2026-11-10"
+            "the detail page's `Beschreibung` region is read only to classify a comedy night, name a tribute band or a featured act " +
+                "and find a run's first show, and is never stored",
+            verified = "2026-11-16"
         )
     )

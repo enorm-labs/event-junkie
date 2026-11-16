@@ -311,6 +311,55 @@ class TempodromDetailPageScraperTest {
         event.artists.map { it.name } shouldBe listOf("The 4 Brothers & Sister's Special Guest Band")
     }
 
+    private val elvisRow =
+        listingRow.copy(
+            title = "The Elvis Story",
+            subtitle = "Ersatztermin vom 17.11.2026 | Rocking & Symphonic",
+            eventDate = LocalDate.of(2027, 5, 31),
+            sourceUrl = "https://www.tempodrom.de/event/the_elvis_story_2027-05-31_20/",
+            sourceId = "tempodrom:the_elvis_story_2027-05-31_20",
+            artists = listOf(ScrapedArtist("The Elvis Story", ArtistRole.HEADLINER))
+        )
+
+    @Test
+    fun `bills the act a production's tagline features instead of its title`() {
+        // Both Elvis Story nights print this tagline under the title (#5193).
+        val blurb =
+            "<strong>The Elvis Story</strong><br>Memphis – Las Vegas – Hawaii - Rocking &amp; Symphonic - " +
+                "Featuring BOB DAWN &amp; Band - Neue Philharmonie Frankfurt<p>Seit über 20 Jahren trifft Sänger und Frontmann Bob Dawn …"
+
+        val event = scraper.enrich(elvisRow, descriptionPage(blurb))
+
+        event.artists shouldBe listOf(ScrapedArtist("Bob Dawn", ArtistRole.HEADLINER))
+        event.title shouldBe "The Elvis Story"
+    }
+
+    @Test
+    fun `keeps two acts in capitals joined by an ampersand as one featured act`() {
+        val event = scraper.addFeaturedAct(elvisRow, descriptionPage("Die Show - Featuring SIMON &amp; GARFUNKEL - Live"))
+
+        event.artists.map { it.name } shouldBe listOf("Simon & Garfunkel")
+    }
+
+    @Test
+    fun `reads no featured act from running prose or a tagline in capitals`() {
+        // The 3A Ka3ba and Red Forest pages, the only other two of 153 that say "featuring" (#5193).
+        listOf(
+            "Enjoy the 3a Kaaba Comedy Show, featuring Fouad Yammine, Anthony Hamawi, Tony Dagher, and Jad Bou Karam.",
+            "kommt „RED FOREST - A MULTIMEDIA POEM FEATURING LISA GERRARD“ am 11. September 2027",
+            "Rocking &amp; Symphonic - Featuring Special Guests"
+        ).forEach { blurb ->
+            scraper.addFeaturedAct(elvisRow, descriptionPage(blurb)) shouldBeSameInstanceAs elvisRow
+        }
+    }
+
+    @Test
+    fun `keeps a listing that bills an act other than the title`() {
+        val row = elvisRow.copy(artists = listOf(ScrapedArtist("Bob Dawn", ArtistRole.HEADLINER), ScrapedArtist("Elvis Band", ArtistRole.SUPPORT)))
+
+        scraper.addFeaturedAct(row, descriptionPage("Rocking - Featuring BOB DAWN &amp; Band")) shouldBeSameInstanceAs row
+    }
+
     @Test
     fun `starts a run at the first show its schedule table lists on the run's first day`() {
         // Roncalli's table: `Do. | 17.12.2026 | 18:00 Uhr` (#4821).
