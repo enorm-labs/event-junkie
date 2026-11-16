@@ -1,7 +1,7 @@
 # Security Report
 
 Pull the project's current dependency-vulnerability position into one prioritized report: the latest **OWASP Dependency-Check** findings and **GitHub's
-Dependabot alerts**, plus **`npm audit`** on the two npm apps, reconciled against each other and against what we have already triaged. This is a **read-only investigation** — inspect and report, never
+Dependabot alerts**, plus **`npm audit`** on the three npm lockfiles, reconciled against each other and against what we have already triaged. This is a **read-only investigation** — inspect and report, never
 mutate. Propose fixes; do not apply them unless the user explicitly asks.
 
 **To act on what this finds, use [`/security-triage`](security-triage.prompt.md)** — the mutating counterpart, which fixes what is cheap, files what is not, and
@@ -34,7 +34,9 @@ Three failure modes have all actually occurred in this repo. Check for each befo
 
 1. **`Dependencies Scanned: 0`.** In August 2026 the scan reported zero findings for months because `scanProjects` was configured with project _names_ while the
    plugin matches project _paths_ — every project was skipped and the CVSS gate passed trivially. **Always read `Dependencies Scanned` out of the HTML report
-   first.** If it is 0, the scan is broken: report that as the finding and stop. Do not report "no vulnerabilities found".
+   first.** If it is 0, the scan is broken: report that as the finding and stop. Do not report "no vulnerabilities found". `build-backend.yml` and
+   `dependency-check-scheduled.yml` gate on it with `scripts/scan-coverage.sh owasp`, so a red coverage step is this case. A report read outside those
+   workflows still needs the check.
 2. **A skipped upload that looks like a pass.** Both workflows guard their report uploads with `hashFiles('<path>') != ''`. If the plugin's output path changes
    (it did in Dependency-Check 13.0.0), the guard matches nothing, the step is silently skipped, and the job stays green while findings stop reaching Code
    Scanning. Confirm the upload steps _ran_.
@@ -98,14 +100,15 @@ submission**
 - Alerts can be **stale in both directions**: an alert may name a version already upgraded on `main`, and a fresh local change is invisible until the next
   submission. Always compare an alert's `first_patched_version` against the _currently resolved_ version before reporting it as outstanding.
 
-## Step 2b — Run `npm audit` on both npm apps
+## Step 2b — Run `npm audit` on every npm lockfile
 
-`events-frontend/` and `events-admin/` each have a lockfile. `npm audit` reads it against the GitHub Advisory Database directly, so it sees an advisory the
-day it is published. Dependabot can take days to raise the same advisory as an alert.
+`events-frontend/`, `events-admin/` and `perf/lighthouse/` each have a lockfile, and `dependabot.yml` covers all three. `perf/lighthouse/` is the
+Lighthouse CLI that `lighthouse.yml` runs: CI tooling, so every finding there is a tooling finding, whatever `--omit=dev` says. `npm audit` reads a
+lockfile against the GitHub Advisory Database directly, so it sees an advisory the day it is published. Dependabot can take days to raise the same advisory as an alert.
 
 ```bash
-for d in events-frontend events-admin; do
-  (cd "$d" && npm audit --omit=dev; npm audit --json) > "<SCRATCH>/npm-audit-$d.txt" 2>&1
+for d in events-frontend events-admin perf/lighthouse; do
+  (cd "$d" && npm audit --omit=dev; npm audit --json) > "<SCRATCH>/npm-audit-${d//\//-}.txt" 2>&1
 done
 ```
 

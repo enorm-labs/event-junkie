@@ -18,6 +18,8 @@ understand the position; use this one to change it.
       rather than a fact. A wrong dismissal is invisible — nobody re-reads a dismissed alert — which is exactly why it needs a higher bar than a wrong fix.
 - **Dismissing an alert is not the same as passing the gate.** For two of the three tools the alert and the gate are separate systems; see below. Dismissing the
   alert and declaring victory leaves the nightly scan red.
+- **Fix in a worktree of your own, cut from `origin/main`**, never in the main checkout (AGENTS.md § Agent Instructions):
+  `git fetch origin && git worktree add ../event-junkie-<slug> -b fix/<slug> origin/main`. A lockfile edit in the main checkout lands on another session's branch.
 - `gh` needs the alerts scope. `gh api …/dependabot/alerts` returning `403` and returning `[]` look identical if you only check the length —
   `gh auth refresh -s security_events` if you see one.
 - Run `git` and `gh` non-interactively (`git --no-pager …`); see AGENTS.md.
@@ -193,7 +195,7 @@ gh api "repos/enorm-labs/event-junkie/code-scanning/alerts?state=open&per_page=1
         (.most_recent_instance.location.path // "-")] | @tsv'
 ```
 
-Then `npm audit` in `events-frontend/` and `events-admin/`, by [`/security-report` § Step 2b](security-report.prompt.md#step-2b--run-npm-audit-on-both-npm-apps).
+Then `npm audit` in `events-frontend/`, `events-admin/` and `perf/lighthouse/` (CI tooling only), by [`/security-report` § Step 2b](security-report.prompt.md#step-2b--run-npm-audit-on-every-npm-lockfile).
 It finds an advisory before Dependabot raises an alert for it, so the alert list alone is behind.
 
 Normalise before deciding: **Dependency-Check duplicates heavily** (one CVE per matching artifact — group by CVE/GHSA) and **its paths are Gradle cache paths,

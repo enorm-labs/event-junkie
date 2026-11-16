@@ -13,7 +13,8 @@ Usage: `/add-venue <name> [<url>]…`, one venue or a batch of about 25.
   page may be the programme link; find its URL in a search snippet or let the operator read it in a browser. A 403 or a `robots.txt` refusal on the venue's
   own site is an answer, not an obstacle.
 - **No event source, no import request.** A venue with a source is an imported venue, and that is `/scaffold-importer`.
-- This skill writes a branch and a pull request. Rows reach a cluster only through `## After deploy`.
+- This skill writes a branch and a pull request, in a worktree of its own cut from `origin/main`, never in the main checkout:
+  `git fetch origin && git worktree add ../event-junkie-venues-<slug> -b feat/venues-<slug> origin/main`. Rows reach a cluster only through `## After deploy`.
 
 ## Scope
 
@@ -58,13 +59,17 @@ A borderline case is a question for the operator, not a call to make.
    `docs/venue-images/REVIEWED.tsv` row for the operator to mark `CONFIRMED`; `scripts/venue-images.py` writes it after the deploy. No photo is fine: the
    card draws a poster.
 
+    **Character tags, optional** (#2379): `queer`, `diy-collective`, `awareness-team` and the rest of `TAGS` in `scripts/venue-character-tags.py`. Only a
+    tag the venue states in its own words. Propose it as a `docs/venue-character-tags/PROPOSED.tsv` row with the page and the sentence, and `verified`
+    empty: the operator sets `yes` after reading the page.
+
 5. **Description**, English and German, one sentence each. Read the venue's About or history page and its Wikipedia articles **for facts only**, then
    write our own prose: the venue's text is copyrighted (#808) and Wikipedia's is CC BY-SA, so no sentence is copied or closely paraphrased. The style
    is `/scaffold-importer` § 6: open with what sets the venue apart, name its formats plainly, no hedged tail. Keep each fact's source URL for the
    operator.
 
 6. **Show the operator one table and stop.** Name, address, postal code, district, coordinates, types, programme link, social links, the evidence it is open, and a
-   photo candidate if any, and the two descriptions. Mark every cell you are unsure of. Write nothing until the operator confirms or corrects each row.
+   photo candidate and character tags if any, and the two descriptions. Mark every cell you are unsure of. Write nothing until the operator confirms or corrects each row.
 
 7. **Write the confirmed venues**, each as its own file `http/importer/seed/venues/<venue-slug>.json` (#2824). The file name is the slug
    `SlugGenerator` makes from the name (`Café Köpenick` → `cafe-kopenick.json`); `SeedVenueFilesTest` fails on a wrong one, and
@@ -107,7 +112,8 @@ A borderline case is a question for the operator, not a call to make.
     - [ ] both: run `scripts/seed-sources.py --host <forwarded importer> --apply --yes` and check the new venues answer `"imported": false`
     ```
 
-    And one line per confirmed photo: `- [ ] both: run scripts/venue-images.py --venue "<Name>" --apply`.
+    And one line per confirmed photo: `- [ ] both: run scripts/venue-images.py --venue "<Name>" --apply`. When a row in
+    `docs/venue-character-tags/PROPOSED.tsv` is verified: `- [ ] both: run scripts/venue-character-tags.py --host <forwarded importer> --apply --yes`.
 
 ## Notes
 

@@ -14,7 +14,10 @@ and the privacy rules before it is shown.
 - **The privacy rules filter the list. They are not a footnote.** Read AGENTS.md § Privacy & GDPR first. An idea that stores something on the visitor's
   device, loads a third-party resource, makes an outbound call from the browser, or adds personal data is **a decision, not a feature**. Show it as one.
 - **Respect what the project already ruled out.** Do not propose scraping Resident Advisor (its terms forbid automated access, #356), tracking, or an
-  embedded third-party player. Accounts, follows and notifications are Phase 3 (#398). Propose them only as an account-free slice.
+  embedded third-party player.
+- **Accounts exist** (`events-bff/.../account/`: sign-in, follows, notifications). An account-bound idea is allowed. It is still a privacy decision: name its legal
+  basis, retention and deletion route (AGENTS.md § Privacy & GDPR), and the deployed-system suites it touches (`fixtures/accounts.sql`,
+  `scripts/account-isolation.sh`; AGENTS.md § Deployed-system suites).
 - If the user named a constraint — "simple", "frontend only", "for the roadmap" — that is the filter. Honour it.
 
 ## Steps
@@ -54,12 +57,11 @@ and the privacy rules before it is shown.
     4. Classify it against AGENTS.md § Privacy & GDPR: none, or the category it falls in.
     5. Estimate the size with the backlog's scale: `size:S` under half a day, `size:M` one to two days, `size:L` about a week.
 
-    An overlap with an open issue keeps the idea only when it is a clearly separable slice, such as the account-free half of an account-bound issue. Name the
-    issue it overlaps.
+    An overlap with an open issue keeps the idea only when it is a clearly separable slice of that issue. Name the issue it overlaps.
 
 5. **Report.** Group the survivors. Show five ideas at most per group, best first:
 
-    1. **Quick wins**: no accounts, no device storage, no new data source.
+    1. **Quick wins**: no new account data, no device storage, no new data source.
     2. **Event and venue pages**
     3. **Reach and site level**
     4. **Roadmap and vision**: bigger bets and decisions

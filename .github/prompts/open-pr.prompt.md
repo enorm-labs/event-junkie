@@ -53,6 +53,7 @@ This is the standard "ship it" flow — the manual equivalent of
       update is a follow-up, file it with [`/new-issue`](new-issue.prompt.md) first and link it here.
     - `## Contributor Licence Agreement`: delete it. The section is for a contributor from a fork; the maintainer's own PRs, and an agent's working for
       the maintainer, do not carry it.
+    - `## Accessibility`: for a change under `events-frontend/`, tick the box when it holds, or say what does not and why. Delete it otherwise.
     - **If the change closes an issue, put `Closes #<n>` in the PR body** — on its own line, near the top of `## What and why`. This repo allows only
       **Rebase and merge** (squash and merge commits are both disabled), so a closing keyword in a commit message would work too — but the PR body is one line
       to fix when the number changes, whereas a commit means rewriting history, and it survives the amending a branch goes through during review. Use `Closes`
