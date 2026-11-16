@@ -49,7 +49,12 @@ no candidates to judge, and `apply` never writes it. Run `collect` again later f
 
 ## Step 2 — Judge each row
 
-Read the `.json`. For each artist, set `decision` and, for `PROPOSE`, `mbid`:
+**Reuse the earlier verdicts first.** The script does not: every collect writes empty `decision` and `mbid` columns. Read the newest earlier file
+(`ls -t temp/musicbrainz-review-<env>-*.tsv`) and match its rows by `artist_id`. A row whose `candidates` and `events` columns are unchanged keeps its
+decision, `mbid` and reason. Judge only the new rows and the changed ones. Most rows repeat from one run to the next. An earlier `PROPOSE` still listed
+was not applied or was refused: ask before you propose it again. [`/admin-review`](admin-review.prompt.md) Step 5 carries the decisions the same way.
+
+Read the `.json`. For each remaining artist, set `decision` and, for `PROPOSE`, `mbid`:
 
 | Decision  | When                                                                                                                                  |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------- |

@@ -1,7 +1,8 @@
 # Admin Review
 
-Work through the five review pages of the admin app with the operator: the worklist, the suggested fixes, the Instagram drafts, the artists to review
-and the venues to review. Give every open item one recommended action and the evidence for it. Write one report, then stop. Apply only the numbers the
+Work through five review pages of the admin app with the operator: the worklist, the suggested fixes, the Instagram drafts, the artists to review
+and the venues to review. The app's other pages are not review queues here: the Reports queue belongs to [`/fix-events`](fix-events.prompt.md), and
+Sources, Events, Picks, Venues, Manual venues and Festivals are for editing. Give every open item one recommended action and the evidence for it. Write one report, then stop. Apply only the numbers the
 operator names. [`/daily-check`](daily-check.prompt.md) runs this in its Step 5. It also runs alone.
 
 ## Important
@@ -71,7 +72,7 @@ admin app's "Suggested fixes" page, because the app builds the feature set. `art
 
 ## Step 4 — Instagram drafts
 
-The daily pass (04:30 UTC, ADR-048) drafts events from venue posts. While `importer.instagram.enabled` is off, skip this step and say so. One night is one venue and one date, and approve and reject judge the whole night.
+The daily pass (04:30 UTC, ADR-048) drafts events from venue posts. While `app.instagram.enabled` is off, skip this step and say so. One night is one venue and one date, and approve and reject judge the whole night.
 Confirm the pass ran:
 
 ```sh

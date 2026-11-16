@@ -8,6 +8,8 @@ Give the promoters with upcoming events a website, an Instagram link and a descr
 ## Important
 
 - **Writes nothing to a cluster.** It writes the table and opens a pull request. The admin API is read only, through `scripts/enrichment-coverage.py`.
+- **Edit the table in a worktree of your own**, cut from `origin/main` (`git worktree add ../event-junkie-<slug> -b fix/<slug> origin/main`), never
+  in the main checkout (AGENTS.md).
 - **WebSearch stops after about 200 calls per session, and subagents share the count.** Take at most 35 rows per run, at most 4 searches each. When a
   search fails for the budget, stop and record the rest as not searched. WebFetch has no such limit, so fetch a domain you can guess before you search.
 - **Never fetch `instagram.com`, `facebook.com` (#356) or `ra.co`.** Read a profile link from the promoter's own site. Never open `lauschangriff-berlin.de`:
@@ -40,16 +42,20 @@ changes in `REVIEWED.tsv`.
 
 One verdict per row, with the evidence in a few words:
 
-| Verdict | Holds when                                                                                                                    |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| high    | You fetched the site. It names the promoter, and it fits the act, the genre or the venue our events list                      |
-| medium  | A likely site with some doubt: another company's site, a name that only half matches, no Berlin show on it                    |
-| low     | Nothing found, or only a listing (Eventbrite, Bandsintown, a ticket shop, a venue page)                                       |
-| other   | Not a promoter: a band billed as its own promoter, a magazine, a party series, a parser fragment. Record its `kind`, and stop |
+| Verdict | Holds when                                                                                                                            |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| high    | You fetched the site. It names the promoter, and it fits the act, the genre or the venue our events list                              |
+| medium  | A likely site with some doubt: another company's site, a name that only half matches, no Berlin show on it                            |
+| low     | Nothing found, or only a listing (Eventbrite, Bandsintown, a ticket shop, a venue page)                                               |
+| other   | Not a business with a site to find: an act billed as its own promoter, a night's name, a parser fragment. Record its `kind`, and stop |
 
-**Record the `kind` on every row you write** (#5080): `promoter` for a business that books other acts, `collective` for DJs who host
-their own nights, `label` for a record label. A collective or a label is enriched like a promoter: it gets a site, an Instagram link and
-a description. [`docs/promoters/README.md`](../../docs/promoters/README.md) gives the order to decide the kind in.
+**Record the `kind` on every row you write** (#5080). It is one of the `PromoterKind` slugs — `promoter`, `collective`, `label`, `party`, `media`,
+`artist`, `sponsor`, `venue` — or `junk` (a fragment a scraper put in the slot) or `unverified` (a single credit nothing else names), which leave the
+stored kind as it is. [`docs/promoters/README.md`](../../docs/promoters/README.md) defines each one. Decide in its order: a row that releases music is a
+`label`, DJs who play their own nights are a `collective`, a row that names a night is a `party`, a business that books other people's acts is a
+`promoter`. A collective plays, a promoter books. The promoter page shows the kind of a collective, a label and a party. A collective or a label is
+enriched like a promoter: a site, an Instagram link and a description. A `media`, `venue` or `sponsor` row gets its site and a shorter description. A
+`party`, `artist` or `junk` row is `other`: it is read from its events and its venue, not from a site.
 
 An Instagram link counts only when the promoter's own site links it. An About page on that site is where a description comes from. Up to four subagents
 may split the rows. Give each the rules in [Important](#important), and tell them the budget is shared.
@@ -58,7 +64,8 @@ may split the rows. Give each the rules in [Important](#important), and tell the
 
 - **Fetch every high site yourself.** A subagent's "high" was wrong three times in the first scan: an orchestra's site given to its agency, a profile
   linked only from a venue, a link meant for a misspelt row.
-- **Look for the right row first.** Grep `PromoterNormalizer.kt` and the `V0*__merge_*promoter*.sql` migrations for the name. A misspelt credit can have a
+- **Look for the right row first.** Grep `PromoterNormalizer.kt` and every promoter migration for the name:
+  `ls events-importer/src/main/resources/db/migration | grep -i promoter` lists the merges, splits, folds, repairs and renames. A misspelt credit can have a
   correct row beside it (`punkfimfest` → `punkfilmfest-berlin`). The link goes on the correct row, and the misspelt one is an `/artist-cleanup` MERGE.
 
 ## Step 4 — Write the table

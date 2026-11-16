@@ -58,9 +58,10 @@ title/name, venue) so findings are verifiable — never report a bare number.
 
 ## Reference: schema & enums
 
-Tables (all in schema `events`): `venue`, `artist`, `promoter`, `event`, `event_source`,
-`event_artist` (join, role + billing_order), `event_promoter` (join), `genre_tag`,
-`event_genre_tag` (join). Full DDL: `events-importer/src/main/resources/db/migration/V001__create_initial_schema.sql`.
+The current DDL is [`docs/architecture/schema.sql`](../../docs/architecture/schema.sql), dumped from a database migrated to the newest version under
+`events-importer/src/main/resources/db/migration/`. [`docs/DATA_MODEL.md`](../../docs/DATA_MODEL.md) explains how the tables relate. The audit mostly reads
+`event`, `venue`, `event_source`, `artist`, `promoter`, `genre_tag`, the joins `event_artist` (role, billing_order), `event_promoter` and
+`event_genre_tag`, and beside them `festival`, `event_feature`, `event_quality_flag` and `artist_slug_alias` (the old slug of a merged artist).
 
 Valid enum values (stored as `TEXT`; anything else is a bug — parsers fall back on unknowns):
 
@@ -136,8 +137,11 @@ useful — a problem concentrated at one venue usually points at that importer. 
     WHERE slug <> regexp_replace(regexp_replace(replace(translate(lower(name), 'äöü', 'aou'), 'ß', 'ss'), '[^a-z0-9]+', '-', 'g'), '(^-|-$)', '', 'g');
     ```
 
-- `PROMOTERS` — Coverage, as numbers rather than findings: rows with a `website_url`, rows with a `description`, rows with `reviewed_at`, out of the total.
-  A drop against the last audit means a merge or a re-mint lost something.
+- `PROMOTERS` — Coverage, as numbers rather than findings: rows with a `website_url`, rows with a `description`, rows with `reviewed_at`, rows with a
+  `kind`, out of the total. A drop against the last audit means a merge or a re-mint lost something.
+- `PROMOTERS` — Promoters on an upcoming event with `kind IS NULL` (V251). The values are the `PromoterKind` slugs: `promoter`, `collective`, `label`,
+  `party`, `media`, `artist`, `sponsor`, `venue`. NULL means nobody decided. Report the count and the slugs with their event counts. Do not guess a kind:
+  a person decides it in `docs/promoters/REVIEWED.tsv`, and `scripts/promoter-websites.py` writes it ([README](../../docs/promoters/README.md)).
 - `—` — Suspiciously short (1–2 char) or suspiciously long name values in any of `artist`, `promoter`, `venue`, `genre_tag`.
 
 ### 4. Event type & genre correctness
@@ -145,7 +149,12 @@ useful — a problem concentrated at one venue usually points at that importer. 
 - `—` — `event_type` / `status` / `event_artist.role` values outside the valid enum sets above.
 - `GENRE` — `genre_tag.name` values that aren't really genres (event-format labels, series names, freeform fragments) that leaked past `GenreNormalizer`'s stop-list —
   cross-check against the `NON_GENRE_TOKENS` stop-list's intent.
-- `GENRE` — Genre tags that are near-duplicates of each other (`Drum & Bass` vs `Drum and Bass` vs `DnB`).
+- `GENRE` — Genre tags that are near-duplicates of each other (`Drum & Bass` vs `Drum and Bass` vs `DnB`). The common shape is a hyphen or space
+  variant: `Dream-Pop`/`Dreampop`, `Top 40`/`Top40`, `Lo Fi`/`Lofi`, `Street-Punk`/`Streetpunk`. The fix is a `GENRE_SYNONYMS` entry plus a fold
+  migration that moves the links onto the canonical tag, as V233 and V242 do.
+- `GENRE` — Tags with `family IS NULL` (V022), ranked by event count. The genre filter shows such a tag in no family. `GenreFamilyReconciler` rewrites
+  the column from `GenreFamilies.kt` on every importer start and logs the tags it leaves without one. Most are not genres (`Art Workshop`,
+  `Kneipenquiz`, `Musical`, `Panel`, `DJ Sets`). Each one becomes a `NON_GENRE_TOKENS` entry in `GenreNormalizer.kt` or a `GENRE_FAMILIES` entry.
 - `GENRE` — Mismatch between raw `event.genre` text and the linked `event_genre_tag` rows (raw genre present but no tags extracted, or tags present that don't relate to
   the raw text).
 - `EVENT_TYPE` — Type heuristic sanity: titles containing `Quiz`/`Karaoke`/`Party` mapped to a surprising `event_type`, or festivals (multi-day, `Festival` in title) typed as

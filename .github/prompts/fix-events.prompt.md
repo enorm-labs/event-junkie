@@ -119,8 +119,9 @@ Prefer the narrowest place that fixes the cause. Admiralspalast's KDoc says why 
 same.
 
 Then **list what else the change touches**, before you write it: the venue's other upcoming events
-(`curl -s "https://event-junkie.de/api/events?venue=<venue-slug>&size=200"`, whose rows carry `artistNames`), and for a shared helper, the same shape
-at other venues. Name each event whose value changes, and say whether the change is right. A fix for one ballet changed four others on 2026-10-27; the
+(`curl -s "https://event-junkie.de/api/events?venue=<venue-slug>&from=<today>&to=<date>&size=100&page=<n>"`, whose rows carry `artistNames`), and for a
+shared helper, the same shape at other venues. The BFF caps a page at 100 rows and answers a larger `size` with 100, so page until
+`page + 1 >= totalPages`. Without `from` and `to` the venue filter reads only a short default window. Name each event whose value changes, and say whether the change is right. A fix for one ballet changed four others on 2026-10-27; the
 PR said so.
 
 ## Step 4 — Fix it in a worktree
