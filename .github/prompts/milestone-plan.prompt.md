@@ -3,7 +3,7 @@
 Take a whole milestone from "a list of open issues" to "a plan you can work": correct the issues that have gone stale, decide which ones belong in it at all,
 and put the survivors in an order. The milestone-scale counterpart to [`/next-issue`](next-issue.prompt.md), which answers the same question for one issue.
 
-Usage: `/milestone-plan v0.3 — Launch-ready`
+Usage: `/milestone-plan 1.0.0 — Out of beta`
 
 ## Important
 

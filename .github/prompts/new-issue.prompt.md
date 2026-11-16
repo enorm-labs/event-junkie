@@ -35,6 +35,16 @@ milestone and board fields.
     | `7-decision.yml` ⚖️        | A choice that has to be made before work can start. Gets `needs-decision`.                                                                                              |
     | `8-epic.yml` 🧭            | A theme large enough to hold sub-issues.                                                                                                                                |
 
+    Forms 1–3 are for visitors, and a visitor's issue arrives through them already labelled. Read its labels before you add more:
+
+    | Form                        | For                                       | Applies                                   |
+    | --------------------------- | ----------------------------------------- | ----------------------------------------- |
+    | `1-wrong-event-data.yml` 📅 | An event that is wrong, stale or missing  | type `Bug`, `bug`, `importer`             |
+    | `2-bug.yml` 🐛              | A page, a filter or an endpoint is broken | type `Bug`, `bug`                         |
+    | `3-new-venue.yml` 🎪        | A venue to import                         | type `Feature`, `importer`, `enhancement` |
+
+    An agent files with forms 4–8. A visitor-shaped finding still goes to 4 or 6, which ask what the work needs.
+
     **A finding that is _not_ an issue:** an accepted limitation — a field the venue never publishes, a trade-off a parser makes deliberately — belongs in that
     scraper's KDoc, next to the code it constrains. See AGENTS.md.
 
@@ -51,6 +61,7 @@ milestone and board fields.
     - **Type** (a GitHub issue type, _not_ a label): `Task` · `Bug` · `Feature`. Never add a `type:` label.
     - **Area** (pick one or more): `area:data-quality` `area:bff` `area:frontend` `area:infra` `area:ci` `area:legal` `area:seo` `area:security` `area:agents` —
       plus `importer` and `documentation`, which double as area labels because release-note grouping already depends on them.
+    - **Visitor labels**: `bug` and `enhancement` come from forms 1–3. Keep them on a visitor's issue; do not add them to one an agent files.
     - **Size** (exactly one): `size:S` under half a day · `size:M` one to two days · `size:L` about a week · `size:XL` too big, split it.
     - **State**, only if it applies: `blocked` (another issue) · `needs-decision` (a choice) · `needs-deployment` (a live origin).
     - **`afk-ok`**, when [`/afk`](afk.prompt.md) can take the issue to a draft PR with nobody to ask. Decide it for every issue, and add it only when all of
@@ -62,8 +73,8 @@ milestone and board fields.
           open), or a confirmation from a person is not.
         - Nothing irreversible, no legal or product call, and no category from AGENTS.md § Privacy & GDPR.
         - A cluster is touched only after the merge, as unticked `- [ ] <env>: <verb>` lines the body asks the PR to carry under `## After deploy`.
-        - The gates fit one of `/afk`'s two lanes. Neither runs the Playwright suite or a browser against a live site; `scripts/pr-screenshots.sh` and
-          `scripts/readme-screenshots.sh` are the exceptions.
+        - The gates fit one of `/afk`'s two lanes. Neither runs the Playwright suite or a browser against a live site; `scripts/pr-screenshots.sh`,
+          `scripts/admin-screenshots.sh` and `scripts/readme-screenshots.sh` are the exceptions.
 
         Say in the report why an issue is or is not `afk-ok`. When one condition fails, name it, so the operator can fix the body and add the label,
         or [`/refine-issues`](refine-issues.prompt.md) can later.

@@ -12,7 +12,7 @@ what ZAP already covers, so the report carries the gap, not a second alert list.
 - **Evidence is a path, a command and its output.** `admin API unroutable` with nothing behind it is an assertion; show the `grep`, the `helm template … | yq`,
   the `gh api` call, and what came back.
 - **Never write** — tracker, tree or cluster; nothing here holds a kubeconfig. `THREAT_MODEL.md` rows are read, never edited; a wrong row is a finding.
-- **A finding names its threat-model row** (`B1`–`B10`, `Cluster-wide`) or says there is none — a finding with no row is a boundary the model missed (A06).
+- **A finding names its threat-model row** (`B1`–`B13`, `Cluster-wide`) or says there is none — a finding with no row is a boundary the model missed (A06).
 - **What ZAP covers is out of scope by name.** Check that `.zap/` still says `FAIL` for what the chart guarantees; do not re-derive the headers.
 - `git --no-pager`, `gh` non-interactive.
 
@@ -32,6 +32,7 @@ SINCE="${SINCE:-7}"
 git --no-pager log --since="$SINCE days ago" --format='%h %ad %s' --date=short -- \
   .github/workflows deploy .zap docs/adr docs/security/THREAT_MODEL.md docs/ops/SECRETS.md \
   events-bff/src/main/kotlin/de/norm/events/GlobalExceptionHandler.kt \
+  events-importer/src/main/kotlin/de/norm/events/GlobalExceptionHandler.kt \
   events-bff/src/main/kotlin/de/norm/events/ProblemDetailErrorHandler.kt \
   events-bff/src/main/kotlin/de/norm/events/NulByteFilter.kt \
   events-bff/src/main/kotlin/de/norm/events/event/EventSearchRepository.kt \
@@ -143,7 +144,7 @@ when the window moved it; read the last commit's diff when it did not, and say `
 
 ### A10 · Mishandling of Exceptional Conditions
 
-- **Evidence:** `GlobalExceptionHandler.kt`, `ProblemDetailErrorHandler.kt`, `NulByteFilter.kt`, `.zap/rules-k3d-api.tsv` rows `100000` and `100001`,
+- **Evidence:** `GlobalExceptionHandler.kt` in the BFF and in the importer, `ProblemDetailErrorHandler.kt`, `NulByteFilter.kt`, `.zap/rules-k3d-api.tsv` rows `100000` and `100001`,
   `CachedImageGate.kt` and `ImageObjectReader.kt` (what happens when Object Storage is down), `EventImportService.kt` (what a scraper exception does to the
   source's status and the previous rows), `values.yaml` `ingress.rateLimit`.
 - **Question:** where does a failure fail open? A 500 whose body carries a message, an image gate that hands out the venue's URL when the cache is
