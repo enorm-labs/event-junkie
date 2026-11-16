@@ -16,7 +16,8 @@
      bff      -> PostgreSQL:5432
      importer -> PostgreSQL:5432
      importer -> the internet     scraping venue sites, which is the product
-     bff      -> the internet:443 reading cached images out of the bucket, while serving them
+     bff      -> the internet:443 reading cached images out of the bucket, while serving them; the DWD
+                                  forecast and the MusicBrainz search for watches ride on the same rule
      bff      -> SMTP relay:587    the sign-in mail through Scaleway TEM, while a mail Secret is set
      bff      -> Scaleway API:443  the month's mail count, while a mail quota Secret is set
      all      -> CoreDNS:53
@@ -258,7 +259,8 @@ metadata:
   annotations:
     kubernetes.io/description: >-
       The BFF reads cached venue images out of Object Storage. Rendered only while it is serving them, so the second workload with a route off the cluster
-      exists for exactly as long as it has a reason to.
+      exists for exactly as long as it has a reason to. The DWD weather forecast and the MusicBrainz artist search for watches use the same route,
+      so where it is not rendered the forecast is empty and the watch picker answers 503.
 spec:
   podSelector:
     matchLabels:

@@ -40,6 +40,10 @@ INSERT INTO accounts.follow (id, account_id, kind, query, name)
 VALUES ('ada00000-0000-4000-8000-000000000011', 'ada00000-0000-4000-8000-000000000001', 'search', 'q=techno&when=weekend', 'Techno am Wochenende'),
        ('b0b00000-0000-4000-8000-000000000012', 'b0b00000-0000-4000-8000-000000000002', 'search', 'q=jazz', 'Jazz');
 
+-- A watch (#5214): an act followed by its MusicBrainz id before it has an artist row. The id is made up.
+INSERT INTO accounts.follow (account_id, kind, mbid, name, notify)
+VALUES ('b0b00000-0000-4000-8000-000000000002', 'watch', 'f1c5ad00-0000-4000-8000-000000000041', 'Fixture Watched Act', 'instant');
+
 INSERT INTO accounts.rsvp (account_id, event_id, status)
 SELECT 'ada00000-0000-4000-8000-000000000001'::uuid, id, 'going' FROM events.event WHERE source_id = 'fixture-multi-bill'
 UNION ALL

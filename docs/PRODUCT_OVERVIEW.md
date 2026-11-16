@@ -202,6 +202,9 @@ the first column. It fails in two cases:
 | `/api/me/following/today`              | Today's events of everything the account follows, a running night included                              |
 | `/api/me/searches`                     | The account's saved searches, and saving one                                                            |
 | `/api/me/searches/{id}`                | Renaming or deleting a saved search                                                                     |
+| `/api/me/musicbrainz/artists`          | MusicBrainz candidates for an act's name, asked from the server, to watch one (#5214)                   |
+| `/api/me/watches`                      | The acts the account watches by MusicBrainz id that have no Berlin date yet                             |
+| `/api/me/watches/{mbid}`               | Watching or unwatching an act. It becomes an artist follow once an artist row carries the id            |
 | `/api/me/rsvps`                        | The account's RSVPs, event slug to status                                                               |
 | `/api/me/reports`                      | The account's open problem reports, for an account the operator allows (#4399)                          |
 | `/api/me/reports/{slug}`               | Reporting a problem with an event, replacing the report, or withdrawing it                              |

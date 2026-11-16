@@ -4,6 +4,27 @@
  */
 
 export interface paths {
+    "/api/me/watches/{mbid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Watches an act by its MusicBrainz id, with the bell on. Watching twice changes nothing
+         * @description The name is read from MusicBrainz, never taken from the request. A merged id is stored as the id it was merged into. When an artist row already carries the id, this follows that artist and answers `kind: artist` with its slug.
+         */
+        put: operations["watch"];
+        post?: never;
+        /** Stops watching. Unwatching what the account does not watch changes nothing */
+        delete: operations["unwatch"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/rsvps/{slug}": {
         parameters: {
             query?: never;
@@ -565,6 +586,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/watches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The acts the account watches that have no Berlin date yet, by name */
+        get: operations["listWatches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/rsvps": {
         parameters: {
             query?: never;
@@ -699,6 +737,26 @@ export interface paths {
         };
         /** How many notifications are unread, for the badge */
         get: operations["unreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/musicbrainz/artists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The MusicBrainz artists for a name, to watch one
+         * @description Asks MusicBrainz from the server, at most once a second, and keeps an answer for a day. The visitor's address does not reach MusicBrainz. A candidate an artist row already carries has `followSlug`: follow that artist instead. 503 when MusicBrainz does not answer.
+         */
+        get: operations["candidates"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1035,6 +1093,10 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WatchOutcome: {
+            kind?: string;
+            slug?: string | null;
+        };
         RsvpRequest: {
             status?: string;
         };
@@ -2150,6 +2212,13 @@ export interface components {
              */
             buildTime?: string | null;
         };
+        WatchResponse: {
+            mbid?: string;
+            name?: string;
+            notify?: string;
+            /** Format: date-time */
+            watchedAt?: string;
+        };
         /** @description A page of results with pagination metadata */
         PageResponseEventSummaryResponse: {
             /** @description The items on this page */
@@ -2224,6 +2293,14 @@ export interface components {
             /** Format: int64 */
             count?: number;
         };
+        MusicBrainzCandidateResponse: {
+            mbid?: string;
+            name?: string;
+            type?: string | null;
+            country?: string | null;
+            disambiguation?: string | null;
+            followSlug?: string | null;
+        };
         FollowResponse: {
             kind?: string;
             slug?: string;
@@ -2250,6 +2327,7 @@ export interface components {
             sessions?: components["schemas"]["SessionInfo"][];
             follows?: components["schemas"]["FollowResponse"][];
             searches?: components["schemas"]["SavedSearchResponse"][];
+            watches?: components["schemas"]["WatchResponse"][];
             rsvps?: components["schemas"]["RsvpResponse"][];
             notifications?: components["schemas"]["NotificationResponse"][];
             pushSubscriptions?: components["schemas"]["PushSubscriptionInfo"][];
@@ -2926,6 +3004,48 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    watch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mbid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WatchOutcome"];
+                };
+            };
+        };
+    };
+    unwatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mbid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     set: {
         parameters: {
             query?: never;
@@ -3871,6 +3991,26 @@ export interface operations {
             };
         };
     };
+    listWatches: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WatchResponse"][];
+                };
+            };
+        };
+    };
     statuses: {
         parameters: {
             query?: never;
@@ -4052,6 +4192,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UnreadCountResponse"];
+                };
+            };
+        };
+    };
+    candidates: {
+        parameters: {
+            query: {
+                /** @description The act's name, 3 to 100 characters */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MusicBrainzCandidateResponse"][];
                 };
             };
         };

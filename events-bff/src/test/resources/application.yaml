@@ -97,6 +97,15 @@ app:
     url: http://localhost:9/mosmix.kmz
     initial-delay: PT10M
     refresh: PT6H
+  # Repeated because this file shadows the main one. Nothing listens at the URL: WatchFlowTest serves its own MusicBrainz.
+  musicbrainz:
+    url: http://localhost:9/ws/2/
+    pace: PT1S
+    timeout: PT10S
+    cache-for: PT24H
+  watch:
+    conversion-delay: PT5M
+    conversion-initial-delay: PT10M
   api:
     max-page-size: 100
     cache:

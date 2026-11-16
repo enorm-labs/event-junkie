@@ -19,6 +19,7 @@ flowchart TD
     licence["licence"]
     mail["mail"]
     meta["meta"]
+    musicbrainz["musicbrainz"]
     promoter["promoter"]
     push["push"]
     search["search"]
@@ -30,6 +31,7 @@ flowchart TD
     account --> common
     account --> event
     account --> mail
+    account --> musicbrainz
     account --> push
     artist --> common
     artist --> image
@@ -48,6 +50,7 @@ flowchart TD
     feed --> venue
     festival --> common
     genretag --> common
+    musicbrainz --> common
     promoter --> common
     promoter --> image
     search --> artist

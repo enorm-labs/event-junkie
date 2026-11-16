@@ -12,7 +12,7 @@
 #
 # Ada's session aims every write the API addresses by id, slug or endpoint at Bob's rows: rename and
 # delete his saved search and his passkey, mark his notification read, unsubscribe his push endpoint,
-# drop his follow and its bell, withdraw his RSVPs and his problem report. The status codes are printed for the reader. The
+# drop his follow and its bell, his watch, withdraw his RSVPs and his problem report. The status codes are printed for the reader. The
 # verdict is Bob's export before and after, because a 404 and a 204 that touched nothing are both
 # correct, and only the rows say which happened. Ada's export must name none of Bob's ids either.
 #
@@ -49,6 +49,7 @@ BOB_SEARCH="$(field bob@example.de savedSearchId)"
 BOB_PASSKEY="$(field bob@example.de passkeyId)"
 BOB_PUSH="$(field bob@example.de pushEndpoint)"
 BOB_NOTIFICATION="$(field bob@example.de notificationId)"
+BOB_WATCH="$(field bob@example.de watchMbid)"
 
 # One request as the account the token names; prints the body, or the status with --status.
 call() {
@@ -81,6 +82,7 @@ bob_rows() {
     call "$BOB_SESSION" GET /api/me/export | jq -S '{
         follows: [.follows[] | {kind, slug, notify}] | sort_by(.kind, .slug),
         searches: [.searches[] | {id, name, query}] | sort_by(.id),
+        watches: [.watches[] | {mbid, name, notify}] | sort_by(.mbid),
         rsvps: [.rsvps[] | {event, status}] | sort_by(.event),
         reports: [.reports[] | {event, problems, note}] | sort_by(.event),
         passkeys: [.passkeys[] | {id, name}] | sort_by(.id),
@@ -90,7 +92,7 @@ bob_rows() {
 }
 
 before="$(bob_rows)"
-for kind in follows searches rsvps reports passkeys notifications; do
+for kind in follows searches watches rsvps reports passkeys notifications; do
     [[ "$(jq ".$kind | length" <<<"$before")" -gt 0 ]] || fail "Bob has no $kind, so there is nothing to aim at"
 done
 [[ "$(jq .push <<<"$before")" -gt 0 ]] || fail "Bob has no push subscription, so there is nothing to aim at"
@@ -108,6 +110,8 @@ attempt PATCH "/api/me/passkeys/$BOB_PASSKEY" '{"name":"taken"}'
 attempt DELETE "/api/me/passkeys/$BOB_PASSKEY"
 attempt POST "/api/me/notifications/$BOB_NOTIFICATION/read"
 attempt POST /api/me/push/unsubscribe "$(jq -cn --arg endpoint "$BOB_PUSH" '{endpoint: $endpoint}')"
+# Only a removal: a PUT would ask MusicBrainz and store a watch of Ada's own.
+attempt DELETE "/api/me/watches/$BOB_WATCH"
 for follow in $(jq -r '.follows[] | "\(.kind)/\(.slug)"' <<<"$before"); do
     attempt PUT "/api/me/follows/$follow/notify" '{"notify":"instant"}'
     attempt DELETE "/api/me/follows/$follow"
@@ -127,7 +131,7 @@ if [[ "$before" != "$after" ]]; then
 fi
 
 ada_export="$(call "$ADA_SESSION" GET /api/me/export)"
-for id in "$BOB_SEARCH" "$BOB_PASSKEY" "$BOB_NOTIFICATION" bob@example.de; do
+for id in "$BOB_SEARCH" "$BOB_PASSKEY" "$BOB_NOTIFICATION" "$BOB_WATCH" bob@example.de; do
     [[ "$ada_export" != *"$id"* ]] || fail "Ada's export names Bob's $id"
 done
 

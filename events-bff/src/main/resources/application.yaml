@@ -118,6 +118,17 @@ app:
     url: https://opendata.dwd.de/weather/local_forecasts/mos/MOSMIX_L/single_stations/10384/kml/MOSMIX_L_LATEST_10384.kmz
     initial-delay: PT30S
     refresh: PT6H
+  musicbrainz:
+    # The artist search for watches (#5214). One request a second, MusicBrainz's limit per source address, which the importer
+    # keeps too. An answer lives a day in memory. The term goes out from the server, never with the visitor's address (LEGAL.md §7).
+    url: https://musicbrainz.org/ws/2/
+    pace: PT1S
+    timeout: PT10S
+    cache-for: PT24H
+  watch:
+    # How often watches are checked against the artist rows' MusicBrainz verdicts (#5214).
+    conversion-delay: PT5M
+    conversion-initial-delay: PT2M
 
 # `info` joins the default `health`. It must NOT be routed through the public ingress: the
 # browser gets `GET /meta`, a curated contract (docs/LEGAL.md §4.4), and the chart sets

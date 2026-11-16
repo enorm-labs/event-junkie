@@ -54,7 +54,12 @@ class RequestLoggingFilter(
                 if (!isActuatorPath(request.path.value(), actuatorBasePath)) {
                     val durationMs = (System.nanoTime() - startNanos) / 1_000_000
                     val rawQuery = request.uri.rawQuery
-                    val query = if (rawQuery == null) "" else "?$rawQuery"
+                    val query =
+                        when {
+                            rawQuery == null -> ""
+                            request.path.value() in MASKED_QUERY_PATHS -> "?$MASKED"
+                            else -> "?$rawQuery"
+                        }
                     val status = exchange.response.statusCode?.value() ?: 0
                     // Fields, not prose (#945). Two values stay in the text: `durationMs`, because
                     // `http.server.requests` carries latency as a histogram, and the query string, because
@@ -71,5 +76,14 @@ class RequestLoggingFilter(
                     }
                 }
             }.contextWrite { it.put(REQUEST_ID, request.id) }
+    }
+
+    companion object {
+        /**
+         * Routes whose query string is never logged. The watch picker's term leaves for MusicBrainz, and a line of a signed-in
+         * request beside it would tie the term to a session (#5214, LEGAL.md §7).
+         */
+        val MASKED_QUERY_PATHS = setOf("/api/me/musicbrainz/artists")
+        const val MASKED = "[masked]"
     }
 }

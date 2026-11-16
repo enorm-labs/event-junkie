@@ -395,6 +395,17 @@ const { t } = useI18n()
         Eintrag aus dem Kalender, lösche ich auch das Folgen.
       </p>
       <p>
+        <strong>Acts, die hier noch nicht spielen:</strong> Du kannst einem Act folgen, der noch
+        keinen Termin in Berlin hat. Um ihn zu finden, schickt mein Server den Namen, den du
+        eingibst, an MusicBrainz, eine offene Musikdatenbank. Die Anfrage kommt von meinem Server,
+        nicht von deinem Browser. Sie enthält weder deine IP-Adresse noch dein Konto, also kann
+        MusicBrainz nicht erkennen, wer gesucht hat. Den eingegebenen Namen protokolliere ich nicht.
+        Die Antwort von MusicBrainz halte ich einen Tag im Arbeitsspeicher. Wählst du einen Act aus,
+        speichere ich seine MusicBrainz-ID, seinen Namen und den Zeitpunkt. Deine Seite „Gefolgt“
+        zeigt ihn, und du kannst ihn dort entfernen. Nur du siehst ihn. Sobald der Act hier einen
+        Termin bekommt, wird daraus ein normales Folgen, und die Glocke meldet dir seine Termine.
+      </p>
+      <p>
         <strong>Gespeicherte Suchen:</strong> Speicherst du eine Suche, speichere ich ihre Filter,
         den Namen, den du ihr gibst, und den Zeitpunkt. Die Seite schlägt einen Namen aus den
         Filtern vor, und du kannst ihn ändern. Deine Seite „Gefolgt“ zeigt deine gespeicherten
