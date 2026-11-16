@@ -43,6 +43,8 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "balearic" to ELECTRONIC,
         "breakbeat" to ELECTRONIC,
         "breakbeats" to ELECTRONIC,
+        // "Melodic, Deep, Afro&House": melodic house and techno, beside Deep.
+        "melodic" to ELECTRONIC,
         "donk" to ELECTRONIC,
         "electronics" to ELECTRONIC,
         "future-beats" to ELECTRONIC,

@@ -619,6 +619,14 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `the collage club's and the cabaret's words are dropped, and the styles beside them stay`() {
+        normalizeGenre("art workshop, creative, social").shouldBeEmpty()
+        normalizeGenre("Rock‘n’Roll Cabaret, Burlesque, Filth").shouldContainExactly("Rock'n'Roll")
+        normalizeGenre("Drag, Whacking, DJs").shouldBeEmpty()
+        normalizeGenre("Future Beats").shouldContainExactly("Future Beats")
+    }
+
+    @Test
     fun `the music veto keeps a style whose name ends in Music`() {
         normalizeGenre("World Music").shouldContainExactly("World Music")
         normalizeGenre("Brazilian Music").shouldContainExactly("Brazilian Music")

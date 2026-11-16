@@ -52,6 +52,7 @@ class GenreFamiliesTest {
         genreFamily("stench") shouldBe GenreFamily.PUNK
         genreFamily("garage") shouldBe GenreFamily.ROCK
         genreFamily("teufelrock") shouldBe GenreFamily.ROCK
+        genreFamily("melodic") shouldBe GenreFamily.ELECTRONIC
         // The explicit entry is for the bare word only.
         genreFamily("uk-garage") shouldBe GenreFamily.ELECTRONIC
     }
