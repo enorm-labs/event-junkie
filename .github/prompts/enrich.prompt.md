@@ -70,8 +70,9 @@ may split the rows. Give each the rules in [Important](#important), and tell the
 
 ## Step 4 — Write the table
 
-Each row as [the README](../../docs/promoters/README.md) says, sorted by `stored_name` case-folded. Write it with `csv` and `quoting=csv.QUOTE_NONE`,
-because the default quoting re-quotes every row that holds a `"`. `name` is the promoter's stored name, or the script skips the row.
+Each row as [the README](../../docs/promoters/README.md) says, sorted by `stored_name` case-folded. Write each row as `"\t".join(row) + "\n"`,
+after a check that no field holds a tab or a newline. Never use `csv.writer`: the default quoting re-quotes every row that holds a `"`, and `QUOTE_NONE`
+raises on that row and leaves the file truncated (#5216). `name` is the promoter's stored name, or the script skips the row.
 
 - **high** — `website`, and `instagram` when the site links one. Write a description where the site has an About page: one to three sentences in German
   and in English, from that page and the venues our events list. Say what it is, since when, what it books and where in Berlin. End on a fact, not on a
