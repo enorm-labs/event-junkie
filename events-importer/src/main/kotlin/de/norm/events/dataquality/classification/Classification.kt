@@ -53,6 +53,30 @@ data class ClassificationAnswer(
     val priceBoxOffice: Finding<BigDecimal>? = null
 )
 
+/** The check a part of an answer failed. The drop line names it, so a night's drops can be read from the log (#5198). */
+private enum class ClassificationCheck {
+    VALUE_INVALID,
+    FEATURE_UNKNOWN,
+    FEATURE_NOT_ASKED,
+    CONFIRMED_NOT_BOOLEAN,
+    CONFIDENCE_OUT_OF_RANGE,
+    EVIDENCE_LENGTH,
+    EVIDENCE_NOT_IN_INPUT,
+    EVIDENCE_DOES_NOT_NAME_VALUE
+}
+
+/**
+ * One dropped part of an answer. [value] is set only for a value already parsed into a closed vocabulary, a time
+ * or a price, or for the confidence: the model's free text and the acts it names stay out of the log.
+ */
+private data class Drop(
+    val field: String,
+    val check: ClassificationCheck,
+    val value: String? = null
+) {
+    override fun toString(): String = "$field $check" + value?.let { " ($it)" }.orEmpty()
+}
+
 /**
  * Turns the model's JSON into a [ClassificationAnswer], and drops every part that fails a check.
  *
@@ -73,32 +97,41 @@ object ClassificationValidator {
     ): ClassificationAnswer? {
         val root = ModelAnswer.jsonObject(raw) ?: return null
         val source = QuotedText.normalise(input.text)
-        val dropped = mutableListOf<String>()
+        val dropped = mutableListOf<Drop>()
 
         fun <T> finding(
             name: String,
-            parse: (JsonNode) -> T?
+            parse: (JsonNode) -> T?,
+            named: (T, String) -> Boolean = { _, _ -> true }
         ): Finding<T>? {
             val node = root.get(name)?.takeUnless { it.isNull } ?: return null
             val value = node.get("value")?.takeUnless { it.isNull }?.let(parse)
             val evidence = evidenceOf(node)
             val confidence = confidenceOf(node)
-            return if (value != null && backed(evidence, confidence, source)) {
-                Finding(value, evidence, confidence)
-            } else {
-                dropped += name
+            val check =
+                if (value == null) {
+                    ClassificationCheck.VALUE_INVALID
+                } else {
+                    evidenceCheck(evidence, confidence, source)
+                        ?: ClassificationCheck.EVIDENCE_DOES_NOT_NAME_VALUE.takeUnless { named(value, evidence) }
+                }
+            return if (value == null || check != null) {
+                // Title acts are artist names, so their value never reaches the log.
+                dropped += Drop(name, check ?: ClassificationCheck.VALUE_INVALID, shown(check, value.takeUnless { name == "titleActs" }, confidence))
                 null
+            } else {
+                Finding(value, evidence, confidence)
             }
         }
 
         val answer =
             ClassificationAnswer(
-                eventType = finding("eventType") { node -> EventType.entries.firstOrNull { it.name == node.asString("") } },
-                titleActs = finding("titleActs") { node -> titleActs(node, input.title) },
+                eventType = finding("eventType", { node -> EventType.entries.firstOrNull { it.name == node.asString("") } }),
+                titleActs = finding("titleActs", { node -> titleActs(node, input.title) }),
                 features = verdicts(root.get("features"), input, source, dropped),
-                startTime = finding("startTime") { node -> ModelAnswer.time(node.asString("")) }?.takeIf { ModelAnswer.namesHour(it.value, it.evidence) },
-                pricePresale = finding("pricePresale", ModelAnswer::price)?.takeIf { ModelAnswer.namesPrice(it.value, it.evidence) },
-                priceBoxOffice = finding("priceBoxOffice", ModelAnswer::price)?.takeIf { ModelAnswer.namesPrice(it.value, it.evidence) }
+                startTime = finding("startTime", { node -> ModelAnswer.time(node.asString("")) }, ModelAnswer::namesHour),
+                pricePresale = finding("pricePresale", ModelAnswer::price, ModelAnswer::namesPrice),
+                priceBoxOffice = finding("priceBoxOffice", ModelAnswer::price, ModelAnswer::namesPrice)
             )
         if (dropped.isNotEmpty()) logger.warn { "Dropped ${dropped.size} classification answer(s) that failed a check: ${dropped.joinToString()}" }
         return answer
@@ -118,23 +151,41 @@ object ClassificationValidator {
         node: JsonNode?,
         input: ClassificationInput,
         source: String,
-        dropped: MutableList<String>
+        dropped: MutableList<Drop>
     ): List<FeatureVerdict> {
         if (node == null || !node.isArray) return emptyList()
         val asked = input.uncertainCues.map { it.feature }.toSet()
         return node.toList().mapNotNull { item ->
-            val feature = EventFeature.fromSlug(item.get("feature")?.asString(""))?.takeIf { it in asked }
+            val feature = EventFeature.fromSlug(item.get("feature")?.asString(""))
             val confirmed = item.get("confirmed")?.takeIf { it.isBoolean }?.asBoolean()
             val evidence = evidenceOf(item)
             val confidence = confidenceOf(item)
-            if (feature != null && confirmed != null && backed(evidence, confidence, source)) {
-                FeatureVerdict(feature, confirmed, evidence, confidence)
-            } else {
-                dropped += "features"
+            val check =
+                when {
+                    feature == null -> ClassificationCheck.FEATURE_UNKNOWN
+                    feature !in asked -> ClassificationCheck.FEATURE_NOT_ASKED
+                    confirmed == null -> ClassificationCheck.CONFIRMED_NOT_BOOLEAN
+                    else -> evidenceCheck(evidence, confidence, source)
+                }
+            if (feature == null || confirmed == null || check != null) {
+                val value = feature?.let { if (confirmed == null) it.slug else "${it.slug}=$confirmed" }
+                dropped += Drop("features", check ?: ClassificationCheck.FEATURE_UNKNOWN, shown(check, value, confidence))
                 null
+            } else {
+                FeatureVerdict(feature, confirmed, evidence, confidence)
             }
         }
     }
+
+    /** What the line shows beside a drop: the parsed value, and the confidence when that is what failed. */
+    private fun shown(
+        check: ClassificationCheck?,
+        value: Any?,
+        confidence: Double
+    ): String? =
+        listOfNotNull(value, "confidence $confidence".takeIf { check == ClassificationCheck.CONFIDENCE_OUT_OF_RANGE })
+            .joinToString()
+            .ifEmpty { null }
 
     private fun evidenceOf(node: JsonNode): String =
         node
@@ -145,15 +196,18 @@ object ClassificationValidator {
 
     private fun confidenceOf(node: JsonNode): Double = node.get("confidence")?.asDouble(-1.0) ?: -1.0
 
-    /** The quote occurs in the input, and the confidence is a probability. */
-    private fun backed(
+    /** The first check the quote and the confidence fail, or null when the quote occurs in the input and the confidence is a probability. */
+    private fun evidenceCheck(
         evidence: String,
         confidence: Double,
         source: String
-    ): Boolean =
-        confidence in 0.0..1.0 &&
-            evidence.length in ModelAnswer.EVIDENCE_LENGTH &&
-            QuotedText.normalise(evidence) in source
+    ): ClassificationCheck? =
+        when {
+            confidence !in 0.0..1.0 -> ClassificationCheck.CONFIDENCE_OUT_OF_RANGE
+            evidence.length !in ModelAnswer.EVIDENCE_LENGTH -> ClassificationCheck.EVIDENCE_LENGTH
+            QuotedText.normalise(evidence) !in source -> ClassificationCheck.EVIDENCE_NOT_IN_INPUT
+            else -> null
+        }
 }
 
 /** Whether a proposed act is a whole name in the title, and not cut short: "Katja" from "Katja Berlin Tour 2026" (#2997). */
