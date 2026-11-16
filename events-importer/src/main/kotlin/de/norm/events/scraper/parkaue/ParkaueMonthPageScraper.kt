@@ -10,6 +10,7 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.forChildrenIf
+import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
@@ -27,7 +28,8 @@ import java.time.LocalDateTime
  * An age under 10 marks the date `for-children`; a 10+ play stays in the default lists (EVENT_SCOPE.md §3.5). A family
  * concert names no age, so `childrensShowPhrase` reads its subtitle. A conference is a participation format (§3.2) and
  * is dropped, and so is a classroom piece, which plays at a school and has no start time here. The key is the number
- * in the date's own link, one per performance, so it survives a changed time.
+ * in the date's own link, one per performance, so it survives a changed time. A bookable date links the ticket shop,
+ * and a sold-out date links nothing.
  */
 class ParkaueMonthPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -64,6 +66,7 @@ class ParkaueMonthPageScraper {
             imageUrl = performance.selectFirst(".performance__image img[src]")?.absUrl("src")?.blankToNull(),
             sourceUrl = url,
             sourceId = "${EventSource.PARKAUE.sourceIdPrefix}$id",
+            ticketUrl = performance.hrefAt(TICKET_LINK),
             soldOut = "performance--is-soldout" in classes,
             status = if ("performance--is-canceled" in classes) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
             artists = if (eventType == EventType.CONCERT) listOf(ScrapedArtist(name = title, role = ArtistRole.HEADLINER)) else emptyList()
@@ -104,6 +107,9 @@ class ParkaueMonthPageScraper {
     private companion object {
         const val HOUSE_NAME = "Theater an der Parkaue"
         const val CHILDRENS_AGE_LIMIT = 10
+
+        // The sold-out date's waiting-list mail link sits in the same column.
+        const val TICKET_LINK = ".performance__col--actions a[href^=https://tickets.parkaue.de/]"
 
         val PERFORMANCE_ID = Regex("""/(\d+)/?$""")
         val AGE = Regex("""\(?(\d{1,2})\+\)?""")

@@ -82,6 +82,17 @@ class ParkaueMonthPageScraperTest {
     }
 
     @Test
+    fun `reads a bookable date's ticket link, and none for a sold-out date or one the shop does not sell`() {
+        val bookable = november.on("16GB: Tischtennisplattenpolitik", LocalDate.of(2026, 11, 16))
+        val soldOut = november.on("Queer Vibes mit Hengameh Yaghoobifarah", LocalDate.of(2026, 11, 20))
+        val premiere = november.on("Pinocchio", LocalDate.of(2026, 11, 15))
+
+        bookable.ticketUrl shouldBe "https://tickets.parkaue.de/eventim.webshop/webticket/shop?&event=11833&language=de"
+        soldOut.ticketUrl shouldBe null
+        premiere.ticketUrl shouldBe null
+    }
+
+    @Test
     fun `bills a family concert's band and marks it for children by its subtitle`() {
         val concert = november.on("Ich & Herr Meyer", LocalDate.of(2026, 11, 21))
 
