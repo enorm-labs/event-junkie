@@ -1,5 +1,7 @@
 package de.norm.events.scraper.hole44
 
+import de.norm.events.event.EventType
+import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -18,5 +20,11 @@ class Hole44CoBillTest {
         val event = scraper.scrape(fixtureDocument("hole44/hole44-detail-cobill.html", sourceUrl), sourceUrl)!!
         event.title shouldBe "Myki, Darlene & Nini"
         event.artists.map { it.name } shouldBe listOf("Myki Meeks", "Darlene Mitchell", "Nini Coco")
+    }
+
+    @Test
+    fun `bills a duo the title joins with an ampersand as one act`() {
+        // Event 14164: Caramella & YDRA tour as one act.
+        buildArtistsForEventType("Caramella & YDRA", null, EventType.CONCERT.name).map { it.name } shouldBe listOf("Caramella & YDRA")
     }
 }

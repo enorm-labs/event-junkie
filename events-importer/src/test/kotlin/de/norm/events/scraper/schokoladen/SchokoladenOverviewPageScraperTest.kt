@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -192,6 +193,18 @@ class SchokoladenOverviewPageScraperTest {
             genreOf("The Groovy Cellar (Beat/Mod)") shouldBe "Beat/Mod"
             genreOf("Awesome Scampis (ska- + pop-punk) + Buster Beat (Ska)") shouldBe "ska- + pop-punk, Ska"
             genreOf("SOKO LiNX - PUNK FÜR LEUTE, DIE PUNK HASZEN - TOUR 2026 + leavr (Leipzig)").shouldBeNull()
+            // An annotation of genres only keeps its last part: events 14178 and 14179 lost their reggae.
+            genreOf("Wood In Di Fire (Rocksteady, Reggae & Jamaican Jazz)") shouldBe "Rocksteady, Reggae & Jamaican Jazz"
+            genreOf("Hot Pursuits (Americana, Soft-Rock, Psychedelic Folk)") shouldBe "Americana, Soft-Rock, Psychedelic Folk"
+            // A place the venue spells out stays out, beside a genre or on its own.
+            genreOf("Kazamatek (powerpop, punk - Athen)") shouldBe "powerpop"
+            genreOf("Grumpy (deutschpunk, regensburg)") shouldBe "deutschpunk"
+            genreOf("Sludgeworth (Noise-Rock/Sludge, Norwich/UK)") shouldBe "Noise-Rock/Sludge"
+        }
+
+        @Test
+        fun `reads every genre of an annotation that names no place`() {
+            normalizeGenre("Rocksteady, Reggae & Jamaican Jazz") shouldContainAll listOf("Rocksteady", "Reggae")
         }
 
         @Test
