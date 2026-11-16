@@ -102,6 +102,11 @@ class PromoterNormalizerTest {
     }
 
     @Test
+    fun `folds the swapped credit Urban Spree writes onto Concert Concept`() {
+        canonicalPromoterName("Concept Concert") shouldBe "Concert Concept"
+    }
+
+    @Test
     fun `never strips a promoter down to nothing`() {
         assertSoftly {
             // A promoter named purely of descriptor words keeps its single word.
