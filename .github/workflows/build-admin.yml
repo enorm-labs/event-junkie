@@ -9,8 +9,8 @@ on:
       - 'events-admin/**'
       - '.github/workflows/build-admin.yml'
   pull_request:
-    # No `paths:` here: `Build & Test (admin)` is **required**, and a required check that never runs
-    # stays Pending forever. The filtering lives in `detect-changes` below.
+    # No `paths:` here, so `Build & Test (admin)` can be made required: a required check that never
+    # runs stays Pending forever. It is not required today. The filtering lives in `detect-changes` below.
   # Ignores the path filters: `gh workflow run build-admin.yml --ref <branch>`.
   workflow_dispatch:
 

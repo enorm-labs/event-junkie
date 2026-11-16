@@ -213,7 +213,8 @@ no `dry_run` because every run is one, no `issues: write` on the agent's job, AD
   matrix creates a context that is not required** — add it to the ruleset in the same change.
 - **No `branches:` filter on a `pull_request` trigger**: a PR stacked on another branch runs every check, not only the `pull_request_target` ones. With
   `branches: [ main ]` a stacked PR ran 4 checks and read as green before its build had run once (#4974). The `push:` filters keep `main`.
-- **`Build & Test (backend)`, `(frontend)` and `(admin)` are required, and none is the job that does the work.** Each workflow is `detect-changes` (seconds, no
+- **`Build & Test (backend)` and `(frontend)` are required, and neither is the job that does the work.** `build-admin.yml` has the same shape, but
+  `Build & Test (admin)` is not required: the admin app is never deployed (ADR-045). Each workflow is `detect-changes` (seconds, no
   checkout, the PR's file list from the API), the build gated on it, and a **`gate` job that always runs and carries the context** — red when the build
   failed, green when skipped, red when detection failed (a detection bug must never read as a green build). A job skipped by a workflow-level `paths:`
   creates no check run at all, so the required context must never be the conditional job. The gate declares `contents: read` only, which is what keeps the
