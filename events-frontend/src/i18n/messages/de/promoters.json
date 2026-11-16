@@ -3,5 +3,24 @@
   "subtitle": "Wer die Abende bucht: die Agenturen, Kollektive und Labels hinter den Events, die wir im Blick haben.",
   "searchPlaceholder": "Veranstalter durchsuchen …",
   "empty": "Zu dieser Suche gibt es keinen Veranstalter. Versuch es mit einem anderen Namen.",
-  "resultCount": "{count} Veranstalter gefunden | {count} Veranstalter gefunden"
+  "resultCount": "{count} Veranstalter gefunden | {count} Veranstalter gefunden",
+  "byKind": "Nach Art filtern",
+  "allKinds": "Alle Arten",
+  "kindsSelected": "{n} Arten",
+  "clearKinds": "Arten zurücksetzen",
+  "kind": {
+    "collective": "Kollektive",
+    "label": "Labels",
+    "party": "Partyreihen"
+  },
+  "kindTitle": {
+    "collective": "Kollektive in Berlin",
+    "label": "Labels in Berlin",
+    "party": "Partyreihen in Berlin"
+  },
+  "kindSubtitle": {
+    "collective": "Die Crews aus DJs und Artists, die eigene Abende veranstalten, mit allem, was bei ihnen ansteht.",
+    "label": "Die Plattenlabels, die eigene Abende und Showcases nach Berlin bringen.",
+    "party": "Die wiederkehrenden Abende mit eigenem Namen, mit allem, was bei ihnen ansteht."
+  }
 }

@@ -119,6 +119,17 @@ describe('PromoterDetailView kind', () => {
     expect(links.textContent?.replace(/\s+/g, ' ').trim()).toBe(line)
   })
 
+  it.each(['en', 'de'] as const)(
+    'links the kind in %s to the promoters of that kind',
+    async (locale) => {
+      const view = await mountPromoter({ ...concerts, kind: 'label' }, locale)
+
+      expect(view.get('a[href$="promoters?kind=label"]').attributes('href')).toBe(
+        `/${locale}/promoters?kind=label`,
+      )
+    },
+  )
+
   it('stands alone for a promoter with no link', async () => {
     const view = await mountPromoter({ ...concerts, websiteUrl: null, kind: 'collective' })
 

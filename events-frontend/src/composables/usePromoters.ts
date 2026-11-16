@@ -5,6 +5,8 @@ import { useAsync } from './useAsync'
 /** Query parameters accepted by the promoter list endpoint (`GET /promoters`). */
 export interface PromoterSearchParams {
   q?: string
+  /** Promoter kind slugs; a promoter of any of them matches (#5091). */
+  kind?: string[]
   page?: number
   size?: number
   /** `name` or `upcomingEvents`, with a direction: `upcomingEvents,desc`. */

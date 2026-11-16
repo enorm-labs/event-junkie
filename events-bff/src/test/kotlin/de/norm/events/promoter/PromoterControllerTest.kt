@@ -226,6 +226,67 @@ class PromoterControllerTest : BaseControllerTest() {
                 .isEqualTo("100-live")
         }
 
+    // #5091: `kind` combines with a search and with the count sort, and repeats.
+    @Test
+    fun `GET promoters filters by kind, with a search and a sort`(): Unit =
+        runBlocking {
+            val venue = insertVenue("Tresor", "tresor")
+            val busy = insertPromoter("Berlin Crew", "berlin-crew")
+            insertPromoter("Berlin Records", "berlin-records")
+            insertPromoter("Berlin Booking", "berlin-booking")
+            insertPromoter("Other Crew", "other-crew")
+            insertPromoter("Untagged Berlin", "untagged-berlin")
+            for ((slug, kind) in listOf(
+                "berlin-crew" to "collective",
+                "other-crew" to "collective",
+                "berlin-records" to "label",
+                "berlin-booking" to "promoter"
+            )) {
+                databaseClient.sql("UPDATE events.promoter SET kind = '$kind' WHERE slug = '$slug'").await()
+            }
+            linkPromoter(insertEvent(venue, "Crew night", "crew-night", LocalDate.now(BERLIN).plusDays(3)), busy)
+
+            webTestClient
+                .get()
+                .uri("/promoters?kind=collective&q=berlin&sort=upcomingEvents,desc")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("berlin-crew"))
+
+            webTestClient
+                .get()
+                .uri("/promoters?kind=label&kind=collective&sort=name,desc")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("other-crew", "berlin-records", "berlin-crew"))
+
+            webTestClient
+                .get()
+                .uri("/promoters?kind=")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.totalElements")
+                .isEqualTo(5)
+        }
+
+    @Test
+    fun `GET promoters refuses an unknown kind`() {
+        webTestClient
+            .get()
+            .uri("/promoters?kind=nope")
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+    }
+
     @Test
     fun `GET promoters carries the description fields a card reads`(): Unit =
         runBlocking {

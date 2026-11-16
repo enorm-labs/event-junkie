@@ -22,17 +22,18 @@ class PromoterService(
     private val clock: Clock
 ) {
     /**
-     * Lists promoters with pagination, optionally filtered by a name [query], by name or by their
+     * Lists promoters with pagination, optionally filtered by a name [query] and by [kinds] (#5091), by name or by their
      * events in the next 30 days (#1349, #2694). Without a sort, a search lists the closest names first.
      */
     @Transactional(readOnly = true)
     suspend fun list(
         query: String?,
         pageable: Pageable,
-        countCap: Int? = null
+        countCap: Int? = null,
+        kinds: Set<PromoterKind> = emptySet()
     ): PageResponse<PromoterListItemResponse> {
         val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, Sort.unsorted())
-        val page = promoterSearchRepository.search(query, LocalDateTime.now(clock), safePageable, countCap)
+        val page = promoterSearchRepository.search(query, LocalDateTime.now(clock), safePageable, countCap, kinds)
         val entities = promoterRepository.findByIdIn(page.rows.map { it.id }).toList().associateBy { it.id }
         return PageResponse.of(
             page.rows.mapNotNull { row -> entities[row.id]?.let { PromoterListItemResponse.fromEntity(it, row) } },

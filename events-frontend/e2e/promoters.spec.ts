@@ -136,6 +136,47 @@ test('sorting by the next 30 days puts the sort in the URL and sends it to the A
   )
 })
 
+// #5091: one kind names the page and its title; the filter writes the URL and the request.
+test('filtering by kind writes it to the URL and the request, and names the page', async ({
+  page,
+}) => {
+  await page.route(promotersList, (route) => {
+    const kinds = new URL(route.request().url()).searchParams.getAll('kind')
+    json(
+      route,
+      pageBody(
+        kinds.includes('collective')
+          ? [promoter('enigma', 'Enigma')]
+          : [promoter('goodlive', 'Goodlive')],
+      ),
+    )
+  })
+
+  await page.goto('/promoters')
+  await page.getByRole('button', { name: 'Filter by kind: All kinds' }).click()
+  await page.getByRole('checkbox', { name: 'Collectives' }).check()
+  await page.keyboard.press('Escape')
+
+  await expect(page).toHaveURL(/\/promoters\?kind=collective$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Collectives in Berlin' })).toBeVisible()
+  await expect(page).toHaveTitle(/^Collectives in Berlin/)
+  await expect(page.getByRole('link', { name: 'Enigma' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Goodlive' })).toHaveCount(0)
+})
+
+test('a shared link to one kind opens filtered in German', async ({ page }) => {
+  await page.route(promotersList, (route) => {
+    const kinds = new URL(route.request().url()).searchParams.getAll('kind')
+    json(route, pageBody(kinds.includes('label') ? [promoter('hands', 'Hands')] : []))
+  })
+
+  await page.goto('/de/promoters?kind=label')
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Labels in Berlin' })).toBeVisible()
+  await expect(page).toHaveTitle(/^Labels in Berlin/)
+  await expect(page.getByRole('link', { name: 'Hands' })).toBeVisible()
+})
+
 test('the empty state offers a way out of the search', async ({ page }) => {
   await page.route(promotersList, (route) => {
     const q = new URL(route.request().url()).searchParams.get('q')
