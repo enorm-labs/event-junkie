@@ -471,6 +471,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         // Tempodrom credits the company; its brand is the first two words.
         "concertconceptveranstaltungsgmbhberlin" to "Concert Concept",
         "concertconceptveranstaltungsberlin" to "Concert Concept",
+        // Urban Spree swaps the words, and the strip leaves "Concept" of "Concept Concert" (#5215).
+        "concept" to "Concert Concept",
         // Cosmic Comedy credits the agency with its initials after a dash.
         "entertaintheworldetw" to "Entertain the World",
         "entertaintheworldetwmanagement" to "Entertain the World",
