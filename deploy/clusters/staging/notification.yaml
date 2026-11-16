@@ -3,7 +3,7 @@
 # reports the *chart version*; the `originRevision` mechanism exists only in kustomize-controller.
 ---
 # A deployment is per environment and answers "what is on staging right now, and since when".
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Provider
 metadata:
   name: github-dispatch
