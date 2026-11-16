@@ -102,7 +102,7 @@ a fork's pull request** exactly as it does on a branch of this repository. None 
 your pull request to hold a token that can write:
 
 ```
-Build & Test (backend | frontend | admin)           Gradle, the Vite + Playwright matrix, the admin app
+Build & Test (backend | frontend)                   Gradle, the Vite + Playwright matrix
 Lint & render · ShellCheck deploy-story scripts     the Helm chart
 Lint & audit workflows                              actionlint + zizmor
 Format & Validate (infra/bootstrap | staging | production)
