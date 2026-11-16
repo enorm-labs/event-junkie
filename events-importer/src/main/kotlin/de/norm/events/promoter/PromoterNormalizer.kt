@@ -457,8 +457,11 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "heesen" to "Heesen Konzerte",
         "heesenmedia" to "Heesen Konzerte",
         "sonicbomm" to "Sonic Boom",
-        // Domain credits: SO36's presenter calls itself by its domain, Peter Edel's names the DJ duo's site.
+        // Domain credits: SO36's presenter calls itself by its domain, Peter Edel's names the DJ duo's site, and SO36
+        // credits LCC Productions by its site.
         "berlinmusikerde" to "Berlinmusiker.de",
+        "wwwlccproductionscom" to "LCC Productions",
+        "lccproductionscom" to "LCC Productions",
         "wwwdundjberlin" to "Dan & Jensai",
         "dundjberlin" to "Dan & Jensai",
         // Spacing twins /artist-cleanup found: each venue writes the name its own way.

@@ -507,6 +507,9 @@ class PromoterNormalizerTest {
             canonicalPromoterName("berlinmusiker.de") shouldBe "Berlinmusiker.de"
             canonicalPromoterName("www.dundj.berlin") shouldBe "Dan & Jensai"
             canonicalPromoterName("dundj.berlin") shouldBe "Dan & Jensai"
+            canonicalPromoterName("www.Lcc-productions.com") shouldBe "LCC Productions"
+            canonicalPromoterName("lcc-productions.com") shouldBe "LCC Productions"
+            canonicalPromoterName("LCC Productions") shouldBe "LCC Productions"
             // A domain stays a name where it is the brand; only the curated entries change.
             canonicalPromoterName("Aufgeigen.at") shouldBe "Aufgeigen.at"
             canonicalPromoterName("therapi.live") shouldBe "therapi.live"
