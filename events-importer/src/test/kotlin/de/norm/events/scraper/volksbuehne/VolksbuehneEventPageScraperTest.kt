@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import java.time.LocalDate
+import java.time.LocalTime
 
 class VolksbuehneEventPageScraperTest {
     private val scraper = VolksbuehneEventPageScraper()
@@ -49,6 +50,16 @@ class VolksbuehneEventPageScraperTest {
         page.applyTo(fallback).typeIsFallback shouldBe false
         page.applyTo(labelled).eventType shouldBe EventType.CONCERT.name
         page.applyTo(labelled).description shouldBe "Text"
+    }
+
+    @Test
+    fun `fills a row's missing start time from the page's schema start and keeps a row's own`() {
+        val page = scraper.scrape(fixtureDocument("volksbuehne/volksbuehne-event-cursed.html", baseUri)).shouldNotBeNull()
+        val untimed = event(EventType.SHOW, typeIsFallback = true)
+
+        page.startTime shouldBe LocalTime.of(19, 0)
+        page.applyTo(untimed).startTime shouldBe LocalTime.of(19, 0)
+        page.applyTo(untimed.copy(startTime = LocalTime.of(20, 0))).startTime shouldBe LocalTime.of(20, 0)
     }
 
     @Test
