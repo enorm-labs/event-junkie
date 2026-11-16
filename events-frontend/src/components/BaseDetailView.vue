@@ -48,6 +48,8 @@ const props = defineProps<{
   intrinsicHeight?: number | null
   /** Who to credit for the image, or null where it carries no credit (#1275). */
   credit?: ImageCredit | null
+  /** `logo` draws the picture whole on a light plate, with the credit under it: a promoter's picture is its logo (#5177). */
+  imageFit?: 'cover' | 'logo'
   /** The description in the visitor's language where one exists (`descriptionFor`). */
   description?: ChosenDescription | null
   /** Upcoming-events feed state (from `useEventSearch`). */
@@ -116,7 +118,7 @@ const { compact } = useCompactView()
         `object-cover` do anything: 560 px sits above the tallest landscape image of the 43, so 39
         render unchanged and the 4 taller ones crop to the same weight.
       -->
-        <div v-if="imageUrl" class="relative border border-border">
+        <div v-if="imageUrl && imageFit !== 'logo'" class="relative border border-border">
           <CachedImage
             :src="imageUrl"
             :sources="imageSources"
@@ -128,6 +130,22 @@ const { compact } = useCompactView()
             img-class="block max-h-140 w-full object-cover"
           />
           <CreditLine v-if="credit" :credit="credit" kind="photo" overlay />
+        </div>
+        <!-- A logo whole, never cropped, on the plate it was drawn for (#5177). -->
+        <div v-else-if="imageUrl" class="space-y-2">
+          <div class="inline-flex border border-border bg-logo-plate p-4">
+            <CachedImage
+              :src="imageUrl"
+              :sources="imageSources"
+              :intrinsic-width="intrinsicWidth"
+              :intrinsic-height="intrinsicHeight"
+              :alt="name ?? ''"
+              priority
+              sizes="320px"
+              img-class="block h-auto max-h-24 w-auto max-w-full object-contain sm:max-w-80"
+            />
+          </div>
+          <CreditLine v-if="credit" :credit="credit" kind="logo" />
         </div>
 
         <!-- No picture, no placeholder: here the name is the content, and a full-width 3:2 void

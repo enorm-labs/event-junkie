@@ -18,9 +18,12 @@ import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
  * them is unreadable on a third of the venues. It is never revealed on hover, because a touch
  * device has none. design.instructions.md §2 names it as the one gradient and the one raw colour.
  */
-withDefaults(defineProps<{ credit: ImageCredit; kind: 'photo' | 'text'; overlay?: boolean }>(), {
-  overlay: false,
-})
+withDefaults(
+  defineProps<{ credit: ImageCredit; kind: 'photo' | 'logo' | 'text'; overlay?: boolean }>(),
+  {
+    overlay: false,
+  },
+)
 
 const { t } = useI18n()
 </script>
@@ -33,7 +36,7 @@ const { t } = useI18n()
         : 'text-meta text-muted-foreground'
     "
   >
-    {{ kind === 'photo' ? t('common.imageCredit.photo') : t('common.textCredit.text') }}
+    {{ kind === 'text' ? t('common.textCredit.text') : t(`common.imageCredit.${kind}`) }}
     <a :href="credit.sourceUrl" :class="UNDERLINED_LINK_CLASS" rel="noopener" target="_blank">
       {{ credit.attribution }}
     </a>

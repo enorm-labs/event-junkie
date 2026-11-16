@@ -52,12 +52,14 @@ were drafted from each promoter's own about page and read by a person before the
 page from an event all the same. A row without one shows no description, which is better than a sentence that says
 nothing.
 
-**Logos: two sites offer one, none states who may use it.** Every site in the table was read for
-a press, brand or partner page (#328). FluxFM (`fluxfm.de/presse`) and Karsten Jahnke
-(`kj.de/presse.html`) offer a logo download on a press page and say nothing about its use. The
-other press pages take accreditation requests or sit behind a login (rbb). No promoter publishes a
-usage grant, so this pass writes no `image_url`. The two offers are in the `note` column, for the
-day the image decision in #328 is taken.
+**Logos come from Wikimedia Commons, never from a promoter's own site.** `IMAGES.tsv` holds one row per logo:
+the promoter's `slug`, its `wikidata` item, the Commons `file` and the `licence_at_review`. A person matched each item
+to the promoter, because a name alone also matches a river or a Greek nymph. `scripts/promoter-images.py` reads the
+licence and the author from Commons when it runs. It stops a row whose licence changed. A public-domain logo with no
+author credits the promoter by name. The promoter page draws the logo whole, on a light plate (#5177).
+
+No promoter's own site grants use of its logo (#328). FluxFM and Karsten Jahnke offer a download on a press page and
+say nothing about its use.
 
 **Kinds that are not promoters stay in the table.** A magazine that presents a show is a credit
 the venue prints and a reader may search for. The kind is what a later enrichment reads to decide

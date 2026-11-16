@@ -267,15 +267,15 @@ const { t } = useI18n()
       <p>
         <strong>Bilder:</strong> Es gibt zwei Quellen. Locations, Veranstalter und Künstler*innen
         veröffentlichen Bilder, zu einzelnen Veranstaltungen und zu sich selbst. Fotos von Gebäuden
-        der Locations stammen außerdem aus offenen Archiven wie Wikimedia Commons und Flickr, wo
-        Fotograf*innen sie unter einer Lizenz veröffentlicht haben, die das erlaubt. Event Junkie
-        lädt beides herunter und speichert eine Kopie auf eigenen Servern bei Hetzner, statt sie bei
-        jedem Seitenaufruf erneut beim Anbieter anzufragen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f
-        DSGVO. Das berechtigte Interesse ist eine Auslieferung ohne Beteiligung Dritter und eine
-        geringere Last für die Server der Locations. Die Kopie wird gelöscht, sobald die Location
-        aussteigt oder Rechteinhaber*innen das verlangen, und danach nicht erneut geladen. Bei einem
-        Archivfoto sind die Rechteinhaber*innen die Fotograf*innen und nicht die Location. Der
-        Bildnachweis unter dem Foto nennt sie.
+        der Locations und Logos von Veranstaltern stammen außerdem aus offenen Archiven wie
+        Wikimedia Commons und Flickr, wo sie unter einer Lizenz veröffentlicht sind, die das
+        erlaubt. Event Junkie lädt beides herunter und speichert eine Kopie auf eigenen Servern bei
+        Hetzner, statt sie bei jedem Seitenaufruf erneut beim Anbieter anzufragen. Rechtsgrundlage
+        ist Art. 6 Abs. 1 lit. f DSGVO. Das berechtigte Interesse ist eine Auslieferung ohne
+        Beteiligung Dritter und eine geringere Last für die Server der Locations. Die Kopie wird
+        gelöscht, sobald die Location aussteigt oder Rechteinhaber*innen das verlangen, und danach
+        nicht erneut geladen. Bei einem Archivfoto sind die Rechteinhaber*innen die Fotograf*innen
+        und nicht die Location. Der Bildnachweis unter dem Foto nennt sie.
       </p>
       <p>
         <strong>Übersetzungen:</strong> Beschreibungen werden maschinell übersetzt, damit die Seite

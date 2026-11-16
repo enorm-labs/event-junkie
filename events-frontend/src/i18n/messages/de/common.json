@@ -75,7 +75,8 @@
   },
   "imageCredit": {
     "photo": "Foto:",
-    "title": "Foto: {attribution} · {licence}"
+    "title": "Foto: {attribution} · {licence}",
+    "logo": "Logo:"
   },
   "textCredit": {
     "text": "Text:"
