@@ -50,6 +50,8 @@ data class AccountExport(
     val sessions: List<SessionInfo>,
     val follows: List<FollowResponse>,
     val searches: List<SavedSearchResponse>,
+    /** Acts watched by MusicBrainz id that have no Berlin date yet (#5214). */
+    val watches: List<WatchResponse>,
     val rsvps: List<RsvpResponse>,
     /** What the header's bell listed (#4078), read or not, for 30 days. */
     val notifications: List<NotificationResponse>,
@@ -88,6 +90,34 @@ data class FollowResponse(
         fun of(follow: FollowedEntity) = FollowResponse(follow.kind.tag, follow.slug, follow.name, follow.notify, follow.followedAt)
     }
 }
+
+/** An act the account watches by its MusicBrainz id, before it has a Berlin date (#5214). [name] is the one MusicBrainz gave when it was picked. */
+data class WatchResponse(
+    val mbid: String,
+    val name: String,
+    val notify: String,
+    val watchedAt: Instant
+) {
+    companion object {
+        fun of(watch: Watch) = WatchResponse(watch.mbid, watch.name, watch.notify, watch.watchedAt)
+    }
+}
+
+/** What watching an id did: a `watch`, or an `artist` follow when an artist row already carries the id, with its [slug]. */
+data class WatchOutcome(
+    val kind: String,
+    val slug: String?
+)
+
+/** One MusicBrainz candidate for the picker. [followSlug] names the artist row that already carries the id, so the picker offers a follow instead. */
+data class MusicBrainzCandidateResponse(
+    val mbid: String,
+    val name: String,
+    val type: String?,
+    val country: String?,
+    val disambiguation: String?,
+    val followSlug: String?
+)
 
 data class SavedSearchRequest(
     val name: String,

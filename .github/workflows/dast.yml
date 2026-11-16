@@ -276,6 +276,9 @@ jobs:
             -config globalexcludeurl.url_list.url(3).regex=^https?://[^/]+/api/me/push$
             -config globalexcludeurl.url_list.url(3).description=no-push
             -config globalexcludeurl.url_list.url(3).enabled=true
+            -config globalexcludeurl.url_list.url(4).regex=^https?://[^/]+/api/me/(musicbrainz/.*|watches/.+)$
+            -config globalexcludeurl.url_list.url(4).description=musicbrainz-third-party-one-request-a-second
+            -config globalexcludeurl.url_list.url(4).enabled=true
 
       # On the runner, not in a container: the load balancer is on the host's :8080 and `Host` does the
       # routing. `-type http` keeps out the network, code, javascript and headless templates; `-ni` drops

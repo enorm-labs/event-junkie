@@ -77,6 +77,8 @@ class AccountFixtureTest : BaseControllerTest() {
         get("/me/follows", bob).jsonPath("$[*].slug").value<List<String>> { it shouldBe listOf("hinterhof-bar") }
         get("/me/searches", ada).jsonPath("$[0].id").isEqualTo(ada.savedSearchId)
         get("/me/searches", bob).jsonPath("$[0].id").isEqualTo(bob.savedSearchId)
+        get("/me/watches", bob).jsonPath("$[*].mbid").value<List<String>> { it shouldBe listOf(fixture[1].get("watchMbid").asString()) }
+        get("/me/watches", ada).jsonPath("$").isEmpty
 
         val statuses =
             webTestClient

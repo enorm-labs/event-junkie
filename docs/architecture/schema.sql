@@ -300,10 +300,13 @@ CREATE TABLE accounts.follow (
     notify text DEFAULT 'off'::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     name text,
-    CONSTRAINT follow_kind_check CHECK ((kind = ANY (ARRAY['artist'::text, 'venue'::text, 'promoter'::text, 'festival'::text, 'search'::text]))),
+    mbid text,
+    CONSTRAINT follow_kind_check CHECK ((kind = ANY (ARRAY['artist'::text, 'venue'::text, 'promoter'::text, 'festival'::text, 'search'::text, 'watch'::text]))),
+    CONSTRAINT follow_mbid_shape CHECK ((mbid ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text)),
     CONSTRAINT follow_notify_check CHECK ((notify = ANY (ARRAY['off'::text, 'digest'::text, 'instant'::text]))),
     CONSTRAINT follow_search_name CHECK (((kind <> 'search'::text) OR ((name IS NOT NULL) AND ((length(name) >= 1) AND (length(name) <= 80))))),
-    CONSTRAINT follow_target CHECK ((((kind = 'search'::text) AND (query IS NOT NULL) AND (entity_id IS NULL)) OR ((kind <> 'search'::text) AND (entity_id IS NOT NULL) AND (query IS NULL))))
+    CONSTRAINT follow_target CHECK ((((kind = 'search'::text) AND (query IS NOT NULL) AND (entity_id IS NULL) AND (mbid IS NULL)) OR ((kind = 'watch'::text) AND (mbid IS NOT NULL) AND (entity_id IS NULL) AND (query IS NULL)) OR ((kind <> ALL (ARRAY['search'::text, 'watch'::text])) AND (entity_id IS NOT NULL) AND (query IS NULL) AND (mbid IS NULL)))),
+    CONSTRAINT follow_watch_name CHECK (((kind <> 'watch'::text) OR ((name IS NOT NULL) AND ((length(name) >= 1) AND (length(name) <= 200)))))
 );
 
 --
@@ -1591,6 +1594,18 @@ CREATE INDEX follow_kind_entity_idx ON accounts.follow USING btree (kind, entity
 CREATE UNIQUE INDEX follow_search_key ON accounts.follow USING btree (account_id, query) WHERE (kind = 'search'::text);
 
 --
+-- Name: follow_watch_key; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE UNIQUE INDEX follow_watch_key ON accounts.follow USING btree (account_id, mbid) WHERE (kind = 'watch'::text);
+
+--
+-- Name: follow_watch_mbid_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX follow_watch_mbid_idx ON accounts.follow USING btree (mbid) WHERE (kind = 'watch'::text);
+
+--
 -- Name: notification_account_idx; Type: INDEX; Schema: accounts; Owner: -
 --
 
@@ -1655,6 +1670,12 @@ CREATE INDEX artist_comedian_unread_idx ON events.artist USING btree (id) WHERE 
 --
 
 CREATE INDEX artist_discogs_unchecked_idx ON events.artist USING btree (id) WHERE ((musicbrainz_match = 'NONE'::text) AND (discogs_match = 'UNCHECKED'::text));
+
+--
+-- Name: artist_musicbrainz_id_idx; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX artist_musicbrainz_id_idx ON events.artist USING btree (musicbrainz_id) WHERE (musicbrainz_id IS NOT NULL);
 
 --
 -- Name: artist_musicbrainz_unchecked_idx; Type: INDEX; Schema: events; Owner: -

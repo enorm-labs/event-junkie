@@ -362,6 +362,16 @@ const { t } = useI18n()
         each entry. Only you can see it. If an entry leaves the calendar, I delete the follow too.
       </p>
       <p>
+        <strong>Acts not playing here yet:</strong> you can follow an act that has no date in Berlin
+        yet. To find it, my server sends the name you type to MusicBrainz, an open music database.
+        The request comes from my server, not from your browser. It carries neither your IP address
+        nor your account, so MusicBrainz cannot tell who searched. I do not log the name you type. I
+        keep MusicBrainz's answer in memory for one day. When you pick an act, I store its
+        MusicBrainz id, its name and when you picked it. Your Following page lists it, and you can
+        remove it there. Only you can see it. As soon as the act gets a date here, it becomes an
+        ordinary follow, and the bell tells you about its dates.
+      </p>
+      <p>
         <strong>Saved searches:</strong> when you save a search, I store its filters, the name you
         give it and when you saved it. The page suggests a name from the filters, and you can change
         it. Your Following page lists your saved searches. You can rename or delete each one there.

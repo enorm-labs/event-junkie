@@ -25,6 +25,7 @@ class AccountMetrics(
     private val pushes = PushAction.entries.associateWith { registry.counter(PUSH, TAG_ACTION, it.tag) }
     private val passkeys = PasskeyOutcome.entries.associateWith { registry.counter(PASSKEY, TAG_OUTCOME, it.tag) }
     private val cleanup = CleanupOutcome.entries.associateWith { registry.counter(CLEANUP, TAG_OUTCOME, it.tag) }
+    private val watches = WatchAction.entries.associateWith { registry.counter(WATCH, TAG_ACTION, it.tag) }
     private val follows =
         FollowAction.entries.associateWith { action ->
             FollowKind.entries.associateWith { kind -> registry.counter(FOLLOW, TAG_ACTION, action.tag, TAG_KIND, kind.tag) }
@@ -67,6 +68,11 @@ class AccountMetrics(
     fun record(action: PushAction) = pushes.getValue(action).increment()
 
     fun record(outcome: PasskeyOutcome) = passkeys.getValue(outcome).increment()
+
+    fun record(
+        action: WatchAction,
+        count: Long = 1
+    ) = watches.getValue(action).increment(count.toDouble())
 
     fun record(
         action: FollowAction,
@@ -116,6 +122,9 @@ class AccountMetrics(
 
         /** `bff.account.passkey{outcome}`: passkeys registered, used to sign in, renamed and deleted, and the refusals (#3888). */
         const val PASSKEY = "bff.account.passkey"
+
+        /** `bff.account.watch{action}`: acts watched by MusicBrainz id, unwatched, and turned into artist follows (#5214). */
+        const val WATCH = "bff.account.watch"
 
         /** `bff.account.follow{action,kind}`: follows and unfollows (#3889). */
         const val FOLLOW = "bff.account.follow"
@@ -214,6 +223,16 @@ enum class FollowAction(
 ) {
     FOLLOW("follow"),
     UNFOLLOW("unfollow")
+}
+
+enum class WatchAction(
+    val tag: String
+) {
+    WATCH("watch"),
+    UNWATCH("unwatch"),
+
+    /** An artist row with the watched id got the verdict EXACT, and the watch became an artist follow. */
+    CONVERTED("converted")
 }
 
 enum class SavedSearchAction(

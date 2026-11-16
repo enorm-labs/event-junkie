@@ -871,6 +871,8 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `bff.accounts.cleanup{outcome}`                  | Counter                               | links/sessions/follows_purged, warned, warn_failed, deleted, failed (#3905, #3889)        |
 | `bff.accounts.cleanup.last_success`              | Gauge                                 | Epoch seconds of the last cleanup pass with no failed step; the start time first          |
 | `bff.account.follow{action,kind}`                | Counter                               | follow / unfollow, per artist / venue / promoter (#3889)                                  |
+| `bff.account.watch{action}`                      | Counter                               | watch / unwatch / converted: an act followed by its MusicBrainz id (#5214)                |
+| `bff.musicbrainz.requests{request,outcome}`      | Counter                               | search / artist × ok / cached / not_found / unavailable. The term is never a tag          |
 | `bff.accounts.count{state}`                      | Gauge                                 | all / active — active is used in the last 30 days. Same on every replica: take `max`      |
 | `bff.accounts.sessions`                          | Gauge                                 | Live sessions, one per signed-in browser. Refreshed every 5 minutes                       |
 | `bff.accounts.follows{kind}`                     | Gauge                                 | Follows that exist, per artist / venue / promoter                                         |

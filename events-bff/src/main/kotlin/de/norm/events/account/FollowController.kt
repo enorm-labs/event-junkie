@@ -128,14 +128,17 @@ class FollowController(
     }
 
     private companion object {
-        /** Keeps the following query an index read, and is far beyond anyone's real list. */
-        const val MAX_FOLLOWS = 500L
-
         /** The events list's own parameters, so a filter means the same on both lists (#4079). */
         val FOLLOWING_PARAMS =
             QueryParameters.accepting(EventFilterParams::class.java, QueryParameters.PAGEABLE, QueryParameters.named("from", "to", "running"))
     }
 }
+
+/**
+ * Every row of `accounts.follow` counts: follows, saved searches and watches. Keeps the following query an index read, and is far
+ * beyond anyone's real list.
+ */
+internal const val MAX_FOLLOWS = 500L
 
 /** The kind and id behind a path's `{kind}/{slug}`, or a 404. */
 internal suspend fun FollowStore.resolve(
