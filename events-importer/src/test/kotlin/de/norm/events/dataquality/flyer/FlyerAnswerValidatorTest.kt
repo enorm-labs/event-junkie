@@ -5,8 +5,8 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -26,7 +26,7 @@ class FlyerAnswerValidatorTest {
                         "startTime" to finding("23:00", "23:00 — END")
                     ),
                     NIGHT
-                ).shouldNotBeNull()
+                ).accepted()
 
         answer.acts!!.value shouldContainExactly listOf("Lukr Range", "Taube", "Wan")
         answer.startTime!!.value shouldBe LocalTime.of(23, 0)
@@ -40,7 +40,7 @@ class FlyerAnswerValidatorTest {
                 .parse(
                     json("flyerText" to SAVORY, "acts" to finding(listOf("Taube", "TAUBE", "Ben Klock"), "TAUBE")),
                     NIGHT
-                ).shouldNotBeNull()
+                ).accepted()
 
         answer.acts!!.value shouldContainExactly listOf("Taube")
     }
@@ -48,18 +48,18 @@ class FlyerAnswerValidatorTest {
     @Test
     fun `a time whose hour the evidence does not name, or evidence the text does not hold, is dropped`() {
         val wrongHour =
-            FlyerAnswerValidator.parse(json("flyerText" to SAVORY, "startTime" to finding("22:00", "23:00 — END")), NIGHT).shouldNotBeNull()
+            FlyerAnswerValidator.parse(json("flyerText" to SAVORY, "startTime" to finding("22:00", "23:00 — END")), NIGHT).accepted()
         wrongHour.startTime.shouldBeNull()
 
         val invented =
-            FlyerAnswerValidator.parse(json("flyerText" to SAVORY, "acts" to finding(listOf("Taube"), "Line up: Taube")), NIGHT).shouldNotBeNull()
+            FlyerAnswerValidator.parse(json("flyerText" to SAVORY, "acts" to finding(listOf("Taube"), "Line up: Taube")), NIGHT).accepted()
         withClue("the evidence is not a passage of the flyer text") { invented.acts.shouldBeNull() }
     }
 
     @Test
     fun `a confidence outside 0 to 1 drops the finding`() {
         val answer =
-            FlyerAnswerValidator.parse(json("flyerText" to SAVORY, "acts" to finding(listOf("Taube"), "TAUBE", 1.5)), NIGHT).shouldNotBeNull()
+            FlyerAnswerValidator.parse(json("flyerText" to SAVORY, "acts" to finding(listOf("Taube"), "TAUBE", 1.5)), NIGHT).accepted()
 
         answer.acts.shouldBeNull()
     }
@@ -68,13 +68,21 @@ class FlyerAnswerValidatorTest {
     fun `a flyer text that does not name the event's day proposes nothing`() {
         val otherNight = SAVORY.replace("19 NOVEMBER 2026", "26 NOVEMBER 2026")
 
-        FlyerAnswerValidator.parse(json("flyerText" to otherNight, "acts" to finding(listOf("Taube"), "TAUBE")), NIGHT).shouldBeNull()
+        FlyerAnswerValidator.parse(json("flyerText" to otherNight, "acts" to finding(listOf("Taube"), "TAUBE")), NIGHT) shouldBe
+            FlyerVerdict.Rejected(FlyerRejection.DAY_NOT_NAMED)
     }
 
     @Test
     fun `an empty or overlong flyer text proposes nothing`() {
-        FlyerAnswerValidator.parse(json("flyerText" to "  "), NIGHT).shouldBeNull()
-        FlyerAnswerValidator.parse(json("flyerText" to "19.11. " + "x".repeat(FlyerAnswerValidator.MAX_FLYER_TEXT)), NIGHT).shouldBeNull()
+        FlyerAnswerValidator.parse(json("flyerText" to "  "), NIGHT) shouldBe FlyerVerdict.Rejected(FlyerRejection.NO_FLYER_TEXT)
+        FlyerAnswerValidator.parse(json("acts" to finding(listOf("Taube"), "TAUBE")), NIGHT) shouldBe FlyerVerdict.Rejected(FlyerRejection.NO_FLYER_TEXT)
+        FlyerAnswerValidator.parse(json("flyerText" to "19.11. " + "x".repeat(FlyerAnswerValidator.MAX_FLYER_TEXT)), NIGHT) shouldBe
+            FlyerVerdict.Rejected(FlyerRejection.FLYER_TEXT_TOO_LONG)
+    }
+
+    @Test
+    fun `an answer that is JSON but no object is rejected as such`() {
+        FlyerAnswerValidator.parse("""["19.11."]""", NIGHT) shouldBe FlyerVerdict.Rejected(FlyerRejection.NOT_AN_OBJECT)
     }
 
     @Test
@@ -129,4 +137,6 @@ class FlyerAnswerValidatorTest {
 
         fun json(vararg entries: Pair<String, Any>): String = mapper.writeValueAsString(mapOf(*entries))
     }
+
+    private fun FlyerVerdict.accepted(): FlyerAnswer = shouldBeInstanceOf<FlyerVerdict.Accepted>().answer
 }

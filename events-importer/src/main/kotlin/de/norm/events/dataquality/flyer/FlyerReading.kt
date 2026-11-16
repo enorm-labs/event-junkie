@@ -3,7 +3,6 @@ package de.norm.events.dataquality.flyer
 import de.norm.events.ai.ModelAnswer
 import de.norm.events.common.QuotedText
 import de.norm.events.dataquality.classification.Finding
-import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import java.time.LocalDate
 import java.time.LocalTime
@@ -26,6 +25,28 @@ data class FlyerAnswer(
     val startTime: Finding<LocalTime>?
 )
 
+/** Why a flyer answer was turned down. The pass logs it, because a rejected flyer is not read again (#5186). */
+enum class FlyerRejection {
+    NO_TEXT,
+    REFUSED,
+    NOT_JSON,
+    NOT_AN_OBJECT,
+    NO_FLYER_TEXT,
+    FLYER_TEXT_TOO_LONG,
+    DAY_NOT_NAMED
+}
+
+/** What [FlyerAnswerValidator] made of one answer. */
+sealed interface FlyerVerdict {
+    data class Accepted(
+        val answer: FlyerAnswer
+    ) : FlyerVerdict
+
+    data class Rejected(
+        val reason: FlyerRejection
+    ) : FlyerVerdict
+}
+
 /**
  * Parses and checks one answer of [AnthropicFlyerReader] (ADR-059).
  *
@@ -34,8 +55,6 @@ data class FlyerAnswer(
  * the person who reviews the suggestion compares the two (ADR-049 rule 4).
  */
 object FlyerAnswerValidator {
-    private val logger = KotlinLogging.logger {}
-
     /** Longer than a full festival flyer. A longer text is no copy of a flyer. */
     const val MAX_FLYER_TEXT = 3000
 
@@ -45,7 +64,7 @@ object FlyerAnswerValidator {
     private const val MIN_ACT_LENGTH = 2
 
     /**
-     * The answer, or null when it is no object, carries no flyer text, or the text does not name the event's day.
+     * The answer, or the reason it fails: it is no object, carries no flyer text, or the text does not name the event's day.
      * A flyer that does not name the day may bill another night, so none of its acts is proposed.
      *
      * @throws de.norm.events.ai.UnparseableAnswer for text that is no JSON at all.
@@ -53,24 +72,27 @@ object FlyerAnswerValidator {
     fun parse(
         raw: String,
         eventDate: LocalDate
-    ): FlyerAnswer? {
-        val root = ModelAnswer.jsonObject(raw) ?: return null
+    ): FlyerVerdict {
+        val root = ModelAnswer.jsonObject(raw) ?: return FlyerVerdict.Rejected(FlyerRejection.NOT_AN_OBJECT)
         val flyerText =
             root
                 .get("flyerText")
                 ?.asString("")
                 ?.trim()
                 .orEmpty()
-        if (flyerText.isEmpty() || flyerText.length > MAX_FLYER_TEXT) return null
-        if (!EventDay.namedIn(eventDate, flyerText)) {
-            logger.info { "The flyer text does not name the event's day $eventDate; no act or time is proposed" }
-            return null
-        }
+        val rejection =
+            when {
+                flyerText.isEmpty() -> FlyerRejection.NO_FLYER_TEXT
+                flyerText.length > MAX_FLYER_TEXT -> FlyerRejection.FLYER_TEXT_TOO_LONG
+                !EventDay.namedIn(eventDate, flyerText) -> FlyerRejection.DAY_NOT_NAMED
+                else -> null
+            }
+        if (rejection != null) return FlyerVerdict.Rejected(rejection)
         val acts = finding(root.get("acts"), flyerText) { node -> acts(node, flyerText) }
         val startTime =
             finding(root.get("startTime"), flyerText) { node -> ModelAnswer.time(node.asString("")) }
                 ?.takeIf { ModelAnswer.namesHour(it.value, it.evidence) }
-        return FlyerAnswer(flyerText, acts, startTime)
+        return FlyerVerdict.Accepted(FlyerAnswer(flyerText, acts, startTime))
     }
 
     private fun <T> finding(

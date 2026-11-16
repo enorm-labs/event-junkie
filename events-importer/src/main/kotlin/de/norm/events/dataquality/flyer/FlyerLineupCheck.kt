@@ -16,14 +16,15 @@ import org.springframework.stereotype.Service
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** What one pass of [FlyerLineupCheck] did. [suggested] counts the rows it wrote, per field. */
+/** What one pass of [FlyerLineupCheck] did. [suggested] counts the rows it wrote, per field, and [rejections] the answers it turned down, per reason. */
 data class FlyerPassResult(
     val candidates: Int,
     val read: Int,
     val rejected: Int,
     val failed: Int,
     val suggested: Map<String, Int>,
-    val overBudget: Int = 0
+    val overBudget: Int = 0,
+    val rejections: Map<FlyerRejection, Int> = emptyMap()
 )
 
 /**
@@ -58,9 +59,18 @@ class FlyerLineupCheck(
         targets.forEach { target ->
             if (tally.monthTokens >= ledger.budget) tally.overBudget++ else withContext(LogContext.forEvent(target.id)) { read(target, tally) }
         }
-        val result = FlyerPassResult(targets.size, tally.read, tally.rejected, tally.failed, tally.suggested.toSortedMap(), tally.overBudget)
+        val result =
+            FlyerPassResult(
+                targets.size,
+                tally.read,
+                tally.rejections.values.sum(),
+                tally.failed,
+                tally.suggested.toSortedMap(),
+                tally.overBudget,
+                tally.rejections.toSortedMap()
+            )
         logger.info {
-            "Flyer-lineup pass finished: ${result.read} read, ${result.rejected} rejected, ${result.failed} failed, " +
+            "Flyer-lineup pass finished: ${result.read} read, ${result.rejected} rejected ${result.rejections}, ${result.failed} failed, " +
                 "${result.overBudget} over the token budget; suggested ${result.suggested}"
         }
         return result
@@ -70,7 +80,7 @@ class FlyerLineupCheck(
         var monthTokens: Long
     ) {
         var read = 0
-        var rejected = 0
+        val rejections = mutableMapOf<FlyerRejection, Int>()
         var failed = 0
         var overBudget = 0
         val suggested = mutableMapOf<String, Int>()
@@ -98,9 +108,10 @@ class FlyerLineupCheck(
             }
 
             is FlyerReadResult.Rejected -> {
-                tally.rejected++
+                tally.rejections.merge(result.reason, 1, Int::plus)
+                logger.info { "The flyer answer was rejected: ${result.reason}, ${result.usage.output} output tokens" }
                 // A broken answer says nothing about the flyer, so the next pass asks again (#4758).
-                if (!result.notJson) repository.recordRead(target.id, target.contentHash, reader.model)
+                if (result.reason != FlyerRejection.NOT_JSON) repository.recordRead(target.id, target.contentHash, reader.model)
                 outcome(OUTCOME_REJECTED)
             }
 

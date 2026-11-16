@@ -1,16 +1,21 @@
 package de.norm.events.dataquality.flyer
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
 import de.norm.events.dataquality.classification.AnthropicResponses.textResponse
 import de.norm.events.dataquality.classification.ClassificationProperties
 import de.norm.events.dataquality.classification.ClassificationTokenLedger
 import de.norm.events.dataquality.classification.EventClassificationRepository
 import de.norm.events.image.ImgproxyClient
+import de.norm.events.scraper.LogFields
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldStartWith
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -23,6 +28,7 @@ import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
@@ -154,10 +160,36 @@ class FlyerLineupCheckTest : BaseControllerTest() {
             val event = insertEvent("Savory", hash = "h1")
             server.enqueue(flyerAnswer(text = SAVORY.replace("{day}", "1 JANUARY 2030")))
 
-            check().pass().rejected shouldBe 1
+            check().pass().rejections shouldBe mapOf(FlyerRejection.DAY_NOT_NAMED to 1)
 
             suggestions(event).shouldBeEmpty()
             check().pass().candidates shouldBe 0
+        }
+
+    @Test
+    fun `a rejected answer is logged with its reason under the event, and the pass counts it per reason`(): Unit =
+        runBlocking {
+            val event = insertEvent("Savory", hash = "h1")
+            server.enqueue(textResponse(mapper.writeValueAsString(mapOf("acts" to emptyList<String>()))))
+            val appender = ListAppender<ILoggingEvent>().apply { start() }
+            val checkLogger = LoggerFactory.getLogger(FlyerLineupCheck::class.java) as Logger
+            checkLogger.addAppender(appender)
+
+            val result =
+                try {
+                    check().pass()
+                } finally {
+                    checkLogger.detachAppender(appender)
+                    appender.stop()
+                }
+
+            result.rejections shouldBe mapOf(FlyerRejection.NO_FLYER_TEXT to 1)
+            result.rejected shouldBe 1
+            val line = appender.list.single { it.formattedMessage.startsWith("The flyer answer was rejected") }
+            line.formattedMessage shouldStartWith "The flyer answer was rejected: NO_FLYER_TEXT, "
+            line.mdcPropertyMap[LogFields.EVENT_ID] shouldBe event.id.toString()
+            appender.list.single { it.formattedMessage.startsWith("Flyer-lineup pass finished") }.formattedMessage shouldContain
+                "1 rejected {NO_FLYER_TEXT=1}"
         }
 
     @Test
