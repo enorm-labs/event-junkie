@@ -439,7 +439,7 @@ gh api 'repos/enorm-labs/event-junkie/deployments?environment=staging' --jq '.[0
 ```
 
 A deployment record from the last few minutes is the evidence. **`flux get alerts` is not.** `Provider` and `Alert` in
-`notification.toolkit.fluxcd.io/v1beta3` have no `status` field, so no condition shows a rejected dispatch.
+`notification.toolkit.fluxcd.io/v1` have no `status` field, so no condition shows a rejected dispatch.
 
 No record usually means one of three things:
 
