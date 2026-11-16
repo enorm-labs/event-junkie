@@ -257,10 +257,11 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/enrich [--count N] [--venues]` — websites, Instagram links and descriptions for the promoters with the most upcoming events, from their own sites, into `docs/promoters/REVIEWED.tsv` and one PR; 35 rows a run, the search budget's size
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
 - `/fix-events [<url> ["<note>"]…]` — events the operator saw wrong on the site, or with no argument the "Report a problem" queue (#4399), each to a verdict: a parser fix with a test in one PR, a scope rule, an accepted limitation, or a numbered hand fix applied only on the operator's word
+- `/genre-cleanup [<env>]` — the stored genre tags that are not genres or are one genre spelled twice, judged into DROP, FOLD, FAMILY or KEEP; fixed as a normalizer change plus a migration, never a hand delete
 - `/git-cleanup` — worktrees and local branches sorted into safe, ask first and keep by PR state and `git cherry`; removes only what the operator confirms
 - `/importer-smoke` — seed, import, inspect the rows and check for regressions, for one importer
 - `/log-check` — both clusters' logs, Kubernetes events and alerts for the last day, sorted into noise, known, explained and new; drafts issues, files none
-- `/maintain [--dry-run]` — the maintenance loop in one command: reads the state, names the next of `/daily-check`, filing, `/afk`, `/afk merge`, a cut, `/post-release`, the weekly `/artist-cleanup` and the monthly `/data-quality-audit`, and runs the safe ones
+- `/maintain [--dry-run]` — the maintenance loop in one command: reads the state, names the next of `/daily-check`, filing, `/afk`, `/afk merge`, a cut, `/post-release`, the weekly `/artist-cleanup`, the monthly `/genre-cleanup` and `/data-quality-audit`, and runs the safe ones
 - `/k3d-rehearsal` — the chart and all three images on a local k3d cluster, end to end, then torn down
 - `/improve-test-coverage` — find and fill coverage gaps
 - `/milestone-plan` — a milestone from a list of open issues to an ordered plan

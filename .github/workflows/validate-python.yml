@@ -99,6 +99,9 @@ jobs:
       - name: artist-cleanup flags names that are not acts and skips what the orphan sweep deletes
         run: python3 scripts/test_artist_cleanup.py
 
+      - name: genre-cleanup folds spelling variants, flags format words and skips unlinked tags
+        run: python3 scripts/test_genre_cleanup.py
+
       - name: festival-match proposes one row per event at the entry's venue and date
         run: python3 scripts/test_festival_match.py
 
