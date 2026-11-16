@@ -84,6 +84,10 @@ decorative and storage would grow without bound. The bucket gets a plain expiry 
 **S3 credentials are project-scoped, not bucket-scoped** — one key pair reaches the state bucket, the observability bucket and this one. Worth knowing before
 assuming the backup bucket is isolated.
 
+**The backups are compressed, not encrypted.** `backups.sh` sets no `WALG_LIBSODIUM_KEY` and no `WALG_PGP_KEY`. Whoever holds an S3 key of the project can
+read every base backup and WAL segment. This is an accepted risk, and the [threat model](../security/THREAT_MODEL.md#accepted) records it. A copy of a backup or
+a dump is not encrypted either.
+
 ## 4. Retention — 30 days, enforced twice
 
 **30 days of point-in-time recovery**, decided 2026-08-18. Long enough that corruption noticed weeks later is still recoverable, and a defensible figure to put
