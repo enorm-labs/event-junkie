@@ -15,9 +15,12 @@ Read the coverage reports, find the under-tested code that matters, and write th
    one in the same pattern if missing). Test files mirror the source path.
 4. **A new test class must not fork a Spring context.** No `@TestPropertySource` or `@Import` on a class that `BaseControllerTest` could carry instead;
    the context count is measured, and a new one costs a container for the whole task.
-5. **Verify**: `./gradlew ktlintFormat`, then `./gradlew clean build`, then `koverLog` again for the after number.
+5. **Verify**: `./gradlew ktlintFormat`, then `./gradlew clean build detektMain detektTest`, then `koverLog` again for the after number.
 
 ## Frontend (Vitest)
+
+`events-frontend/` and `events-admin/` both test with Vitest. Only `events-frontend/` has a coverage script; in `events-admin/`, read the gaps from the tests
+next to the code and verify with `npm run type-check`, `npm run lint` and `npm run test:unit -- --run`.
 
 1. **Baseline**: `npm run test:unit:coverage` (console summary, `coverage/index.html`).
 2. **Prioritise**: composables → pure helpers in `src/lib/` → components with real logic (computed, watchers, handlers). Skip layout-only components, the

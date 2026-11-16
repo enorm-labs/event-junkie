@@ -98,6 +98,7 @@ A Consequences section listing only benefits is a sales document. Name the new o
 ## Step 5 — Verify
 
 ```sh
+git add docs/adr/<the new ADR>.md  # ste-lint reads `git ls-files`, so an untracked ADR passes unread
 scripts/format-markdown.sh check
 scripts/ste-lint.sh check          # docs/adr is its own baseline area, and it is at zero
 ```

@@ -10,7 +10,11 @@ Review the changes in this pull request (or diff) for correctness, maintainabili
 4. The conventions are the path-scoped rules, and they load as you open the files: [kotlin](../instructions/kotlin.instructions.md),
    [architecture](../instructions/architecture.instructions.md), [logging](../instructions/logging.instructions.md), [testing](../instructions/testing.instructions.md),
    [vue](../instructions/vue.instructions.md), [design](../instructions/design.instructions.md), [comments](../instructions/comments.instructions.md),
-   [kubernetes](../instructions/kubernetes.instructions.md), [ci-cd](../instructions/ci-cd.instructions.md). Review against them; do not restate them.
+   [kubernetes](../instructions/kubernetes.instructions.md), [ci-cd](../instructions/ci-cd.instructions.md), [python](../instructions/python.instructions.md),
+   [documentation](../instructions/documentation.instructions.md), [markdown](../instructions/markdown.instructions.md). Review against them; do not restate
+   them.
+5. A new route, a row an account owns, or a change to sign-in: check the deployed-system suites moved with it ([AGENTS.md](../../AGENTS.md) § Deployed-system
+   suites). A suite that misses a feature stays green.
 
 ## What to look for
 

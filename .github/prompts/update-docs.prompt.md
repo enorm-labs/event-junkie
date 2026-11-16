@@ -43,10 +43,13 @@ Each row is mechanical. Start at the top: the findings get less certain as you g
 Each is documented as "these must move together", so each is a place where drift is a real defect rather than a style preference. Check them explicitly:
 
 - **`docs/CREDENTIALS.md` §2 ↔ the `CREDENTIALS` table in `credential-expiry-reminder.yml`** — the expiry dates.
-- **`HELM_VERSION` and `HELM_UNITTEST_VERSION`** — `validate-chart.yml` and `release.yml`.
-- **`SHELLCHECK_VERSION`** — `validate-scripts.yml` and `validate-infra.yml`.
+- **A CI tool pin set in more than one workflow** — `HELM_VERSION`, `HELM_UNITTEST_VERSION`, `SHELLCHECK_VERSION`, `FLUX_VERSION`, `TRIVY_VERSION` and any
+  other. List the files each one is in rather than trusting a list here: `grep -rn '_VERSION:' .github/workflows/ | grep -vE 'VERSION: \$\{\{'`.
 - **The required-check list in [ci-cd.instructions.md](../instructions/ci-cd.instructions.md) ↔ the `main` ruleset** — `gh api repos/:owner/:repo/rulesets`.
-- **The skills list in `AGENTS.md` ↔ `.claude/skills/` ↔ `.claude/commands/`** — `scripts/skill-parity.sh` already checks this, so run it rather than reading.
+- **The pairs a parity script checks** — run the script rather than reading. For documentation: `skill-parity.sh` (the skills list in `AGENTS.md`),
+  `rules-parity.sh`, `sources-parity.sh` (EVENT_DATA_SOURCES.md's counts), `secrets-parity.sh` (SECRETS.md), `collector-parity.sh` (a log field name),
+  `features-parity.sh` (PRODUCT_OVERVIEW.md § Surfaces), `scope-parity.sh`, `index-parity.sh` (`scripts/README.md`) and `dashboard-parity.sh check` (LINKS.md
+  and the operations page). [scripts/README.md](../../scripts/README.md) lists every one; a bare `dashboard-parity.sh` regenerates rather than checks.
 
 Where a script already checks a pair, run the script. A check that exists and was not run is the reason the pair drifted.
 
@@ -125,7 +128,7 @@ LEAVE     3   true, and long because the subject is
 ──────────────
 5 documents changed, 0 arguments rewritten
 
-pairs checked   5 of 5 in step, skill-parity 20/20, rules-parity 7/7
+pairs checked   <n> of <n> in step, each parity script with its result
 ste-lint        at or below baseline, unchanged
 ```
 

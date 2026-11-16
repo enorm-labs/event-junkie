@@ -27,8 +27,8 @@ changes is which of them an unwatched run is allowed to reach.
   deleted, and nobody re-reads a comment that still looks fine. The `asd-ste100` pass on prose that has to stay is a human's job.
 - **Never touch a scraper's venue KDoc**, whatever its density. It is the designated home for accepted limitations (#393, #714), it is the densest prose in the
   repository by construction, and it is the single most attractive target for something optimising for line count.
-- **The baseline only moves down.** If the run cannot lower a number honestly, it leaves the number alone. An unattended run must never argue for a raise,
-  because the argument is the part a human makes in the pull request.
+- **No cap moves up.** The comment rules' thresholds (`LongComment` and `CommentDensity` in `detekt.yml`) stay where they are. If the run cannot lower the
+  density honestly, it changes nothing. An unattended run must never argue for a raise, because the argument is the part a human makes in the pull request.
 - **Rank the whole tree, then read at most twenty files, then change at most twelve.** Those are three different numbers and only the last one is about the
   diff. `--all` names hundreds of files, and reading all of them is how a run exhausts itself before it writes anything — rank first from
   `comment-density.sh report`, which needs no file opened, and open only the top of that list. Report what was left, and let the next run take it: a sweep that

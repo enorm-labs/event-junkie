@@ -30,7 +30,7 @@ Do not invent findings. Every change here starts from something that was already
 
 ```bash
 ./gradlew detekt --console=plain -q                    # complexity, long methods, naming
-./gradlew :events-importer:detektMain                  # the type-resolution rules CI does not run — see #407
+./gradlew detektMain detektTest                        # the type-resolved rules, which CI runs beside detekt (#407)
 ./gradlew koverLog                                     # coverage per module, the before number
 find . -name '*.kt' -not -path '*/build/*' | xargs wc -l | sort -rn | head -30
 ```

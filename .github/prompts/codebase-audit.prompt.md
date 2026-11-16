@@ -7,8 +7,8 @@ skimmable report where every claim is backed by a concrete file, count, or comma
 
 ## Scope & intent
 
-This is **not** `code-review` (which is scoped to the current diff/PR). This audit looks at the entire codebase across all four projects — `events-core`,
-`events-bff`, `events-importer`, and `events-frontend` — plus build config, CI, and docs. The goal is to surface **actionable, high-value** structural and
+This is **not** `code-review` (which is scoped to the current diff/PR). This audit looks at the entire codebase across all six modules — `events-core`,
+`events-bff`, `events-importer`, `detekt-rules`, `events-frontend` and `events-admin` (AGENTS.md § Project Overview) — plus build config, CI, and docs. The goal is to surface **actionable, high-value** structural and
 quality issues: files/classes that have grown too large, duplicated logic that should be deduped, code that has become hard to follow, drift from documented
 conventions, and places where a library or a small refactor would meaningfully simplify things.
 
@@ -35,24 +35,23 @@ Run the tooling the project already ships and let the numbers drive the findings
 ```bash
 # Largest Kotlin source files (excludes build output)
 find . -name '*.kt' -not -path '*/build/*' -not -path '*/node_modules/*' | xargs wc -l | sort -rn | head -30
-# Largest frontend source files
-find events-frontend/src -name '*.vue' -o -name '*.ts' | xargs wc -l | sort -rn | head -20
+# Largest frontend source files, public SPA and admin app
+find events-frontend/src events-admin/src \( -name '*.vue' -o -name '*.ts' \) | xargs wc -l | sort -rn | head -20
 ```
 
 Treat size as a _smell, not a verdict_: open the large files and judge whether they hold one cohesive responsibility (fine) or several that should be split
 (e.g. a scraper that also does normalization, a service doing HTTP + parsing + persistence, a Vue view that mixes fetching, formatting, and layout). Flag
-classes/files that mix concerns, have very long functions, deep nesting, or a large public surface. The recent split of `EventMappingExtensions` into three
-cohesive files (see git log) is the model to hold others against.
+classes/files that mix concerns, have very long functions, deep nesting, or a large public surface.
 
 **Static analysis & coverage** — run and read the output; don't just assert.
 
 ```bash
-./gradlew detekt         # complexity, long methods, naming — read the reports, not just pass/fail
+./gradlew detekt detektMain detektTest   # syntax-only plus the type-resolved rules CI runs (#4013); read the reports, not just pass/fail
 ./gradlew koverLog       # per-module coverage; note modules/classes with weak coverage
 ./gradlew dependencyUpdates   # outdated libraries (also cross-check Dependabot groups)
 ```
 
-For the frontend, `cd events-frontend && npm run lint` and `npm run type-check`. Note that `schema.d.ts` is generated — never count it as a hand-written
+For the frontend and the admin app, `npm run lint` and `npm run type-check` in `events-frontend/` and in `events-admin/`. Note that `schema.d.ts` is generated — never count it as a hand-written
 oversized file.
 
 **Duplication** — the highest-value thing to hunt for in this codebase. The scraper package is where duplication tends to accumulate: many venue importers
@@ -84,11 +83,12 @@ or propose a new one. Distinguish incidental similarity from true duplication wo
 Is the code still easy to follow? Unclear names, dead/commented-out code, leftover TODOs, inconsistent patterns between sibling modules, magic numbers/strings
 that should be named constants or config. Note where a newcomer would struggle.
 
-Comments are part of this, measured against the **"Comments and KDoc" section of `AGENTS.md`**: a comment that restates the code, carries history or dates, or
-duplicates a decision that belongs in AGENTS.md or an ADR. detekt's `LongComment` rule already fails the build above 25 lines, so what is left for an audit is
-the shorter prose the rule cannot judge — and the pattern of a codebase drifting toward narration. Two things this audit must **not** do: treat length alone as
-a finding, and touch the scraper KDoc, which is the designated home for accepted limitations (`**/scraper/**` is excluded from the rule for that reason). If a
-comment there is long, the finding is at most "say it in fewer words", never "delete it".
+Comments are part of this, measured against **`.github/instructions/comments.instructions.md`**: a comment that restates the code, carries history or dates,
+or duplicates a decision that belongs in AGENTS.md or an ADR. The repository's own detekt rules (`detekt-rules/`, the `event-junkie:` key in `detekt.yml`)
+already fail the build on `LongComment` (over 25 lines, one cap for every package, #741), `CommentDensity` (a file that is mostly comment) and `CommentSmell`
+(dates and history in main sources). What is left for an audit is the shorter prose the rules cannot judge — and the pattern of a codebase drifting toward
+narration. Two things this audit must **not** do: treat length alone as a finding, and delete scraper KDoc, which is the designated home for accepted
+limitations. If a comment there is long, the finding is at most "say it in fewer words", never "delete it".
 
 ### 4. Convention adherence (per `AGENTS.md` + code-review rubric)
 
@@ -108,8 +108,9 @@ comment there is long, the finding is at most "say it in fewer words", never "de
 
 Places where a library the project already uses (or a small, well-justified new one) would remove hand-rolled code — e.g. repeated null/collection handling,
 manual JSON walking that a mapping could express, date/price logic already covered by an extension. Be conservative: every proposed dependency must earn its
-place (justify it, note the maintenance cost), and prefer using what's already on the classpath. Also flag tooling wins: detekt rules worth enabling, coverage
-thresholds worth raising, config worth centralizing.
+place (justify it, note the maintenance cost), and prefer using what's already on the classpath. Also flag tooling wins: detekt rules worth enabling, config
+worth centralizing. The Kover floors (`koverVerificationFloor` in `build.gradle.kts`) are floors, not targets (kotlin.instructions.md): never propose raising
+one.
 
 ### 6. Architecture & module health
 
@@ -119,7 +120,8 @@ structure will scale as more venue importers are added. Cross-reference the rele
 
 ### 7. Tests & safety net
 
-Coverage gaps on important classes (services, controllers, scrapers, normalizers) per `koverLog`; brittle or over-mocked tests; missing integration coverage for
+Coverage gaps on important classes (services, controllers, scrapers, normalizers) per `koverLog`, judged by what is untested rather than by the distance to
+a module's floor; brittle or over-mocked tests; missing integration coverage for
 cross-module flows; test files that are large because of boilerplate rather than cases. Note where the safety net is thin enough that refactoring would be
 risky.
 

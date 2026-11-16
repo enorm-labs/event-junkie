@@ -13,6 +13,12 @@ is derived from the source **name** (e.g. "Astra Kulturhaus" → `astra-kulturha
   command list.
 - **Restart the importer after any code change.** `bootRun` does not hot-reload; a smoke test against a stale JVM tests the previous version of your scraper.
   After editing Kotlin: `scripts/dev-env.sh down && scripts/dev-env.sh up`.
+- **In a worktree, `export COMPOSE_PROJECT_NAME=event-junkie` before `scripts/dev-env.sh up`.** Without it the worktree starts a second, empty Postgres and
+  `diff-snapshot` reports every source as `GONE`. Ports `8081` / `8080` / `5173` are fixed: run `down` in the other checkout first.
+- **A re-run at a one-page venue whose page has not changed answers 304** and imports nothing, because the stored `ETag` / `Last-Modified` skip it. After a
+  parser fix, force the fetch (#1159): `scripts/dev-env.sh import` has no force option, so trigger with
+  `curl -sS -X POST "http://localhost:8081/api/admin/event-sources/<slug>/import?force=true"` and poll
+  `curl -sS http://localhost:8081/api/admin/event-sources/<slug> | jq .status` until it leaves `RUNNING`. Do not clear the validator columns.
 - **Be polite to the venue** (ADR-007 scraping ethics). Import the source under test, not everything. Re-triggering the same source a handful of times while
   debugging is fine; looping it dozens of times is not.
 - The default scope is **targeted**: seed and import only this source against the existing database. Use `--full` (wipe + re-seed everything) only when the
@@ -59,7 +65,7 @@ It prints the slug to use below. Both POSTs are re-run safe: an existing venue/s
 ### 4. Import and inspect
 
 ```bash
-scripts/dev-env.sh import <slug>       # triggers, then polls until SUCCESS/FAILED
+scripts/dev-env.sh import <slug>       # triggers, then polls until SUCCESS/FAILED; a re-run after a parser fix forces instead (Important)
 scripts/dev-env.sh check <slug>        # summary · field coverage · types · suspicious rows · sample
 ```
 
