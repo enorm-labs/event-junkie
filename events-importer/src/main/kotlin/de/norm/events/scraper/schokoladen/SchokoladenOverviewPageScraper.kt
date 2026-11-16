@@ -1,6 +1,7 @@
 package de.norm.events.scraper.schokoladen
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.genretag.isGenreLabel
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -137,6 +138,7 @@ class SchokoladenOverviewPageScraper {
      * "art-pop, indie-pop/songwriter" (#1495). The origin is not a genre (#314): an annotation with
      * more than one comma-separated part loses its last, or its first when that is the country or
      * city code ("(Bln, punk)"), and a code or a spelled-out place is dropped wherever it stands.
+     * A last part made only of known genres stays ("(Rocksteady, Reggae & Jamaican Jazz)").
      * A one-part annotation is a genre unless it is a code ("(SWE)").
      */
     private fun parseGenre(title: String): String? =
@@ -406,6 +408,7 @@ private fun genresFromAnnotation(annotation: String): List<String> {
             parts.size < 2 -> parts
             isOrigin(parts.last()) -> parts.dropLast(1)
             isOrigin(parts.first()) -> parts.drop(1)
+            namesOnlyGenres(parts.last()) -> parts
             else -> parts.dropLast(1)
         }
     return genres
@@ -424,6 +427,16 @@ private fun genresFromAnnotation(annotation: String): List<String> {
  * its `Mod` (#2327).
  */
 private fun isOrigin(part: String): Boolean = (ORIGIN_CODE.matches(part) && part.lowercase() !in SHORT_GENRES) || part.lowercase() in ORIGIN_PLACES
+
+/**
+ * Whether every piece of an annotation's last part is a genre the vocabulary knows, so the part is
+ * not the origin: `(Rocksteady, Reggae & Jamaican Jazz)` lost its reggae (events 14178, 14179).
+ * A place in any piece keeps the whole part out: `punk - Athen`, `Norwich/UK`.
+ */
+private fun namesOnlyGenres(part: String): Boolean = part.split(ANNOTATION_PIECE_SEPARATOR).all { it.isNotBlank() && isGenreLabel(it.trim()) }
+
+/** What joins the pieces of one annotation part: `&`, `/` or a spaced dash. */
+private val ANNOTATION_PIECE_SEPARATOR = Regex("""\s+&\s+|/|\s+-\s+""")
 
 /** A country or city code inside an annotation — "uk", "bln", "aus", "bln/tlv". */
 private val ORIGIN_CODE = Regex("""[a-z]{2,3}(?:\s*/\s*[a-z]{2,3})*""", RegexOption.IGNORE_CASE)

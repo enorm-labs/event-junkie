@@ -80,7 +80,9 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "zohar & adam",
         // Comedy duos Die Wühlmäuse bills as their whole act line.
         "emmi & willnowsky",
-        "heißmann & rassau"
+        "heißmann & rassau",
+        // A rap duo Hole 44 bills as its whole title, on tour as one act (event 14164).
+        "caramella & ydra"
     )
 
 /**
