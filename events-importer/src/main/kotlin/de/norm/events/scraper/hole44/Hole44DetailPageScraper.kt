@@ -4,7 +4,6 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
-import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
@@ -89,7 +88,7 @@ class Hole44DetailPageScraper {
             status = parseEventStatus(content.textAt(".single_event_header span.changes").orEmpty()),
             statusNote = content.textAt(".single_event_header span.changes"),
             promoters = parsePromoter(content),
-            artists = buildArtistsForEventType(title, support, eventType, description)
+            artists = hole44Artists(title, support, eventType, description)
         )
     }
 }
