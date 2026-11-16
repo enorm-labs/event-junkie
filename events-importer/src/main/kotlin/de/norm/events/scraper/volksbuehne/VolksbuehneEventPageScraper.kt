@@ -7,10 +7,12 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.ogImageUrl
+import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import org.jsoup.nodes.Document
+import java.time.LocalTime
 
 /** What one Volksbühne performance page adds to its row. */
 data class VolksbuehneEventPage(
@@ -20,7 +22,9 @@ data class VolksbuehneEventPage(
     /** The names of the page's writer line, which names a director or an author on a staged work and the performers on a concert. */
     val writers: List<String> = emptyList(),
     /** The house's ticket shop for this date; a sold-out category is a `<span>` with no link. */
-    val ticketUrl: String? = null
+    val ticketUrl: String? = null,
+    /** The schema.org start, for a row that prints one time per ticket category and so none of its own (#5171). */
+    val startTime: LocalTime? = null
 ) {
     /**
      * The page's text and image; its schema.org type replaces the listing's only where the listing named no format. A concert
@@ -36,6 +40,7 @@ data class VolksbuehneEventPage(
             eventType = confirmedType?.name ?: event.eventType,
             typeIsFallback = event.typeIsFallback && confirmedType == null,
             artists = event.artists.ifEmpty { writerActs },
+            startTime = event.startTime ?: startTime,
             ticketUrl = event.ticketUrl?.takeIf { isShopLink(it) && it.trimEnd('/') != event.sourceUrl.trimEnd('/') } ?: ticketUrl
         )
     }
@@ -57,6 +62,7 @@ class VolksbuehneEventPageScraper {
         return VolksbuehneEventPage(
             ticketUrl = document.select(".activity-detail__tickets a.ticket-button[href]").map { it.attr("href") }.firstOrNull(::isShopLink),
             writers = document.textAt("p.production__writer")?.let(VolksbuehneSpielplanScraper::splitNames).orEmpty(),
+            startTime = event?.stringOrNull("startDate")?.substringAfter('T', "")?.let(::parseClockPrefix),
             description = description,
             imageUrl = event?.schemaImageUrl() ?: document.ogImageUrl(),
             eventType =

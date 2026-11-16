@@ -156,6 +156,21 @@ class VolksbuehneSpielplanScraperTest {
     }
 
     @Test
+    fun `dates a row that prints one time per ticket category from its day and leaves its time to the page`() {
+        val later = fixtureDocument("volksbuehne/volksbuehne-spielplan-2026-11-16.html", url)
+        val rows =
+            VolksbuehneSpielplanScraper(VolksbuehneHouse.PRATER).scrape(later, url) +
+                VolksbuehneSpielplanScraper(VolksbuehneHouse.ROSA_LUXEMBURG_PLATZ).scrape(later, url)
+        val cursed = rows.filter { it.title == "CURSED – a preinvented world." }
+
+        cursed.map { it.eventDate.toString() } shouldContainExactly
+            listOf("10", "11", "14", "17", "18", "19", "21", "22", "30", "31").map { "2026-12-$it" }
+        cursed.first().sourceId shouldBe "volksbuehne_prater:cursed-a-preinvented-world-20261210-1800"
+        cursed.first().room shouldBe null
+        rows.filter { it.startTime == null } shouldContainExactly cursed
+    }
+
+    @Test
     fun `marks a children's show`() {
         val html =
             """

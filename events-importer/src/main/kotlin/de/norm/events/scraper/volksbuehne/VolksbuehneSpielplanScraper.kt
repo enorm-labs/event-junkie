@@ -22,7 +22,9 @@ import java.net.URI
 /**
  * Pure parser for the Volksbühne Spielplan, the home page's `section#performances`, keeping the
  * rows on [house]'s stages. Each `li.activity` carries a `time[datetime]` with its offset, the
- * stage, the title and its link, and optional lines: a format label (`Konzert`, `Lesung und
+ * stage, the title and its link, and optional lines. A row with several ticket categories prints
+ * their start times bare instead, so its date comes from its `li.day` and its time from the
+ * performance page ([VolksbuehneEventPage]). The optional lines are a format label (`Konzert`, `Lesung und
  * Gespräch`), the writer or director, a `mit …` line and a surtitle note (`mit engl. ÜT`).
  * Workshops and theatre tours drop (EVENT_SCOPE.md §3.2). Children's shows are marked `for-children` (§3.5).
  */
@@ -52,7 +54,8 @@ class VolksbuehneSpielplanScraper(
         val addition = row.textAt(".activity__title_addition")
         if (title == null || isOutOfScope(title, label)) return null
         val dateTime = row.attrAt(".activity__time time[datetime]", "datetime")
-        val date = dateTime?.let { parseIsoDate(it.take(ISO_DATE_LENGTH)) }
+        val day = dateTime ?: row.closest("li.day")?.attrAt(".day__label time[datetime]", "datetime")
+        val date = day?.let { parseIsoDate(it.take(ISO_DATE_LENGTH)) }
         val page = row.selectFirst("h3.activity__title a[href]")?.absUrl("href").blankToNull()
         if (date == null || page == null) {
             logger.warn { "Volksbühne row without a date or a page on $url ($stage, $title, $dateTime), skipping it" }
@@ -65,7 +68,7 @@ class VolksbuehneSpielplanScraper(
             eventType = (type ?: EventType.SHOW).name,
             typeIsFallback = type == null,
             eventDate = date,
-            startTime = parseClockPrefix(dateTime.substringAfter('T')),
+            startTime = dateTime?.let { parseClockPrefix(it.substringAfter('T')) },
             room = house.stages[stage],
             sourceUrl = page,
             sourceId = "${house.eventSource.sourceIdPrefix}${pageSlug(page)}",
