@@ -172,11 +172,13 @@ class FestsaalApiScraper {
 
     /**
      * The structured `presenters`, then the companies a `präsentiert von <name>` text block credits,
-     * deduplicated case-insensitively. Most credits are only text, see #3098.
+     * deduplicated case-insensitively, without the [SPONSOR_NAMES]. Most credits are only text, see #3098.
      */
     private fun promoters(node: FestsaalEventNode): List<String> {
         val credited = textBlocks(node.layouts).flatMap(::creditedPromoters)
-        return (node.presenters.mapNotNull { it.name.blankToNull() } + credited).distinctBy { it.lowercase() }
+        return (node.presenters.mapNotNull { it.name.blankToNull() } + credited)
+            .distinctBy { it.lowercase() }
+            .filterNot { it.lowercase() in SPONSOR_NAMES }
     }
 
     /**
@@ -423,6 +425,12 @@ private const val TEXT_ITEM = "item_text"
  * (`präsentiert von Loft, Visions & ByteFM`).
  */
 private val PRESENTER_BLOCK = Regex("""(?:wird\s+)?(?:$PRESENTED_BY_WORDS)\s*:?(?:\s+(.+))?""", RegexOption.IGNORE_CASE)
+
+/**
+ * The sponsors an ENERGY LIVE night credits after `präsentiert von`, lower-cased; ENERGY runs the night (#5196). Here, not in
+ * the promoter normalizer's non-promoter list, because `Mini` and `Helios` are short names a real promoter elsewhere can carry.
+ */
+private val SPONSOR_NAMES = setOf("helios", "mini", "ihk berlin", "riller & schnauck")
 
 /** The companies a [PRESENTER_BLOCK] credit line names; none for a bare heading or any other block. */
 private fun creditedPromoters(block: String): List<String> {

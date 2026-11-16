@@ -81,12 +81,19 @@ class FestsaalApiScraperTest {
         parsed.single().description shouldBe "Die Band spielt live."
     }
 
-    // Event 13985 split the car dealer Riller & Schnauck into two promoters (#5000).
+    // Event 13985 credits the radio show's four sponsors, and ENERGY runs the night (#5196).
     @Test
-    fun `keeps a credited company whose own name carries a spaced ampersand`() {
+    fun `stores no promoter for the sponsors an ENERGY LIVE night credits`() {
         val parsed = scraper.scrape(apiWithText("<p>präsentiert von Helios, Mini, IHK Berlin, Riller &amp; Schnauck</p>"))
 
-        parsed.single().promoters shouldBe listOf("Helios", "Mini", "IHK Berlin", "Riller & Schnauck")
+        parsed.single().promoters shouldBe emptyList()
+    }
+
+    @Test
+    fun `keeps a real presenter credited beside a sponsor`() {
+        val parsed = scraper.scrape(apiWithText("<p>präsentiert von Loft, MINI &amp; ByteFM</p>"))
+
+        parsed.single().promoters shouldBe listOf("Loft", "ByteFM")
     }
 
     @Test
