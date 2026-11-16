@@ -10,11 +10,13 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerWebExchange
 
 /**
@@ -40,6 +42,9 @@ class PromoterController(
         )
         @RequestParam(required = false)
         q: String?,
+        @Parameter(description = "Promoter kind slug (e.g. collective). Repeatable: a promoter of any given kind matches. An unknown kind is a 400.")
+        @RequestParam(required = false)
+        kind: List<String>?,
         @ParameterObject
         @PageableDefault(size = 20)
         pageable: Pageable,
@@ -47,7 +52,8 @@ class PromoterController(
     ): PageResponse<PromoterListItemResponse> {
         LIST_PARAMS.rejectUnknownIn(exchange)
         val term = TextSearch.term(q)
-        return cache.get(PromoterListKey(term, pageable)) { promoterService.list(term, pageable) }
+        val kinds = kindsOf(kind)
+        return cache.get(PromoterListKey(term, kinds, pageable)) { promoterService.list(term, pageable, kinds = kinds) }
     }
 
     @GetMapping("/{slug}")
@@ -59,13 +65,24 @@ class PromoterController(
 
     private companion object {
         /** Declared rather than derived: these parameters are on the method, not on a filter object. */
-        val LIST_PARAMS = QueryParameters.accepting(QueryParameters.PAGEABLE, QueryParameters.named("q"))
+        val LIST_PARAMS = QueryParameters.accepting(QueryParameters.PAGEABLE, QueryParameters.named("q", "kind"))
+
+        /** A blank value is no filter, as an empty `q` is. A slug the vocabulary does not know is a 400, not an empty list. */
+        fun kindsOf(slugs: List<String>?): Set<PromoterKind> =
+            slugs
+                .orEmpty()
+                .map { it.trim().lowercase() }
+                .filter { it.isNotEmpty() }
+                .mapTo(sortedSetOf()) {
+                    PromoterKind.fromSlug(it) ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown promoter kind: $it")
+                }
     }
 }
 
 /** The cache keys this controller owns. Separate types, so no endpoint can collide with another. */
 private data class PromoterListKey(
     val query: String?,
+    val kinds: Set<PromoterKind>,
     val pageable: Pageable
 )
 

@@ -31,6 +31,10 @@ Accept: application/json
 GET {{bff-host}}/api/promoters?q=concerts
 Accept: application/json
 
+### List the collectives and labels (kind repeats; an unknown kind is a 400)
+GET {{bff-host}}/api/promoters?kind=collective&kind=label&sort=upcomingEvents,desc
+Accept: application/json
+
 ### Unknown/malicious sort is ignored (falls back to default order, not a 500)
 GET {{bff-host}}/api/promoters?sort=name;DROP TABLE events.promoter;--
 Accept: application/json

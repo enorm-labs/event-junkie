@@ -3,5 +3,24 @@
   "subtitle": "Who books the nights: the agencies, collectives and labels behind the events we track.",
   "searchPlaceholder": "Search promoters…",
   "empty": "No promoters match that search. Try a different name.",
-  "resultCount": "{count} promoter found | {count} promoters found"
+  "resultCount": "{count} promoter found | {count} promoters found",
+  "byKind": "Filter by kind",
+  "allKinds": "All kinds",
+  "kindsSelected": "{n} kinds",
+  "clearKinds": "Clear kinds",
+  "kind": {
+    "collective": "Collectives",
+    "label": "Labels",
+    "party": "Party series"
+  },
+  "kindTitle": {
+    "collective": "Collectives in Berlin",
+    "label": "Labels in Berlin",
+    "party": "Party series in Berlin"
+  },
+  "kindSubtitle": {
+    "collective": "The crews of DJs and artists who host their own nights, with what each has coming up.",
+    "label": "The record labels that bring their own nights and showcases to Berlin.",
+    "party": "The recurring nights with a name of their own, with what each has coming up."
+  }
 }

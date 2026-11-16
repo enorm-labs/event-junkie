@@ -27,7 +27,7 @@ data class PromoterListPage(
 )
 
 /**
- * The promoter list query: a name search ([TextSearch]), ordered by name or by the events in
+ * The promoter list query: a name search ([TextSearch]) and a filter on [PromoterKind] (#5091), ordered by name or by the events in
  * [NextThirtyDays] (#1349, #2694).
  *
  * Both counts are correlated subqueries on `event_promoter` joined to `event`, so a page costs one
@@ -42,30 +42,46 @@ class PromoterSearchRepository(
 ) {
     private val order = NameListOrder("p.name", SORT_COLUMNS, TIEBREAKER)
 
+    /** An empty [kinds] lists every promoter, one with no kind included. */
     suspend fun search(
         query: String?,
         now: LocalDateTime,
         pageable: Pageable,
-        countCap: Int? = null
+        countCap: Int? = null,
+        kinds: Set<PromoterKind> = emptySet()
     ): PromoterListPage {
         val term = TextSearch.term(query)
-        return TextSearch.strictThenSimilar(term, found = { it.total > 0 }) { bySimilarity -> search(term, bySimilarity, now, pageable, countCap) }
+        return TextSearch.strictThenSimilar(term, found = { it.total > 0 }) { bySimilarity ->
+            search(Criteria(term, bySimilarity, kinds), now, pageable, countCap)
+        }
     }
 
-    @Suppress("LongParameterList") // The public search's four, plus the pass.
+    /** What one pass filters on: the name [term], matched strictly or by similarity, and the [kinds]. */
+    private data class Criteria(
+        val term: String?,
+        val bySimilarity: Boolean,
+        val kinds: Set<PromoterKind>
+    ) {
+        val where: String =
+            listOfNotNull(
+                term?.let { TextSearch.predicate("p.name", it, bySimilarity) },
+                "p.kind IN (:kinds)".takeIf { kinds.isNotEmpty() }
+            ).takeIf { it.isNotEmpty() }?.joinToString(" AND ", prefix = "WHERE ").orEmpty()
+    }
+
     private suspend fun search(
-        term: String?,
-        bySimilarity: Boolean,
+        criteria: Criteria,
         now: LocalDateTime,
         pageable: Pageable,
         countCap: Int?
     ): PromoterListPage {
-        val where = if (term == null) "" else "WHERE ${TextSearch.predicate("p.name", term, bySimilarity)}"
+        val (term, bySimilarity) = criteria
+        val where = criteria.where
 
         val total =
             databaseClient
                 .sql(countQuery("$EVENTS_SCHEMA.promoter p", where, countCap))
-                .bindTerm(term, bySimilarity)
+                .bindCriteria(criteria)
                 .map { row: Readable -> row.get(0, Long::class.javaObjectType) ?: 0L }
                 .one()
                 .awaitSingle()
@@ -77,7 +93,7 @@ class PromoterSearchRepository(
                 .sql(
                     "SELECT p.id, ($UPCOMING_COUNT) AS upcoming, ($NEXT_30_DAYS_COUNT) AS next30 FROM $EVENTS_SCHEMA.promoter p $where " +
                         "${order.clause(pageable, term, bySimilarity)} LIMIT :limit OFFSET :offset"
-                ).bindTerm(term, bySimilarity)
+                ).bindCriteria(criteria)
                 .bindAll(NextThirtyDays.params(now))
                 .bind("today", now.toLocalDate())
                 .bind("limit", pageable.pageSize)
@@ -95,10 +111,10 @@ class PromoterSearchRepository(
         return PromoterListPage(rows, total)
     }
 
-    private fun DatabaseClient.GenericExecuteSpec.bindTerm(
-        term: String?,
-        bySimilarity: Boolean
-    ): DatabaseClient.GenericExecuteSpec = if (term == null) this else bindAll(TextSearch.params(term, bySimilarity))
+    private fun DatabaseClient.GenericExecuteSpec.bindCriteria(criteria: Criteria): DatabaseClient.GenericExecuteSpec {
+        val withTerm = criteria.term?.let { bindAll(TextSearch.params(it, criteria.bySimilarity)) } ?: this
+        return if (criteria.kinds.isEmpty()) withTerm else withTerm.bind("kinds", criteria.kinds.map { it.slug })
+    }
 
     companion object {
         private const val UPCOMING_COUNT =

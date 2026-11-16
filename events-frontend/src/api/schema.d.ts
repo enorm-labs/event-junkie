@@ -3761,6 +3761,8 @@ export interface operations {
             query?: {
                 /** @description Search on the promoter name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all promoters. */
                 q?: string;
+                /** @description Promoter kind slug (e.g. collective). Repeatable: a promoter of any given kind matches. An unknown kind is a 400. */
+                kind?: string[];
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */
