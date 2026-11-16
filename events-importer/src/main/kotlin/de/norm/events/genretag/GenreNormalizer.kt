@@ -417,7 +417,12 @@ private val NON_GENRE_TOKENS: Set<String> =
         "singer",
         // Wild at Heart's "Playing Ramones" names a tribute set, and Schokoladen's "mmbrs milemarker" credits a band's members.
         "playing",
-        "mmbrs"
+        "mmbrs",
+        // Orangerie Neukölln's collage club bills "art workshop, creative, social"; a cabaret bills "Filth"; "Whacking" is a dance.
+        "creative",
+        "social",
+        "filth",
+        "whacking"
     )
 
 /**
