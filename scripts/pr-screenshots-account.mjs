@@ -2,7 +2,7 @@
 // /api/auth/** and /api/me/** in the browser, before the preview server's proxy, so production never sees an
 // account request.
 //
-// The account follows production's busiest venue, an artist and a promoter, keeps two saved searches and two RSVPs,
+// The account follows production's busiest venue, an artist and a promoter, waits for one invented act, keeps two saved searches and two RSVPs,
 // has eight notifications over three days, three of them unread and the first a change to the event marked going, and has no push. Its feeds come from the public /api/events, so the cards are real events. A write answers 204 and
 // changes nothing. An /api/me path this file does not know answers 404 and is logged once, so a new endpoint shows.
 
@@ -10,6 +10,14 @@ const ACCOUNT = { email: 'ada@example.de', locale: 'en', createdAt: '2026-10-01T
 const SEARCHES = [
   { id: '00000000-0000-4000-8000-000000000001', name: 'Techno', query: 'genre=techno', savedAt: '2026-10-02T10:00:00Z' },
   { id: '00000000-0000-4000-8000-000000000002', name: 'Free', query: 'free=true', savedAt: '2026-10-03T10:00:00Z' },
+]
+// An act waited for before its first Berlin date (#5214), and what the MusicBrainz picker finds. Invented names, so a shot
+// shows no real act, and never asks MusicBrainz.
+const WATCHES = [{ mbid: '00000000-0000-4000-8000-000000000031', name: 'Kesselwerk Trio', notify: 'instant', watchedAt: '2026-10-05T10:00:00Z' }]
+const CANDIDATES = [
+  { mbid: '00000000-0000-4000-8000-000000000041', name: 'Nebelhorn', type: 'Group', country: 'DE', disambiguation: 'Leipzig synth duo' },
+  { mbid: '00000000-0000-4000-8000-000000000042', name: 'Nebelhorn', type: 'Person', country: 'AT', disambiguation: 'Vienna folk singer' },
+  { mbid: '00000000-0000-4000-8000-000000000043', name: 'Nebelhorn Collective', type: 'Group', country: 'NL' },
 ]
 const PASSKEYS = [
   { id: 'passkey-1', name: 'This Mac', createdAt: '2026-10-04T10:00:00Z', lastUsedAt: '2026-10-20T10:00:00Z' },
@@ -105,6 +113,8 @@ export async function signIn(context, origin) {
         return json(route, page.content ?? [])
       }
       if (path === '/api/me/searches') return json(route, SEARCHES)
+      if (path === '/api/me/watches') return json(route, WATCHES)
+      if (path === '/api/me/musicbrainz/artists') return json(route, CANDIDATES)
       if (path === '/api/me/rsvps') return json(route, account.rsvps)
   // Allowed to report (#4399), with nothing reported yet, so an event page shows the button.
   if (path === '/api/me/reports') return json(route, [])

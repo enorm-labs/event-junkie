@@ -17,6 +17,7 @@ import { useI18n } from 'vue-i18n'
 import BaseInput from '@/components/BaseInput.vue'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { folded } from '@/lib/foldText'
 import { CHECKBOX_CLASS, cn, FIELD_CLASS } from '@/lib/utils'
 
 export interface FilterOption {
@@ -61,11 +62,6 @@ const summary = computed(() => {
 })
 
 const query = ref('')
-
-/** Lower case without accents, so `saal` finds Säälchen. */
-function folded(text: string): string {
-  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-}
 
 /** The values ticked when the list last opened. */
 const pinned = ref<ReadonlySet<string>>(new Set())

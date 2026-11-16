@@ -80,6 +80,7 @@ async function mockBff(page: Page, signedIn: boolean): Promise<{ path: string; b
     if (path === '/api/me/follows') return json(route, [])
     if (path === '/api/me/push') return json(route, { publicKey: null })
     if (path === '/api/me/searches') return json(route, [])
+    if (path === '/api/me/watches') return json(route, [])
     return fallthrough(route)
   })
   return writes

@@ -62,7 +62,8 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
 - **A page for every venue, artist and promoter**, with everything coming up there. Venues show their type, capacity and what they say about themselves —
   awareness team, step-free access, cash only.
 - **Follow** artists, venues and promoters with an optional account, signed in by e-mail link or a passkey, with no password, and see what they have coming up on
-  one **Following** page. **Save a search** there too, with how many events match it. Mark an event **Interested** or **Going** and
+  one **Following** page. **Save a search** there too, with how many events match it. **Wait for an act** that has never played
+  Berlin, picked from MusicBrainz, and hear of its first date here. Mark an event **Interested** or **Going** and
   find it on **My calendar**. The bell in the header lists the **new dates** of what you follow and the **changes** to what you
   plan to go to, unread until opened. Turn on **notifications** and ring the bell on a follow to get a push too. A cancelled or
   moved event you marked pushes by default.

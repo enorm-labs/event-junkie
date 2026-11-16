@@ -15,6 +15,7 @@ const account = vi.hoisted(() => ({
   fetchFollowing: vi.fn<(page?: number, query?: Record<string, unknown>) => Promise<unknown>>(),
   fetchFollowingToday: vi.fn<() => Promise<unknown[]>>(),
   fetchSearches: vi.fn<() => Promise<unknown[]>>(),
+  fetchWatches: vi.fn<() => Promise<unknown[]>>(),
 }))
 const getMock = vi.hoisted(() => vi.fn<(path: string, options?: unknown) => Promise<unknown>>())
 
@@ -62,6 +63,7 @@ beforeEach(() => {
   account.unfollow.mockResolvedValue()
   account.fetchFollowingToday.mockResolvedValue([])
   account.fetchSearches.mockResolvedValue([])
+  account.fetchWatches.mockResolvedValue([])
 })
 
 afterEach(() => {

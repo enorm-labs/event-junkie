@@ -11,7 +11,8 @@ class SignInNextTest {
             "/de/venues/sisyphos",
             "/en/events/tonight?do=rsvp-going",
             "/de/artists/ada?do=follow",
-            "/en/events?genre=techno&genre=house&q=Caf%C3%A9+Nacht&from=2026-11-20&do=save"
+            "/en/events?genre=techno&genre=house&q=Caf%C3%A9+Nacht&from=2026-11-20&do=save",
+            "/de/search?q=Moderat&do=watch"
         ).forEach { SignInNext.accepts(it) shouldBe true }
     }
 

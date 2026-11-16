@@ -202,6 +202,62 @@ export async function deleteSearch(id: string): Promise<void> {
   await unwrap(api.DELETE('/api/me/searches/{id}', { params: { path: { id } } }))
 }
 
+/** An act MusicBrainz knows, to watch (#5214). `followSlug` names the artist on this site that already carries it. */
+export interface MusicBrainzCandidate {
+  mbid: string
+  name: string
+  type?: string
+  country?: string
+  disambiguation?: string
+  followSlug?: string
+}
+
+/** An act the account watches by its MusicBrainz id, before it has a Berlin date (#5214). */
+export interface Watch {
+  mbid: string
+  name: string
+}
+
+/**
+ * The MusicBrainz candidates for [query]. The BFF asks MusicBrainz from the server, so the visitor's address never
+ * reaches it; a 503 means MusicBrainz did not answer.
+ */
+export async function searchMusicBrainz(query: string): Promise<MusicBrainzCandidate[]> {
+  const found = await unwrap(
+    api.GET('/api/me/musicbrainz/artists', { params: { query: { q: query } } }),
+  )
+  return found.flatMap((item) =>
+    item.mbid && item.name
+      ? [
+          {
+            mbid: item.mbid,
+            name: item.name,
+            type: item.type ?? undefined,
+            country: item.country ?? undefined,
+            disambiguation: item.disambiguation ?? undefined,
+            followSlug: item.followSlug ?? undefined,
+          },
+        ]
+      : [],
+  )
+}
+
+export async function fetchWatches(): Promise<Watch[]> {
+  return (await unwrap(api.GET('/api/me/watches'))).flatMap((item) =>
+    item.mbid && item.name ? [{ mbid: item.mbid, name: item.name }] : [],
+  )
+}
+
+/** Watches the act, or follows the artist when one on this site carries the id: then its slug comes back. */
+export async function watchAct(mbid: string): Promise<{ followed: string | null }> {
+  const outcome = await unwrap(api.PUT('/api/me/watches/{mbid}', { params: { path: { mbid } } }))
+  return { followed: outcome.kind === 'artist' ? (outcome.slug ?? null) : null }
+}
+
+export async function unwatchAct(mbid: string): Promise<void> {
+  await unwrap(api.DELETE('/api/me/watches/{mbid}', { params: { path: { mbid } } }))
+}
+
 /** Interested or going (#3892): private to the account. */
 export type RsvpStatus = 'interested' | 'going'
 

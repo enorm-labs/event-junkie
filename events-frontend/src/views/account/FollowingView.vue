@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { SavedSearch } from '@/api/account'
+import type { SavedSearch, Watch } from '@/api/account'
 import type { EventSummary } from '@/api/types'
 import type { Followed } from '@/components/FollowedList.vue'
 
@@ -16,6 +16,7 @@ interface Snapshot {
   hasMore: boolean
   total: number | undefined
   follows: Followed[]
+  watches: Watch[]
   searches: SavedSearch[]
   counts: Record<string, number>
 }
@@ -33,6 +34,7 @@ const SNAPSHOT_STATE_KEY = 'followingSnapshot'
  * events page's filters and sort from the URL, behind one Filter button (#4079); Today stays as it is. Below `sm` the bar shows without that
  * button, since its own Filters button already hides it in a sheet. The count and the sort sit under the open bar, as on the events page.
  * Saved searches show as chips beside the filters, and as a list to rename and delete on the follows tab (#4099).
+ * The follows tab also lists the acts watched before their first Berlin date, and picks a new one (#5214).
  */
 import { SlidersHorizontal } from '@lucide/vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -51,11 +53,13 @@ import SavedSearchList from '@/components/SavedSearchList.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import TodayEvents from '@/components/TodayEvents.vue'
+import WatchList from '@/components/WatchList.vue'
 import { Button } from '@/components/ui/button'
 import {
   fetchFollowing,
   fetchFollowingToday,
   fetchFollows,
+  fetchWatches,
   type FollowingQuery,
   type FollowKind,
   type Notify,
@@ -154,6 +158,7 @@ const page = ref(restored?.page ?? 0)
 const hasMore = ref(restored?.hasMore ?? false)
 const total = ref<number | undefined>(restored?.total)
 const follows = ref<Followed[] | null>(restored?.follows ?? null)
+const watches = ref<Watch[]>(restored?.watches ?? [])
 const suggestions = ref<{ slug: string; name: string }[]>([])
 const loadingMore = ref(false)
 const problem = ref('')
@@ -169,9 +174,12 @@ const TABS: Tab[] = ['events', 'follows']
 // Events is the default, so its URL stays bare and its own query stays alone.
 const tab = computed<Tab>(() => (route.query.tab === 'follows' ? 'follows' : 'events'))
 const tabButtons = ref<HTMLButtonElement[]>([])
-// Saved searches count as following something (#3890), and the tab lists them too.
+// Saved searches (#3890) and watched acts (#5214) count as following something, and the tab lists them too.
 const followedCount = computed(
-  () => (follows.value?.filter((item) => item.following).length ?? 0) + saved.searches.value.length,
+  () =>
+    (follows.value?.filter((item) => item.following).length ?? 0) +
+    saved.searches.value.length +
+    watches.value.length,
 )
 
 function selectTab(next: Tab, focus = false) {
@@ -207,11 +215,28 @@ watch(tab, (_, before) => {
   void load()
 })
 
+/**
+ * A watch came or went, or a pick followed an artist already on the site. The list of watches reloads now; the follows
+ * reload on leaving the tab, as after an unfollow, so a row kept for an undo stays.
+ */
+async function onWatchChange() {
+  followsChanged = true
+  try {
+    watches.value = await fetchWatches()
+  } catch (e) {
+    problem.value = describeError(e, 'errors.subject.following')
+  }
+}
+
 /** The bells show once the site is known to send push (#3894); unknown or off, they would promise nothing. */
 const bells = computed(() => !['loading', 'unavailable'].includes(push.state.value))
 
 const empty = computed(
-  () => follows.value !== null && follows.value.length === 0 && saved.searches.value.length === 0,
+  () =>
+    follows.value !== null &&
+    follows.value.length === 0 &&
+    saved.searches.value.length === 0 &&
+    watches.value.length === 0,
 )
 
 /** Counts the upcoming loads, so a slower answer to an older filter never replaces a newer one. */
@@ -222,12 +247,14 @@ async function load(pages = 1) {
   problem.value = ''
   try {
     const ticket = ++upcomingTicket
-    const [day, list, ...upcoming] = await Promise.all([
+    const [day, list, waiting, ...upcoming] = await Promise.all([
       fetchFollowingToday(),
       fetchFollows(),
+      fetchWatches(),
       ...Array.from({ length: pages }, (_, n) => fetchFollowing(n, upcomingQuery())),
     ])
     today.value = day
+    watches.value = waiting
     if (ticket === upcomingTicket) showPages(upcoming)
     follows.value = list.flatMap((item) =>
       item.kind && item.kind in ROUTE && item.slug && item.name
@@ -335,6 +362,7 @@ onBeforeUnmount(() => {
     hasMore: hasMore.value,
     total: total.value,
     follows: follows.value,
+    watches: watches.value,
     searches: saved.searches.value,
     counts: saved.counts.value,
   }
@@ -523,6 +551,7 @@ onBeforeUnmount(() => {
           </RouterLink>
         </p>
         <FollowedList :bells="bells" :follows="follows" @change="onFollowChange" />
+        <WatchList :watches="watches" @change="onWatchChange" />
         <SavedSearchList :saved="saved" />
       </div>
     </template>
