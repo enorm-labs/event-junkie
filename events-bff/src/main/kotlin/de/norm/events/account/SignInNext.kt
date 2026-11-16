@@ -6,7 +6,8 @@ package de.norm.events.account
  * to save. The frontend's `signInNext.ts` is the same pattern.
  */
 internal object SignInNext {
-    val ACTIONS = listOf("follow", "rsvp-going", "rsvp-interested", "save")
+    /** `watch` opens the MusicBrainz picker on `/search` (#5214). */
+    val ACTIONS = listOf("follow", "rsvp-going", "rsvp-interested", "save", "watch")
 
     /** The keys a saved search writes, and the list's own dates. */
     val FILTERS =

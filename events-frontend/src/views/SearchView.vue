@@ -8,11 +8,13 @@ import ListPage from '@/components/ListPage.vue'
 import SearchInput from '@/components/SearchInput.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import VenueRow from '@/components/VenueRow.vue'
+import WatchOffer from '@/components/WatchOffer.vue'
 import { Button } from '@/components/ui/button'
 import { useAsync } from '@/composables/useAsync'
 import { fetchSearch, MIN_SEARCH_LENGTH } from '@/composables/useGlobalSearch'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useSearchDraft } from '@/composables/useSearchDraft'
+import { folded } from '@/lib/foldText'
 import { addDays, todayIso } from '@/lib/format'
 import { CARD_LIST_CLASS, PANEL_CLASS, TEXT_LINK_CLASS } from '@/lib/utils'
 
@@ -64,6 +66,17 @@ const sections = computed(() => {
     .filter((section) => section.total > 0)
 })
 
+/**
+ * No artist carries the name searched, so the act may not be on the site yet (#5214). A search for one we lack often still
+ * finds an old event or a venue, and the search forgives typos, so `Nebelhorn` finds `DJ Nebelmaschine`: only an artist whose
+ * name equals the term, case and accents aside, keeps the offer away. It reads the answer the page has, and asks nothing more.
+ */
+const offerWatch = computed(() => {
+  if (!data.value) return false
+  const term = folded(q.value)
+  return !(data.value.artists?.items ?? []).some((artist) => folded(artist.name ?? '') === term)
+})
+
 // The BFF stops counting at 100 (#2533), so a capped total reads "100+".
 function countOf(group?: { total?: number; totalCapped?: boolean }) {
   const total = group?.total ?? 0
@@ -108,9 +121,15 @@ function linksOf(key: string): { to: string; name: string }[] {
       <Button as-child variant="outline">
         <RouterLink :to="localePath('/events')">{{ t('common.actions.browseEvents') }}</RouterLink>
       </Button>
+      <WatchOffer class="pt-6" :q="q" />
     </div>
     <template v-else>
-      <section v-for="section in sections" :key="section.key" class="space-y-3">
+      <section
+        v-for="section in sections"
+        :key="section.key"
+        class="space-y-3"
+        :data-group="section.key"
+      >
         <div class="flex items-baseline justify-between gap-3">
           <SectionLabel>
             {{ t(`search.groups.${section.key}`) }}
@@ -148,6 +167,7 @@ function linksOf(key: string): { to: string; name: string }[] {
           </template>
         </ul>
       </section>
+      <WatchOffer v-if="offerWatch" :q="q" />
     </template>
   </ListPage>
 </template>

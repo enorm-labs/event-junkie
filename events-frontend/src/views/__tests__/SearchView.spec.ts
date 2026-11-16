@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineComponent, h } from 'vue'
@@ -13,6 +13,7 @@ vi.mock('@/api/client', async (importOriginal) => ({
 
 const { default: SearchView } = await import('@/views/SearchView.vue')
 const { addDays, todayIso } = await import('@/lib/format')
+const { setSession } = await import('@/composables/useSession')
 
 const Page = defineComponent({ render: () => h('p') })
 
@@ -21,6 +22,7 @@ let wrapper: VueWrapper | undefined
 afterEach(() => {
   wrapper?.unmount()
   wrapper = undefined
+  getMock.mockReset()
 })
 
 const event = (slug: string) => ({ slug, title: slug, eventDate: '2026-01-10' })
@@ -74,7 +76,7 @@ describe('SearchView', () => {
       '/api/search',
       expect.objectContaining({ params: { query: { q: 'lido', limit: 20, past: true } } }),
     )
-    const sections = view.findAll('section')
+    const sections = view.findAll('section[data-group]')
     expect(sections.map((section) => section.find('h2, span').text())).toEqual([
       expect.stringContaining('Events'),
       expect.stringContaining('Promoters'),
@@ -97,7 +99,85 @@ describe('SearchView', () => {
     })
     const view = await mountAt('/en/search?q=lido')
 
-    expect(view.findAll('section')).toHaveLength(1)
+    expect(view.findAll('section[data-group]')).toHaveLength(1)
     expect(view.text()).not.toContain('Past events')
+  })
+
+  describe('the offer to watch an act that is not on the site (#5214)', () => {
+    const offer = (view: VueWrapper) =>
+      view.findAll('section').find((s) => s.text().includes('Not playing Berlin yet?'))
+
+    beforeEach(() => setSession(null))
+
+    it('shows under the empty sentence when nothing matched', async () => {
+      getMock.mockResolvedValue({
+        venues: { items: [], total: 0 },
+        events: { items: [], total: 0 },
+        artists: { items: [], total: 0 },
+        promoters: { items: [], total: 0 },
+        past: { items: [], total: 0 },
+      })
+      const view = await mountAt('/en/search?q=Moderat')
+
+      expect(view.text()).toContain('Nothing found for “Moderat”.')
+      expect(offer(view)?.text()).toContain('Get told when “Moderat” gets a Berlin date.')
+    })
+
+    it('shows after the results when they hold no artist, as for an old event title', async () => {
+      getMock.mockResolvedValue({
+        venues: { items: [], total: 0 },
+        events: { items: [], total: 0 },
+        artists: { items: [], total: 0 },
+        promoters: { items: [], total: 0 },
+        past: { items: [event('moderat-2019')], total: 1 },
+      })
+      const view = await mountAt('/en/search?q=Moderat')
+
+      const sections = view.findAll('section')
+      expect(sections[sections.length - 1]?.text()).toContain('Not playing Berlin yet?')
+    })
+
+    it('stays away when an artist carries the name searched, case and accents aside', async () => {
+      getMock.mockResolvedValue({
+        venues: { items: [], total: 0 },
+        events: { items: [], total: 0 },
+        artists: { items: [{ slug: 'cafe-tacvba', name: 'Café Tacvba' }], total: 1 },
+        promoters: { items: [], total: 0 },
+        past: { items: [], total: 0 },
+      })
+      const view = await mountAt('/en/search?q=cafe%20tacvba')
+
+      expect(offer(view)).toBeUndefined()
+    })
+
+    it('still shows when the search only forgave a typo and found a near name', async () => {
+      getMock.mockResolvedValue({
+        venues: { items: [], total: 0 },
+        events: { items: [], total: 0 },
+        artists: { items: [{ slug: 'dj-nebelmaschine', name: 'DJ Nebelmaschine' }], total: 1 },
+        promoters: { items: [], total: 0 },
+        past: { items: [], total: 0 },
+      })
+      const view = await mountAt('/en/search?q=Nebelhorn')
+
+      expect(view.find('section[data-group="artists"]').exists()).toBe(true)
+      expect(offer(view)?.text()).toContain('Get told when “Nebelhorn” gets a Berlin date.')
+    })
+
+    it('signed out, leads to sign-in and back to this search to open the picker, and asks MusicBrainz nothing', async () => {
+      getMock.mockResolvedValue({
+        venues: { items: [], total: 0 },
+        events: { items: [], total: 0 },
+        artists: { items: [], total: 0 },
+        promoters: { items: [], total: 0 },
+      })
+      const view = await mountAt('/en/search?q=Moderat')
+
+      const link = offer(view)!.find('a')
+      const next = new URL(link.attributes('href')!, 'https://example.org').searchParams.get('next')
+      expect(next).toBe('/en/search?q=Moderat&do=watch')
+      expect(getMock).toHaveBeenCalledTimes(1)
+      expect(getMock).toHaveBeenCalledWith('/api/search', expect.anything())
+    })
   })
 })

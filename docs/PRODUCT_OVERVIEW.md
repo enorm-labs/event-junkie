@@ -87,6 +87,9 @@ lists what that includes and what it excludes.
 - **Save a search** on the events list, under a name the page suggests. One genre or one district saves with a single press. On the
   **Following** page, a chip above the upcoming list opens each saved search and shows how many events match. The _You follow_ tab lists them
   to rename or delete.
+- **Wait for an act** with no Berlin date on the site yet. When a search finds no artist of that name, the search page offers it, and so does the _You follow_
+  tab. The visitor picks the act from MusicBrainz, which the server asks, so the visitor's address never reaches it. Once the act gets a
+  Berlin date, it becomes an ordinary follow, and the bell lists its dates.
 - Mark an event **Interested** or **Going** on its page. Only the visitor sees it, on the cards and in the **Following** feed.
   **My calendar** shows these plans as a list or a calendar, and keeps the past ones as history.
 - Turn on **notifications** in a browser, from the account page. A bell on each follow sends a push to those browsers when the artist,
@@ -136,7 +139,7 @@ the first column. It fails in two cases:
 | `/christmas-markets`                   | The Christmas markets of the season, as a list and on a map (EVENT_SCOPE.md §3.7)                       |
 | `/for-children`                        | Every upcoming children's event, linked from the footer (EVENT_SCOPE.md §3.5)                           |
 | `/promoters/:slug`                     | Promoter page                                                                                           |
-| `/search`                              | All results for a header search, not indexed                                                            |
+| `/search`                              | All results for a header search, and the offer to wait for an act no artist name matches; not indexed   |
 | `/about`                               | About page                                                                                              |
 | `/legal/imprint`                       | Imprint                                                                                                 |
 | `/legal/privacy`                       | Privacy notice                                                                                          |
@@ -146,7 +149,7 @@ the first column. It fails in two cases:
 | `/sign-in/check-mail`                  | Says the link is on its way                                                                             |
 | `/sign-in/confirm`                     | The page the mail links to; signs in on a click                                                         |
 | `/account`                             | The address, notifications, passkeys, data export, sign-out and account deletion                        |
-| `/following`                           | Two tabs: the events of what the visitor follows, and that list by kind, to unfollow                    |
+| `/following`                           | Two tabs: the events of what the visitor follows, and that list by kind, with the acts it waits for     |
 | `/my-calendar`                         | The events the visitor is interested in or going to, as a list or a calendar                            |
 | `/notifications`                       | Every notification by day, all or only the unread ones, 50 at a time                                    |
 | `/feed.xml`                            | RSS feed of newly imported events, with every events-list filter                                        |

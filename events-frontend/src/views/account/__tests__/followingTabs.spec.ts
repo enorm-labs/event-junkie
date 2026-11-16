@@ -15,6 +15,7 @@ const account = vi.hoisted(() => ({
   fetchFollowing: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
   fetchFollowingToday: vi.fn<() => Promise<unknown[]>>(),
   fetchSearches: vi.fn<() => Promise<unknown[]>>(),
+  fetchWatches: vi.fn<() => Promise<unknown[]>>(),
   fetchPushKey: vi.fn<() => Promise<string | null>>(),
 }))
 const getMock = vi.hoisted(() => vi.fn<(path: string, options?: unknown) => Promise<unknown>>())
@@ -55,6 +56,7 @@ beforeEach(() => {
   account.unfollow.mockResolvedValue()
   account.fetchFollowingToday.mockResolvedValue([])
   account.fetchSearches.mockResolvedValue([])
+  account.fetchWatches.mockResolvedValue([])
   // A key, so the site sends push and the bells show; jsdom then reads as a browser without it.
   account.fetchPushKey.mockResolvedValue('key')
   account.fetchFollowing.mockResolvedValue({ content: [adaLive], totalPages: 1 })

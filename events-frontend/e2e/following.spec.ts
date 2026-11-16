@@ -12,11 +12,19 @@ import { failUnmockedGets } from './unmocked'
  * · GET /api/me/following/today · GET /api/me/rsvps · GET /api/me · GET /api/me/passkeys
  * · GET /api/me/push
  * · GET|POST /api/me/searches · PATCH|DELETE /api/me/searches/:id
+ * · GET /api/me/watches · PUT|DELETE /api/me/watches/:mbid · GET /api/me/musicbrainz/artists (#5214)
  */
 
 const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:00:00Z' }
 const venue = { slug: 'mock-venue', name: 'Mock Venue', city: 'Berlin' }
 const emptyPage = { content: [], page: 0, size: 50, totalElements: 0, totalPages: 0 }
+const MODERAT = {
+  mbid: 'aaaaaaaa-0000-4000-8000-000000000001',
+  name: 'Moderat',
+  type: 'Group',
+  country: 'DE',
+  disambiguation: 'Berlin electronic trio',
+}
 
 function json(route: Route, body: unknown, status = 200): Promise<void> {
   return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
@@ -38,6 +46,7 @@ async function mockBff(
   const writes: { method: string; path: string; csrf: string | null; body?: unknown }[] = []
   let following = feed.following ?? false
   let searches: { id: string; name: string; query: string }[] = []
+  let watches: { mbid: string; name: string }[] = []
   await page
     .context()
     .addCookies([{ name: 'XSRF-TOKEN', value: 'csrf-1', url: 'http://localhost' }])
@@ -90,6 +99,18 @@ async function mockBff(
     if (path === '/api/me/searches/s1' && request.method() === 'DELETE') {
       searches = []
       return route.fulfill({ status: 204 })
+    }
+    if (path === '/api/me/watches') return json(route, watches)
+    if (path === `/api/me/watches/${MODERAT.mbid}`) {
+      if (request.method() === 'PUT') watches = [{ mbid: MODERAT.mbid, name: MODERAT.name }]
+      if (request.method() === 'DELETE') watches = []
+      return request.method() === 'PUT'
+        ? json(route, { kind: 'watch', slug: null })
+        : route.fulfill({ status: 204 })
+    }
+    if (path === '/api/me/musicbrainz/artists') {
+      const q = new URL(request.url()).searchParams.get('q') ?? ''
+      return json(route, q.toLowerCase().startsWith('moderat') ? [MODERAT] : [])
     }
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
     if (path === '/api/me/passkeys/accepted') return route.fulfill({ status: 204 })
@@ -532,4 +553,45 @@ test('Back from an event keeps Show all today open and returns to where the visi
   await expect(page.getByRole('button', { name: 'Show all 8 events today' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: /Night 7 at the venue/ }).first()).toBeInViewport()
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+})
+
+test('the tab of what you follow waits for an act picked from MusicBrainz, and lets it go (#5214)', async ({
+  page,
+}) => {
+  const writes = await mockBff(page, true, { following: true })
+  await page.goto('/en/following?tab=follows')
+
+  await expect(page.getByText('Waiting for an act that has not played Berlin yet?')).toBeVisible()
+  await page.getByRole('button', { name: 'Add an act' }).click()
+  await expect(
+    page.getByText('Your search goes to MusicBrainz from our server, without your IP address.'),
+  ).toBeVisible()
+  await page.getByRole('searchbox', { name: 'Name of the act' }).fill('Moderat')
+  await expect(page.getByText('Berlin electronic trio · Group · DE')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Notify me when Moderat plays Berlin' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Waiting for a Berlin date (1)' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'You follow (2)' })).toBeVisible()
+  await page.getByRole('button', { name: 'Remove Moderat' }).click()
+  await expect(page.getByRole('heading', { name: 'Waiting for a Berlin date (1)' })).toHaveCount(0)
+  expect(writes.filter((write) => write.path.startsWith('/api/me/watches'))).toEqual([
+    { method: 'PUT', path: `/api/me/watches/${MODERAT.mbid}`, csrf: 'csrf-1' },
+    { method: 'DELETE', path: `/api/me/watches/${MODERAT.mbid}`, csrf: 'csrf-1' },
+  ])
+})
+
+test('the act picker passes axe, with its candidates and a watched act', async ({ page }) => {
+  await mockBff(page, true, { following: true })
+  await page.goto('/en/following?tab=follows')
+  await page.getByRole('button', { name: 'Add an act' }).click()
+  await page.getByRole('searchbox', { name: 'Name of the act' }).fill('Moderat')
+  await page.getByRole('button', { name: 'Notify me when Moderat plays Berlin' }).click()
+  await expect(page.getByText('We will tell you')).toBeVisible()
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .exclude('#__vue-devtools-container__')
+    .analyze()
+  expect(results.violations).toEqual([])
 })
