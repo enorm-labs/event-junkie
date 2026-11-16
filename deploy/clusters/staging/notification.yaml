@@ -28,7 +28,7 @@ spec:
   secretRef:
     name: github-dispatch
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Alert
 metadata:
   name: github-dispatch
@@ -53,7 +53,7 @@ spec:
 # unreachable registry keeps the last good artifact, and the HelmRelease emits no event. `error`
 # rather than `info`, or every merge would spend a `contents: write` call on nothing.
 # `flux-source-failure.yml` receives these and goes red, unless a signature was in flight (#2031).
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Alert
 metadata:
   name: source-failure
@@ -73,7 +73,7 @@ spec:
 # A Kustomization that fails to apply (#4491). While `flux-system` fails, a merged cluster file does not
 # reach this cluster. The controller reports it only as this event: it counts no reconcile error.
 # Name each one: `cluster-assertions.sh` holds this list and the workflow's `types` to the cluster's.
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Alert
 metadata:
   name: apply-failure
