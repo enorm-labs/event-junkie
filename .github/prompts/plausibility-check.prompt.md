@@ -42,14 +42,14 @@ Record the version: a finding is reproducible only against the build that produc
 
 ## Step 2 — Pull the window
 
-The list endpoint pages, and defaults to twenty rows:
+The list endpoint pages. It defaults to twenty rows and caps a page at 100:
 
 ```sh
-curl -fsS "$ORIGIN/api/events?from=$FROM&to=$TO&size=200&page=0"   # PageResponseEventSummaryResponse: content, totalPages, totalElements
+curl -fsS "$ORIGIN/api/events?from=$FROM&to=$TO&size=100&page=0"   # PageResponseEventSummaryResponse: content, totalPages, totalElements
 ```
 
 Loop over `totalPages` into one JSON file under `temp/`, then `GET /api/events/{slug}` per row for `sourceUrl`, `ticketUrl`, `description`, `lineup`,
-`imageWithheld` and `descriptionWithheld`. Our own API; sequential is throttling enough. Pull the default listing too (`GET /api/events?size=200`, no dates) and keep rows dated before `$FROM` — the site's
+`imageWithheld` and `descriptionWithheld`. Our own API; sequential is throttling enough. Pull the default listing too (`GET /api/events?size=100`, no dates, paged the same way) and keep rows dated before `$FROM` — the site's
 _Running since_ rows, which the last Step 3 check tests.
 
 Report the shape first: rows in the window, rows per venue, venues with zero rows against the count the site registers. **A venue that always has events and
