@@ -2,6 +2,7 @@ package de.norm.events.scraper.hole44
 
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.blankToNull
@@ -83,7 +84,7 @@ class Hole44OverviewPageScraper {
             genre = parseGenres(item),
             status = parseEventStatus(item.textAt("span.changes").orEmpty()),
             statusNote = item.textAt("span.changes"),
-            artists = buildArtistsForEventType(title, support, eventType)
+            artists = hole44Artists(title, support, eventType)
         )
     }
 }
@@ -100,3 +101,26 @@ internal fun parseGenres(root: Element): String? =
         .filter { it.isNotBlank() }
         .joinToString(", ")
         .takeIf { it.isNotBlank() }
+
+/**
+ * The acts of a Hole 44 title. A title joined by ` & ` names a tour when one part holds a tour
+ * word or is a place, as in `H1GHR SEASON IN EUROPE & UK` (#5195): the title then bills no act,
+ * and only the support line does. `Caramella & YDRA` and `DONNA SAVAGE & BRENK SINATRA` stay acts.
+ */
+internal fun hole44Artists(
+    title: String,
+    support: String?,
+    eventType: String?,
+    description: String? = null
+): List<ScrapedArtist> {
+    val artists = buildArtistsForEventType(title, support, eventType, description)
+    return if (isTourTitle(title)) artists.filterNot { it.titleDerived } else artists
+}
+
+private val TOUR_WORD = Regex("""\b(?:season|tour|showcase)\b""", RegexOption.IGNORE_CASE)
+private val PLACE_PARTS = setOf("uk", "europe")
+
+private fun isTourTitle(title: String): Boolean {
+    val parts = title.split('&').map { it.trim() }
+    return parts.size > 1 && parts.any { TOUR_WORD.containsMatchIn(it) || it.lowercase() in PLACE_PARTS }
+}
