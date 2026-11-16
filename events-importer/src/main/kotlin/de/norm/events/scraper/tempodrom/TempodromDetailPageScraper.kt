@@ -32,7 +32,7 @@ import java.time.format.DateTimeFormatter
  * ("NIGHTS ON BROADWAY: Anniversary Tour '27" / "60 Jahre BEE GEES - 20 Jahre BEE GEES Tribute"). The blurb then names the band:
  * "NIGHT FEVER gilt als die erfolgreichste … BEE GEES Tribute-Band", so that band is billed instead ([addTributeBand], #3828).
  *
- * A production's tagline names its act: "… - Featuring BOB DAWN & Band - …" bills `Bob Dawn`, not "The Elvis Story" ([addFeaturedAct], #5193).
+ * A production's tagline names its act: "… - Featuring BOB DAWN & Band - …" bills `Bob Dawn`, not "The Elvis Story" ([addFeaturedAct], #5193, #5211).
  *
  * A show moved to another house carries `<a class="btn big-btn relocated">Veranstaltung wurde verlegt</a>` where the ticket button would be.
  * Its JSON-LD says `EventCancelled` beside "verlegt ins Huxley's neue Welt", so the listing reads it `CANCELLED`. The badge is the venue's own
@@ -101,7 +101,8 @@ class TempodromDetailPageScraper {
     /**
      * [event] billing the act the Beschreibung names in capitals after `- Featuring`, when the listing billed the title as the act.
      * The band and the orchestra after the name are no act of their own. [event] unchanged when the listing billed anything else,
-     * or the blurb names no act this way: "featuring Fouad Yammine" in running prose is no tagline.
+     * or the blurb names no act this way: "featuring Fouad Yammine" in running prose is no tagline. Without that tagline, a subtitle
+     * that ends in `Featuring <Name>` names the act: "A Multimedia Poem Featuring Lisa Gerrard" bills `Lisa Gerrard` (#5211).
      */
     fun addFeaturedAct(
         event: ScrapedEvent,
@@ -109,13 +110,16 @@ class TempodromDetailPageScraper {
     ): ScrapedEvent {
         val billed = event.artists.singleOrNull() ?: return event
         if (!billed.name.equals(event.title, ignoreCase = true)) return event
+        val featured =
+            description(document)?.let(FEATURED_ACT::find)?.groupValues?.get(1)
+                ?: event.subtitle
+                    ?.let(SUBTITLE_FEATURED_ACT::find)
+                    ?.groupValues
+                    ?.get(1)
         val act =
-            description(document)
-                ?.let(FEATURED_ACT::find)
-                ?.groupValues
-                ?.get(1)
+            featured
                 ?.let(::deshout)
-                ?.takeUnless { isNonArtistName(it) || it.equals(billed.name, ignoreCase = true) }
+                ?.takeUnless { isNonArtistName(it) || it.equals(billed.name, ignoreCase = true) || it.lowercase() in NOT_A_FEATURED_ACT }
                 ?: return event
         return event.copy(artists = listOf(ScrapedArtist(act, ArtistRole.HEADLINER)))
     }
@@ -210,6 +214,12 @@ class TempodromDetailPageScraper {
          * where a lowercase letter would follow, so "& Band" stays out, and a word joined by `&` to another in capitals stays in.
          */
         val FEATURED_ACT = Regex("""\s[-–]\s+Featuring\s+(\p{Lu}[\p{Lu}\p{N}'’.-]*(?!\p{L})(?:\s+(?:&\s+)?\p{Lu}[\p{Lu}\p{N}'’.-]*(?!\p{L}))*)""")
+
+        /** A name of up to four capitalised words that ends a subtitle after `Featuring`: "A Multimedia Poem Featuring Lisa Gerrard". */
+        val SUBTITLE_FEATURED_ACT = Regex("""\bFeaturing\s+(\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){0,3})\s*$""")
+
+        /** What a tagline features that is no act: "Featuring Special Guests". */
+        val NOT_A_FEATURED_ACT = setOf("special guests", "special guest", "guests")
 
         /** A schedule clock: `18:00`, `9:30`. */
         val CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")

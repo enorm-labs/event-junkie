@@ -353,6 +353,35 @@ class TempodromDetailPageScraperTest {
         }
     }
 
+    private val redForestRow =
+        listingRow.copy(
+            title = "Red Forest",
+            subtitle = "A Multimedia Poem Featuring Lisa Gerrard",
+            eventDate = LocalDate.of(2027, 9, 11),
+            sourceUrl = "https://www.tempodrom.de/event/red_forest_2027-09-11_19/",
+            sourceId = "tempodrom:red_forest_2027-09-11_19",
+            artists = listOf(ScrapedArtist("Red Forest", ArtistRole.HEADLINER))
+        )
+
+    @Test
+    fun `bills the act a subtitle ends on after Featuring`() {
+        // Event 2027-09-11 Red Forest: the description's capitals carry no dash, so only the subtitle names her (#5211).
+        val blurb = "Mit LISA GERRARD … kommt „RED FOREST - A MULTIMEDIA POEM FEATURING LISA GERRARD“ am 11. September 2027"
+
+        val event = scraper.enrich(redForestRow, descriptionPage(blurb))
+
+        event.artists shouldBe listOf(ScrapedArtist("Lisa Gerrard", ArtistRole.HEADLINER))
+    }
+
+    @Test
+    fun `reads no featured act from a subtitle that features guests or runs on`() {
+        listOf("Rocking & Symphonic - Featuring Special Guests", "Featuring Lisa Gerrard and orchestra", "A Multimedia Poem").forEach { subtitle ->
+            val row = redForestRow.copy(subtitle = subtitle)
+
+            scraper.addFeaturedAct(row, descriptionPage("Ein Abend.")) shouldBeSameInstanceAs row
+        }
+    }
+
     @Test
     fun `keeps a listing that bills an act other than the title`() {
         val row = elvisRow.copy(artists = listOf(ScrapedArtist("Bob Dawn", ArtistRole.HEADLINER), ScrapedArtist("Elvis Band", ArtistRole.SUPPORT)))
