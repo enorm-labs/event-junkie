@@ -129,22 +129,7 @@ class DataQualityReportLogger(
             val rows = measured + upcomingPriceRows(today, report.perSource.map { it.source }, upcoming, existing)
             snapshots.saveAll(rows).toList()
 
-            // One line, not one per metric: a daily summary somebody actually reads in an aggregated
-            // log, with the headline number first because it is the one that moves the product.
-            val overall = report.overall
-            logger.info {
-                "Data quality: ${overall.totalEvents} events, " +
-                    "${overall.concertsWithoutArtist} concerts without an artist (${overall.concertsWithoutArtistPct}%), " +
-                    "${overall.eventsTypedOther} typed OTHER, ${overall.missingGenre} without genre, " +
-                    "${overall.missingPromoter} without promoter, ${overall.missingPrice} without price, " +
-                    "${overall.missingStartTime} without start time, " +
-                    "${overall.suspectNonArtistTitles} suspect artist names, " +
-                    "${overall.titleDerivedSingletons} title-named one-event headliners " +
-                    "(${overall.titleDerivedUnmatched} unknown to MusicBrainz), " +
-                    "${overall.flaggedAtImport} flagged at import, " +
-                    "${overall.unreviewedLicence} from unreviewed sources (${overall.unreviewedLicencePct}%) — " +
-                    "${rows.size} snapshot rows for $today across ${report.perSource.size} source(s)"
-            }
+            logger.info { summaryLine(report, rows.size, today) }
 
             checkForRegressions(today, rows)
         } catch (e: Exception) {
@@ -295,4 +280,29 @@ class DataQualityReportLogger(
     private companion object {
         const val SUSPECT_NON_ARTIST_TITLES = "suspectNonArtistTitles"
     }
+}
+
+/**
+ * The day's numbers as one line, not one per metric: a daily summary somebody actually reads in an
+ * aggregated log. The headline number comes first because it is the one that moves the product.
+ *
+ * Top level rather than a member: it reads only its arguments.
+ */
+private fun summaryLine(
+    report: DataQualityReportResponse,
+    rowCount: Int,
+    today: LocalDate
+): String {
+    val overall = report.overall
+    return "Data quality: ${overall.totalEvents} events, " +
+        "${overall.concertsWithoutArtist} concerts without an artist (${overall.concertsWithoutArtistPct}%), " +
+        "${overall.eventsTypedOther} typed OTHER, ${overall.missingGenre} without genre, " +
+        "${overall.missingPromoter} without promoter, ${overall.missingPrice} without price, " +
+        "${overall.missingStartTime} without start time, " +
+        "${overall.suspectNonArtistTitles} suspect artist names, " +
+        "${overall.titleDerivedSingletons} title-named one-event headliners " +
+        "(${overall.titleDerivedUnmatched} unknown to MusicBrainz), " +
+        "${overall.flaggedAtImport} flagged at import, " +
+        "${overall.unreviewedLicence} from unreviewed sources (${overall.unreviewedLicencePct}%) — " +
+        "$rowCount snapshot rows for $today across ${report.perSource.size} source(s)"
 }
