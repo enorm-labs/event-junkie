@@ -21,7 +21,8 @@ const val SCRAPER_WEB_CLIENT = "scraperWebClient"
  *
  * Everything [SCRAPER_WEB_CLIENT] has except [RobotsTxtFilter], including the *same*
  * [PerHostThrottlingFilter] instance — so a request through it is spaced against the venue's other
- * requests rather than keeping a second, independent timer.
+ * requests rather than keeping a second, independent timer. It also accepts response headers up to
+ * [ROBOTS_MAX_HEADER_SIZE].
  *
  * It exists because [RobotsRulesCache] has to read `robots.txt` somehow, and reading it through a
  * client that checks `robots.txt` first is a recursion. A separate bean rather than a re-entrancy
@@ -50,6 +51,13 @@ const val PLAIN_SCRAPER_USER_AGENT = "EventJunkie/1.0 (+https://github.com/enorm
 
 /** The size of Reactor Netty's global pool, so moving off it changes eviction and nothing else. */
 private const val SCRAPER_POOL_MAX_CONNECTIONS = 500
+
+/**
+ * The response header limit of [SCRAPER_BASE_WEB_CLIENT], four times Netty's 8 KiB default.
+ * `thumb.wikimedia.org` answered its `robots.txt` with more than 8 KiB of headers, so the read failed and the host
+ * went unchecked (#5197).
+ */
+internal const val ROBOTS_MAX_HEADER_SIZE = 32 * 1024
 
 /**
  * Builds the single [WebClient] instance shared by every outbound scraper request —
@@ -101,7 +109,10 @@ class ScraperHttpClientConfig {
         scraperProperties: ScraperProperties,
         connectionProvider: ConnectionProvider,
         throttle: PerHostThrottlingFilter
-    ): WebClient = baseClient(webClientBuilder, scraperProperties, connectionProvider).filter(throttle).build()
+    ): WebClient =
+        baseClient(webClientBuilder, scraperProperties, connectionProvider, maxHeaderSize = ROBOTS_MAX_HEADER_SIZE)
+            .filter(throttle)
+            .build()
 
     @Bean(SCRAPER_WEB_CLIENT)
     fun scraperWebClient(
@@ -118,17 +129,19 @@ class ScraperHttpClientConfig {
             .filter(throttle)
             .build()
 
-    /** Pool, connector, timeouts and `User-Agent` — everything both clients share. */
+    /** Pool, connector, timeouts and `User-Agent` — everything both clients share, and a header limit only one of them raises. */
     private fun baseClient(
         webClientBuilder: WebClient.Builder,
         scraperProperties: ScraperProperties,
-        connectionProvider: ConnectionProvider
+        connectionProvider: ConnectionProvider,
+        maxHeaderSize: Int? = null
     ): WebClient.Builder =
         webClientBuilder
             .clientConnector(
                 ReactorClientHttpConnector(
                     HttpClient
                         .create(connectionProvider)
+                        .let { client -> maxHeaderSize?.let { size -> client.httpResponseDecoder { it.maxHeaderSize(size) } } ?: client }
                         .followRedirect(true)
                         // Sends `Accept-Encoding` and decodes what comes back. Reactor Netty does
                         // neither by default, and Uber Arena answers `Content-Encoding: gzip` even

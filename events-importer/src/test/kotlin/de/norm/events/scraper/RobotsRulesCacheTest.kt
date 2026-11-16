@@ -147,6 +147,28 @@ class RobotsRulesCacheTest {
     }
 
     @Nested
+    inner class LargeHeaders {
+        @Test
+        fun `reads the rules behind response headers over Netty's 8 KiB default`() =
+            runTest {
+                // #5197: thumb.wikimedia.org sent more than 8 KiB of headers, and the read fell back to unrestricted.
+                server.enqueue(
+                    MockResponse
+                        .Builder()
+                        .code(200)
+                        .addHeader("X-Padding", "x".repeat(12 * 1024))
+                        .body("User-agent: *\nDisallow: /private\n")
+                        .build()
+                )
+
+                val check = cache().check(url("/private"))
+
+                check.allowed shouldBe false
+                check.robotsTxtUrl shouldBe url("/robots.txt")
+            }
+    }
+
+    @Nested
     inner class CrawlDelay {
         @Test
         fun `reads a Crawl-delay from the wildcard group`() =
