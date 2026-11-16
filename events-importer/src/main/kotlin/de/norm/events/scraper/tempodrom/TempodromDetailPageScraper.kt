@@ -32,6 +32,8 @@ import java.time.format.DateTimeFormatter
  * ("NIGHTS ON BROADWAY: Anniversary Tour '27" / "60 Jahre BEE GEES - 20 Jahre BEE GEES Tribute"). The blurb then names the band:
  * "NIGHT FEVER gilt als die erfolgreichste … BEE GEES Tribute-Band", so that band is billed instead ([addTributeBand], #3828).
  *
+ * A production's tagline names its act: "… - Featuring BOB DAWN & Band - …" bills `Bob Dawn`, not "The Elvis Story" ([addFeaturedAct], #5193).
+ *
  * A show moved to another house carries `<a class="btn big-btn relocated">Veranstaltung wurde verlegt</a>` where the ticket button would be.
  * Its JSON-LD says `EventCancelled` beside "verlegt ins Huxley's neue Welt", so the listing reads it `CANCELLED`. The badge is the venue's own
  * word for this page, so it outranks the JSON-LD: the row becomes `RELOCATED`, and the subtitle names where it went ([addRelocation], #3576).
@@ -43,12 +45,12 @@ import java.time.format.DateTimeFormatter
  * @see <a href="https://www.tempodrom.de/event/jill_scott_2026-10-06_20/">A Tempodrom event page</a>
  */
 class TempodromDetailPageScraper {
-    /** [event] with every field the page adds: the promoter, the comedy type, a tribute band, a run's start, then a move. */
+    /** [event] with every field the page adds: the promoter, the comedy type, a tribute band, a featured act, a run's start, then a move. */
     fun enrich(
         event: ScrapedEvent,
         document: Document
     ): ScrapedEvent =
-        listOf(::addPromoter, ::addComedyType, ::addTributeBand, ::addScheduleStart, ::addRelocation)
+        listOf(::addPromoter, ::addComedyType, ::addTributeBand, ::addFeaturedAct, ::addScheduleStart, ::addRelocation)
             .fold(event) { enriched, step -> step(enriched, document) }
 
     /**
@@ -94,6 +96,28 @@ class TempodromDetailPageScraper {
                 ?.takeUnless(::isNonArtistName)
                 ?: return event
         return event.copy(artists = listOf(ScrapedArtist(band, ArtistRole.HEADLINER)))
+    }
+
+    /**
+     * [event] billing the act the Beschreibung names in capitals after `- Featuring`, when the listing billed the title as the act.
+     * The band and the orchestra after the name are no act of their own. [event] unchanged when the listing billed anything else,
+     * or the blurb names no act this way: "featuring Fouad Yammine" in running prose is no tagline.
+     */
+    fun addFeaturedAct(
+        event: ScrapedEvent,
+        document: Document
+    ): ScrapedEvent {
+        val billed = event.artists.singleOrNull() ?: return event
+        if (!billed.name.equals(event.title, ignoreCase = true)) return event
+        val act =
+            description(document)
+                ?.let(FEATURED_ACT::find)
+                ?.groupValues
+                ?.get(1)
+                ?.let(::deshout)
+                ?.takeUnless { isNonArtistName(it) || it.equals(billed.name, ignoreCase = true) }
+                ?: return event
+        return event.copy(artists = listOf(ScrapedArtist(act, ArtistRole.HEADLINER)))
     }
 
     /** [event] marked `RELOCATED` when the page shows the "verlegt" badge; unchanged otherwise. */
@@ -180,6 +204,12 @@ class TempodromDetailPageScraper {
          * Capitals only, so a sentence's opening words are never part of the name.
          */
         val TRIBUTE_BAND = Regex("""\b(\p{Lu}[\p{Lu}\p{N}&'’-]*(?:\s+[\p{Lu}\p{N}&'’-]+)*)\s+gilt\s+als\b[^.]*?\b(?i:tribute[\s-]?band)\b""")
+
+        /**
+         * An act in capitals after a tagline's `- Featuring`: "… - Featuring BOB DAWN & Band - …" is `BOB DAWN`. Each word ends
+         * where a lowercase letter would follow, so "& Band" stays out, and a word joined by `&` to another in capitals stays in.
+         */
+        val FEATURED_ACT = Regex("""\s[-–]\s+Featuring\s+(\p{Lu}[\p{Lu}\p{N}'’.-]*(?!\p{L})(?:\s+(?:&\s+)?\p{Lu}[\p{Lu}\p{N}'’.-]*(?!\p{L}))*)""")
 
         /** A schedule clock: `18:00`, `9:30`. */
         val CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
