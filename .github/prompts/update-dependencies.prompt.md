@@ -35,8 +35,9 @@ was wrong. Every count in the summary carries the command that produced it.
 
 ## Step 2: What we manage
 
-- **`gradle.properties` `*.version` properties** — `jsoup`, `kotest`, `kotlin-logging`, `mockk`, `slugify`, `spring-modulith` (BOM), `springdoc`.
-  **`settings.gradle.kts` `pluginManagement`** — Kotlin, Spring Boot, dependency-management, Kover, ktlint, `dev.detekt`, versions plugin, OWASP. The ktlint _tool_ version is `version = "…"` in the root `build.gradle.kts` `configure<KtlintExtension>` block.
+- **Every `*.version` property in `gradle.properties`** except `java.version` (the toolchain, below) and the CVE-remediation overrides (below).
+  **`settings.gradle.kts` `pluginManagement`** — every plugin there: Kotlin, Spring Boot, dependency-management, Kover, ktlint, `dev.detekt`, versions plugin,
+  OWASP, license-report. The ktlint _tool_ version is `version = "…"` in the root `build.gradle.kts` `configure<KtlintExtension>` block.
 - **Bumping `dev.detekt` needs no second edit**: `:detekt-rules` follows the plugin (`./gradlew :detekt-rules:detektToolVersion`). A 2.0 alpha can move its API,
   so a bump that fails that module is the rule needing an update, not a bad version.
 - **Anything declared without a version string comes from a BOM and is not touched**: `spring-boot-starter-*`, `spring-*`, `kotlin-*`, `kotlinx-coroutines-*`,
@@ -75,7 +76,7 @@ upper-bound removals, never bumps; raising an override belongs to `/security-tri
 
 ## Step 6: Verify
 
-`./gradlew clean build`. On a failure caused by the bump: fix an import or a minor API change; revert a complex break and flag it.
+`./gradlew clean build detektMain detektTest` — `build` runs only the syntax-level `detekt` (#4013). On a failure caused by the bump: fix an import or a minor API change; revert a complex break and flag it.
 
 ## Frontend (`events-frontend/`)
 
@@ -113,7 +114,7 @@ checkout falls behind.
 3. **Majors are reported, never applied.** The JDK stays on its LTS line, and Node follows the LTS line.
    When a newer LTS major exists, name it in the summary with its date. Moving the JDK also moves the runtime image (ADR-017), so it needs its own issue.
 
-## Step 11: README badges and the Kotlin link
+## Step 7: README badges and the Kotlin link
 
 The badge row in [`README.md`](../../README.md) hardcodes versions and nothing fails when they rot. `Kotlin` and `Spring Boot` to the exact version from
 `settings.gradle.kts`; `Java` and `Vue.js` major only. Edit the version segment of the shields.io URL alone (`%20` is the space in `Spring%20Boot`). Check
@@ -121,7 +122,7 @@ every badge — a Boot bump can drag Kotlin along. A Kotlin minor also moves the
 `scripts/dashboard-parity.sh` regenerates the page. The `--gradle-version <x>` example in `docs/DEVELOPMENT.md` should match `distributionUrl`; this prompt does
 not bump the wrapper.
 
-## Step 12: Ship it
+## Step 8: Ship it
 
 **An edit that is not committed did not happen.** Run whichever verification the diff touched, then [`/open-pr`](open-pr.prompt.md) with the summary as the
 body. **One pull request per sweep. Nothing under `.github/workflows/`. If nothing moved, ship nothing and say so** — an empty sweep is the normal outcome.

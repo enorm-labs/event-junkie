@@ -11,8 +11,8 @@ and the importers already there.
 - Read [ADR-007](../../docs/adr/ADR-007_WEB_SCRAPING_STRATEGY.md) in full first — architecture, selector strategy, scraping ethics. Read the venue's row in
   [EVENT_DATA_SOURCES.md](../../docs/EVENT_DATA_SOURCES.md) for platform and quirks; it is not a field mapping — analyse the live site and map it onto
   [DATA_MODEL.md](../../docs/DATA_MODEL.md) yourself.
-- Copy the closest existing importer: **JSON / API source** — `scraper/festsaal/`, `scraper/neuezukunft/`, `scraper/madameclaude/` (`EventImporter` directly,
-  `ApiClient`, one `*ApiScraper.kt`); **single listing page** — `scraper/privatclub/` (`AbstractSinglePageWebsiteImporter`); **list + detail** — `scraper/cassiopeia/`,
+- Copy the closest existing importer: **JSON / API source** — `scraper/festsaal/`, `scraper/neuezukunft/` (`AbstractJsonApiImporter`, `ApiClient`, one
+  `*ApiScraper.kt`), or `scraper/madameclaude/` for a paged WordPress REST API (`AbstractWpRestImporter`); **single listing page** — `scraper/privatclub/` (`AbstractSinglePageWebsiteImporter`); **list + detail** — `scraper/cassiopeia/`,
   `scraper/astra/` (`AbstractTwoPageWebsiteImporter`). New code looks like the code around it; the shared helpers in `scraper/` are used, not reimplemented.
 
 ## 1. Reconnaissance
@@ -88,9 +88,10 @@ goes into the extension file and ADR-007's utility table, not the venue package.
 
 Selectors in ADR-007's order: JSON-LD > semantic HTML5 (`article`, `time[datetime]`, headings) > ARIA > `data-*` > meaningful classes > **never** positional
 (`div:nth-child(3)`, `.col-md-4`). Scope to the narrowest container; `:has()` for context.
-**Write each selector for jsoup's web query mode**, the default from 1.25.1: a query matches below the element only, and `[a~=x]` is a token, not a regex.
-`selectFirstOrSelf` or `selectWithSelf` when the element itself can match, `:matchesAttr(a, regex)` for a regex. `webQueryModeTest` runs every scraper test
-in that mode (#4871).
+**Write each selector so it holds in both of jsoup's query modes.** The pinned jsoup (`jsoup.version` in `gradle.properties`) defaults to the legacy mode.
+Web query mode becomes the default in 1.25.1: a query matches below the element only, and `[a~=x]` is a token, not a regex. `selectFirstOrSelf` or
+`selectWithSelf` when the element itself can match, `:matchesAttr(a, regex)` for a regex. `test` runs every scraper test in the legacy mode, and
+`webQueryModeTest` runs them again in web mode (#4871).
 
 `ScrapedEvent` (`scraper/ScrapedEvent.kt`): required `title`, `eventDate`, `sourceUrl`, `sourceId` = `"${EventSource.<VENUE>.sourceIdPrefix}$slug"` derived
 from the canonical URL, never from mutable text. **Validate before returning**: skip a blank title or an unparseable date with a warning, and parse the rows

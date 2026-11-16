@@ -34,9 +34,8 @@ Read the **🔨 Ready to implement** table. Take the requested venue, or else th
 then Low) whose `EventSource` enum value does not yet exist in `events-importer/src/main/kotlin/de/norm/events/scraper/EventSource.kt`. The table is not
 sorted by priority: rows are added in batches, so a Low row can sit above a Medium one.
 
-Two special cases in that table: some rows explicitly **share one importer** with another row (e.g. MS Hoppetosse ↔ Club der Visionaere, Ufo im Velodrom ↔
-Max-Schmeling-Halle via the VELOMAX listing). When you pick one of those, implement the shared importer and move **both** rows in step 6 — as
-`Kantine am Berghain` already does under ✅ Imported.
+Some rows explicitly **share one importer** with another row. When you pick one of those, implement the shared importer and move **both** rows in step 6.
+Under ✅ Imported, MS Hoppetosse ↔ Club der Visionaere and UFO im Velodrom ↔ Max-Schmeling-Halle (the VELOMAX listing) show the pattern.
 
 Announce which venue you picked and why before continuing.
 
@@ -61,10 +60,11 @@ Fixture-based tests are the cheap loop — get them green before touching the da
 
 ### 4. Smoke-test against reality (repeat, max 3 rounds)
 
-Run [`/importer-smoke`](importer-smoke.prompt.md) for the new source. Restart the importer first (`scripts/dev-env.sh down && scripts/dev-env.sh up`) so it runs
-your new code.
+Run [`/importer-smoke`](importer-smoke.prompt.md) for the new source. This runs in a worktree, so `export COMPOSE_PROJECT_NAME=event-junkie` first, or `up`
+starts a second, empty Postgres. Restart the importer (`scripts/dev-env.sh down && scripts/dev-env.sh up`) so it runs your new code.
 
-Each round: read the verdict, fix the defect, re-run the unit tests, re-run the smoke test. When you fix a parsing bug, **also add or extend a fixture test that
+Each round: read the verdict, fix the defect, re-run the unit tests, re-run the smoke test. At a one-page venue a plain re-import answers 304 and proves
+nothing — force it with `?force=true` (`/importer-smoke` § Important, #1159). When you fix a parsing bug, **also add or extend a fixture test that
 would have caught it** — that's what stops the regression from coming back.
 
 After 3 rounds without a PASS, stop iterating and go to step 7. Repeated identical failures mean the approach is wrong, not that another round will help.

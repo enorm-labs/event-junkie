@@ -12,15 +12,13 @@ for readability, not at a fixed column width.
 
 ## Instructions
 
-1. **Identify the branch commits** — list all commits on the current branch that are not on `main`:
+1. **Identify the branch commits** — list all commits on the current branch that are not on `origin/main`. A worktree branch is cut from `origin/main`, and a
+   local `main` is often stale:
     ```bash
-    git --no-pager log --oneline --no-merges main..HEAD
+    git fetch origin
+    git --no-pager log --oneline --no-merges origin/main..HEAD
     ```
-    If `main..HEAD` produces no output, find the merge base first:
-    ```bash
-    git --no-pager log --oneline --no-merges $(git merge-base main HEAD)..HEAD
-    ```
-2. **Read every commit message** — use `git --no-pager log --format='%B' main..HEAD` (or equivalent) to get the full messages including bodies, not just the
+2. **Read every commit message** — use `git --no-pager log --format='%B' origin/main..HEAD` (or equivalent) to get the full messages including bodies, not just the
    subject lines.
 3. **Analyze the combined changeset** — consider all commits together to determine the single most appropriate Conventional Commits _type_ and optional _scope_:
     - If the branch introduces a new feature a visitor to the site can see (even alongside docs, CI, refactoring), use `feat`, in a product scope
@@ -30,6 +28,8 @@ for readability, not at a fixed column width.
     - If no feature or fix is present, pick the most prominent type (`ci`, `docs`, `build`, `chore`, `refactor`, etc.).
     - Choose a _scope_ that reflects the primary area of change (e.g., `importer`, `bff`, `frontend`). Omit the scope if changes span the entire project
       broadly.
+    - If any commit is breaking — a `!` after its type/scope or a `BREAKING CHANGE:` footer — the squash message keeps it, with a `!` and the footer
+      (a MAJOR, or a minor before 1.0.0; [commit-message](commit-message.prompt.md)).
 4. **Write the squash commit message** with this structure:
     ```
     <type>[optional scope]: <concise summary of the entire branch>
@@ -45,7 +45,7 @@ for readability, not at a fixed column width.
 6. **Do NOT**:
     - Simply concatenate the original commit messages.
     - Include commit hashes, dates, or author info in the output.
-    - Add footers like `Refs:` or `Reviewed-by:` unless explicitly requested.
+    - Add footers like `Refs:` or `Reviewed-by:` unless explicitly requested. `BREAKING CHANGE:` is the exception.
 
 ## Output
 
