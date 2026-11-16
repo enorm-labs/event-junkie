@@ -1,5 +1,9 @@
 package de.norm.events.dataquality.classification
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.ai.UnparseableAnswer
 import de.norm.events.event.EventFeature
 import de.norm.events.event.EventType
@@ -10,6 +14,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import java.time.LocalTime
 
@@ -183,6 +188,57 @@ class ClassificationValidatorTest {
             .parse("""{"titleActs": {"value": ["Kraftklub"], "evidence": "Kraftklub - Tour 2026", "confidence": 0.9}}""", input)
             ?.titleActs
             ?.value shouldBe listOf("Kraftklub")
+    }
+
+    @Test
+    @DisplayName("the drop line names the check each part failed, and the value only once it is parsed (#5198)")
+    fun `drop line names the failed check`() {
+        val line =
+            dropLine(
+                """
+                {"eventType": {"value": "GIG", "evidence": "Beginn 20 Uhr", "confidence": 0.9},
+                 "titleActs": {"value": ["Kraftklub"], "evidence": "a stand-up comedy evening", "confidence": 0.9},
+                 "startTime": {"value": "19:00", "evidence": "Beginn 20 Uhr", "confidence": 0.9},
+                 "pricePresale": {"value": 18.5, "evidence": "VV", "confidence": 0.9},
+                 "priceBoxOffice": {"value": 22, "evidence": "Abendkasse 22 €", "confidence": 1.5},
+                 "features": [{"feature": "free-entry-ish", "confirmed": true, "evidence": "Beginn 20 Uhr", "confidence": 0.9},
+                              {"feature": "queer", "confirmed": true, "evidence": "Beginn 20 Uhr", "confidence": 0.9},
+                              {"feature": "flinta-only", "confirmed": "yes", "evidence": "Beginn 20 Uhr", "confidence": 0.9},
+                              {"feature": "flinta-only", "confirmed": true, "evidence": "FLINTA* only", "confidence": 0.9},
+                              {"feature": "flinta-only", "confirmed": false, "evidence": "Beginn 20 Uhr", "confidence": -0.1}]}
+                """.trimIndent()
+            )
+
+        line shouldBe
+            "Dropped 10 classification answer(s) that failed a check: " +
+            "eventType VALUE_INVALID, " +
+            "titleActs EVIDENCE_NOT_IN_INPUT, " +
+            "features FEATURE_UNKNOWN, " +
+            "features FEATURE_NOT_ASKED (queer=true), " +
+            "features CONFIRMED_NOT_BOOLEAN (flinta-only), " +
+            "features EVIDENCE_NOT_IN_INPUT (flinta-only=true), " +
+            "features CONFIDENCE_OUT_OF_RANGE (flinta-only=false, confidence -0.1), " +
+            "startTime EVIDENCE_DOES_NOT_NAME_VALUE (19:00), " +
+            "pricePresale EVIDENCE_LENGTH (18.50), " +
+            "priceBoxOffice CONFIDENCE_OUT_OF_RANGE (22.00, confidence 1.5)"
+    }
+
+    @Test
+    fun `a sound answer logs no drop line`() {
+        dropLine("""{"eventType": {"value": "CONCERT", "evidence": "Support: Blond", "confidence": 0.9}}""").shouldBeNull()
+    }
+
+    private fun dropLine(raw: String): String? {
+        val log = LoggerFactory.getLogger(ClassificationValidator::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        log.addAppender(appender)
+        try {
+            ClassificationValidator.parse(raw, input)
+            return appender.list.singleOrNull { it.level == Level.WARN }?.formattedMessage
+        } finally {
+            log.detachAppender(appender)
+            appender.stop()
+        }
     }
 
     private fun acts(
