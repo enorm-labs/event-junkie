@@ -15,6 +15,9 @@ on:
       - '.github/workflows/validate-python.yml'
       # test_venue_images.py reads the venue request and response DTOs.
       - 'events-importer/src/main/kotlin/de/norm/events/venue/Venue*.kt'
+      # test_promoter_images.py reads the promoter request DTO and docs/promoters/IMAGES.tsv.
+      - 'events-importer/src/main/kotlin/de/norm/events/promoter/PromoterRequest.kt'
+      - 'docs/promoters/IMAGES.tsv'
       # test_festival_match.py reads the saved programme page.
       - 'scripts/festival-match-fixture.html'
       - 'events-importer/src/test/resources/scraper/**'
@@ -28,6 +31,9 @@ on:
       - '.github/workflows/validate-python.yml'
       # test_venue_images.py reads the venue request and response DTOs.
       - 'events-importer/src/main/kotlin/de/norm/events/venue/Venue*.kt'
+      # test_promoter_images.py reads the promoter request DTO and docs/promoters/IMAGES.tsv.
+      - 'events-importer/src/main/kotlin/de/norm/events/promoter/PromoterRequest.kt'
+      - 'docs/promoters/IMAGES.tsv'
       # test_festival_match.py reads the saved programme page.
       - 'scripts/festival-match-fixture.html'
       - 'events-importer/src/test/resources/scraper/**'
@@ -92,6 +98,9 @@ jobs:
 
       - name: venue-images rewrites every venue field it does not set
         run: python3 scripts/test_venue_images.py
+
+      - name: promoter-images keeps every promoter field and credits a logo
+        run: python3 scripts/test_promoter_images.py
 
       - name: musicbrainz-review keeps billed AMBIGUOUS artists and writes nothing but the MBID
         run: python3 scripts/test_musicbrainz_review.py

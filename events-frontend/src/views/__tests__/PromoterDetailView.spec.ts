@@ -104,6 +104,33 @@ describe.each(['en', 'de'] as const)('PromoterDetailView in %s', (locale) => {
   })
 })
 
+// #5177: a promoter's picture is its logo, drawn whole on a plate with the credit under it.
+describe.each(['en', 'de'] as const)('PromoterDetailView logo in %s', (locale) => {
+  it('draws the logo uncropped and credits it as a logo', async () => {
+    const view = await mountPromoter(
+      {
+        ...concerts,
+        imageUrl: 'https://upload.wikimedia.org/x/1920px-Radio_Eins.svg.png',
+        imageAttribution: 'radioeins, via Wikimedia Commons',
+        imageLicenceId: 'PD',
+        imageSourceUrl: 'https://commons.wikimedia.org/wiki/File:Radio_Eins.svg',
+      },
+      locale,
+    )
+
+    const img = view.get('img[src="https://upload.wikimedia.org/x/1920px-Radio_Eins.svg.png"]')
+    expect(img.classes()).toContain('object-contain')
+    expect(img.classes()).not.toContain('object-cover')
+    expect(img.element.closest('.bg-logo-plate')).not.toBeNull()
+
+    const credit = view.get('a[href="https://commons.wikimedia.org/wiki/File:Radio_Eins.svg"]')
+      .element.parentElement!
+    expect(credit.textContent).toContain('Logo:')
+    expect(credit.textContent).toContain('Public domain')
+    expect(credit.className).not.toContain('absolute')
+  })
+})
+
 describe('PromoterDetailView kind', () => {
   it.each([
     ['en', 'collective', 'Collective · Website'],

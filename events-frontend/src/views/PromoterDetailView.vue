@@ -36,7 +36,7 @@ const links = computed(() =>
 </script>
 
 <template>
-  <BaseDetailView v-bind="detail">
+  <BaseDetailView v-bind="detail" image-fit="logo">
     <template #meta>
       <DetailLinks :lead="kindLabel" :lead-to="kindLink" :links="links" />
     </template>
