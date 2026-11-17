@@ -297,7 +297,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 **Two directory skills are not slash commands**, vendored so every contributor has them and invoked by name: [`asd-ste100`](.claude/skills/asd-ste100/SKILL.md)
 (Simplified Technical English; `/compact-comments` and `/update-docs` call it) and [`gh`](.claude/skills/gh/SKILL.md) (from
 [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh)). Each has a `VENDORED.md` with its upstream commit and refresh command; **edit nothing else inside
-them** — the next update reverts it. [`.github/skills/`](.github/skills) holds one symlink per directory skill, Copilot's documented path; `skill-parity.sh`
+them** — the next update reverts it. `vendored-skill-reminder.yml` opens an issue weekly when one falls behind upstream. [`.github/skills/`](.github/skills) holds one symlink per directory skill, Copilot's documented path; `skill-parity.sh`
 asserts each is a symlink onto the right target.
 
 ## Automating GitHub with `gh`

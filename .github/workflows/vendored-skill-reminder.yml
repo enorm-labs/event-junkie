@@ -1,0 +1,159 @@
+# Opens an issue when a vendored skill under .claude/skills/ falls behind upstream, and never opens a
+# pull request. `gh` and `asd-ste100` are copies of third-party repositories that no manifest declares,
+# so neither Dependabot nor Renovate sees them (ADR-024); both had drifted by 20 and 82 commits before
+# anything looked.
+#
+# **A reminder rather than a bot** because the update is a re-copy plus the gates, and a hosted Renovate
+# can run neither: its pull request would move the commit in VENDORED.md and leave the files behind.
+# **The comparison is `scripts/upstream-vendored-skills.sh`**, which a person can run before updating.
+# **Idempotent**: one issue per skill, keyed on the exact title, which carries the pinned commit.
+name: Vendored Skill Reminder
+
+on:
+  schedule:
+    # Weekly, Mondays, off-the-hour; both upstreams move a few times a month.
+    - cron: '43 7 * * 1'
+  # The only way to see it work without waiting for a Monday, and to produce the first issue.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Creating the issue, and listing to find one that already exists.
+  issues: write
+
+# A dispatch racing the schedule must not produce two issues; the second still checks.
+concurrency:
+  group: vendored-skill-reminder
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check the vendored skills
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Exit 1 is "something is behind" and expected. Anything above it is "the check could not be made",
+      # which fails the job: a run that cannot reach upstream and stays green is the failure this exists about.
+      - name: Compare the skills with upstream
+        id: check
+        env:
+          # Lifts api.github.com's 60-per-hour anonymous limit, which a shared runner address reaches alone.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          rc=0
+          skills="$(scripts/upstream-vendored-skills.sh --json)" || rc=$?
+          if [ "$rc" -ge 2 ]; then
+            echo "::error::The skill check could not be made — see the message above." >&2
+            exit "$rc"
+          fi
+          echo "skills=$skills" >> "$GITHUB_OUTPUT"
+
+      - name: Open an issue for anything behind
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SKILLS: ${{ steps.check.outputs.skills }}
+          # An assignee rather than a mention: an unassigned issue on a board is nobody's.
+          SKILL_OWNER: enorm
+        with:
+          script: |
+            const skills = JSON.parse(process.env.SKILLS);
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const blob = `https://github.com/${owner}/${repo}/blob/main`;
+
+            // The title carries the *pinned* commit, never the target, so upstream moving cannot pile up issues.
+            const candidates = skills
+              .filter((skill) => skill.status === 'behind')
+              .map((skill) => ({
+                skill,
+                title: `Refresh the vendored ${skill.name} skill — the pinned ${skill.pinned.slice(0, 8)} is behind upstream`,
+              }));
+
+            // Listing, not search: the search index is eventually consistent. `listForRepo` returns pull requests
+            // too, and a same-titled one would suppress the reminder.
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const openIssues = open.filter((issue) => !issue.pull_request);
+
+            const opened = [];
+            const skipped = [];
+
+            for (const { skill, title } of candidates) {
+              const existing = openIssues.find((issue) => issue.title === title);
+              if (existing) {
+                skipped.push(`${title} — already open as #${existing.number}`);
+                continue;
+              }
+
+              const body = [
+                `> Opened automatically by [\`vendored-skill-reminder.yml\`](${blob}/.github/workflows/vendored-skill-reminder.yml). ` +
+                  'The numbers below were true when this issue opened; ' +
+                  `[\`scripts/upstream-vendored-skills.sh\`](${blob}/scripts/upstream-vendored-skills.sh) answers for today.`,
+                '',
+                `**\`.claude/skills/${skill.name}\` is pinned to \`${skill.pinned.slice(0, 8)}\`. Upstream is at ` +
+                  `\`${skill.latest.slice(0, 8)}\` (${skill.latestDate.slice(0, 10)}), ${skill.behind} commits later.**`,
+                '',
+                `Upstream: ${skill.upstream} · [what changed](${skill.compare})`,
+                '',
+                '## The update',
+                '',
+                `The re-copy commands are in [\`${skill.record}\`](${blob}/${skill.record}) § Updating. ` +
+                  'Nothing in the directory is modified locally except `VENDORED.md`, so the diff is upstream\'s alone.',
+                '',
+                '- Read the compare view first: a new file the skill points at, or a new directory, may need to come along, ' +
+                  'or to stay out with the reason in `VENDORED.md`.',
+                '- A new `.py` or `scripts/` reference inside the skill is already out of ruff and `index-parity.sh`.',
+                '',
+                '## Done when',
+                '',
+                `- [ ] \`${skill.record}\` records the new commit and its date`,
+                '- [ ] The directory is byte-identical to upstream at that commit, `VENDORED.md` aside',
+                '- [ ] `scripts/upstream-vendored-skills.sh` reports the skill current, and `/verify` passes',
+              ].join('\n');
+
+              const { data: issue } = await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+                // Intrinsic properties of the work; Status and Priority are board fields.
+                labels: ['area:agents', 'size:S'],
+                assignees: [process.env.SKILL_OWNER],
+                // No milestone: a recurring maintenance obligation outlives every release gate.
+                type: 'Task',
+              });
+
+              // The board cannot be written from here (`GITHUB_TOKEN` cannot write to an organisation project), and
+              // "Auto-add to project" misses items (#1092). Check the card after a run.
+              core.notice(`Opened #${issue.number} — ${title}`);
+              opened.push(`[#${issue.number}](${issue.html_url}) — ${title}`);
+            }
+
+            const summary = core.summary.addHeading('🧩 Vendored skills', 2);
+            summary.addTable([
+              [{ data: 'Skill', header: true }, { data: 'Pinned', header: true },
+               { data: 'Upstream', header: true }, { data: 'Status', header: true }],
+              ...skills.map((skill) => [
+                skill.name, skill.pinned.slice(0, 8), skill.latest.slice(0, 8),
+                skill.status === 'behind' ? `behind by ${skill.behind}` : 'current',
+              ]),
+            ]);
+            if (opened.length > 0) {
+              summary.addRaw('Opened:').addList(opened);
+            }
+            if (skipped.length > 0) {
+              summary.addRaw('Already open:').addList(skipped);
+            }
+            if (candidates.length === 0) {
+              summary.addRaw('Every vendored skill is current.');
+            }
+            await summary.write();
