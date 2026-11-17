@@ -169,9 +169,15 @@ jq --arg cut "$(date -u -v-14d +%FT%TZ 2>/dev/null || date -u -d '14 days ago' +
   temp/manual-venues-$(date +%F).json
 ```
 
-- **A programme on `ra.co`, Instagram or Facebook**: ACT, the link for the operator. No script reads it; RA's terms forbid any automated access (#356).
-  On the operator's word the agent reads that one page in the operator's Chrome (`claude-in-chrome`) instead: a page view in the operator's
-  browser, never a loop over pages or an API.
+- **A programme on Instagram**: the agent reads it with `scripts/instagram-posts.sh <handle>`, without asking. Business Discovery is the read-only
+  source ADR-048 approved. A programme printed only in an image: `--json`, download the post's `media_url` into the scratchpad, and read the image.
+  Read a venue the nightly Instagram pass covers (`GET http://localhost:28081/api/admin/instagram/venues`) too: a flyer often leaves nights out.
+  Never open Instagram in Chrome. It stops at its splash screen.
+- **A programme on `ra.co`**: RA's terms forbid any automated access (#356), so no script and no API reads it. Ask once in the action list: "Read
+  the <n> RA pages in your Chrome?" On the operator's yes, the agent reads each page once in the operator's Chrome (`claude-in-chrome`): one page
+  view per venue of today's 8, never a loop. Wait about 3 seconds after `navigate` before `get_page_text`. RA routes on the client, and an early
+  read returns the previous page. RA lists every night of a club, and a venue's Instagram flyer often lists only some.
+- **A programme on Facebook only**: ACT, the link for the operator.
 - **Every other venue**: one subagent for the 8 reads each programme once, with the `USER_AGENT` of `scripts/musicbrainz-match.py`, after its
   `robots.txt`. It compares the dated events in scope ([EVENT_SCOPE.md](../../docs/EVENT_SCOPE.md)) with the held ones,
   `GET http://localhost:28080/api/events?venue=<slug>&from=<today>&to=<a year on>`, paged. One verdict per venue: NOTHING MISSING, MISSING with
@@ -180,7 +186,7 @@ jq --arg cut "$(date -u -v-14d +%FT%TZ 2>/dev/null || date -u -d '14 days ago' +
 - **A page `robots.txt` forbids, or dates printed only in an image**: MANUAL ONLY, the link for the operator. On the operator's word the agent reads it
   once in Chrome instead.
 
-The subagent writes `temp/manual-venues-<YYYY-MM-DD>.md`. On the operator's numbers: create each event by
+All verdicts go into `temp/manual-venues-<YYYY-MM-DD>.md`, in the same shape for every source. On the operator's numbers: create each event by
 [`/admin-review` Step 8](admin-review.prompt.md)'s `CREATE` rule, then `PUT /api/admin/venues/{id}/programme-checked`. The same word marks a
 NOTHING MISSING venue checked. A venue whose proposals are not entered stays unchecked.
 
