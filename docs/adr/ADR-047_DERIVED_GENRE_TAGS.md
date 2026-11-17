@@ -10,6 +10,8 @@ Decided in [#3339](https://github.com/enorm-labs/event-junkie/issues/3339), opti
 
 **Amended by [ADR-058](ADR-058_A_DECADE_PARTY_IN_THE_TITLE_IS_A_GENRE.md)**, which reads a decade that the title bills as a party.
 
+**Amended by [ADR-060](ADR-060_AN_UNTAGGED_EVENT_TAKES_ITS_HEADLINERS_WIKIDATA_GENRE.md)**, which adds the origin `WIKIDATA` after the three above.
+
 ## Context
 
 On 2026-10-15, production had 2013 events in the next 30 days. 1240 of them had no genre tag, and 735 of these were concerts, parties or festivals. Without
