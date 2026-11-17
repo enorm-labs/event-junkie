@@ -365,7 +365,7 @@ private val RENATE_NAMES = setOf("Renate", "Salon zur wilden Renate")
  * The crews a `Renate Klubnacht w/ HOUSE OF HIGHLIFE & ELSE X SOUL EXPRESS` title names, one per floor (#5080). A DJ who
  * `invites…` a floor is named too; `withTitleCrews` drops one the line-up bills.
  */
-internal fun klubnachtCrews(title: String): List<String> {
+private fun klubnachtCrews(title: String): List<String> {
     val hosts = KLUBNACHT_HOSTS.find(title)?.groupValues?.get(1) ?: return emptyList()
     return hosts.split(KLUBNACHT_SEPARATOR).flatMap { crewNames(it) { name -> name.equals("Renate", ignoreCase = true) } }
 }

@@ -12,7 +12,7 @@ import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-/** Unit tests for [AbstractSinglePageWebsiteImporter]'s cookies and paged listing, on synthetic pages. */
+/** Unit tests for [AbstractSinglePageWebsiteImporter]'s 304, cookies and paged listing, on synthetic pages. */
 class AbstractSinglePageWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val entryUrl = "https://venue.example/events"
@@ -87,6 +87,16 @@ class AbstractSinglePageWebsiteImporterTest {
             result.complete shouldBe true
             OnePage().fetchesBeyondEntryPage shouldBe false
             coVerify { htmlFetcher.fetch(entryUrl, null, null, mapOf("gate" to "1")) }
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(any()) }
+        }
+
+    @Test
+    fun `answers a 304 on the entry page with NotModified and fetches nothing else`() =
+        runTest {
+            coEvery { htmlFetcher.fetch(entryUrl, "\"v1\"", "Wed, 01 Oct 2026 00:00:00 GMT", mapOf("gate" to "1")) } returns
+                FetchResult.NotModified
+
+            OnePage().importEvents(entryUrl, "\"v1\"", "Wed, 01 Oct 2026 00:00:00 GMT") shouldBe ImportResult.NotModified
             coVerify(exactly = 0) { htmlFetcher.fetchDocument(any()) }
         }
 

@@ -57,7 +57,7 @@ private const val SCRAPER_POOL_MAX_CONNECTIONS = 500
  * `thumb.wikimedia.org` answered its `robots.txt` with more than 8 KiB of headers, so the read failed and the host
  * went unchecked (#5197).
  */
-internal const val ROBOTS_MAX_HEADER_SIZE = 32 * 1024
+private const val ROBOTS_MAX_HEADER_SIZE = 32 * 1024
 
 /**
  * Builds the single [WebClient] instance shared by every outbound scraper request —

@@ -63,14 +63,6 @@ class ArcanoaWebsiteImporterTest {
         }
 
     @Test
-    fun `importEvents returns NotModified when the page is unchanged`() =
-        runTest {
-            coEvery { htmlFetcher.fetch(sourceUrl, etag, lastModified) } returns FetchResult.NotModified
-
-            importer.importEvents(sourceUrl, etag, lastModified) shouldBe ImportResult.NotModified
-        }
-
-    @Test
     fun `importEvents returns no events for a page without a programme`() =
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns

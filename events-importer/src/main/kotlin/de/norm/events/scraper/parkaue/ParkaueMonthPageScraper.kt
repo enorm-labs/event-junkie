@@ -123,6 +123,6 @@ class ParkaueMonthPageScraper {
 }
 
 /** Text without the soft hyphens the site sets inside long words (`Tisch­tennis­platten­politik`). */
-internal fun cleanText(text: String?): String? = text?.replace(SOFT_HYPHEN, "")?.replace(WHITESPACE, " ")?.blankToNull()
+private fun cleanText(text: String?): String? = text?.replace(SOFT_HYPHEN, "")?.replace(WHITESPACE, " ")?.blankToNull()
 
 private const val SOFT_HYPHEN = "­"

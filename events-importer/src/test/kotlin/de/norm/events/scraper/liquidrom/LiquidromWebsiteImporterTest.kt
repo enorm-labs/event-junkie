@@ -54,14 +54,6 @@ class LiquidromWebsiteImporterTest {
         }
 
     @Test
-    fun `importEvents returns NotModified when the page is unchanged`() =
-        runTest {
-            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns FetchResult.NotModified
-
-            importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.NotModified>()
-        }
-
-    @Test
     fun `importEvents returns an empty success for a page without a programme`() =
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns

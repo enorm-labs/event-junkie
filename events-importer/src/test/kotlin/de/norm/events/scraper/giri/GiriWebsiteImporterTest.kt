@@ -107,14 +107,6 @@ class GiriWebsiteImporterTest {
         }
 
     @Test
-    fun `importEvents returns NotModified when the page is unchanged`() =
-        runTest {
-            coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns FetchResult.NotModified
-
-            importer.importEvents(sourceUrl) shouldBe ImportResult.NotModified
-        }
-
-    @Test
     fun `the later months make the run fetch beyond the entry page`() {
         importer.fetchesBeyondEntryPage shouldBe true
     }

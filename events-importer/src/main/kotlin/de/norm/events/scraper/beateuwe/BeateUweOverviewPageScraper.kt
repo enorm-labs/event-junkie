@@ -140,7 +140,7 @@ class BeateUweOverviewPageScraper {
 private val BEATE_UWE_NAMES = setOf("Beate", "Beate Uwe")
 
 /** The crew a `Beate Invites /// House Queens` title names: the club invites, so the guest after the slashes hosts (#5080). */
-internal fun invitedCrews(title: String): List<String> =
+private fun invitedCrews(title: String): List<String> =
     BEATE_INVITES
         .find(title)
         ?.groupValues
