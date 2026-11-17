@@ -11,6 +11,8 @@ import de.norm.events.wikimedia.wikidataIdOf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
+import java.time.Clock
+import java.time.Instant
 import kotlin.time.TimeMark
 
 /**
@@ -19,20 +21,22 @@ import kotlin.time.TimeMark
  *
  * Runs on [ArtistLookupSweep]'s tick after the occupation read, within the same budget. One request per row at the
  * Wikimedia pace, [WikimediaProperties.genreMaxPerRun] rows a tick. A failure is a retry on the next tick. Three in a
- * row, or the deadline, end this tick's pass.
+ * row, or the deadline, end this tick's pass. A read row is read again after [WikimediaProperties.rereadAfter], so a
+ * fix on Wikidata reaches us (#5253).
  */
 @Service
 class ArtistGenreService(
     private val genres: ArtistGenreRepository,
     private val wikimedia: WikimediaClient,
-    private val properties: WikimediaProperties
+    private val properties: WikimediaProperties,
+    private val clock: Clock = Clock.systemUTC()
 ) {
     private val logger = KotlinLogging.logger {}
 
-    /** Reads the unread rows; [LookupPass.OFF] when the Wikimedia reads are off. */
+    /** Reads the unread rows, then the stale ones; [LookupPass.OFF] when the Wikimedia reads are off. */
     suspend fun sweep(deadline: TimeMark = LookupPass.noDeadline()): LookupPass {
         if (!properties.enabled) return LookupPass.OFF
-        val candidates = genres.findUnreadGenres(properties.genreMaxPerRun).toList()
+        val candidates = genres.findGenreReads(properties.genreMaxPerRun, staleBefore()).toList()
         var mapped = 0
         val pass =
             LookupPass.drain("Genre read", candidates, deadline) { artist ->
@@ -67,4 +71,6 @@ class ArtistGenreService(
         if (unmapped.isNotEmpty()) logger.info { "Unmapped Wikidata genre(s) $unmapped of '${artist.name}' ($wikidataId)" }
         return held.any { it in WIKIDATA_GENRES }
     }
+
+    private fun staleBefore(): Instant = clock.instant().minus(properties.rereadAfter)
 }

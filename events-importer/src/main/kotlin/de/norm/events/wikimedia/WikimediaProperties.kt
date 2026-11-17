@@ -27,11 +27,14 @@ data class WikimediaProperties(
     /** How many artists' occupations one artist lookup tick reads (ADR-039). */
     val occupationMaxPerRun: Int = DEFAULT_OCCUPATION_MAX_PER_RUN,
     /** How many artists' genres one artist lookup tick reads (ADR-060). */
-    val genreMaxPerRun: Int = DEFAULT_GENRE_MAX_PER_RUN
+    val genreMaxPerRun: Int = DEFAULT_GENRE_MAX_PER_RUN,
+    /** How long a read artist's occupations and genres stand before the tick reads them again. */
+    val rereadAfter: Duration = Duration.ofDays(DEFAULT_REREAD_AFTER_DAYS)
 ) {
     companion object {
         private const val DEFAULT_OCCUPATION_MAX_PER_RUN = 100
         private const val DEFAULT_GENRE_MAX_PER_RUN = 100
+        private const val DEFAULT_REREAD_AFTER_DAYS = 90L
         private const val DEFAULT_POLITE_DELAY_MILLIS = 250L
         private const val DEFAULT_TIMEOUT_SECONDS = 30L
         private const val DEFAULT_THUMB_WIDTH = 1600

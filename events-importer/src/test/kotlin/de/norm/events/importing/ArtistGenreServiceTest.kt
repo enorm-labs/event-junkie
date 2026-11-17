@@ -14,6 +14,10 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneOffset
 
 class ArtistGenreServiceTest {
     private val genres: ArtistGenreRepository = mockk(relaxed = true)
@@ -29,7 +33,7 @@ class ArtistGenreServiceTest {
     @Test
     fun `stores the item ids in statement order, a mapped one and an unmapped one alike`() =
         runTest {
-            every { genres.findUnreadGenres(100) } returns flowOf(artist(69263), artist(2))
+            every { genres.findGenreReads(100, any()) } returns flowOf(artist(69263), artist(2))
             coEvery { wikimedia.genresOf("Q69263") } returns listOf("Q959583", "Q9759")
             coEvery { wikimedia.genresOf("Q2") } returns listOf("Q1062702")
 
@@ -42,7 +46,7 @@ class ArtistGenreServiceTest {
     @Test
     fun `a link with no item id is stored as no genre, so the row leaves the queue`() =
         runTest {
-            every { genres.findUnreadGenres(any()) } returns flowOf(artist(3, wikidataUrl = "https://www.wikidata.org/wiki/Special:Search"))
+            every { genres.findGenreReads(any(), any()) } returns flowOf(artist(3, wikidataUrl = "https://www.wikidata.org/wiki/Special:Search"))
 
             service().sweep() shouldBe LookupPass(owed = 1, stored = 1)
 
@@ -53,7 +57,7 @@ class ArtistGenreServiceTest {
     @Test
     fun `a failed read stores nothing, and the row waits for the next tick`() =
         runTest {
-            every { genres.findUnreadGenres(any()) } returns flowOf(artist(4))
+            every { genres.findGenreReads(any(), any()) } returns flowOf(artist(4))
             coEvery { wikimedia.genresOf(any()) } throws WikimediaUnavailableException("Wikidata Q4 answered 503")
 
             service().sweep().stored shouldBe 0
@@ -62,10 +66,24 @@ class ArtistGenreServiceTest {
         }
 
     @Test
+    fun `asks for the rows read more than the reread interval ago, and stores a changed answer over the old one (#5253)`() =
+        runTest {
+            val now = Instant.parse("2026-11-17T12:00:00Z")
+            val properties = WikimediaProperties(rereadAfter = Duration.ofDays(90))
+            every { genres.findGenreReads(any(), any()) } returns flowOf(artist(5))
+            coEvery { wikimedia.genresOf("Q5") } returns listOf("Q8341")
+
+            ArtistGenreService(genres, wikimedia, properties, Clock.fixed(now, ZoneOffset.UTC)).sweep() shouldBe LookupPass(owed = 1, stored = 1)
+
+            coVerify { genres.findGenreReads(100, now.minus(Duration.ofDays(90))) }
+            coVerify { genres.storeGenres(5, arrayOf("Q8341")) }
+        }
+
+    @Test
     fun `a switched-off read is off and asks for no row`() =
         runTest {
             service(WikimediaProperties(enabled = false)).sweep() shouldBe LookupPass.OFF
 
-            coVerify(exactly = 0) { genres.findUnreadGenres(any()) }
+            coVerify(exactly = 0) { genres.findGenreReads(any(), any()) }
         }
 }
