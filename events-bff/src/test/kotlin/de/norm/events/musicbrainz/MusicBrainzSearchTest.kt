@@ -103,15 +103,45 @@ class MusicBrainzSearchTest {
         }
 
     @Test
-    fun `a 503 is unavailable at once, without a retry, and is not cached`() =
+    fun `retries a 503 once, a pace later, and answers what the retry finds`() =
         runBlocking<Unit> {
             server.enqueue(MockResponse.Builder().code(503).build())
             server.enqueue(found(MODERAT to "Moderat"))
 
+            val started = System.nanoTime()
+            search.search("Moderat").map { it.name } shouldContainExactly listOf("Moderat")
+
+            (System.nanoTime() - started) / 1_000_000 shouldBeGreaterThanOrEqual PACE.toMillis()
+            server.requestCount shouldBe 2
+            outcome("retried") shouldBe 1.0
+            outcome("ok") shouldBe 1.0
+        }
+
+    @Test
+    fun `a second 503 is unavailable, and is not cached`() =
+        runBlocking<Unit> {
+            server.enqueue(MockResponse.Builder().code(503).build())
+            server.enqueue(MockResponse.Builder().code(503).build())
+            server.enqueue(found(MODERAT to "Moderat"))
+
             shouldThrow<MusicBrainzUnavailableException> { search.search("Moderat") }
-            server.requestCount shouldBe 1
+            server.requestCount shouldBe 2
+            outcome("unavailable") shouldBe 1.0
             search.search("Moderat").map { it.name } shouldContainExactly listOf("Moderat")
         }
+
+    @Test
+    fun `retries no other error status`() =
+        runBlocking<Unit> {
+            server.enqueue(MockResponse.Builder().code(500).build())
+            server.enqueue(found(MODERAT to "Moderat"))
+
+            shouldThrow<MusicBrainzUnavailableException> { search.search("Moderat") }
+            server.requestCount shouldBe 1
+            outcome("retried") shouldBe 0.0
+        }
+
+    private fun outcome(tag: String) = registry.counter(MusicBrainzSearch.METRIC, "request", "search", "outcome", tag).count()
 
     private companion object {
         val PACE: Duration = Duration.ofMillis(300)

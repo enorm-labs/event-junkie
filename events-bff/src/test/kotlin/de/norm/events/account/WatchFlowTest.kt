@@ -219,6 +219,8 @@ class WatchFlowTest : BaseControllerTest() {
     @Test
     fun `an unknown id is a 404, an unanswered MusicBrainz a 503, and a malformed id a 400`() {
         server.enqueue(MockResponse.Builder().code(404).build())
+        // Two: the search retries one 503 (#5227), and an unconsumed answer would reach the next test on this shared server.
+        server.enqueue(MockResponse.Builder().code(503).build())
         server.enqueue(MockResponse.Builder().code(503).build())
 
         watch(MODERAT).expectStatus().isNotFound
