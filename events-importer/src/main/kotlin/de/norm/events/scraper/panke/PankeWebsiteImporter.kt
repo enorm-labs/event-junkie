@@ -63,6 +63,11 @@ val PANKE_LIMITATIONS =
             verified = "2026-11-01"
         ),
         AcceptedLimitation(
+            LimitedAspect.IMAGE,
+            "a night without a poster renders an empty background image on the programme",
+            verified = "2026-11-17"
+        ),
+        AcceptedLimitation(
             LimitedAspect.PRICE,
             "most nights print no figure and sell on Resident Advisor; a figure in a sentence, with no label opening its line, is prose",
             verified = "2026-10-13"

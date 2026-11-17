@@ -43,8 +43,21 @@ val RENAISSANCE_THEATER_LIMITATIONS =
         EventSource.RENAISSANCE_THEATER,
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site states one start time per performance", verified = "2026-10-18"),
         AcceptedLimitation(LimitedAspect.IMAGE, "a production page shows a picture only for some productions", verified = "2026-10-18"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the site states prices only in its ticket shop", verified = "2026-10-18"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site states prices only in its ticket shop", verified = "2026-10-18"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the house prints its price tiers on one page, and a production page names neither its tier nor a figure",
+            verified = "2026-11-17"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PRICE_PRESALE,
+            "the house prints its price tiers on one page, and a production page names neither its tier nor a figure",
+            verified = "2026-11-17"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PRICE_BOX_OFFICE,
+            "the house prints its price tiers on one page, and a production page names neither its tier nor a figure",
+            verified = "2026-11-17"
+        ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
             "the listing names performers only in its billing prose, and a production lists its cast on its own page",

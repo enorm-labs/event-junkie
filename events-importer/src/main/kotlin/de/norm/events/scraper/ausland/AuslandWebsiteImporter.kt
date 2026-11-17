@@ -67,6 +67,11 @@ val AUSLAND_LIMITATIONS =
             "most nights sell only at the door; a ticket shop is linked only from a phrase in the text",
             verified = "2026-10-16"
         ),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a night whose line-up field is empty names its players only in prose, which is not read",
+            verified = "2026-11-17"
+        ),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits partners only as logos", verified = "2026-10-16"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-16")
     )
