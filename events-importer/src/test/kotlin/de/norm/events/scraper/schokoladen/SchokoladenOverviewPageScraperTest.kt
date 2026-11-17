@@ -200,6 +200,8 @@ class SchokoladenOverviewPageScraperTest {
             genreOf("Kazamatek (powerpop, punk - Athen)") shouldBe "powerpop"
             genreOf("Grumpy (deutschpunk, regensburg)") shouldBe "deutschpunk"
             genreOf("Sludgeworth (Noise-Rock/Sludge, Norwich/UK)") shouldBe "Noise-Rock/Sludge"
+            // Event 14564 stored both towns as genres.
+            genreOf("Dosenstolz (Punk/Dresden) + Eddie (Punk/Neuruppin)") shouldBe "Punk"
         }
 
         @Test

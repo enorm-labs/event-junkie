@@ -51,6 +51,14 @@ class AegCoBillMergeTest {
         }
 
     @Test
+    fun `bills a Support Act paragraph after the headliners`() =
+        runTest {
+            // Event 14579 lost Blancmange, the support of The Human League.
+            importedEvent("ubereatsmusichall-detail-cobill-support.html").artists.map { it.name to it.role } shouldBe
+                listOf("D-Block Europe" to ArtistRole.HEADLINER, "French Montana" to ArtistRole.HEADLINER, "Blancmange" to ArtistRole.SUPPORT)
+        }
+
+    @Test
     fun `keeps the listing's own roster when no detail page answers`() =
         runTest {
             // The fallback path: without the description the comma decides nothing, exactly as before.

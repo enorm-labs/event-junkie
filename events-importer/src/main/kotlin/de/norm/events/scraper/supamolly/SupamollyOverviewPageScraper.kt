@@ -43,8 +43,8 @@ import java.time.LocalTime
  * artist list, first billed the headliner. A block with an empty `.tit` is an extra reference
  * link for the act above, not an act, and dropped.
  * - **Monthly programme posters are rows.** A flyer-only row stamped 23:59 and titled after the month
- * ("September Programm 2026", "Oktober Supamolly", [PROGRAMME_POSTER_TITLE]) announces the printed
- * programme, not an event. The wording after the month changes; the 23:59 stamp has not.
+ * or after the programme ("September Programm 2026", "Oktober Supamolly", "Programm Nov 2026", [PROGRAMME_POSTER_TITLE])
+ * announces the printed programme, not an event. The wording changes; the 23:59 stamp has not.
  * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee" social is billed like an act, its time only in
  * `td.date .uhr`. A programme note ([isProgrammeNote]) stays the title but is never an artist, so [inferUnmarkedTitleType]
  * types the night instead of defaulting to a concert. It is the social's name, any name with an inline `HH:MM Uhr`, which no
@@ -265,13 +265,13 @@ class SupamollyOverviewPageScraper {
         private const val DATE_LENGTH = 8
 
         /**
-         * A title that opens with a German month name: "September Programm 2026", "Oktober Prog 2026",
-         * "Oktober Supamolly". Only a poster together with [POSTER_STAMP_TIME], so a real night named
-         * after a month keeps its real time and stays an event.
+         * A title that opens with a German month name or with `Programm`: "September Programm 2026",
+         * "Oktober Supamolly", "Programm Nov 2026". Only a poster together with [POSTER_STAMP_TIME], so a
+         * real night named after a month keeps its real time and stays an event.
          */
         private val PROGRAMME_POSTER_TITLE =
             Regex(
-                """^(?:${GERMAN_MONTH_NAMES.joinToString("|") { it.replace("ä", "(?:ä|ae)") }})\b""",
+                """^(?:${GERMAN_MONTH_NAMES.joinToString("|") { it.replace("ä", "(?:ä|ae)") }}|programm|prog)\b""",
                 RegexOption.IGNORE_CASE
             )
 

@@ -197,7 +197,10 @@ private val QUOTED_TITLE = Regex("""["„“‘«»][^"„“”‘’«»\n]{1,
 private val SUPPORT_CLAUSE =
     Regex("""\b(?:support|supported|vorband|special\s+guests?|guests?|gäste|plus)\b|\+""", RegexOption.IGNORE_CASE)
 
-/** Vocabulary keys that prose uses in another sense ("around the world", "in full swing", "the 90s", "a downbeat mood"). */
+/**
+ * Vocabulary keys that prose uses in another sense ("around the world", "in full swing", "the 90s", "a downbeat mood").
+ * Prose names the chart with `Top 40`: "13 UK Top 40 singles".
+ */
 private val AMBIGUOUS_IN_PROSE =
     setOf(
         "house",
@@ -229,5 +232,6 @@ private val AMBIGUOUS_IN_PROSE =
         "experimental",
         "oldschool",
         "newschool",
-        "downbeat"
+        "downbeat",
+        "top40"
     )

@@ -271,16 +271,19 @@ class SupamollyOverviewPageScraperTest {
         }
 
         @Test
-        fun `skips a poster row whatever follows the month name`() {
-            val document =
-                Jsoup.parse(
-                    """<table><tr class="event" id="202610082359"><td class="evcont"><div class="even">
-                       <div class="tit"><b>Oktober Supamolly<div class="progln" alt=""> </div></b></div>
-                       <div class="beschr  empty"><div class="lin"><div></div></div></div></div></td></tr></table>""",
-                    baseUrl
-                )
+        fun `skips a poster row whatever follows the month name, or one that opens with Programm`() {
+            // Event 14534 was "Programm Nov 2026".
+            listOf("Oktober Supamolly", "Programm Nov 2026").forEach { title ->
+                val document =
+                    Jsoup.parse(
+                        """<table><tr class="event" id="202610082359"><td class="evcont"><div class="even">
+                           <div class="tit"><b>$title<div class="progln" alt=""> </div></b></div>
+                           <div class="beschr  empty"><div class="lin"><div></div></div></div></div></td></tr></table>""",
+                        baseUrl
+                    )
 
-            scraper.scrape(document, baseUrl) shouldBe emptyList()
+                scraper.scrape(document, baseUrl) shouldBe emptyList()
+            }
         }
 
         @Test

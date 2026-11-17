@@ -445,7 +445,8 @@ private val ORIGIN_CODE = Regex("""[a-z]{2,3}(?:\s*/\s*[a-z]{2,3})*""", RegexOpt
 private val SHORT_GENRES = setOf("mod", "ska", "emo", "pop", "dub", "rap")
 
 /** The places the venue spells out instead of coding, as met in its titles. */
-private val ORIGIN_PLACES = setOf("berlin", "hamburg", "bernau", "aachen", "leipzig", "warsaw", "basque country", "ho chi minh city")
+private val ORIGIN_PLACES =
+    setOf("berlin", "hamburg", "bernau", "aachen", "leipzig", "dresden", "neuruppin", "warsaw", "basque country", "ho chi minh city")
 
 /**
  * The DJs a subtitle bills after the show (#2327): `& after 22h: DJ Mietze Fiebels (post-punk /

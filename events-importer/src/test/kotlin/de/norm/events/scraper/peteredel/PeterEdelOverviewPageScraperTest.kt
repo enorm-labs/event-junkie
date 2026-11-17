@@ -157,6 +157,22 @@ class PeterEdelOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a night for invited guests only`() {
+        // Event 14535, a club's anniversary party.
+        val document =
+            grid(
+                heading = "November 2026",
+                dateLine = "FR | 20.11.",
+                main =
+                    "<h3><strong>25 JAHRE MAGNET CLUB</strong></h3><p><strong>JUBILÄUMSFEIER</strong></p>" +
+                        "<p>Die Veranstaltung ist nur für geladene Gäste.<br><strong>Einlass &amp; Beginn: </strong>18:00 Uhr</p>",
+                ticketColumn = "<h3>Tickets:<br><br>Nur für<br>geladene Gäste</h3>"
+            )
+
+        scraper.scrape(document, baseUrl).shouldBeEmpty()
+    }
+
+    @Test
     fun `marks a sold-out event and stores no price for it`() {
         val carmenMaja = events.single { it.title.startsWith("Carmen Maja") }
         carmenMaja.soldOut shouldBe true

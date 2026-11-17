@@ -21,6 +21,7 @@ import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferVenueFormatType
+import de.norm.events.scraper.isClosedToPublic
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.knownSoloPerformer
@@ -232,6 +233,10 @@ class PeterEdelOverviewPageScraper {
         val subtitle = subtitleLine.takeIf { extraShowNote == null }
         val support = extractSupportFromSubtitle(subtitle)
         val info = infoParagraph(main)?.text().orEmpty()
+        if (isClosedToPublic(info) || isClosedToPublic(ticketColumn?.text())) {
+            logger.info { "Skipping Peter Edel event '$title': closed to the public" }
+            return null
+        }
         val (doors, start) = parseTimes(info)
         val note = priceNote(ticketColumn)
         val description = main.textAt(".text-block .text-container")

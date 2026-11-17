@@ -1,5 +1,6 @@
 package de.norm.events.scraper.aeg
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
@@ -61,6 +62,7 @@ abstract class AbstractAegVenueImporter(
     /**
      * The merged roster: the detail page's `Line Up:` list when it has one (#3215). Otherwise the
      * listing's, unless the detail page's description shows it to be a whole bill (#1832) or names its act.
+     * The detail page's `Support Act:` acts follow either.
      *
      * `D-Block Europe, French Montana` is one artist row on the listing, because a single comma
      * decides nothing about a title; the description reads `D-Block Europe und French Montana …`
@@ -73,10 +75,21 @@ abstract class AbstractAegVenueImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): List<ScrapedArtist> {
-        val pageBilled = primary.artists.isNotEmpty()
-        val roster = primary.artists.ifEmpty { fallback.artists }
+        val (support, lineUp) = primary.artists.partition { it.role == ArtistRole.SUPPORT }
+        val headline = headliningActs(lineUp, fallback, primary.description)
+        val billed = headline.mapTo(mutableSetOf()) { it.name.lowercase() }
+        return headline + support.filter { billed.add(it.name.lowercase()) }
+    }
+
+    private fun headliningActs(
+        lineUp: List<ScrapedArtist>,
+        fallback: ScrapedEvent,
+        pageDescription: String?
+    ): List<ScrapedArtist> {
+        val pageBilled = lineUp.isNotEmpty()
+        val roster = lineUp.ifEmpty { fallback.artists }
         // The flat text, as before the stored description kept its lines (#4778).
-        val description = primary.description?.replace('\n', ' ')
+        val description = pageDescription?.replace('\n', ' ')
         if (pageBilled || roster.size > 1 || description.isNullOrBlank()) return roster
         val corroborated =
             buildArtistsForEventType(

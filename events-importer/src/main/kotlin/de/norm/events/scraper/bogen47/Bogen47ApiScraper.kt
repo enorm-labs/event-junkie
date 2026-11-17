@@ -249,6 +249,7 @@ internal class Bogen47ApiScraper(
      * not a performer, so it yields none (mirroring `buildArtistsForEventType`).
      *
      * A [bulletedLineup] in the description replaces the title's headliners; its support acts stay. A [VERSUS_NIGHT] title bills its two sides.
+     * A [labelledLineup] is the whole bill, so the title names the night.
      */
     private fun artistsFrom(
         title: String,
@@ -256,6 +257,7 @@ internal class Bogen47ApiScraper(
         eventType: String
     ): List<ScrapedArtist> {
         if (eventType != EventType.CONCERT.name) return emptyList()
+        labelledLineup(description)?.let { return it }
         val supportActs =
             SUPPORT_TAIL
                 .findAll(title)
@@ -333,9 +335,41 @@ private fun partyLineup(
     description: String?,
     night: LocalDate
 ): List<ScrapedArtist> =
-    descriptionLineup(description, night).ifEmpty {
+    labelledLineup(description) ?: descriptionLineup(description, night).ifEmpty {
         titleBill(title).map { ScrapedArtist(name = it, role = ArtistRole.DJ, titleDerived = true) }
     }
+
+/**
+ * The acts under a `Live` and a `DJs` label line, or null with fewer than [MIN_LABELLED_ACTS]. Event 14576, `La Regla`,
+ * bills `Live`, `LA MEKANICA`, `DJs`, then one DJ per line. A live act heads the bill. A line too long for a name, or
+ * one that ends in a colon (`Background Infos zur Party:`), ends the block.
+ */
+private fun labelledLineup(description: String?): List<ScrapedArtist>? {
+    var role = ArtistRole.HEADLINER
+    return description
+        .orEmpty()
+        .lines()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .dropWhile { !LINEUP_LABEL_LINE.matches(it) }
+        .takeWhile { LINEUP_LABEL_LINE.matches(it) || (!it.endsWith(':') && it.split(WHITESPACE).size <= MAX_LABELLED_NAME_WORDS) }
+        .mapNotNull { line ->
+            val label = LINEUP_LABEL_LINE.matchEntire(line)
+            if (label != null) {
+                role = if (label.groupValues[1].startsWith("dj", ignoreCase = true)) ArtistRole.DJ else ArtistRole.HEADLINER
+                null
+            } else {
+                line.takeUnless(::isNonArtistName)?.let { ScrapedArtist(name = it, role = role) }
+            }
+        }.takeIf { it.size >= MIN_LABELLED_ACTS }
+}
+
+/** A `Live` or `DJs` label on a line of its own; LARK writes it in any case and without a colon. */
+private val LINEUP_LABEL_LINE = Regex("""(live|djs?)\s*:?""", RegexOption.IGNORE_CASE)
+
+private const val MAX_LABELLED_NAME_WORDS = 4
+
+private const val MIN_LABELLED_ACTS = 2
 
 /**
  * The acts a title bills: a `TEMPO GALLERY presents: A, B, and C` bill ([presentsFrameNames]), the two sides of a

@@ -1,7 +1,9 @@
 package de.norm.events.scraper.aeg
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -9,6 +11,7 @@ import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -20,8 +23,8 @@ import java.time.LocalTime
  * Pure HTML parser for the AEG venues' event detail pages (`/events/detail/<slug>/<YYYY-MM-DD-HHMM>`).
  *
  * Adds what a listing row cannot carry: the `Einlass` doors time, the prose description, the
- * external ticket-shop link, and a package show's bill from a `Line Up:` paragraph in the
- * description (see [parseLineUp]).
+ * external ticket-shop link, a package show's bill from a `Line Up:` paragraph in the
+ * description (see [parseLineUp]), and the acts of a `Support Act:` paragraph ([parseSupport]).
  *
  * Deliberately supplies **no date and no usable title**: `h1.summary` appends the venue ("JONY
  * **live in der Uber Eats Music Hall**"), so the listing's cleaner act name is kept, and the
@@ -63,7 +66,7 @@ class AegDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${eventSource.sourceIdPrefix}$slug",
             ticketUrl = parseTicketUrl(document, sourceUrl),
-            artists = parseLineUp(document)
+            artists = parseLineUp(document) + parseSupport(document)
         )
     }
 
@@ -99,6 +102,19 @@ class AegDetailPageScraper {
     }
 
     /**
+     * The acts of a line that opens with a support label, `Support Act: Blancmange` (event 14579), as support. Only a
+     * line's head is read, so prose that mentions a support act names none.
+     */
+    private fun parseSupport(document: Document): List<ScrapedArtist> =
+        document
+            .select(".event_body p")
+            .flatMap { it.textLines() }
+            .mapNotNull { SUPPORT_PARAGRAPH.matchEntire(it.trim())?.groupValues?.get(1) }
+            .flatMap(::splitSupportActs)
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
+
+    /**
      * The external ticket-shop link (AXS for both venues) from the `#tickets` block. The music
      * hall renders a **self-link before** the shop link with identical classes, so the first
      * `a.btn-tix` would store the event's own URL as its ticket link. Only a link off the venue's
@@ -125,5 +141,7 @@ class AegDetailPageScraper {
 
     private companion object {
         val LINE_UP_LABEL = Regex("""\bline[ -]?up\s*:""", RegexOption.IGNORE_CASE)
+
+        val SUPPORT_PARAGRAPH = Regex("""(?:$SUPPORT_LABELS)\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
     }
 }

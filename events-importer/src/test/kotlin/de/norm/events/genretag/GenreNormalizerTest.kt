@@ -42,10 +42,17 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `the post-hardcore abbreviation is one tag with the spelled-out name`() {
+        // Event 14562.
+        normalizeGenre("Post-HC/Indie Rock").shouldContainExactlyInAnyOrder("Post Hardcore", "Indie")
+        normalizeGenre("post-hardcore").shouldContainExactly("Post Hardcore")
+    }
+
+    @Test
     fun `an unknown shouted genre is stored de-shouted, and a short acronym is kept`() {
         normalizeGenre("TRANCE, HARDTECHNO, EBM").shouldContainExactly("Trance", "Hardtechno", "EBM")
         normalizeGenre("EARLY HARDCORE").shouldContainExactly("Early Hardcore")
-        normalizeGenre("POST-HC").shouldContainExactly("Post-HC")
+        normalizeGenre("DARK-EBM").shouldContainExactly("Dark-EBM")
         normalizeGenre("ElectroClash").shouldContainExactly("ElectroClash")
     }
 
