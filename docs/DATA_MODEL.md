@@ -616,17 +616,18 @@ select, and the importer logs those tags at start.
 
 Links events to their normalized genre tags (many-to-many).
 
-| Field          | Type        | Nullable | Description                         | Example  |
-| -------------- | ----------- | -------- | ----------------------------------- | -------- |
-| `id`           | `BIGINT`    | No       | Auto-generated primary key          | `5`      |
-| `event_id`     | `BIGINT` FK | No       | References `event.id`               | `101`    |
-| `genre_tag_id` | `BIGINT` FK | No       | References `genre_tag.id`           | `1`      |
-| `origin`       | `TEXT`      | No       | `SOURCE`, `ARTIST` or `DESCRIPTION` | `SOURCE` |
+| Field          | Type        | Nullable | Description                                     | Example  |
+| -------------- | ----------- | -------- | ----------------------------------------------- | -------- |
+| `id`           | `BIGINT`    | No       | Auto-generated primary key                      | `5`      |
+| `event_id`     | `BIGINT` FK | No       | References `event.id`                           | `101`    |
+| `genre_tag_id` | `BIGINT` FK | No       | References `genre_tag.id`                       | `1`      |
+| `origin`       | `TEXT`      | No       | `SOURCE`, `ARTIST`, `DESCRIPTION` or `WIKIDATA` | `SOURCE` |
 
 Unique constraint on `(event_id, genre_tag_id)` prevents duplicate tag-event associations.
 
 `origin` is `SOURCE` for a tag that the event's source published. The importer derives `ARTIST` and `DESCRIPTION` tags only for an event with no `SOURCE`
-tag (ADR-047). The public event detail returns the derived tags in `derivedGenreTags`.
+tag (ADR-047). A `WIKIDATA` tag comes from the acts' Wikidata genres in `artist.wikidata_genres`, only when no other origin gives a tag (ADR-060). The public
+event detail returns the derived tags in `derivedGenreTags`.
 
 ### event_enrichment (Side Table)
 

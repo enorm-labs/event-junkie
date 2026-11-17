@@ -6,6 +6,7 @@ import de.norm.events.enrichment.LookupPass
 import de.norm.events.wikimedia.WikimediaClient
 import de.norm.events.wikimedia.WikimediaProperties
 import de.norm.events.wikimedia.WikimediaUnavailableException
+import de.norm.events.wikimedia.wikidataIdOf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
@@ -62,12 +63,5 @@ class ArtistOccupationService(
         val comedian = held.any { it in PerformerTyping.COMEDY_OCCUPATIONS }
         occupations.storeComedian(id, comedian)
         return comedian
-    }
-
-    private companion object {
-        /** The item id at the end of a Wikidata link: `https://www.wikidata.org/wiki/Q76152`. */
-        val WIKIDATA_ID = Regex("""/(Q\d+)/?$""")
-
-        fun wikidataIdOf(url: String): String? = WIKIDATA_ID.find(url)?.groupValues?.get(1)
     }
 }

@@ -176,6 +176,7 @@
     "relatedAtVenue": "Also at {venue}",
     "genreFromArtist": "Genre from the acts' other events",
     "genreFromDescription": "Genre from the event description",
+    "genreFromWikidata": "Genre of the acts from Wikidata",
     "share": {
       "share": "Share",
       "nativeShare": "Share via…",

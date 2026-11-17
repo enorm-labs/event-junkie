@@ -606,7 +606,7 @@ rule(
 # two minutes with the whole epoch as the age.
 rule(
     "ej-artist-lookup-tick-stale",
-    "The artist lookup tick (MusicBrainz, its enrichment, Discogs, the occupations) has "
+    "The artist lookup tick (MusicBrainz, its enrichment, Discogs, the occupations, the genres) has "
     "not finished in an hour, against a five-minute interval. New artists get no verdict "
     "and no links. First search the importer log for `MusicBrainz unavailable`: many lines "
     "mean a MusicBrainz brownout. A pass it holds ends with `stopped at its time budget`, "

@@ -112,6 +112,7 @@ CREATE TABLE events.artist (
     name_search text GENERATED ALWAYS AS (events.search_text(name)) STORED,
     comedian boolean,
     name_pinned boolean DEFAULT false NOT NULL,
+    wikidata_genres text[],
     CONSTRAINT artist_description_alt_attributed CHECK ((((description_alt_attribution IS NULL) AND (description_alt_licence_id IS NULL) AND (description_alt_source_url IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_attribution IS NOT NULL) AND (description_alt_licence_id IS NOT NULL) AND (description_alt_source_url IS NOT NULL)))),
     CONSTRAINT artist_description_alt_beside_wikipedia CHECK (((description_alt IS NULL) OR ((description_attribution IS NOT NULL) AND (description_language IS NOT NULL) AND (description_alt_language <> description_language)))),
     CONSTRAINT artist_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL)))),
@@ -657,7 +658,7 @@ CREATE TABLE events.event_genre_tag (
     event_id bigint NOT NULL,
     genre_tag_id bigint NOT NULL,
     origin text DEFAULT 'SOURCE'::text NOT NULL,
-    CONSTRAINT event_genre_tag_origin_check CHECK ((origin = ANY (ARRAY['SOURCE'::text, 'ARTIST'::text, 'DESCRIPTION'::text])))
+    CONSTRAINT event_genre_tag_origin_check CHECK ((origin = ANY (ARRAY['SOURCE'::text, 'ARTIST'::text, 'DESCRIPTION'::text, 'WIKIDATA'::text])))
 );
 
 --
@@ -1688,6 +1689,12 @@ CREATE INDEX artist_musicbrainz_unchecked_idx ON events.artist USING btree (id) 
 --
 
 CREATE INDEX artist_musicbrainz_unenriched_idx ON events.artist USING btree (id) WHERE ((musicbrainz_match = 'EXACT'::text) AND (musicbrainz_enriched_at IS NULL));
+
+--
+-- Name: artist_wikidata_genres_unread_idx; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX artist_wikidata_genres_unread_idx ON events.artist USING btree (id) WHERE ((musicbrainz_match = 'EXACT'::text) AND (wikidata_url IS NOT NULL) AND (wikidata_genres IS NULL));
 
 --
 -- Name: idx_artist_name_search_trgm; Type: INDEX; Schema: events; Owner: -
