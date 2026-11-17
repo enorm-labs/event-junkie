@@ -185,7 +185,7 @@ schema change.
 | Scheinbar Varieté                | https://www.scheinbar.de/programm/                                       | Theater      | ProcessWire list by month; one show a night               |
 | Schlosspark Theater              | https://www.schlossparktheater.de/spielplan/kalender.html                | Theater      | PHP month pages; type from billing words                  |
 | Schokoladen                      | https://www.schokoladen-mitte.de/                                        | Club         | Laravel; anchor-based events; genre inside title          |
-| Showfenster Theater              | https://www.showfenster-show.de/%C3%BCbersichtskalender                  | Theater      | Wix Events warmup JSON; Eventfrog path gives the type     |
+| Showfenster Theater              | https://www.showfenster-show.de/%C3%BCbersichtskalender                  | Theater      | Wix warmup JSON; Eventfrog type; players on concert page  |
 | silent green                     | https://www.silent-green.net/programm                                    | Concert Hall | TYPO3 news; month walk; a run listed per open day         |
 | Sisyphos                         | https://www.sisyphos-berlin.net/                                         | Techno Club  | Calendar JSON + shop + sisy.fan line-ups (ADR-038)        |
 | Slaughterhouse                   | https://slaughterhouse-berlin.de/konzerte/                               | Club         | Block-editor post; entries between hr rules               |
