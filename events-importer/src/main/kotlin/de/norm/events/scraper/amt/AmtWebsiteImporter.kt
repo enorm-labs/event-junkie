@@ -62,5 +62,10 @@ val AMT_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the month and event pages print a date but no clock time", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.GENRE, "the event pages name no style", verified = "2026-10-13"),
+        AcceptedLimitation(
+            LimitedAspect.IMAGE,
+            "a night without a poster leaves the event template's image field empty",
+            verified = "2026-11-17"
+        ),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
     )
