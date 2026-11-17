@@ -57,7 +57,10 @@ private data class MusicBrainzSearchResponse(
  *
  * **One request at a time, [pace] apart, per process.** MusicBrainz allows one a second per source address. The importer
  * keeps the same pace, and the two can leave the cluster through one address, so a burst here can cost the importer's
- * sweep a 503, which it retries (#1610). No retry here: a visitor gets a 503 at once rather than a wait.
+ * sweep a 503, which it retries (#1610).
+ *
+ * **A 503 is retried once, [pace] after the first request** (#5227). MusicBrainz refuses a lone request from the cluster's
+ * address now and then, and the next one goes through. One retry costs the visitor about a second; a second 503 answers 503.
  *
  * `GET artist/?query=…`: **the trailing slash is not optional**, the bare path answers 503 (ADR-031). The query is a
  * phrase on the name and the aliases, as the importer's lookup is. A partial word finds nothing.
@@ -137,8 +140,8 @@ class MusicBrainzSearch(
         }
 
     /**
-     * One paced request. A 404 is null. A 503, any other error status and a transport failure are [MusicBrainzUnavailableException]:
-     * every failure of the call out is one outcome for the caller. A cancellation is rethrown.
+     * One paced request, and one more after a 503. A 404 is null. A second 503, any other error status and a transport failure are
+     * [MusicBrainzUnavailableException]: every failure of the call out is one outcome for the caller. A cancellation is rethrown.
      */
     @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     private suspend fun <T> fetch(
@@ -149,7 +152,9 @@ class MusicBrainzSearch(
         val started = System.nanoTime()
         val failure =
             try {
-                return paced(request).also { log(what, "$subject: ${Outcome.OK.tag}${count(it)}", Outcome.OK, started) }
+                return retryingOnce(what, subject, started, request).also {
+                    log(what, "$subject: ${Outcome.OK.tag}${count(it)}", Outcome.OK, started)
+                }
             } catch (e: WebClientResponseException) {
                 if (e.statusCode == HttpStatus.NOT_FOUND) {
                     log(what, "$subject: ${Outcome.NOT_FOUND.tag}", Outcome.NOT_FOUND, started)
@@ -165,6 +170,21 @@ class MusicBrainzSearch(
             }
         throw MusicBrainzUnavailableException("MusicBrainz did not answer", failure)
     }
+
+    /** [paced], and once more after a 503; [paced] keeps the retry a pace after the first request. */
+    private suspend fun <T> retryingOnce(
+        what: String,
+        subject: String,
+        started: Long,
+        request: suspend () -> T
+    ): T =
+        try {
+            paced(request)
+        } catch (e: WebClientResponseException) {
+            if (e.statusCode != HttpStatus.SERVICE_UNAVAILABLE) throw e
+            log(what, "$subject: answered 503, retrying once", Outcome.RETRIED, started)
+            paced(request)
+        }
 
     private fun count(result: Any?): String = (result as? List<*>)?.let { ", ${it.size} candidates" }.orEmpty()
 
@@ -186,7 +206,7 @@ class MusicBrainzSearch(
         record(what, outcome)
         val ms = (System.nanoTime() - started) / NANOS_PER_MILLI
         val line = "MusicBrainz $what for $summary (${ms}ms)"
-        if (outcome == Outcome.UNAVAILABLE) logger.warn { line } else logger.info { line }
+        if (outcome == Outcome.UNAVAILABLE || outcome == Outcome.RETRIED) logger.warn { line } else logger.info { line }
     }
 
     private fun record(
@@ -200,11 +220,12 @@ class MusicBrainzSearch(
         OK("ok"),
         CACHED("cached"),
         NOT_FOUND("not_found"),
+        RETRIED("retried"),
         UNAVAILABLE("unavailable")
     }
 
     companion object {
-        /** `bff.musicbrainz.requests{request,outcome}`: searches and id reads for watches (#5214), cached answers included. */
+        /** `bff.musicbrainz.requests{request,outcome}`: searches and id reads for watches (#5214), cached answers and retried 503s included. */
         const val METRIC = "bff.musicbrainz.requests"
         private const val TAG_REQUEST = "request"
         private const val TAG_OUTCOME = "outcome"
