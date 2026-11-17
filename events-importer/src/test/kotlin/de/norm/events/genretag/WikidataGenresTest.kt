@@ -15,7 +15,12 @@ class WikidataGenresTest {
 
     @Test
     fun `every key is a Wikidata item id`() {
-        WIKIDATA_GENRES.keys.filterNot { it.matches(Regex("""Q\d+""")) }.shouldBeEmpty()
+        (WIKIDATA_GENRES.keys + WIKIDATA_NO_TAG).filterNot { it.matches(Regex("""Q\d+""")) }.shouldBeEmpty()
+    }
+
+    @Test
+    fun `an item gives a tag or no tag, never both (#5252)`() {
+        WIKIDATA_GENRES.keys.intersect(WIKIDATA_NO_TAG).shouldBeEmpty()
     }
 
     @Test

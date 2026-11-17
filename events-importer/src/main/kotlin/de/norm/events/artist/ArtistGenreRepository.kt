@@ -38,6 +38,16 @@ interface ArtistGenreRepository : CoroutineCrudRepository<ArtistEntity, Long> {
         staleBefore: Instant
     ): Flow<ArtistEntity>
 
+    /** The EXACT rows that hold a genre, for `/genre-cleanup` to list the items the map lacks (#5252). */
+    @Query(
+        """
+        SELECT a.id, a.slug, a.name, a.wikidata_genres FROM $EVENTS_SCHEMA.artist a
+        WHERE a.musicbrainz_match = 'EXACT' AND cardinality(a.wikidata_genres) > 0
+        ORDER BY a.id
+        """
+    )
+    fun findWithGenres(): Flow<ArtistWikidataGenresResponse>
+
     /**
      * Stores the item ids Wikidata's P136 names, in statement order, and stamps `wikidata_read_at`.
      * The genre read runs last on the tick, so its stamp stands for both reads.

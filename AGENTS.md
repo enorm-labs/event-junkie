@@ -257,7 +257,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/enrich [--count N] [--venues]` — websites, Instagram links and descriptions for the promoters with the most upcoming events, from their own sites, into `docs/promoters/REVIEWED.tsv` and one PR; 35 rows a run, the search budget's size
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
 - `/fix-events [<url> ["<note>"]…]` — events the operator saw wrong on the site, or with no argument the "Report a problem" queue (#4399), each to a verdict: a parser fix with a test in one PR, a scope rule, an accepted limitation, or a numbered hand fix applied only on the operator's word
-- `/genre-cleanup [<env>]` — the stored genre tags that are not genres or are one genre spelled twice, judged into DROP, FOLD, FAMILY or KEEP; fixed as a normalizer change plus a migration, never a hand delete
+- `/genre-cleanup [<env>]` — the stored genre tags that are not genres or are one genre spelled twice, judged into DROP, FOLD, FAMILY or KEEP; fixed as a normalizer change plus a migration, never a hand delete; then the Wikidata genres the map lacks
 - `/git-cleanup` — worktrees and local branches sorted into safe, ask first and keep by PR state and `git cherry`; removes only what the operator confirms
 - `/importer-smoke` — seed, import, inspect the rows and check for regressions, for one importer
 - `/log-check` — both clusters' logs, Kubernetes events and alerts for the last day, sorted into noise, known, explained and new; drafts issues, files none

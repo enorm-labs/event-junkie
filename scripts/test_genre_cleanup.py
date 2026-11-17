@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Asserts that genre-cleanup.py flags tags that are not genres or are one genre twice, and leaves out unlinked ones.
+"""Asserts that genre-cleanup.py flags non-genres and duplicates, and lists the unmapped Wikidata genres.
 
 Usage:
     python3 scripts/test_genre_cleanup.py
@@ -113,6 +113,52 @@ def main() -> int:
         {},
     )[0]
     check(one_source[0]["slug"] == "kneipenquiz", "a row flagged only one-source sorts after a stronger flag")
+
+    kt = (
+        'val WIKIDATA_GENRES = mapOf(\n    "Q37073" to "Pop", // pop music\n)\n'
+        'val WIKIDATA_NO_TAG = setOf(\n    "Q2743" // musical play\n)\n'
+    )
+    check(cleanup.judged_items(kt) == {"Q37073", "Q2743"}, "the map's keys and the no-tag set are both judged")
+
+    def billed(artist_id, role="HEADLINER"):
+        return {"artistId": artist_id, "role": role}
+
+    def night(event_id, date, artists, genre_tags=(), event_type="CONCERT"):
+        return {
+            "id": event_id,
+            "eventDate": date,
+            "eventType": event_type,
+            "genreTags": list(genre_tags),
+            "artists": artists,
+        }
+
+    artists = [
+        {"id": 1, "name": "Opera Singer", "wikidataGenres": ["Q1344", "Q37073"]},
+        {"id": 2, "name": "Shanty Choir", "wikidataGenres": ["Q1195253"]},
+        {"id": 3, "name": "Support Band", "wikidataGenres": ["Q1195253"]},
+        {"id": 4, "name": "Other Singer", "wikidataGenres": ["Q1344"]},
+    ]
+    nights = [
+        night(20, "2026-11-20", [billed(1)]),
+        night(21, "2026-11-21", [billed(4)]),
+        night(22, "2026-11-22", [billed(2)], genre_tags=["Folk"]),
+        night(23, "2026-11-23", [billed(4), billed(3, "SUPPORT")]),
+        night(24, "2026-10-01", [billed(2)]),
+        night(25, "2026-11-24", [billed(2)], event_type="READING"),
+    ]
+    unmapped = cleanup.unmapped_rows(artists, nights, {"Q37073"}, TODAY, {"Q1195253": "NO_TAG: an occasion"})
+    by_item = {r["item"]: r for r in unmapped}
+    check(set(by_item) == {"Q1344", "Q1195253"}, "a judged item is left out")
+    check(by_item["Q1344"]["reach"] == 3, "reach counts the untagged upcoming music nights of the item's acts")
+    check(by_item["Q1195253"]["reach"] == 0, "a tagged night, a past night, a reading and a support act give no reach")
+    check(by_item["Q1195253"]["acts"] == 2, "every act that holds the item counts, a support act too")
+    check(unmapped[0]["item"] == "Q1344", "the widest reach sorts first")
+    check(by_item["Q1195253"]["previous"] == "NO_TAG: an occasion", "an earlier verdict is carried by item")
+    labels = cleanup.wikidata_labels(
+        ["Q1344", "Q3071"],
+        lambda url: {"entities": {"Q1344": {"labels": {"en": {"value": "opera"}}}, "Q3071": {"labels": {}}}},
+    )
+    check(labels == {"Q1344": "opera", "Q3071": ""}, "an item with no English label keeps an empty label")
 
     print(f"genre-cleanup: {checks} checks passed")
     return 0

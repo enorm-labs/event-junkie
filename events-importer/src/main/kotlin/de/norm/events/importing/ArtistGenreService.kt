@@ -4,6 +4,7 @@ import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistGenreRepository
 import de.norm.events.enrichment.LookupPass
 import de.norm.events.genretag.WIKIDATA_GENRES
+import de.norm.events.genretag.WIKIDATA_NO_TAG
 import de.norm.events.wikimedia.WikimediaClient
 import de.norm.events.wikimedia.WikimediaProperties
 import de.norm.events.wikimedia.WikimediaUnavailableException
@@ -66,8 +67,8 @@ class ArtistGenreService(
                 wikimedia.genresOf(wikidataId) ?: return null
             }
         genres.storeGenres(id, held.toTypedArray())
-        val unmapped = held.filterNot { it in WIKIDATA_GENRES }
-        // The map grows from these lines: an unlisted item gives no tag (ADR-060).
+        val unmapped = held.filterNot { it in WIKIDATA_GENRES || it in WIKIDATA_NO_TAG }
+        // `/genre-cleanup` grows the map from these items: an unlisted one gives no tag (ADR-060, #5252).
         if (unmapped.isNotEmpty()) logger.info { "Unmapped Wikidata genre(s) $unmapped of '${artist.name}' ($wikidataId)" }
         return held.any { it in WIKIDATA_GENRES }
     }

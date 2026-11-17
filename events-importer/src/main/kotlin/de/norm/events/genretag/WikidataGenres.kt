@@ -177,3 +177,17 @@ val WIKIDATA_GENRES: Map<String, String> =
         "Q1344" to "Classical", // opera
         "Q106576145" to "Classical" // neoclassical music
     )
+
+/**
+ * Wikidata genre items judged to give no tag: a region, an occasion or a medium rather than a style (#5252). `/genre-cleanup`
+ * adds an item here when its verdict is `NO_TAG`, so the next run does not list it again, and the importer does not log it as unmapped.
+ */
+val WIKIDATA_NO_TAG: Set<String> =
+    setOf(
+        "Q846784", // music of Sweden
+        "Q1075799", // music of Albania
+        "Q2389651", // children's music
+        "Q1062702", // video game music
+        "Q1428637", // spoken word
+        "Q2743" // musical play
+    )

@@ -3,6 +3,7 @@
 Find the stored genre tags that are not genres — a format, an event type, an audience, a series, a place — and the genres stored twice under two
 spellings, then fix the normalizer rule that made each one and repair the stored links with a migration. **It writes nothing to a cluster.**
 `scripts/genre-cleanup.py collect` reads, the judging is yours, and the fix is a pull request: a normalizer change plus a `V` migration.
+Then the same for the Wikidata genres that `WIKIDATA_GENRES` does not map yet ([Step 4](#step-4--the-wikidata-genres)).
 
 ## Important
 
@@ -94,7 +95,34 @@ One pull request for the batch:
 
 A row that needs a product decision becomes a ⚖️ Decision draft instead. Never file it unasked.
 
-## Step 4 — The report
+## Step 4 — The Wikidata genres
+
+An untagged music night takes its acts' Wikidata genres through `WIKIDATA_GENRES` in `events-importer/…/genretag/WikidataGenres.kt` (ADR-060). An
+item the map does not list gives no tag. This step lists those items, so the map grows with the acts.
+
+```sh
+python3 scripts/genre-cleanup.py wikidata <env>
+```
+
+It reads the stored items from `GET /api/admin/artists/wikidata-genres` and the events from the admin API, and asks Wikidata for each item's English
+label. It writes `temp/genre-cleanup-wikidata-<env>-<date>.tsv`: one row per item that neither `WIKIDATA_GENRES` nor `WIKIDATA_NO_TAG` names, the
+widest **reach** first. Reach is the number of upcoming concerts, parties and festivals with no genre tag whose non-support acts hold the item. A row
+with reach 0 still counts, because the act can be billed again. `previous` carries the verdict of the newest earlier run, by item id.
+
+Judge each row:
+
+| Decision   | When                                                                                      | The fix                                                |
+| ---------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| a tag name | A style. The tag is the one `normalizeGenre` gives the label, or the family it folds onto | A `WIKIDATA_GENRES` entry: `"Q…" to "<tag>", // label` |
+| `NO_TAG`   | A region (`music of Sweden`), an occasion, a medium or an audience, not a style           | A `WIKIDATA_NO_TAG` entry                              |
+
+- **The tag must be one the vocabulary gives already.** `WikidataGenresTest` fails a value that `normalizeGenre` does not return unchanged. A subgenre
+  folds onto its family, as the existing entries do: `death metal` gives Metal.
+- **No migration.** The artist stores the item ids, so a new entry reaches each source's events at its next import.
+- **An item with no English label** is still a row. Read it on `https://www.wikidata.org/wiki/<item>`. `Q3071` (punk rock) is one.
+- The entries go into the same pull request as the batch of Step 3, or one of their own when Step 3 found nothing.
+
+## Step 5 — The report
 
 ```markdown
 ## Genre cleanup — <env>, <date>
@@ -106,4 +134,6 @@ A row that needs a product decision becomes a ⚖️ Decision draft instead. Nev
 ### Event-type notes   ← only when there are any: the tag, the type its events carry, the type it names
 
 ### Kept on purpose   ← the flagged tags that are genres, one line each, so the next run's reader skips them
+
+### Wikidata genres   ← <U> unmapped items, <M> mapped, <N> NO_TAG; file: temp/genre-cleanup-wikidata-<env>-<date>.tsv
 ```
