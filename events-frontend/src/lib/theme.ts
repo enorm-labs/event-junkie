@@ -5,7 +5,7 @@
  */
 export type Theme = 'light' | 'dark' | 'system'
 
-const THEME_KEY = 'theme'
+export const THEME_KEY = 'theme'
 
 export function storedTheme(): Theme {
   try {

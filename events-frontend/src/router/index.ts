@@ -16,6 +16,7 @@ import {
   stripLocale,
 } from '../i18n/locales'
 import { updateSeoTags } from '../lib/seoTags'
+import { scrollMotion } from '../lib/motion'
 import { waitForElement } from '../lib/waitForElement'
 import { i18n, setI18nLocale } from '../i18n'
 import { localisedView } from '../views/localisedView'
@@ -284,7 +285,7 @@ const router = createRouter({
     if (!to.hash) return { top: 0 }
     const clearance = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
     const target = await waitForElement(to.hash, ANCHOR_WAIT_MS)
-    return target ? { el: target, top: clearance, behavior: 'smooth' } : { top: 0 }
+    return target ? { el: target, top: clearance, behavior: scrollMotion() } : { top: 0 }
   },
 })
 

@@ -137,6 +137,20 @@ describe('DisplaySettings', () => {
     expect(isDark()).toBe(false)
   })
 
+  it('follows a theme chosen in another tab', async () => {
+    stubOsScheme(false)
+    await open()
+
+    // Another tab writes the key; this tab hears only the `storage` event.
+    localStorage.setItem('theme', 'dark')
+    window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: 'dark' }))
+    expect(isDark()).toBe(true)
+
+    localStorage.removeItem('theme')
+    window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: null }))
+    expect(isDark()).toBe(false)
+  })
+
   it('switches to the compact view on the document and stores it', async () => {
     await open()
 
