@@ -372,6 +372,9 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "känguruh" to "Känguruh Production",
         "kaenguruh" to "Känguruh Production",
         "messedupmagazine" to "Messed!Up Magazine",
+        // Bi Nuu credits both magazines short: the German spelling, and Frontstage without "Magazine" (#5229).
+        "messedupmagazin" to "Messed!Up Magazine",
+        "frontstage" to "Frontstage Magazine",
         "musikblog" to "MusikBlog",
         "musikblogde" to "MusikBlog",
         "prkdreamhaus" to "PRK DreamHaus",
