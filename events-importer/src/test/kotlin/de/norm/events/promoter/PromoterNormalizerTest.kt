@@ -1,5 +1,6 @@
 package de.norm.events.promoter
 
+import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.slug.SlugGenerator
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
@@ -104,6 +105,27 @@ class PromoterNormalizerTest {
     @Test
     fun `folds the swapped credit Urban Spree writes onto Concert Concept`() {
         canonicalPromoterName("Concept Concert") shouldBe "Concert Concept"
+    }
+
+    @Test
+    fun `strips a leading anniversary and keeps a number that is part of the name`() {
+        assertSoftly {
+            canonicalPromoterName("30 Jahre COSMIC WALKERS") shouldBe "Cosmic Walkers"
+            canonicalPromoterName("25. Jahre Cosmic Walkers") shouldBe "Cosmic Walkers"
+            canonicalPromoterName("10 years Cosmic Walkers") shouldBe "Cosmic Walkers"
+            canonicalPromoterName("10 Years of Cosmic Walkers") shouldBe "Cosmic Walkers"
+            canonicalPromoterName("36 Concerts") shouldBe "36 Concerts"
+            canonicalPromoterName("11FREUNDE") shouldBe "11FREUNDE"
+            canonicalPromoterName("20TOKENS") shouldBe "20TOKENS"
+            canonicalPromoterName("30 Jahre") shouldBe "30 Jahre"
+            canonicalPromoterName("Cosmic Walkers 30 Jahre") shouldBe "Cosmic Walkers 30 Jahre"
+        }
+    }
+
+    @Test
+    fun `credits Cosmic Walkers for the KitKat title that marks its anniversary`() {
+        val crews = hostingCrewsFromTitle("The Mystic Rose meets EAT STATIC & 30 Jahre COSMIC WALKERS", setOf("KitKatClub"))
+        crews.map(::canonicalPromoterName) shouldBe listOf("The Mystic Rose", "Eat Static", "Cosmic Walkers")
     }
 
     @Test
