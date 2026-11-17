@@ -157,6 +157,33 @@ class ZigZagWebsiteImportersTest {
         }
 
     @Test
+    fun `bills The JIB Sessions from its page, not from its title`() =
+        runTest {
+            val listing =
+                """
+                <div class="summary-item summary-item-record-type-event">
+                  <a href="/program-mai/jibjune26-3pjnl" class="summary-title-link">The JIB Sessions</a>
+                  <time class="summary-metadata-item summary-metadata-item--date">December 7, 2026</time>
+                </div>
+                """.trimIndent()
+            coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(listing, listingUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("zigzag/zigzag-detail-jib.html", firstArg<String>()) }
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val names =
+                result.events
+                    .single()
+                    .artists
+                    .map { it.name }
+            names shouldHaveSize 10
+            names.first() shouldBe "Nick Olter"
+            names.filter { it.contains("JIB", ignoreCase = true) }.shouldBeEmpty()
+        }
+
+    @Test
     fun `prices a box-office-only night at the door`() =
         runTest {
             stubListing()

@@ -74,6 +74,24 @@ class ZigZagDetailPageScraperTest {
         detail.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
+    // Event 14571, The JIB Sessions on 2026-12-07: two bands under "Zweite Band:" and "Erste Band:", one musician a line.
+    @Test
+    fun `bills both bands of a JIB Sessions night by musician, not their band headings`() {
+        page("zigzag-detail-jib.html").artists.map { it.name } shouldBe
+            listOf(
+                "Nick Olter",
+                "Dima Bondarev",
+                "Igor Osypov",
+                "Péter Somos",
+                "Pip van Eeden",
+                "Irma Neumüller",
+                "Käthe Johanning",
+                "Darius Blair",
+                "Salim Bouamama",
+                "Dominik Witte"
+            )
+    }
+
     @Test
     fun `reads an en-dash line-up and one broken by line breaks`() {
         page("zigzag-detail.html").artists.map { it.name } shouldBe
