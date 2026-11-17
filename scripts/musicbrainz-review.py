@@ -12,7 +12,9 @@ whose name, sort name or alias equals ours (the rule of musicbrainz-match.py, at
 second). The TSV has an empty `decision` and `mbid` column per artist; the JSON beside it holds the
 same rows unflattened, for a reader that judges them. A name whose lookup still fails after the
 matcher's retries keeps its row, with no candidates and `lookup failed: <cause>` in the `candidates`
-column (`lookup_failed` in the JSON), and `apply` never writes that row.
+column (`lookup_failed` in the JSON), and `apply` never writes that row. The AMBIGUOUS rows visitors
+wait for come first, with their count in a `watchers` column, a watched row the window does not bill
+too, with no events (#5214). An importer without the watched list leaves every count at 0.
 
 `apply` reads the rows marked `PROPOSE` with an `mbid`, and is a dry run unless given `--apply`.
 Both read each artist's match first and skip a row no longer AMBIGUOUS, because someone settled it
@@ -44,7 +46,7 @@ PAGE_SIZE = 100
 MAX_PAGES = 200
 EXIT_FAILED = 1
 EXIT_CANNOT_RUN = 2
-COLUMNS = ["decision", "artist_id", "slug", "name", "mbid", "candidates", "events"]
+COLUMNS = ["decision", "artist_id", "slug", "name", "watchers", "mbid", "candidates", "events"]
 LOOKUP_FAILED = "lookup failed: "
 
 
@@ -120,6 +122,31 @@ def billed_ambiguous(events: list, artists: list) -> list:
     return sorted(rows, key=lambda r: (min(e["date"] for e in r["events"]), r["slug"]))
 
 
+def with_watched(rows: list, watched: list) -> list:
+    """Each row with how many visitors wait for an act of its name (#5214), and the watched rows the window does not
+    bill, with no events. The most watched first; the order is otherwise kept, so the billing stays by date."""
+    counts = {w["id"]: w["watchers"] for w in watched}
+    listed = {r["artist_id"] for r in rows}
+    unbilled = [
+        {"artist_id": w["id"], "slug": w["slug"], "name": w["name"], "events": []}
+        for w in watched
+        if w["id"] not in listed
+    ]
+    counted = [{**r, "watchers": counts.get(r["artist_id"], 0)} for r in rows + unbilled]
+    return sorted(counted, key=lambda r: -r["watchers"])
+
+
+def watched_artists(get, importer: str) -> list:
+    """The AMBIGUOUS artists visitors wait for, or none from an importer that predates the endpoint."""
+    try:
+        return get(f"{importer}/api/admin/artists/watched")
+    except urllib.error.HTTPError as error:
+        if error.code != 404:
+            raise
+        print("no /api/admin/artists/watched on this importer; the watchers column stays 0", file=sys.stderr)
+        return []
+
+
 def candidates(mb, name: str) -> list:
     wanted = mb.fold(name)
     return [
@@ -175,12 +202,15 @@ def collect(args) -> int:
     try:
         events = pages(get, f"{bff}/api/events?from={today}&to={today + datetime.timedelta(days=args.days)}")
         artists = pages(get, f"{importer}/api/admin/artists")
+        watched = watched_artists(get, importer)
     except (urllib.error.URLError, OSError) as error:
         print(f"musicbrainz-review: the {args.env} forwards do not answer ({error}) — run scripts/ej.sh up {args.env}")
         return EXIT_CANNOT_RUN
 
-    rows = billed_ambiguous(events, artists)
-    print(f"{len(events)} events in {args.days} days, {len(rows)} AMBIGUOUS artists billed; asking MusicBrainz")
+    rows = with_watched(billed_ambiguous(events, artists), watched)
+    waiting = sum(1 for r in rows if r["watchers"])
+    print(f"{len(events)} events in {args.days} days, {len(rows)} AMBIGUOUS artists, {waiting} watched")
+    print("asking MusicBrainz")
     failed = ask_musicbrainz(matcher(), rows)
 
     out = args.out or REPO / "temp" / f"musicbrainz-review-{args.env}-{today}.tsv"
@@ -195,6 +225,7 @@ def collect(args) -> int:
                     "artist_id": row["artist_id"],
                     "slug": row["slug"],
                     "name": row["name"],
+                    "watchers": row["watchers"],
                     "mbid": "",
                     "candidates": flat_candidates(row),
                     "events": " ;; ".join(flat_event(e) for e in row["events"]),

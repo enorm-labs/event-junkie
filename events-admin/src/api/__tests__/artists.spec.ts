@@ -22,6 +22,7 @@ function candidate(overrides: Partial<MusicBrainzCandidate> = {}): MusicBrainzCa
     founded: null,
     dissolved: null,
     url: 'https://musicbrainz.org/artist/a1',
+    watchers: 0,
     ...overrides,
   }
 }

@@ -43,6 +43,11 @@ python3 scripts/musicbrainz-review.py collect <env> --days <N>
 It writes `temp/musicbrainz-review-<env>-<date>.tsv`, with empty `decision` and `mbid` columns, and a `.json` with the same rows unflattened. It takes about
 one second per artist. Run it in the background and wait for it to finish.
 
+**The rows visitors wait for come first** (#5214). The `watchers` column counts the accounts that watch an act of that name before it has an
+artist row: a watch becomes a follow only once the row is EXACT. The script also adds a watched AMBIGUOUS row the window does not bill, with an
+empty `events` column. Judge it from its candidates alone, and open the row on the admin Artists page: there the candidate the visitors picked is
+marked "waiting". Name the watched rows first in the report.
+
 A name whose MusicBrainz lookup still fails after the retries keeps its row. The `candidates` column says `lookup failed: HTTP 503` or another cause, and the
 `.json` row has no candidates and a `lookup_failed` field. The script then names each failed artist on stderr, prints the count and exits 1. A marked row has
 no candidates to judge, and `apply` never writes it. Run `collect` again later for those names, or judge them `KEEP`.

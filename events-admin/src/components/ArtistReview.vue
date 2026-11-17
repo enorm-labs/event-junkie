@@ -122,6 +122,14 @@ function time(value: string | null) {
           {{ artist.name }}
           <ExternalLink aria-hidden="true" class="size-3 shrink-0" />
         </a>
+        <Badge
+          v-if="artist.watchers"
+          class="ml-2"
+          data-testid="artist-watchers"
+          variant="secondary"
+        >
+          {{ artist.watchers }} waiting
+        </Badge>
       </h2>
       <Button
         :aria-expanded="open"
@@ -204,6 +212,15 @@ function time(value: string | null) {
                 </a>
                 <Badge v-if="candidate.nameMatch !== 'NAME'" class="ml-2" variant="outline">
                   {{ candidate.nameMatch === 'OTHER_NAME' ? 'alias' : 'similar name' }}
+                </Badge>
+                <!-- Visitors wait for this MBID (#5214): likely the act they mean. -->
+                <Badge
+                  v-if="candidate.watchers"
+                  class="ml-2"
+                  data-testid="candidate-watchers"
+                  variant="secondary"
+                >
+                  {{ candidate.watchers }} waiting
                 </Badge>
                 <p v-if="candidate.disambiguation" class="text-muted-foreground">
                   {{ candidate.disambiguation }}

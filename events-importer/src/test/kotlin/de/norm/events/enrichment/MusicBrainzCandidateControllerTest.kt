@@ -1,6 +1,7 @@
 package de.norm.events.enrichment
 
 import de.norm.events.GlobalExceptionHandler
+import de.norm.events.account.WatchCounts
 import de.norm.events.artist.Artist
 import de.norm.events.artist.ArtistNotFoundException
 import de.norm.events.artist.ArtistResponse
@@ -27,9 +28,10 @@ import org.springframework.test.web.reactive.server.expectBody
 class MusicBrainzCandidateControllerTest {
     private val artistService = mockk<ArtistService>()
     private val client = mockk<MusicBrainzClient>()
+    private val watchCounts = mockk<WatchCounts> { coEvery { byMbid(any()) } returns emptyMap() }
     private val webTestClient =
         WebTestClient
-            .bindToController(MusicBrainzCandidateController(artistService, client))
+            .bindToController(MusicBrainzCandidateController(artistService, client, watchCounts))
             .controllerAdvice(GlobalExceptionHandler())
             .build()
 
@@ -98,6 +100,20 @@ class MusicBrainzCandidateControllerTest {
         // A person's life span is a birth date; an untyped candidate may be a person.
         listed.filter { it.type != "Group" }.map { it.founded } shouldBe listOf(null, null, null)
         listed.single { it.musicbrainzId == "mb-person" }.disambiguation shouldBe null
+    }
+
+    @Test
+    fun `puts a candidate visitors watch first among the equal names, with their count (#5214)`() {
+        coEvery { artistService.findById(ARTIST_ID) } returns artist("Moderat")
+        coEvery { client.search("Moderat") } returns
+            listOf(
+                MusicBrainzCandidate(id = "mb-se", name = "Moderat", country = "SE"),
+                MusicBrainzCandidate(id = "mb-near", name = "Moderato"),
+                MusicBrainzCandidate(id = "mb-de", name = "Moderat", country = "DE")
+            )
+        coEvery { watchCounts.byMbid(listOf("mb-se", "mb-near", "mb-de")) } returns mapOf("mb-de" to 2, "mb-near" to 5)
+
+        candidates().map { it.musicbrainzId to it.watchers } shouldBe listOf("mb-de" to 2, "mb-se" to 0, "mb-near" to 5)
     }
 
     @Test
