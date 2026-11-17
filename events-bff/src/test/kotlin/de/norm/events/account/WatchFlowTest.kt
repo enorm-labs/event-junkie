@@ -1,6 +1,7 @@
 package de.norm.events.account
 
 import de.norm.events.BaseControllerTest
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -22,6 +23,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
 /** Watching an act by its MusicBrainz id (#5214), end to end against a local MusicBrainz. */
 @ExtendWith(OutputCaptureExtension::class)
@@ -149,9 +151,10 @@ class WatchFlowTest : BaseControllerTest() {
                 .jsonPath("$[1].followSlug")
                 .isEqualTo("known")
 
-            // The term never reaches the log: neither the access line nor the call out.
+            // The term never reaches the log: neither the access line nor the call out. The access line is written in
+            // `doFinally`, after the response the client already has, so wait for it before asserting what is absent.
+            eventually(5.seconds) { output.out shouldContain "/api/me/musicbrainz/artists?[masked]" }
             output.out shouldNotContain "Secret"
-            output.out shouldContain "/api/me/musicbrainz/artists?[masked]"
         }
 
     @Test
