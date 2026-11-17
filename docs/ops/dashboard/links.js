@@ -1109,6 +1109,10 @@ window.EJ_LINKS = {
           "note": "the 8 manual venues most due: read each programme, enter its events on the \"Manual venues\" page, press Checked"
         },
         {
+          "command": "scripts/instagram-posts.sh <handle>",
+          "note": "an Instagram-only venue's recent posts, through Business Discovery"
+        },
+        {
           "command": "scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .frontend.page_loads, .bff.sessions, .bff.night_sessions] | @tsv'",
           "note": "sessions per day"
         }
