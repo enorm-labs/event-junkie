@@ -1,5 +1,6 @@
 package de.norm.events.enrichment
 
+import de.norm.events.account.WatchCounts
 import de.norm.events.artist.ArtistService
 import de.norm.events.musicbrainz.CandidateNameMatch
 import de.norm.events.musicbrainz.MusicBrainzCandidate
@@ -26,13 +27,17 @@ import org.springframework.web.bind.annotation.RestController
  * retries and `User-Agent`, and the browser never calls MusicBrainz. Nothing is stored: the choice
  * goes back through `PUT /api/admin/artists/{id}/musicbrainz-id`. Every request is one search on a
  * queue the sweep shares, so a reply can wait behind a running sweep.
+ *
+ * A candidate visitors watch carries their count, and comes first among the equal names (#5214): it is likely the act they
+ * wait for. [WatchCounts] answers counts only, never which account watches.
  */
 @RestController
 @RequestMapping("/api/admin/artists")
 @Tag(name = "Admin: Artists", description = "Admin CRUD endpoints for managing artists")
 class MusicBrainzCandidateController(
     private val artistService: ArtistService,
-    private val client: MusicBrainzClient
+    private val client: MusicBrainzClient,
+    private val watchCounts: WatchCounts
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -46,10 +51,11 @@ class MusicBrainzCandidateController(
         @PathVariable id: Long
     ): List<MusicBrainzCandidateResponse> {
         val name = artistService.findById(id).name
-        return client
-            .search(name)
-            .map { MusicBrainzCandidateResponse.of(it, MusicBrainzMatcher.nameMatch(name, it)) }
-            .sortedBy { it.nameMatch.ordinal }
+        val found = client.search(name)
+        val watched = watchCounts.byMbid(found.map { it.id })
+        return found
+            .map { MusicBrainzCandidateResponse.of(it, MusicBrainzMatcher.nameMatch(name, it), watched[it.id] ?: 0) }
+            .sortedWith(compareBy({ it.nameMatch.ordinal }, { -it.watchers }))
     }
 
     /** MusicBrainz did not answer, after the client's retries: its outage, not the request's fault. */
@@ -88,14 +94,17 @@ data class MusicBrainzCandidateResponse(
     @Schema(description = "When the ensemble dissolved; always null for a person", example = "1989")
     val dissolved: String?,
     @Schema(description = "The candidate's page on musicbrainz.org", example = "https://musicbrainz.org/artist/06e3bce0-c612-4a5f-b095-9ffed1e4a656")
-    val url: String
+    val url: String,
+    @Schema(description = "How many visitors watch this MBID before it has an artist row (#5214); 0 when nobody does", example = "2")
+    val watchers: Int = 0
 ) {
     companion object {
         private const val PERSON = "Person"
 
         fun of(
             candidate: MusicBrainzCandidate,
-            nameMatch: CandidateNameMatch
+            nameMatch: CandidateNameMatch,
+            watchers: Int = 0
         ): MusicBrainzCandidateResponse {
             val lifeSpan = candidate.lifeSpan.takeIf { candidate.type != null && candidate.type != PERSON }
             return MusicBrainzCandidateResponse(
@@ -108,7 +117,8 @@ data class MusicBrainzCandidateResponse(
                 area = candidate.area?.name,
                 founded = lifeSpan?.begin?.takeIf { it.isNotBlank() },
                 dissolved = lifeSpan?.end?.takeIf { it.isNotBlank() },
-                url = "https://musicbrainz.org/artist/${candidate.id}"
+                url = "https://musicbrainz.org/artist/${candidate.id}",
+                watchers = watchers
             )
         }
     }

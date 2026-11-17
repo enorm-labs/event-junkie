@@ -59,6 +59,7 @@ function candidate(overrides: Partial<MusicBrainzCandidate>): MusicBrainzCandida
     founded: '1976',
     dissolved: null,
     url: 'https://musicbrainz.org/artist/mb-1',
+    watchers: 0,
     ...overrides,
   }
 }
@@ -68,6 +69,7 @@ let totalPages = 1
 let billed: AdminEvent[] = []
 let candidates: MusicBrainzCandidate[] = []
 let candidateStatus = 200
+let watchedRows: ReviewArtist[] = []
 const fetchMock = vi.fn<typeof fetch>()
 
 beforeEach(() => {
@@ -77,10 +79,12 @@ beforeEach(() => {
   totalPages = 1
   billed = []
   candidates = []
+  watchedRows = []
   candidateStatus = 200
   fetchMock.mockImplementation(async (input, init) => {
     const url = String(input)
     const method = init?.method ?? 'GET'
+    if (method === 'GET' && url === '/api/admin/artists/watched') return json(watchedRows)
     if (method === 'GET' && url.startsWith('/api/admin/artists?')) {
       return json({ content: listed, totalElements: 121, totalPages })
     }
@@ -312,5 +316,62 @@ describe('ArtistsView', () => {
     expect(wrapper.find('[data-testid="confirm"]').exists()).toBe(false)
     expect(calls().some((c) => c.startsWith('PUT'))).toBe(false)
     expect(wrapper.findAll('[data-testid="review-artist"]')).toHaveLength(2)
+  })
+
+  describe('the rows visitors wait for (#5214)', () => {
+    it('lists them first with their count, and keeps them out of the regular list', async () => {
+      watchedRows = [
+        { ...artist(9, 'Accept'), watchers: 2 },
+        { ...artist(30, 'Glasshouse'), watchers: 1 },
+      ]
+      const { wrapper } = await mountView()
+
+      const watched = wrapper.find('[data-testid="watched"]')
+      expect(watched.find('h2').text()).toBe('Visitors wait for these')
+      const rows = watched.findAll('[data-testid="review-artist"]')
+      expect(rows.map((r) => r.find('[data-testid="artist-watchers"]').text())).toEqual([
+        '2 waiting',
+        '1 waiting',
+      ])
+      const all = wrapper.findAll('[data-testid="review-artist"]').map((r) => r.find('a').text())
+      expect(all).toEqual(['Accept', 'Glasshouse', LONG_NAME])
+    })
+
+    it('shows nothing extra when nobody waits, or on a later page', async () => {
+      const { wrapper, router } = await mountView()
+      expect(wrapper.find('[data-testid="watched"]').exists()).toBe(false)
+
+      watchedRows = [{ ...artist(30, 'Glasshouse'), watchers: 1 }]
+      totalPages = 3
+      await router.push('/artists?page=1')
+      await flushPromises()
+      expect(wrapper.find('[data-testid="watched"]').exists()).toBe(false)
+    })
+
+    it('marks the candidate visitors picked', async () => {
+      candidates = [candidate({}), candidate({ musicbrainzId: 'mb-2', watchers: 3 })]
+      const { wrapper } = await mountView()
+
+      await review(wrapper)
+
+      const rows = wrapper.findAll('[data-testid="candidate"]')
+      expect(rows[0]!.find('[data-testid="candidate-watchers"]').exists()).toBe(false)
+      expect(rows[1]!.find('[data-testid="candidate-watchers"]').text()).toBe('3 waiting')
+    })
+
+    it('drops a watched row once it is matched, without lowering the count of the list', async () => {
+      watchedRows = [{ ...artist(9, 'Accept'), watchers: 2 }]
+      listed = [artist(10, LONG_NAME)]
+      candidates = [candidate({})]
+      const { wrapper } = await mountView()
+
+      await review(wrapper)
+      await wrapper.find('[data-testid="candidate"] button').trigger('click')
+      await wrapper.find('[data-testid="confirm"] button').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="watched"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="left-count"]').text()).toBe('121 to review')
+    })
   })
 })

@@ -13,6 +13,8 @@ export interface ReviewArtist {
   name: string
   slug: string
   musicbrainzMatch: string
+  /** How many visitors wait for an act of this name (#5214); only the watched list sends it. */
+  watchers?: number
 }
 
 export type ReviewPage = Page<ReviewArtist>
@@ -38,6 +40,8 @@ export interface MusicBrainzCandidate {
   founded: string | null
   dissolved: string | null
   url: string
+  /** How many visitors wait for this MBID (#5214); 0 when nobody does. */
+  watchers: number
 }
 
 export function reviewUrl(page: number): string {
@@ -59,6 +63,17 @@ export async function fetchReviewPage(
   const response = await fetchFn(reviewUrl(page), { headers: { Accept: 'application/json' } })
   await failOnError(response, 'GET /api/admin/artists')
   return (await response.json()) as ReviewPage
+}
+
+/**
+ * The AMBIGUOUS artists whose name visitors wait for (#5214), the most watched first, whatever their dates: a watch turns
+ * into a follow only once the row is EXACT.
+ */
+export async function fetchWatchedArtists(fetchFn: typeof fetch = fetch): Promise<ReviewArtist[]> {
+  const path = '/api/admin/artists/watched'
+  const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
+  await failOnError(response, `GET ${path}`)
+  return (await response.json()) as ReviewArtist[]
 }
 
 /**

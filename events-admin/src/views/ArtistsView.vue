@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import {
   fetchReviewPage,
+  fetchWatchedArtists,
   type MusicBrainzCandidate,
   REVIEW_DAYS,
   type ReviewArtist,
@@ -35,10 +36,23 @@ const { data: venueNames, reload: loadVenueNames } = useLoad<ReadonlyMap<number,
   new Map(),
 )
 
+// The AMBIGUOUS rows visitors wait for (#5214) come first, on the first page, whatever their dates: a watch turns into a
+// follow only once its row is EXACT. A failed read leaves the regular list, which is the page's job.
+const { data: watchedLoaded, reload: loadWatched } = useLoad<ReviewArtist[]>(
+  () => fetchWatchedArtists(),
+  [],
+)
+const watched = ref<ReviewArtist[]>([])
+watch(watchedLoaded, (loaded) => {
+  watched.value = [...loaded]
+})
+const watchedIds = computed(() => new Set(watched.value.map((a) => a.id)))
+const listed = computed(() => artists.value.filter((a) => !watchedIds.value.has(a.id)))
+
 const origin = publicOrigin(import.meta.env.MODE)
 
 watch(page, reload, { immediate: true })
-onMounted(loadVenueNames)
+onMounted(() => Promise.all([loadVenueNames(), loadWatched()]))
 
 /** What is left: the total the importer counted, less what this page matched since. */
 const matched = ref(0)
@@ -55,8 +69,10 @@ function goTo(next: number) {
 }
 
 function onMatched(artist: ReviewArtist, candidate: MusicBrainzCandidate) {
+  watched.value = watched.value.filter((a) => a.id !== artist.id)
+  // The count is the page's own: only a row of this list lowers it.
+  if (artists.value.some((a) => a.id === artist.id)) matched.value++
   artists.value = artists.value.filter((a) => a.id !== artist.id)
-  matched.value++
   notice.value = `${artist.name} is matched to ${candidate.name} on MusicBrainz.`
 }
 </script>
@@ -82,10 +98,28 @@ function onMatched(artist: ReviewArtist, candidate: MusicBrainzCandidate) {
   </div>
 
   <p v-if="notice" class="text-sm" role="status">{{ notice }}</p>
+
+  <section v-if="page === 0 && watched.length" class="flex flex-col gap-3" data-testid="watched">
+    <h2 class="text-sm font-medium">Visitors wait for these</h2>
+    <p class="max-w-prose text-sm text-muted-foreground">
+      AMBIGUOUS rows whose name visitors watch, from any date. A watch becomes a follow once the row
+      is EXACT. A candidate marked "waiting" is the MusicBrainz id they picked.
+    </p>
+    <ul class="flex flex-col gap-3">
+      <ArtistReview
+        v-for="artist in watched"
+        :key="artist.id"
+        :artist="artist"
+        :origin="origin"
+        :venue-names="venueNames"
+        @matched="(candidate) => onMatched(artist, candidate)"
+      />
+    </ul>
+  </section>
   <p v-if="error" class="text-destructive" role="alert">{{ error }}</p>
   <p v-else-if="loading" class="text-muted-foreground">Loading the artists…</p>
   <p
-    v-else-if="!artists.length"
+    v-else-if="!listed.length"
     class="rounded-lg border p-6 text-center text-sm"
     data-testid="no-artists"
   >
@@ -94,7 +128,7 @@ function onMatched(artist: ReviewArtist, candidate: MusicBrainzCandidate) {
 
   <ul v-if="!loading && !error" class="flex flex-col gap-3">
     <ArtistReview
-      v-for="artist in artists"
+      v-for="artist in listed"
       :key="artist.id"
       :artist="artist"
       :origin="origin"

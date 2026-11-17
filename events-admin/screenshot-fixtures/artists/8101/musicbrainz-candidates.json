@@ -9,7 +9,8 @@
     "area": "London",
     "founded": "2009",
     "dissolved": null,
-    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000001"
+    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000001",
+    "watchers": 0
   },
   {
     "musicbrainzId": "0f3b6c1e-0000-4000-8000-000000000002",
@@ -21,7 +22,8 @@
     "area": "Chicago",
     "founded": "1998",
     "dissolved": "2004",
-    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000002"
+    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000002",
+    "watchers": 2
   },
   {
     "musicbrainzId": "0f3b6c1e-0000-4000-8000-000000000003",
@@ -33,6 +35,7 @@
     "area": null,
     "founded": null,
     "dissolved": null,
-    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000003"
+    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000003",
+    "watchers": 0
   }
 ]

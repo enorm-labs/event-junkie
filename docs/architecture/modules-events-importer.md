@@ -43,6 +43,7 @@ flowchart TD
     discogs --> artist
     discogs --> common
     discogs --> musicbrainz
+    enrichment --> account
     enrichment --> artist
     enrichment --> discogs
     enrichment --> musicbrainz

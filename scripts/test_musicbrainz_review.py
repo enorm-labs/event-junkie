@@ -59,13 +59,18 @@ class StubMatcher:
         return [{"id": f"mbid-{name.lower()}", "name": name}]
 
 
-def collect_with(review, events, artists, errors, out):
-    """Runs `collect` against stubbed forwards and a stubbed matcher; returns the exit code and stderr."""
+def collect_with(review, events, artists, errors, out, watched=None):
+    """Runs `collect` against stubbed forwards and a stubbed matcher; returns the exit code and stderr. Without
+    [watched], the importer answers 404 for the watched list, as one that predates it does."""
     by_path = {"/api/events": events, "/api/admin/artists": artists}
 
     def http(method, url, body=None):
-        path = url.split("//", 1)[1].split("/", 1)[1].split("?")[0]
-        return {"content": by_path["/" + path], "totalPages": 1}
+        path = "/" + url.split("//", 1)[1].split("/", 1)[1].split("?")[0]
+        if path == "/api/admin/artists/watched":
+            if watched is None:
+                raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
+            return watched
+        return {"content": by_path[path], "totalPages": 1}
 
     review.http, review.matcher = http, lambda: StubMatcher(errors)
     stderr = io.StringIO()
@@ -177,6 +182,21 @@ def main() -> int:
 
         assert collect_with(review, events, artists, {}, out)[0] == 0, "a run with no failed lookup exits 0"
         checks += 1
+
+        # #5214: the rows visitors wait for come first, an unbilled one too, with its count in the TSV.
+        watched = [
+            {"id": 3, "name": "Cassius", "slug": "cassius", "watchers": 2},
+            {"id": 7, "name": "Moderat", "slug": "moderat", "watchers": 1},
+        ]
+        assert collect_with(review, events, artists, {}, out, watched)[0] == 0, "a run with watched rows exits 0"
+        with out.open(newline="") as f:
+            tsv = list(csv.DictReader(f, delimiter="\t"))
+        order = [(r["name"], r["watchers"]) for r in tsv]
+        assert order == [("Cassius", "2"), ("Moderat", "1"), ("Gore", "0"), ("Polaris", "0")], (
+            "the most watched first, an unbilled watched row added, the billing order kept after them"
+        )
+        assert next(r for r in tsv if r["name"] == "Moderat")["events"] == "", "an unbilled watched row has no events"
+        checks += 3
 
     print(f"musicbrainz-review: {checks} checks passed")
     return 0
