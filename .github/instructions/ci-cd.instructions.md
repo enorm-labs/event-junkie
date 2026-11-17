@@ -148,6 +148,9 @@ is the map and the traps.
   `user_data`, so a merged bump changes nothing on a running node until its next rebuild, and `walg_checksums` must move with the version or `backups.sh` aborts the boot. `scripts/upstream-node-pins.sh`
   holds the comparison (exit 0 current, 1 behind, 2 could not check — only 2 fails the job); titles carry the pinned version so upstream moving cannot pile
   up issues. What to do with the issue is `docs/ops/K3S_UPGRADE.md`, and it is not a rebuild.
+- `vendored-skill-reminder.yml` — when a skill under `.claude/skills/` with a `VENDORED.md` falls behind upstream. Same shape as `node-pin-reminder.yml`:
+  `scripts/upstream-vendored-skills.sh` compares, exit 2 alone fails the job, the title carries the pinned commit. **No pull request**: the update is a
+  re-copy plus the gates, and a Renovate SHA bump would move `VENDORED.md` without the files.
 
 **Agent workloads** (#387) — six workflows, each driving one of this repository's prompts through `claude-code-action`, each opening a PR or a report and
 never pushing to `main`. Decisions shared by all six:
