@@ -12,6 +12,7 @@ import de.norm.events.dataquality.flyer.FlyerPassResult
 import de.norm.events.importing.EventSourceEntity
 import de.norm.events.importing.EventSourceRepository
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -67,6 +68,38 @@ class ClassificationRunnerTest {
     }
 
     @Test
+    fun `a source whose candidates are all unchanged sorts after one with work that needs a model call`() {
+        ClassificationRunner.order(mapOf("big-but-done" to 0L, "small" to 1L), regressed = emptySet()) shouldContainExactly
+            listOf("small", "big-but-done")
+    }
+
+    @Test
+    fun `a source's share is a tenth of max-per-run, rounded up, and at least one call`() {
+        ClassificationRunner.share(50) shouldBe 5
+        ClassificationRunner.share(150) shouldBe 15
+        ClassificationRunner.share(51) shouldBe 6
+        ClassificationRunner.share(5) shouldBe 1
+    }
+
+    @Test
+    fun `a night with more than max-per-run pending candidates reaches more than one source`(): Unit =
+        runBlocking {
+            candidates("huge" to 270, "big" to 240, "mid" to 30, "small" to 2)
+            checks("huge" to 270, "big" to 240, "mid" to 30, "small" to 2)
+
+            val result = runner().runNightly()
+
+            result shouldBe NightlyPassResult(listOf("huge", "big", "mid", "small"), calls = 50, stoppedBy = PassStop.NIGHT_CAP)
+            coVerify(exactly = 1) { check.checkSource("small", false, 5) }
+            withClue("a source with candidates over its share comes back after the others, and the last turn gets what is left") {
+                coVerify(exactly = 3) { check.checkSource("huge", false, 5) }
+                coVerify(exactly = 1) { check.checkSource("huge", false, 3) }
+            }
+            info().last() shouldBe
+                "Nightly event classification reached max-per-run: 4 of 4 source(s), 50 model call(s), 0 answer(s) not JSON; the rest wait for the next night"
+        }
+
+    @Test
     fun `the pass reads the regression gauge, and logs its start and result`(): Unit =
         runBlocking {
             regress("quiet")
@@ -77,13 +110,13 @@ class ClassificationRunnerTest {
 
             result shouldBe NightlyPassResult(listOf("quiet", "busy"), calls = 5, stoppedBy = null)
             coVerifyOrder {
-                check.checkSource("quiet", false, 50)
-                check.checkSource("busy", false, 49)
+                check.checkSource("quiet", false, 5)
+                check.checkSource("busy", false, 5)
             }
             info() shouldContainExactly
                 listOf(
-                    "Nightly event classification started: 2 source(s) with candidates, 1 with a data-quality regression first, " +
-                        "at most 50 model call(s)",
+                    "Nightly event classification started: 2 source(s) with candidates, 2 with candidates that need a model call, " +
+                        "1 with a data-quality regression first, at most 50 model call(s), 5 a source per turn",
                     "Nightly event classification finished: 2 of 2 source(s), 5 model call(s), 0 answer(s) not JSON"
                 )
         }
@@ -96,12 +129,16 @@ class ClassificationRunnerTest {
 
             val result = runner(maxPerRun = 5).runNightly()
 
-            result shouldBe NightlyPassResult(listOf("b", "a"), calls = 5, stoppedBy = PassStop.NIGHT_CAP)
-            coVerify { check.checkSource("b", false, 5) }
-            coVerify { check.checkSource("a", false, 1) }
-            coVerify(exactly = 0) { check.checkSource("c", any(), any()) }
+            result shouldBe NightlyPassResult(listOf("b", "a", "c"), calls = 5, stoppedBy = PassStop.NIGHT_CAP)
+            coVerifyOrder {
+                check.checkSource("b", false, 1)
+                check.checkSource("a", false, 1)
+                check.checkSource("c", false, 1)
+                check.checkSource("b", false, 1)
+                check.checkSource("a", false, 1)
+            }
             info().last() shouldBe
-                "Nightly event classification reached max-per-run: 2 of 3 source(s), 5 model call(s), 0 answer(s) not JSON; the rest wait for the next night"
+                "Nightly event classification reached max-per-run: 3 of 3 source(s), 5 model call(s), 0 answer(s) not JSON; the rest wait for the next night"
         }
 
     @Test
@@ -125,7 +162,7 @@ class ClassificationRunnerTest {
 
             runner().runNightly().shouldBeNull()
 
-            coVerify(exactly = 0) { repository.countSourceCandidates() }
+            coVerify(exactly = 0) { repository.countPendingCandidates() }
             warnings() shouldContainExactly listOf("Nightly event classification skipped: $BUDGET of $BUDGET tokens used this month")
         }
 
@@ -270,15 +307,18 @@ class ClassificationRunnerTest {
     )
 
     private fun candidates(vararg counts: Pair<String, Int>) {
-        coEvery { repository.countSourceCandidates() } returns counts.associate { (slug, n) -> slug to n.toLong() }
+        coEvery { repository.countPendingCandidates() } returns counts.associate { (slug, n) -> slug to n.toLong() }
     }
 
-    /** Each source's run sends all its candidates, up to the calls it is given. */
+    /** Each source's run sends its pending candidates, up to the calls it is given; the ones it sent are unchanged in its next run. */
     private fun checks(vararg counts: Pair<String, Int>) {
         counts.forEach { (slug, n) ->
+            var sent = 0
             coEvery { check.checkSource(slug, false, any()) } answers {
-                val calls = minOf(n, thirdArg<Int>())
-                ClassificationRunResult(n, calls, 0, 0, n - calls, emptyMap())
+                val calls = minOf(n - sent, thirdArg<Int>())
+                val unchanged = sent
+                sent += calls
+                ClassificationRunResult(n, calls, unchanged, 0, n - sent, emptyMap())
             }
         }
     }

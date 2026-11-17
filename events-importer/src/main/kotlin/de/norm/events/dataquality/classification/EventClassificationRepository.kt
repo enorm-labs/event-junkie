@@ -92,17 +92,22 @@ class EventClassificationRepository(
             .asFlow()
             .toList()
 
-    /** The number of upcoming candidates of every source that has one, by slug. */
-    suspend fun countSourceCandidates(): Map<String, Long> =
+    /**
+     * Every source with an upcoming candidate, by slug, and how many of its candidates would cost a model call:
+     * never answered, or changed since the last answer. A source whose candidates are all unchanged maps to 0 (#5236).
+     */
+    suspend fun countPendingCandidates(): Map<String, Long> =
         template.databaseClient
             .sql(
                 """
-                SELECT s.slug, count(*) AS candidates FROM $EVENTS_SCHEMA.event e
+                SELECT s.slug, count(*) FILTER (WHERE c.content_hash IS DISTINCT FROM $CONTENT_HASH) AS pending
+                FROM $EVENTS_SCHEMA.event e
                 JOIN $EVENTS_SCHEMA.event_source s ON s.id = e.event_source_id
+                LEFT JOIN $EVENTS_SCHEMA.event_classification_check c ON c.event_id = e.id
                 WHERE e.event_date >= CURRENT_DATE AND ($CANDIDATE_PREDICATE)
                 GROUP BY s.slug
                 """.trimIndent()
-            ).map { row, _ -> row.string("slug") to row.long("candidates") }
+            ).map { row, _ -> row.string("slug") to row.long("pending") }
             .all()
             .asFlow()
             .toList()

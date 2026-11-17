@@ -322,8 +322,12 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
 
     A nightly pass runs the check at 04:00 UTC, after the 03:00 snapshot
     ([#2996](https://github.com/enorm-labs/event-junkie/issues/2996)). The pass takes the sources with a
-    `data_quality_regression` first. Then it takes the sources with the most candidates. In each source it reads only
-    upcoming events, soonest first. `app.scheduling.enabled=false` stops the pass, as it stops every scheduled job.
+    `data_quality_regression` first. Then it takes the sources with the most candidates that need a model call. A
+    candidate needs a call when the check never answered it, or when its text changed after the last answer. A source
+    gets at most a tenth of `max-per-run` in one turn. Then the pass goes to the next source. A source that still has
+    candidates goes back to the end of the queue
+    ([#5236](https://github.com/enorm-labs/event-junkie/issues/5236)). In each source the pass reads only upcoming
+    events, soonest first. `app.scheduling.enabled=false` stops the pass, as it stops every scheduled job.
     An operator can also start the check by hand. `POST /api/admin/data-quality/check/event/{id}` checks one event and
     answers with the result. `POST /api/admin/data-quality/check/source/{slug}` starts a run in the background and
     answers `202`. Both kinds of run share one runner, so a second start answers `409` while a run is going. The

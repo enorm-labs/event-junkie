@@ -140,7 +140,7 @@ class EventClassificationControllerTest : BaseControllerTest() {
         check: EventClassificationCheck,
         sources: EventSourceRepository = mockk { coEvery { findBySlug(any()) } returns mockk<EventSourceEntity>() }
     ): ClassificationRunner {
-        val repository = mockk<EventClassificationRepository> { coEvery { countSourceCandidates() } returns emptyMap() }
+        val repository = mockk<EventClassificationRepository> { coEvery { countPendingCandidates() } returns emptyMap() }
         val ledger =
             mockk<ClassificationTokenLedger> {
                 coEvery { monthTotal() } returns 0

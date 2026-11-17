@@ -555,7 +555,22 @@ class EventClassificationCheckTest : BaseControllerTest() {
             insertEvent("Lesung", type = "OTHER")
             insertEvent("Vergangen", type = "OTHER", daysAhead = -3)
 
-            EventClassificationRepository(template).countSourceCandidates() shouldBe mapOf(SOURCE to 2L)
+            EventClassificationRepository(template).countPendingCandidates() shouldBe mapOf(SOURCE to 2L)
+        }
+
+    @Test
+    fun `only the candidates that would cost a model call are pending, and a source with none still counts`(): Unit =
+        runBlocking {
+            val repository = EventClassificationRepository(template)
+            val checked = insertEvent("Unbekannt", type = "OTHER")
+            val changed = insertEvent("Lesung", type = "OTHER")
+            listOf(checked, changed).forEach { repository.recordChecked(it, repository.findTarget(it)!!.contentHash, "test-model") }
+
+            repository.countPendingCandidates() shouldBe mapOf(SOURCE to 0L)
+
+            databaseClient.sql("UPDATE events.event SET description = 'Neu' WHERE id = $changed").await()
+
+            repository.countPendingCandidates() shouldBe mapOf(SOURCE to 1L)
         }
 
     @Test
