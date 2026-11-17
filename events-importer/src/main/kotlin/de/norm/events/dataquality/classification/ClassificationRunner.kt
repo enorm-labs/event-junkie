@@ -25,7 +25,7 @@ import kotlin.coroutines.cancellation.CancellationException
 /** Why a nightly pass ended before its last source. */
 enum class PassStop { NIGHT_CAP, TOKEN_BUDGET }
 
-/** What one nightly pass did: the sources it ran, in order, its model calls, and why it stopped early, if it did. */
+/** What one nightly pass did: the sources it ran, each once in the order of its first turn, its model calls, and why it stopped early, if it did. */
 data class NightlyPassResult(
     val sources: List<String>,
     val calls: Int,
@@ -126,12 +126,15 @@ class ClassificationRunner(
             return null
         }
         val regressed = metrics.regressedSources()
-        val order = order(repository.countSourceCandidates(), regressed)
+        val pendingBySource = repository.countPendingCandidates()
+        val order = order(pendingBySource, regressed)
+        val share = share(properties.maxPerRun)
         logger.info {
-            "Nightly event classification started: ${order.size} source(s) with candidates, ${order.count { it in regressed }} " +
-                "with a data-quality regression first, at most ${properties.maxPerRun} model call(s)"
+            "Nightly event classification started: ${order.size} source(s) with candidates, ${pendingBySource.count { it.value > 0 }} " +
+                "with candidates that need a model call, ${order.count { it in regressed }} with a data-quality regression first, " +
+                "at most ${properties.maxPerRun} model call(s), $share a source per turn"
         }
-        val ran = mutableListOf<String>()
+        val ran = linkedSetOf<String>()
         var calls = 0
         var notJson = 0
         var stop: PassStop? = null
@@ -142,14 +145,16 @@ class ClassificationRunner(
                 stop = PassStop.NIGHT_CAP
             } else {
                 val slug = pending.removeFirst()
-                val result = check.checkSource(slug, maxCalls = left)
+                val result = check.checkSource(slug, maxCalls = minOf(share, left))
                 ran += slug
                 calls += result.checked
                 notJson += result.notJson
                 if (result.overBudget > 0) stop = PassStop.TOKEN_BUDGET
+                // Back to the end of the queue while candidates wait over its share, so one source cannot take the night (#5236).
+                if (result.overCap > 0) pending.addLast(slug)
             }
         }
-        val result = NightlyPassResult(ran, calls, stop, notJson).also { report(it, order.size) }
+        val result = NightlyPassResult(ran.toList(), calls, stop, notJson).also { report(it, order.size) }
         // The flyers share the month's budget, so a pass that spent it reads none (ADR-041 rule 5).
         if (stop != PassStop.TOKEN_BUDGET) flyerCheck?.pass()
         return result
@@ -178,12 +183,21 @@ class ClassificationRunner(
     override fun destroy() = scope.cancel()
 
     companion object {
-        /** Sources with a regression first, then the most candidates first. The slug breaks a tie, so the order is stable. */
+        /** A turn gives a source at most a tenth of `max-per-run`, so a night that hits the cap reaches ten sources or more. */
+        private const val TURNS_PER_NIGHT = 10
+
+        /** The calls one source may make before the pass moves on to the next one. At least one. */
+        fun share(maxPerRun: Int): Int = maxOf(1, (maxPerRun + TURNS_PER_NIGHT - 1) / TURNS_PER_NIGHT)
+
+        /**
+         * Sources with a regression first, then the most candidates that would cost a model call first, so a source whose
+         * candidates are all unchanged comes last (#5236). The slug breaks a tie, so the order is stable.
+         */
         fun order(
-            candidates: Map<String, Long>,
+            pending: Map<String, Long>,
             regressed: Set<String>
         ): List<String> =
-            candidates.entries
+            pending.entries
                 .sortedWith(compareBy<Map.Entry<String, Long>> { it.key !in regressed }.thenByDescending { it.value }.thenBy { it.key })
                 .map { it.key }
     }
