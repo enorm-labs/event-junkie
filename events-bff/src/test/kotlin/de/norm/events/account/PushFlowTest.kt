@@ -397,7 +397,8 @@ class PushFlowTest : BaseControllerTest() {
             registry.add("app.push.vapid.private-key") { SERVER_SCALAR }
             registry.add("app.push.vapid.public-key") { SERVER_POINT }
             registry.add("app.push.allowed-origins") { "http://localhost,http://127.0.0.1" }
-            registry.add("app.push.new-dates-lag") { "PT0S" }
+            // The window ends on the JVM's clock and `created_at` comes from Postgres's, which can run a few ms ahead (Colima's VM).
+            registry.add("app.push.new-dates-lag") { "-PT1S" }
         }
 
         @JvmStatic

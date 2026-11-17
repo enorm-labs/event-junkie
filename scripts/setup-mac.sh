@@ -5,6 +5,7 @@
 # Usage:
 #   scripts/setup-mac.sh check [operator]               # report only; `operator` adds keychain, key files, cluster access
 #   scripts/setup-mac.sh contributor                    # Brewfile, JDK, Node, npm ci, hooks, private env template
+#   EJ_COLIMA=1 scripts/setup-mac.sh contributor        # the same, with Colima instead of Docker Desktop
 #   scripts/setup-mac.sh operator                       # contributor, plus the cluster tools, keychain items, SSH config, .envrc files
 #   scripts/setup-mac.sh kubeconfig <staging|production>  # fetch and merge one cluster's kubeconfig; the tunnel must be up
 #
@@ -117,13 +118,26 @@ check_tools() {
     done
     # `docker version` exits zero on the client half alone; `docker info` fails when the daemon does not answer.
     if command -v docker >/dev/null; then
-        if docker info >/dev/null 2>&1; then ok "docker daemon"; else warn "docker daemon not running — start Docker Desktop (/setup-machine Step 2.2)"; fi
+        if docker info >/dev/null 2>&1; then ok "docker daemon"; else warn "docker daemon not running — start Docker Desktop, or colima start (/setup-machine Step 2.2)"; fi
     fi
+    if command -v colima >/dev/null; then check_colima_plugins; fi
     if [ "${1:-}" = operator ]; then
         for tool in wg-quick kubectl kubectx k9s sops age; do
             if command -v "$tool" >/dev/null; then ok "$tool"; else miss "$tool"; fi
         done
     fi
+}
+
+# Homebrew's compose and buildx are not where the docker CLI looks; Docker Desktop's symlinks in ~/.docker/cli-plugins hide that until it goes.
+check_colima_plugins() {
+    local plugin
+    for plugin in compose buildx; do
+        if docker "$plugin" version >/dev/null 2>&1; then
+            ok "docker $plugin"
+        else
+            miss "docker $plugin — add \"cliPluginsExtraDirs\": [\"$(brew --prefix)/lib/docker/cli-plugins\"] to ~/.docker/config.json"
+        fi
+    done
 }
 
 check_runtimes() {
@@ -179,11 +193,22 @@ check_profile() {
     while IFS= read -r entry; do
         marker="${entry%%|*}" line="${entry#*|}"
         if grep -qF "$marker" "$HOME/.zshrc" 2>/dev/null; then ok "$marker"; else miss "add to ~/.zshrc: $line"; fi
-    done <<'EOF'
+    done < <(profile_entries)
+}
+
+profile_entries() {
+    cat <<'EOF'
 direnv hook zsh|eval "$(direnv hook zsh)"
 sdkman-init.sh|export SDKMAN_DIR="$HOME/.sdkman" && source "$SDKMAN_DIR/bin/sdkman-init.sh"
 nvm.sh|export NVM_DIR="$HOME/.nvm" && source "$(brew --prefix nvm)/nvm.sh"
 EOF
+    # Testcontainers needs Colima's socket, and the VM-side path to mount into its Ryuk container.
+    if command -v colima >/dev/null; then
+        cat <<'EOF'
+DOCKER_HOST=|export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
+TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=|export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
+EOF
+    fi
 }
 
 check_operator() {

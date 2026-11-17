@@ -30,9 +30,11 @@ warning and is not counted: give its fix, but it does not block Step 5. When not
 
 ## Step 2 — The contributor tier
 
-1. The operator runs `scripts/setup-mac.sh contributor`. It installs the `Brewfile`, the JDK from `.sdkmanrc`, Node from `events-frontend/.nvmrc`, both apps'
-   `node_modules`, squawk and the commit hooks.
-2. The operator starts Docker Desktop once and accepts its terms. `bootRun` and the Testcontainers tests fail until the daemon runs.
+1. Ask once whether the operator wants Docker Desktop or Colima ([DEVELOPMENT.md § Colima](../../docs/DEVELOPMENT.md#colima)). The operator runs
+   `scripts/setup-mac.sh contributor`, prefixed with `EJ_COLIMA=1` for Colima. It installs the `Brewfile`, the JDK from `.sdkmanrc`, Node from
+   `events-frontend/.nvmrc`, both apps' `node_modules`, squawk and the commit hooks.
+2. The operator starts Docker Desktop once and accepts its terms, or runs `colima start --cpu 4 --memory 8`. `bootRun` and the Testcontainers tests fail
+   until the daemon runs.
    While it is stopped, `check` prints `!!  docker daemon not running`.
 3. For each `add to ~/.zshrc` line in the report, give the line. The operator adds it and opens a new terminal.
 4. The operator restarts `claude` in the repository and accepts the `fluxcd` marketplace and its plugin when Claude Code asks. `.claude/settings.json`
