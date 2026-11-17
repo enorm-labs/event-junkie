@@ -131,6 +131,14 @@ class AstraOverviewPageScraperTest {
     }
 
     @Test
+    fun `keeps the title act when a feat line bills its guests`() {
+        // Event 14573 lost Underøath to its two guests.
+        artistsOf("Underøath", listOf("Europe / UK Tour 2027", "feat. Saosin and I Promised the World"), "CONCERT")
+            .map { it.name to it.role } shouldContainExactly
+            listOf("Underøath" to ArtistRole.HEADLINER, "Saosin" to ArtistRole.SUPPORT, "I Promised the World" to ArtistRole.SUPPORT)
+    }
+
+    @Test
     fun `bills no package title as an act when its Live line names the bill`() {
         event("Monsters Of Punk").artists.map { it.name to it.role } shouldContainExactly
             listOf(

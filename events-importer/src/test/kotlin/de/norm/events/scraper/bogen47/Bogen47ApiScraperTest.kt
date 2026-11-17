@@ -183,6 +183,26 @@ class Bogen47ApiScraperTest {
     }
 
     @Test
+    fun `scrapePage bills the acts under Live and DJs labels, not the night's name`() {
+        // Event 14576: LARK typed the night a concert, and Fitzroy the same night a party.
+        val description =
+            """<p>La Regla regresa con todo el sabor cubano!</p><p>Live</p><p>LA MEKANICA</p><p>DJs</p><p>SHERRYAERI</p>""" +
+                """<p>COCO:SAOCO</p><p>DJ BONGO</p><p>Background Infos zur Party:</p><p>Seit 1999 ist La Regla eine Institution.</p>"""
+        val expected =
+            listOf("LA MEKANICA" to ArtistRole.HEADLINER, "SHERRYAERI" to ArtistRole.DJ, "COCO:SAOCO" to ArtistRole.DJ, "DJ BONGO" to ArtistRole.DJ)
+
+        eventDescribed("La Regla", description).artists.map { it.name to it.role } shouldContainExactly expected
+        eventDescribed("La Regla", description, eventType = "Party").artists.map { it.name to it.role } shouldContainExactly expected
+    }
+
+    @Test
+    fun `scrapePage keeps the title's act when a Live label names one act only`() {
+        eventDescribed("Ben Morgan", """<p>Live</p><p>Ben Morgan</p><p>Tickets an der Abendkasse und online erhältlich.</p>""")
+            .artists
+            .map { it.name } shouldContainExactly listOf("Ben Morgan")
+    }
+
+    @Test
     fun `scrapePage keeps the title's act when the description holds only two bullets`() {
         val event = eventDescribed("Ben Morgan", """Mit dabei:\r\n- Tickets 20 €\r\n- Einlass 19 Uhr""")
 

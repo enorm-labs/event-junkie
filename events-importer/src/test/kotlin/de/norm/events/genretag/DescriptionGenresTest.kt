@@ -30,6 +30,9 @@ class DescriptionGenresTest {
         descriptionGenres("An experimental film about the Berlin techno scene") shouldBe listOf("Techno")
         descriptionGenres("Experimental theatre with live music").shouldBeEmpty()
         descriptionGenres("A downbeat comedy about a band on tour").shouldBeEmpty()
+        // Events 166, 754 and 3342 took a Top40 tag from a chart placing.
+        descriptionGenres("Eine unausweichliche Präsenz in den Top 40 einbrachte").shouldBeEmpty()
+        descriptionGenres("They scored 13 UK Top 40 singles").shouldBeEmpty()
         descriptionGenres("Ambient and down tempo sets by the pool") shouldBe listOf("Ambient", "Downtempo")
     }
 

@@ -144,6 +144,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "dnb" to "Drum & Bass",
         // Post-punk / dark wave family
         "postpunk" to "Post-Punk",
+        "posthardcore" to "Post Hardcore",
+        "posthc" to "Post Hardcore",
         "newwave" to "New Wave",
         "darkwave" to "Darkwave",
         // The bare word is the broad family ("dream-pop/wave"), not New Wave.
@@ -613,8 +615,8 @@ private fun resolveGenreOrNull(token: String): List<String>? {
 
 /**
  * De-shouts one hyphen part of a genre word, so VOID Club's `TRANCE` is stored as `Trance` (#2924).
- * A part of [GENRE_ACRONYM_MAX_LEN] letters or fewer stays as written: EBM, NDH and the HC of
- * `POST-HC` are acronyms far more often than shouted words.
+ * A part of [GENRE_ACRONYM_MAX_LEN] letters or fewer stays as written: EBM, NDH and the EBM of
+ * `DARK-EBM` are acronyms far more often than shouted words.
  */
 private fun String.deshoutGenrePart(): String = if (length <= GENRE_ACRONYM_MAX_LEN) this else deshoutWord()
 

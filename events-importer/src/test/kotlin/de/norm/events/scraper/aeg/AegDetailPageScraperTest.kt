@@ -162,6 +162,22 @@ class AegDetailPageScraperTest {
     }
 
     @Test
+    fun `bills the acts of a Support Act paragraph as support, not a support act in prose`() {
+        val html =
+            """
+            <h1 class="summary">The Human League live in der Uber Eats Music Hall</h1>
+            <div class="event_body">
+              <p>Die Band spielt ohne Support Act: wie früher.</p>
+              <p><strong>Support Act: Blancmange</strong></p>
+              <p>SUPPORT: PERIPHERY &amp; Vildjharta<br>Opener: Bleed from Within</p>
+            </div>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, musicHallUrl), musicHallUrl, EventSource.UBER_EATS_MUSIC_HALL)!!
+        event.artists.map { it.name } shouldBe listOf("Blancmange", "PERIPHERY", "Vildjharta", "Bleed from Within")
+        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.SUPPORT)
+    }
+
+    @Test
     fun `states no price of its own`() {
         arenaEvent.pricePresale.shouldBeNull()
         arenaEvent.startTime.shouldBeNull()

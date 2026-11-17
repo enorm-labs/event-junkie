@@ -142,8 +142,9 @@ class AstraOverviewPageScraper {
 /**
  * The acts of one overview article: the title's headliners, then a concert's [subtitleLineup], then the
  * `Support:` acts. Only the `Support:` lines feed [buildArtistsForEventType], so a note on another
- * `<br>` line, such as a cancellation, is not taken for an act. A line-up of two or more acts is the
- * whole bill, so a title act it does not name is a package name such as `MONSTERS OF PUNK` (#3194).
+ * `<br>` line, such as a cancellation, is not taken for an act. A `Live:` line of two or more acts is the
+ * whole bill, so a title act it does not name is a package name such as `MONSTERS OF PUNK` (#3194). A `feat.`
+ * line is the whole bill only under a tour's title: under `Underøath` it bills the act's guests (event 14573).
  */
 internal fun artistsOf(
     title: String,
@@ -152,9 +153,10 @@ internal fun artistsOf(
 ): List<ScrapedArtist> {
     val named = if (eventType == EventType.CONCERT.name) subtitleLineup(subtitleLines) else emptyList()
     val namedKeys = named.mapTo(mutableSetOf()) { it.lowercase() }
+    val wholeBill = namedKeys.size >= MIN_WHOLE_BILL_LINEUP && (TOUR_TITLE.containsMatchIn(title) || subtitleLines.any { LIVE_LINE.containsMatchIn(it.trim()) })
     val artists =
         buildArtistsForEventType(title, supportSubtitleLines(subtitleLines), eventType)
-            .filterNot { namedKeys.size >= MIN_WHOLE_BILL_LINEUP && it.isTitleHeadliner() && it.name.lowercase() !in namedKeys }
+            .filterNot { wholeBill && it.isTitleHeadliner() && it.name.lowercase() !in namedKeys }
     val billed = artists.mapTo(mutableSetOf()) { it.name.lowercase() }
     val lineup = named.filter { billed.add(it.lowercase()) }
     if (lineup.isEmpty()) return artists
@@ -195,6 +197,11 @@ private fun ScrapedArtist.isTitleHeadliner(): Boolean = titleDerived && role == 
 private const val MIN_WHOLE_BILL_LINEUP = 2
 
 private val LINEUP_LINE = Regex("""^(?:featuring|feat\b\.?|live\s*:)\s*(.+)$""", RegexOption.IGNORE_CASE)
+
+private val LIVE_LINE = Regex("""^live\s*:""", RegexOption.IGNORE_CASE)
+
+/** A title that names a tour, not an act: `THE REVIVAL TOUR`. */
+private val TOUR_TITLE = Regex("""\btour\b""", RegexOption.IGNORE_CASE)
 
 /**
  * Common fields from the `.event__*` markup shared by overview articles and the detail header.

@@ -16,6 +16,7 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isFestivalTitle
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanWeekday
 import org.jsoup.nodes.Document
@@ -30,7 +31,7 @@ import java.time.LocalDate
  *
  * An act comes from the head of the title only when the page's text names it too: `Wintertales - from around the world`
  * names a programme, and `Maggie Riley` misspells the Maggie Reilly the text describes. A festival title bills no act; the
- * import types it a festival.
+ * import types it a festival. Its acts are the linked bold names after a `Das Programm:` label ([programmeActs]).
  */
 class PassionskircheEventPageScraper {
     fun scrape(
@@ -62,7 +63,12 @@ class PassionskircheEventPageScraper {
             ticketUrl = ticketUrl(schedule, sourceUrl),
             sourceUrl = sourceUrl,
             sourceId = passionskircheSourceId(sourceUrl),
-            artists = if (eventType == EventType.CONCERT.name && !isFestivalTitle(title)) namedActs(title, description) else emptyList()
+            artists =
+                when {
+                    isFestivalTitle(title) -> programmeActs(text)
+                    eventType == EventType.CONCERT.name -> namedActs(title, description)
+                    else -> emptyList()
+                }
         )
     }
 
@@ -77,6 +83,19 @@ class PassionskircheEventPageScraper {
             .firstOrNull { it.startsWith("http") && URI(it).host != host }
     }
 
+    /** Event 14508 bills four acts as `<a><strong>NORLAND WIND</strong></a>`, each above a tagline, after `Das Programm:`. */
+    private fun programmeActs(paragraphs: List<Element>): List<ScrapedArtist> {
+        val label = paragraphs.indexOfFirst { PROGRAMME_LABEL.containsMatchIn(it.text()) }
+        if (label < 0) return emptyList()
+        return paragraphs
+            .drop(label)
+            .flatMap { it.select("a strong") }
+            .map { plainText(it.text()) }
+            .filterNot { it.isBlank() || isNonArtistName(it) }
+            .distinct()
+            .map { ScrapedArtist(name = it) }
+    }
+
     private fun namedActs(
         title: String,
         description: String?
@@ -88,6 +107,8 @@ class PassionskircheEventPageScraper {
     }
 
     private companion object {
+        val PROGRAMME_LABEL = Regex("""\bprogramm\s*:""", RegexOption.IGNORE_CASE)
+
         val SCHEDULE_HEADING = Regex("""\p{L}*ablauf\s*:?""", RegexOption.IGNORE_CASE)
 
         /** Where the tour or programme name begins: a spaced dash, or a quote. */

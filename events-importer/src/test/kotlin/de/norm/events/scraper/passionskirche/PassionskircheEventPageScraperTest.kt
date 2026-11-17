@@ -86,6 +86,26 @@ class PassionskircheEventPageScraperTest {
     }
 
     @Test
+    fun `bills a festival's linked programme acts`() {
+        // Event 14508, contacts left out.
+        val html =
+            """
+            <main><h1>Celtic Music Festival 2026</h1><div class="text-root">
+            <p><span>Das Programm:</span><br><br><a href="https://example.de/a"><span><strong>MÁIRE NÍ CHATHASAIGH &amp; CHRIS NEWMAN</strong></span></a>
+            <br><span>“World‘s Number One Celtic Harp / Guitar Duo“</span><br><br>
+            <a href="https://example.de/b"><span><strong>NORLAND WIND</strong></span></a><br><span>Songs and Soundscapes</span></p>
+            <p><a href="https://example.de/c"><strong>KERSTIN BLODIG</strong></a><br><i><strong>Celtic Scandinavian World Music</strong></i></p>
+            <p><strong><u>Konzertablauf:</u></strong></p><p>Samstag, 12. Dezember 2026<br>Einlass: 19.00 Uhr<br>Beginn: 20:00 Uhr</p>
+            </div></main>
+            """.trimIndent()
+        val url = "https://www.halle-luja.berlin/celtic-music-festival-2026"
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.eventDate shouldBe LocalDate.of(2026, 12, 12)
+        event.artists.map { it.name } shouldContainExactly listOf("MÁIRE NÍ CHATHASAIGH & CHRIS NEWMAN", "NORLAND WIND", "KERSTIN BLODIG")
+    }
+
+    @Test
     fun `leaves the date unresolved without a schedule block`() {
         val html = """<main><h1>Band</h1><div class="text-root"><p>Ein Abend.</p></div></main>"""
         val event = scraper.scrape(Jsoup.parse(html, "https://www.halle-luja.berlin/band"), "https://www.halle-luja.berlin/band").shouldNotBeNull()
