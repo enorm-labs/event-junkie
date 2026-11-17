@@ -8,9 +8,9 @@ import de.norm.events.slug.SlugGenerator
 // Promoter-name canonicalization. One promoter is written many ways ("LOFT", "Loft Concerts
 // GmbH"), so slugging the raw name fragments it; [canonicalPromoterName] reduces variants to one
 // form before slugging, conservatively and deterministically:
-// 1. Drop double quotes ("„Aufgeigen.at“"), then strip a trailing run of legal-form and descriptor
-// words (GmbH, UG, "Concerts", "Konzerte", "Music", "Events", …) and the conjunction that joined
-// them. Trailing only, so "Concert Concept" stays intact.
+// 1. Drop double quotes ("„Aufgeigen.at“") and a leading anniversary ("30 Jahre"), then strip a
+// trailing run of legal-form and descriptor words (GmbH, UG, "Concerts", "Konzerte", "Music",
+// "Events", …) and the conjunction that joined them. Trailing only, so "Concert Concept" stays intact.
 // 2. De-shout ALL-CAPS words ("SIMPLY QUIZ" to "Simply Quiz") with the artist normalizer's
 // [deshoutWord], so its acronym list applies ("TV NOIR" to "TV Noir") and "GreyZone" survives.
 // 3. Fold known typos and spacing variants via a curated map ("Trinty" to "Trinity", "Allrooms"
@@ -42,6 +42,7 @@ private fun strippedPromoterName(raw: String): String {
             // After the quotes go, so a backtick a quote stood beside is folded in this pass, not the next.
             .foldTypedApostrophes()
             .trim()
+            .replace(LEADING_ANNIVERSARY_REGEX, "")
             .ifBlank { raw.trim() }
     val tokens =
         withoutAnnotation
@@ -180,6 +181,12 @@ private val TRAILING_PAREN_REGEX = Regex("""\s*\([^)]*\)\s*$""")
 
 /** Straight and typographic double quotes, which a credit wraps a brand in and no promoter keeps in its name. */
 private val DOUBLE_QUOTE_REGEX = Regex("[\"„“”«»]")
+
+/**
+ * A leading anniversary, `30 Jahre COSMIC WALKERS` or `10 Years of …`: the promoter is the name after it (#5230). A number
+ * that is part of the name has no `Jahre` or `Years` after it, so `36 Concerts` and `11FREUNDE` stay.
+ */
+private val LEADING_ANNIVERSARY_REGEX = Regex("""^\d+\.?\s+(?:jahre|years(?:\s+of)?)\s+(?=\S)""", RegexOption.IGNORE_CASE)
 
 /**
  * Everything but a letter of any script, the accent on it and a digit. A key that dropped Cyrillic letters would read
