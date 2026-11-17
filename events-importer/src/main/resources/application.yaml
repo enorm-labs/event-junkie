@@ -194,6 +194,8 @@ app:
     occupation-max-per-run: 100
     # P136 reads per artist lookup tick, one request each; the genres of ADR-060.
     genre-max-per-run: 100
+    # A read artist's occupations and genres are read again after this, so a fix on Wikidata reaches us (#5253).
+    reread-after: 90d
   scheduling:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m

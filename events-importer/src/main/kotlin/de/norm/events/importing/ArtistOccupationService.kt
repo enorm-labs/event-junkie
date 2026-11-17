@@ -10,6 +10,8 @@ import de.norm.events.wikimedia.wikidataIdOf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
+import java.time.Clock
+import java.time.Instant
 import kotlin.time.TimeMark
 
 /**
@@ -18,20 +20,22 @@ import kotlin.time.TimeMark
  *
  * Runs on [ArtistLookupSweep]'s tick after the enrichment, which writes the link. One request per
  * row at the Wikimedia pace, [WikimediaProperties.occupationMaxPerRun] rows a tick. A failure is a
- * retry on the next tick; three in a row, or the tick's deadline, end this tick's pass.
+ * retry on the next tick; three in a row, or the tick's deadline, end this tick's pass. A read row is
+ * read again after [WikimediaProperties.rereadAfter], so a fix on Wikidata reaches us (#5253).
  */
 @Service
 class ArtistOccupationService(
     private val occupations: ArtistOccupationRepository,
     private val wikimedia: WikimediaClient,
-    private val properties: WikimediaProperties
+    private val properties: WikimediaProperties,
+    private val clock: Clock = Clock.systemUTC()
 ) {
     private val logger = KotlinLogging.logger {}
 
-    /** Reads the unread rows; [LookupPass.OFF] when the Wikimedia reads are off. */
+    /** Reads the unread rows, then the stale ones; [LookupPass.OFF] when the Wikimedia reads are off. */
     suspend fun sweep(deadline: TimeMark = LookupPass.noDeadline()): LookupPass {
         if (!properties.enabled) return LookupPass.OFF
-        val candidates = occupations.findUnreadOccupations(properties.occupationMaxPerRun).toList()
+        val candidates = occupations.findOccupationReads(properties.occupationMaxPerRun, staleBefore()).toList()
         var comedians = 0
         val pass =
             LookupPass.drain("Occupation read", candidates, deadline) { artist ->
@@ -64,4 +68,6 @@ class ArtistOccupationService(
         occupations.storeComedian(id, comedian)
         return comedian
     }
+
+    private fun staleBefore(): Instant = clock.instant().minus(properties.rereadAfter)
 }

@@ -144,7 +144,7 @@ WHERE e.source_id LIKE 'dast-%' AND e.event_type = 'PARTY';
 -- right outcome for an invented artist and beats borrowing a real act's identity. It is also the one
 -- row the enrichment filled (V040), so the artist page has a row with every profile and `founded`,
 -- which V040 allows only for an ensemble, and a Wikipedia lead with its credit (V054). Its
--- occupations were read and name no comedian (V094), and its genres name jazz (V265).
+-- occupations were read and name no comedian (V094), its genres name jazz (V265), and the read is stamped (V266).
 UPDATE events.artist
 SET musicbrainz_id = '00000000-0000-4000-8000-000000000272',
     musicbrainz_match = 'EXACT',
@@ -162,6 +162,7 @@ SET musicbrainz_id = '00000000-0000-4000-8000-000000000272',
     spotify_url = 'https://spotify.example/artist/mobius-trio',
     comedian = false,
     wikidata_genres = '{Q8341}',
+    wikidata_read_at = now(),
     description = 'Møbius Trio ist eine deutsche Jazz-Band aus Leipzig, die 2014 gegründet wurde und kammermusikalischen Jazz spielt.',
     description_language = 'de',
     description_attribution = 'Wikipedia',
