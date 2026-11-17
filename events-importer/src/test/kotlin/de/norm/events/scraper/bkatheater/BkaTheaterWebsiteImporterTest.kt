@@ -7,6 +7,7 @@ import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -48,10 +49,26 @@ class BkaTheaterWebsiteImporterTest {
             description shouldNotContain "mehr lesen"
             description shouldNotContain "instagram.com"
             show.doorsTime shouldBe LocalTime.of(19, 0)
+            show.free shouldBe false
             result.events
                 .map { it.sourceUrl }
                 .distinct()
                 .forEach { url -> coVerify(exactly = 1) { htmlFetcher.fetchDocument(url) } }
+        }
+
+    @Test
+    fun `marks every performance of a free production as free`() =
+        runTest {
+            val page = "https://www.bka-theater.de/prg/462"
+            coEvery { htmlFetcher.fetchDocument(page) } returns fixtureDocument("bkatheater/bkatheater-production-free.html", page)
+
+            val result = importer.importEvents(sourceUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val (free, priced) = result.events.partition { it.sourceUrl == page }
+            free.shouldNotBeEmpty()
+            free.forEach { it.free shouldBe true }
+            priced.forEach { it.free shouldBe false }
         }
 
     @Test

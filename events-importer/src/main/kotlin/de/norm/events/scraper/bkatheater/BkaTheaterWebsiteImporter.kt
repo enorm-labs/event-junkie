@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for the BKA Theater (Berliner Kabarett Anstalt) at Mehringdamm, a hand-built PHP
  * site. `/spielplan/` lists about 300 performances a year ahead on one page of about 1.2 MB. Each
- * production page (`/prg/<pid>`) is then read once, for its text and the doors rule, and applied to
+ * production page (`/prg/<pid>`) is then read once, for its text, the doors rule and free entry, and applied to
  * every performance of the production; a failed page flags its performances, so the upsert keeps
  * the text stored last time.
  *
@@ -38,7 +38,8 @@ class BkaTheaterWebsiteImporter(
     ): ScrapedEvent =
         event.copy(
             description = production.description,
-            doorsTime = production.doorsLead?.let { lead -> event.startTime?.minus(lead) }
+            doorsTime = production.doorsLead?.let { lead -> event.startTime?.minus(lead) },
+            free = event.free || production.free
         )
 }
 
