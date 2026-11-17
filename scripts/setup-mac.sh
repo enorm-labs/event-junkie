@@ -113,7 +113,7 @@ require_brew() {
 check_tools() {
     log "tools"
     local tool
-    for tool in git gh jq yq direnv psql uv docker ijhttp claude kotlin-lsp typescript-language-server pre-commit gitleaks shellcheck shfmt ruff hadolint tofu helm flux lychee squawk; do
+    for tool in git gh jq yq direnv psql uv docker ijhttp claude kotlin-lsp typescript-language-server pre-commit gitleaks shellcheck shfmt ruff hadolint tofu helm flux lychee; do
         if command -v "$tool" >/dev/null; then ok "$tool"; else miss "$tool"; fi
     done
     # `docker version` exits zero on the client half alone; `docker info` fails when the daemon does not answer.
@@ -290,8 +290,6 @@ contributor() {
         log "npm ci in $app"
         (cd "$app" && nvm exec --silent npm ci)
     done
-
-    command -v squawk >/dev/null || uv tool install squawk-cli
 
     log "commit hooks"
     pre-commit install

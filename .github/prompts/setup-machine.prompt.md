@@ -32,7 +32,7 @@ warning and is not counted: give its fix, but it does not block Step 5. When not
 
 1. Ask once whether the operator wants Docker Desktop or Colima ([DEVELOPMENT.md § Colima](../../docs/DEVELOPMENT.md#colima)). The operator runs
    `scripts/setup-mac.sh contributor`, prefixed with `EJ_COLIMA=1` for Colima. It installs the `Brewfile`, the JDK from `.sdkmanrc`, Node from
-   `events-frontend/.nvmrc`, both apps' `node_modules`, squawk and the commit hooks.
+   `events-frontend/.nvmrc`, both apps' `node_modules` and the commit hooks.
 2. The operator starts Docker Desktop once and accepts its terms, or runs `colima start --cpu 4 --memory 8`. `bootRun` and the Testcontainers tests fail
    until the daemon runs.
    While it is stopped, `check` prints `!!  docker daemon not running`.
