@@ -82,11 +82,12 @@ done <<<"$named"
 #
 # `-I` skips binaries. The character class before `scripts/` is the anchor described in the header;
 # a match at the start of a line has nothing before it and is kept by the `^` alternative.
+# The vendored skills are left out: their `scripts/` is the skill's own directory, not this one.
 
 while read -r ref; do
     [ -z "$ref" ] && continue
     [ -f "$ref" ] || note "the tree references $ref, which does not exist — run: git grep -n '$ref'"
-done <<<"$(git ls-files -z | xargs -0 grep -IohsE '(^|[^A-Za-z0-9_/.-])scripts/[A-Za-z0-9_.-]+\.(sh|py)' |
+done <<<"$(git ls-files -z -- . ':!.claude/skills/asd-ste100' ':!.claude/skills/gh' | xargs -0 grep -IohsE '(^|[^A-Za-z0-9_/.-])scripts/[A-Za-z0-9_.-]+\.(sh|py)' |
     sed -E 's/^[^s]*scripts\//scripts\//' | sort -u)"
 
 # --- 4. every script answers --help --------------------------------------------------------------

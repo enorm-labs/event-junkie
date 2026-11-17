@@ -3,7 +3,7 @@
 Upstream: <https://github.com/cli/cli/tree/trunk/skills/gh>, MIT, © GitHub Inc. — `LICENSE` is the
 one from the root of `cli/cli` and is kept verbatim beside this file.
 
-Vendored at `cli/cli` commit `f2bf7c35dfff79d4d9a17289e82ad1b587b23f8d` (2026-08-28), the last one
+Vendored at `cli/cli` commit `17ac598e6afc43bb6206f074b05de9d63563a42f` (2026-10-23), the last one
 to touch `skills/gh`. `SKILL.md` is the whole skill; upstream ships no reference files with it.
 
 **The skill assumes `gh` is on `$PATH` and authenticated.** It documents how to drive the binary,

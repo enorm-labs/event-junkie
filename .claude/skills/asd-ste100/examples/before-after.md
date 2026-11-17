@@ -1,12 +1,12 @@
 # Before / After Examples
 
-## Part 1 — Official STE Examples
+## Part 1 — Rule illustrations
 
 These illustrate real ASD-STE100 rules, drawn from public secondary sources (see `references/writing-rules.md`). They are paraphrased illustrations of the rule, not quotes from the standard itself.
 
 | Rule | Before | After | Why |
 |---|---|---|---|
-| One meaning per word | "Verify the system." / "Check the connections." / "Confirm receipt." | "Make sure the system is correct." (one approved term used consistently) | Three near-synonyms force the reader to guess whether they mean the same action. |
+| One meaning per word | "Verify the system." / "Check the connections." / "Confirm receipt." | "Make sure the system is correct." / "Make sure the connections are correct." / "Make sure that the receipt arrived." | Three near-synonyms force the reader to guess whether they mean the same action. |
 | One part of speech per word | "Oil the valve." | "Apply oil to the valve." | If "oil" is approved only as a noun, using it as a verb breaks the one-word-one-role guarantee. |
 | Precise verb meaning | "Follow the safety instructions." | "Obey the safety instructions." | "Follow" can mean "come after" or "obey" — STE picks the unambiguous one. |
 | Simple tense only | "We have received the technical reports from HQ." | "We received the technical reports from HQ." | Present perfect adds a second parse ("received, and still relevant now?") that simple past avoids. |
@@ -17,6 +17,8 @@ These illustrate real ASD-STE100 rules, drawn from public secondary sources (see
 
 These are original examples built for this skill's actual use case: rewriting AI agent output so another agent, a translation layer, or a non-native reader can parse it without ambiguity. They are illustrations, not quotes from any real system.
 
+Word counts below are whitespace-separated tokens (`text.split()`), punctuation not counted separately. A different tokenizer will produce a different number.
+
 ### Example A — Tool description
 
 **Before:**
@@ -25,7 +27,7 @@ These are original examples built for this skill's actual use case: rewriting AI
 **Violations flagged:**
 - Two instructions in one sentence (sync + resolve/surface).
 - Present perfect in the relative clauses ("have been configured", "has been set").
-- 55 words, far over the 25-word descriptive cap.
+- 44 words, far over the 25-word descriptive cap.
 
 Note what is *not* flagged: "will attempt to" and "may resolve". Those are hedges, not violations. The tool is not promised to succeed, and the rewrite must not promise it either.
 
@@ -40,7 +42,7 @@ The last sentence branches on whether the conflict was resolved, not on what the
 > An error may have occurred while processing your request due to a possible mismatch in the expected data format, which could be caused by an outdated client version.
 
 **Violations flagged:**
-- One sentence carrying three separate claims (an error occurred; a format mismatch; a client version).
+- One sentence carrying three separate claims (an error occurred, a format mismatch, a client version).
 - 28 words, over the descriptive cap.
 
 Not flagged: "may have occurred" and "could be caused by". The message is written by a system that does not know what went wrong. Both hedges are accurate reporting of that ignorance.
@@ -60,7 +62,7 @@ Note also that "may have failed" keeps a compound verb form that the simple-tens
 **Violations flagged:**
 - Present perfect ("has completed") and subordinate-clause stacking ("assuming...", "though it is worth noting...").
 - One sentence, three separate facts (completion condition, next action, edge-case warning).
-- 42 words, over the 20-word instruction cap.
+- 36 words, over the 20-word instruction cap.
 
 **After:**
 > Wait for the upstream job to finish with no errors. Then read the output artifact. Warning: a timeout can produce a partial artifact. Check that the artifact is complete before you use it.
@@ -78,12 +80,14 @@ Two deliberate calls worth stating rather than hiding:
 - Marketing adjectives and claims without measurement ("seamlessly", "minimal friction", "dramatically").
 - Semicolon joining two separate ideas.
 - Nominalization and soft phrasing ("is designed to slot into", "leverages").
-- 36 words, over the 25-word descriptive cap.
+- 34 words, over the 25-word descriptive cap.
 
 **After:**
-> A normal cache matches requests by exact text, so a small change in wording causes a cache miss. This cache compares the meaning of a new prompt against the prompts it already holds. It runs alongside your current stack and stores no data outside it.
+> We designed our cache layer to fit into your current stack without vendor lock-in. It uses semantic similarity to reduce cache misses, a long-standing problem for LLM workloads.
 
-Flavored mode kept the explanatory rhythm and did not force one fixed term per concept. It still cut the marketing adjectives, the semicolon, and the length.
+Flavored mode did not force one fixed term per concept. It still cut the marketing adjectives, the semicolon, and the length. It kept "designed to", because the input states a design goal, not a result.
+
+An earlier version of this file added two facts. It said that a normal cache matches requests by exact text. It also said that this cache stores no data outside your stack. The input states neither fact. A rewrite that adds a fact is no longer a rewrite.
 
 ## How to Read These Examples
 
