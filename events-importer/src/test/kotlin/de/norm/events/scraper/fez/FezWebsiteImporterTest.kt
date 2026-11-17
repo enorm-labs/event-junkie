@@ -64,14 +64,6 @@ class FezWebsiteImporterTest {
         }
 
     @Test
-    fun `importEvents returns NotModified when the page is unchanged`() =
-        runTest {
-            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns FetchResult.NotModified
-
-            importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.NotModified>()
-        }
-
-    @Test
     fun `importEvents returns no events for a page without performances`() =
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns

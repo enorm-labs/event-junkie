@@ -216,7 +216,7 @@ class HuxleysDetailPageScraper {
 }
 
 /** The genre tag of a live podcast or talk tour, such as event 14046: it types the night a show. */
-internal const val HUXLEYS_PODCAST_TAG = "Podcast"
+private const val HUXLEYS_PODCAST_TAG = "Podcast"
 
 /**
  * The event type the line-up is built for. A podcast tour's title is its host, so it keeps the concert billing; the show

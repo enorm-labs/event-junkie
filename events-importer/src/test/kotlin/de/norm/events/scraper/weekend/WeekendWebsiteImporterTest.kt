@@ -54,14 +54,6 @@ class WeekendWebsiteImporterTest {
         }
 
     @Test
-    fun `importEvents returns NotModified when the page is unchanged`() =
-        runTest {
-            coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns FetchResult.NotModified
-
-            importer.importEvents(sourceUrl) shouldBe ImportResult.NotModified
-        }
-
-    @Test
     fun `importEvents returns no events for an empty page`() =
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns

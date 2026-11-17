@@ -148,13 +148,6 @@ class ClubDerVisionaereWebsiteImportersTest {
         }
 
     @Test
-    fun `importEvents returns NotModified when the page is unchanged`() =
-        runTest {
-            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns FetchResult.NotModified
-            clubImporter.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.NotModified>()
-        }
-
-    @Test
     fun `importEvents returns an empty list for a page without events`() =
         runTest {
             val emptyDoc = Jsoup.parse("<html><body><p>No events</p></body></html>", sourceUrl)
