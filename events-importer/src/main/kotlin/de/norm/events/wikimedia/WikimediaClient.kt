@@ -21,10 +21,15 @@ class WikimediaUnavailableException(
     cause: Throwable? = null
 ) : RuntimeException(message, cause)
 
+/** The item id at the end of a Wikidata link: `https://www.wikidata.org/wiki/Q76152` gives `Q76152`. */
+fun wikidataIdOf(url: String): String? = WIKIDATA_ID.find(url)?.groupValues?.get(1)
+
+private val WIKIDATA_ID = Regex("""/(Q\d+)/?$""")
+
 /**
  * The picture behind a Wikidata item: its `P18` claim, then that file's `imageinfo` on Commons. And
  * the item's Wikipedia leads: its `dewiki` / `enwiki` sitelinks, then each article's REST summary.
- * And its `P106` occupations, which decide whether the act is a comedian (ADR-039).
+ * And its `P106` occupations, which decide whether the act is a comedian (ADR-039), and its `P136` genres (ADR-060).
  *
  * Two hosts, one pace: `wbgetclaims` on Wikidata names the file, `imageinfo` on Commons renders a
  * thumbnail at [WikimediaProperties.thumbWidth] and states the licence and the author. Both are
@@ -74,6 +79,26 @@ class WikimediaClient(
                         .path("id")
                         .textOrNull()
                 }.toSet()
+        } else {
+            null
+        }
+
+    /**
+     * The `P136` genre items of [wikidataId] in statement order (`Q69263` → `Q959583`, `Q9759`), less a deprecated one;
+     * empty when it has none or Wikidata does not know the item; null when the read is off, so a caller stores nothing.
+     */
+    suspend fun genresOf(wikidataId: String): List<String>? =
+        if (properties.enabled) {
+            claimsOf(wikidataId, P136)
+                .filter { it.path("rank").asString("") != "deprecated" }
+                .mapNotNull { claim ->
+                    claim
+                        .path("mainsnak")
+                        .path("datavalue")
+                        .path("value")
+                        .path("id")
+                        .textOrNull()
+                }.distinct()
         } else {
             null
         }
@@ -227,6 +252,7 @@ class WikimediaClient(
     companion object {
         private const val P18 = "P18"
         private const val P106 = "P106"
+        private const val P136 = "P136"
 
         /** Commons appends `utm_` parameters to a thumbnail URL; the column holds the image, not the campaign. */
         fun withoutQuery(url: String): String = url.substringBefore('?')

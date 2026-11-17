@@ -32,6 +32,7 @@ class ArtistLookupSweepTest {
     private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService = mockk()
     private val discogsLookupService: DiscogsLookupService = mockk()
     private val artistOccupationService: ArtistOccupationService = mockk()
+    private val artistGenreService: ArtistGenreService = mockk()
     private val performerTyping: PerformerTyping = mockk()
     private val registry = SimpleMeterRegistry()
 
@@ -44,6 +45,7 @@ class ArtistLookupSweepTest {
         coEvery { musicBrainzEnrichmentService.sweep(any(), any()) } returns LookupPass(owed = 0, stored = 0)
         coEvery { discogsLookupService.sweep(any(), any()) } returns LookupPass(owed = 0, stored = 0)
         coEvery { artistOccupationService.sweep(any()) } returns LookupPass(owed = 0, stored = 0)
+        coEvery { artistGenreService.sweep(any()) } returns LookupPass(owed = 0, stored = 0)
         coEvery { performerTyping.retypeStored() } returns 0
         appender = ListAppender<ILoggingEvent>().apply { start() }
         logger.addAppender(appender)
@@ -63,6 +65,7 @@ class ArtistLookupSweepTest {
             musicBrainzEnrichmentService,
             discogsLookupService,
             artistOccupationService,
+            artistGenreService,
             performerTyping,
             ImporterMetrics(registry),
             enabled,
@@ -83,7 +86,9 @@ class ArtistLookupSweepTest {
             sweep.tick()
 
             tickLines().map { it.formattedMessage } shouldBe
-                listOf("Artist lookup tick: 0 touched · MusicBrainz 0 of 0 · enrichment 0 of 0 · Discogs 0 of 0 · occupations 0 of 0 · retyped 0")
+                listOf(
+                    "Artist lookup tick: 0 touched · MusicBrainz 0 of 0 · enrichment 0 of 0 · Discogs 0 of 0 · occupations 0 of 0 · retyped 0 · genres 0 of 0"
+                )
             lastSuccess().shouldNotBeNull() shouldBeGreaterThan 0.0
         }
 
@@ -94,6 +99,7 @@ class ArtistLookupSweepTest {
             coEvery { musicBrainzEnrichmentService.sweep(any(), any()) } throws IllegalStateException("boom")
             coEvery { discogsLookupService.sweep(any(), any()) } returns LookupPass.OFF
             coEvery { artistOccupationService.sweep(any()) } returns LookupPass(owed = 5, stored = 5)
+            coEvery { artistGenreService.sweep(any()) } returns LookupPass(owed = 4, stored = 3)
             coEvery { performerTyping.retypeStored() } returns 2
             val sweep = sweep()
             sweep.queue(setOf(1L, 2L, 3L))
@@ -101,7 +107,7 @@ class ArtistLookupSweepTest {
             sweep.tick()
 
             tickLines().single().formattedMessage shouldBe
-                "Artist lookup tick: 3 touched · MusicBrainz 2 of 3 · enrichment failed · Discogs off · occupations 5 of 5 · retyped 2"
+                "Artist lookup tick: 3 touched · MusicBrainz 2 of 3 · enrichment failed · Discogs off · occupations 5 of 5 · retyped 2 · genres 3 of 4"
             lastSuccess().shouldNotBeNull() shouldBeGreaterThan 0.0
         }
 
@@ -117,7 +123,7 @@ class ArtistLookupSweepTest {
         }
 
     @Test
-    fun `a tick runs the lookup, the enrichment and Discogs with the queued artists, then the occupations and the retype`() =
+    fun `a tick runs the lookup, the enrichment and Discogs with the queued artists, then the occupations, the retype and the genres`() =
         runTest {
             val sweep = sweep()
             sweep.queue(setOf(1L, 2L))
@@ -131,7 +137,23 @@ class ArtistLookupSweepTest {
                 discogsLookupService.sweep(setOf(1L, 2L, 3L), any())
                 artistOccupationService.sweep(any())
                 performerTyping.retypeStored()
+                artistGenreService.sweep(any())
             }
+        }
+
+    @Test
+    fun `the occupation and genre reads share one budget, so the tick stays under the stale alert's hour (ADR-060)`() =
+        runTest {
+            val deadlines = mutableListOf<TimeMark>()
+            coEvery { artistOccupationService.sweep(capture(deadlines)) } coAnswers {
+                clock += 5.minutes
+                LookupPass(owed = 0, stored = 0)
+            }
+            coEvery { artistGenreService.sweep(capture(deadlines)) } returns LookupPass(owed = 0, stored = 0)
+
+            sweep().tick()
+
+            deadlines.distinct().size shouldBe 1
         }
 
     @Test

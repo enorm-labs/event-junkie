@@ -113,7 +113,7 @@ which helper lives where — is not repeated; `grep` answers that.
   on `,`, `//`, `&`, `/`, strips noise suffixes, maps synonyms (`Hip-Hop`/`Rap` → `Hip Hop`), keeps unknowns in title case; shared by `EventService` and
   `GenreTagAssociationSync`. No manual tag CRUD. **`event_genre_tag.origin` says where a tag comes from** (ADR-047): `SOURCE`, or derived by
   `GenreDerivationService` for an event with no source tag — `ARTIST` from the acts' other source tags, `DESCRIPTION` from vocabulary words in the
-  description. A derived tag never feeds another derivation, and a source tag replaces every derived one.
+  description, and last `WIKIDATA` from the acts' Wikidata genres through `WIKIDATA_GENRES` (ADR-060). A derived tag never feeds another derivation, and a source tag replaces every derived one.
 - **Web scraping** (ADR-007), the `scraper` module: Jsoup, a throttled `WebClient` (`PerHostThrottlingFilter`, `app.scraper.polite-delay-millis`, 200ms per
   host, transparent to every `HtmlFetcher` and `ApiClient` call), conditional requests by ETag / Last-Modified, for an entry page that is the whole source
   only (`EventImporter.fetchesBeyondEntryPage`, #2020). `EventSource` is the enum registry; each

@@ -139,10 +139,11 @@ const taxonomyItems = computed<MetaItem[]>(() => {
   }))
   return [...(type ? [{ text: type }] : []), ...genres]
 })
-// A genre the source did not publish says where it comes from (ADR-047).
+// A genre the source did not publish says where it comes from (ADR-047, ADR-060).
 function derivedGenreNote(origin: string | undefined): string | undefined {
   if (origin === 'ARTIST') return t('events.detail.genreFromArtist')
   if (origin === 'DESCRIPTION') return t('events.detail.genreFromDescription')
+  if (origin === 'WIKIDATA') return t('events.detail.genreFromWikidata')
   return undefined
 }
 // A venue without a coordinate gets no route (#2767).

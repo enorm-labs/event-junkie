@@ -17,7 +17,8 @@ import kotlin.time.toKotlinDuration
 
 /**
  * Runs the artist lookups on their own tick: the MusicBrainz lookup, then its enrichment, then the
- * Discogs lookup (#2051). Then the Wikidata occupations, and the comedy retype they feed (ADR-039).
+ * Discogs lookup (#2051). Then the Wikidata occupations, and the comedy retype they feed (ADR-039), and the
+ * Wikidata genres (ADR-060).
  *
  * **Separate from the import on purpose.** Run after each import, the three passes turned a
  * one-second scrape into minutes, concurrent imports raced for the backfill, and a rollout killed
@@ -30,7 +31,8 @@ import kotlin.time.toKotlinDuration
  *
  * **Each pass has a time budget**, counted from its own start (#2896). A MusicBrainz brownout
  * answers some requests, so no pass stops on failures alone; the budget ends it, and the rows it
- * owes wait for the next tick. Four budgets and the delay stay under the stale alert's hour.
+ * owes wait for the next tick. The two Wikidata reads share one budget, so four budgets and the delay stay under
+ * the stale alert's hour.
  */
 @Service
 @Suppress("LongParameterList") // One service per pass of the tick, run in a fixed order.
@@ -39,6 +41,7 @@ class ArtistLookupSweep(
     private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService,
     private val discogsLookupService: DiscogsLookupService,
     private val artistOccupationService: ArtistOccupationService,
+    private val artistGenreService: ArtistGenreService,
     private val performerTyping: PerformerTyping,
     private val metrics: ImporterMetrics,
     @Value($$"${app.artists.lookup-enabled:true}")
@@ -77,21 +80,24 @@ class ArtistLookupSweep(
         val lookup = pass("MusicBrainz lookup") { musicBrainzLookupService.sweep(ids, it) }
         val enrichment = pass("MusicBrainz enrichment") { musicBrainzEnrichmentService.sweep(ids, it) }
         val discogs = pass("Discogs lookup") { discogsLookupService.sweep(ids, it) }
-        val occupations = pass("Occupation read") { artistOccupationService.sweep(it) }
+        val wikidataDeadline = timeSource.markNow() + passBudget
+        val occupations = pass("Occupation read", wikidataDeadline) { artistOccupationService.sweep(it) }
         val retyped = pass("Comedy retype") { performerTyping.retypeStored() }
+        val genres = pass("Genre read", wikidataDeadline) { artistGenreService.sweep(it) }
         logger.info {
             "Artist lookup tick: ${ids.size} touched · MusicBrainz $lookup · enrichment $enrichment · Discogs $discogs · " +
-                "occupations $occupations · retyped $retyped"
+                "occupations $occupations · retyped $retyped · genres $genres"
         }
         metrics.markArtistLookupTickSucceeded()
     }
 
-    /** The pass's outcome, or `failed` after its `WARN`. [block] gets the pass's deadline. */
+    /** The pass's outcome, or `failed` after its `WARN`. [block] gets [deadline], by default a budget from now. */
     private suspend fun pass(
         name: String,
+        deadline: TimeMark? = null,
         block: suspend (TimeMark) -> Any
     ): String =
-        runCatchingCancellable { block(timeSource.markNow() + passBudget).toString() }
+        runCatchingCancellable { block(deadline ?: (timeSource.markNow() + passBudget)).toString() }
             .onFailure { logger.warn(it) { "$name pass failed" } }
             .getOrElse { FAILED }
 

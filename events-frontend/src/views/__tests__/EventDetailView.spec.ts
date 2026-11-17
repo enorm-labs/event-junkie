@@ -525,14 +525,15 @@ describe('EventDetailView', () => {
     const view = await mountEvent({
       ...night,
       eventType: 'OTHER',
-      genreTags: ['Jazz', 'Punk', 'Ska'],
-      derivedGenreTags: { Punk: 'ARTIST', Ska: 'DESCRIPTION' },
+      genreTags: ['Jazz', 'Punk', 'Ska', 'Schlager'],
+      derivedGenreTags: { Punk: 'ARTIST', Ska: 'DESCRIPTION', Schlager: 'WIKIDATA' },
     })
 
     const derived = view.findAll('[data-meta-derived]')
     expect(derived.map((d) => d.attributes('title'))).toEqual([
       "Genre from the acts' other events",
       'Genre from the event description',
+      'Genre of the acts from Wikidata',
     ])
     expect(derived[0]?.find('.sr-only').text()).toBe("(Genre from the acts' other events)")
     expect(view.find('[data-testid="event-taxonomy"]').text()).toContain('Jazz')

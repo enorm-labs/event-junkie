@@ -5,7 +5,7 @@
 **Accepted (2026-11-17). The importer reads the genres (P136) of an act's Wikidata item and stores them on the artist. An event that has no tag after
 the rules of ADR-047 takes the mapped genres of its billed acts. Such a tag has the origin `WIKIDATA`.**
 
-Decided in [#5222](https://github.com/enorm-labs/event-junkie/issues/5222). Not implemented yet.
+Decided and implemented in [#5222](https://github.com/enorm-labs/event-junkie/issues/5222) (`V265`).
 
 **Amends [ADR-047](ADR-047_DERIVED_GENRE_TAGS.md) and supersedes nothing.** ADR-047 rejected Wikidata P136 for now, because it adds a stored artist
 attribute. Its "When to revisit" names a check of LEGAL.md §7.3a as the condition. This ADR makes that check. The rules of ADR-047 stay as they are, and

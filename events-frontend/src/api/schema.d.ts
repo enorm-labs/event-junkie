@@ -2690,7 +2690,7 @@ export interface components {
              *     }
              */
             derivedGenreTags?: {
-                [key: string]: "SOURCE" | "ARTIST" | "DESCRIPTION";
+                [key: string]: "SOURCE" | "ARTIST" | "DESCRIPTION" | "WIKIDATA";
             };
             /** @description The other sources that filled empty fields of this event, such as a promoter's page (ADR-043). The page must link each one (ADR-036). Empty for almost every event. */
             enrichmentSources?: components["schemas"]["EnrichmentSourceResponse"][];

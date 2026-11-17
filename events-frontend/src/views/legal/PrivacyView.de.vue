@@ -223,11 +223,12 @@ const { t } = useI18n()
         Übermittelt wird nur der Künstlername. Für Bands, Orchester und Chöre stammt die
         Kurzbeschreibung aus der Wikipedia. Aus Wikidata stammt auch die Angabe, ob jemand als
         Comedian oder Kabarettist auftritt. Danach wird ein Abend, dem die Spielstätte keine
-        Kategorie gibt, als Comedy geführt. Kennt MusicBrainz einen Namen nicht, fragt der Importer
-        Discogs (Zink Media, LLC, USA) und speichert bei einem Treffer nur den Link zur
-        Discogs-Seite; auch dabei wird nur der Künstlername übermittelt. Diese Website nutzt die
-        Discogs-API, ist aber nicht mit Discogs verbunden und wird von Discogs weder gesponsert noch
-        empfohlen. „Discogs“ ist eine Marke der Zink Media, LLC.
+        Kategorie gibt, als Comedy geführt. Ebenso stammen aus Wikidata die Genres eines Acts. Sie
+        geben einem Abend ein Genre, wenn die Spielstätte keines nennt. Kennt MusicBrainz einen
+        Namen nicht, fragt der Importer Discogs (Zink Media, LLC, USA) und speichert bei einem
+        Treffer nur den Link zur Discogs-Seite; auch dabei wird nur der Künstlername übermittelt.
+        Diese Website nutzt die Discogs-API, ist aber nicht mit Discogs verbunden und wird von
+        Discogs weder gesponsert noch empfohlen. „Discogs“ ist eine Marke der Zink Media, LLC.
       </p>
       <p>
         Die Line-ups und Spielzeiten der Wochenenden im Sisyphos stammen von sisy.fan, einem

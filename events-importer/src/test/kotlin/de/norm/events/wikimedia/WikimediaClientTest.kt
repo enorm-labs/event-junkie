@@ -233,10 +233,37 @@ class WikimediaClientTest {
         }
 
     @Test
+    fun `the genres of an item come in statement order`() =
+        runTest {
+            server.enqueue(json(fixture("wbgetclaims-P136-Q69263")))
+
+            client().genresOf("Q69263") shouldBe listOf("Q959583", "Q9759")
+
+            server.takeRequest().target shouldBe "/wikidata/api.php?action=wbgetclaims&entity=Q69263&property=P136&format=json"
+        }
+
+    @Test
+    fun `a deprecated genre is left out, and an unknown item holds no genre`() =
+        runTest {
+            server.enqueue(
+                json(
+                    """{"claims":{"P136":[
+                    {"rank":"deprecated","mainsnak":{"datavalue":{"value":{"id":"Q9759"}}}},
+                    {"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q959583"}}}}]}}"""
+                )
+            )
+            server.enqueue(json("""{"error":{"code":"no-such-entity","info":"Could not find an entity with the ID \"Q0\"."}}"""))
+
+            client().genresOf("Q69263") shouldBe listOf("Q959583")
+            client().genresOf("Q0").shouldBeEmpty()
+        }
+
+    @Test
     fun `a switched-off read asks nothing and answers null, so nothing is stored`() =
         runTest {
             val properties = WikimediaProperties(enabled = false, wikidataBaseUrl = server.url("/wikidata/api.php").toString())
             WikimediaClient(WebClient.create(), properties).occupationsOf("Q76152").shouldBeNull()
+            WikimediaClient(WebClient.create(), properties).genresOf("Q69263").shouldBeNull()
             server.requestCount shouldBe 0
         }
 }

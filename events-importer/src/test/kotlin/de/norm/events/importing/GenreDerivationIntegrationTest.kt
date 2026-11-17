@@ -15,6 +15,7 @@ import de.norm.events.venue.VenueRepository
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -36,6 +37,22 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
 
     @Autowired
     private lateinit var genreTagRepository: GenreTagRepository
+
+    /** What the lookup tick stores for an act: an EXACT match and its Wikidata genres (ADR-060). */
+    private suspend fun readGenres(
+        name: String,
+        vararg items: String,
+        match: String = "EXACT"
+    ) {
+        databaseClient
+            .sql("UPDATE events.artist SET musicbrainz_match = :match, wikidata_genres = :items WHERE name = :name")
+            .bind("match", match)
+            .bind("items", arrayOf(*items))
+            .bind("name", name)
+            .fetch()
+            .rowsUpdated()
+            .awaitSingle() shouldBe 1
+    }
 
     private suspend fun persistEvent(
         sourceId: String,
@@ -122,6 +139,42 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
 
             tagsOf(concert) shouldBe mapOf("Punk" to GenreTagOrigin.DESCRIPTION.name)
             tagsOf(party) shouldBe mapOf("Indie" to "ARTIST", "Alternative" to "ARTIST")
+        }
+    }
+
+    @Test
+    fun `an untagged concert takes its acts' mapped Wikidata genres in billing order, at most three (ADR-060)`() {
+        runBlocking {
+            val night = persistEvent("waldbuhne:1")
+            val acts = listOf("Roland Kaiser" to ArtistRole.HEADLINER, "Peter Maffay" to ArtistRole.HEADLINER)
+            sync(night, acts)
+            readGenres("Roland Kaiser", "Q959583", "Q1062702", "Q9759")
+            readGenres("Peter Maffay", "Q11399", "Q37073")
+
+            sync(night, acts)
+
+            tagsOf(night) shouldBe mapOf("Schlager" to "WIKIDATA", "Blues" to "WIKIDATA", "Rock" to "WIKIDATA")
+        }
+    }
+
+    @Test
+    fun `Wikidata comes last, and a support act, an unmapped item or a reset match gives nothing`() {
+        runBlocking {
+            val described = persistEvent("waldbuhne:2", description = "Ein Abend voller Jazz")
+            sync(described, listOf("Jazz Act" to ArtistRole.HEADLINER))
+            readGenres("Jazz Act", "Q11399")
+            val supported = persistEvent("waldbuhne:3")
+            val bill = listOf("Video Game Band" to ArtistRole.HEADLINER, "Rock Support" to ArtistRole.SUPPORT, "Reset Act" to ArtistRole.HEADLINER)
+            sync(supported, bill)
+            readGenres("Video Game Band", "Q1062702")
+            readGenres("Rock Support", "Q11399")
+            readGenres("Reset Act", "Q11399", match = "UNCHECKED")
+
+            sync(described, listOf("Jazz Act" to ArtistRole.HEADLINER))
+            sync(supported, bill)
+
+            tagsOf(described) shouldBe mapOf("Jazz" to "DESCRIPTION")
+            tagsOf(supported) shouldBe emptyMap()
         }
     }
 

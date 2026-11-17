@@ -7,6 +7,7 @@ import de.norm.events.genretag.EventGenreTagEntity
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagOrigin
 import de.norm.events.genretag.GenreTagRepository
+import de.norm.events.genretag.WIKIDATA_GENRES
 import de.norm.events.genretag.descriptionGenres
 import de.norm.events.genretag.genreFamily
 import de.norm.events.genretag.titleDecadeGenres
@@ -23,7 +24,8 @@ import org.springframework.stereotype.Service
  * A music event takes the source tags its billed acts carry on their other events, past or upcoming. A support act does not count, and a
  * DJ billing and a live billing do not lend each other tags: one name can be a resident DJ and a band (#4411).
  * An event still untagged takes the decades its title bills as a party ([titleDecadeGenres]) and the genre words of its description
- * ([descriptionGenres]). A derived tag never feeds another derivation.
+ * ([descriptionGenres]). An event still untagged takes the mapped Wikidata genres of its acts ([WIKIDATA_GENRES], ADR-060).
+ * A derived tag never feeds another derivation.
  */
 @Service
 class GenreDerivationService(
@@ -50,10 +52,12 @@ class GenreDerivationService(
                 .filter { it.id in music && byArtist[it.id].isNullOrEmpty() }
                 .mapNotNull { event -> textGenres(event).takeIf { it.isNotEmpty() }?.let { event.requiredId() to it } }
                 .toMap()
-        val tagIdByName = resolveTagIds(descriptionNames.values.flatten().toSet())
+        val wikidataNames = wikidataGenres(music - byArtist.keys - descriptionNames.keys)
+        val tagIdByName = resolveTagIds((descriptionNames.values.flatten() + wikidataNames.values.flatten()).toSet())
         val desired: Map<Long, Map<Long, GenreTagOrigin>> =
             byArtist.mapValues { (_, tagIds) -> tagIds.associateWith { GenreTagOrigin.ARTIST } } +
-                descriptionNames.mapValues { (_, names) -> names.mapNotNull { tagIdByName[it] }.associateWith { GenreTagOrigin.DESCRIPTION } }
+                descriptionNames.mapValues { (_, names) -> names.mapNotNull { tagIdByName[it] }.associateWith { GenreTagOrigin.DESCRIPTION } } +
+                wikidataNames.mapValues { (_, names) -> names.mapNotNull { tagIdByName[it] }.associateWith { GenreTagOrigin.WIKIDATA } }
 
         val derivedRows = stored.values.flatten().filter { it.origin != GenreTagOrigin.SOURCE.name }
         val stale = derivedRows.filter { row -> desired[row.eventId]?.get(row.genreTagId)?.name != row.origin }
@@ -71,12 +75,14 @@ class GenreDerivationService(
             GenreDerivation(
                 fromArtists = byArtist.size,
                 fromDescriptions = descriptionNames.count { (id, _) -> desired[id].orEmpty().isNotEmpty() },
+                fromWikidata = wikidataNames.size,
                 inserted = toInsert.size,
                 removed = stale.size
             )
         if (outcome.inserted > 0 || outcome.removed > 0) {
             logger.info {
-                "Derived genre tags for ${outcome.fromArtists} event(s) from their acts and ${outcome.fromDescriptions} from their description: " +
+                "Derived genre tags for ${outcome.fromArtists} event(s) from their acts, ${outcome.fromDescriptions} from their description " +
+                    "and ${outcome.fromWikidata} from Wikidata: " +
                     "${outcome.inserted} added, ${outcome.removed} removed"
             }
         }
@@ -101,6 +107,29 @@ class GenreDerivationService(
             .mapValues { (_, tagIds) -> tagIds.take(MAX_ARTIST_GENRES) }
     }
 
+    /**
+     * The mapped Wikidata genres of each event's billed acts, in billing order, at most [MAX_WIKIDATA_GENRES] per event. A support
+     * act does not count. Only an `EXACT` row counts, so a match an operator reset does not tag with the old act's genres.
+     */
+    private suspend fun wikidataGenres(eventIds: Set<Long>): Map<Long, List<String>> {
+        if (eventIds.isEmpty()) return emptyMap()
+        return databaseClient
+            .sql(WIKIDATA_ACT_GENRES)
+            .bind("ids", eventIds.toTypedArray())
+            .map { row, _ -> row.long("event_id") to row.get("wikidata_genres", Array<String>::class.java).orEmpty().toList() }
+            .all()
+            .collectList()
+            .awaitSingle()
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, items) ->
+                items
+                    .flatten()
+                    .mapNotNull { WIKIDATA_GENRES[it] }
+                    .distinct()
+                    .take(MAX_WIKIDATA_GENRES)
+            }.filterValues { it.isNotEmpty() }
+    }
+
     /** The id of each canonical genre name, creating a tag the vocabulary names and the table lacks. */
     private suspend fun resolveTagIds(names: Set<String>): Map<String, Long> {
         if (names.isEmpty()) return emptyMap()
@@ -121,6 +150,17 @@ class GenreDerivationService(
         val MUSIC_TYPES = setOf(EventType.CONCERT, EventType.PARTY, EventType.FESTIVAL)
         const val MAX_ARTIST_GENRES = 3
         const val MAX_TEXT_GENRES = 3
+        const val MAX_WIKIDATA_GENRES = 3
+
+        val WIKIDATA_ACT_GENRES =
+            """
+            SELECT ea.event_id, a.wikidata_genres
+            FROM $EVENTS_SCHEMA.event_artist ea
+            JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id
+            WHERE ea.event_id = ANY(:ids) AND ea.role <> 'SUPPORT'
+                AND a.musicbrainz_match = 'EXACT' AND cardinality(a.wikidata_genres) > 0
+            ORDER BY ea.event_id, ea.billing_order, ea.artist_id
+            """.trimIndent()
 
         /** Ties break on the tag name, so a re-import derives the same tags. */
         val ARTIST_TAGS =
@@ -146,6 +186,8 @@ data class GenreDerivation(
     val fromArtists: Int = 0,
     /** Events that took tags from their description. */
     val fromDescriptions: Int = 0,
+    /** Events that took tags from their acts' Wikidata genres. */
+    val fromWikidata: Int = 0,
     /** Derived rows written. */
     val inserted: Int = 0,
     /** Derived rows deleted: the event got a source tag, or the acts or the description changed. */
