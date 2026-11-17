@@ -17,8 +17,16 @@ brew "direnv"
 brew "nvm"
 brew "postgresql@17"
 brew "uv"
-# A cask refuses to overwrite an app installed without Homebrew, so skip what is already there.
-cask "docker-desktop" unless File.exist?("/Applications/Docker.app")
+# Docker Desktop, or Colima and the open-source CLI with EJ_COLIMA=1 or once colima is installed (docs/DEVELOPMENT.md § Colima).
+if ENV["EJ_COLIMA"] == "1" || on_path?("colima")
+  brew "colima"
+  brew "docker"
+  brew "docker-compose"
+  brew "docker-buildx"
+else
+  # A cask refuses to overwrite an app installed without Homebrew, so skip what is already there.
+  cask "docker-desktop" unless File.exist?("/Applications/Docker.app")
+end
 cask "ijhttp" unless on_path?("ijhttp")
 cask "claude-code" unless on_path?("claude")
 

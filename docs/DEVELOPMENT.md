@@ -54,7 +54,7 @@ scripts/format-markdown.sh                # any .md change
 | Tool         | Version                                   | Notes                                                                    |
 | ------------ | ----------------------------------------- | ------------------------------------------------------------------------ |
 | JDK          | see [`.sdkmanrc`](../.sdkmanrc)           | `sdk env` picks it up; install [SDKMAN](https://sdkman.io/) first        |
-| Docker       | any recent                                | Postgres is started for you by `bootRun`                                 |
+| Docker       | any recent                                | Docker Desktop or [Colima](#colima); `bootRun` starts Postgres           |
 | Node.js      | see [`.nvmrc`](../events-frontend/.nvmrc) | frontend only; `nvm use`                                                 |
 | `pre-commit` | any                                       | for the commit hooks — `brew install pre-commit`                         |
 | `gh`         | any recent                                | GitHub from the CLI — `brew install gh`, then `gh auth login -s project` |
@@ -83,6 +83,30 @@ for anything under `infra/`. The pre-commit hooks below need both of the last tw
 ```bash
 sdk env      # Java version from .sdkmanrc
 ```
+
+### Colima
+
+[Colima](https://github.com/abiosoft/colima) is an open-source replacement for Docker Desktop. It runs the Docker Engine in a small Linux VM, so the
+Docker CLI, `docker compose`, `buildx`, Testcontainers and k3d work without changes. The full k3d rehearsal passes on it.
+
+```bash
+EJ_COLIMA=1 scripts/setup-mac.sh contributor   # Colima, the docker CLI, compose and buildx instead of Docker Desktop
+colima start --cpu 4 --memory 8                # k3d, Postgres and a Gradle build need 8 GB; the settings persist
+scripts/setup-mac.sh check                     # names the two lines below and a missing CLI plugin
+```
+
+```bash
+# ~/.zshrc — Testcontainers finds Colima's socket through these
+export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
+export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
+```
+
+The Docker CLI does not find Homebrew's `compose` and `buildx` plugins by itself. Add
+`"cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"]` to `~/.docker/config.json`. On a Mac that still has Docker Desktop, its symlinks in
+`~/.docker/cli-plugins` hide this gap until you remove Docker Desktop. Remove `"credsStore": "desktop"` from the same file at that time too, or every
+`docker pull` fails on `docker-credential-desktop`.
+
+Colima starts with empty volumes. Your local database stays in Docker Desktop's VM. Load data again with `scripts/dev-env.sh seed-fixture` or `seed-all`.
 
 ## Git hooks (pre-commit)
 
@@ -500,7 +524,7 @@ docker buildx build -f events-bff/Dockerfile events-bff/build/docker -t event-ju
 ```
 
 Both architectures at once — this is what CI does. Neither Dockerfile does build work in a `RUN`, so no build matrix is needed. A named `apk upgrade`,
-when one is present, runs for the other architecture under Docker's emulation. Docker Desktop and the CI runner both have it:
+when one is present, runs for the other architecture under Docker's emulation. Docker Desktop, Colima and the CI runner all have it:
 
 ```bash
 docker buildx build -f events-bff/Dockerfile events-bff/build/docker \
