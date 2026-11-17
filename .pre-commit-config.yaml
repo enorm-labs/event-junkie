@@ -67,11 +67,11 @@ repos:
         files: (^|/)(Dockerfile(\.[^/]+)?|[^/]+\.Dockerfile)$
         pass_filenames: true
 
-      # `pipx install squawk-cli`; validate-migrations.yml pins the version that decides. Reads
-      # `.squawk.toml` from the repository root, and sees only the migrations a commit touches.
+      # scripts/squawk.sh runs the version validate-migrations.yml pins, through uvx, so no local
+      # install can drift from CI. Sees only the migrations a commit touches.
       - id: squawk
         name: squawk
-        entry: squawk
+        entry: scripts/squawk.sh
         language: system
         files: ^events-importer/src/main/resources/db/migration/.*\.sql$
         pass_filenames: true
