@@ -100,6 +100,17 @@ class FlyerLineupCheckTest : BaseControllerTest() {
         }
 
     @Test
+    fun `a flyer text answered as an array of lines still gives the suggestions`(): Unit =
+        runBlocking {
+            val event = insertEvent("Savory", hash = "h1")
+            server.enqueue(flyerAnswer(lines = true))
+
+            check().pass().read shouldBe 1
+
+            suggestions(event).map { it.field } shouldContainExactly listOf("artists", "startTime")
+        }
+
+    @Test
     fun `a flyer read once is not read again, and a new image for the night is`(): Unit =
         runBlocking {
             val event = insertEvent("Savory", hash = "h1")
@@ -236,11 +247,14 @@ class FlyerLineupCheckTest : BaseControllerTest() {
         val evidence: String
     )
 
-    private fun flyerAnswer(text: String = SAVORY): mockwebserver3.MockResponse =
+    private fun flyerAnswer(
+        text: String = SAVORY,
+        lines: Boolean = false
+    ): mockwebserver3.MockResponse =
         textResponse(
             mapper.writeValueAsString(
                 mapOf(
-                    "flyerText" to text.replace("{day}", dayOf(NIGHT)),
+                    "flyerText" to text.replace("{day}", dayOf(NIGHT)).let { if (lines) it.lines() else it },
                     "acts" to mapOf("value" to listOf("Lukr Range", "Taube", "Wan"), "evidence" to "LUKR RANGE\nTAUBE\nWAN", "confidence" to 0.95),
                     "startTime" to mapOf("value" to "23:00", "evidence" to "23:00 — END", "confidence" to 0.9)
                 )
