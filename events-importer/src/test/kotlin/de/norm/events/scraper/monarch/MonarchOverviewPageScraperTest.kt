@@ -302,6 +302,16 @@ class MonarchOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills a night's name dashed to one act playing LIVE as a concert (event 14655)`() {
+        val event = scraper.scrape(block("Donnerstag 03/12/2026-20:00", "CITY SLANG XMAS - PARTY DOZEN LIVE"), baseUrl).single()
+
+        event.eventType shouldBe EventType.CONCERT.name
+        event.artists.map { canonicalArtistName(it.name) } shouldBe listOf("Party Dozen")
+        event.artists.single().role shouldBe ArtistRole.HEADLINER
+        event.artists.single().titleDerived shouldBe true
+    }
+
+    @Test
     fun `keeps a two-part dashed title a night's name`() {
         val event = scraper.scrape(block("Samstag 18/07/2026-18:00", "CHEERS QUEERS – CSD EDITION"), baseUrl).single()
 

@@ -34,7 +34,8 @@ import java.time.LocalTime
  * kept with no start time (#1962);
  * - a title cell `td#td1`, where a trailing `(KONZERT)` marks a concert and a leading
  * `ABGESAGT` a cancellation. An unmarked title of three or more acts joined by spaced dashes
- * (`THE HAND CUTS - GÜNTHER AND THE JAUCHS - BLUTCYPHER`) is a concert bill too. The bold line below it is empty, except that an external organiser's
+ * (`THE HAND CUTS - GÜNTHER AND THE JAUCHS - BLUTCYPHER`) is a concert bill too, and so is a night's name dashed to one act
+ * that plays `LIVE` (`CITY SLANG XMAS - PARTY DOZEN LIVE`, #5265). The bold line below it is empty, except that an external organiser's
  * night can carry its name there under a `Veranstalter*in` label with `td#td1` blank (#2045); and
  * - an optional external "Ticket Vorverkauf" shop link (eventim, dice, ra.co, …).
  *
@@ -93,13 +94,13 @@ class MonarchOverviewPageScraper {
         }
 
         val startTime = parseStartTime(dateText)
-        val dashedBill = dashedBill(rawTitle, title)
+        val titleBill = dashedBill(rawTitle, title) ?: liveBill(rawTitle, title)
         // "(KONZERT)" is the venue's authoritative concert marker. An unmarked event never defaults to
         // CONCERT, so its name is not minted as a headliner ([inferUnmarkedTitleType]).
         val eventType =
             if (KONZERT_PATTERN.containsMatchIn(rawTitle)) {
                 mapEventType("konzert")
-            } else if (dashedBill != null) {
+            } else if (titleBill != null) {
                 EventType.CONCERT.name
             } else {
                 unmarkedType(rawTitle, startTime, block.textAt("td.tom").orEmpty())
@@ -124,7 +125,7 @@ class MonarchOverviewPageScraper {
             // Only a concert's title names the headliner; parties/club nights extract none, and a numbered session names none either.
             artists =
                 when {
-                    dashedBill != null -> dashedBill.map { ScrapedArtist(name = it, titleDerived = true) }
+                    titleBill != null -> titleBill.map { ScrapedArtist(name = it, titleDerived = true) }
                     NUMBERED_SESSION.matches(title) -> emptyList()
                     else -> buildArtistsForEventType(title, subtitle = null, eventType = eventType)
                 }
@@ -157,6 +158,21 @@ class MonarchOverviewPageScraper {
         if (KONZERT_PATTERN.containsMatchIn(rawTitle) || inferUnmarkedTitleType(rawTitle) != EventType.OTHER.name) return null
         val acts = title.split(DASHED_BILL).map { it.trim() }.filter { it.isNotEmpty() && !isNonArtistName(it) }
         return acts.takeIf { it.size >= MIN_DASHED_ACTS }
+    }
+
+    /**
+     * The act of an unmarked two-part dashed title whose second part ends in `LIVE`, or `null`: `CITY SLANG XMAS - PARTY DOZEN LIVE`
+     * bills `PARTY DOZEN`. The title's own type is not asked, because the act's name can read as a party's (#5265).
+     */
+    private fun liveBill(
+        rawTitle: String,
+        title: String
+    ): List<String>? {
+        if (KONZERT_PATTERN.containsMatchIn(rawTitle)) return null
+        val parts = title.split(DASHED_BILL).map { it.trim() }
+        if (parts.size != 2 || parts.first().isEmpty()) return null
+        val (act) = LIVE_SUFFIX.matchEntire(parts.last())?.destructured ?: return null
+        return listOf(act).takeUnless { isNonArtistName(act) }
     }
 
     /** The bold line in the title table's second row, or empty when the table has none. */
@@ -219,6 +235,9 @@ class MonarchOverviewPageScraper {
         /** A spaced dash between two acts of an unmarked bill. */
         private val DASHED_BILL = Regex("""\s+[-–]\s+""")
         private const val MIN_DASHED_ACTS = 3
+
+        /** An act's name followed by the word `LIVE`: `PARTY DOZEN LIVE`. */
+        private val LIVE_SUFFIX = Regex("""^(.*\S)\s+live$""", RegexOption.IGNORE_CASE)
 
         /** A blurb that calls the night a party ("Pop-Party") or names its dancefloor. */
         private val CLUB_NIGHT_BLURB = Regex("""party|dance\s?floor""", RegexOption.IGNORE_CASE)
