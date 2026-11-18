@@ -32,6 +32,7 @@ enum class FlyerRejection {
     NOT_JSON,
     NOT_AN_OBJECT,
     NO_FLYER_TEXT,
+    FLYER_TEXT_NOT_TEXT,
     FLYER_TEXT_TOO_LONG,
     DAY_NOT_NAMED
 }
@@ -74,12 +75,7 @@ object FlyerAnswerValidator {
         eventDate: LocalDate
     ): FlyerVerdict {
         val root = ModelAnswer.jsonObject(raw) ?: return FlyerVerdict.Rejected(FlyerRejection.NOT_AN_OBJECT)
-        val flyerText =
-            root
-                .get("flyerText")
-                ?.asString("")
-                ?.trim()
-                .orEmpty()
+        val flyerText = flyerText(root.get("flyerText")) ?: return FlyerVerdict.Rejected(FlyerRejection.FLYER_TEXT_NOT_TEXT)
         val rejection =
             when {
                 flyerText.isEmpty() -> FlyerRejection.NO_FLYER_TEXT
@@ -93,6 +89,31 @@ object FlyerAnswerValidator {
             finding(root.get("startTime"), flyerText) { node -> ModelAnswer.time(node.asString("")) }
                 ?.takeIf { ModelAnswer.namesHour(it.value, it.evidence) }
         return FlyerVerdict.Accepted(FlyerAnswer(flyerText, acts, startTime))
+    }
+
+    /**
+     * The flyer text, trimmed: a string, or an array of lines joined with `\n`. Asked for "one line per line", a model can answer
+     * with the array, and reading only the string rejected every production flyer (#5258). Null for any other type.
+     */
+    private fun flyerText(node: JsonNode?): String? {
+        val elements = node?.takeIf { it.isArray }?.let { array -> (0 until array.size()).map { array.get(it) } }
+        return when {
+            node == null || node.isNull -> {
+                ""
+            }
+
+            node.isString -> {
+                node.asString().trim()
+            }
+
+            elements != null && elements.all { it.isString } -> {
+                elements.map { it.asString().trim() }.filter { it.isNotEmpty() }.joinToString("\n")
+            }
+
+            else -> {
+                null
+            }
+        }
     }
 
     private fun <T> finding(

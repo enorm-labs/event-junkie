@@ -81,6 +81,34 @@ class FlyerAnswerValidatorTest {
     }
 
     @Test
+    fun `a flyer text given as an array of lines is read as those lines`() {
+        val answer =
+            FlyerAnswerValidator
+                .parse(
+                    json(
+                        "flyerText" to SAVORY.lines().map { " $it " } + "",
+                        "acts" to finding(listOf("Taube", "Wan"), "TAUBE\nWAN"),
+                        "startTime" to finding("23:00", "23:00 — END")
+                    ),
+                    NIGHT
+                ).accepted()
+
+        answer.flyerText shouldBe SAVORY
+        answer.acts!!.value shouldContainExactly listOf("Taube", "Wan")
+        answer.startTime!!.value shouldBe LocalTime.of(23, 0)
+    }
+
+    @Test
+    fun `a flyer text that is neither a string nor an array of strings is rejected as such`() {
+        FlyerAnswerValidator.parse(json("flyerText" to mapOf("text" to SAVORY)), NIGHT) shouldBe
+            FlyerVerdict.Rejected(FlyerRejection.FLYER_TEXT_NOT_TEXT)
+        FlyerAnswerValidator.parse(json("flyerText" to listOf(SAVORY, 19)), NIGHT) shouldBe
+            FlyerVerdict.Rejected(FlyerRejection.FLYER_TEXT_NOT_TEXT)
+        FlyerAnswerValidator.parse(json("flyerText" to 19), NIGHT) shouldBe FlyerVerdict.Rejected(FlyerRejection.FLYER_TEXT_NOT_TEXT)
+        FlyerAnswerValidator.parse(json("flyerText" to emptyList<String>()), NIGHT) shouldBe FlyerVerdict.Rejected(FlyerRejection.NO_FLYER_TEXT)
+    }
+
+    @Test
     fun `an answer that is JSON but no object is rejected as such`() {
         FlyerAnswerValidator.parse("""["19.11."]""", NIGHT) shouldBe FlyerVerdict.Rejected(FlyerRejection.NOT_AN_OBJECT)
     }
