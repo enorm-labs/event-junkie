@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.crewPairFromTitle
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
@@ -21,6 +22,7 @@ import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.withTitleCrews
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -52,7 +54,7 @@ import java.util.Locale
  * that play rather than spin, and a `DJ Sets by` / `DJ Set:` label opening a DJ section. [parseLineup] reads the acts from the tail and uses the marker
  * to tell a live act (`HEADLINER`) from a DJ, as Club der Visionäre does. The series name
  * before the marker stays in the title and is no artist: a night's name ("WOCHENMITTE",
- * "MONDAY ROAST"), not a performer.
+ * "MONDAY ROAST"), not a performer. A guest crew's `SUMPFKRÜGE x KLUNKERKRANICH` there is the night's promoter.
  *
  * Every night is a [PARTY][EventType.PARTY], like ÆDEN, OHM and gART.n: 1034 of the 1200
  * sitemap events are `… w. <DJ lineup>` nights. That mislabels the occasional concert.
@@ -115,8 +117,14 @@ class KlunkerkranichOverviewPageScraper(
             sourceUrl = eventUrl,
             sourceId = "${EventSource.KLUNKERKRANICH.sourceIdPrefix}$slug",
             artists = parseLineup(title)
-        )
+        ).withTitleCrews(VENUE_NAMES, crewPairFromTitle(billingHead(title), VENUE_NAMES))
     }
+
+    /**
+     * The title before its line-up marker, where a guest crew's `X x KLUNKERKRANICH` stands (event 14605). The shared
+     * splitter cuts at `w/` but not at the venue's `w.`, so the whole title would bill the line-up as crews.
+     */
+    private fun billingHead(title: String): String = LINEUP_MARKER.find(title)?.let { title.substring(0, it.range.first) } ?: title
 
     /** The ISO date the venue bakes into every event slug, or `null` when a slug lacks one. */
     private fun parseSlugDate(slug: String): LocalDate? = parseIsoDate(slug.take(ISO_DATE_LENGTH))
@@ -244,6 +252,9 @@ class KlunkerkranichOverviewPageScraper(
          * never matches. [parseLineup] takes the last one on the title.
          */
         val LINEUP_MARKER = Regex("""\sw[./]\s|\s(?:$PRESENTS_VERBS)\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** The venue's own name in a `X x KLUNKERKRANICH` title; it is never the guest crew. */
+        private val VENUE_NAMES = setOf("Klunkerkranich", "Kranich")
 
         /** The boundary between two sections of the lineup tail. */
         const val SECTION_SEPARATOR = "|"

@@ -2,11 +2,13 @@ package de.norm.events.scraper.monarch
 
 import de.norm.events.artist.canonicalArtistName
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventType
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -287,6 +289,24 @@ class MonarchOverviewPageScraperTest {
         event.sourceId shouldBe "monarch:2026-11-28-herzer-gebruder-manns-the-hand-cuts"
         // The scraper's split is unchanged; only `GEBRüDER` no longer keeps the second billing shouted.
         event.artists.map { canonicalArtistName(it.name) } shouldBe listOf("Herzer", "Gebrüder Manns & The Hand Cuts")
+    }
+
+    @Test
+    fun `bills an unmarked title of three dashed acts as a concert (event 14654)`() {
+        val event =
+            scraper.scrape(block("Samstag 28/11/2026-18:00", "THE HAND CUTS - GÜNTHER AND THE JAUCHS - BLUTCYPHER"), baseUrl).single()
+
+        event.eventType shouldBe EventType.CONCERT.name
+        event.artists.map { canonicalArtistName(it.name) } shouldBe listOf("The Hand Cuts", "Günther And The Jauchs", "Blutcypher")
+        event.artists.map { it.titleDerived }.distinct() shouldBe listOf(true)
+    }
+
+    @Test
+    fun `keeps a two-part dashed title a night's name`() {
+        val event = scraper.scrape(block("Samstag 18/07/2026-18:00", "CHEERS QUEERS – CSD EDITION"), baseUrl).single()
+
+        event.eventType shouldNotBe EventType.CONCERT.name
+        event.artists shouldBe emptyList()
     }
 
     @ParameterizedTest

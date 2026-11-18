@@ -104,6 +104,6 @@ val KLUNKERKRANICH_LIMITATIONS =
             "entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored",
             verified = "2026-09-20"
         ),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a guest crew appears only in the title, as `SUMPFKRÜGE x KLUNKERKRANICH`", verified = "2026-11-18"),
         houseGenre = "House"
     )

@@ -2,6 +2,7 @@ package de.norm.events.scraper.monarch
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -10,6 +11,7 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
@@ -31,7 +33,8 @@ import java.time.LocalTime
  * can be missing ("Samstag 24/10/2026-") while the venue fills an entry in, and such an event is
  * kept with no start time (#1962);
  * - a title cell `td#td1`, where a trailing `(KONZERT)` marks a concert and a leading
- * `ABGESAGT` a cancellation. The bold line below it is empty, except that an external organiser's
+ * `ABGESAGT` a cancellation. An unmarked title of three or more acts joined by spaced dashes
+ * (`THE HAND CUTS - GÜNTHER AND THE JAUCHS - BLUTCYPHER`) is a concert bill too. The bold line below it is empty, except that an external organiser's
  * night can carry its name there under a `Veranstalter*in` label with `td#td1` blank (#2045); and
  * - an optional external "Ticket Vorverkauf" shop link (eventim, dice, ra.co, …).
  *
@@ -90,11 +93,14 @@ class MonarchOverviewPageScraper {
         }
 
         val startTime = parseStartTime(dateText)
+        val dashedBill = dashedBill(rawTitle, title)
         // "(KONZERT)" is the venue's authoritative concert marker. An unmarked event never defaults to
         // CONCERT, so its name is not minted as a headliner ([inferUnmarkedTitleType]).
         val eventType =
             if (KONZERT_PATTERN.containsMatchIn(rawTitle)) {
                 mapEventType("konzert")
+            } else if (dashedBill != null) {
+                EventType.CONCERT.name
             } else {
                 unmarkedType(rawTitle, startTime, block.textAt("td.tom").orEmpty())
             }
@@ -116,7 +122,12 @@ class MonarchOverviewPageScraper {
             ticketUrl = ticketUrl,
             status = status,
             // Only a concert's title names the headliner; parties/club nights extract none, and a numbered session names none either.
-            artists = if (NUMBERED_SESSION.matches(title)) emptyList() else buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+            artists =
+                when {
+                    dashedBill != null -> dashedBill.map { ScrapedArtist(name = it, titleDerived = true) }
+                    NUMBERED_SESSION.matches(title) -> emptyList()
+                    else -> buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+                }
         )
     }
 
@@ -133,6 +144,19 @@ class MonarchOverviewPageScraper {
         val fromTitle = inferUnmarkedTitleType(rawTitle)
         val clubNight = (startTime != null && startTime >= CLUB_NIGHT_START) || CLUB_NIGHT_BLURB.containsMatchIn(blurb)
         return if (fromTitle == EventType.OTHER.name && clubNight) EventType.PARTY.name else fromTitle
+    }
+
+    /**
+     * The acts of an unmarked title that bills three or more names joined by spaced dashes, or `null`. Two parts stay a
+     * night's name (`CHEERS QUEERS – CSD EDITION`); a dash inside the shared splitter is never an act boundary.
+     */
+    private fun dashedBill(
+        rawTitle: String,
+        title: String
+    ): List<String>? {
+        if (KONZERT_PATTERN.containsMatchIn(rawTitle) || inferUnmarkedTitleType(rawTitle) != EventType.OTHER.name) return null
+        val acts = title.split(DASHED_BILL).map { it.trim() }.filter { it.isNotEmpty() && !isNonArtistName(it) }
+        return acts.takeIf { it.size >= MIN_DASHED_ACTS }
     }
 
     /** The bold line in the title table's second row, or empty when the table has none. */
@@ -191,6 +215,10 @@ class MonarchOverviewPageScraper {
 
         /** The earliest start of a club night; every concert on the programme starts before it. */
         private val CLUB_NIGHT_START: LocalTime = LocalTime.of(21, 0)
+
+        /** A spaced dash between two acts of an unmarked bill. */
+        private val DASHED_BILL = Regex("""\s+[-–]\s+""")
+        private const val MIN_DASHED_ACTS = 3
 
         /** A blurb that calls the night a party ("Pop-Party") or names its dancefloor. */
         private val CLUB_NIGHT_BLURB = Regex("""party|dance\s?floor""", RegexOption.IGNORE_CASE)

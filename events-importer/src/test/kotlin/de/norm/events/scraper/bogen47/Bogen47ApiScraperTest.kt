@@ -309,6 +309,32 @@ class Bogen47ApiScraperTest {
     }
 
     @Test
+    fun `scrapePage bills the acts after a party title's with, not its head (event 14612)`() {
+        val event =
+            eventDescribed(
+                "FILLAN with ADNS, Malingula, Matthieu P, sinkaaf",
+                "<p>ADNS<br>Malingula<br>Matthieu P<br>sinkaaf<br>more tba</p>",
+                eventType = "Party"
+            )
+
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("ADNS", "Malingula", "Matthieu P", "sinkaaf").map { it to ArtistRole.DJ }
+    }
+
+    @Test
+    fun `scrapePage types a LARK night naming the sister club a party, with no acts (event 14615)`() {
+        val event = eventDescribed("Baile Trama NYE – Lark & Fitzroy", "<p>NYE!</p>", eventType = "")
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists shouldHaveSize 0
+    }
+
+    @Test
+    fun `scrapePage collapses a paragraph gap that holds a line of spaces (event 14614)`() {
+        eventDescribed("Prima Queen", """A \r\n\r\n \r\n\r\nB\r\nC""").description shouldBe "A \n\nB\nC"
+    }
+
+    @Test
     fun `scrapePage bills nobody for a party title with one name after its star`() {
         eventDescribed("Night Shift ★ Winter Edition", "<p>See you there.</p>", eventType = "Party").artists shouldHaveSize 0
     }

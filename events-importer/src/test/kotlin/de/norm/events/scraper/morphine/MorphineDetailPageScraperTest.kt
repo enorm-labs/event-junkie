@@ -99,7 +99,7 @@ class MorphineDetailPageScraperTest {
     }
 
     @Test
-    fun `splits a co-billed lineup entry into two acts`() {
+    fun `splits a co-billed lineup entry into two acts, the entry's time on the first`() {
         val url = "http://www.morphinerecords.com/events/all-about-birds-jon-rose-hinterland"
         val event = parse("morphine-detail-paypal.html", url).shouldNotBeNull()
 
@@ -107,7 +107,7 @@ class MorphineDetailPageScraperTest {
             listOf(
                 ScrapedArtist("ALL ABOUT BIRDS", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z")),
                 // The project after the colon is the work, not the act (#1585).
-                ScrapedArtist("JON ROSE", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z"))
+                ScrapedArtist("JON ROSE", ArtistRole.HEADLINER, titleDerived = true)
             )
         event.doorsTime shouldBe LocalTime.of(19, 30)
         event.startTime shouldBe LocalTime.of(20, 0)
@@ -122,8 +122,8 @@ class MorphineDetailPageScraperTest {
         event.artists shouldBe
             listOf(
                 ScrapedArtist("Gareth Psaltis", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")),
-                ScrapedArtist("Temple Rat", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")),
-                ScrapedArtist("Jacob Stoy", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z"))
+                ScrapedArtist("Temple Rat", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Jacob Stoy", ArtistRole.HEADLINER, titleDerived = true)
             )
     }
 
