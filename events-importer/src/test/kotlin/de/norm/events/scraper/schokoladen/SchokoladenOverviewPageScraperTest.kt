@@ -120,6 +120,31 @@ class SchokoladenOverviewPageScraperTest {
         }
 
         @Test
+        fun `reads a banged sold-out prefix as sold out and keeps it out of the artist names`() {
+            // Event 4479, 20 November 2026: "AUSVERKAUFT! ParkPunk" was minted beside ParkPunk (#5271).
+            val title = "AUSVERKAUFT! ParkPunk (deutschpunk, regensburg) + FCKSCHNTZL (punk-rock, bln)"
+            val event =
+                scraper
+                    .scrape(
+                        Jsoup.parse(
+                            """
+                            <div class="event"><h6 class="category">Musik</h6><h2 class="fw-bold">$title</h2>
+                              <a class="ticket-btn" href="https://vvk.link/4edjm0g">Tickets</a>
+                              <div class="event-info" id="e20261120" data-event-date="2026-11-20"></div></div>
+                            """.trimIndent(),
+                            baseUrl
+                        ),
+                        baseUrl
+                    ).single()
+
+            event.artists.map { it.name } shouldContainExactly listOf("ParkPunk", "FCKSCHNTZL")
+            event.soldOut shouldBe true
+            event.ticketUrl.shouldBeNull()
+            event.toEventEntity(venueId = 1L, venueSlug = "schokoladen", eventSourceId = 1L).title shouldBe
+                "ParkPunk (deutschpunk, regensburg) + FCKSCHNTZL (punk-rock, bln)"
+        }
+
+        @Test
         fun `bills the acts of a night title, not the night, its album or a placeholder for more`() {
             fun artistsOf(title: String): List<String> =
                 scraper
