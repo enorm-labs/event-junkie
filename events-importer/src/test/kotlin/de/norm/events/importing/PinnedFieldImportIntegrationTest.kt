@@ -13,11 +13,6 @@ import de.norm.events.event.EventRequest
 import de.norm.events.event.EventResponse
 import de.norm.events.festival.FestivalRequest
 import de.norm.events.festival.FestivalResponse
-import de.norm.events.genretag.EventGenreTagEntity
-import de.norm.events.genretag.EventGenreTagRepository
-import de.norm.events.genretag.GenreTagEntity
-import de.norm.events.genretag.GenreTagOrigin
-import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -54,12 +49,6 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
 
     @Autowired
     private lateinit var venueRepository: VenueRepository
-
-    @Autowired
-    private lateinit var genreTagRepository: GenreTagRepository
-
-    @Autowired
-    private lateinit var eventGenreTagRepository: EventGenreTagRepository
 
     private var venueId: Long = 0
     private var eventSourceId: Long = 0
@@ -183,11 +172,12 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
     @Test
     fun `an edit of the lineup keeps a derived genre tag and pins no genres`(): Unit =
         runBlocking {
-            import(published(genre = null))
+            // A second show of the headliner carries the source tag the first one derives.
+            val tagged = published(genre = "Punk").copy(title = "The Adicts II", sourceId = "astra:the-adicts-2", eventDate = date.plusDays(1))
+            eventUpsertService.upsertAndCleanup(listOf(published(genre = null), tagged), venueId, venueSlug, eventSourceId)
             val id = storedId()
-            val tag = genreTagRepository.save(GenreTagEntity(name = "Punk", slug = "punk"))
-            eventGenreTagRepository.save(EventGenreTagEntity(eventId = id, genreTagId = requireNotNull(tag.id), origin = GenreTagOrigin.ARTIST.name))
             val before = get(id)
+            before.genreTags shouldBe listOf("Punk")
             val headliner = before.artists.single { it.billingOrder == 0 }
 
             val edited = put(id, before.toRequest().copy(artists = listOf(EventArtistRequest(headliner.artistId, headliner.role, 0, headliner.stage))))
