@@ -530,12 +530,12 @@ describe('EventDetailView', () => {
     })
 
     const derived = view.findAll('[data-meta-derived]')
-    expect(derived.map((d) => d.attributes('title'))).toEqual([
-      "Genre from the acts' other events",
-      'Genre from the event description',
-      'Genre of the acts from Wikidata',
+    expect(derived.map((d) => d.find('.sr-only').text())).toEqual([
+      "(Genre from the acts' other events)",
+      '(Genre from the event description)',
+      '(Genre of the acts from Wikidata)',
     ])
-    expect(derived[0]?.find('.sr-only').text()).toBe("(Genre from the acts' other events)")
+    expect(derived.every((d) => d.element.tagName === 'BUTTON')).toBe(true)
     expect(view.find('[data-testid="event-taxonomy"]').text()).toContain('Jazz')
   })
 

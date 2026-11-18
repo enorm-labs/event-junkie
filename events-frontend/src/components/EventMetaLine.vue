@@ -4,6 +4,7 @@
  * line reads (#2661). The space before the dot does not break, so a wrap never opens a line on one.
  */
 import BaseBadge from '@/components/BaseBadge.vue'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 export interface MetaItem {
   text: string
@@ -28,14 +29,20 @@ defineProps<{ items: MetaItem[] }>()
       >
       <BaseBadge v-if="item.badge" variant="destructive">{{ item.text }}</BaseBadge>
       <del v-else-if="item.struck" :class="item.class">{{ item.text }}</del>
-      <span
-        v-else-if="item.note"
-        :class="item.class"
-        class="underline decoration-dotted underline-offset-4"
-        :title="item.note"
-        data-meta-derived
-        >{{ item.text }}<span class="sr-only"> ({{ item.note }})</span></span
-      >
+      <!-- A popover, not a title: a phone never shows a title, and the underline invites a tap (#5263). -->
+      <Popover v-else-if="item.note">
+        <PopoverTrigger as-child>
+          <button
+            :class="item.class"
+            class="rounded-sm text-left underline decoration-dotted underline-offset-4 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            data-meta-derived
+            type="button"
+          >
+            {{ item.text }}<span class="sr-only"> ({{ item.note }})</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" class="w-auto" data-meta-note>{{ item.note }}</PopoverContent>
+      </Popover>
       <span v-else :class="item.class">{{ item.text }}</span>
     </template>
   </p>
