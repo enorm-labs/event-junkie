@@ -155,7 +155,8 @@ class KlunkerkranichOverviewPageScraper(
      * The billed acts from a title's `w.` / `presents:` lineup tail.
      *
      * Empty for a title with no marker ("LA MAISON x KLUNKERKRANICH") — the whole title is the
-     * night's name, no act to mint. Otherwise the tail splits on `|` into sections and each section on
+     * night's name, no act to mint; [KlunkerkranichWebsiteImporter] then reads the event page's
+     * line-up block. Otherwise the tail splits on `|` into sections and each section on
      * commas into one billing per slot, each parsed by [parseBilling]. Joining two sections into one
      * billing drops acts (#1908).
      *
@@ -204,7 +205,7 @@ class KlunkerkranichOverviewPageScraper(
      * of its own and the members separate ones; the first member no longer keeps the team's name
      * glued to its own (#1137).
      */
-    private fun parseBilling(
+    internal fun parseBilling(
         billing: String,
         sectionRole: ArtistRole
     ): List<ScrapedArtist> {

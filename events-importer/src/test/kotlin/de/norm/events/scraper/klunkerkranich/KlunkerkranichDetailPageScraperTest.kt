@@ -2,6 +2,7 @@ package de.norm.events.scraper.klunkerkranich
 
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.splitBilingualDescription
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -120,5 +121,66 @@ class KlunkerkranichDetailPageScraperTest {
         split.original shouldNotContain "[EN]"
         split.alt shouldStartWith "For the second time in 2026"
         split.alt shouldNotContain "Ein zweites Mal"
+    }
+
+    /** An event page whose prose block holds [paragraphs], one `<p>` each. */
+    private fun page(vararg paragraphs: String): Document =
+        Jsoup.parse(
+            "<div class=\"c-article__content\">" + paragraphs.joinToString("") { "<p>$it</p>" } + "</div>",
+            pageUrl
+        )
+
+    @Test
+    fun `reads the line-up block after the last room heading, up to the rule`() {
+        val lineup = scraper.scrapeLineup(rangePage(), "LA MAISON x KLUNKERKRANICH")
+
+        lineup shouldBe listOf("Lex Ludlow", "Kaldera", "Martin Brodin", "Alex Esser", "Jesper Aubin", "Raj Shindi")
+    }
+
+    @Test
+    fun `reads no line-up from a page without a room heading`() {
+        scraper.scrapeLineup(page("*Wohnzimmer ab 18 Uhr", "Ein Abend.", "Lex Ludlow", "_*_"), "NIGHT").shouldBeEmpty()
+    }
+
+    @Test
+    fun `drops links, credits, the no-clouds note and affiliations from the line-up block`() {
+        val lineup =
+            scraper.scrapeLineup(
+                page(
+                    "*Wohnzimmer:",
+                    "presented by die brotfrau",
+                    "hosted by Gieza Poke",
+                    "https://www.instagram.com/someone/",
+                    "JaMoll [Sumpfkrüge]",
+                    "no clouds",
+                    "_*_",
+                    "After the rule"
+                ),
+                "SOME NIGHT"
+            )
+
+        lineup shouldBe listOf("JaMoll")
+    }
+
+    @Test
+    fun `drops a line that restates the night but keeps an act the title also names`() {
+        val lineup =
+            scraper.scrapeLineup(
+                page("*Wohnzimmer:", "DJANGO LASSI *live", "HEAP Album Release Show", "DJ Set by Seraphim"),
+                "Django Lassi – HEAP Album Release | DJ Seraphim Balkanique · Gypsy · Swingcore"
+            )
+
+        lineup shouldBe listOf("DJANGO LASSI *live", "DJ Set by Seraphim")
+    }
+
+    @Test
+    fun `keeps an act that opens with a one-word part of the title`() {
+        // `Gypsy` is too short to mark a line as the night's name.
+        scraper.scrapeLineup(page("*Wohnzimmer:", "Gypsy Kings *live"), "Gypsy | Swing Night") shouldBe listOf("Gypsy Kings *live")
+    }
+
+    @Test
+    fun `drops a line that repeats the whole title`() {
+        scraper.scrapeLineup(page("*Wohnzimmer:", "Sunday Social"), "SUNDAY SOCIAL").shouldBeEmpty()
     }
 }

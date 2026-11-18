@@ -11,8 +11,9 @@ import java.math.BigDecimal
  * Pure HTML parser for a Klunkerkranich `/events/<slug>` page.
  *
  * The page restates the listing's fields — title, date, opening hours, thumbnail — and adds
- * three: the blurb, the entry price, the full-size poster. Those three are all this class
- * returns, which is why [KlunkerkranichWebsiteImporter] implements `EventImporter` directly
+ * three: the blurb, the entry price, the full-size poster. Those three, and the line-up block that
+ * stands in for a title without a line-up marker ([scrapeLineup]), are all this class returns,
+ * which is why [KlunkerkranichWebsiteImporter] implements `EventImporter` directly
  * rather than extending
  * [AbstractTwoPageWebsiteImporter][de.norm.events.scraper.AbstractTwoPageWebsiteImporter], whose
  * detail scraper is the primary source and must return a whole event (ADR-007 §"Shared Detail
@@ -81,8 +82,64 @@ class KlunkerkranichDetailPageScraper {
     /** The full-size poster the header image links to, falling back to the rendered crop. */
     fun scrapeImageUrl(document: Document): String? = document.hrefAt("$HEADER_MEDIA a[href]") ?: document.imgSrcAt("$HEADER_MEDIA img")
 
+    /**
+     * The billing lines of the page's line-up block, for a night whose title names no acts (#5264).
+     *
+     * The block runs from the last `*<Room>:` heading to the `_*_` rule, one billing per line. Four kinds
+     * of line are no billing and are dropped: a web address, a credit ("hosted by Gieza Poke", "presented
+     * by …"), the venue's `no clouds` note for an act without a SoundCloud, and the night's own name. A
+     * trailing `[affiliation]` is cut ("JaMoll [Sumpfkrüge]"). The `*live` marker and a `DJ Set by` label
+     * stay for the caller, which reads the role from them as it does on the listing's title.
+     *
+     * Empty when the page has no room heading followed by a block.
+     */
+    fun scrapeLineup(
+        document: Document,
+        title: String
+    ): List<String> {
+        val paragraphs =
+            document
+                .select(CONTENT_PARAGRAPH)
+                .map { it.text().trim() }
+                .takeWhile { it != FOOTER_RULE }
+        val heading = paragraphs.indexOfLast { it.startsWith(ROOM_LABEL_MARKER) && it.endsWith(':') }
+        if (heading < 0) return emptyList()
+        return paragraphs
+            .drop(heading + 1)
+            .map { it.replace(AFFILIATION, "").trim() }
+            .filter { line ->
+                line.any(Char::isLetterOrDigit) &&
+                    !WEB_ADDRESS.containsMatchIn(line) &&
+                    !CREDIT.containsMatchIn(line) &&
+                    !line.equals(NO_SOUNDCLOUD, ignoreCase = true) &&
+                    !namesTheNight(line, title)
+            }
+    }
+
     /** A euro amount with a German comma or a dot decimal separator. */
     private fun parseAmount(text: String): BigDecimal? = text.germanDecimalOrNull()
+
+    /**
+     * Whether [line] restates the night: it is the whole [title], or it opens with a part of the title and goes on
+     * ("HEAP Album Release Show" after `HEAP Album Release`, "HIVE TEA DRAG SHOW *live" after `HIVE TEA`). A line
+     * equal to a part is an act the title also names — `Django Lassi` in `Django Lassi – HEAP Album Release` — and stays.
+     * A part counts only with two words or more, so a one-word part like "Gypsy" never swallows an act that starts with it.
+     */
+    private fun namesTheNight(
+        line: String,
+        title: String
+    ): Boolean {
+        val folded = fold(LIVE_MARKER.replace(line, ""))
+        if (folded == fold(title)) return true
+        return title
+            .split(TITLE_PART_SEPARATOR)
+            .filter { part -> part.trim().split(WHITESPACE).size >= MIN_NIGHT_NAME_WORDS }
+            .map(::fold)
+            .any { part -> part.isNotEmpty() && folded.length > part.length && folded.startsWith(part) }
+    }
+
+    /** Lowercase letters and digits only, so the line's spacing and `*` decoration do not hide a restated title. */
+    private fun fold(text: String): String = text.lowercase().filter(Char::isLetterOrDigit)
 
     private companion object {
         /** The event page's prose block; the sidebar beside it holds date and price. */
@@ -99,6 +156,29 @@ class KlunkerkranichDetailPageScraper {
 
         /** The `*` prefixed to each room — "*Wohnzimmer", "*Ostflügel", "*Club „Hinter den Alpen“". */
         const val ROOM_LABEL_MARKER = "*"
+
+        /** A trailing `[affiliation]` on a line-up line — "JaMoll [Sumpfkrüge]". */
+        val AFFILIATION = Regex("""\s*\[[^\]]*]\s*$""")
+
+        /** A web address in the line-up block — the act's Instagram or Discogs page. */
+        val WEB_ADDRESS = Regex("""https?://|www\.""", RegexOption.IGNORE_CASE)
+
+        /** A credit opening a line-up line: a host or presenter is a person or a crew, not an act on the bill. */
+        val CREDIT = Regex("""^(?:hosted|presented)\s+by\b|^präsentiert\s+von\b""", RegexOption.IGNORE_CASE)
+
+        /** The venue's note under an act without a SoundCloud profile to embed. */
+        const val NO_SOUNDCLOUD = "no clouds"
+
+        /** The venue's `*live` marker, ignored when a line is compared with the title. */
+        val LIVE_MARKER = Regex("""\*\s*live\b""", RegexOption.IGNORE_CASE)
+
+        /** The separators between a title's parts — "Django Lassi – HEAP Album Release | DJ Seraphim", "HIVE TEA * DRAG SHOWS". */
+        val TITLE_PART_SEPARATOR = Regex("""[|–—*]""")
+
+        /** The fewest words a title part needs before a line that opens with it counts as the night's name. */
+        const val MIN_NIGHT_NAME_WORDS = 2
+
+        val WHITESPACE = Regex("""\s+""")
 
         /** A schedule-preamble line stating when the night or a room opens — "Samstag 8. August 2026, ab 16 Uhr". */
         val SCHEDULE_LINE = Regex("""\bab\s+\d{1,2}(?:[:.]\d{2})?\s*Uhr\b""", RegexOption.IGNORE_CASE)
