@@ -202,6 +202,7 @@ class SchokoladenOverviewPageScraperTest {
             genreOf("Sludgeworth (Noise-Rock/Sludge, Norwich/UK)") shouldBe "Noise-Rock/Sludge"
             // Event 14564 stored both towns as genres.
             genreOf("Dosenstolz (Punk/Dresden) + Eddie (Punk/Neuruppin)") shouldBe "Punk"
+            genreOf("DORFTERROR (Punkrock/Oberbillig) + special guest") shouldBe "Punkrock"
         }
 
         @Test
