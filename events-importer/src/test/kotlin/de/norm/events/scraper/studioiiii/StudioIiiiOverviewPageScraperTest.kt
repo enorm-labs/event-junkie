@@ -174,6 +174,37 @@ class StudioIiiiOverviewPageScraperTest {
     }
 
     @Test
+    fun `the november page bills the performances credits and a line that goes on with and`() {
+        val clock = Clock.fixed(Instant.parse("2026-11-18T10:00:00Z"), BERLIN)
+        val page = StudioIiiiOverviewPageScraper(clock).scrape(fixtureDocument("studioiiii/studioiiii-overview-2026-11-18.html", baseUrl), baseUrl)
+
+        fun acts(title: String) = page.single { it.title == title }.artists.map { it.name to it.role }
+
+        acts("STUDIO NIGHT – SALIMATA INVITES") shouldContainExactly
+            listOf("MIKE STARR", "SALIMATA", "UNITY", "DAISY WEWEH", "CLEO", "LUCIA LU").map { it to ArtistRole.DJ }
+        acts("WASTED SUMMER").take(3) shouldContainExactly
+            listOf("LELOSA" to ArtistRole.LIVE, "G LA SOSITA" to ArtistRole.LIVE, "ELIESG" to ArtistRole.DJ)
+        acts("WASTED SUMMER").last() shouldBe ("JALE" to ArtistRole.DJ)
+        acts("WASTED SUMMER") shouldHaveSize 13
+    }
+
+    @Test
+    fun `performances credits bill by role, and a performance by one act stays a credit`() {
+        credited("LIVE PERFORMANCE BY ANA. DJ PERFORMANCES WITH BEN & CARA.").artists.map { it.name to it.role } shouldContainExactly
+            listOf("ANA" to ArtistRole.LIVE, "BEN" to ArtistRole.DJ, "CARA" to ArtistRole.DJ)
+        credited("A PERFORMANCE BY ANA, AN INSTALLATION BY BEN").artists.shouldBeEmpty()
+        credited("DJ SET WITH FRIENDS BY ANA").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a line that opens with and or an ampersand goes on with the line before it`() {
+        credited("WITH DJ SETS BY CLEO", "AND LUCIA LU").artists.map { it.name } shouldContainExactly listOf("CLEO", "LUCIA LU")
+        credited("ANA, BEN", "& CARA").artists.map { it.name } shouldContainExactly listOf("ANA", "BEN", "CARA")
+        credited("DJ SETS BY ANA", "AND MORE").artists.map { it.name } shouldContainExactly listOf("ANA")
+        credited("ANDY, BEN").artists.map { it.name } shouldContainExactly listOf("ANDY", "BEN")
+    }
+
+    @Test
     fun `lowercase, music and live-set credits bill their acts and a more tail bills nobody`() {
         val event = credited("dj set by Ana & more", "MUSIC BY BEN", "LIVE SETS BY CARA AND DANI AND MORE")
 
