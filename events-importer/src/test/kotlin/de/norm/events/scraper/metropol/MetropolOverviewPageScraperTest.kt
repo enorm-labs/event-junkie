@@ -140,6 +140,36 @@ class MetropolOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a row filed under a sport category and keeps the concert beside it`() {
+        // The live listing's row for event 14732, 2026-11-18, beside a concert.
+        val document =
+            Jsoup.parse(
+                """
+                <ul class="eventlist">
+                  <li class="event category-571">
+                    <div class="date"><span class="day">11/</span> <span class="monthyear">Dez. 2026</span>
+                      <span class="time">19:00 <small>Einlass: 18:00</small></span>
+                      <ul class="event-categories"><li><a href="https://metropol-berlin.de/events/categories/boxing">Boxing</a></li></ul>
+                    </div>
+                    <div class="main"><a class="title" href="https://metropol-berlin.de/event/2026-12-11-playground-boxing-18-rising-stars">
+                      <h2 class="artist">Playground Boxing 18 &#8211; Rising Stars</h2></a></div>
+                  </li>
+                  <li class="event category-3">
+                    <div class="date"><span class="day">10/</span> <span class="monthyear">Dez. 2026</span>
+                      <span class="time">20:00 <small>Einlass: 19:00</small></span>
+                      <ul class="event-categories"><li><a href="https://metropol-berlin.de/events/categories/konzert">Konzert</a></li></ul>
+                    </div>
+                    <div class="main"><a class="title" href="https://metropol-berlin.de/event/2026-12-10-zebrahead"><h2 class="artist">Zebrahead</h2></a></div>
+                  </li>
+                </ul>
+                """.trimIndent(),
+                baseUrl
+            )
+
+        scraper.scrape(document, baseUrl).map { it.sourceId } shouldBe listOf("metropol:2026-12-10-zebrahead")
+    }
+
+    @Test
     fun `returns an empty list for a page without an event list`() {
         val document = Jsoup.parse("<html><body><div id='em-wrapper'></div></body></html>", baseUrl)
         scraper.scrape(document, baseUrl).shouldBeEmpty()
