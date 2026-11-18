@@ -11,6 +11,8 @@ class SoldOutMarkerTest {
             "!!AUSVERKAUFT!! Tim Vantol",
             "!!SOLD OUT!! Tim Vantol",
             "SOLD OUT - Otha",
+            "AUSVERKAUFT! ParkPunk",
+            "Sold out!!! The Act",
             "(ausverkauft) The Act",
             "Please Louise [ausverkauft]",
             "Please Louise [pre-sale sold out, 10 tix on the doors]",
@@ -37,6 +39,9 @@ class SoldOutMarkerTest {
             "Ihre restlos ausverkauften Konzerte",
             "the tape sold out in a record 3 months",
             "Soldouts live",
+            "Ausverkauft live",
+            "Ausverkauft!",
+            "Ausverkauft!Band",
             "Ausverkauft war gestern: ein Abend mit X",
             "Konzert-ausverkauft",
             "Mitsing-Event-ausverkauften-",
@@ -48,6 +53,11 @@ class SoldOutMarkerTest {
     fun `strips the marker and leaves the rest of the title`() {
         stripSoldOutMarker("!!AUSVERKAUFT!! Tim Vantol") shouldBe "Tim Vantol"
         stripSoldOutMarker("SOLD OUT - Otha") shouldBe "Otha"
+        // #5271: the word, a bang and a space.
+        stripSoldOutMarker("AUSVERKAUFT! ParkPunk") shouldBe "ParkPunk"
+        stripSoldOutMarker("AUSVERKAUFT! ParkPunk (deutschpunk, regensburg) + FCKSCHNTZL (punk-rock, bln)") shouldBe
+            "ParkPunk (deutschpunk, regensburg) + FCKSCHNTZL (punk-rock, bln)"
+        stripSoldOutMarker("Sold out !! The Act") shouldBe "The Act"
         stripSoldOutMarker("The Blood Arm + Please Louise [ausverkauft]") shouldBe "The Blood Arm + Please Louise"
         stripSoldOutMarker("Flower Face SOLD OUT") shouldBe "Flower Face"
         stripSoldOutMarker("Haken -ausverkauft-") shouldBe "Haken"
