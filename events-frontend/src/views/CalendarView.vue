@@ -8,6 +8,7 @@ import EventFilterBar from '@/components/EventFilterBar.vue'
 import ListPage from '@/components/ListPage.vue'
 import { describeError } from '@/api/client'
 import { retryTransient } from '@/api/retry'
+import { useCalendarReturn } from '@/composables/useCalendarReturn'
 import { fetchCalendarEvents } from '@/composables/useEvents'
 import { toCalendarInput } from '@/lib/calendarEvent'
 import { clampToCalendarWindow } from '@/lib/dateRanges'
@@ -21,7 +22,10 @@ const router = useRouter()
 const { filters } = useEventFilters()
 const localePath = useLocalePath()
 
-const events = ref<EventInput[]>([])
+// Filters live in the URL, so the query is what the events depend on besides the range.
+const memory = useCalendarReturn('calendar', () => JSON.stringify(route.query))
+const events = ref<EventInput[]>(memory.restored?.events ?? [])
+memory.keepOnLeave(() => (error.value ? undefined : events.value))
 const error = ref<string | null>(null)
 const retrying = ref(false)
 let generation = 0
@@ -58,8 +62,9 @@ async function load() {
 }
 
 // Driven by EventCalendar's `datesSet`, which also fires on initial render.
-function loadRange(next: { from: string; to: string }) {
-  range.value = next
+function loadRange(next: { from: string; to: string; view: string; date: string }) {
+  memory.track(next)
+  range.value = { from: next.from, to: next.to }
   return load()
 }
 
@@ -79,6 +84,12 @@ const { t } = useI18n()
     <EventFilterBar :show-date-range="false" />
     <p v-if="retrying" class="text-body text-muted-foreground">{{ t('errors.retrying') }}</p>
     <ErrorLine v-else-if="error">{{ error }}</ErrorLine>
-    <EventCalendar :events="events" @dates-set="loadRange" @event-click="openEvent" />
+    <EventCalendar
+      :events="events"
+      :initial-date="memory.restored?.date"
+      :initial-view="memory.restored?.view"
+      @dates-set="loadRange"
+      @event-click="openEvent"
+    />
   </ListPage>
 </template>

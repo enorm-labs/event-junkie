@@ -206,11 +206,8 @@ describe('EventCalendar week view', () => {
     await openWeek(wrapper)
 
     expect(viewType(wrapper)).toBe('listWeekNarrow')
-    expect(wrapper.findAll('[role="tab"]').map((tab) => tab.text())).toEqual([
-      'Month',
-      'Week',
-      'List',
-    ])
+    // List would open the same day list a second time.
+    expect(wrapper.findAll('[role="tab"]').map((tab) => tab.text())).toEqual(['Month', 'Week'])
   })
 
   it('opens on the month from md up', async () => {
@@ -240,5 +237,69 @@ describe('EventCalendar week view', () => {
     setNarrow(false)
     await flushPromises()
     expect(viewType(wrapper)).toBe('dayGridWeek')
+  })
+
+  it('moves an open list onto the Week button below md, where List is not offered', async () => {
+    const setNarrow = stubNarrow(false)
+    const wrapper = mount(EventCalendar, {
+      props: { events: [], initialView: 'listWeek' },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    setNarrow(true)
+    await flushPromises()
+
+    expect(viewType(wrapper)).toBe('listWeekNarrow')
+  })
+})
+
+/** Back from an event reopens the view and the date the visitor left (useCalendarReturn). */
+describe('EventCalendar return', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+    vi.unstubAllGlobals()
+  })
+
+  const monday = (iso: string) => {
+    const date = new Date(`${iso}T12:00:00`)
+    date.setDate(date.getDate() - ((date.getDay() + 6) % 7))
+    return date.toISOString().slice(0, 10)
+  }
+
+  it('opens on the view and the date it is given, and reports both', async () => {
+    stubNarrow(false)
+    const date = monday(addDays(todayIso(), 21))
+    const wrapper = mount(EventCalendar, {
+      props: { events: [], initialView: 'listWeek', initialDate: date },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    expect(viewType(wrapper)).toBe('listWeek')
+    const reported = wrapper.emitted('datesSet')!
+    expect(reported[reported.length - 1]![0]).toMatchObject({ view: 'listWeek', date })
+  })
+
+  it('keeps a returning visitor on the month below md', async () => {
+    stubNarrow(true)
+    const wrapper = mount(EventCalendar, {
+      props: { events: [], initialView: 'dayGridMonth' },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    expect(viewType(wrapper)).toBe('dayGridMonth')
+  })
+
+  it('reopens a week left on a wide screen as the day list below md', async () => {
+    stubNarrow(true)
+    const wrapper = mount(EventCalendar, {
+      props: { events: [], initialView: 'dayGridWeek' },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    expect(viewType(wrapper)).toBe('listWeekNarrow')
   })
 })

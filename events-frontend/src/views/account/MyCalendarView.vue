@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { fetchRsvpCalendar, fetchRsvpPast, fetchRsvpUpcoming } from '@/api/account'
 import { ApiError, describeError } from '@/api/client'
 import type { EventSummary } from '@/api/types'
+import { useCalendarReturn } from '@/composables/useCalendarReturn'
 import { useCompactView } from '@/composables/useCompactView'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useSession } from '@/composables/useSession'
@@ -41,8 +42,11 @@ const upcomingPage = ref(0)
 const upcomingMore = ref(false)
 const pastPage = ref(0)
 const pastMore = ref(false)
-const calendarEvents = ref<EventInput[]>([])
 const problem = ref('')
+// Another account's events must not flash up, so the account scopes the snapshot.
+const memory = useCalendarReturn('my-calendar', () => account.value?.email ?? '')
+const calendarEvents = ref<EventInput[]>(memory.restored?.events ?? [])
+memory.keepOnLeave(() => (problem.value || !showCalendar.value ? undefined : calendarEvents.value))
 
 async function loadList() {
   problem.value = ''
@@ -77,7 +81,9 @@ async function more(which: 'upcoming' | 'past') {
 }
 
 // Driven by EventCalendar's `datesSet`, which also fires on its first render.
-async function loadRange({ from, to }: { from: string; to: string }) {
+async function loadRange(next: { from: string; to: string; view: string; date: string }) {
+  memory.track(next)
+  const { from, to } = next
   try {
     const data = await fetchRsvpCalendar(from, clampToCalendarWindow(from, to))
     calendarEvents.value = data.map((event) => toCalendarInput(event, localePath))
@@ -140,6 +146,8 @@ onMounted(async () => {
     <EventCalendar
       v-if="showCalendar"
       :events="calendarEvents"
+      :initial-date="memory.restored?.date"
+      :initial-view="memory.restored?.view"
       @dates-set="loadRange"
       @event-click="openEvent"
     />

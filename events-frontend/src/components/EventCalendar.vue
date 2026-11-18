@@ -30,17 +30,17 @@ import '@fullcalendar/vue3/themes/classic/palette.css'
 
 interface Props {
   events: EventInput[]
+  /** Unset, the calendar opens on its default for the width; a return passes the view it left. */
   initialView?: string
+  initialDate?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  initialView: 'dayGridMonth',
-})
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   // Emitted whenever the visible range changes, so the parent can fetch the new window. Inclusive
-  // ISO date strings.
-  datesSet: [range: { from: string; to: string }]
+  // ISO date strings, with the view and its first date for a return to reopen on.
+  datesSet: [range: { from: string; to: string; view: string; date: string }]
   // Emitted when an event is clicked, carrying its slug for router navigation.
   eventClick: [slug: string]
 }>()
@@ -67,7 +67,12 @@ function handleDatesSet(arg: DatesSetInfo) {
   // FullCalendar's `end` is exclusive; the BFF's `to` is inclusive, so step back a day.
   const inclusiveEnd = new Date(arg.end)
   inclusiveEnd.setDate(inclusiveEnd.getDate() - 1)
-  emit('datesSet', { from: toIsoDate(arg.start), to: toIsoDate(inclusiveEnd) })
+  emit('datesSet', {
+    from: toIsoDate(arg.start),
+    to: toIsoDate(inclusiveEnd),
+    view: arg.view.type,
+    date: toIsoDate(arg.view.currentStart),
+  })
 }
 
 function handleEventClick(arg: EventClickInfo) {
@@ -121,7 +126,7 @@ const CALENDAR_LOCALES = { en: enGbLocale, de: deLocale }
 
 /**
  * Below Tailwind's `md`, seven columns of titles do not fit, so the Week button shows the same week
- * as a day-grouped list (#2693). jsdom has no `matchMedia` and counts as wide.
+ * as a day-grouped list (#2693), and the List button, now the same view, goes. jsdom has no `matchMedia` and counts as wide.
  */
 const narrowQuery = window.matchMedia?.('(max-width: 767.98px)')
 const narrow = ref(narrowQuery?.matches ?? false)
@@ -134,21 +139,31 @@ const GRID_WEEK = 'dayGridWeek'
 const LIST_WEEK_NARROW = 'listWeekNarrow'
 const weekView = (isNarrow: boolean) => (isNarrow ? LIST_WEEK_NARROW : GRID_WEEK)
 
+const LIST_WEEK = 'listWeek'
+
+/** The view for the width: below `md` the week is a list, so List would repeat Week and is not offered. */
+function fit(view: string, isNarrow: boolean): string {
+  if (view === GRID_WEEK || view === LIST_WEEK_NARROW) return weekView(isNarrow)
+  return view === LIST_WEEK && isNarrow ? LIST_WEEK_NARROW : view
+}
+
 /**
  * Below `md` the calendar opens on the week list, not the month: seven 44 px columns cut every
  * title to a few letters (#4657). The Month button stays; only the first view changes.
  */
-function firstView(view: string, isNarrow: boolean): string {
-  if (view === GRID_WEEK || (view === GRID_MONTH && isNarrow)) return weekView(isNarrow)
-  return view
+function firstView(view: string | undefined, isNarrow: boolean): string {
+  if (view) return fit(view, isNarrow)
+  return isNarrow ? LIST_WEEK_NARROW : GRID_MONTH
 }
 
 const calendar = useTemplateRef<InstanceType<typeof FullCalendar>>('calendar')
 
-// The toolbar only names the views; a week already on screen is swapped when the width crosses `md`.
+// The toolbar only names the views; a view already on screen is swapped when the width crosses `md`.
 watch(narrow, (isNarrow) => {
   const api = calendar.value?.getApi()
-  if (api?.view.type === weekView(!isNarrow)) api.changeView(weekView(isNarrow))
+  if (!api) return
+  const next = fit(api.view.type, isNarrow)
+  if (next !== api.view.type) api.changeView(next)
 })
 
 // FullCalendar is encapsulated here so the rest of the app sees one on-theme component
@@ -157,12 +172,15 @@ watch(narrow, (isNarrow) => {
 const options = computed<CalendarOptions>(() => ({
   plugins: [classicThemePlugin, dayGridPlugin, listPlugin],
   initialView: firstView(props.initialView, narrow.value),
+  initialDate: props.initialDate,
   locale: isLocale(locale.value) ? CALENDAR_LOCALES[locale.value] : enGbLocale,
   eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
   headerToolbar: {
     start: 'prev,next today',
     center: 'title',
-    end: `${GRID_MONTH},${weekView(narrow.value)},listWeek`,
+    end: narrow.value
+      ? `${GRID_MONTH},${LIST_WEEK_NARROW}`
+      : `${GRID_MONTH},${GRID_WEEK},${LIST_WEEK}`,
   },
   // v7 has no `buttonText` option and no built-in English labels. A view button with no resolvable
   // text is silently not rendered, so without this block the calendar loses its view switcher.
@@ -173,7 +191,7 @@ const options = computed<CalendarOptions>(() => ({
     [GRID_MONTH]: viewButton(t('calendar.view.month')),
     [GRID_WEEK]: viewButton(t('calendar.view.week')),
     [LIST_WEEK_NARROW]: viewButton(t('calendar.view.week')),
-    listWeek: viewButton(t('calendar.view.list')),
+    [LIST_WEEK]: viewButton(t('calendar.view.list')),
   },
   height: 'auto',
   firstDay: 1, // Monday (Berlin / EU convention)
@@ -186,7 +204,7 @@ const options = computed<CalendarOptions>(() => ({
   views: {
     [GRID_MONTH]: { dayMaxEvents: 6 },
     [GRID_WEEK]: { dayMaxEvents: false },
-    [LIST_WEEK_NARROW]: { type: 'listWeek' },
+    [LIST_WEEK_NARROW]: { type: LIST_WEEK },
   },
   moreLinkText: t('calendar.more'), // rendered as `+N <more>`
   // A day's own events take the cell's rows before a run that spans it, so five month-long
