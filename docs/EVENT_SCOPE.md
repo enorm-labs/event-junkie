@@ -113,6 +113,8 @@ than avoid it:
   row when its title or format line names a sport, for example `Snooker` or `Darts`. An esports tournament is sport, so
   `GeoGuessr` and `E-Sport` also drop a row. `World Championship` alone does not, because a music or dance contest can
   use it.
+- **Metropol** — a boxing night plays here, filed under the `Boxing` category. `MetropolOverviewPageScraper.isSport`
+  drops a row whose category is `Boxing`, `Boxen` or `Sport`.
 
 The consequence is worth stating plainly. **An arena's imported event count is well below what its own programme page
 shows**, and that is correct rather than a bug.

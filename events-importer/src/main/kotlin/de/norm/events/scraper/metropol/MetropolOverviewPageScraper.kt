@@ -37,7 +37,7 @@ import java.time.LocalTime
  * (`04/`), a `.monthyear` (`Aug. 2026`), a `.time` whose own text is the start and whose
  * nested `<small>` holds `Einlass: HH:mm` — a category link (`Konzert` / `Party`), an
  * `h2.artist` title whose `small.support` child lists the `+`-joined support acts, and a link
- * to the `/event/<iso-date-slug>` detail page.
+ * to the `/event/<iso-date-slug>` detail page. A row under a sport category is dropped (#5272).
  *
  * The overview is the discovery list, the fallback for every field the detail page also
  * carries (the importer degrades to it when a detail fetch fails), and the **only** source for
@@ -59,8 +59,8 @@ class MetropolOverviewPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val rows = document.select("ul.eventlist li.event")
-        logger.info { "Found ${rows.size} event row(s) on Metropol overview" }
+        val (sport, rows) = document.select("ul.eventlist li.event").partition(::isSport)
+        logger.info { "Found ${rows.size} event row(s) on Metropol overview, skipping ${sport.size} sport fixture(s)" }
 
         return rows.mapSkippingFailures(logger, "Metropol event row") { row ->
             parseRow(row, baseUrl)
@@ -109,6 +109,9 @@ class MetropolOverviewPageScraper {
             artists = buildMetropolArtists(title, support, eventType)
         )
     }
+
+    /** A row filed under a sport category, such as the `Boxing` fight nights: out of scope, EVENT_SCOPE.md §3.1 (#5272). */
+    private fun isSport(row: Element): Boolean = row.select("ul.event-categories a").any { it.text().trim().lowercase() in SPORT_CATEGORIES }
 
     /**
      * The rendered German date from the calendar block — a `.day` with a trailing slash (`04/`)
@@ -173,3 +176,6 @@ private fun parseMetropolTime(text: String?): LocalTime? =
  * `0:00` placeholder (which the shared `HH:mm` formatter would reject).
  */
 private val TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")
+
+/** The categories of a sport fixture; the site lists `Boxing` today. */
+private val SPORT_CATEGORIES = setOf("boxing", "boxen", "sport")
