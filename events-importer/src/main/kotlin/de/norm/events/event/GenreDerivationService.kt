@@ -1,8 +1,6 @@
-package de.norm.events.importing
+package de.norm.events.event
 
 import de.norm.events.EVENTS_SCHEMA
-import de.norm.events.event.EventEntity
-import de.norm.events.event.EventType
 import de.norm.events.genretag.EventGenreTagEntity
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagOrigin
@@ -19,7 +17,8 @@ import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Service
 
 /**
- * Derives genre tags for the events whose source publishes none (ADR-047). Runs inside the import transaction, after the genre sync.
+ * Derives genre tags for the events whose source publishes none (ADR-047). Runs inside the import transaction, after the genre sync, and
+ * inside an admin create or edit, after the line-up is written (#5262).
  *
  * A music event takes the source tags its billed acts carry on their other events, past or upcoming. A support act does not count, and a
  * DJ billing and a live billing do not lend each other tags: one name can be a resident DJ and a band (#4411).
@@ -34,6 +33,17 @@ class GenreDerivationService(
     private val genreTagRepository: GenreTagRepository
 ) {
     private val logger = KotlinLogging.logger {}
+
+    /**
+     * Derives the tags of [event], which an admin create or edit has just written, unless the event pins its genre tags (ADR-042).
+     *
+     * @return whether a derived tag was written or removed.
+     */
+    suspend fun deriveUnlessPinned(event: EventEntity): Boolean {
+        if (PinnedField.GENRES.key in event.pinnedFields) return false
+        val outcome = derive(listOf(event))
+        return outcome.inserted > 0 || outcome.removed > 0
+    }
 
     /**
      * Replaces the derived tags of [events] with what their acts and descriptions give today. An event with a source tag keeps no derived tag.

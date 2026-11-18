@@ -51,6 +51,7 @@ class EventService(
     private val eventPinService: EventPinService,
     private val contentStamp: EventContentStamp,
     private val changeLog: EventChangeLog,
+    private val genreDerivation: GenreDerivationService,
     private val template: R2dbcEntityTemplate
 ) {
     private val logger = KotlinLogging.logger {}
@@ -153,10 +154,11 @@ class EventService(
         val artistResponses = saveArtistAssociations(eventId, request.artists)
         val promoterIdResponses = savePromoterAssociations(eventId, request.promoterIds)
         val genreTagNames = saveGenreTagAssociations(eventId, request.genre)
+        val derived = genreDerivation.deriveUnlessPinned(saved)
         contentStamp.restamp(listOf(saved))
 
         logger.info { "Created event '${saved.title}' with id $eventId" }
-        return toResponse(saved, artistResponses, promoterIdResponses, genreTagNames)
+        return toResponse(saved, artistResponses, promoterIdResponses, genreTagNames.takeUnless { derived })
     }
 
     /**
@@ -254,11 +256,12 @@ class EventService(
             } else {
                 null
             }
+        val derived = genreDerivation.deriveUnlessPinned(saved)
         contentStamp.restamp(listOf(saved))
 
         logger.info { "Updated event '${saved.title}' (id=$id)" }
         if (pinned.isNotEmpty()) logger.info { "Pinned ${pinned.joinToString { it.key }} on event $id: the importer keeps them" }
-        return toResponse(saved, artistResponses, promoterIdResponses, genreTagNames)
+        return toResponse(saved, artistResponses, promoterIdResponses, genreTagNames.takeUnless { derived })
     }
 
     /**

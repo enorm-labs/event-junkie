@@ -2,6 +2,7 @@ package de.norm.events.importing
 
 import de.norm.events.artist.artistSlugFor
 import de.norm.events.event.EventEntity
+import de.norm.events.event.GenreDerivationService
 import de.norm.events.event.PinnedField
 import de.norm.events.genretag.nonGenreTokens
 import de.norm.events.genretag.normalizeGenre

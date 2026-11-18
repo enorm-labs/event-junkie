@@ -419,6 +419,7 @@ Core entity representing a single music event at a venue on a specific date.
 **A hand edit pins the fields that it changes (ADR-042).** `PUT /api/admin/events/{id}` adds each changed field to
 `pinned_fields`, by its name in the request. `PATCH /api/admin/events/{id}` changes only the fields that it sends, and pins them the same way. `lineup`, `promoters` and `genres` pin the join tables.
 The edit rewrites the genre tags and pins `genres` only when the `genre` text changes. Otherwise the stored tags stay, derived tags too.
+After the save, the edit derives the tags again from the lineup, unless `genres` is pinned (#5262).
 `PUT /api/admin/events/{id}/features` sets the event features and pins `features`. The importer keeps a
 pinned field and updates every other field. A pinned title, date or venue also keeps the slug, and a pinned date keeps
 the end. A hand edit keeps the slug when it changes none of the title, the date and the venue. So a second sitting keeps its
@@ -626,7 +627,7 @@ Links events to their normalized genre tags (many-to-many).
 Unique constraint on `(event_id, genre_tag_id)` prevents duplicate tag-event associations.
 
 `origin` is `SOURCE` for a tag that the event's source published. The importer derives `ARTIST` and `DESCRIPTION` tags only for an event with no `SOURCE`
-tag (ADR-047). A `WIKIDATA` tag comes from the acts' Wikidata genres in `artist.wikidata_genres`, only when no other origin gives a tag (ADR-060). The public
+tag (ADR-047). An admin create or edit derives them too, unless the event pins `genres`. A `WIKIDATA` tag comes from the acts' Wikidata genres in `artist.wikidata_genres`, only when no other origin gives a tag (ADR-060). The public
 event detail returns the derived tags in `derivedGenreTags`.
 
 ### event_enrichment (Side Table)
