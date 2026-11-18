@@ -156,6 +156,26 @@ class KlunkerkranichOverviewPageScraperTest {
             .artists
 
     @Test
+    fun `credits a guest crew billed with the venue as the promoter (event 14605)`() {
+        val night =
+            scrape(
+                cardHtml(href = "/events/2026-12-05-a/", dateLine = "Samstag, 05. Dezember", title = "SUMPFKRÜGE x KLUNKERKRANICH w. JaMoll, KBLZ")
+            ).single()
+
+        night.promoters shouldContainExactly listOf("SUMPFKRÜGE")
+        night.artists.map { it.name } shouldContainExactly listOf("JaMoll", "KBLZ")
+    }
+
+    @Test
+    fun `credits no promoter to a night the venue bills alone`() {
+        scrape(
+            cardHtml(href = "/events/2026-12-05-b/", dateLine = "Samstag, 05. Dezember", title = "LA MAISON x KRANICH")
+        ).single().promoters shouldContainExactly
+            listOf("LA MAISON")
+        scrape(cardHtml(href = "/events/2026-12-05-c/", dateLine = "Samstag, 05. Dezember")).single().promoters shouldContainExactly emptyList()
+    }
+
+    @Test
     fun `reads the acts of a promoter's presents billing`() {
         val night = on(LocalDate.of(2026, 8, 12), "Sonic Odyssey presents: IBAAKU & K’BOKO *live")
 

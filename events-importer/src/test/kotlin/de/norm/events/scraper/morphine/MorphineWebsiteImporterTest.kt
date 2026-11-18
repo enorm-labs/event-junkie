@@ -140,7 +140,7 @@ class MorphineWebsiteImporterTest {
             birds.artists shouldBe
                 listOf(
                     ScrapedArtist("ALL ABOUT BIRDS", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z")),
-                    ScrapedArtist("JON ROSE", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z"))
+                    ScrapedArtist("JON ROSE", ArtistRole.HEADLINER, titleDerived = true)
                 )
         }
 

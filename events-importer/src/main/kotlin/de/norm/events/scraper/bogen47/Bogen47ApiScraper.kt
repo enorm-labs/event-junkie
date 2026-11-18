@@ -88,6 +88,9 @@ data class Bogen47Page(
  * event is classified**, because it otherwise decides the type: a bare `club` in the keyword
  * classifier turned `LEILA – 20 SOMETHING CLUB TOUR` into a `PARTY` that lost its headliner.
  *
+ * **LARK leaves `acf.event_type` blank on most posts**, so a blank one is a concert, but a title naming the sister club
+ * (`Baile Trama NYE – Lark & Fitzroy`, event 14615) is a party across both clubs, whose venue names are no acts.
+ *
  * **A showcase night bills its line-up in the description** (`KULTURSCHOCKTHERAPIE`, #3293):
  * three or more bullet lines (`- Sin Davis`), with only blank or punctuation lines between them,
  * are the concert's headliners in listed order, and the title, the night's name, bills no act.
@@ -193,7 +196,12 @@ internal class Bogen47ApiScraper(
         // Classify the act, not the tour: "LEILA – 20 SOMETHING CLUB TOUR" is a gig, but the shared
         // keyword classifier sees the "club" in its tour name and calls it a party.
         val actTitle = stripArtistSuffix(title)
-        val eventType = refineConcertVenueType(mapEventType(acf.stringOrNull("event_type"), eventTypes), actTitle)
+        val eventType =
+            if (eventSource == EventSource.LARK && SISTER_CLUB_NIGHT.containsMatchIn(title)) {
+                EventType.PARTY.name
+            } else {
+                refineConcertVenueType(mapEventType(acf.stringOrNull("event_type"), eventTypes), actTitle)
+            }
 
         return Bogen47Entry(
             event =
@@ -373,20 +381,28 @@ private const val MIN_LABELLED_ACTS = 2
 
 /**
  * The acts a title bills: a `TEMPO GALLERY presents: A, B, and C` bill ([presentsFrameNames]), the two sides of a
- * [VERSUS_NIGHT], or the acts after a [STAR_BILL]'s star. Any other title names the night, so it bills nobody.
+ * [VERSUS_NIGHT], or the acts after a [STAR_BILL]'s star or a [WITH_BILL]'s `with`. Any other title names the night, so
+ * it bills nobody. The head before `with` can be the night's name (`BAILE TRAMA with …`), so it is no act.
  */
 private fun titleBill(title: String): List<String> =
     presentsFrameNames(title)
         ?: VERSUS_NIGHT.matchEntire(title)?.let { listOf(it.groupValues[1], it.groupValues[2]) }
-        ?: STAR_BILL
-            .matchEntire(title.trim())
-            ?.groupValues
-            ?.get(1)
-            ?.split(BILL_SEPARATOR)
-            ?.map { it.trim() }
-            ?.filterNot { it.isBlank() || isNonArtistName(it) || RESIDENTS_SLOT.matches(it) }
-            ?.takeIf { it.size >= MIN_STAR_BILL_ACTS }
-            .orEmpty()
+        ?: billAfter(STAR_BILL, title)
+        ?: billAfter(WITH_BILL, title).orEmpty()
+
+/** The acts listed after [frame]'s marker, or null with fewer than [MIN_STAR_BILL_ACTS]. */
+private fun billAfter(
+    frame: Regex,
+    title: String
+): List<String>? =
+    frame
+        .matchEntire(title.trim())
+        ?.groupValues
+        ?.get(1)
+        ?.split(BILL_SEPARATOR)
+        ?.map { it.trim() }
+        ?.filterNot { it.isBlank() || isNonArtistName(it) || RESIDENTS_SLOT.matches(it) }
+        ?.takeIf { it.size >= MIN_STAR_BILL_ACTS }
 
 /** Two acts and the night's name: `HONKY DONK vs Mordorkore: Battle of the Jesterz`. Without the colon, `vs` can sit inside a band's name. */
 private val VERSUS_NIGHT = Regex("""(.+?)\s+vs\.?\s+([^:]+?)\s*:\s+\S.*""", RegexOption.IGNORE_CASE)
@@ -394,7 +410,13 @@ private val VERSUS_NIGHT = Regex("""(.+?)\s+vs\.?\s+([^:]+?)\s*:\s+\S.*""", Rege
 /** `tm8.club x Dissident ★ Mama Snake, Jan Loup + residents`: the hosts, one star, then the acts. */
 private val STAR_BILL = Regex("""[^★]+★\s*([^★]+)""")
 
-/** A comma or a spaced `+` between two acts of a [STAR_BILL]. */
+/** `FILLAN with ADNS, Malingula, Matthieu P, sinkaaf` (event 14612): the night or its host, then the acts. */
+private val WITH_BILL = Regex(""".+?\s+with\s+(.+)""", RegexOption.IGNORE_CASE)
+
+/** The sister club named in a LARK title. */
+private val SISTER_CLUB_NIGHT = Regex("""\bFitzroy\b|\b2 CLUBS\b""", RegexOption.IGNORE_CASE)
+
+/** A comma or a spaced `+` between two acts of a [STAR_BILL] or a [WITH_BILL]. */
 private val BILL_SEPARATOR = Regex("""\s*,\s*|\s+\+\s+""")
 
 /** The unnamed residents closing a bill: `+ residents`. */
@@ -496,6 +518,7 @@ private fun htmlToPlainText(raw: String): String {
     fragment.select("p").forEach { it.appendChild(TextNode("\n")) }
     return fragment
         .wholeText()
+        .replace("\r\n", "\n")
         .replace('\r', '\n')
         .replace(BLANK_LINE_RUN, "\n\n")
         .trim()
@@ -503,7 +526,7 @@ private fun htmlToPlainText(raw: String): String {
 
 /**
  * The acts a description lists as bullets, or null when it lists fewer than [MIN_LINEUP_BULLETS].
- * A run of bullets may hold blank lines, as LARK's editor puts one between each, and lines of only
+ * A run of bullets may hold blank lines and lines of only
  * punctuation (`--`), but any other line ends it. A trailing parenthesis is a note
  * (`GUILE (TSOL, X-Kalay)`), and `X` inside a name (`Eaven X Oceans11`) is one act.
  */
@@ -534,8 +557,11 @@ private val BULLET_LINE = Regex("""[-–•]\s*(.+)""")
 /** A parenthesised note closing a bullet's name. */
 private val TRAILING_PARENTHESIS = Regex("""\s*\([^)]*\)$""")
 
-/** Three or more consecutive newlines, collapsed to one blank line. */
-private val BLANK_LINE_RUN = Regex("""\n{3,}""")
+/**
+ * Two or more blank lines in a row, collapsed to one. A line of only spaces counts as blank: LARK's editor separates
+ * paragraphs with `\r\n\r\n \r\n\r\n` (event 14614).
+ */
+private val BLANK_LINE_RUN = Regex("""\n(?:[ \t\u00A0]*\n){2,}""")
 
 /**
  * The promoters one organiser field credits. The theme writes a list in one field (`Homebound Music, BANDU,

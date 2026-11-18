@@ -58,8 +58,11 @@ internal object ZebranoTheaterBilling {
     private const val NAME_WORD = """\p{Lu}[\p{L}'.-]*"""
     private const val JOINER = """und|&|feat\.|von|van|de|la|le|di"""
 
-    /** Capitalised words, joined by `und`, `&`, `feat.` or a name particle. */
-    private val NAMES = Regex("""$NAME_WORD(?:\s+(?:$NAME_WORD|$JOINER))*""")
+    /**
+     * Capitalised words, joined by `und`, `&`, `feat.` or a name particle. A band after the last `&` may be lower case by
+     * choice (`Felix Meyer & project île`, event 14617).
+     */
+    private val NAMES = Regex("""$NAME_WORD(?:\s+(?:$NAME_WORD|$JOINER))*(?:\s+&(?:\s+[\p{L}'.-]+){1,3})?""")
 
     private val LIST_SEPARATOR = Regex(""",\s*|\s+und\s+""")
 

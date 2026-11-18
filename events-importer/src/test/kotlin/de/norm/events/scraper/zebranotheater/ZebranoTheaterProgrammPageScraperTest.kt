@@ -103,6 +103,13 @@ class ZebranoTheaterProgrammPageScraperTest {
     }
 
     @Test
+    fun `keeps a band named in lower case after the ampersand (event 14617)`() {
+        scrapeTable("Dezember 2026", row("11.12.", "19:30 Uhr", "Felix Meyer &amp; project &icirc;le: Paradies (CD-Release)"))
+            .single()
+            .artists shouldContainExactly listOf(ScrapedArtist(name = "Felix Meyer & project île"))
+    }
+
+    @Test
     fun `keeps an evening announced before its page on the listing`() {
         val announced = event("2027-01-17")
         announced.title shouldBe "Johannes Kirchberg: Im Leuchtturm durch die Zeit"

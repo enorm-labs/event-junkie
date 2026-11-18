@@ -112,9 +112,10 @@ class MorphineDetailPageScraper {
                         .withIndex()
                         .filter { it.value.name.isNotBlank() }
                         .flatMap { (index, set) ->
+                            // One time for a co-billed entry is when its first act starts, not every act (event 14609).
                             morphineSetLineActs(stripFormatTail(set.name), title)
                                 .flatMap { headlinersFromTitle(it) }
-                                .map { it.copy(setStart = starts[index]) }
+                                .mapIndexed { act, artist -> artist.copy(setStart = starts[index].takeIf { act == 0 }) }
                         }.distinctBy { it.name.lowercase() }
                 }
         )
