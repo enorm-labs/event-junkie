@@ -146,7 +146,8 @@ test('refetches when switching the calendar view', async ({ page }) => {
   const initialCount = froms.length
 
   // FullCalendar 7 renders the view switcher as a tablist: role="tab" named "<View> view".
-  await page.getByRole('tab', { name: 'List view' }).click()
+  // Below md the calendar opens on the week list, and List, the same view, is not offered.
+  await page.getByRole('tab', { name: isNarrow(page) ? 'Month view' : 'List view' }).click()
 
   await expect.poll(() => froms.length).toBeGreaterThan(initialCount)
 })
@@ -312,4 +313,45 @@ test('opens on the week list below md', async ({ page }) => {
   // Seven month columns cut every title to a few letters on a phone (#4657).
   await expect(page.getByRole('tab', { name: 'Week view' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('tab', { name: 'Month view' })).toBeVisible()
+})
+
+test('returns to the list, the week and the scroll position on Back from an event', async ({
+  page,
+}) => {
+  await page.route(calendarFeed, (route) => {
+    const from = new URL(route.request().url()).searchParams.get('from') ?? '2026-07-01'
+    return json(
+      route,
+      Array.from({ length: 30 }, (_, i) => ({
+        slug: `gig-${i}`,
+        title: `Gig ${i}`,
+        eventDate: from,
+        startTime: '20:00',
+      })),
+    )
+  })
+  await page.route(/\/api\/events\/gig-25/, (route) =>
+    json(route, { slug: 'gig-25', title: 'Gig 25', eventDate: '2026-08-15' }),
+  )
+  // Below md the Week button already is the list, and List is not offered.
+  const list = page.getByRole('tab', { name: isNarrow(page) ? 'Week view' : 'List view' })
+  const title = page.locator('.ej-title')
+
+  await page.goto('/calendar')
+  await list.click()
+  await page.getByRole('button', { name: 'next' }).click()
+  const week = await title.textContent()
+  const gig = page.getByRole('link', { name: /\bGig 25$/ })
+  await gig.scrollIntoViewIfNeeded()
+  const scrolled = await page.evaluate(() => window.scrollY)
+  expect(scrolled).toBeGreaterThan(0)
+
+  await gig.click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Gig 25' })).toBeVisible()
+  await page.goBack()
+
+  await expect(list).toHaveAttribute('aria-selected', 'true')
+  await expect(title).toHaveText(week!)
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrolled - 50)
+  await expect(gig).toBeInViewport()
 })
