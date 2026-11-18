@@ -1,11 +1,13 @@
 package de.norm.events.scraper.klunkerkranich
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
@@ -23,7 +25,8 @@ import java.time.Clock
  * 2. [KlunkerkranichOverviewPageScraper] parses every `article.o-card` — title, date, start
  * time, thumbnail and billed acts.
  * 3. Each night's `/events/<slug>` page for the three fields the listing omits — blurb, entry
- * charge, full-size poster ([KlunkerkranichDetailPageScraper]).
+ * charge, full-size poster ([KlunkerkranichDetailPageScraper]) — and for the acts when the title
+ * names none.
  *
  * Step 3 runs in [enrichFromEventPage] rather than through [de.norm.events.scraper.AbstractTwoPageWebsiteImporter]:
  * the event page restates the listing and adds only those three, so it is not the primary source
@@ -51,6 +54,9 @@ class KlunkerkranichWebsiteImporter(
 
     private val detailPageScraper = KlunkerkranichDetailPageScraper()
 
+    /** The listing's billing rules, applied to the event page's line-up lines too. */
+    private val billingParser = KlunkerkranichOverviewPageScraper(clock)
+
     override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = ::addEventPageFields
 
     /** A failed page leaves the card's thumbnail, which yields to a stored full-size poster (#2465). */
@@ -59,6 +65,7 @@ class KlunkerkranichWebsiteImporter(
     /**
      * The event with the page's blurb, price and full-size poster. A page without a blurb still
      * gives its price and poster, so the row is flagged rather than dropped back to the listing.
+     * A title that named no acts takes the page's line-up block instead ([pageLineup]).
      */
     private fun addEventPageFields(
         event: ScrapedEvent,
@@ -72,9 +79,31 @@ class KlunkerkranichWebsiteImporter(
                 imageUrl = detailPageScraper.scrapeImageUrl(document) ?: event.imageUrl,
                 priceBoxOffice = priceBoxOffice,
                 priceNote = priceNote,
+                artists = event.artists.ifEmpty { pageLineup(document, event.title) },
                 detailUnavailable = description == null
             )
     }
+
+    /**
+     * The acts of the page's line-up block, for a title with no line-up marker (#5264). Each line is one billing,
+     * read as the listing reads one: a DJ by default, `LIVE` with `*live`, a `DJ Set by` label stripped. An act the
+     * title also names keeps the title's spelling, since the block shouts it ("DJANGO LASSI" for `Django Lassi`).
+     */
+    private fun pageLineup(
+        document: Document,
+        title: String
+    ): List<ScrapedArtist> =
+        detailPageScraper
+            .scrapeLineup(document, title)
+            .flatMap { billingParser.parseBilling(it, ArtistRole.DJ) }
+            .map { act -> titleSpelling(act.name, title)?.let { act.copy(name = it) } ?: act }
+            .distinctBy { it.name.lowercase() }
+
+    /** The [title]'s own spelling of [name], when the title contains it in any case. */
+    private fun titleSpelling(
+        name: String,
+        title: String
+    ): String? = title.indexOf(name, ignoreCase = true).takeIf { it >= 0 }?.let { title.substring(it, it + name.length) }
 }
 
 val KLUNKERKRANICH_LIMITATIONS =

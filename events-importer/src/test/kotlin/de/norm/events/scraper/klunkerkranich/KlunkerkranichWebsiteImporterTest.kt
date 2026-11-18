@@ -1,9 +1,11 @@
 package de.norm.events.scraper.klunkerkranich
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -95,6 +97,69 @@ class KlunkerkranichWebsiteImporterTest {
             // The listing's thumbnail is a 520x320 crop; the event page links the original.
             night.imageUrl shouldBe "https://klunkerkranich.org/wp-content/uploads/2025/10/Klunkerkranich-kunst-10.Oct25.jpg"
             night.detailUnavailable shouldBe false
+        }
+
+    /**
+     * The 2026-11-18 programme, whose Django Lassi, HIVE TEA and VINYL POP UP titles carry no line-up marker. Their own
+     * pages are served for them, the HMWL page for every other night.
+     */
+    private fun stubNoMarkerProgramme() {
+        val url = "https://klunkerkranich.org/events/"
+        coEvery { htmlFetcher.fetch(url, any(), any()) } returns
+            FetchResult.Success(fixtureDocument("klunkerkranich/klunkerkranich-overview-no-marker.html", url), etag = null, lastModified = null)
+        coEvery { htmlFetcher.fetchDocument(any()) } answers {
+            val page = firstArg<String>()
+            val name =
+                when {
+                    "django-lassi" in page -> "klunkerkranich-detail-django-lassi.html"
+                    "hive-tea" in page -> "klunkerkranich-detail-hive-tea.html"
+                    "vinyl-pop-up" in page -> "klunkerkranich-detail-vinyl-pop-up.html"
+                    else -> "klunkerkranich-detail-price-range.html"
+                }
+            fixtureDocument("klunkerkranich/$name", page)
+        }
+    }
+
+    private suspend fun importNoMarkerNight(slugPart: String): ScrapedEvent {
+        stubNoMarkerProgramme()
+        val result = importer.importEvents(listingUrl) as ImportResult.Success
+        return result.events.single { slugPart in it.sourceId }
+    }
+
+    private fun ScrapedEvent.lineup() = artists.map { it.name to it.role }
+
+    @Test
+    fun `bills the event page's line-up when the title has no line-up marker`() =
+        runTest {
+            val night = importNoMarkerNight("django-lassi")
+
+            night.title shouldBe "Django Lassi – HEAP Album Release | DJ Seraphim Balkanique · Gypsy · Swingcore"
+            // The block shouts `DJANGO LASSI *live`; the title's spelling wins. `HEAP Album Release Show` restates the title.
+            night.lineup() shouldBe listOf("Django Lassi" to ArtistRole.LIVE, "Seraphim" to ArtistRole.DJ)
+        }
+
+    @Test
+    fun `drops the show line, the host, the link and the affiliation from the page's line-up`() =
+        runTest {
+            val night = importNoMarkerNight("hive-tea")
+
+            // `HIVE TEA DRAG SHOW *live` is the night itself, `hosted by Gieza Poke` its host.
+            night.lineup() shouldBe listOf("Emorine" to ArtistRole.DJ, "Vamilienfa†er" to ArtistRole.DJ)
+        }
+
+    @Test
+    fun `bills no act from a page whose block only restates the night and credits its presenter`() =
+        runTest {
+            importNoMarkerNight("vinyl-pop-up").artists.shouldBeEmpty()
+        }
+
+    @Test
+    fun `keeps the title's line-up over the page's block when the title has a marker`() =
+        runTest {
+            val night = importNoMarkerNight("les-moches")
+
+            // The HMWL page served for it bills Lex Ludlow; the title's acts stand.
+            night.artists.map { it.name } shouldBe listOf("Zuendhoelzl", "Silvi Knallt", "Dämser", "Tigo")
         }
 
     @Test
