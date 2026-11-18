@@ -34,8 +34,9 @@ import java.time.MonthDay
  *
  * Line-up lines are split into DJs, without a leading `LINE UP:` label or the prose before `… AND DJS`. A line
  * with "by" credits an installation or a curator, and a ticket line is a notice: both become the description.
- * A credit line still bills the names after `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`, up to the end of that
- * sentence, and the names between `JOINED BY` and `ON THE DECKS`. A title line `INVITES <act>` bills that act first. A night with
+ * A credit line still bills the names after `DJ SETS BY`, `LIVE SETS BY`, `LIVE PERFORMANCES BY`, `DJ PERFORMANCES WITH`
+ * or `MUSIC BY`, up to the end of that sentence, and the names between `JOINED BY` and `ON THE DECKS`. A line that opens
+ * with `AND` or `&` goes on with the line before it. A title line `INVITES <act>` bills that act first. A night with
  * only credits is an exhibition. A note the page's editor forgot in the line-up bills nobody.
  *
  * Accepted limitation: `and` always splits a set list, so an act named with one (`Sun and Moon`)
@@ -85,6 +86,7 @@ class StudioIiiiOverviewPageScraper(
                 ?.lines()
                 .orEmpty()
                 .filterNot { SAVE_THE_DATE.matches(it) }
+                .let(::joinContinuations)
         val (notes, lineup) = text.partition { CREDIT.containsMatchIn(it) || NOTICE.containsMatchIn(it) }
         val invited = lineupActs(titleLines.mapNotNull { INVITES.matchEntire(it.trim())?.groupValues?.get(1) })
         val djs = (invited + lineupActs(lineup.map(::afterProse)) + notes.flatMap(::setActs)).distinctBy { it.name.lowercase() }
@@ -153,8 +155,8 @@ class StudioIiiiOverviewPageScraper(
         }.distinctBy { it.name }
 
     /**
-     * The acts a credit line names after `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`: `… AND DJ SETS BY
-     * DOUNIA AND MATHIS AND DJ SALIVA.` (event 11928). The list ends at the sentence's stop, and a
+     * The acts a credit line names after `DJ SETS BY`, `LIVE PERFORMANCES BY`, `DJ PERFORMANCES WITH` or `MUSIC BY`:
+     * `… AND DJ SETS BY DOUNIA AND MATHIS AND DJ SALIVA.` (event 11928). The list ends at the sentence's stop, and a
      * later credit in it, `…, AN INSTALLATION BY X`, is cut off with its separator. `JOINED BY` bills
      * only up to `ON THE DECKS` (event 11930), and nobody without it.
      */
@@ -218,13 +220,20 @@ class StudioIiiiOverviewPageScraper(
         val CREDIT = Regex("""\bby\b""", RegexOption.IGNORE_CASE)
 
         /** The credits that name acts; group 1 tells a live set from a DJ set, and group 2 is a `JOINED BY` that needs [ON_THE_DECKS]. */
-        val SET_CREDIT = Regex("""\b(?:(DJ|LIVE)\s+SETS?|MUSIC|(JOINED))\s+BY\s+""", RegexOption.IGNORE_CASE)
+        val SET_CREDIT = Regex("""\b(?:(DJ|LIVE)\s+(?:SETS?\s+BY|PERFORMANCES?\s+(?:BY|WITH))|MUSIC\s+BY|(JOINED)\s+BY)\s+""", RegexOption.IGNORE_CASE)
         const val JOINED_GROUP = 2
         val ON_THE_DECKS = Regex("""\s+ON\s+THE\s+DECKS\b""", RegexOption.IGNORE_CASE)
         val INVITES = Regex("""INVITES\s+(.+)""", RegexOption.IGNORE_CASE)
 
-        /** The stop that ends a sentence: after a word of two letters that is not `FEAT.`, `JR.` and the like; or a colon or `//`. */
-        val SENTENCE_END = Regex("""(?<=\p{L}{2})(?<!\b(?:feat|ft|vs|jr|sr|dr|st|mr|mrs|ms|bros|inc|co))\.(?=\s|$)|[:;]|\s//\s""", RegexOption.IGNORE_CASE)
+        /**
+         * The stop that ends a sentence: after a word of two letters that is not `FEAT.`, `JR.` and the like, before a space or the
+         * next credit, `G LA SOSITA.DJ SETS BY` (Wasted Summer); or a colon or `//`.
+         */
+        val SENTENCE_END =
+            Regex(
+                """(?<=\p{L}{2})(?<!\b(?:feat|ft|vs|jr|sr|dr|st|mr|mrs|ms|bros|inc|co))\.(?=\s|$|(?:DJ|LIVE|MUSIC)\s)|[:;]|\s//\s""",
+                RegexOption.IGNORE_CASE
+            )
         val SET_SEPARATOR = Regex("""\s*,\s*|\s+(?:&|and)\s+""", RegexOption.IGNORE_CASE)
         val NOTICE = Regex("""^(?:tickets?|free|entry|doors?|sold\s+out|cancell?ed)\b""", RegexOption.IGNORE_CASE)
         val SAVE_THE_DATE = Regex("""save\s+the\s+date\.?""", RegexOption.IGNORE_CASE)

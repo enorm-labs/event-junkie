@@ -46,6 +46,17 @@ internal fun afterProse(text: String): String {
     return text.substring(marker.range.last + 1)
 }
 
+/** A line that opens with `AND` or `&` goes on with the line before it: `WITH DJ SETS BY CLEO` / `AND LUCIA LU` (event 14674). */
+internal fun joinContinuations(lines: List<String>): List<String> =
+    lines.fold(mutableListOf()) { joined, line ->
+        if (joined.isNotEmpty() && CONTINUATION.containsMatchIn(line)) {
+            joined[joined.lastIndex] = "${joined.last().trimEnd()} ${line.trim()}"
+        } else {
+            joined += line
+        }
+        joined
+    }
+
 private fun roomName(room: String): String = room.lowercase().replaceFirstChar { it.titlecase() }
 
 private val ROOM = Regex("""\s*\((\p{L}*room)\)""", RegexOption.IGNORE_CASE)
@@ -58,3 +69,5 @@ private val ROOM_LABEL = Regex("""\s*\b(\p{L}*room)\s*:\s*""", RegexOption.IGNOR
 /** `DJS` or `WITH` after a word, where prose hands over to the names. */
 private val PROSE_MARKER = Regex("""(?<=\p{L}\s)(?:DJS|WITH)\s+""", RegexOption.IGNORE_CASE)
 private const val MIN_PROSE_WORDS = 3
+
+private val CONTINUATION = Regex("""^\s*(?:and|&)\s""", RegexOption.IGNORE_CASE)
