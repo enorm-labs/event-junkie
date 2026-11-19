@@ -49,8 +49,9 @@ private const val HUMBOLDTHAIN_URL = "https://www.humboldthain.com/"
  * anchors whose text is the DJ's name; the prose around them varies ("Lineup/Musik", "Line-up
  * Live:") and its other lines are door policy and awareness notes.
  *
- * **Every night is a party** unless the title opens with the one category marker, `KONZERT:`,
- * which is stripped and makes the remainder the headliner. The widget's `eventType` vocabulary
+ * **Every night is a party** unless the title opens with the one category marker, `KONZERT:` or
+ * `CONCERT:`, which is stripped and makes the remainder the headliner, or the prose calls the night
+ * a `Gameshow`, which is a quiz (EVENT_SCOPE.md §2, event 14744). The widget's `eventType` vocabulary
  * is ignored: the venue filled it with weekday labels ("Samstag, 14:00") that contradict
  * `start.time`.
  *
@@ -107,7 +108,7 @@ class HumboldthainApiScraper(
         val descriptionHtml = node.description.blankToNull()
         val description = descriptionHtml?.let { Jsoup.parse(it) }
 
-        // A "KONZERT:" night bills its act in the title; every other night is a DJ party whose
+        // A "KONZERT:" or "CONCERT:" night bills its act in the title; every other night is a DJ party whose
         // roster, if announced, is the description's Resident Advisor artist links.
         val artists = (if (concert) headlinersFromTitle(title) else emptyList()) + djArtists(description)
         val descriptionText = htmlParagraphText(descriptionHtml)
@@ -116,7 +117,7 @@ class HumboldthainApiScraper(
             ScrapedEvent(
                 title = title,
                 description = descriptionText,
-                eventType = if (concert) EventType.CONCERT.name else EventType.PARTY.name,
+                eventType = eventType(concert, descriptionText).name,
                 eventDate = date,
                 // All-day entries carry a placeholder time; only a real clock value becomes a start time.
                 startTime = if (node.isAllDay) null else parseTime(node.start?.time.blankToNull()),
@@ -132,6 +133,17 @@ class HumboldthainApiScraper(
             )
         }
     }
+
+    /** A concert by its title marker, a quiz when the prose calls it a game show, otherwise a party. */
+    private fun eventType(
+        concert: Boolean,
+        descriptionText: String?
+    ): EventType =
+        when {
+            concert -> EventType.CONCERT
+            descriptionText != null && GAME_SHOW.containsMatchIn(descriptionText) -> EventType.QUIZ
+            else -> EventType.PARTY
+        }
 
     /**
      * The DJs billed on a night: the link text of every `ra.co/dj/<slug>` anchor in the
@@ -168,7 +180,10 @@ class HumboldthainApiScraper(
         private const val VENUE_NAME = "Humboldthain"
 
         /** The venue's one category marker, opening a title it wants read as a concert rather than a party. */
-        private val CONCERT_TITLE_PREFIX = Regex("""^konzert\s*[:\-–—]\s*""", RegexOption.IGNORE_CASE)
+        private val CONCERT_TITLE_PREFIX = Regex("""^(?:konzert|concert)\s*[:\-–—]\s*""", RegexOption.IGNORE_CASE)
+
+        /** `Gameshow`, `Game-Show`, `Game Show`: the venue's word for a game night with prizes. */
+        private val GAME_SHOW = Regex("""\bgame[\s-]?show""", RegexOption.IGNORE_CASE)
 
         /** Resident Advisor **artist** profiles — the venue's machine-readable lineup markup. */
         private const val RA_ARTIST_LINK_SELECTOR = "a[href*=ra.co/dj/]"

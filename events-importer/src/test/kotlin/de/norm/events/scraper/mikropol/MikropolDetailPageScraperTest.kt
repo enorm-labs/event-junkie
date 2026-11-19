@@ -1,6 +1,7 @@
 package de.norm.events.scraper.mikropol
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
@@ -181,6 +182,30 @@ class MikropolDetailPageScraperTest {
 
         event.priceBoxOffice shouldBe BigDecimal("15.50")
         event.free shouldBe false
+    }
+
+    @Test
+    fun `reads a Fest as a festival with its run's end date and bills no act, as event 14865`() {
+        val url = "https://mikropol-berlin.de/event/2027-01-08-berlin-bowie-fest-2027/"
+        val html =
+            """<html><body><h1 class="entry-title">Berlin Bowie Fest 2027</h1>
+            <div class="event-details"><span class="eventdates">8.01.2027 - 10.01.2027</span><div><b>Beginn:</b> 19:00</div></div>
+            <div class="eventnotes"><p>TANGERINE DREAM will headline BERLIN BOWIE FEST.</p></div>
+            </body></html>"""
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.eventType shouldBe EventType.FESTIVAL.name
+        event.eventDate shouldBe LocalDate.of(2027, 1, 8)
+        event.endDate shouldBe LocalDate.of(2027, 1, 10)
+        event.artists shouldBe emptyList()
+    }
+
+    @Test
+    fun `a one-day show keeps no end date and stays a concert`() {
+        val event = parse("mikropol-detail-simple.html", "https://mikropol-berlin.de/event/2026-07-17-dueja/").shouldNotBeNull()
+
+        event.eventType shouldBe EventType.CONCERT.name
+        event.endDate shouldBe null
     }
 
     @Test

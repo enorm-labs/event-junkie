@@ -14,9 +14,25 @@ import org.jsoup.nodes.Element
 /**
  * The event type of a Modus title. The venue states no category, so a title is a concert unless
  * it names another format. Its weekly `Modus Comedy` series is COMEDY: the shared comedy pattern
- * leaves a bare "comedy" alone, because a band can be called that (#2398).
+ * leaves a bare "comedy" alone, because a band can be called that (#2398). A detail page whose
+ * [description] says `sounds by` is a DJ night (`Off-Season`, event 14869). A bare `DJ` is no cue:
+ * a band's blurb mentions one too.
  */
-internal fun modusEventType(title: String): String = if (isModusComedySeries(title)) EventType.COMEDY.name else inferConcertVenueType(title)
+internal fun modusEventType(
+    title: String,
+    description: String? = null
+): String =
+    when {
+        isModusComedySeries(title) -> {
+            EventType.COMEDY.name
+        }
+
+        else -> {
+            inferConcertVenueType(title).let { type ->
+                if (type == EventType.CONCERT.name && description != null && SOUNDS_BY.containsMatchIn(description)) EventType.PARTY.name else type
+            }
+        }
+    }
 
 /**
  * The acts a Modus page bills. The comedy series bills its lineup in [description] only, so a
@@ -81,6 +97,9 @@ private val RECORD_ON_TOUR = Regex("""\s+\S+\s+on\s+tour\b.*$""", RegexOption.IG
 private val ACT_LIST_SEPARATOR = Regex(""",\s|\s&\s""")
 
 private val NUMBERED_SESSION = Regex("""\bsession\s+\d+\s*$""", RegexOption.IGNORE_CASE)
+
+/** `WITH SOUNDS BY`: the venue's words for the DJs of a club night. */
+private val SOUNDS_BY = Regex("""\bsounds\s+by\b""", RegexOption.IGNORE_CASE)
 
 private val COMEDY_SERIES = Regex("""^modus\s+comedy\b""", RegexOption.IGNORE_CASE)
 

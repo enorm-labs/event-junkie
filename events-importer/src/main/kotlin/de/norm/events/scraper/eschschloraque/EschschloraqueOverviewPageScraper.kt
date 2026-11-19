@@ -113,8 +113,8 @@ class EschschloraqueOverviewPageScraper {
             // The first billing line is the subtitle; a later one heads an act's own blurb.
             subtitle =
                 billingParagraphs
-                    .firstOrNull()
-                    ?.text()
+                    .map { it.text() }
+                    .firstOrNull { !isConnective(it) }
                     ?.blankToNull(),
             description = description,
             eventType =
@@ -229,11 +229,14 @@ class EschschloraqueOverviewPageScraper {
      * any wording is stripped ("erstmals zusammen auf der Couch:", #2173).
      *
      * The event *title* is not read here: it names the night ("Hot Tunes for Cool Cats"), and
-     * [presentedLiveActs] reads the one title form that bills a performer.
+     * [presentedLiveActs] reads the one title form that bills a performer. A span that holds only
+     * a connective joins the title to the next line ("Beatschuppen" `meets` "Beat Bag", event 14810)
+     * and bills nobody.
      */
     private fun parseLineup(billingParagraphs: List<Element>): List<ScrapedArtist> =
         billingParagraphs
             .flatMap { it.select(".redsubtitle") }
+            .filterNot { isConnective(it.text()) }
             .flatMap { line ->
                 val text = line.text().trim()
                 val label = billingLabel(line)
@@ -386,3 +389,9 @@ private fun repeatsNightName(
 
 /** A night's edition number at the end of its title: `II`, `3`, `#4`. */
 private val TRAILING_EDITION_NUMBER = Regex("""\s+#?(?:[IVX]+|\d+)$""")
+
+/** Whether a billing line is only a word that joins two names: `meets`, `vs.`, `presents`. */
+private fun isConnective(line: String): Boolean = CONNECTIVE.matches(line.trim())
+
+/** A connective on its own. `X` stays out: it is a band's name too. */
+private val CONNECTIVE = Regex("""(?:meets|vs\.?|versus|presents|präsentiert|&)""", RegexOption.IGNORE_CASE)

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.modus
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.buildArtistsForEventType
 import io.kotest.matchers.shouldBe
@@ -99,5 +100,13 @@ class ModusComedySeriesTest {
     @Test
     fun `bills nobody on a comedy series tile`() {
         modusLineup("Modus Comedy", modusEventType("Modus Comedy"), description = null) shouldBe emptyList()
+    }
+
+    @Test
+    fun `a page that says sounds by is a DJ night, and a band blurb that names a DJ stays a concert`() {
+        modusEventType("Off-Season", "TWENTY SIX FINALE WITH SOUNDS BY\nSPECIAL GUESTS:") shouldBe EventType.PARTY.name
+        modusEventType("Too Many Zooz - Audio Lipstick Tour", "Brass house with a DJ set after the show.") shouldBe EventType.CONCERT.name
+        modusEventType("Off-Season") shouldBe EventType.CONCERT.name
+        modusEventType("Modus Comedy", "sounds by DJ X") shouldBe EventType.COMEDY.name
     }
 }

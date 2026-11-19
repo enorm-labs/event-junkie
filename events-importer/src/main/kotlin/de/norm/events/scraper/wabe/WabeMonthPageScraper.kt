@@ -95,7 +95,7 @@ class WabeMonthPageScraper {
             imageUrl = posterUrl(row),
             sourceUrl = ownPage ?: baseUrl,
             sourceId = "",
-            genre = category?.takeIf { eventType == EventType.CONCERT.name && it.lowercase() !in NON_GENRE_LABELS }?.replace(" | ", ", "),
+            genre = category?.takeIf { eventType == EventType.CONCERT.name }?.let(::genreOf),
             pricePresale = billing.presale,
             priceBoxOffice = billing.boxOffice,
             free = billing.free,
@@ -140,9 +140,18 @@ class WabeMonthPageScraper {
         category: String?,
         billing: WabeBilling
     ): String {
-        val mapped = mapEventType(category, TYPE_SYNONYMS) ?: category?.let(::typeByCategoryWord)
+        val mapped = mapEventType(category, TYPE_SYNONYMS) ?: category?.let(::typeOfParts) ?: category?.let(::typeByCategoryWord)
         val presentedTheatre = billing.presenter?.let { THEATRE_WORD.containsMatchIn(it) } == true
         return refineConcertVenueType(mapped ?: EventType.SHOW.name.takeIf { presentedTheatre }, billing.title)
+    }
+
+    /**
+     * The type of a category split on `/` or `|`, read part by part: `Musik-Show / Comedy` is a comedy
+     * (event 14761). A part that names another format than a concert wins over a concert part.
+     */
+    private fun typeOfParts(category: String): String? {
+        val types = categoryParts(category).mapNotNull { mapEventType(it, TYPE_SYNONYMS) }
+        return types.firstOrNull { it != EventType.CONCERT.name } ?: types.firstOrNull()
     }
 
     /** A category the table does not spell out: a `Jazz | Pop`-style genre list is a concert, any theatre word a show. */
@@ -201,9 +210,6 @@ class WabeMonthPageScraper {
         private val STATUS = Regex("""\b(?:abgesagt|entfällt|fällt\s+aus|verschoben)\b""", RegexOption.IGNORE_CASE)
         private val THEATRE_WORD = Regex("""theater|schauspiel|monodrama""", RegexOption.IGNORE_CASE)
 
-        /** Category labels that type the night but name no musical style. */
-        private val NON_GENRE_LABELS = setOf("musik-show", "konzert")
-
         private val BILLED_TYPES = setOf(EventType.CONCERT.name, EventType.READING.name, EventType.COMEDY.name)
 
         private val TYPE_SYNONYMS =
@@ -219,3 +225,17 @@ class WabeMonthPageScraper {
             )
     }
 }
+
+/** The parts of a category that name a style, joined as genre text: `Jazz | Pop` is `Jazz, Pop`; `Musik-Show` names none. */
+private fun genreOf(category: String): String? =
+    categoryParts(category)
+        .filterNot { it.lowercase() in NON_GENRE_LABELS }
+        .joinToString(", ")
+        .ifEmpty { null }
+
+private fun categoryParts(category: String): List<String> = category.split(CATEGORY_SEPARATOR).map { it.trim() }.filter { it.isNotEmpty() }
+
+/** Category labels that type the night but name no musical style. */
+private val NON_GENRE_LABELS = setOf("musik-show", "konzert", "comedy")
+
+private val CATEGORY_SEPARATOR = Regex("""\s*[/|]\s*""")

@@ -1,10 +1,12 @@
 package de.norm.events.scraper.metropol
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.START_LABELS
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
@@ -12,6 +14,8 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
@@ -32,6 +36,9 @@ import java.time.LocalTime
  * subtitle, an `.event-details` box with the rendered date, the `Einlass: 19:00 // Beginn:
  * 20:00` line and the category, an `a.button.ticket` Eventim link, a lazy-loaded poster, and
  * the `.event-text` description.
+ *
+ * A page whose category is empty is typed from its title, the house being a concert hall: `Fest` is
+ * a festival (event 14868). A text line `Mit den DJs <names>` makes it a party of those DJs (event 14867).
  *
  * Primary for everything except the support acts, which only the overview's `small.support`
  * line carries (see [MetropolWebsiteImporter.fillGapsFromOverview]).
@@ -61,12 +68,15 @@ class MetropolDetailPageScraper {
         val timeLine = document.textAt(".event-details .time")
         val description = document.selectFirst(".event-text")?.descriptionText()
         val relocationNote = parseRelocationNote(document)
+        val title = cleanEventTitle(stripRelocationPrefix(rawTitle)).text
+        val subtitle = document.textAt(".event-info p.tour")
+        val eventType = metropolEventType(document.textAt(".event-details ul.event-categories"), title, subtitle, description)
 
         return ScrapedEvent(
-            title = cleanEventTitle(stripRelocationPrefix(rawTitle)).text,
-            subtitle = document.textAt(".event-info p.tour"),
+            title = title,
+            subtitle = subtitle,
             description = description,
-            eventType = metropolEventType(document.textAt(".event-details ul.event-categories"), description),
+            eventType = eventType,
             // The slug's ISO prefix is the canonical date; the sentinel lets the overview's rendered
             // German date backstop it via fillGapsFromOverview.
             eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: UNRESOLVED_EVENT_DATE,
@@ -79,18 +89,10 @@ class MetropolDetailPageScraper {
             soldOut = cleanEventTitle(rawTitle).soldOut,
             status = parseEventStatus("${document.textAt(".alert-red").orEmpty()} $rawTitle ${relocationNote.orEmpty()}"),
             statusNote = relocationNote ?: rawTitle,
-            promoters = listOfNotNull(parsePromoter(document))
+            promoters = listOfNotNull(parsePromoter(document)),
+            artists = if (eventType == EventType.PARTY.name) metropolDjs(description) else emptyList()
         )
     }
-
-    /**
-     * The category's type, unless the text calls the night a party format: PARTY101 is filed under
-     * `Konzert`, and its blurb says `Throwback-Party` and `Partyformat` (#3415). A party mints no act.
-     */
-    private fun metropolEventType(
-        category: String?,
-        description: String?
-    ): String? = if (description != null && PARTY_FORMAT.containsMatchIn(description)) EventType.PARTY.name else mapEventType(category)
 
     /**
      * The `.alert-blue` note when it names a house a show moved from or to, or `null`.
@@ -122,9 +124,45 @@ class MetropolDetailPageScraper {
             document.attrAt(".event-image a.thumbnail img[data-src]", "data-src")
                 ?: document.attrAt(".event-image noscript img", "src")
         )?.takeIf { it.startsWith("http") }
-
-    private companion object {
-        /** The words a blurb uses for a party night billed under another category. */
-        val PARTY_FORMAT = Regex("""(?<!\p{L})(?:partyformat|throwback-party)""", RegexOption.IGNORE_CASE)
-    }
 }
+
+/**
+ * The category's type, unless the text calls the night a party format: PARTY101 is filed under
+ * `Konzert`, and its blurb says `Throwback-Party` and `Partyformat` (#3415). A party mints no act.
+ * An empty category is a party when the text bills DJs, otherwise the title's cue or a concert.
+ */
+internal fun metropolEventType(
+    category: String?,
+    title: String,
+    subtitle: String?,
+    description: String?
+): String? =
+    when {
+        description != null && PARTY_FORMAT.containsMatchIn(description) -> EventType.PARTY.name
+        !category.isNullOrBlank() -> mapEventType(category)
+        metropolDjs(description).isNotEmpty() -> EventType.PARTY.name
+        else -> inferConcertVenueType(title, subtitle, FESTIVAL_KEYWORDS)
+    }
+
+/** The DJs a text line `Mit den DJs Stern von Avalon und ITZY` bills, in order. */
+internal fun metropolDjs(description: String?): List<ScrapedArtist> =
+    DJ_LINE
+        .find(description.orEmpty())
+        ?.groupValues
+        ?.get(1)
+        ?.split(DJ_SEPARATOR)
+        .orEmpty()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() && !isNonArtistName(it) }
+        .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+
+/** The words a blurb uses for a party night billed under another category. */
+private val PARTY_FORMAT = Regex("""(?<!\p{L})(?:partyformat|throwback-party)""", RegexOption.IGNORE_CASE)
+
+/** `Berlin Bowie Fest 2027`: a festival. `Festival` is a shared cue already. */
+private val FESTIVAL_KEYWORDS = mapOf("fest" to EventType.FESTIVAL.name)
+
+/** A line `Mit den DJs <names>` or `Mit DJ <name>`. */
+private val DJ_LINE = Regex("""(?im)^\s*mit\s+(?:den\s+)?DJs?\s+(.+?)\s*$""")
+
+private val DJ_SEPARATOR = Regex("""\s+und\s+|\s*[&,]\s*""")

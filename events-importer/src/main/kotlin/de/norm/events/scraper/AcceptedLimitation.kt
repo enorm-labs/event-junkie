@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.EventType
 import de.norm.events.event.SpokenLanguage
 import java.time.LocalDate
 
@@ -50,6 +51,11 @@ data class VenueLimitations(
      */
     val houseGenre: String? = null,
     /**
+     * The event types [houseGenre] covers, for a venue whose concerts play another style than its club nights.
+     * Null covers every music type.
+     */
+    val houseGenreTypes: Set<EventType>? = null,
+    /**
      * The language all the venue's shows are in (#2584), on one of two grounds the declaration's KDoc
      * names: the venue states it, quoted with its URL; or the programme is German in practice, with
      * the measured share and the date. A mixed or thinly measured programme gets none.
@@ -62,8 +68,9 @@ data class VenueLimitations(
         source: EventSource,
         vararg limitations: AcceptedLimitation,
         houseGenre: String? = null,
+        houseGenreTypes: Set<EventType>? = null,
         houseLanguage: SpokenLanguage? = null
-    ) : this(setOf(source), limitations.toList(), houseGenre, houseLanguage)
+    ) : this(setOf(source), limitations.toList(), houseGenre, houseGenreTypes, houseLanguage)
 }
 
 /**

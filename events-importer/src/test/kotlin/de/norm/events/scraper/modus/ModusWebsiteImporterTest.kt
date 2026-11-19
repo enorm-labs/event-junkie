@@ -1,5 +1,6 @@
 package de.norm.events.scraper.modus
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -90,6 +91,35 @@ class ModusWebsiteImporterTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events shouldHaveSize 0
+        }
+
+    @Test
+    fun `bills no act on a night the event page calls a DJ night, though the listing billed its title, as event 14869`() =
+        runTest {
+            val detailUrl = "https://modus-berlin.de/event/281126-Off-Season"
+            val overview =
+                """
+                <div class="event-tiles"><div class="event-item"><a class="event-link" href="/event/281126-Off-Season">
+                <figure><figcaption><h2>Off-Season</h2><div>28.11.2026</div></figcaption></figure></a></div></div>
+                """.trimIndent()
+            val detail =
+                """
+                <div class="event-view-right"><h1>Off-Season</h1><h2>28.11.2026 - 22:00</h2>
+                <div class="event-description"><p>Push Berlin's Hip-Hop culture forward.</p><p>TWENTY SIX FINALE WITH SOUNDS BY</p></div></div>
+                """.trimIndent()
+            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(overview, sourceUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns Jsoup.parse(detail, detailUrl)
+
+            val night =
+                importer
+                    .importEvents(sourceUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events
+                    .single()
+
+            night.eventType shouldBe EventType.PARTY.name
+            night.artists shouldHaveSize 0
         }
 
     @Test

@@ -259,6 +259,28 @@ class EschschloraqueOverviewPageScraperTest {
     }
 
     @Test
+    fun `a billing line that holds only a connective bills nobody and is no subtitle, as event 14810`() {
+        val node =
+            """
+            <div class="node-veranstaltung" about="/beatschuppen-28112026">
+              <h2 class="veranstaltung-title">Beatschuppen</h2>
+              <span class="date-display-single" content="2026-11-28T21:00:00+01:00">Samstag, 28. November 2026 ab 21Uhr</span>
+              <div class="field-type-text-with-summary">
+                <p><span class="redsubtitle">meets</span></p>
+                <p><span class="redsubtitle">Beat Bag</span> (Hamburg / Molotow)</p>
+                <p><span class="redsubtitle"><span>Live:</span> Big Tom &amp; The Bogsnorklers</span></p>
+                <p><span class="redsubtitle"><span>Live:</span> 60s GoGo Girl</span></p>
+              </div>
+            </div>
+            """.trimIndent()
+        val night = EschschloraqueOverviewPageScraper().scrape(Jsoup.parse(node, baseUrl), baseUrl).single()
+
+        night.artists.map { it.name } shouldBe listOf("Beat Bag", "Big Tom & The Bogsnorklers", "60s GoGo Girl")
+        night.artists.first().role shouldBe ArtistRole.DJ
+        night.subtitle shouldBe "Beat Bag (Hamburg / Molotow)"
+    }
+
+    @Test
     fun `joins the venue's bilingual prose and excludes photo credits`() {
         val bingo = events.first { it.title.startsWith("BULETTEN BINGO") }
         val description = bingo.description!!
