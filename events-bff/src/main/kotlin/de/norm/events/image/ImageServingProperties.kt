@@ -41,7 +41,7 @@ data class ImageServingProperties(
          */
         val size: DataSize = DEFAULT_SIZE
     ) {
-        companion object {
+        private companion object {
             val DEFAULT_SIZE: DataSize = DataSize.ofMegabytes(32)
         }
     }

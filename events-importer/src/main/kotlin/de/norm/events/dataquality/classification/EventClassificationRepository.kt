@@ -264,7 +264,7 @@ class EventClassificationRepository(
 
     private fun Readable.string(column: String): String = requireNotNull(get(column, String::class.java)) { "Column '$column' is null" }
 
-    companion object {
+    private companion object {
         /**
          * The candidates, from [QualityIssue]'s predicates so the worklist and the check agree. A missing
          * time or price counts only beside a description, the one place the model can find it.

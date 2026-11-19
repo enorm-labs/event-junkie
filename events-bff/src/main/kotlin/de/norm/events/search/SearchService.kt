@@ -54,7 +54,7 @@ class SearchService(
 
     private fun <T> PageResponse<T>.group() = SearchGroup(content, minOf(totalElements, COUNT_CAP.toLong()), totalCapped = totalElements > COUNT_CAP)
 
-    companion object {
+    private companion object {
         /** Past this many matches of one kind the header says "100+"; counting further cost the most (#2533). */
         const val COUNT_CAP = 100
     }
