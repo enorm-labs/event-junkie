@@ -124,20 +124,65 @@ class Richten25OverviewPageScraperTest {
     }
 
     @Test
+    fun `reads a date line with no comma and a start before its colon, and bills the acts a presenter names`() {
+        val night =
+            nightOf(
+                "Est.Discipline presents \\&quot;𝐵𝑜𝑔𝑒𝓃\\&quot;: Yves B Golden &amp;#x26; Cr00k6",
+                dateLine = "November 19 2026 (starts at 19:30)"
+            )
+
+        night.eventDate shouldBe LocalDate.of(2026, 11, 19)
+        night.sourceId shouldBe "richten25:2026-11-19"
+        night.startTime shouldBe LocalTime.of(19, 30)
+        night.title shouldBe "Est.Discipline presents \"𝐵𝑜𝑔𝑒𝓃\": Yves B Golden & Cr00k6"
+        night.artists.map { it.name } shouldBe listOf("Yves B Golden", "Cr00k6")
+    }
+
+    @Test
+    fun `reads a start before the colon after a date with its comma, and a date with neither`() {
+        nightOf("Ada Ryu", dateLine = "November 2, 2026 (starts at 20:00)").startTime shouldBe LocalTime.of(20, 0)
+        nightOf("Ada Ryu", dateLine = "November 2, 2026 (Starts at 9:00)").startTime shouldBe LocalTime.of(9, 0)
+        with(nightOf("Ada Ryu", dateLine = "November 2 2026")) {
+            eventDate shouldBe LocalDate.of(2026, 11, 2)
+            startTime shouldBe null
+        }
+    }
+
+    @Test
+    fun `starts a timetable at its concert time over the date line's, and at the date line's when it names no concert`() {
+        val timetable = "Listening Session: Doors 18:00, Talk 19:00"
+
+        nightOf("$timetable Concert: 20:30", dateLine = "November 2 2026 (starts at 18:00)").startTime shouldBe LocalTime.of(20, 30)
+        nightOf(timetable, dateLine = "November 2 2026 (starts at 18:00)").startTime shouldBe LocalTime.of(18, 0)
+    }
+
+    @Test
+    fun `skips a night whose date line has no year`() {
+        nightsOf("Ada Ryu", dateLine = "November 19 (starts at 19:30)").shouldBeEmpty()
+    }
+
+    @Test
     fun `yields nothing for a page without the embed`() {
         Richten25OverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
 
     /** One night in the embed's shape; the lineup is escaped once, as the island's attribute carries it. */
-    private fun nightOf(lineup: String) =
-        Richten25OverviewPageScraper()
-            .scrape(
-                Jsoup.parse(
-                    """<astro-island props="{&quot;x&quot;:[0,&quot;&lt;section class=\&quot;event-list\&quot;&gt;&lt;h2&gt;Upcoming Events&lt;/h2&gt;""" +
-                        """&lt;ul&gt;&lt;li&gt;&lt;strong&gt;November 2, 2026: &lt;/strong&gt; $lineup""" +
-                        """&lt;/li&gt;&lt;/ul&gt;&lt;/section&gt;&quot;]}"></astro-island>""",
-                    baseUrl
-                ),
+    private fun nightOf(
+        lineup: String,
+        dateLine: String = "November 2, 2026"
+    ) = nightsOf(lineup, dateLine).single()
+
+    private fun nightsOf(
+        lineup: String,
+        dateLine: String
+    ) = Richten25OverviewPageScraper()
+        .scrape(
+            Jsoup.parse(
+                """<astro-island props="{&quot;x&quot;:[0,&quot;&lt;section class=\&quot;event-list\&quot;&gt;&lt;h2&gt;Upcoming Events&lt;/h2&gt;""" +
+                    """&lt;ul&gt;&lt;li&gt;&lt;strong&gt;$dateLine: &lt;/strong&gt; $lineup""" +
+                    """&lt;/li&gt;&lt;/ul&gt;&lt;/section&gt;&quot;]}"></astro-island>""",
                 baseUrl
-            ).single()
+            ),
+            baseUrl
+        )
 }
