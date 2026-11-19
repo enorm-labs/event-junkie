@@ -22,7 +22,7 @@
 #
 # **The two backend images must pin the same base**, which is also why Dependabot groups all three
 # Dockerfiles into one PR — see `.github/dependabot.yml`.
-FROM bellsoft/liberica-openjre-alpine:25@sha256:6e37a10866f46514a2439295cecaec5666ab817bfcb961d2fc6bcb8001335b61
+FROM bellsoft/liberica-openjre-alpine:25@sha256:59fe4ed4c6eb5baabe8801ad19a79d01b5b3f9f6af2534b4515de3f705109eec
 
 ARG VERSION=unspecified
 ARG REVISION=unknown

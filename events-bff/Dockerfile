@@ -35,7 +35,7 @@
 # Alpine, so musl: nothing here depends on `netty-transport-native-*`, so Netty runs NIO on
 # both. The musl difference that matters is DNS, which the k3d rehearsal and the chart's
 # `helm test` exercise.
-FROM bellsoft/liberica-openjre-alpine:25@sha256:6e37a10866f46514a2439295cecaec5666ab817bfcb961d2fc6bcb8001335b61
+FROM bellsoft/liberica-openjre-alpine:25@sha256:59fe4ed4c6eb5baabe8801ad19a79d01b5b3f9f6af2534b4515de3f705109eec
 
 # Supplied by the build; both default to something obviously wrong rather than a plausible lie.
 ARG VERSION=unspecified
