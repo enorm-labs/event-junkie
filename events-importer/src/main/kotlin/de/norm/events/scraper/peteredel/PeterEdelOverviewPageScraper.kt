@@ -268,7 +268,7 @@ class PeterEdelOverviewPageScraper {
                     cleanedTitle.soldOut,
             status = resolveStatus(rawTitle, ticketColumn),
             statusNote = extraShowNote,
-            promoters = listOfNotNull(promoterOf(info)),
+            promoters = promotersOf(info),
             artists = actsOf(title, subtitle, support, eventType)
         ).forChildrenIf(childrensShowPhrase(title, subtitle))
     }
@@ -367,6 +367,9 @@ class PeterEdelOverviewPageScraper {
          */
         private val PROMOTER = Regex("""(?:$PRESENTED_BY_WORDS)\s*:\s*(.+?)(?:\s*(?:Tickets|Hinweis)\s*:|$)""", RegexOption.IGNORE_CASE)
 
+        /** Zero-width space, non-joiner, joiner and byte-order mark: `\s` matches none, so a trim keeps them. */
+        private val ZERO_WIDTH = Regex("""[\u200B-\u200D\uFEFF]""")
+
         /** The ticket column's trailing call to action, dropped from the price note. */
         private val CALL_TO_ACTION = Regex("""\s*Für mehr Infos\s*hier klicken\s*:?\s*(?:Details)?\s*$""", RegexOption.IGNORE_CASE)
 
@@ -449,13 +452,21 @@ class PeterEdelOverviewPageScraper {
         /** A title head longer than this names a programme, not an act. */
         private const val MAX_ACT_WORDS = 5
 
-        /** The promoter a `Präsentiert von:` credit in the info line names ([PROMOTER]), or `null`. */
-        fun promoterOf(info: String): String? =
+        /**
+         * The promoters a `Präsentiert von:` credit in the info line names ([PROMOTER]), split at its commas:
+         * `LOFT CONCERTS, FluxFM & EINEN HAB ICH NOCH` (event 13807) to `LOFT CONCERTS` and `FluxFM & EINEN HAB ICH NOCH`.
+         * A spaced `&` is left to the import's known-promoter split, because `Frack & Spitzenhöschen` is one show's name.
+         * The venue's editor leaves a zero-width space before a comma, so those characters are dropped first.
+         */
+        fun promotersOf(info: String): List<String> =
             PROMOTER
                 .find(info)
                 ?.groupValues
                 ?.get(1)
-                ?.blankToNull()
+                ?.replace(ZERO_WIDTH, "")
+                ?.split(',')
+                ?.mapNotNull { it.trim().blankToNull() }
+                .orEmpty()
 
         /** The known genres among the styles before `Tanzcafé` ([TANZCAFE_STYLE]), or `null`. */
         fun danceCafeGenre(subtitle: String?): String? = knownGenresInStyleTail(subtitle?.let { TANZCAFE_STYLE.find(it) }?.groupValues?.get(1))
