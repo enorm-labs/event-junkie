@@ -203,7 +203,7 @@ class Passkeys(
         /** A phone, a laptop, a security key and a few more, as for push subscriptions. */
         const val MAX_PASSKEYS = 10L
         const val TIMEOUT_MILLIS = 300_000L
-        val CHALLENGE_VALIDITY: Duration = Duration.ofMillis(TIMEOUT_MILLIS)
+        private val CHALLENGE_VALIDITY: Duration = Duration.ofMillis(TIMEOUT_MILLIS)
         private const val RP_NAME = "Event Junkie"
         private const val CHALLENGE_BYTES = 32
         private const val SIGN_INS_PER_CLIENT_PER_HOUR = 30

@@ -419,26 +419,26 @@ class ImporterMetrics(
     }
 
     companion object {
-        const val RUN_DURATION = "importer.run.duration"
-        const val RUN_OUTCOME = "importer.run.outcome"
-        const val EVENTS_WRITTEN = "importer.events.written"
-        const val SCRAPE_FAILURES = "importer.scrape.failures"
-        const val EVENTS_DROPPED = "importer.events.dropped"
-        const val ENRICHMENT_EVENTS = "importer.enrichment.events"
-        const val ENRICHMENT_FIELDS_FILLED = "importer.enrichment.fields_filled"
-        const val SOURCE_LAST_SUCCESS = "importer.source.last_success"
+        private const val RUN_DURATION = "importer.run.duration"
+        private const val RUN_OUTCOME = "importer.run.outcome"
+        private const val EVENTS_WRITTEN = "importer.events.written"
+        private const val SCRAPE_FAILURES = "importer.scrape.failures"
+        private const val EVENTS_DROPPED = "importer.events.dropped"
+        private const val ENRICHMENT_EVENTS = "importer.enrichment.events"
+        private const val ENRICHMENT_FIELDS_FILLED = "importer.enrichment.fields_filled"
+        private const val SOURCE_LAST_SUCCESS = "importer.source.last_success"
 
         /** `importer.translations{outcome}` — attempts and how many produced a text. See [recordTranslation]. */
         const val TRANSLATIONS = "importer.translations"
 
         /** `importer.artists.lookup_tick.last_success` — epoch seconds of the last finished [ArtistLookupSweep] tick. */
-        const val ARTIST_LOOKUP_TICK_LAST_SUCCESS = "importer.artists.lookup_tick.last_success"
+        private const val ARTIST_LOOKUP_TICK_LAST_SUCCESS = "importer.artists.lookup_tick.last_success"
 
         /**
          * `importer.source.has_succeeded{source}`, the series that exists for a source which has never
          * worked. See [publishHasSucceeded].
          */
-        const val SOURCE_HAS_SUCCEEDED = "importer.source.has_succeeded"
+        private const val SOURCE_HAS_SUCCEEDED = "importer.source.has_succeeded"
 
         /**
          * `importer.source.events_future{source}`, the per-source half of ADR-015's criterion 1. See
@@ -447,18 +447,18 @@ class ImporterMetrics(
         const val SOURCE_EVENTS_FUTURE = "importer.source.events_future"
 
         /** `importer.source.last_event_count{source}` (#4540). See [publishLastEventCount]. */
-        const val SOURCE_LAST_EVENT_COUNT = "importer.source.last_event_count"
+        private const val SOURCE_LAST_EVENT_COUNT = "importer.source.last_event_count"
 
         /**
          * `importer.source.days_since_future_event{source,known_quiet}` (#1498). See
          * [publishDaysSinceFutureEvent].
          */
         const val SOURCE_DAYS_SINCE_FUTURE_EVENT = "importer.source.days_since_future_event"
-        const val TAG_KNOWN_QUIET = "known_quiet"
+        private const val TAG_KNOWN_QUIET = "known_quiet"
 
         /** `importer.source.last_success{source,known_blocked}` (#2201). See [KNOWN_BLOCKED_SOURCES]. */
-        const val TAG_KNOWN_BLOCKED = "known_blocked"
-        const val SOURCE_RUNNING = "importer.source.running"
+        private const val TAG_KNOWN_BLOCKED = "known_blocked"
+        private const val SOURCE_RUNNING = "importer.source.running"
 
         /** `importer.sources.failed{reason}` (#708). See [publishFailedSources]. */
         const val SOURCES_FAILED = "importer.sources.failed"
@@ -477,13 +477,13 @@ class ImporterMetrics(
          * are the same measurement over two windows, which is what a label is for; §7 states this shape.
          */
         const val DB_EVENTS = "db.events"
-        const val TAG_HORIZON = "horizon"
-        const val HORIZON_ALL = "all"
-        const val HORIZON_FUTURE = "future"
+        private const val TAG_HORIZON = "horizon"
+        private const val HORIZON_ALL = "all"
+        private const val HORIZON_FUTURE = "future"
 
         const val TAG_SOURCE = "source"
         const val TAG_OUTCOME = "outcome"
-        const val TAG_OPERATION = "operation"
+        private const val TAG_OPERATION = "operation"
         const val TAG_REASON = "reason"
 
         private const val MILLIS_PER_SECOND = 1000L

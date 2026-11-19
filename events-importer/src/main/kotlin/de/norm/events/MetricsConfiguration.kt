@@ -46,6 +46,6 @@ class MetricsConfiguration {
     internal companion object {
         const val HTTP_CLIENT_REQUESTS = "http.client.requests"
         const val HTTP_CLIENT_REQUESTS_ACTIVE = "http.client.requests.active"
-        val PER_TARGET_TAGS = setOf("uri", "client.name")
+        private val PER_TARGET_TAGS = setOf("uri", "client.name")
     }
 }

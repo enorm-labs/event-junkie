@@ -152,7 +152,7 @@ class FlyerLineupCheck(
         const val CHECK_NAME = "flyer-lineup"
 
         /** `importer.data_quality.flyer_reads{outcome}`: answered, rejected or failed flyer reads. */
-        const val READS_METER = "importer.data_quality.flyer_reads"
+        private const val READS_METER = "importer.data_quality.flyer_reads"
 
         private const val FIELD_ARTISTS = EventClassificationCheck.FIELD_ARTISTS
         private const val FIELD_START_TIME = EventClassificationCheck.FIELD_START_TIME

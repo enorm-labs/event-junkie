@@ -63,7 +63,7 @@ class SchemaVersionHealthIndicator(
 
     companion object {
         /** Written by the `generateExpectedSchemaVersion` task in `events-bff/build.gradle.kts`. */
-        const val EXPECTED_VERSION_RESOURCE = "META-INF/expected-schema-version"
+        private const val EXPECTED_VERSION_RESOURCE = "META-INF/expected-schema-version"
 
         fun readExpectedVersion(): Int =
             ClassPathResource(EXPECTED_VERSION_RESOURCE)

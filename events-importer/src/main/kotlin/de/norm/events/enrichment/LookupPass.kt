@@ -84,7 +84,7 @@ data class LookupPass(
          * succeed, so the stop after three failures in a row never comes and only time ends the
          * pass (#2896). Logs the stop, so a slow tick is told from a stopped one.
          */
-        fun budgetSpent(
+        private fun budgetSpent(
             deadline: TimeMark,
             pass: String,
             done: Int,

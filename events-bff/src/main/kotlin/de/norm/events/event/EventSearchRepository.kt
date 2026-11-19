@@ -107,7 +107,7 @@ data class EventFilter(
         const val CHRISTMAS_MARKET = "christmas-market"
 
         /** The features a default list leaves out. */
-        val HIDDEN_FEATURES = listOf(FOR_CHILDREN, CHRISTMAS_MARKET)
+        private val HIDDEN_FEATURES = listOf(FOR_CHILDREN, CHRISTMAS_MARKET)
 
         /** Before this on its end day, an earlier night is over for the list's `running=true` (#2923). */
         val RUNNING_CUTOFF: LocalTime = LocalTime.of(12, 0)
