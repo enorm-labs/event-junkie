@@ -171,6 +171,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Badehaus            | `WORKSHOP_TITLE` (`BadehausOverviewPageScraper.kt`)          | A title that names a `Workshop`. A subtitle that names one is not enough: `Café com Samba` is a dance night                          |
 | Duncker Club        | `MARKET` (`DunckerOverviewPageScraper.kt`)                   | A name or style line that names a `Market` or ends in `markt`: the `Dark Market` design and flea market                              |
 | Humboldt Forum      | `PARTICIPATION` (`HumboldtForumApiScraper.kt`)               | The `Führung`, `Workshop`, `Drop-In`, `Fortbildung` and `Meetup` categories, beside any other category                               |
+| Crack Bellmer       | `WORKSHOP_TITLE` (`CrackBellmerOverviewPageScraper.kt`)      | A title that names a `Workshop`. The lineup field of a workshop names the collectives on its panel                                   |
 
 A market in a venue's feed stays out, a Christmas market too. Christmas markets get their own page, entered by hand
 (§3.7). The predicates above do not change for it.

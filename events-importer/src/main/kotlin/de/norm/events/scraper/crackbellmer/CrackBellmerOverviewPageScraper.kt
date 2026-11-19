@@ -50,6 +50,8 @@ import java.util.Locale
  * cue-less night is one of those.
  * 4. **A poster-less night still renders an `<img>`**, pointing at Webflow's placeholder SVG
  * and flagged `w-dyn-bind-empty`; the same flag marks an empty genre or lineup paragraph.
+ * 5. **A workshop is skipped** (EVENT_SCOPE.md §3.2), on its title alone. Its lineup field names the
+ * panel's collectives, which would otherwise be billed as DJs.
  *
  * @see CRACK_BELLMER_LIMITATIONS for what the venue does not publish.
  * @see CrackBellmerWebsiteImporter for the HTTP fetch orchestrator.
@@ -93,6 +95,10 @@ class CrackBellmerOverviewPageScraper(
         val title = cleanedTitle.text
         // Closed days and the bar's opening hours are programme entries that name no event.
         if (title.equals(CLOSED_MARKER, ignoreCase = true) || title.equals(BAR_OPENING, ignoreCase = true)) return null
+        if (WORKSHOP_TITLE.containsMatchIn(title)) {
+            logger.info { "Skipping Crack Bellmer workshop '$title': out of scope" }
+            return null
+        }
 
         val eventDate = parseDate(item)
         if (eventDate == null) {
@@ -202,6 +208,9 @@ class CrackBellmerOverviewPageScraper(
          * lineup: opening hours, not programme (EVENT_SCOPE.md §5).
          */
         const val BAR_OPENING = "BELLMER BAR"
+
+        /** A title that names a workshop, a format the visitor takes part in (EVENT_SCOPE.md §3.2). */
+        val WORKSHOP_TITLE = Regex("""\bworkshops?\b""", RegexOption.IGNORE_CASE)
 
         /** The `data-date` rendering, e.g. `August 7, 2026`. */
         val DATE_FORMATTER: DateTimeFormatter =

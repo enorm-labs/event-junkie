@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
@@ -192,8 +193,51 @@ class CrackBellmerOverviewPageScraperTest {
     }
 
     @Test
+    fun `skips a workshop and the collectives on its panel`() {
+        // Event 14657 (#5276): a panel and skill-sharing tables, its lineup field naming the collectives on the panel.
+        val nights =
+            stayToxicReplacedBy(
+                title = "FLINTA* Soundsystem Community & Infrastructure Workshop",
+                lineup = "Angel Audio, Femme Bass Mafia, Garage Girls"
+            )
+        nights.map { it.sourceId } shouldNotContain STAY_TOXIC_ID
+        nights.flatMap { it.artists }.map { it.name } shouldNotContain "Femme Bass Mafia"
+        stayToxicReplacedBy(title = "dj workshops for beginners").map { it.sourceId } shouldNotContain STAY_TOXIC_ID
+    }
+
+    @Test
+    fun `keeps a party that names a workshop outside its title`() {
+        val night =
+            stayToxicReplacedBy(genre = "Techno, Workshop Floor", lineup = "Workshop Crew, Selessa T")
+                .first { it.sourceId == STAY_TOXIC_ID }
+        night.title shouldBe "STAY TOXIC"
+        night.eventType shouldBe "PARTY"
+        night.artists.map { it.name } shouldContainExactly listOf("Workshop Crew", "Selessa T")
+        // Word-bounded: a title that only contains the letters is not a workshop.
+        stayToxicReplacedBy(title = "WORKSHOPPED").map { it.sourceId } shouldContain STAY_TOXIC_ID
+    }
+
+    /** The whole listing, with the 29 August night's [title], [genre] and [lineup] replaced. */
+    private fun stayToxicReplacedBy(
+        title: String = "STAY TOXIC",
+        genre: String = "House, Techno",
+        lineup: String = "Secret Line-Up"
+    ): List<ScrapedEvent> {
+        val document = fixtureDocument("crackbellmer/crackbellmer-overview.html", sourceUrl)
+        val item = document.selectFirst(".event-item:has(a[href=/events/stay-toxic])") ?: error("No STAY TOXIC item")
+        item.selectFirst("[fs-list-field=title]")?.text(title)
+        item.selectFirst("[fs-list-field=genre]")?.text(genre)
+        item.selectFirst("[fs-list-field=lineup]")?.text(lineup)
+        return CrackBellmerOverviewPageScraper(beforeProgramme).scrape(document, sourceUrl)
+    }
+
+    @Test
     fun `returns no events for a page without a programme`() {
         val document = Jsoup.parse("<html><body><main></main></body></html>", sourceUrl)
         CrackBellmerOverviewPageScraper(captureDate).scrape(document, sourceUrl).shouldBeEmpty()
+    }
+
+    private companion object {
+        const val STAY_TOXIC_ID = "crack_bellmer:stay-toxic"
     }
 }
