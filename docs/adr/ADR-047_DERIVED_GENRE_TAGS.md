@@ -53,6 +53,9 @@ The rules:
    usually the title of an album, a song or a tour. Thus the album title "Whiskey Tango Foxtrot" gives no Tango.
    A line that opens with "Sounds like" or "We love" lists bands. Only an item of genre words in it counts (#4359). Thus "70s Disco" gives Disco, but
    "Panic! At The Disco" gives nothing.
+   A hyphenated word with a format noun gives the genre before the noun. The nouns are "Party", "Nacht", "Night", "Ball", "Duo", "Band" and
+   "Produzent". Thus "K-POP-Party" gives K-Pop and "Techno-Produzenten-Duo" gives Techno. "House-Party" gives nothing, because "house" has another sense.
+   This rule also reads the title and the subtitle. Thus the title "Jazz-Nacht" gives Jazz. No other word of the title counts.
    The first three genres stay.
 5. **Each import computes the derived tags again** for the events of its source. An event that the admin API pinned keeps its tags (ADR-042).
 6. **A derived tag counts as a tag everywhere else.** "More like this" reads it. The venue programme families and the genre filter read it too.

@@ -112,6 +112,46 @@ class DescriptionGenresTest {
     }
 
     @Test
+    fun `a genre before a format noun in a hyphenated word is a genre`() {
+        // Event 14719 at The Cloud and event 14771 at the Uber Eats Music Hall.
+        descriptionGenres("Feiert mit uns eine letzte K-POP-Party in diesem Jahr!") shouldBe listOf("K-Pop")
+        descriptionGenres("Das deutsche Techno-Produzenten-Duo bringt seinen Stil nach Berlin.") shouldBe listOf("Techno")
+        descriptionGenres("Eine Jazz-Nacht mit Freunden") shouldBe listOf("Jazz")
+        descriptionGenres("Die Bachata-Nacht im Ballsaal") shouldBe listOf("Latin")
+        descriptionGenres("Eine Rock-Band aus Leipzig") shouldBe listOf("Rock")
+        descriptionGenres("Die erste Indie-Pop-Night im Haus") shouldBe listOf("Indie")
+    }
+
+    @Test
+    fun `a hyphenated word with no format noun, or with a key prose uses in another sense, gives no genre`() {
+        descriptionGenres("Eine House-Party bei Freunden").shouldBeEmpty()
+        descriptionGenres("Die Latin-Nacht im Club").shouldBeEmpty()
+        descriptionGenres("Der Pop-up-Chor singt mit allen").shouldBeEmpty()
+        descriptionGenres("Die Ü30-Party am Freitag").shouldBeEmpty()
+        descriptionGenres("Die Party-Band spielt Hits").shouldBeEmpty()
+        descriptionGenres("Eine Silvester-Party mit Feuerwerk").shouldBeEmpty()
+    }
+
+    @Test
+    fun `a hyphenated word the vocabulary knows whole stays one genre`() {
+        descriptionGenres("Ein Abend voller Hip-Hop") shouldBe listOf("Hip Hop")
+        descriptionGenres("A night of Industrial-Techno") shouldBe listOf("Industrial", "Techno")
+    }
+
+    @Test
+    fun `a title names a genre only in a hyphenated format word`() {
+        // Events 9696 at Konrad Tönz, 6958 at Ballhaus Wedding and 14867 at Metropol.
+        titleCompoundGenres("Jazz-Nacht im Toenz", null) shouldBe listOf("Jazz")
+        titleCompoundGenres("Bachata-Nacht") shouldBe listOf("Latin")
+        titleCompoundGenres("Nackt-Schlager-Ball") shouldBe listOf("Schlager")
+        titleCompoundGenres("Sahra PARTY", "Techno-Night | Swana FLINTA Edition") shouldBe listOf("Techno")
+        titleCompoundGenres("Discofox-Nacht").shouldBeEmpty()
+        titleCompoundGenres("House-Party").shouldBeEmpty()
+        titleCompoundGenres("Jazz im Garten", "Punk Rock Night").shouldBeEmpty()
+        titleCompoundGenres("K-POP- & KHIPHOP-Party").shouldBeEmpty()
+    }
+
+    @Test
     fun `German electronic-music phrases are genres, the single words are not`() {
         // Event 13495, Hidéo at Bar Tausend.
         descriptionGenres("Hidéo versteht elektronische Musik als Erzählung.") shouldBe listOf("Electronic")

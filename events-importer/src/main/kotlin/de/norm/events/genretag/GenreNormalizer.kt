@@ -194,6 +194,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "neuedeutschehrte" to "Neue Deutsche Härte",
         // Tango
         "tango" to "Tango",
+        // South West Asian and North African, as Badehaus bills a night "Swana FLINTA Edition"; the family map places it already.
+        "swana" to "SWANA",
         // Latin family — the Latin-dance styles a club bills per floor (Havanna: "Salsa, Merengue &
         // Bachata", "Reggaeton, Latin-Pop") all fold onto the one Latin tag, following salsa/cumbia.
         "cumbia" to "Latin",
