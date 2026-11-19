@@ -2,6 +2,13 @@
   - article:
     - heading "Tonight Show" [level=1]
     - paragraph: /Sat, \d+ Aug \d+ \d+:\d+ Mock Venue/
+    - group "Your plans for this event":
+      - link "Interested":
+        - /url: /en/sign-in?next=/en/events/tonight-show?do=rsvp-interested&intent=rsvp
+      - link "Going":
+        - /url: /en/sign-in?next=/en/events/tonight-show?do=rsvp-going&intent=rsvp
+    - button "Share"
+    - status
     - heading "Running order" [level=2]
     - heading "Main Floor" [level=3]
     - list:
@@ -19,13 +26,6 @@
     - paragraph: Test Str. 1, Berlin
     - heading "Tickets" [level=2]
     - paragraph: Price not announced
-    - group "Your plans for this event":
-      - link "Interested":
-        - /url: /en/sign-in?next=/en/events/tonight-show?do=rsvp-interested&intent=rsvp
-      - link "Going":
-        - /url: /en/sign-in?next=/en/events/tonight-show?do=rsvp-going&intent=rsvp
-    - button "Share"
-    - status
     - heading "Promoters" [level=2]
     - paragraph:
       - link "Mock Promoter":
