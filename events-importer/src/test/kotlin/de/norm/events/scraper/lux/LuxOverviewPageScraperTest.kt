@@ -131,6 +131,31 @@ class LuxOverviewPageScraperTest {
     }
 
     @Test
+    fun `a bold blurb sentence bills no act`() {
+        // Event 14812, #5295.
+        parse(
+            """
+            <section><div class="when">Do<br>10.12.</div>
+            <div class="details"><h2>Thursday sounds superb!</h2>
+            <p>Smoked out music for circadian rhythm cheaters, dirty ravers and holy jesters!</p>
+            <p><strong>Punchy electro cuts and cosmic dance-rock tunes with a punk-funk-reggae vibe!</strong></p>
+            <p>DJ <strong>Lehmann</strong></p><p>21.00 Uhr</p></div></section>
+            """.trimIndent()
+        ).single().artists.map { it.name } shouldContainExactly listOf("Lehmann")
+    }
+
+    @Test
+    fun `a short bold name ending in an exclamation mark and a long back-to-back line stay acts`() {
+        parse(
+            """
+            <section><div class="when">Do<br>10.12.</div>
+            <div class="details"><h2>BANG</h2>
+            <p><strong>Bleach!<br>Pop Will Eat Itself!<br>DJ Foo Bar b2b DJ Baz<br>Wild raver music all night long, no breaks</strong></p></div></section>
+            """.trimIndent()
+        ).single().artists.map { it.name } shouldContainExactly listOf("Bleach!", "Pop Will Eat Itself!", "DJ Foo Bar b2b DJ Baz")
+    }
+
+    @Test
     fun `a night without a readable date or title is skipped`() {
         parse(
             """
