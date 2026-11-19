@@ -132,6 +132,18 @@ describe('BaseDetailView', () => {
   })
 
   // design.instructions.md §1 forbids an eyebrow above a page title (#2662).
+  it('offers Share in the header for the page, and no Share without its path (#5291)', () => {
+    const shared = mount(BaseDetailView, {
+      props: { ...mountWith(page(), pager([])).props(), pagePath: '/artists/sesh-orka' },
+      global: { stubs: { ...stubs, FollowButton: true } },
+    })
+
+    const menu = shared.get('header').findComponent({ name: 'ShareMenu' })
+    expect(menu.props('url')).toMatch(/\/artists\/sesh-orka$/)
+    expect(menu.props('title')).toBe('Sesh Orka')
+    expect(mountWith(page(), pager([])).findComponent({ name: 'ShareMenu' }).exists()).toBe(false)
+  })
+
   it('opens the header on the h1, with no kind label above it', () => {
     const wrapper = mountWith(page(), pager([]))
 

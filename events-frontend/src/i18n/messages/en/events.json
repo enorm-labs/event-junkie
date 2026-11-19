@@ -178,11 +178,6 @@
     "genreFromDescription": "Genre from the event description",
     "genreFromWikidata": "Genre of the acts from Wikidata",
     "share": {
-      "share": "Share",
-      "nativeShare": "Share via…",
-      "copyLink": "Copy link",
-      "copied": "Link copied.",
-      "copyFailed": "Could not copy the link. Here it is: {url}",
       "ics": "Add to calendar (.ics)",
       "google": "Google Calendar",
       "startEstimated": "The start time is our estimate.",

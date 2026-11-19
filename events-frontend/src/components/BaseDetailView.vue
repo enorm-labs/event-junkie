@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventPage } from '@/api/types'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import ErrorLine from '@/components/ErrorLine.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import FollowButton from '@/components/FollowButton.vue'
+import ShareMenu from '@/components/ShareMenu.vue'
 import type { FollowKind } from '@/api/account'
 import ReportLine from '@/components/ReportLine.vue'
 import { useCompactView } from '@/composables/useCompactView'
@@ -21,6 +22,8 @@ import type { PastEvents } from '@/composables/usePastEvents'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS, PAGE_TITLE_CLASS } from '@/lib/utils'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
+import { canonicalUrl } from '@/lib/seo'
+import type { Locale } from '@/i18n/locales'
 
 /**
  * Presentational shell shared by the artist, venue and promoter detail pages: the loading /
@@ -67,9 +70,10 @@ const props = defineProps<{
   /** What the Follow button follows (#3889); no button without both. */
   followKind?: FollowKind
   followSlug?: string
-  /** The report line's question and the page's path without the locale; no line without both. */
+  /** The report line's question; no line without it and `pagePath`. */
   reportText?: string
-  reportPath?: string
+  /** The page's path without the locale, for the Share menu and the report line. */
+  pagePath?: string
 }>()
 
 // The document title is not set here: each detail view owns its page meta, because the
@@ -79,7 +83,12 @@ const localePath = useLocalePath()
 
 const pastEvents = computed(() => props.past?.events ?? [])
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+const shareUrl = computed(() =>
+  props.pagePath ? canonicalUrl(locale.value as Locale, props.pagePath) : null,
+)
+const shareStatus = ref('')
 // The compact view is a global display preference — see `useCompactView`.
 const { compact } = useCompactView()
 </script>
@@ -152,12 +161,19 @@ const { compact } = useCompactView()
            would push it off the screen (#811 draws one on a card). -->
         <header class="space-y-2">
           <h1 :class="PAGE_TITLE_CLASS">{{ name }}</h1>
-          <FollowButton
-            v-if="followKind && followSlug"
-            :kind="followKind"
-            :name="name ?? undefined"
-            :slug="followSlug"
-          />
+          <!-- Follow, then Share, as the event page's plans come before its Share (#5291). -->
+          <div class="flex flex-wrap items-start gap-3">
+            <FollowButton
+              v-if="followKind && followSlug"
+              :kind="followKind"
+              :name="name ?? undefined"
+              :slug="followSlug"
+            />
+            <ShareMenu v-if="shareUrl" v-model:status="shareStatus" :title="name" :url="shareUrl" />
+          </div>
+          <p class="text-body text-muted-foreground" role="status">
+            {{ shareStatus }}
+          </p>
           <slot name="meta" />
         </header>
 
@@ -174,8 +190,8 @@ const { compact } = useCompactView()
         <slot />
 
         <ReportLine
-          v-if="reportText && reportPath && name"
-          :path="reportPath"
+          v-if="reportText && pagePath && name"
+          :path="pagePath"
           :text="reportText"
           :title="name"
         />

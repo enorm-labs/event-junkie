@@ -80,5 +80,12 @@
   },
   "textCredit": {
     "text": "Text:"
+  },
+  "share": {
+    "share": "Teilen",
+    "nativeShare": "Teilen über…",
+    "copyLink": "Link kopieren",
+    "copied": "Link kopiert.",
+    "copyFailed": "Der Link ließ sich nicht kopieren. Hier ist er: {url}"
   }
 }
