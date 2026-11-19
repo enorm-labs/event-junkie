@@ -173,7 +173,7 @@ class FieldCoverageService(
         logger.warn { "Field coverage dropped for source '${source.slug}': $reason" }
     }
 
-    companion object {
+    private companion object {
         private const val DEFAULT_BASELINE_RUNS = 10
         private const val DEFAULT_MIN_SAMPLE = 10
 

@@ -158,7 +158,7 @@ class MusicBrainzClient(
         }
     }
 
-    companion object {
+    private companion object {
         private const val CANDIDATES = 10
         private const val BACKOFF_GROWTH = 3
 

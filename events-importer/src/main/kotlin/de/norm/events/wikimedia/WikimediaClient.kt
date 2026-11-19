@@ -249,7 +249,7 @@ class WikimediaClient(
 
     private fun JsonNode.textOrNull(): String? = asString(null)?.takeIf { it.isNotBlank() }
 
-    companion object {
+    private companion object {
         private const val P18 = "P18"
         private const val P106 = "P106"
         private const val P136 = "P136"

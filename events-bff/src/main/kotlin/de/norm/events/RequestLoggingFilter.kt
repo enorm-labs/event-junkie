@@ -78,7 +78,7 @@ class RequestLoggingFilter(
             }.contextWrite { it.put(REQUEST_ID, request.id) }
     }
 
-    companion object {
+    private companion object {
         /**
          * Routes whose query string is never logged. The watch picker's term leaves for MusicBrainz, and a line of a signed-in
          * request beside it would tie the term to a session (#5214, LEGAL.md §7).
