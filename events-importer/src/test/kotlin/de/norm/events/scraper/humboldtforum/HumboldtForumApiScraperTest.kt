@@ -121,6 +121,78 @@ class HumboldtForumApiScraperTest {
     }
 
     @Test
+    fun `reads free entry from the ticket text when the planned price is blank`() {
+        val logoskop = row("173565-202701271800")
+        logoskop.free shouldBe true
+        logoskop.priceNote.shouldBeNull()
+    }
+
+    @Test
+    fun `keeps free entry beside a museum ticket as the note, from the ticket text and from a date's info`() {
+        val dragStoryHour = row("173508-202611221300")
+        dragStoryHour.free shouldBe false
+        dragStoryHour.priceNote shouldBe "kostenfrei zzgl. Ausstellungseintritt"
+
+        val mysticDimensions = row("72781-202601031700")
+        mysticDimensions.free shouldBe false
+        mysticDimensions.priceNote shouldBe "Teilnahme kostenfrei – Ausstellungsticket notwendig"
+    }
+
+    @Test
+    fun `prices each date from its own info`() {
+        val priced = row("72781-202612051700")
+        priced.pricePresale shouldBe BigDecimal("9")
+        priced.priceNote.shouldBeNull()
+    }
+
+    @ParameterizedTest(name = "price \"{0}\", info \"{1}\", ticket text \"{2}\"")
+    @CsvSource(
+        delimiter = '|',
+        nullValues = ["-"],
+        value = [
+            "12 EUR     | kostenfrei                                       | kostenfrei                              | false | 12 | -",
+            "''         | Führung in deutscher Sprache - 9 EUR             | kostenfrei                              | false | 9  | -",
+            "''         | ''                                               | kostenfrei                              | true  | -  | -",
+            "''         | kostenfrei - Anmeldung unter w-masked@example.de | -                                       | true  | -  | -",
+            "''         | Bitte T-Shirt mitbringen                         | Ein Abend kostenfrei, bitte buchen Sie  | false | -  | -",
+            "''         | -                                                | Bitte buchen Sie telefonisch: 030 12345678 | false | -  | -",
+            "''         | Teilnahme kostenfrei, Anmeldung unter w-masked@example.de | -                              | false | -  | -",
+            "-          | -                                                | Teilnahme auf Einladung                 | false | -  | -"
+        ]
+    )
+    fun `prices a date from the planned price, then its info, then the ticket text, and never from booking prose`(
+        price: String?,
+        info: String?,
+        ticketText: String?,
+        free: Boolean,
+        presale: BigDecimal?,
+        note: String?
+    ) {
+        val event = HumboldtForumApiScraper().scrape(priceItem(price, info, ticketText), SOURCE_URL).single()
+
+        event.free shouldBe free
+        event.pricePresale shouldBe presale
+        event.priceNote shouldBe note
+    }
+
+    private fun priceItem(
+        price: String?,
+        info: String?,
+        ticketText: String?
+    ): String {
+        fun field(
+            name: String,
+            value: String?
+        ) = value?.let { """"$name":"$it",""" }.orEmpty()
+        return """
+            {"events":[{"postId":1,"title":"Ein Abend","type":"event","permalink":"https://www.humboldtforum.org/de/programm/termin/1/",
+              "genre_details":[{"text":"Konzert"}],
+              "acf":{${field("tickettext", ticketText)}"planning":{${field("price", price)}"admission":""},
+                "times":[{${field("info", info)}"start":"20261201 19:00","status":"BUY"}]}}]}
+            """.trimIndent()
+    }
+
+    @Test
     fun `keeps a long title whole, with its no-break space collapsed`() {
         row("172656-202611291600").title shouldBe "Wer hat, der hat? - Über Erbe, Chancen und Verantwortung"
     }
