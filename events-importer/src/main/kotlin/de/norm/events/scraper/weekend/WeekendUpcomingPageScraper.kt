@@ -14,9 +14,9 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.lazyImgSrcAt
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -41,8 +41,7 @@ class WeekendUpcomingPageScraper {
         sourceUrl: String
     ): List<ScrapedEvent> {
         val articles = document.select("article.eventlist-event--upcoming")
-        logger.info { "Found ${articles.size} upcoming event(s) on the Weekend listing" }
-        return articles.mapSkippingFailures(logger, "Weekend event item") { parseArticle(it, sourceUrl) }
+        return articles.parseListing(logger, "Weekend event item") { parseArticle(it, sourceUrl) }
     }
 
     private fun parseArticle(

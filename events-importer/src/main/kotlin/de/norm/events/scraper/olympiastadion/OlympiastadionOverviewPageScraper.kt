@@ -8,7 +8,7 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.lazyImgSrcAt
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -30,9 +30,8 @@ class OlympiastadionOverviewPageScraper {
         sourceUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select("a.card-link[href*=$EVENT_PATH]")
-        logger.info { "Found ${cards.size} event card(s) on the Olympiastadion listing" }
         return cards
-            .mapSkippingFailures(logger, "an Olympiastadion event card") { parseCard(it, sourceUrl) }
+            .parseListing(logger, "an Olympiastadion event card") { parseCard(it, sourceUrl) }
             .distinctBy { it.sourceId }
     }
 

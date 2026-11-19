@@ -9,9 +9,9 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -50,9 +50,7 @@ class Hole44OverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("li.event-item")
-        logger.info { "Found ${items.size} event item(s) on overview page" }
-
-        return items.mapSkippingFailures(logger, "event item") { item ->
+        return items.parseListing(logger, "event item") { item ->
             parseItem(item, baseUrl)
         }
     }

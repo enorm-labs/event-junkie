@@ -11,8 +11,8 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -42,9 +42,7 @@ class TiffanyClubOverviewPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val items = document.select(".e-loop-item.type-event")
-        logger.info { "Found ${items.size} event item(s) on the Tiffany Club listing" }
-
-        return items.mapSkippingFailures(logger, "a Tiffany Club event item") { item ->
+        return items.parseListing(logger, "a Tiffany Club event item") { item ->
             parseItem(item, sourceUrl)
         }
     }

@@ -14,8 +14,8 @@ import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.lazyImgSrcAt
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
+import de.norm.events.scraper.parseListing
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -51,9 +51,8 @@ class EightMmProgramPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("noscript li:has(> h1 > a[href*=/program/])")
-        logger.info { "Found ${items.size} event(s) on the 8MM programme" }
         return items
-            .mapSkippingFailures(logger, "8MM event item") { parseItem(it, sourceUrl) }
+            .parseListing(logger, "8MM event item") { parseItem(it, sourceUrl) }
             .dropPastEvents(clock) { dropped -> logger.info { "Dropped $dropped past event(s) from the 8MM programme" } }
     }
 

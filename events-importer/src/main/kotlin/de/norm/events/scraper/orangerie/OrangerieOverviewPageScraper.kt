@@ -10,7 +10,7 @@ import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaName
@@ -40,9 +40,8 @@ class OrangerieOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val nights = document.jsonLdEvents()
-        logger.info { "Found ${nights.size} night(s) in the Orangerie programme JSON-LD" }
         val cards = document.select("div.card").associateBy { it.textAt("h3.card-title") }
-        return nights.mapSkippingFailures(logger, "Orangerie night") { parseNight(it, cards, baseUrl) }
+        return nights.parseListing(logger, "Orangerie night") { parseNight(it, cards, baseUrl) }
     }
 
     private fun parseNight(

@@ -14,7 +14,7 @@ import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripLineupBracket
@@ -62,9 +62,7 @@ class OhmOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("ul.event-list li.event-item")
-        logger.info { "Found ${items.size} event item(s) on OHM overview" }
-
-        return items.mapSkippingFailures(logger, "OHM event item") { item ->
+        return items.parseListing(logger, "OHM event item") { item ->
             parseItem(item, baseUrl)
         }
     }

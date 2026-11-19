@@ -26,11 +26,11 @@ import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitCrossBilled
@@ -85,9 +85,7 @@ class GretchenOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val gigs = document.select("div.gig")
-        logger.info { "Found ${gigs.size} gig block(s) on Gretchen homepage" }
-
-        return gigs.mapSkippingFailures(logger, "Gretchen gig block") { gig ->
+        return gigs.parseListing(logger, "Gretchen gig block") { gig ->
             parseGig(gig, baseUrl)
         }
     }

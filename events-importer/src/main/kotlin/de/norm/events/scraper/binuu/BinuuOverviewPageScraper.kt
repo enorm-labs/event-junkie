@@ -3,7 +3,7 @@ package de.norm.events.scraper.binuu
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -38,9 +38,7 @@ class BinuuOverviewPageScraper {
             logger.warn { "No Bi Nuu events payload found on overview page" }
             return emptyList()
         }
-        logger.info { "Found ${events.size()} event(s) in Bi Nuu overview payload" }
-
-        return events.mapSkippingFailures(logger, "Bi Nuu overview event") { node ->
+        return events.parseListing(logger, "Bi Nuu overview event") { node ->
             parseEvent(node, baseUrl)
         }
     }

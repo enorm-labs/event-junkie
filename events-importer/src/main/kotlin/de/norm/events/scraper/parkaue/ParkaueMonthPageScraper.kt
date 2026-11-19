@@ -11,7 +11,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.hrefAt
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -39,8 +39,7 @@ class ParkaueMonthPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val performances = document.select("div.performance[data-day-token]")
-        logger.info { "Found ${performances.size} Theater an der Parkaue performance(s) on $baseUrl" }
-        return performances.mapSkippingFailures(logger, "Theater an der Parkaue performance") { parse(it) }
+        return performances.parseListing(logger, "Theater an der Parkaue performance", url = baseUrl) { parse(it) }
     }
 
     private fun parse(performance: Element): ScrapedEvent? {

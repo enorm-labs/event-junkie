@@ -8,8 +8,8 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.lastPathSegment
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -29,8 +29,7 @@ class MadMonkeyRoomShopPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("div.item:has(> .content > a.header)")
-        logger.info { "Found ${items.size} Mad Monkey Room shop item(s) on $baseUrl" }
-        return items.mapSkippingFailures(logger, "Mad Monkey Room shop item", ::parseItem)
+        return items.parseListing(logger, "Mad Monkey Room shop item", url = baseUrl, parse = ::parseItem)
     }
 
     private fun parseItem(item: Element): ScrapedEvent? {

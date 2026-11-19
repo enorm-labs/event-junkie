@@ -13,7 +13,7 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaName
@@ -53,9 +53,8 @@ class BkaTheaterSpielplanPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("div.bka-spielplan-row.event-wrapper:not(.bka-spielfrei)")
-        logger.info { "Found ${rows.size} BKA Theater performance(s) on $baseUrl" }
         val prices = shopPrices(document)
-        return rows.mapSkippingFailures(logger, "BKA Theater performance") { row -> parseRow(row, prices) }
+        return rows.parseListing(logger, "BKA Theater performance", url = baseUrl) { row -> parseRow(row, prices) }
     }
 
     /** The words that bill a Kindertheater row, in its title, its badges or its note (EVENT_SCOPE.md §3.5). */

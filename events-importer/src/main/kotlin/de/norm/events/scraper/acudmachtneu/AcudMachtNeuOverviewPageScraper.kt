@@ -8,8 +8,8 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistList
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferUnmarkedTitleType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -31,8 +31,7 @@ class AcudMachtNeuOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select(".programm-page__list__item:has(a.post-item__title__link[href])")
-        logger.info { "Found ${items.size} event item(s) on the ACUD month page $baseUrl" }
-        return items.mapSkippingFailures(logger, "ACUD event item") { parseItem(it) }.distinctBy { it.sourceId }
+        return items.parseListing(logger, "ACUD event item", url = baseUrl) { parseItem(it) }.distinctBy { it.sourceId }
     }
 
     private fun parseItem(item: Element): ScrapedEvent? {

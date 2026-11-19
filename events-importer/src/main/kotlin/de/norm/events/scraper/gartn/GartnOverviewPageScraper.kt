@@ -11,8 +11,8 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
@@ -79,9 +79,7 @@ class GartnOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val blocks = document.select("div.container-component").filter { DATE_HEADING.matches(dateHeading(it)) }
-        logger.info { "Found ${blocks.size} event block(s) on the gART.n programme" }
-
-        return blocks.mapSkippingFailures(logger, "gART.n event block") { block ->
+        return blocks.parseListing(logger, "gART.n event block") { block ->
             parseBlock(block, baseUrl)
         }
     }

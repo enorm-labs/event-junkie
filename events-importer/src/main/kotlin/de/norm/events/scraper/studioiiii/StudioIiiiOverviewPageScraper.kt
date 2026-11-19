@@ -12,9 +12,9 @@ import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -52,8 +52,7 @@ class StudioIiiiOverviewPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val covers = document.select("div.t001__wrapper:has(.t001__uptitle)")
-        logger.info { "Found ${covers.size} cover block(s) on the Studio IIII homepage" }
-        return covers.mapSkippingFailures(logger, "a Studio IIII cover block") { parseCover(it, sourceUrl) }
+        return covers.parseListing(logger, "a Studio IIII cover block") { parseCover(it, sourceUrl) }
     }
 
     private fun parseCover(

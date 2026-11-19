@@ -10,10 +10,10 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDayMonth
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
@@ -81,9 +81,7 @@ class FrannzOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val articles = document.select("article.events:has(h2.event-title):has(.event-day)")
-        logger.info { "Found ${articles.size} event article(s) on Frannz homepage" }
-
-        return articles.mapSkippingFailures(logger, "Frannz event article") { article ->
+        return articles.parseListing(logger, "Frannz event article") { article ->
             parseArticle(article, baseUrl)
         }
     }

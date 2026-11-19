@@ -12,9 +12,9 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanShortDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseRealDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
@@ -65,10 +65,9 @@ class AstraOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val articles = document.select("article.event")
-        logger.info { "Found ${articles.size} event article(s) on overview page" }
 
         val events =
-            articles.mapSkippingFailures(logger, "event article") { article ->
+            articles.parseListing(logger, "event article") { article ->
                 parseArticle(article, baseUrl)
             }
         return normalizeFestivalDays(events)

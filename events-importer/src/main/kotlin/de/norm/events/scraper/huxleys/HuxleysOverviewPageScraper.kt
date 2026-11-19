@@ -12,9 +12,9 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -55,9 +55,7 @@ class HuxleysOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select("li.event-item:has(a[href])")
-        logger.info { "Found ${cards.size} event card(s) on Huxleys overview" }
-
-        return cards.mapSkippingFailures(logger, "event card") { card ->
+        return cards.parseListing(logger, "event card") { card ->
             parseCard(card, baseUrl)
         }
     }

@@ -14,8 +14,8 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -64,9 +64,7 @@ class WildAtHeartOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("tr:has(.datum)")
-        logger.info { "Found ${rows.size} event row(s) on Wild at Heart programme" }
-
-        return rows.mapSkippingFailures(logger, "Wild at Heart event row") { row ->
+        return rows.parseListing(logger, "Wild at Heart event row") { row ->
             parseRow(row, baseUrl)
         }
     }

@@ -16,7 +16,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
@@ -61,10 +61,9 @@ class ATraneProgrammePageScraper {
 
     fun scrape(document: Document): List<ScrapedEvent> {
         val cards = document.select(".eventon_list_event[data-event_id]")
-        logger.info { "Found ${cards.size} event card(s) on the A-Trane programme" }
 
         return cards
-            .mapSkippingFailures(logger, "an A-Trane event card") { card ->
+            .parseListing(logger, "an A-Trane event card") { card ->
                 parseCard(card)
             }.distinctBy { it.sourceId }
     }

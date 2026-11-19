@@ -9,8 +9,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.headlinersFromTitle
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -57,8 +57,7 @@ class SpeichesOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("tr:has(> td a[href*=auswahl_lfdnr])")
-        logger.info { "Found ${rows.size} programme row(s) on the Speiche page" }
-        return rows.mapSkippingFailures(logger, "Speiche programme row") { parseRow(it, baseUrl) }
+        return rows.parseListing(logger, "Speiche programme row") { parseRow(it, baseUrl) }
     }
 
     private fun parseRow(

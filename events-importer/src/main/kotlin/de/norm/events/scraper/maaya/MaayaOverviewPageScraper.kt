@@ -13,7 +13,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -88,10 +88,9 @@ class MaayaOverviewPageScraper(
             }
 
         val cards = section.select(EVENT_CARD)
-        logger.info { "Found ${cards.size} programme card(s) in the MAAYA NEXT DATES section" }
 
         val events =
-            cards.mapSkippingFailures(logger, "MAAYA programme card") { card ->
+            cards.parseListing(logger, "MAAYA programme card") { card ->
                 parseCard(card, baseUrl)
             }
         // A clock reading marks a schedule line; the area blurbs below the programme carry none.

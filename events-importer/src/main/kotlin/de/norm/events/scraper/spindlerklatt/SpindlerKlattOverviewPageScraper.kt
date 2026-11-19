@@ -11,8 +11,8 @@ import de.norm.events.scraper.endOn
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -40,8 +40,7 @@ class SpindlerKlattOverviewPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select(".card")
-        logger.info { "Found ${cards.size} night(s) on the Spindler & Klatt club page" }
-        return cards.mapSkippingFailures(logger, "a Spindler & Klatt night") { parseNight(it, sourceUrl) }
+        return cards.parseListing(logger, "a Spindler & Klatt night") { parseNight(it, sourceUrl) }
     }
 
     private fun parseNight(

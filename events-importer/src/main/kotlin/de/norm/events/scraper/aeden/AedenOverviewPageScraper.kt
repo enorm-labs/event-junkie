@@ -10,7 +10,7 @@ import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
@@ -58,9 +58,7 @@ class AedenOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("div.single-accordion")
-        logger.info { "Found ${items.size} event block(s) on ÆDEN month page $baseUrl" }
-
-        return items.mapSkippingFailures(logger, "ÆDEN event block") { item ->
+        return items.parseListing(logger, "ÆDEN event block", url = baseUrl) { item ->
             parseEvent(item, baseUrl)
         }
     }

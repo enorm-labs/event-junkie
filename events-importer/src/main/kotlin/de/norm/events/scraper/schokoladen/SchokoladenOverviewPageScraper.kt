@@ -12,9 +12,9 @@ import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripTitleStatusMarker
@@ -53,9 +53,7 @@ class SchokoladenOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val eventBlocks = document.select("div.event")
-        logger.info { "Found ${eventBlocks.size} event block(s) on page" }
-
-        return eventBlocks.mapSkippingFailures(logger, "Schokoladen event block") { block ->
+        return eventBlocks.parseListing(logger, "Schokoladen event block") { block ->
             parseEvent(block, baseUrl)
         }
     }

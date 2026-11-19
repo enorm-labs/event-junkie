@@ -10,8 +10,8 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripTitleMark
@@ -64,10 +64,9 @@ class MonsterRonsonsOverviewPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select(CARD_SELECTOR)
-        logger.info { "Found ${cards.size} event card(s) on page" }
 
         val events =
-            cards.mapSkippingFailures(logger, "event card") { card ->
+            cards.parseListing(logger, "event card") { card ->
                 parseCard(card, sourceUrl)
             }
 

@@ -10,8 +10,8 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -36,8 +36,7 @@ class FriedrichstadtPalastGastspielePageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val shows = document.select("section.content-with-photo")
-        logger.info { "Found ${shows.size} guest show(s) on the Friedrichstadt-Palast page" }
-        return shows.mapSkippingFailures(logger, "a Friedrichstadt-Palast guest show") { parseShow(it, baseUrl) }.flatten()
+        return shows.parseListing(logger, "a Friedrichstadt-Palast guest show") { parseShow(it, baseUrl) }.flatten()
     }
 
     private fun parseShow(

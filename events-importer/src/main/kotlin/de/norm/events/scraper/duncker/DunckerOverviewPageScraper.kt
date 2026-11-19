@@ -14,8 +14,8 @@ import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
@@ -69,10 +69,9 @@ class DunckerOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val cells = document.select("table.bodytable td.tableevent")
-        logger.info { "Found ${cells.size} programme row(s) on Duncker Club page" }
 
         val parsed =
-            cells.mapSkippingFailures(logger, "Duncker event row") { cell ->
+            cells.parseListing(logger, "Duncker event row") { cell ->
                 parseRow(cell, baseUrl)
             }
 

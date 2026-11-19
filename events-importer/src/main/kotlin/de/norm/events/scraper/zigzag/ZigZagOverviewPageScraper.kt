@@ -9,7 +9,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.lazyImgSrcAt
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -39,11 +39,10 @@ class ZigZagOverviewPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val items = document.select(".summary-item-record-type-event")
-        logger.info { "Found ${items.size} event item(s) on the Zig Zag programme" }
         val today = LocalDate.now(clock)
 
         return items
-            .mapSkippingFailures(logger, "a Zig Zag event item") { item ->
+            .parseListing(logger, "a Zig Zag event item") { item ->
                 parseItem(item, sourceUrl)
             }.filterNot { it.eventDate.isBefore(today) }
             .distinctBy { it.sourceId }

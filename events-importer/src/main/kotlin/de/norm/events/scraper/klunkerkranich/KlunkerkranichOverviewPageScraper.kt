@@ -17,8 +17,8 @@ import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownBillingActs
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -79,9 +79,7 @@ class KlunkerkranichOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select(EVENT_CARD)
-        logger.info { "Found ${cards.size} event card(s) on the Klunkerkranich programme" }
-
-        return cards.mapSkippingFailures(logger, "Klunkerkranich event card") { card ->
+        return cards.parseListing(logger, "Klunkerkranich event card") { card ->
             parseCard(card, baseUrl)
         }
     }

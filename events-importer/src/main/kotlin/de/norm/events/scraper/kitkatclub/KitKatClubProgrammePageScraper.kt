@@ -12,9 +12,9 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
@@ -51,9 +51,7 @@ class KitKatClubProgrammePageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("tr:has(> td > span.ClubTermineDatum)")
-        logger.info { "Found ${rows.size} night(s) on the KitKatClub programme" }
-
-        return rows.mapSkippingFailures(logger, "KitKatClub night") { row -> parseRow(row, sourceUrl) }
+        return rows.parseListing(logger, "KitKatClub night") { row -> parseRow(row, sourceUrl) }
     }
 
     private fun parseRow(

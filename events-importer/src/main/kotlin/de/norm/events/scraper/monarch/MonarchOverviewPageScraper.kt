@@ -13,9 +13,9 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.stripTitleStatusMarker
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -64,9 +64,7 @@ class MonarchOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val titleCells = document.select("td#td1")
-        logger.info { "Found ${titleCells.size} event block(s) on Monarch programme" }
-
-        return titleCells.mapSkippingFailures(logger, "Monarch event") { cell ->
+        return titleCells.parseListing(logger, "Monarch event") { cell ->
             parseEvent(cell, baseUrl)
         }
     }

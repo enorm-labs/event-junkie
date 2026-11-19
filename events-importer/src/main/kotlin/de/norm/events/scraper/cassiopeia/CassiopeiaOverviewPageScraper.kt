@@ -8,7 +8,7 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.headlinersFromTitle
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -48,10 +48,9 @@ class CassiopeiaOverviewPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val eventItems = document.select(".event-item")
-        logger.info { "Found ${eventItems.size} event item(s) on page" }
 
         val events =
-            eventItems.mapSkippingFailures(logger, "event item") { item ->
+            eventItems.parseListing(logger, "event item") { item ->
                 parseEventItem(item, sourceUrl)
             }
 

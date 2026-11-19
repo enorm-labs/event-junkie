@@ -18,9 +18,9 @@ import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDayMonth
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.selectFirstOrSelf
@@ -83,10 +83,9 @@ class RoadrunnerOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val blocks = splitIntoEventBlocks(document.select("p"))
-        logger.info { "Found ${blocks.size} event block(s) on Roadrunner programme" }
 
         val parsed =
-            blocks.mapSkippingFailures(logger, "event block") { block ->
+            blocks.parseListing(logger, "event block") { block ->
                 parseBlock(block, baseUrl)
             }
 

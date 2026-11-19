@@ -11,7 +11,7 @@ import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.germanDecimalOrNull
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
@@ -37,8 +37,7 @@ class SchlossparkTheaterMonthPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("#spielplan div.hoverBox[data-content]")
-        logger.info { "Found ${rows.size} Schlosspark Theater performance(s) on $baseUrl" }
-        return rows.mapSkippingFailures(logger, "Schlosspark Theater performance", ::parseRow)
+        return rows.parseListing(logger, "Schlosspark Theater performance", url = baseUrl, parse = ::parseRow)
     }
 
     private fun parseRow(row: Element): ScrapedEvent? {

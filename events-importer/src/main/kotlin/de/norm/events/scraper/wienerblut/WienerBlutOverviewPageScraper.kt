@@ -7,8 +7,8 @@ import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.mapWixEventStatus
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
@@ -29,8 +29,7 @@ class WienerBlutOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val events = WixEventsWarmupData.events(document, EventSource.WIENER_BLUT) ?: return emptyList()
-        logger.info { "Found ${events.size()} event(s) in Wiener Blut Wix warmup payload" }
-        return events.mapSkippingFailures(logger, "Wiener Blut event") { parseEvent(it, baseUrl) }
+        return events.parseListing(logger, "Wiener Blut event") { parseEvent(it, baseUrl) }
     }
 
     private fun parseEvent(

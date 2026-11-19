@@ -11,7 +11,7 @@ import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.textAt
@@ -42,10 +42,9 @@ class PfefferbergTheaterCalendarPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("div.event[data-searchid]")
-        logger.info { "Found ${rows.size} Pfefferberg Theater performance(s) on $baseUrl" }
         val labels = filterLabels(document)
         val room = GLASPALAST.takeIf { GLASPALAST_PATH in baseUrl }
-        return rows.mapSkippingFailures(logger, "Pfefferberg Theater performance") { row -> parseRow(row, labels, room) }
+        return rows.parseListing(logger, "Pfefferberg Theater performance", url = baseUrl) { row -> parseRow(row, labels, room) }
     }
 
     private fun filterLabels(document: Document): Map<String, String> =

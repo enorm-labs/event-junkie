@@ -20,8 +20,8 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseOffsetToBerlin
 import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.splitHeadlinerTitle
@@ -81,12 +81,11 @@ class ZennerApiScraper(
             logger.warn { "Zenner page-data has no '$EVENTS_QUERY.nodes' array" }
             return emptyList()
         }
-        logger.info { "Found ${nodes.size()} event(s) in Zenner page-data" }
 
         val visibility = parseVisibility(data)
 
         val events =
-            nodes.mapSkippingFailures(logger, "Zenner event") { node ->
+            nodes.parseListing(logger, "Zenner event") { node ->
                 parseEvent(SCRAPER_JSON.treeToValue(node, ZennerEventNode::class.java), sourceUrl, visibility)
             }
 

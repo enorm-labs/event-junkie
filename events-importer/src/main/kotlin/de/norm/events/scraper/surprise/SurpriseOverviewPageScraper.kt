@@ -10,7 +10,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.euroAmounts
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -35,8 +35,7 @@ class SurpriseOverviewPageScraper {
         sourceUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("div.every-event-displayed")
-        logger.info { "Found ${rows.size} night(s) on the Surprise Club events page" }
-        return rows.mapSkippingFailures(logger, "a Surprise Club night") { parseNight(it, sourceUrl) }
+        return rows.parseListing(logger, "a Surprise Club night") { parseNight(it, sourceUrl) }
     }
 
     private fun parseNight(

@@ -12,8 +12,8 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseBasicIsoDatePrefix
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistPrefix
 import de.norm.events.scraper.textAt
@@ -60,9 +60,7 @@ class TresorOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("article.event-item")
-        logger.info { "Found ${items.size} event item(s) on the Tresor listing" }
-
-        return items.mapSkippingFailures(logger, "Tresor event item") { item ->
+        return items.parseListing(logger, "Tresor event item") { item ->
             parseItem(item, baseUrl)
         }
     }

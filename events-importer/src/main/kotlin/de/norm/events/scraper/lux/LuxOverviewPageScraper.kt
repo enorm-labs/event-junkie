@@ -12,8 +12,8 @@ import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -41,8 +41,7 @@ class LuxOverviewPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val nights = document.select("main.dates > section")
-        logger.info { "Found ${nights.size} night(s) on the L.U.X page" }
-        return nights.mapSkippingFailures(logger, "an L.U.X night") { parseNight(it, sourceUrl) }
+        return nights.parseListing(logger, "an L.U.X night") { parseNight(it, sourceUrl) }
     }
 
     private fun parseNight(

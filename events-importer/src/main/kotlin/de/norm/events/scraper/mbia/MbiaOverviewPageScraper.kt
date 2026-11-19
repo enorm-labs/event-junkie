@@ -15,7 +15,7 @@ import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -43,8 +43,7 @@ class MbiaOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val records = WixEventsWarmupData.collectionRecords(document, COLLECTION, EventSource.M_BIA) ?: return emptyList()
-        logger.info { "Found ${records.size()} record(s) in the M-BIA $COLLECTION collection" }
-        return records.mapSkippingFailures(logger, "M-BIA event record") { parseRecord(it, baseUrl) }
+        return records.parseListing(logger, "M-BIA event record") { parseRecord(it, baseUrl) }
     }
 
     private fun parseRecord(

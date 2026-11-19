@@ -8,7 +8,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseNumericDate
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.selectWithSelf
@@ -70,9 +70,7 @@ class JunctionBarMusicOverviewPageScraper {
         val container = document.selectFirst("div.gridContainer") ?: document.body()
 
         val groups = segmentIntoNights(container, ::isDateBar)
-        logger.info { "Found ${groups.size} dated night(s) on Junction Bar page $baseUrl" }
-
-        return groups.mapSkippingFailures(logger, "Junction Bar night") { group ->
+        return groups.parseListing(logger, "Junction Bar night", url = baseUrl) { group ->
             parseNight(group, year, baseUrl)
         }
     }

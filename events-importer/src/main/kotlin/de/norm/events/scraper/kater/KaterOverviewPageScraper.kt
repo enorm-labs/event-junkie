@@ -15,8 +15,8 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isScreeningTitle
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
@@ -70,9 +70,7 @@ class KaterOverviewPageScraper(
         // `.resident` and `.awareness` articles share the page and the `hentry` markup; only the
         // `event` post type is a dated night.
         val articles = document.select("article.event")
-        logger.info { "Found ${articles.size} event article(s) on Kater homepage" }
-
-        return articles.mapSkippingFailures(logger, "event article") { article ->
+        return articles.parseListing(logger, "event article") { article ->
             parseArticle(article, baseUrl)
         }
     }

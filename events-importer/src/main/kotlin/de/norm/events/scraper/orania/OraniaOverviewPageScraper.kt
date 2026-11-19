@@ -8,8 +8,8 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -40,9 +40,7 @@ class OraniaOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("div.calendarize div.event-list-item")
-        logger.info { "Found ${items.size} Orania listing item(s) on $baseUrl" }
-
-        return items.mapSkippingFailures(logger, "Orania listing item") { item ->
+        return items.parseListing(logger, "Orania listing item", url = baseUrl) { item ->
             parseItem(item)
         }
     }

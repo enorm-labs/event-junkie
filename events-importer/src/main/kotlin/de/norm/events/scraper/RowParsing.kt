@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.Level
 
 /**
  * [parse] applied to every row, dropping a row that yields null or throws. A row that throws is
@@ -44,3 +45,25 @@ inline fun <T, R> Iterable<T>.flatMapSkippingFailures(
             emptyList()
         }
     }
+
+/**
+ * A listing's rows through [mapSkippingFailures], after one INFO line counting them: `Found <n> <what>(s)`.
+ * The source comes from the run's MDC, and [url], when given, goes in the payload rather than the text.
+ */
+inline fun <T, R : Any> Iterable<T>.parseListing(
+    logger: KLogger,
+    what: String,
+    url: String? = null,
+    parse: (T) -> R?
+): List<R> {
+    val rows = this as? Collection<T> ?: toList()
+    logger.at(Level.INFO) {
+        message = "Found ${rows.size} ${countedNoun(what)}(s)"
+        payload = url?.let { mapOf(LogFields.URL to it) }
+    }
+    return rows.mapSkippingFailures(logger, what, parse)
+}
+
+/** [what] without the article its failure line reads it with: `a Paloma night` is counted as `Paloma night(s)`. */
+@PublishedApi
+internal fun countedNoun(what: String): String = what.removePrefix("an ").removePrefix("a ")

@@ -15,7 +15,7 @@ import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
@@ -73,10 +73,9 @@ class CrackBellmerOverviewPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("[role=list] .event-item")
-        logger.info { "Found ${items.size} event item(s) on Crack Bellmer programme" }
 
         val events =
-            items.mapSkippingFailures(logger, "Crack Bellmer event item") { item ->
+            items.parseListing(logger, "Crack Bellmer event item") { item ->
                 parseItem(item, sourceUrl)
             }
 
