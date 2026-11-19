@@ -32,6 +32,8 @@ import java.time.format.DateTimeFormatter
  *   the start crosses midnight only before 06:00; a later one is a typing slip and is dropped.
  * - The children's series `Bilderbuchkino` and `Geschichtentheater` are named only through `partof`, an id of another item.
  * - A concert's or a DJ night's acts come from `acf.subline` or the title ([actsOf]).
+ * - **The price is `acf.planning.price`.** When that is blank, a date's `times[].info` and then the item's `acf.tickettext`
+ *   stand in, but only when they price the entry ([isEntryPrice]). Both also hold booking prose with the office's contact.
  */
 class HumboldtForumApiScraper {
     private val logger = KotlinLogging.logger {}
@@ -60,21 +62,16 @@ class HumboldtForumApiScraper {
         val type = typeOf(categories)
         if (itemType in NOT_EVENTS || type == null || categories.any { it in PARTICIPATION }) return null
         val base = baseEvent(item, type, seriesTitles) ?: return null
-        val price =
-            item
-                .path("acf")
-                .path("planning")
-                .stringOrNull("price")
-                ?.collapseWhitespace()
-        val priced = base.withPrice(price)
+        val acf = item.path("acf")
+        val price = priceText(acf.path("planning").stringOrNull("price"))
+        val ticketText = priceText(acf.stringOrNull("tickettext"))?.takeIf(::isEntryPrice)
         return if (itemType == EXHIBITION_RUN) {
-            listOfNotNull(run(item, priced))
+            listOfNotNull(run(item, base.withPrice(price ?: ticketText)))
         } else {
-            item
-                .path("acf")
-                .path("times")
-                .toList()
-                .mapNotNull { occurrence(it, priced, item.path("postId").asLong()) }
+            acf.path("times").toList().mapNotNull { time ->
+                val info = priceText(time.stringOrNull("info"))?.takeIf(::isEntryPrice)
+                occurrence(time, base.withPrice(price ?: info ?: ticketText), item.path("postId").asLong())
+            }
         }
     }
 
@@ -162,6 +159,17 @@ private fun ScrapedEvent.withPrice(price: String?): ScrapedEvent {
     )
 }
 
+private fun priceText(raw: String?): String? = raw?.collapseWhitespace()?.takeIf { it.isNotEmpty() }
+
+/**
+ * Whether a fallback text prices the entry: it names an amount, opens free, or says free entry beside no booking prose.
+ * `Bitte buchen Sie die Führung telefonisch unter …` is an instruction, and would put a phone number into the note.
+ */
+private fun isEntryPrice(text: String): Boolean =
+    parsePriceValue(text) != null ||
+        (FREE_PRICE.containsMatchIn(text) && EXTRA_TICKET !in text) ||
+        (FREE_MENTION.containsMatchIn(text) && !BOOKING_PROSE.containsMatchIn(text))
+
 /** The first type its categories name, in this order; null when none does. */
 internal fun typeOf(categories: List<String>): EventType? = TYPE_ORDER.firstOrNull { (names, _) -> categories.any { it in names } }?.second
 
@@ -206,6 +214,12 @@ private val CHILDRENS_TITLE = Regex("""\bBilderbuch\w*""", RegexOption.IGNORE_CA
 
 /** `free` only when the text opens with it; `kostenfrei zzgl. Ausstellungsticket` still needs a ticket. */
 private val FREE_PRICE = Regex("""^(?:kostenfrei|freier\s+ein(?:t)?ritt|ein(?:t)?ritt\s+frei)\b""", RegexOption.IGNORE_CASE)
+
+/** A free-entry phrase anywhere in the text: `Teilnahme kostenfrei – Ausstellungsticket notwendig`. */
+private val FREE_MENTION = Regex("""kostenfrei|freier\s+ein(?:t)?ritt|ein(?:t)?ritt\s+frei""", RegexOption.IGNORE_CASE)
+
+/** How to book, with whom: an e-mail address, a phone number, `buchen`, `Anmeldung unter`. */
+private val BOOKING_PROSE = Regex("""@|\bbuchen\b|\banmeldung\s+unter\b|\btelefonisch\b|\d[\d /-]{6,}\d""", RegexOption.IGNORE_CASE)
 
 /** An end before the start crosses midnight only before this hour. */
 private val NIGHT_ENDS: LocalTime = LocalTime.of(6, 0)
