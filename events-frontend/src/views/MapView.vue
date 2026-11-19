@@ -21,6 +21,7 @@ import { fetchCalendarEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
+import { useOriginPicker } from '@/composables/useOriginPicker'
 import { fetchAllVenues } from '@/composables/useVenues'
 import { today } from '@/lib/dateRanges'
 import { addDays, isOnNow, isPastEvent, todayIso, venueLocationLine } from '@/lib/format'
@@ -46,7 +47,7 @@ const { filters, dateRange, queryString, applyFilters } = useEventFilters()
 const onNowOnly = computed(() => queryString('now') === '1')
 const localePath = useLocalePath()
 const { t, locale } = useI18n()
-const { origin, state: locateState, locate, set: setOrigin, clear: clearOrigin } = useLocation()
+const { origin, state: locateState } = useLocation()
 const venueMap = useTemplateRef<{ center(): Position | null; focusPin(slug: string): void }>(
   'venueMap',
 )
@@ -233,34 +234,20 @@ onMounted(async () => {
   if (slug && !anchors.value.some((venue) => venue.slug === slug)) await fetchFocus(slug)
 })
 
-const picking = ref(false)
-
-function pick(position: Position) {
-  setOrigin({ ...position, source: 'map' })
-  picking.value = false
-}
-
-function pickCenter() {
-  const position = venueMap.value?.center()
-  if (position) pick(position)
-}
+const {
+  picking,
+  pick,
+  pickCenter,
+  pickVenue,
+  useDevice,
+  clear: clearNear,
+} = useOriginPicker(() => venueMap.value?.center() ?? null)
 
 function nearVenue(slug: string) {
-  const venue = anchors.value.find((candidate) => candidate.slug === slug)
-  const position = venuePosition(venue)
-  if (!venue || !position) return
-  picking.value = false
-  setOrigin({ ...position, source: 'venue', label: venue.name ?? '', slug })
-}
-
-function useDevice() {
-  picking.value = false
-  locate()
-}
-
-function clearNear() {
-  picking.value = false
-  clearOrigin()
+  pickVenue(
+    slug,
+    anchors.value.find((candidate) => candidate.slug === slug),
+  )
 }
 
 function selectRadius(radius: number) {
