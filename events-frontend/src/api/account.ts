@@ -274,22 +274,40 @@ export async function withdrawRsvp(slug: string): Promise<void> {
   await unwrap(api.DELETE('/api/me/rsvps/{slug}', { params: { path: { slug } } }))
 }
 
-/** The boxes of "Report a problem" (#4399), in the order the form shows them. */
+/** The problem boxes of "Report a problem" (#4399), in the order the form shows them. */
 export const REPORT_PROBLEMS = [
   'ARTISTS',
-  'TITLE',
-  'DESCRIPTION',
+  'PROMOTER',
+  'GENRE',
+  'EVENT_TYPE',
+  'FEATURES',
   'DATE_TIME',
+  'TEXT',
   'STATUS',
   'PRICE_TICKETS',
-  'TYPE_GENRE',
   'NOT_AN_EVENT',
+] as const
+
+/** A hint, not a problem, set apart below the boxes: the details are on the event's image. */
+export const REPORT_HINT = 'ON_IMAGE'
+
+/**
+ * Names of earlier forms. A stored report can hold them, and an edit keeps them; the form shows
+ * no box for them. `OTHER` is also what the BFF stores for a note with no box.
+ */
+export const OLD_REPORT_PROBLEMS = [
+  'TITLE',
+  'DESCRIPTION',
+  'TYPE_GENRE',
   'DUPLICATE',
   'OTHER',
   'QUESTION',
-  'ON_IMAGE',
 ] as const
-export type ReportProblem = (typeof REPORT_PROBLEMS)[number]
+
+export type ReportProblem =
+  | (typeof REPORT_PROBLEMS)[number]
+  | typeof REPORT_HINT
+  | (typeof OLD_REPORT_PROBLEMS)[number]
 
 /** The account's open report on an event, as the form pre-fills it. */
 export interface OpenReport {

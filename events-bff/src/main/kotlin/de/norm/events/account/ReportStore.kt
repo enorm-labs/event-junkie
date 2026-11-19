@@ -10,26 +10,35 @@ import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.UUID
 
-/** The ticked boxes of "Report a problem" (#4399), in the form's order. V247's CHECK lists the same names. */
+/**
+ * The ticked boxes of "Report a problem" (#4399). The form offers the first ten and [ON_IMAGE]; the rest are the names
+ * of earlier forms, kept so stored reports still read. V269's CHECK lists the same names.
+ */
 enum class ReportProblem {
     ARTISTS,
-    TITLE,
-    DESCRIPTION,
+    PROMOTER,
+    GENRE,
+    EVENT_TYPE,
+    FEATURES,
     DATE_TIME,
+    TEXT,
     STATUS,
     PRICE_TICKETS,
-    TYPE_GENRE,
+
+    /** Not a real event, or listed twice. */
     NOT_AN_EVENT,
+
+    /** A hint, not a problem: the details are on the event's image. Never alone without a note. */
+    ON_IMAGE,
+
+    TITLE,
+    DESCRIPTION,
+    TYPE_GENRE,
     DUPLICATE,
 
-    /** Needs a note: the box alone says nothing. */
+    /** A report with a note and no box. The form no longer offers it, so the BFF stores it for a note-only report. */
     OTHER,
-
-    /** A question or a suggestion, not a data error (#4978). Needs a note, as [OTHER] does. */
-    QUESTION,
-
-    /** A hint, not a problem: the details are on the event's image. Never the only box. */
-    ON_IMAGE;
+    QUESTION;
 
     companion object {
         fun ofOrNull(name: String): ReportProblem? = entries.firstOrNull { it.name == name }

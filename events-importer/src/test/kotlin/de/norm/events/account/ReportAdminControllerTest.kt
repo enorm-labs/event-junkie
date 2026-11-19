@@ -101,7 +101,7 @@ class ReportAdminControllerTest : BaseControllerTest() {
     }
 
     @Test
-    fun `the database takes the boxes V247 added, and refuses an unknown problem and an empty list`() {
+    fun `the database takes the boxes V269 added and the old ones, and refuses an unknown problem and an empty list`() {
         fun refused(problems: String) =
             runCatching {
                 runBlocking {
@@ -112,7 +112,7 @@ class ReportAdminControllerTest : BaseControllerTest() {
                 }
             }.isFailure
 
-        refused("ARRAY ['DESCRIPTION', 'QUESTION', 'ON_IMAGE']") shouldBe false
+        refused("ARRAY ['PROMOTER', 'GENRE', 'EVENT_TYPE', 'FEATURES', 'TEXT', 'ON_IMAGE', 'TYPE_GENRE', 'DUPLICATE', 'QUESTION']") shouldBe false
         refused("ARRAY ['WEATHER']") shouldBe true
         refused("ARRAY []::text[]") shouldBe true
     }

@@ -113,7 +113,7 @@ class ReportFlowTest : BaseControllerTest() {
 
     @Test
     fun `a report is stored, replaced and withdrawn, and never cached`() {
-        put("tonight", listOf("ARTISTS", "TITLE")).expectStatus().isNoContent
+        put("tonight", listOf("ARTISTS", "TEXT")).expectStatus().isNoContent
         put("tonight", listOf("DATE_TIME", "DATE_TIME"), "  Starts at 23:00, not 20:00  ").expectStatus().isNoContent
 
         get("/me/reports")
@@ -143,19 +143,38 @@ class ReportFlowTest : BaseControllerTest() {
 
     @Test
     fun `the new boxes are stored, and each ticked box is counted on a store and a replace, not on a withdraw`() {
-        val artists = ticked("artists")
+        val genre = ticked("genre")
         val image = ticked("on_image")
-        val description = ticked("description")
+        val features = ticked("features")
 
-        put("tonight", listOf("ARTISTS", "ON_IMAGE")).expectStatus().isNoContent
-        put("tonight", listOf("DESCRIPTION", "ON_IMAGE")).expectStatus().isNoContent
-        put("next-week", listOf("QUESTION"), "Is there a festival page?").expectStatus().isNoContent
+        put("tonight", listOf("GENRE", "ON_IMAGE")).expectStatus().isNoContent
+        put("tonight", listOf("FEATURES", "ON_IMAGE")).expectStatus().isNoContent
+        put("next-week", listOf("PROMOTER", "EVENT_TYPE", "TEXT")).expectStatus().isNoContent
         withdraw("tonight").expectStatus().isNoContent
 
-        ticked("artists") - artists shouldBe 1.0
+        ticked("genre") - genre shouldBe 1.0
         ticked("on_image") - image shouldBe 2.0
-        ticked("description") - description shouldBe 1.0
-        get("/me/reports").expectBody().jsonPath("$[0].problems").isEqualTo(listOf("QUESTION"))
+        ticked("features") - features shouldBe 1.0
+        get("/me/reports").expectBody().jsonPath("$[0].problems").isEqualTo(listOf("PROMOTER", "EVENT_TYPE", "TEXT"))
+    }
+
+    @Test
+    fun `a note alone is stored as OTHER, the image hint with a note is stored as sent, and an old name stays valid`() {
+        put("tonight", emptyList(), "Is this really a party?").expectStatus().isNoContent
+        put("next-week", listOf("ON_IMAGE"), "See flyer").expectStatus().isNoContent
+
+        get("/me/reports")
+            .expectBody()
+            .jsonPath("$[?(@.event == 'tonight')].problems[*]")
+            .isEqualTo(listOf("OTHER"))
+            .jsonPath("$[?(@.event == 'next-week')].problems[*]")
+            .isEqualTo(listOf("ON_IMAGE"))
+
+        put("tonight", listOf("GENRE", "TYPE_GENRE", "QUESTION"), "Is this really a party?").expectStatus().isNoContent
+        get("/me/reports")
+            .expectBody()
+            .jsonPath("$[?(@.event == 'tonight')].problems[*]")
+            .isEqualTo(listOf("GENRE", "TYPE_GENRE", "QUESTION"))
     }
 
     @Test
@@ -165,15 +184,14 @@ class ReportFlowTest : BaseControllerTest() {
     }
 
     @Test
-    fun `no problem, an unknown one, OTHER or QUESTION without a note, ON_IMAGE alone and a long note are 400s, an unknown event a 404`() {
+    fun `no problem and no note, an unknown one, ON_IMAGE alone and a long note are 400s, an unknown event a 404`() {
         put("tonight", emptyList()).expectStatus().isBadRequest
+        put("tonight", emptyList(), "   ").expectStatus().isBadRequest
         put("tonight", listOf("WEATHER")).expectStatus().isBadRequest
-        put("tonight", listOf("OTHER"), "   ").expectStatus().isBadRequest
-        put("tonight", listOf("QUESTION")).expectStatus().isBadRequest
-        put("tonight", listOf("ON_IMAGE", "ON_IMAGE"), "See the poster").expectStatus().isBadRequest
+        put("tonight", listOf("ON_IMAGE", "ON_IMAGE")).expectStatus().isBadRequest
         put("tonight", listOf("TITLE"), "x".repeat(501)).expectStatus().isBadRequest
         put("nothing-here", listOf("TITLE")).expectStatus().isNotFound
-        put("tonight", listOf("OTHER"), "Wrong venue").expectStatus().isNoContent
+        put("tonight", listOf("QUESTION")).expectStatus().isNoContent
     }
 
     @Test

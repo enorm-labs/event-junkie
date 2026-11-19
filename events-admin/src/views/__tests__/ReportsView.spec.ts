@@ -14,7 +14,7 @@ const tonight: ReportedEvent = {
   sourceSlug: 'badehaus',
   reports: [
     {
-      problems: ['ARTISTS', 'OTHER'],
+      problems: ['GENRE', 'OTHER'],
       note: 'Support act missing',
       updatedAt: '2026-11-02T08:00:00Z',
     },
@@ -53,8 +53,9 @@ describe('ReportsView', () => {
     expect(row[0]!.text()).toContain('Die Nerven')
     expect(row[0]!.text()).toContain('Badehaus')
     expect(row[0]!.findAll('[data-slot="badge"]').map((b) => b.text())).toEqual([
-      'Artists',
+      'Genre',
       'Other',
+      'Artists',
     ])
     expect(row[0]!.text()).toContain('Support act missing')
     expect(row[0]!.find('a').attributes('href')).toBe(

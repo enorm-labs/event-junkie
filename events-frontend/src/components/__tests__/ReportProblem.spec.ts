@@ -6,18 +6,17 @@ import { ApiError } from '@/api/client'
 const account = vi.hoisted(() => ({
   REPORT_PROBLEMS: [
     'ARTISTS',
-    'TITLE',
-    'DESCRIPTION',
+    'PROMOTER',
+    'GENRE',
+    'EVENT_TYPE',
+    'FEATURES',
     'DATE_TIME',
+    'TEXT',
     'STATUS',
     'PRICE_TICKETS',
-    'TYPE_GENRE',
     'NOT_AN_EVENT',
-    'DUPLICATE',
-    'OTHER',
-    'QUESTION',
-    'ON_IMAGE',
   ],
+  REPORT_HINT: 'ON_IMAGE',
   prepareCsrf: vi.fn<() => Promise<void>>(),
   fetchSession: vi.fn<() => Promise<unknown>>(),
   fetchReports: vi.fn<() => Promise<Record<string, unknown>>>(),
@@ -73,7 +72,7 @@ describe('ReportProblem', () => {
     await flushPromises()
     expect(wrapper.find('[data-testid="report-open"]').text()).toBe('Report a problem')
 
-    useReports().reports.value = { tonight: { problems: ['TITLE'], note: '' } }
+    useReports().reports.value = { tonight: { problems: ['TEXT'], note: '' } }
     await flushPromises()
     expect(wrapper.find('[data-testid="report-open"]').text()).toBe('Edit report')
   })
@@ -103,35 +102,64 @@ describe('ReportProblemForm', () => {
     expect(view.emitted('done')).toHaveLength(1)
   })
 
-  it('needs a note with Something else', async () => {
+  it('sends a note alone, and never asks for one', async () => {
     setSession({ ...me, canReport: true } as never)
     const view = await mountForm()
-    await view.find('[data-testid="report-OTHER"]').setValue(true)
-    expect(send(view).attributes('disabled')).toBeDefined()
-    expect(view.text()).toContain('Note (needed for “Something else” and questions)')
+    expect(view.text()).toContain('Note or question (optional)')
 
-    await view.find('[data-testid="report-note"]').setValue('Wrong venue')
+    await view.find('[data-testid="report-note"]').setValue('   ')
+    expect(send(view).attributes('disabled')).toBeDefined()
+    await view.find('[data-testid="report-note"]').setValue('Is this really a party?')
     expect(send(view).attributes('disabled')).toBeUndefined()
+
+    await view.find('form').trigger('submit')
+    await flushPromises()
+    expect(account.saveReport).toHaveBeenCalledWith('tonight', {
+      problems: [],
+      note: 'Is this really a party?',
+    })
   })
 
-  it('needs a note with a question', async () => {
-    setSession({ ...me, canReport: true } as never)
-    const view = await mountForm()
-    await view.find('[data-testid="report-QUESTION"]').setValue(true)
-    expect(send(view).attributes('disabled')).toBeDefined()
-
-    await view.find('[data-testid="report-note"]').setValue('Is there a festival page?')
-    expect(send(view).attributes('disabled')).toBeUndefined()
-  })
-
-  it('sends the image hint only with a problem', async () => {
+  it('sends the image hint only with a problem or a note', async () => {
     setSession({ ...me, canReport: true } as never)
     const view = await mountForm()
     await view.find('[data-testid="report-ON_IMAGE"]').setValue(true)
     expect(send(view).attributes('disabled')).toBeDefined()
 
-    await view.find('[data-testid="report-ARTISTS"]').setValue(true)
+    await view.find('[data-testid="report-note"]').setValue('See flyer')
     expect(send(view).attributes('disabled')).toBeUndefined()
+    await view.find('[data-testid="report-note"]').setValue('')
+    await view.find('[data-testid="report-GENRE"]').setValue(true)
+    expect(send(view).attributes('disabled')).toBeUndefined()
+
+    await view.find('form').trigger('submit')
+    await flushPromises()
+    expect(account.saveReport).toHaveBeenCalledWith('tonight', {
+      problems: ['GENRE', 'ON_IMAGE'],
+      note: '',
+    })
+  })
+
+  it('keeps the names of an older form on save, and shows no box for them', async () => {
+    setSession({ ...me, canReport: true } as never)
+    useReports().reports.value = {
+      tonight: { problems: ['TYPE_GENRE', 'ON_IMAGE', 'QUESTION'], note: '' },
+    }
+    const view = await mountForm()
+    expect(view.find('[data-testid="report-TYPE_GENRE"]').exists()).toBe(false)
+    expect(view.find('[data-testid="report-QUESTION"]').exists()).toBe(false)
+    expect((view.find('[data-testid="report-ON_IMAGE"]').element as HTMLInputElement).checked).toBe(
+      true,
+    )
+    expect(send(view).attributes('disabled')).toBeUndefined()
+
+    await view.find('[data-testid="report-EVENT_TYPE"]').setValue(true)
+    await view.find('form').trigger('submit')
+    await flushPromises()
+    expect(account.saveReport).toHaveBeenCalledWith('tonight', {
+      problems: ['EVENT_TYPE', 'ON_IMAGE', 'TYPE_GENRE', 'QUESTION'],
+      note: '',
+    })
   })
 
   it('pre-fills an earlier report, and withdraws it', async () => {
@@ -160,7 +188,7 @@ describe('ReportProblemForm', () => {
     setSession({ ...me, canReport: true } as never)
     account.saveReport.mockRejectedValue(new ApiError(status, 'refused'))
     const view = await mountForm()
-    await view.find('[data-testid="report-TITLE"]').setValue(true)
+    await view.find('[data-testid="report-TEXT"]').setValue(true)
 
     await view.find('form').trigger('submit')
     await flushPromises()

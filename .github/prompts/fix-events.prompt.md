@@ -45,20 +45,23 @@ A failed call prints nothing, which is not an empty queue: say "queue not readab
 the route (#4399) has not reached production. An empty list, `[]`, is "No open reports", and the run ends. Otherwise each entry becomes one URL, `https://event-junkie.de/de/events/<slug>`, and one note:
 the ticked problems in words, then each reporter's free text. Two reports on one event are one entry with both notes.
 
-| Problem         | Lead                                                  |
-| --------------- | ----------------------------------------------------- |
-| `ARTISTS`       | wrong or missing artists, or the title billed as one  |
-| `TITLE`         | garbled title                                         |
-| `DESCRIPTION`   | garbled, cut-off or badly formatted description       |
-| `DATE_TIME`     | wrong date or time                                    |
-| `STATUS`        | cancelled, postponed or moved, shown wrong or not     |
-| `PRICE_TICKETS` | price or ticket link wrong or missing                 |
-| `TYPE_GENRE`    | wrong event type, genre or audience                   |
-| `NOT_AN_EVENT`  | should not be listed                                  |
-| `DUPLICATE`     | listed twice                                          |
-| `OTHER`         | the note says what                                    |
-| `QUESTION`      | a question or suggestion, not a data error            |
-| `ON_IMAGE`      | a hint: the details are on the event's image (Step 1) |
+| Problem         | Lead                                                                 |
+| --------------- | -------------------------------------------------------------------- |
+| `ARTISTS`       | wrong or missing artists, or the title billed as one                 |
+| `PROMOTER`      | wrong or missing promoter                                            |
+| `GENRE`         | wrong or missing genre                                               |
+| `EVENT_TYPE`    | wrong or missing event type (`OTHER` is not shown, so "missing")     |
+| `FEATURES`      | wrong or missing features: queer, open end, dress code, for children |
+| `DATE_TIME`     | wrong date or time                                                   |
+| `TEXT`          | garbled title or description                                         |
+| `STATUS`        | cancelled, sold out or moved, shown wrong or not                     |
+| `PRICE_TICKETS` | price or ticket link wrong                                           |
+| `NOT_AN_EVENT`  | not a real event, or listed twice                                    |
+| `ON_IMAGE`      | a hint: the details are on the event's image (Step 1)                |
+| `OTHER`         | no box: the note says what                                           |
+
+Reports from before the form was simplified can hold `TITLE`, `DESCRIPTION` (read as `TEXT`), `TYPE_GENRE` (`GENRE` or `EVENT_TYPE`), `DUPLICATE`
+(`NOT_AN_EVENT`) and `QUESTION` (a note that asks).
 
 Keep the `eventId` and the number of reports per entry: Step 6 needs both. Then run Step 1 for each entry, as for a pasted URL.
 
@@ -94,7 +97,7 @@ verdict of **Correct as it is**, with what the source showed.
 | **Accepted limitation** | The venue never publishes the value, in any form the parser can read            | CLEAR if the venue's `*_LIMITATIONS` declares it     |
 | **Hand fix**            | A one-off the parser cannot be expected to read: a typo on the venue's page     | A numbered proposal, applied on the operator's word  |
 | **Correct as it is**    | The stored value matches the source, or the note does not hold                  | One line, with what the source showed                |
-| **Question**            | `QUESTION`: the note asks or suggests something, and no stored value is wrong   | The answer, and an issue draft for a product idea    |
+| **Question**            | The note asks or suggests something, and no stored value is wrong               | The answer, and an issue draft for a product idea    |
 
 **A queued event's reports are resolved by its verdict.** Resolving deletes them, as the privacy notice promises, so it waits for the fix to be live:
 
@@ -165,6 +168,14 @@ Print one line per URL:
 ```
 
 A queued event's line ends with `· queue, <n> reports`.
+
+**A note that asks a question gets a `Reply:` line** under its verdict line, whatever the verdict: a note that ends in `?`, or an old `QUESTION`
+report. The reply is one sentence that the operator can pass on to the reporter as it stands:
+
+```text
+3. 14578 Maffay + Oerding (waldbuehne) · Correct as it is · the venue names no genre
+   Reply: The venue names no genre, so we show none; we may take one from the headliner later.
+```
 
 Then the other events the change touches (Step 3), and the hand-fix proposals, numbered, in [`/worklist`](worklist.prompt.md) Step 5's shape. For a
 queue run, then the resolve proposals, numbered `R1`, `R2`… — one per event that Step 2 resolves now, with a hand-fixed event marked "after <n>", the number of its hand fix:
