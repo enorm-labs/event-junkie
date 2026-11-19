@@ -8,6 +8,7 @@ import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.genretag.WIKIDATA_GENRES
 import de.norm.events.genretag.descriptionGenres
 import de.norm.events.genretag.genreFamily
+import de.norm.events.genretag.titleCompoundGenres
 import de.norm.events.genretag.titleDecadeGenres
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -22,8 +23,9 @@ import org.springframework.stereotype.Service
  *
  * A music event takes the source tags its billed acts carry on their other events, past or upcoming. A support act does not count, and a
  * DJ billing and a live billing do not lend each other tags: one name can be a resident DJ and a band (#4411).
- * An event still untagged takes the decades its title bills as a party ([titleDecadeGenres]) and the genre words of its description
- * ([descriptionGenres]). An event still untagged takes the mapped Wikidata genres of its acts ([WIKIDATA_GENRES], ADR-060).
+ * An event still untagged takes the decades its title bills as a party ([titleDecadeGenres]), the genre of a hyphenated format word in
+ * its title ([titleCompoundGenres]) and the genre words of its description ([descriptionGenres]).
+ * An event still untagged takes the mapped Wikidata genres of its acts ([WIKIDATA_GENRES], ADR-060).
  * A derived tag never feeds another derivation.
  */
 @Service
@@ -99,9 +101,16 @@ class GenreDerivationService(
         return outcome
     }
 
-    /** The genres the event's own text names: decades its title bills as a party, then the description's genre words. */
+    /**
+     * The genres the event's own text names: decades its title bills as a party, the genre of a hyphenated format word in its title
+     * (`Jazz-Nacht`), then the description's genre words.
+     */
     private fun textGenres(event: EventEntity): List<String> =
-        (titleDecadeGenres(event.title, event.subtitle) + descriptionGenres(event.description)).distinct().take(MAX_TEXT_GENRES)
+        (
+            titleDecadeGenres(event.title, event.subtitle) +
+                titleCompoundGenres(event.title, event.subtitle) +
+                descriptionGenres(event.description)
+        ).distinct().take(MAX_TEXT_GENRES)
 
     /** The source tags the billed acts of each event carry elsewhere, most frequent first, at most [MAX_ARTIST_GENRES] per event. */
     private suspend fun artistTagIds(eventIds: Set<Long>): Map<Long, List<Long>> {

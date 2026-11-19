@@ -58,13 +58,14 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
         sourceId: String,
         description: String? = null,
         eventType: String = "CONCERT",
-        status: String = "SCHEDULED"
+        status: String = "SCHEDULED",
+        title: String = "Night $sourceId"
     ): EventEntity {
         val venue = venueRepository.save(VenueEntity(name = "Venue $sourceId", slug = "venue-${sourceId.replace(':', '-')}"))
         return eventRepository.save(
             EventEntity(
                 venueId = requireNotNull(venue.id),
-                title = "Night $sourceId",
+                title = title,
                 slug = "night-${sourceId.replace(':', '-')}",
                 eventDate = LocalDate.of(2026, 11, 1),
                 sourceId = sourceId,
@@ -199,6 +200,16 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
             sync(night, listOf("Unknown Act" to ArtistRole.HEADLINER))
 
             tagsOf(night) shouldBe mapOf("Techno" to GenreTagOrigin.DESCRIPTION.name)
+        }
+    }
+
+    @Test
+    fun `an untagged night takes the genre of a hyphenated format word in its title`() {
+        runBlocking {
+            val night = persistEvent("so36:title", eventType = "PARTY", title = "Jazz-Nacht im Toenz", description = "Mit DJ Unknown")
+            sync(night)
+
+            tagsOf(night) shouldBe mapOf("Jazz" to GenreTagOrigin.DESCRIPTION.name)
         }
     }
 

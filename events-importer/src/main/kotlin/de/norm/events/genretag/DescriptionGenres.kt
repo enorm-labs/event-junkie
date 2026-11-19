@@ -33,6 +33,17 @@ fun titleDecadeGenres(vararg texts: String?): List<String> =
         .filterNotNull()
         .distinct()
 
+/**
+ * The genres a title or subtitle names in a hyphenated format word: `Jazz-Nacht`, `Bachata-Nacht`, `Nackt-Schlager-Ball`.
+ * Only such a compound counts, so a title's other words still mint nothing. A key prose uses in another sense gives none: `House-Party`.
+ */
+fun titleCompoundGenres(vararg texts: String?): List<String> =
+    texts
+        .filterNotNull()
+        .flatMap { text -> text.split(WORD_BREAK) }
+        .mapNotNull { word -> formatCompound(word)?.let { vocabularyGenre(it.first) } }
+        .distinct()
+
 private fun proseGenres(line: String): List<String> =
     line
         .split(SENTENCE_BREAK)
@@ -84,12 +95,33 @@ private fun sentenceGenres(
 
 /**
  * The lookup keys of one word. A hyphenated compound of a contextual key gives that key and the rest: `Industrial-Techno`, `Industrial-Pioniere`.
- * The first key keeps its hyphen, which marks it as music.
+ * The first key keeps its hyphen, which marks it as music. A [formatCompound] gives its genre key and the rest: `K-POP-Party`.
  */
 private fun wordKeys(word: String): List<String> {
-    val compound = CONTEXTUAL_COMPOUND.matchEntire(word) ?: return listOf(lookupKey(word))
-    return listOf(compound.groupValues[1].lowercase() + "-", lookupKey(compound.groupValues[2]))
+    CONTEXTUAL_COMPOUND.matchEntire(word)?.let { return listOf(it.groupValues[1].lowercase() + "-", lookupKey(it.groupValues[2])) }
+    return formatCompound(word)?.toList() ?: listOf(lookupKey(word))
 }
+
+/**
+ * The genre key and the rest of a hyphenated word whose genre segments precede a [FORMAT_NOUNS] segment:
+ * `K-POP-Party` is `kpop` and `party`, `Techno-Produzenten-Duo` is `techno` and `produzentenduo`. The longest key among the segments
+ * before the noun wins, so `K-POP` is K-Pop and not Pop. A word the vocabulary knows whole is no compound.
+ */
+private fun formatCompound(word: String): Pair<String, String>? {
+    if ('-' !in word || lookupKey(word) in GENRE_SYNONYMS) return null
+    val parts = word.split('-')
+    val noun = parts.indexOfFirst { lookupKey(it) in FORMAT_NOUNS }
+    if (noun <= 0) return null
+    val genreParts = parts.subList(0, noun)
+    val key =
+        (genreParts.size downTo 1).firstNotNullOfOrNull { size ->
+            genreParts.windowed(size).map { lookupKey(it.joinToString("")) }.firstOrNull { it in GENRE_SYNONYMS }
+        } ?: return null
+    return key to lookupKey(parts.drop(noun).joinToString(""))
+}
+
+/** The nouns that make a hyphenated word a format of the genre before them: `Jazz-Nacht`, `Rock-Band`, `Techno-Produzenten-Duo`. */
+private val FORMAT_NOUNS = setOf("party", "partys", "nacht", "night", "ball", "duo", "band", "produzent", "produzenten", "produzentin")
 
 /**
  * A genre key or a music word is one of the two words on either side of [index], an `and` not counted.
