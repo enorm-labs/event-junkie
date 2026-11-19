@@ -4,20 +4,29 @@
  */
 import { failOnError } from '@/api/http'
 
-/** The boxes of "Report a problem", labelled as the operator reads them. `ReportProblem` in the BFF. */
+/**
+ * The boxes of "Report a problem", labelled as the operator reads them. `ReportProblem` in the BFF:
+ * the form's boxes and hint, then the names of earlier forms that stored reports can still hold.
+ * `OTHER` is a report with a note and no box.
+ */
 export const PROBLEM_LABELS: Record<string, string> = {
   ARTISTS: 'Artists',
+  PROMOTER: 'Promoter',
+  GENRE: 'Genre',
+  EVENT_TYPE: 'Event type',
+  FEATURES: 'Features',
+  DATE_TIME: 'Date or time',
+  TEXT: 'Title or description',
+  STATUS: 'Cancelled/sold out/moved',
+  PRICE_TICKETS: 'Price or tickets',
+  NOT_AN_EVENT: 'Not an event or duplicate',
+  ON_IMAGE: 'On the image',
   TITLE: 'Title',
   DESCRIPTION: 'Description',
-  DATE_TIME: 'Date or time',
-  STATUS: 'Cancelled/postponed',
-  PRICE_TICKETS: 'Price or tickets',
   TYPE_GENRE: 'Type or genre',
-  NOT_AN_EVENT: 'Not an event',
   DUPLICATE: 'Duplicate',
   OTHER: 'Other',
   QUESTION: 'Question',
-  ON_IMAGE: 'On the image',
 }
 
 export interface ReportEntry {

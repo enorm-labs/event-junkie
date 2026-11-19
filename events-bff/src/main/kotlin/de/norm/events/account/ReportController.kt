@@ -41,8 +41,8 @@ class ReportController(
     @Operation(
         summary = "Reports a problem with an event, or replaces the account's earlier report on it",
         description =
-            "Only for accounts the operator allows. At least one problem, and ON_IMAGE never alone; " +
-                "a note of at most 500 characters, required with OTHER and QUESTION."
+            "Only for accounts the operator allows. At least one problem other than ON_IMAGE, or a note of at most " +
+                "500 characters. A report with a note and no problem is stored as OTHER."
     )
     suspend fun save(
         @AuthenticationPrincipal account: Account,
@@ -50,10 +50,9 @@ class ReportController(
         @RequestBody request: ReportRequest
     ): ResponseEntity<Unit> {
         allowed(account)
-        val problems = problems(request.problems)
         val note = request.note?.trim()?.takeIf { it.isNotEmpty() }
         if (note != null && note.length > MAX_NOTE) refuse(HttpStatus.BAD_REQUEST, "A note of at most $MAX_NOTE characters")
-        problems.firstOrNull { it in NEEDS_NOTE }?.let { if (note == null) refuse(HttpStatus.BAD_REQUEST, "${it.name} needs a note") }
+        val problems = problems(request.problems, note != null)
         val eventId = rsvps.eventId(slug) ?: refuse(HttpStatus.NOT_FOUND, "No such event")
         val replaced = reports.save(account.id, eventId, problems, note, clock.instant())
         record(if (replaced) ReportAction.REPLACE else ReportAction.STORE, problems)
@@ -87,21 +86,26 @@ class ReportController(
 
     private companion object {
         const val MAX_NOTE = 500
-        val NEEDS_NOTE = setOf(ReportProblem.OTHER, ReportProblem.QUESTION)
 
-        fun problems(raw: List<String>): List<ReportProblem> {
+        /**
+         * Any known name passes, the old ones too, so an edited report keeps what it held. The stored row needs a
+         * problem, so a note with no box is stored as [ReportProblem.OTHER].
+         */
+        fun problems(
+            raw: List<String>,
+            hasNote: Boolean
+        ): List<ReportProblem> {
             val problems = raw.map { ReportProblem.ofOrNull(it) ?: refuse(HttpStatus.BAD_REQUEST, "Unknown problem $it") }.distinct()
-            if (problems.isEmpty()) refuse(HttpStatus.BAD_REQUEST, "At least one problem")
-            if (problems == listOf(ReportProblem.ON_IMAGE)) refuse(HttpStatus.BAD_REQUEST, "ON_IMAGE needs a problem")
-            return problems
+            if (!hasNote && problems.all { it == ReportProblem.ON_IMAGE }) refuse(HttpStatus.BAD_REQUEST, "At least one problem or a note")
+            return problems.ifEmpty { listOf(ReportProblem.OTHER) }
         }
     }
 }
 
 data class ReportRequest(
-    /** [ReportProblem] names, at least one, and `ON_IMAGE` never alone. */
+    /** [ReportProblem] names. At least one other than `ON_IMAGE`, unless there is a note. */
     val problems: List<String>,
-    /** Free text, at most 500 characters. Required with `OTHER` and `QUESTION`. */
+    /** Free text, at most 500 characters. Never required, but a report with no problem needs one. */
     val note: String? = null
 )
 

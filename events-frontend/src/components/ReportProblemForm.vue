@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /**
- * The form inside "Report a problem" (#4399): the common problems as boxes, a note, Send. The
- * note is required with "Something else" and a question, because those boxes alone say nothing.
- * "On the image" is a hint, so it never goes alone (#4978).
+ * The form inside "Report a problem" (#4399): the common problems as boxes, the image hint set
+ * apart, a note, Send. A box or a note is enough; the image hint alone says nothing. An earlier
+ * report keeps the names of an older form, which get no box, when it is saved again.
  */
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
-import { REPORT_PROBLEMS, type OpenReport, type ReportProblem } from '@/api/account'
+import { REPORT_HINT, REPORT_PROBLEMS, type OpenReport, type ReportProblem } from '@/api/account'
 import { ApiError } from '@/api/client'
 import { useReports } from '@/composables/useReports'
 import { CHECKBOX_CLASS, cn, FIELD_CLASS } from '@/lib/utils'
@@ -21,19 +21,17 @@ const { t } = useI18n()
 const { reports, save, withdraw } = useReports()
 
 const earlier = computed<OpenReport | undefined>(() => reports.value[props.slug])
-const problems = ref<ReportProblem[]>([...(earlier.value?.problems ?? [])])
+const shown = (p: ReportProblem) => (REPORT_PROBLEMS as readonly ReportProblem[]).includes(p)
+const before = earlier.value?.problems ?? []
+const problems = ref<ReportProblem[]>(before.filter(shown))
+const hint = ref(before.includes(REPORT_HINT))
+const kept = before.filter((p) => !shown(p) && p !== REPORT_HINT)
 const note = ref(earlier.value?.note ?? '')
 const busy = ref(false)
 const problem = ref('')
 
-const NEEDS_NOTE: ReportProblem[] = ['OTHER', 'QUESTION']
-
-const needsNote = computed(
-  () => problems.value.some((p) => NEEDS_NOTE.includes(p)) && !note.value.trim(),
-)
-const hintOnly = computed(() => problems.value.length === 1 && problems.value[0] === 'ON_IMAGE')
 const canSend = computed(
-  () => problems.value.length > 0 && !hintOnly.value && !needsNote.value && !busy.value,
+  () => (problems.value.length > 0 || kept.length > 0 || note.value.trim() !== '') && !busy.value,
 )
 
 function message(e: unknown): string {
@@ -54,7 +52,13 @@ async function run(action: () => Promise<void>) {
   }
 }
 
-const send = () => run(() => save(props.slug, { problems: problems.value, note: note.value }))
+const send = () =>
+  run(() =>
+    save(props.slug, {
+      problems: [...problems.value, ...(hint.value ? [REPORT_HINT as ReportProblem] : []), ...kept],
+      note: note.value,
+    }),
+  )
 const remove = () => run(() => withdraw(props.slug))
 </script>
 
@@ -78,12 +82,21 @@ const remove = () => run(() => withdraw(props.slug))
       </label>
     </fieldset>
 
+    <label class="flex items-start gap-2 border-t border-border pt-4 text-body">
+      <input
+        v-model="hint"
+        :class="['mt-1', CHECKBOX_CLASS]"
+        :data-testid="`report-${REPORT_HINT}`"
+        type="checkbox"
+      />
+      <span>{{ t('account.report.hint') }}</span>
+    </label>
+
     <label class="block space-y-1 text-body">
-      <span class="block">{{
-        t(needsNote ? 'account.report.noteRequired' : 'account.report.note')
-      }}</span>
+      <span class="block">{{ t('account.report.note') }}</span>
       <textarea
         v-model="note"
+        :placeholder="t('account.report.notePlaceholder')"
         :class="cn(FIELD_CLASS, 'h-auto min-h-20 w-full py-1')"
         :maxlength="MAX_NOTE"
         data-testid="report-note"

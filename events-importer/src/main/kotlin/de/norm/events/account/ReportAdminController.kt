@@ -36,8 +36,9 @@ data class ReportedEventResponse(
 data class ReportEntryResponse(
     @Schema(
         description =
-            "The ticked problems: ARTISTS, TITLE, DESCRIPTION, DATE_TIME, STATUS, PRICE_TICKETS, TYPE_GENRE, " +
-                "NOT_AN_EVENT, DUPLICATE, OTHER, QUESTION, ON_IMAGE."
+            "The ticked problems: ARTISTS, PROMOTER, GENRE, EVENT_TYPE, FEATURES, DATE_TIME, TEXT, STATUS, PRICE_TICKETS, " +
+                "NOT_AN_EVENT and the hint ON_IMAGE. Older reports can hold TITLE, DESCRIPTION, TYPE_GENRE, DUPLICATE " +
+                "and QUESTION. OTHER is a report with a note and no box."
     )
     val problems: List<String>,
     val note: String?,
