@@ -1,6 +1,7 @@
 package de.norm.events.scraper.peteredel
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.promoter.splitCoBilledPromoter
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
@@ -361,6 +362,28 @@ class PeterEdelOverviewPageScraperTest {
                 "Rudelsingen - Das Original aus Münster Hinweis: Diese Veranstaltung ist Teil des Kultursommers!</p>"
         val parsed = scraper.scrape(grid("AUGUST 2026", "DO | 20.08.", main), baseUrl)
         parsed[0].promoters shouldContainExactly listOf("Rudelsingen - Das Original aus Münster")
+    }
+
+    @Test
+    fun `splits a comma credit and drops the zero-width space before its comma`() {
+        // Wolf Parade (event 13807) on the live page of 2026-11-19 (#5275).
+        val main =
+            "<h3>Wolf Parade</h3><p>20 Jahre \"Apologies to the Queen Mary\"</p>" +
+                "<div class=\"text-block\"><p>Indie-Rock aus Montréal.</p></div>" +
+                "<p>Einlass: 19:00 Uhr | Beginn: 20:00 Uhr<br/><strong>Präsentiert von:</strong> " +
+                "<a href=\"https://loft.de/\">LOFT CONCERTS</a>\u200B, FluxFM &amp; EINEN HAB ICH NOCH</p>"
+        val promoters = scraper.scrape(grid("JUNI 2027", "SA | 05.06.", main), baseUrl).single().promoters
+
+        promoters shouldContainExactly listOf("LOFT CONCERTS", "FluxFM & EINEN HAB ICH NOCH")
+        // The import splits the spaced `&` because FluxFM is a stored promoter.
+        promoters.flatMap { raw -> splitCoBilledPromoter(raw) { it == "fluxfm" } } shouldContainExactly
+            listOf("LOFT CONCERTS", "FluxFM", "EINEN HAB ICH NOCH")
+    }
+
+    @Test
+    fun `keeps a show credited with a spaced ampersand whole`() {
+        val parsed = scraper.scrape(fixtureDocument("peteredel/peteredel-blurbs-2026-10.html", baseUrl), baseUrl)
+        parsed.single { it.title == "Frack & Spitzenhöschen" }.promoters shouldContainExactly listOf("Frack & Spitzenhöschen")
     }
 
     @Test
