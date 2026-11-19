@@ -80,5 +80,12 @@
   },
   "textCredit": {
     "text": "Text:"
+  },
+  "share": {
+    "share": "Share",
+    "nativeShare": "Share via…",
+    "copyLink": "Copy link",
+    "copied": "Link copied.",
+    "copyFailed": "Could not copy the link. Here it is: {url}"
   }
 }

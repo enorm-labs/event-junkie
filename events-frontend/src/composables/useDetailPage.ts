@@ -112,7 +112,7 @@ export function useDetailPage<T extends DetailEntity>(
     followKind: kind,
     followSlug: entitySlug.value,
     reportText: t(`detail.${kind}.report`),
-    reportPath: `/${kind}s/${entitySlug.value}`,
+    pagePath: `/${kind}s/${entitySlug.value}`,
   }))
 
   return { entity, description, detail }

@@ -1,18 +1,13 @@
 <script setup lang="ts">
 /**
- * The event page's action row: the page's own buttons from the slot, then one Share menu with
- * the native share sheet, the link and the calendar entries (#2564).
+ * The event page's action row: the page's own buttons from the slot, then the Share menu with
+ * the calendar entries added (#2564).
  */
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { CalendarPlus, ExternalLink, Link as LinkIcon, Send, Share2 } from '@lucide/vue'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { CalendarPlus, ExternalLink } from '@lucide/vue'
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import ShareMenu from '@/components/ShareMenu.vue'
 import type { EventDetail } from '@/api/types'
 import {
   eventCalendarEntry,
@@ -23,7 +18,6 @@ import {
 } from '@/lib/addToCalendar'
 import { isPastEvent } from '@/lib/format'
 import { canonicalUrl } from '@/lib/seo'
-import { canShareNatively, copyLink, shareLink, type ShareOutcome } from '@/lib/share'
 import type { Locale } from '@/i18n/locales'
 
 const props = defineProps<{ event: EventDetail }>()
@@ -34,25 +28,7 @@ const pageUrl = computed(() =>
   canonicalUrl(locale.value as Locale, `/events/${props.event.slug ?? ''}`),
 )
 
-const nativeShare = canShareNatively()
 const status = ref('')
-
-function announce(outcome: ShareOutcome): void {
-  status.value =
-    outcome === 'copied'
-      ? t('events.detail.share.copied')
-      : outcome === 'failed'
-        ? t('events.detail.share.copyFailed', { url: pageUrl.value })
-        : ''
-}
-
-async function share(): Promise<void> {
-  announce(await shareLink({ title: props.event.title, url: pageUrl.value }))
-}
-
-async function copy(): Promise<void> {
-  announce(await copyLink(pageUrl.value))
-}
 
 const calendarTexts = computed((): CalendarTexts => ({
   movedTo: (venue) => t('events.status.movedTo', { venue }),
@@ -96,36 +72,20 @@ function downloadIcs(): void {
   <section class="space-y-2">
     <div class="flex flex-wrap gap-3">
       <slot />
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button variant="outline">
-            <Share2 aria-hidden="true" />
-            {{ t('events.detail.share.share') }}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem v-if="nativeShare" @select="share">
-            <Send aria-hidden="true" />
-            {{ t('events.detail.share.nativeShare') }}
+      <ShareMenu v-model:status="status" :title="event.title" :url="pageUrl">
+        <template v-if="calendarEntry">
+          <DropdownMenuItem @select="downloadIcs">
+            <CalendarPlus aria-hidden="true" />
+            {{ t('events.detail.share.ics') }}
           </DropdownMenuItem>
-          <DropdownMenuItem @select="copy">
-            <LinkIcon aria-hidden="true" />
-            {{ t('events.detail.share.copyLink') }}
+          <DropdownMenuItem v-if="googleUrl" as-child>
+            <a :href="googleUrl" rel="noopener noreferrer" target="_blank">
+              <ExternalLink aria-hidden="true" />
+              {{ t('events.detail.share.google') }}
+            </a>
           </DropdownMenuItem>
-          <template v-if="calendarEntry">
-            <DropdownMenuItem @select="downloadIcs">
-              <CalendarPlus aria-hidden="true" />
-              {{ t('events.detail.share.ics') }}
-            </DropdownMenuItem>
-            <DropdownMenuItem v-if="googleUrl" as-child>
-              <a :href="googleUrl" rel="noopener noreferrer" target="_blank">
-                <ExternalLink aria-hidden="true" />
-                {{ t('events.detail.share.google') }}
-              </a>
-            </DropdownMenuItem>
-          </template>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </template>
+      </ShareMenu>
     </div>
     <p class="text-body text-muted-foreground" role="status">{{ status }}</p>
   </section>
