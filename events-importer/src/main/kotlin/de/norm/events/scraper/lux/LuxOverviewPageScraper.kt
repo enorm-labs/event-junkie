@@ -110,14 +110,20 @@ class LuxOverviewPageScraper(
         }
     }
 
-    /** Every bold line in the night's text that is not a clock, once each, without a leading `with`. */
+    /** Every bold line in the night's text that is not a clock or prose, once each, without a leading `with`. */
     private fun djs(night: Element): List<String> =
         night
             .select(".details > p strong")
             .flatMap { it.brLines() }
             .map { it.replace(WITH_LEAD, "") }
-            .filterNot { TIME_LINE.matches(it) || GENRE_NOTE.matches(it) || isNonArtistName(it) }
+            .filterNot { TIME_LINE.matches(it) || GENRE_NOTE.matches(it) || isProse(it) || isNonArtistName(it) }
             .distinct()
+
+    /** A bolded blurb sentence (event 14812, #5295): a long line, or a shorter one that ends like a sentence. */
+    private fun isProse(line: String): Boolean {
+        val words = line.split(WHITESPACE).size
+        return words > MAX_ACT_WORDS || (words >= MIN_SENTENCE_WORDS && SENTENCE_END.containsMatchIn(line))
+    }
 
     private fun Element.flatTextAt(selector: String): String? = selectFirst(selector)?.text()?.collapseWhitespace().blankToNull()
 
@@ -140,6 +146,15 @@ class LuxOverviewPageScraper(
 
         /** `with DJ RIGO`: the house bills a night's one DJ as a phrase. */
         val WITH_LEAD = Regex("""^(?:with|w/|mit)\s+""", RegexOption.IGNORE_CASE)
+
+        val WHITESPACE = Regex("""\s+""")
+        val SENTENCE_END = Regex("""[.!?]$""")
+
+        /** `DJ Foo b2b DJ Bar` is five words; a billing line longer than six is a sentence. */
+        const val MAX_ACT_WORDS = 6
+
+        /** Shorter, so `Bleach!` or `Pop Will Eat Itself!` stays an act. */
+        const val MIN_SENTENCE_WORDS = 5
 
         const val DOORS_GROUP = 1
         const val HOUR_GROUP = 2
