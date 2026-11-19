@@ -271,7 +271,7 @@ class DataQualityService(
          * Prefix for a source id that no longer resolves to a row. Deliberately not a slug shape, so
          * it cannot be mistaken for one in a dashboard's legend.
          */
-        const val UNRESOLVED_PREFIX = "unresolved-source-"
+        private const val UNRESOLVED_PREFIX = "unresolved-source-"
         private const val PERCENT = 100.0
         private const val DECIMAL = 10.0
     }

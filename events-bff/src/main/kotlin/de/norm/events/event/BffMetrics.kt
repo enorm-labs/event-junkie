@@ -28,8 +28,8 @@ class BffMetrics(
         .increment(count.toDouble())
 
     companion object {
-        const val EVENTS_SERVED = "bff.events.served"
-        const val TAG_ENDPOINT = "endpoint"
+        private const val EVENTS_SERVED = "bff.events.served"
+        private const val TAG_ENDPOINT = "endpoint"
 
         /** `GET /events` — the filtered search the SPA's list view uses. */
         const val ENDPOINT_SEARCH = "search"

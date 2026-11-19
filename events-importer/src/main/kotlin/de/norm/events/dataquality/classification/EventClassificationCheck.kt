@@ -352,18 +352,18 @@ class EventClassificationCheck(
     companion object {
         const val CHECK_NAME = "event-classification"
 
-        const val FIELD_EVENT_TYPE = "eventType"
+        private const val FIELD_EVENT_TYPE = "eventType"
         const val FIELD_ARTISTS = "artists"
-        const val FIELD_FEATURES = "features"
+        private const val FIELD_FEATURES = "features"
         const val FIELD_START_TIME = "startTime"
-        const val FIELD_PRICE_PRESALE = "pricePresale"
-        const val FIELD_PRICE_BOX_OFFICE = "priceBoxOffice"
+        private const val FIELD_PRICE_PRESALE = "pricePresale"
+        private const val FIELD_PRICE_BOX_OFFICE = "priceBoxOffice"
 
         /** `importer.data_quality.suggestions{check,field}`: suggestion rows written. */
         const val SUGGESTIONS_METER = "importer.data_quality.suggestions"
 
         /** `importer.data_quality.classifications{outcome}`: answered, rejected, failed or unchanged events. */
-        const val CLASSIFICATIONS_METER = "importer.data_quality.classifications"
+        private const val CLASSIFICATIONS_METER = "importer.data_quality.classifications"
 
         private const val TAG_CHECK = "check"
         private const val TAG_FIELD = "field"
@@ -385,7 +385,7 @@ class EventClassificationCheck(
         private val SEGMENT_SEPARATOR = Regex("\\s+[-–—|+/]\\s+|,\\s+|:\\s+|\\s+(?:feat\\.?|ft\\.|w/|b2b|vs\\.?)\\s+", RegexOption.IGNORE_CASE)
 
         /** `flinta-only: FLINTA* Party` → the feature and its cue, as `EventFeatureSync` writes the flag. */
-        fun parseCue(value: String): UncertainCue? {
+        private fun parseCue(value: String): UncertainCue? {
             val feature = EventFeature.fromSlug(value.substringBefore(':').trim()) ?: return null
             return UncertainCue(feature, value.substringAfter(':').trim())
         }

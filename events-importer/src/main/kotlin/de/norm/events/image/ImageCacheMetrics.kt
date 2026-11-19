@@ -195,14 +195,14 @@ class ImageCacheMetrics(
         const val URLS = "images.urls"
 
         /** `images.derivatives.backlog` — stored images still short of their variants. */
-        const val DERIVATIVE_BACKLOG = "images.derivatives.backlog"
+        private const val DERIVATIVE_BACKLOG = "images.derivatives.backlog"
 
         /** `images.sweep.candidates{kind}` — what the last sweep would delete, deleting or not. */
-        const val SWEEP_CANDIDATES = "images.sweep.candidates"
+        private const val SWEEP_CANDIDATES = "images.sweep.candidates"
 
-        const val FETCH = "images.fetch"
-        const val DERIVATIVES = "images.derivatives"
-        const val SWEEP_DELETED = "images.sweep.deleted"
+        private const val FETCH = "images.fetch"
+        private const val DERIVATIVES = "images.derivatives"
+        private const val SWEEP_DELETED = "images.sweep.deleted"
 
         const val TAG_STATE = "state"
         const val TAG_OUTCOME = "outcome"

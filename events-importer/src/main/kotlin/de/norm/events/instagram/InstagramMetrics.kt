@@ -47,10 +47,10 @@ class InstagramMetrics(
     fun graphError(kind: String) = registry.counter(GRAPH_ERRORS, TAG_KIND, kind).increment()
 
     companion object {
-        const val POSTS_READ = "instagram.posts.read"
-        const val DRAFTS = "instagram.drafts"
-        const val EXTRACTIONS = "instagram.extractions"
-        const val GRAPH_ERRORS = "instagram.graph.errors"
+        private const val POSTS_READ = "instagram.posts.read"
+        private const val DRAFTS = "instagram.drafts"
+        private const val EXTRACTIONS = "instagram.extractions"
+        private const val GRAPH_ERRORS = "instagram.graph.errors"
 
         /** `instagram_pass_last_success`, epoch seconds of the last ended [InstagramDraftRunner] pass. */
         const val LAST_SUCCESS = "instagram.pass.last_success"

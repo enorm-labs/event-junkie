@@ -100,7 +100,7 @@ class SisyphosCalendarScraper {
 
     companion object {
         const val FEED_URL = "https://dashboard.sisyphos-berlin.net/kalender-media/events.json"
-        const val HOMEPAGE_URL = "https://www.sisyphos-berlin.net/"
+        private const val HOMEPAGE_URL = "https://www.sisyphos-berlin.net/"
 
         private const val CLUB_DOMAIN = "sisyphos-berlin.net"
         private const val PARTY_SUBTITLE = "Party"

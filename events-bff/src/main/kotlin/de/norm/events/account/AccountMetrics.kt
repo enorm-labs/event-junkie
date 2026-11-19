@@ -97,31 +97,31 @@ class AccountMetrics(
         const val LINK = "bff.auth.link"
 
         /** `bff.auth.sign_in{outcome}`: links used. */
-        const val SIGN_IN = "bff.auth.sign_in"
+        private const val SIGN_IN = "bff.auth.sign_in"
 
         /** `bff.accounts.cleanup{outcome}`: what the daily cleanup of inactive accounts, links and sessions did (#3905). */
         const val CLEANUP = "bff.accounts.cleanup"
 
         /** `bff_accounts_cleanup_last_success`: epoch seconds of the last cleanup pass with no failed step, for `ej-account-cleanup-stale` (#4034). */
-        const val CLEANUP_LAST_SUCCESS = "bff.accounts.cleanup.last_success"
+        private const val CLEANUP_LAST_SUCCESS = "bff.accounts.cleanup.last_success"
 
         /** `bff.account.saved_search{action}`: saved searches saved, renamed and deleted (#3890). */
-        const val SAVED_SEARCH = "bff.account.saved_search"
+        private const val SAVED_SEARCH = "bff.account.saved_search"
 
         /** `bff.account.rsvp{action}`: RSVPs set or changed, and withdrawn (#3892). */
         const val RSVP = "bff.account.rsvp"
 
         /** `bff.account.report{action}`: problem reports stored, replaced and withdrawn, and those refused at the limit (#4399). */
-        const val REPORT = "bff.account.report"
+        private const val REPORT = "bff.account.report"
 
         /** `bff.account.report.problem{problem}`: each ticked box of a stored or replaced report, counts only (#4978). */
         const val REPORT_PROBLEM = "bff.account.report.problem"
 
         /** `bff.account.push{action}`: browsers subscribed and unsubscribed, and bells turned on and off (#3894). What was sent is `bff.push.sent`. */
-        const val PUSH = "bff.account.push"
+        private const val PUSH = "bff.account.push"
 
         /** `bff.account.passkey{outcome}`: passkeys registered, used to sign in, renamed and deleted, and the refusals (#3888). */
-        const val PASSKEY = "bff.account.passkey"
+        private const val PASSKEY = "bff.account.passkey"
 
         /** `bff.account.watch{action}`: acts watched by MusicBrainz id, unwatched, and turned into artist follows (#5214). */
         const val WATCH = "bff.account.watch"

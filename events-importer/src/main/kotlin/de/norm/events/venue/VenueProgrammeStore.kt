@@ -100,7 +100,7 @@ class VenueProgrammeStore(
         const val WINDOW_DAYS = 365L
         const val MIN_SHARE = 0.15
         const val MIN_EVENTS = 3
-        const val MAX_VALUES = 3
+        private const val MAX_VALUES = 3
 
         /**
          * The family CTEs over `win`: the threshold counts, the declared house families, and `fam_pick`, which

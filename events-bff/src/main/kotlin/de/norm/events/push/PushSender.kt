@@ -155,10 +155,10 @@ class PushSender(
         const val TAG_OUTCOME = "outcome"
 
         /** A day: a new date is still news tomorrow, and a phone off overnight should still get it. */
-        val TIME_TO_LIVE: Duration = Duration.ofDays(1)
+        private val TIME_TO_LIVE: Duration = Duration.ofDays(1)
 
         /** RFC 8292 allows at most 24 hours. */
-        val TOKEN_LIFETIME: Duration = Duration.ofHours(12)
+        private val TOKEN_LIFETIME: Duration = Duration.ofHours(12)
         val TIMEOUT: Duration = Duration.ofSeconds(10)
         private const val NOT_FOUND = 404
         private const val GONE = 410

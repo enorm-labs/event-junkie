@@ -79,13 +79,13 @@ class NearbyStopRepository(
     }
 
     companion object {
-        const val MAX_STOPS = 3
+        private const val MAX_STOPS = 3
 
         /** About 20 minutes on foot. A venue farther from every station shows none rather than a long walk. */
-        const val MAX_WALKING_METRES = 1500.0
+        private const val MAX_WALKING_METRES = 1500.0
 
         /** How much longer a walk through Berlin's streets is than the straight line, roughly. */
-        const val WALKING_FACTOR = 1.3
+        private const val WALKING_FACTOR = 1.3
 
         private const val EARTH_RADIUS_METRES = 6_371_000
         private const val METRES_PER_DEGREE = 111_320.0

@@ -136,6 +136,6 @@ class AnthropicClient(
         const val DEFAULT_BASE_URL = "https://api.anthropic.com"
 
         /** What Anthropic reports when a safety classifier declines the request. */
-        const val REFUSAL = "refusal"
+        private const val REFUSAL = "refusal"
     }
 }

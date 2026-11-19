@@ -61,7 +61,7 @@ class ImageServingMetrics(
          * counters and Micrometer strips it silently, how `db.events.total` became `db_events`
          * (PLATFORM_SETUP.md §7).
          */
-        const val CACHE_WEIGHT = "bff.images.cache.weight"
+        private const val CACHE_WEIGHT = "bff.images.cache.weight"
 
         const val TAG_OUTCOME = "outcome"
     }

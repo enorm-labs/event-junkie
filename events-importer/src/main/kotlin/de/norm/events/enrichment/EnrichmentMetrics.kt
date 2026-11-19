@@ -83,10 +83,10 @@ class EnrichmentMetrics(
         const val MUSICBRAINZ_LOOKUPS = "importer.musicbrainz.lookups"
 
         /** `importer.musicbrainz.heads{state}` — the head pass, reported only. See [recordMusicBrainzHead]. */
-        const val MUSICBRAINZ_HEADS = "importer.musicbrainz.heads"
+        private const val MUSICBRAINZ_HEADS = "importer.musicbrainz.heads"
 
         /** `importer.musicbrainz.unchecked` — rows still awaiting a verdict; the backfill draining. */
-        const val MUSICBRAINZ_UNCHECKED = "importer.musicbrainz.unchecked"
+        private const val MUSICBRAINZ_UNCHECKED = "importer.musicbrainz.unchecked"
 
         /** `importer.musicbrainz.enriched{field}` — one per column family step C filled, `error` for a read that failed. */
         const val MUSICBRAINZ_ENRICHED = "importer.musicbrainz.enriched"
@@ -96,15 +96,15 @@ class EnrichmentMetrics(
         const val WIKIPEDIA_REFUSED = "importer.wikipedia.refused"
 
         /** `importer.musicbrainz.unenriched` — EXACT rows awaiting their entity read; step C's backfill draining. */
-        const val MUSICBRAINZ_UNENRICHED = "importer.musicbrainz.unenriched"
+        private const val MUSICBRAINZ_UNENRICHED = "importer.musicbrainz.unenriched"
 
         /** `importer.discogs.lookups{state}` — one per name looked up. See [recordDiscogsLookup]. */
         const val DISCOGS_LOOKUPS = "importer.discogs.lookups"
 
         /** `importer.discogs.unchecked` — NONE rows still awaiting a Discogs verdict; the backfill draining. */
-        const val DISCOGS_UNCHECKED = "importer.discogs.unchecked"
+        private const val DISCOGS_UNCHECKED = "importer.discogs.unchecked"
 
-        const val FIELD_ERROR = "error"
+        private const val FIELD_ERROR = "error"
         const val TAG_STATE = "state"
         private const val TAG_FIELD = "field"
         private const val TAG_REASON = "reason"
