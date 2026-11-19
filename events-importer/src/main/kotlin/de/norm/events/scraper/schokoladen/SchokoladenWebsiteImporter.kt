@@ -51,5 +51,10 @@ val SCHOKOLADEN_LIMITATIONS =
             LimitedAspect.GENRE,
             "the genre comes only from a per-act `(genre, origin)` note; readings, parties and acts without one carry none",
             verified = "2026-10-13"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "the programme is one paged listing that addresses each night only by a fragment anchor (`#e<yyyymmdd>`)",
+            verified = "2026-11-19"
         )
     )
