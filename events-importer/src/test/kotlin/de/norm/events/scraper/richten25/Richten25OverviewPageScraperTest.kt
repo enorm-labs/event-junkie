@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalTime
 
 class Richten25OverviewPageScraperTest {
     private val baseUrl = "https://richten25.de/events"
@@ -93,6 +94,33 @@ class Richten25OverviewPageScraperTest {
         nightOf("3 Doors Down: Brad Arnold &amp; Chris Henderson").artists.map { it.name } shouldBe listOf("3 Doors Down")
         nightOf("3 Solos Ensemble: Ada Ryu &amp; Ben Ott").artists.map { it.name } shouldBe listOf("3 Solos Ensemble")
         nightOf("Sumpf Trio: Tkacz, Daszkiewicz &amp; Doskocz").artists.map { it.name } shouldBe listOf("Sumpf Trio")
+    }
+
+    @Test
+    fun `bills nobody for a night whose text after its colon is a timetable, and starts it at the concert`() {
+        val night = nightOf("Taiwanese Music in Live Exchange: Workshops: 14:30–17:30 Concert: 19:30–21:00")
+
+        night.title shouldBe "Taiwanese Music in Live Exchange"
+        night.startTime shouldBe LocalTime.of(19, 30)
+        night.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `leaves the start open for a timetable with no concert time`() {
+        val night = nightOf("Listening Session: Doors 18:00, Talk 19:00")
+
+        night.title shouldBe "Listening Session"
+        night.startTime shouldBe null
+        night.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads a night with no clock time as a lineup with no start`() {
+        val night = nightOf("Die Enttäuschung: Mahall, Dörner, Roder &amp; Tom")
+
+        night.startTime shouldBe null
+        night.artists.map { it.name } shouldBe listOf("Die Enttäuschung")
+        events.forEach { it.startTime shouldBe null }
     }
 
     @Test

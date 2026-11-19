@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseClock
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -27,7 +28,9 @@ import java.time.LocalDate
  * Guionnet / …` (#4421), whose members a single `/` parts. The `and more..` tail announces nobody and is cut before the
  * split, because a bare `more..` would read as the band More. A second embed lists past nights and is not read.
  * The text cannot tell a band from a work's title, so `Work: performers` bills the title. Such a night needs a lineup pin (ADR-042).
- * The page names no time, price or image.
+ * A night whose text after its first colon holds clock times is a timetable, not a lineup: `Taiwanese Music in Live Exchange:
+ * Workshops: 14:30–17:30 Concert: 19:30–21:00` names no performer, so it bills nobody, keeps the name as its title and starts at the
+ * `Concert:` time (#5274). Every other night names no time. The page names no price or image.
  */
 class Richten25OverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -74,13 +77,20 @@ class Richten25OverviewPageScraper {
             return null
         }
         val lineup = match.groupValues[2].trim()
-        return ScrapedEvent(
-            title = lineup,
-            eventType = EventType.CONCERT.name,
-            eventDate = date,
-            sourceUrl = baseUrl,
-            sourceId = "${EventSource.RICHTEN25.sourceIdPrefix}$date",
-            artists = artistsOf(lineup)
+        val event =
+            ScrapedEvent(
+                title = lineup,
+                eventType = EventType.CONCERT.name,
+                eventDate = date,
+                sourceUrl = baseUrl,
+                sourceId = "${EventSource.RICHTEN25.sourceIdPrefix}$date",
+                artists = artistsOf(lineup)
+            )
+        val timetable = PREFIX.find(lineup)?.takeIf { CLOCK.containsMatchIn(it.groupValues[2]) } ?: return event
+        return event.copy(
+            title = timetable.groupValues[1].trim(),
+            startTime = CONCERT_TIME.find(timetable.groupValues[2])?.let { parseClock(it.groupValues[1]) },
+            artists = emptyList()
         )
     }
 
@@ -112,6 +122,8 @@ class Richten25OverviewPageScraper {
         val NIGHT_NAME = Regex("""\b(?:series|evening|night|benefit|solidarity|festival)\b""", RegexOption.IGNORE_CASE)
         val FORMAT_LABEL = Regex("""\d+\s+(?:solos?|duos?|trios?|sets?)""", RegexOption.IGNORE_CASE)
         val MORE_TAIL = Regex("""\s+(?:and|&)\s+more\.*\s*$""", RegexOption.IGNORE_CASE)
+        val CLOCK = Regex("""\b\d{1,2}:\d{2}\b""")
+        val CONCERT_TIME = Regex("""\bConcert:\s*(\d{1,2}:\d{2})\b""", RegexOption.IGNORE_CASE)
         val MEMBER_SEPARATOR = Regex(""",\s*|\s+&\s+|\s+and\s+|\s+/\s+|\s+\+\s+""")
     }
 }

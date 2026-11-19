@@ -24,7 +24,7 @@ class Richten25WebsiteImporter(
 val RICHTEN25_LIMITATIONS =
     VenueLimitations(
         EventSource.RICHTEN25,
-        AcceptedLimitation(LimitedAspect.START_TIME, "the programme names a date and a lineup, no time", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "most nights name a date and a lineup, and no time", verified = "2026-11-18"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme names a date and a lineup, no time", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.PRICE, "the page names no entry price", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.IMAGE, "the programme is a text list with no posters", verified = "2026-10-08"),
