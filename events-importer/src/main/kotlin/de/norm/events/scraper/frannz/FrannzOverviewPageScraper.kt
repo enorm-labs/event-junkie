@@ -3,6 +3,7 @@ package de.norm.events.scraper.frannz
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
@@ -156,9 +157,30 @@ class FrannzOverviewPageScraper(
             status = status,
             statusNote = statusNote,
             soldOut = cleanedTitle.soldOut,
-            artists = buildArtistsForEventType(title, subtitle, eventType),
+            artists = parseArtists(article, title, subtitle, eventType),
             promoters = parsePromoters(article.textAt("h4.event-otitle"))
         )
+    }
+
+    /**
+     * The line-up. A party bills the DJs its subtitle names ([frannzPartyDjs], #5299), which the
+     * shared reading never does. The subtitle is read line by line, because the venue puts each
+     * floor on its own line.
+     */
+    private fun parseArtists(
+        article: Element,
+        title: String,
+        subtitle: String?,
+        eventType: String?
+    ): List<ScrapedArtist> {
+        if (eventType != EventType.PARTY.name) return buildArtistsForEventType(title, subtitle, eventType)
+        val lines =
+            article
+                .selectFirst("h4.event-utitle")
+                ?.wholeText()
+                ?.lines()
+                .orEmpty()
+        return frannzPartyDjs(lines.map { stripMarkdownEmphasis(it) })
     }
 
     /**
