@@ -127,6 +127,15 @@ class QuasimodoDetailPageScraperTest {
     }
 
     @Test
+    fun `splits a line that runs two presenter credits together`() {
+        val html =
+            fixtureText("quasimodo/quasimodo-detail-otis-kane.html")
+                .replace("FKP Scorpio präsentiert:", "FKP Scorpio präsentiert:Trinity Music präsentiert:")
+        val sourceUrl = "https://quasimodo.club/events/otis-kane-7410"
+        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.promoters shouldBe listOf("FKP Scorpio", "Trinity Music")
+    }
+
+    @Test
     fun `leaves the promoter empty for an in-house night`() {
         val berlinBeat = scrape("berlin-beat-invasion", "berlin-beat-invasion-no-8-7316")
         berlinBeat.promoters.shouldBeEmpty()
