@@ -3,6 +3,7 @@ package de.norm.events.scraper.quasimodo
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -105,17 +106,22 @@ class QuasimodoDetailPageScraper {
     }
 
     /**
-     * The promoters from the `.promoter` line minus the `"… präsentiert:"` suffix (`"FKP Scorpio
-     * präsentiert:"` → `"FKP Scorpio"`), split by [splitPromoterCredit]; none when absent — in-house
-     * nights name no promoter.
+     * The promoters from the `.promoter` line, one per `"… präsentiert:"` credit (`"FKP Scorpio
+     * präsentiert:"` → `"FKP Scorpio"`), each split by [splitPromoterCredit]; none when absent — in-house
+     * nights name no promoter. Two presenters run together with no space after the inner colon
+     * (`"FKP Scorpio präsentiert:Trinity Music präsentiert:"`), so every colon credit is a split point (#5296).
      */
     private fun parsePromoters(document: Document): List<String> =
         document
             .textAt(".promoter")
-            .let(::promoterFromCredit)
-            ?.let(::splitPromoterCredit)
+            ?.split(PRESENTER_CREDIT_END)
+            ?.mapNotNull(::promoterFromCredit)
+            ?.flatMap(::splitPromoterCredit)
             .orEmpty()
 }
+
+/** The end of one `"… präsentiert:"` credit on the `.promoter` line: a [PRESENTS_VERBS] verb and its colon. */
+private val PRESENTER_CREDIT_END = Regex("""(?<!\p{L})(?:$PRESENTS_VERBS)\s*:""", RegexOption.IGNORE_CASE)
 
 /** Label of the detail table's doors row. */
 private const val DOORS_LABEL = "Einlass"
