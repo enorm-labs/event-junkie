@@ -94,8 +94,9 @@ Web query mode becomes the default in 1.25.1: a query matches below the element 
 `webQueryModeTest` runs them again in web mode (#4871).
 
 `ScrapedEvent` (`scraper/ScrapedEvent.kt`): required `title`, `eventDate`, `sourceUrl`, `sourceId` = `"${EventSource.<VENUE>.sourceIdPrefix}$slug"` derived
-from the canonical URL, never from mutable text. **Validate before returning**: skip a blank title or an unparseable date with a warning, and parse the rows
-with `rows.mapSkippingFailures(logger, "<Venue> event item") { … }` so one malformed event does not abort the import; never a hand-written try/catch.
+from the canonical URL, never from mutable text. **Validate before returning**: skip a blank title or an unparseable date with a warning, and parse the
+listing with `rows.parseListing(logger, "<Venue> event item", url = baseUrl) { … }`. It logs the row count and goes through `mapSkippingFailures`, so one
+malformed event does not abort the import; never a hand-written count line or try/catch (#5305).
 
 ## 5. Tests
 
