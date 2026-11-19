@@ -27,6 +27,7 @@ import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
 import { useMarketFilters } from '@/composables/useMarketFilters'
+import { useOriginPicker } from '@/composables/useOriginPicker'
 import {
   CHRISTMAS_MARKET,
   type ChristmasMarket,
@@ -112,7 +113,7 @@ const listed = computed(() =>
 )
 
 // The same origin as the events map's and the venues page's "near me".
-const { origin, state: locateState, locate, set: setOrigin, clear: clearOrigin } = useLocation()
+const { origin, state: locateState } = useLocation()
 const nearest = computed(() => sort.value === MARKET_NEAREST)
 
 /** The rows in the order shown: nearest first once there is an origin, else by name with no distance. */
@@ -135,40 +136,21 @@ const marketVenues = computed(() => {
     .sort((a, b) => a.name.localeCompare(b.name, locale.value))
 })
 
-const picking = ref(false)
+const { picking, pick, pickCenter, pickVenue, useDevice, clear } = useOriginPicker(
+  () => venueMap.value?.center() ?? null,
+)
 
 function toggleNearest() {
   picking.value = false
   setSort(!nearest.value)
 }
 
-// Only "Use my location" asks the browser, as on the maps: its prompt is the consent (LEGAL.md §7.4a).
-function useDevice() {
-  picking.value = false
-  locate()
-}
-
-function pick(position: Position) {
-  setOrigin({ ...position, source: 'map' })
-  picking.value = false
-}
-
-function pickCenter() {
-  const position = venueMap.value?.center()
-  if (position) pick(position)
-}
-
 function fromMarket(slug: string) {
-  const venue = events.value.find((market) => market.venue?.slug === slug)?.venue
-  const position = venuePosition(venue)
-  if (!venue || !position) return
-  picking.value = false
-  setOrigin({ ...position, source: 'venue', label: venue.name ?? '', slug })
+  pickVenue(slug, events.value.find((market) => market.venue?.slug === slug)?.venue)
 }
 
 function clearNearest() {
-  picking.value = false
-  clearOrigin()
+  clear()
   setSort(false)
 }
 
