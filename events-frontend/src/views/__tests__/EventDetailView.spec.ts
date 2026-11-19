@@ -346,6 +346,17 @@ describe('EventDetailView', () => {
     expect(view.text()).not.toContain('Price not announced')
   })
 
+  it('puts the ticket and share actions in the header, above the poster (#5290)', async () => {
+    const view = await mountEvent({ ...night, imageUrl: 'https://img.example/a.jpg' })
+
+    const header = view.get('article > header')
+    expect(header.find('a[href^="https://tickets.example"]').exists()).toBe(true)
+    expect(header.text()).toContain('Share')
+    expect(view.findAll('a[href^="https://tickets.example"]')).toHaveLength(1)
+    const html = view.html()
+    expect(html.indexOf('tickets.example')).toBeLessThan(html.indexOf('img.example'))
+  })
+
   it('orders poster, description, lineup, then facts', async () => {
     const view = await mountEvent({
       ...night,
