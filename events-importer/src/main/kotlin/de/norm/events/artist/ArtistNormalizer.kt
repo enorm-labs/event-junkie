@@ -217,7 +217,9 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "djangelicsintesis" to "Angelic Sintesis",
         "djhaukepauke" to "DJ HaukePauke",
         "djhighscore" to "High Score",
-        "rabbigreen" to "Rabbi Green"
+        "rabbigreen" to "Rabbi Green",
+        // Frannz bills `JULIAN TSF`, and the de-shouter would write the initials `Tsf` (#5299).
+        "juliantsf" to "Julian TSF"
     )
 
 /** Lowercased, punctuation- and space-free lookup key for a name. */

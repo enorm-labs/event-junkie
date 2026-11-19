@@ -123,11 +123,24 @@ class FrannzOverviewPageScraperTest {
             party.ticketUrl shouldBe "https://shop.copilot.events/frannz/events/7cb59a74-6fa0-421b-b534-9162d0bc9c16"
         }
 
+        // The DJs of a party come from its subtitle, one per floor, with the floor as the stage (#5299).
         @Test
-        fun `party events extract no artists`() {
+        fun `a party bills the DJs its floors name`() {
             val party = scrape().first { it.title == "Tannz im Frannz -auf 2 Floors" }
 
-            party.artists.shouldBeEmpty()
+            party.artists shouldContainExactly
+                listOf(
+                    ScrapedArtist(name = "DJ Dr.M", role = ArtistRole.DJ, stage = "1st floor"),
+                    ScrapedArtist(name = "DJ Stan", role = ArtistRole.DJ, stage = "2nd floor")
+                )
+        }
+
+        // `auf 1 Floor:` is a floor label without a floor's name, so the act gets no stage.
+        @Test
+        fun `a party on one unnamed floor bills its DJ without a stage`() {
+            val party = scrape().first { it.title == "Rebel Yell – Vamos a la Playa!" }
+
+            party.artists shouldContainExactly listOf(ScrapedArtist(name = "DJ Hey, my Commander", role = ArtistRole.DJ))
         }
 
         @Test
@@ -748,5 +761,96 @@ class FrannzOverviewPageScraperTest {
         val emptyHtml = "<html><body><main id='main'></main></body></html>"
 
         scraper.scrape(Jsoup.parse(emptyHtml, baseUrl), baseUrl).shouldBeEmpty()
+    }
+
+    /**
+     * The party nights of the homepage on 2026-11-19, the night each subtitle shape was first
+     * seen (#5299). The swing classes and all but one swing night are cut from the snapshot.
+     */
+    @Nested
+    inner class PartyDjs {
+        private val partyClock =
+            Clock.fixed(
+                ZonedDateTime.of(2026, 11, 19, 12, 0, 0, 0, ZoneId.systemDefault()).toInstant(),
+                ZoneId.systemDefault()
+            )
+        private val parties by lazy {
+            FrannzOverviewPageScraper(clock = partyClock).scrape(fixtureDocument("frannz/frannz-party-djs.html", baseUrl), baseUrl)
+        }
+
+        private fun djsOn(date: LocalDate) = parties.single { it.eventDate == date && it.eventType == "PARTY" }.artists
+
+        private fun dj(
+            name: String,
+            stage: String? = null
+        ) = ScrapedArtist(name = name, role = ArtistRole.DJ, stage = stage)
+
+        @Test
+        fun `reads the DJs after An den Decks, without the style note or the crew between dashes`() {
+            djsOn(LocalDate.of(2026, 11, 20)) shouldContainExactly listOf(dj("Sony Straight"), dj("Marc Hype"))
+        }
+
+        @Test
+        fun `drops the plural DJs label over the names`() {
+            djsOn(LocalDate.of(2026, 12, 11)) shouldContainExactly listOf(dj("BImmel"), dj("Bammel"))
+        }
+
+        @Test
+        fun `reads the DJs after a floor's mit, each on its floor`() {
+            djsOn(LocalDate.of(2026, 11, 27)) shouldContainExactly
+                listOf(
+                    dj("DJ Mig", "Mainfloor"),
+                    dj("DJ Stan", "Mainfloor"),
+                    dj("Danny D.", "Loungefloor"),
+                    dj("Final Serg", "Salon")
+                )
+        }
+
+        // `DJ Hey, my Commander` keeps its comma: a lower-case word follows it. `tba` is no act.
+        @Test
+        fun `reads the DJs before a floor's style note, and keeps a name with a comma whole`() {
+            djsOn(LocalDate.of(2026, 12, 4)) shouldContainExactly
+                listOf(
+                    dj("DJ Hey, my Commander", "Mainfloor"),
+                    dj("RadioRadau", "Radaufloor"),
+                    dj("DJ Spy", "Radaufloor")
+                )
+            djsOn(LocalDate.of(2027, 1, 8)) shouldContainExactly
+                listOf(
+                    dj("DJ Hey, my Commander", "Mainfloor"),
+                    dj("RadioRadau", "Radaufloor"),
+                    dj("Estelle van der Rhone", "Salon")
+                )
+        }
+
+        // `Salon: Pop Non-Stop` names a theme: no `mit`, and no style note to stand before.
+        @Test
+        fun `a floor that names only its theme bills nobody`() {
+            djsOn(LocalDate.of(2027, 1, 29)) shouldContainExactly
+                listOf(
+                    dj("Wilco", "Loungefloor"),
+                    dj("Björn", "Loungefloor"),
+                    dj("Stan", "Mainfloor"),
+                    dj("Mig", "Mainfloor")
+                )
+        }
+
+        @Test
+        fun `reads bare DJ tokens, one word and a jr`() {
+            djsOn(LocalDate.of(2026, 12, 31)) shouldContainExactly listOf(dj("DJ Tyx"), dj("DJ D.Light"), dj("DJ Eric jr."))
+        }
+
+        // The band of the concert that night stands before `feat`, and is no DJ of the after-show.
+        @Test
+        fun `reads the DJs after feat, without their origin notes`() {
+            djsOn(LocalDate.of(2027, 1, 22)) shouldContainExactly listOf(dj("JULIAN TSF"), dj("PSYCHO JONES"))
+        }
+
+        @Test
+        fun `a subtitle with no DJ cue bills nobody`() {
+            listOf("Millennial Mixtape", "Red RHYTHM – Swing Dance Night", "Die Schöne Party", "„Flashbacks mit Liebe“").forEach { title ->
+                parties.single { it.title == title }.artists.shouldBeEmpty()
+            }
+        }
     }
 }
