@@ -17,9 +17,9 @@ import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.siteTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Clock
@@ -44,9 +44,8 @@ class OrwohausCalendarScraper(
     fun scrape(calendar: String): List<ScrapedEvent> {
         val horizon = LocalDate.now(clock).plusMonths(HORIZON_MONTHS)
         val entries = calendarEvents(calendar)
-        logger.info { "Found ${entries.size} ORWOhaus calendar entr(y/ies)" }
         return entries
-            .mapSkippingFailures(logger, "ORWOhaus calendar entry") { parseEntry(it) }
+            .parseListing(logger, "ORWOhaus calendar entry") { parseEntry(it) }
             .filter { it.eventDate <= horizon }
     }
 

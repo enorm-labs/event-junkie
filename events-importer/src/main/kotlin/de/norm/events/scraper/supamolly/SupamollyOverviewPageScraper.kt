@@ -16,8 +16,8 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistPrefix
@@ -71,9 +71,7 @@ class SupamollyOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("tr.event[id]")
-        logger.info { "Found ${rows.size} event row(s) on the Supamolly programme page" }
-
-        return rows.mapSkippingFailures(logger, "Supamolly event row") { row ->
+        return rows.parseListing(logger, "Supamolly event row") { row ->
             parseEventRow(row, baseUrl)
         }
     }

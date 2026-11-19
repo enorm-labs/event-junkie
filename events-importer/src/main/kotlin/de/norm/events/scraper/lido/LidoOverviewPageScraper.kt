@@ -8,9 +8,9 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseRealDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
@@ -63,10 +63,9 @@ class LidoOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val articles = document.select("article.event-ticket")
-        logger.info { "Found ${articles.size} event article(s) on overview page" }
 
         val listed =
-            articles.mapSkippingFailures(logger, "event article") { article ->
+            articles.parseListing(logger, "event article") { article ->
                 parseArticle(article, baseUrl)
             }
         val listedUrls = listed.mapTo(mutableSetOf()) { it.sourceUrl }

@@ -12,7 +12,7 @@ import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseRealDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
@@ -37,8 +37,7 @@ class GiriProgrammePageScraper {
         pageUrl: String
     ): List<ScrapedEvent> {
         val links = document.select(CALENDAR_LINK_SELECTOR).distinctBy { it.attr("data-event") }
-        logger.info { "Found ${links.size} event(s) on the Giri programme page $pageUrl" }
-        return links.mapSkippingFailures(logger, "Giri programme entry") { parseEvent(it, document) }
+        return links.parseListing(logger, "Giri programme entry", url = pageUrl) { parseEvent(it, document) }
     }
 
     private fun parseEvent(

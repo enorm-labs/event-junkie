@@ -15,7 +15,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
@@ -65,9 +65,7 @@ class AmtOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("div.div-grid-dan[data-date]")
-        logger.info { "Found ${items.size} event block(s) on AMT month page $baseUrl" }
-
-        return items.mapSkippingFailures(logger, "AMT event block") { item ->
+        return items.parseListing(logger, "AMT event block", url = baseUrl) { item ->
             parseEvent(item, baseUrl)
         }
     }

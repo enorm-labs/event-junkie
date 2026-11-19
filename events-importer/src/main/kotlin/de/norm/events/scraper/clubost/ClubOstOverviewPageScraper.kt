@@ -8,7 +8,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.clubost.ClubOstOverviewPageScraper.Companion.EVENT_INFO
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -49,9 +49,7 @@ class ClubOstOverviewPageScraper {
         sourceUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select(EVENT_CARD)
-        logger.info { "Found ${cards.size} event card(s) on the Club OST homepage" }
-
-        return cards.mapSkippingFailures(logger, "Club OST event card") { card ->
+        return cards.parseListing(logger, "Club OST event card") { card ->
             parseCard(card, sourceUrl)
         }
     }

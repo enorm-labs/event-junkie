@@ -10,7 +10,7 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
@@ -38,8 +38,7 @@ class JonnyKnuppelOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("li.event-item")
-        logger.info { "Found ${items.size} night(s) in the Jonny Knüppel calendar" }
-        return items.mapSkippingFailures(logger, "Jonny Knüppel night") { parseNight(it, baseUrl) }
+        return items.parseListing(logger, "Jonny Knüppel night") { parseNight(it, baseUrl) }
     }
 
     private fun parseNight(

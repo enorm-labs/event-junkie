@@ -16,9 +16,9 @@ import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.siteTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 
@@ -36,8 +36,7 @@ class LabsaalCalendarScraper {
 
     fun scrape(calendar: String): List<ScrapedEvent> {
         val entries = calendarEvents(calendar)
-        logger.info { "Found ${entries.size} LabSaal calendar entr(y/ies)" }
-        return entries.mapSkippingFailures(logger, "LabSaal calendar entry") { parseEntry(it) }
+        return entries.parseListing(logger, "LabSaal calendar entry") { parseEntry(it) }
     }
 
     private fun parseEntry(entry: Map<String, CalendarProperty>): ScrapedEvent? {

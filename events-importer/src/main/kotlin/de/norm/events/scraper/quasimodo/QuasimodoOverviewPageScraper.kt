@@ -10,8 +10,8 @@ import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -51,9 +51,7 @@ class QuasimodoOverviewPageScraper {
         // Parse the enclosing <li>, not the anchor: the genre tags and the ticket button are the
         // anchor's *siblings* inside it, so an anchor-scoped lookup would miss both.
         val items = document.select("ul.events li:has(a.event-item[href])")
-        logger.info { "Found ${items.size} event card(s) on Quasimodo overview" }
-
-        return items.mapSkippingFailures(logger, "Quasimodo event card") { item ->
+        return items.parseListing(logger, "Quasimodo event card") { item ->
             parseCard(item, baseUrl)
         }
     }

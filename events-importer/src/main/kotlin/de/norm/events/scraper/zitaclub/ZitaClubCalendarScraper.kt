@@ -9,7 +9,7 @@ import de.norm.events.scraper.calendarEvents
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferUnmarkedTitleType
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.siteTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 
@@ -24,8 +24,7 @@ class ZitaClubCalendarScraper {
 
     fun scrape(calendar: String): List<ScrapedEvent> {
         val entries = calendarEvents(calendar)
-        logger.info { "Found ${entries.size} Zita Club calendar entr(y/ies)" }
-        return entries.mapSkippingFailures(logger, "Zita Club calendar entry") { parseEntry(it) }
+        return entries.parseListing(logger, "Zita Club calendar entry") { parseEntry(it) }
     }
 
     private fun parseEntry(entry: Map<String, CalendarProperty>): ScrapedEvent? {

@@ -23,7 +23,7 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseOffsetToBerlin
 import de.norm.events.scraper.readTreeOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -98,10 +98,9 @@ class InselApiScraper(
         sourceUrl: String
     ): List<ScrapedEvent>? {
         val nodes = eventNodes(json) ?: return null
-        logger.info { "Found ${nodes.size()} event(s) in the Insel static-query artefact" }
 
         val events =
-            nodes.mapSkippingFailures(logger, "Insel event") { edge ->
+            nodes.parseListing(logger, "Insel event") { edge ->
                 parseEvent(SCRAPER_JSON.treeToValue(edge.path("node"), InselEventNode::class.java), sourceUrl)
             }
 

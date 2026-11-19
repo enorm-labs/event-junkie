@@ -18,9 +18,9 @@ import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.lazyImgSrcAt
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDayMonth
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.schemaDate
@@ -70,9 +70,7 @@ class PrivatclubOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val eventWrappers = document.select(".event_wrapper.skewed")
-        logger.info { "Found ${eventWrappers.size} event wrapper(s) on page" }
-
-        return eventWrappers.mapSkippingFailures(logger, "event wrapper") { wrapper ->
+        return eventWrappers.parseListing(logger, "event wrapper") { wrapper ->
             parseEventWrapper(wrapper, baseUrl)
         }
     }

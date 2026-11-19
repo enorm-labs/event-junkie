@@ -12,7 +12,7 @@ import de.norm.events.scraper.crewNames
 import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.stripLineupBracket
@@ -39,8 +39,7 @@ class BeateUweOverviewPageScraper {
         sourceUrl: String
     ): List<ScrapedEvent> {
         val nights = pairNights(document)
-        logger.info { "Found ${nights.size} night(s) on the Beate Uwe homepage" }
-        return nights.mapSkippingFailures(logger, "a Beate Uwe night") { (dates, text) -> parseNight(dates, text, sourceUrl) }
+        return nights.parseListing(logger, "a Beate Uwe night") { (dates, text) -> parseNight(dates, text, sourceUrl) }
     }
 
     /** Each date list with the first text widget after it, in document order. */

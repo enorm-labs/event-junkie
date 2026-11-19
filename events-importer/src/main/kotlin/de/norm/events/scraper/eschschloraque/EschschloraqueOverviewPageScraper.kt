@@ -12,9 +12,9 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.paragraphText
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
@@ -69,9 +69,7 @@ class EschschloraqueOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val nodes = document.select(".node-veranstaltung")
-        logger.info { "Found ${nodes.size} event node(s) on Eschschloraque overview" }
-
-        return nodes.mapSkippingFailures(logger, "Eschschloraque event node") { node ->
+        return nodes.parseListing(logger, "Eschschloraque event node") { node ->
             parseNode(node, baseUrl)
         }
     }

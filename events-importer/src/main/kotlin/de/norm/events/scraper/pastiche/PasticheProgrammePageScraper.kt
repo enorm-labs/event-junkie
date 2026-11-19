@@ -12,9 +12,9 @@ import de.norm.events.scraper.endOn
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.slug.SlugGenerator
@@ -53,8 +53,7 @@ class PasticheProgrammePageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("div.pages column-set:has(> column-unit[slot=2])").filter { it.titleText() != null }
-        logger.info { "Found ${rows.size} row(s) on the Pastiche programme" }
-        return rows.mapSkippingFailures(logger, "a Pastiche programme row") { parseRow(it, sourceUrl) }
+        return rows.parseListing(logger, "a Pastiche programme row") { parseRow(it, sourceUrl) }
     }
 
     private fun parseRow(

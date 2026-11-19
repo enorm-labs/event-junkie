@@ -9,7 +9,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
 import de.norm.events.scraper.schemaOffers
@@ -44,9 +44,8 @@ class TausendOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val nights = document.jsonLdEvents()
-        logger.info { "Found ${nights.size} night(s) in the Tausend lineup JSON-LD" }
         val texts = descriptions(document)
-        return nights.mapSkippingFailures(logger, "Tausend night") { parseNight(it, texts, baseUrl) }
+        return nights.parseListing(logger, "Tausend night") { parseNight(it, texts, baseUrl) }
     }
 
     /** Each night's full text by `sourceId`, in whichever language the page is in. */

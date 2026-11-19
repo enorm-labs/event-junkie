@@ -16,9 +16,9 @@ import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripFriendsTail
@@ -83,9 +83,7 @@ class RenateOverviewPageScraper(
     ): List<ScrapedEvent> {
         // A `.prog-row.blog-row` carries a news post; requiring a date keeps only real nights.
         val rows = document.select(".prog-row:has(.prog-date)")
-        logger.info { "Found ${rows.size} event row(s) on Renate homepage" }
-
-        return rows.mapSkippingFailures(logger, "Renate row") { row ->
+        return rows.parseListing(logger, "Renate row") { row ->
             parseRow(row, baseUrl)
         }
     }

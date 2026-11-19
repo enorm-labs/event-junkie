@@ -11,9 +11,9 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -61,9 +61,7 @@ class BadehausOverviewPageScraper {
     ): List<ScrapedEvent> {
         // A card wrapper is the div that directly holds the `.eventlistimg` image block.
         val cards = document.select("div:has(> div.eventlistimg)")
-        logger.info { "Found ${cards.size} event card(s) on Badehaus listing" }
-
-        return cards.mapSkippingFailures(logger, "event card") { card ->
+        return cards.parseListing(logger, "event card") { card ->
             parseCard(card, baseUrl)
         }
     }

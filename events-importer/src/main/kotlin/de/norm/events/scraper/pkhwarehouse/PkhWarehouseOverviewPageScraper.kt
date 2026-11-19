@@ -14,8 +14,8 @@ import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -52,8 +52,7 @@ class PkhWarehouseOverviewPageScraper(
                     month?.let { element to it }
                 }
             }
-        logger.info { "Found ${nights.size} night(s) on the PKH Warehouse page" }
-        return nights.mapSkippingFailures(logger, "a PKH Warehouse night") { (row, rowMonth) -> parseNight(row, rowMonth, sourceUrl) }
+        return nights.parseListing(logger, "a PKH Warehouse night") { (row, rowMonth) -> parseNight(row, rowMonth, sourceUrl) }
     }
 
     private fun parseNight(

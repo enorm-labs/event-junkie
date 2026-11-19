@@ -5,7 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.jsonLdEvents
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
@@ -39,9 +39,7 @@ class TheWallEventsPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val events = document.jsonLdEvents()
-        logger.info { "Found ${events.size} The Wall JSON-LD event(s) on $baseUrl" }
-
-        return events.mapSkippingFailures(logger, "The Wall event") { event ->
+        return events.parseListing(logger, "The Wall event", url = baseUrl) { event ->
             toScrapedEvent(event)
         }
     }

@@ -10,9 +10,9 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.lastPathSegment
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -34,8 +34,7 @@ class HausDerStatistikMonthPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select(".listing .teaser.event")
-        logger.info { "Found ${rows.size} programme row(s) on Haus der Statistik month page $baseUrl" }
-        return rows.mapSkippingFailures(logger, "Haus der Statistik programme row") { parseRow(it) }
+        return rows.parseListing(logger, "Haus der Statistik programme row", url = baseUrl) { parseRow(it) }
     }
 
     private fun parseRow(row: Element): ScrapedEvent? {

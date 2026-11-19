@@ -6,8 +6,8 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -35,8 +35,7 @@ class PfefferbergHaus13OverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("div.event-archive")
-        logger.info { "Found ${rows.size} Pfefferberg Haus 13 listing row(s)" }
-        return rows.mapSkippingFailures(logger, "Pfefferberg Haus 13 listing row") { row(it, baseUrl) }
+        return rows.parseListing(logger, "Pfefferberg Haus 13 listing row") { row(it, baseUrl) }
     }
 
     private fun row(

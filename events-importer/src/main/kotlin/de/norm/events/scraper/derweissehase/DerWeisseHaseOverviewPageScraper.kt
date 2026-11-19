@@ -15,9 +15,9 @@ import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Com
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.RA_EVENT_URL
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.UNANNOUNCED_SLOT_PATTERN
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -79,9 +79,7 @@ class DerWeisseHaseOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val blocks = document.select("div.event50:has(.eventrahm)")
-        logger.info { "Found ${blocks.size} event block(s) on Der Weiße Hase listing" }
-
-        return blocks.mapSkippingFailures(logger, "Der Weiße Hase event block") { block ->
+        return blocks.parseListing(logger, "Der Weiße Hase event block") { block ->
             parseBlock(block, baseUrl)
         }
     }

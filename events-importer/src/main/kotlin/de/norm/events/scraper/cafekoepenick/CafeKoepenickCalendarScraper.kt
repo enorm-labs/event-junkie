@@ -10,7 +10,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.calendarEvents
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.siteTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.net.URI
@@ -30,9 +30,8 @@ class CafeKoepenickCalendarScraper {
         feedUrl: String
     ): List<ScrapedEvent> {
         val entries = calendarEvents(calendar)
-        logger.info { "Found ${entries.size} Café Köpenick calendar entr(y/ies)" }
         val pageUrl = calendarPageUrl(feedUrl)
-        return entries.mapSkippingFailures(logger, "Café Köpenick calendar entry") { parseEntry(it, pageUrl) }
+        return entries.parseListing(logger, "Café Köpenick calendar entry") { parseEntry(it, pageUrl) }
     }
 
     private fun parseEntry(

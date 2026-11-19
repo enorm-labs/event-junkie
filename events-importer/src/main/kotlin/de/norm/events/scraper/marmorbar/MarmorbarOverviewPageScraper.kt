@@ -8,8 +8,8 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isWixCheckoutOpen
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.mapWixEventStatus
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
@@ -34,8 +34,7 @@ class MarmorbarOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val events = WixEventsWarmupData.events(document, EventSource.MARMORBAR) ?: return emptyList()
-        logger.info { "Found ${events.size()} event(s) in the Marmorbar Wix warmup payload" }
-        return events.mapSkippingFailures(logger, "Marmorbar event") { parseEvent(it, baseUrl) }
+        return events.parseListing(logger, "Marmorbar event") { parseEvent(it, baseUrl) }
     }
 
     private fun parseEvent(

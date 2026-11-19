@@ -11,8 +11,8 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -62,10 +62,9 @@ class BerghainOverviewPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val blocks = document.select(EVENT_LINK_SELECTOR)
-        logger.info { "Found ${blocks.size} event block(s) on Berghain overview page" }
 
         val parsed =
-            blocks.mapSkippingFailures(logger, "Berghain event block") { block ->
+            blocks.parseListing(logger, "Berghain event block") { block ->
                 parseBlock(block, sourceUrl)
             }
         val kantinePage = isKantinePage(sourceUrl)

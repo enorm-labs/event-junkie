@@ -11,8 +11,8 @@ import de.norm.events.scraper.flightStringOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.jsonArrayAt
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.nextFlightPayload
+import de.norm.events.scraper.parseListing
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
@@ -37,9 +37,7 @@ class PunchlineTicketsPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val dates = jsonArrayAt(nextFlightPayload(document), DATES_KEY)?.let { SCRAPER_JSON.readTree(it).toList() }.orEmpty()
-        logger.info { "Found ${dates.size} PUNCH L!NE show date(s) on $baseUrl" }
-
-        return dates.mapSkippingFailures(logger, "PUNCH L!NE show date") { date ->
+        return dates.parseListing(logger, "PUNCH L!NE show date", url = baseUrl) { date ->
             toScrapedEvent(date, dates, baseUrl)
         }
     }

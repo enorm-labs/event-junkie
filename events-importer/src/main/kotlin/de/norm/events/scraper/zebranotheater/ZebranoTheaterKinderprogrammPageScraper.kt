@@ -9,8 +9,8 @@ import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.forChildren
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -42,8 +42,7 @@ class ZebranoTheaterKinderprogrammPageScraper(
         val heading = document.select("h2").firstOrNull { PUBLIC_PERFORMANCES.containsMatchIn(it.text()) }
         val table = heading?.nextElementSiblings()?.firstOrNull { it.tagName() == "table" }
         val rows = table?.select("tr:has(> td)").orEmpty()
-        logger.info { "Found ${rows.size} Zebrano-Theater children's performance(s) on $baseUrl" }
-        return rows.mapSkippingFailures(logger, "Zebrano-Theater children's row") { row -> parseRow(row, baseUrl) }
+        return rows.parseListing(logger, "Zebrano-Theater children's row", url = baseUrl) { row -> parseRow(row, baseUrl) }
     }
 
     private fun parseRow(

@@ -15,7 +15,7 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isIceShow
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
@@ -68,10 +68,9 @@ class TempodromOverviewPageScraper {
      */
     fun scrape(document: Document): List<ScrapedEvent> {
         val nodes = document.jsonLdEvents()
-        logger.info { "Found ${nodes.size} schema.org Event object(s) on the Tempodrom programme" }
 
         val parsed =
-            nodes.mapSkippingFailures(logger, "Tempodrom event") { node ->
+            nodes.parseListing(logger, "Tempodrom event") { node ->
                 parseEvent(node)
             }
         val (sport, ours) = parsed.partition(::isTempodromSport)

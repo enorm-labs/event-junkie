@@ -10,8 +10,8 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -47,9 +47,7 @@ class WuhlheideOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val shows = document.select(".shows .show")
-        logger.info { "Found ${shows.size} show(s) on Parkbühne Wuhlheide overview" }
-
-        return shows.mapSkippingFailures(logger, "Parkbühne Wuhlheide show") { show ->
+        return shows.parseListing(logger, "Parkbühne Wuhlheide show") { show ->
             parseShow(show, baseUrl)
         }
     }

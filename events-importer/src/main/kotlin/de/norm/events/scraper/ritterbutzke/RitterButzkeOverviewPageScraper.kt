@@ -8,8 +8,8 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanShortDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -49,9 +49,7 @@ class RitterButzkeOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select("div:has(> div > a.event-link[href])")
-        logger.info { "Found ${cards.size} event card(s) on $eventSource overview" }
-
-        return cards.mapSkippingFailures(logger, "$eventSource event card") { card ->
+        return cards.parseListing(logger, "$eventSource event card") { card ->
             parseCard(card, baseUrl)
         }
     }

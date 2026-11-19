@@ -11,8 +11,8 @@ import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripLineupBracket
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -43,8 +43,7 @@ class PalomaProgrammPageScraper(
         sourceUrl: String
     ): List<ScrapedEvent> {
         val headings = document.select("b").filter { HEADING.matches(it.text().collapseWhitespace()) }
-        logger.info { "Found ${headings.size} night(s) on the Paloma programme" }
-        return headings.mapSkippingFailures(logger, "a Paloma night") { parseNight(it, sourceUrl) }
+        return headings.parseListing(logger, "a Paloma night") { parseNight(it, sourceUrl) }
     }
 
     private fun parseNight(

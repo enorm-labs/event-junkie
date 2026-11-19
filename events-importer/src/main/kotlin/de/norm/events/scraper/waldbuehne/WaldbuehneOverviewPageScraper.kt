@@ -13,7 +13,7 @@ import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.jsonLdEvents
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
@@ -47,9 +47,7 @@ class WaldbuehneOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val nodes = document.jsonLdEvents()
-        logger.info { "Found ${nodes.size} Waldbühne JSON-LD event(s) on $baseUrl" }
-
-        val parsed = nodes.mapSkippingFailures(logger, "Waldbühne event") { toScrapedEvent(it) }
+        val parsed = nodes.parseListing(logger, "Waldbühne event", url = baseUrl) { toScrapedEvent(it) }
         val (orchestra, ours) = parsed.partition { ORCHESTRA.containsMatchIn(it.title) }
         if (orchestra.isNotEmpty()) {
             logger.info { "Skipping ${orchestra.size} Waldbühne orchestra concert(s): ${orchestra.joinToString { it.sourceId }}" }

@@ -16,10 +16,10 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isScreeningTitle
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.readTreeOrNull
 import de.norm.events.scraper.splitSegmentOnConjunctions
@@ -68,10 +68,9 @@ class MadameClaudeApiScraper {
     /** [scrape], with the response's post count, which tells the page walk whether another page follows. */
     fun scrapePage(json: String): MadameClaudePage {
         val root = parseRoot(json) ?: return MadameClaudePage(emptyList(), postCount = 0)
-        logger.info { "Found ${root.size()} event(s) in Madame Claude API response" }
 
         val events =
-            root.mapSkippingFailures(logger, "Madame Claude event") { node ->
+            root.parseListing(logger, "Madame Claude event") { node ->
                 parseEvent(SCRAPER_JSON_SNAKE_CASE.treeToValue(node, MadameClaudeEventNode::class.java))
             }
         return MadameClaudePage(events, postCount = root.size())

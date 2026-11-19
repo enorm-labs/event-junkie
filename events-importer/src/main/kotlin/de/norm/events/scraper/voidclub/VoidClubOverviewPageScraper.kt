@@ -15,7 +15,7 @@ import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stripArtistSuffix
@@ -75,10 +75,9 @@ class VoidClubOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select("article.void-event-card")
-        logger.info { "Found ${cards.size} event card(s) on VOID Club homepage" }
         val teasers = teaserImages(document, baseUrl)
 
-        return cards.mapSkippingFailures(logger, "VOID Club event card") { card ->
+        return cards.parseListing(logger, "VOID Club event card") { card ->
             parseCard(card, baseUrl, teasers)
         }
     }

@@ -13,8 +13,8 @@ import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -57,8 +57,7 @@ class KuehlspotOverviewPageScraper {
                     ?.trim()
             )
         val nights = document.select(NIGHT)
-        logger.info { "Found ${nights.size} Kühlspot block(s) on $baseUrl" }
-        return nights.mapSkippingFailures(logger, "Kühlspot night") { parseNight(it, baseUrl, house) }
+        return nights.parseListing(logger, "Kühlspot night", url = baseUrl) { parseNight(it, baseUrl, house) }
     }
 
     private fun parseNight(

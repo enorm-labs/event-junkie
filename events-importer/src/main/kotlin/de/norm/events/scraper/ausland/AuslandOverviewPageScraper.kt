@@ -9,7 +9,7 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -39,8 +39,7 @@ class AuslandOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("section.event.listitem")
-        logger.info { "Found ${items.size} event item(s) on the ausland listing" }
-        return items.mapSkippingFailures(logger, "ausland event item") { parseItem(it, baseUrl) }
+        return items.parseListing(logger, "ausland event item") { parseItem(it, baseUrl) }
     }
 
     private fun parseItem(

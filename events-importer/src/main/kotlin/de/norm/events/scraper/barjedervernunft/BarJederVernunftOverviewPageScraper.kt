@@ -4,7 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.jsonLdEvents
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.queryParameter
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaImageUrl
@@ -54,9 +54,8 @@ class BarJederVernunftOverviewPageScraper(
      */
     fun scrape(document: Document): List<ScrapedEvent> {
         val cards = document.select(CARD_SELECTOR)
-        logger.info { "Found ${cards.size} calendar card(s) on page" }
 
-        return cards.mapSkippingFailures(logger, "$eventSource calendar card") { card ->
+        return cards.parseListing(logger, "$eventSource calendar card") { card ->
             parseCard(card)
         }
     }

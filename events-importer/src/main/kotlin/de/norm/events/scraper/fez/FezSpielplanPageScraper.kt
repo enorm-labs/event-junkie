@@ -12,9 +12,9 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.forChildren
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDayMonth
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -43,8 +43,7 @@ class FezSpielplanPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("div.termin")
-        logger.info { "Found ${items.size} FEZ performance(s) on $baseUrl" }
-        return items.mapSkippingFailures(logger, "FEZ performance") { parseItem(it, baseUrl) }
+        return items.parseListing(logger, "FEZ performance", url = baseUrl) { parseItem(it, baseUrl) }
     }
 
     private fun parseItem(

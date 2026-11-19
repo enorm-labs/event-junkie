@@ -9,8 +9,8 @@ import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -38,8 +38,7 @@ class PassionskircheOverviewPageScraper(
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = passionskircheItems(document)
-        logger.info { "Found ${items.size} event item(s) under the Passionskirche heading" }
-        return items.mapSkippingFailures(logger, "Passionskirche event item") { parseItem(it, baseUrl) }
+        return items.parseListing(logger, "Passionskirche event item") { parseItem(it, baseUrl) }
     }
 
     /** The gallery pictures after the `PASSIONSKIRCHE` heading and before the next church's heading, in page order. */

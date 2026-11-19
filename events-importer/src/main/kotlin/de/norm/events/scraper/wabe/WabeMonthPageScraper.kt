@@ -7,10 +7,10 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
@@ -37,9 +37,8 @@ class WabeMonthPageScraper {
     ): List<ScrapedEvent> {
         val page = pageMonth(document, baseUrl) ?: error("No month and year in WABE page $baseUrl")
         val rows = document.select("#content_area .j-hgrid").filter { DATE.containsMatchIn(dateColumnText(it)) }
-        logger.info { "Found ${rows.size} programme row(s) on WABE month page $baseUrl" }
         return rows
-            .mapSkippingFailures(logger, "WABE programme row") { row -> parseRow(row, page, baseUrl) }
+            .parseListing(logger, "WABE programme row", url = baseUrl) { row -> parseRow(row, page, baseUrl) }
             .flatten()
             .distinctBy { it.sourceId }
     }

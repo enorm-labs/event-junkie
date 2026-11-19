@@ -10,8 +10,8 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseNumericDayMonth
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -58,9 +58,7 @@ class JunctionBarDjOverviewPageScraper(
         val container = document.selectFirst("div.gridContainer") ?: document.body()
 
         val groups = segmentIntoNights(container, ::isDateBar)
-        logger.info { "Found ${groups.size} dated night(s) on Junction Bar DJ page" }
-
-        return groups.mapSkippingFailures(logger, "Junction Bar DJ night") { group ->
+        return groups.parseListing(logger, "Junction Bar DJ night") { group ->
             parseNight(group, baseUrl)
         }
     }

@@ -10,8 +10,8 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseListing
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -37,8 +37,7 @@ class KonradToenzOverviewPageScraper {
         sourceUrl: String
     ): List<ScrapedEvent> {
         val nights = document.select("section.events-dates")
-        logger.info { "Found ${nights.size} night(s) on the Konrad Tönz page" }
-        return nights.mapSkippingFailures(logger, "a Konrad Tönz night") { parseNight(it, sourceUrl) }
+        return nights.parseListing(logger, "a Konrad Tönz night") { parseNight(it, sourceUrl) }
     }
 
     private fun parseNight(

@@ -6,8 +6,8 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanShortDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -48,9 +48,7 @@ class MorphineOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val rows = document.select("div.list-events a.link-overlay[href]")
-        logger.info { "Found ${rows.size} listing row(s) on Morphine Raum overview" }
-
-        return rows.mapSkippingFailures(logger, "Morphine Raum listing row") { row ->
+        return rows.parseListing(logger, "Morphine Raum listing row") { row ->
             parseRow(row, baseUrl)
         }
     }

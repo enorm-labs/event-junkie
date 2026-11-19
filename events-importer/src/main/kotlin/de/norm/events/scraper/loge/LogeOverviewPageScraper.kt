@@ -7,7 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.buildArtistList
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
@@ -46,9 +46,7 @@ class LogeOverviewPageScraper {
         if (events == null) {
             return emptyList()
         }
-        logger.info { "Found ${events.size()} event(s) in Loge Wix warmup payload" }
-
-        return events.mapSkippingFailures(logger, "Loge overview event") { node ->
+        return events.parseListing(logger, "Loge overview event") { node ->
             parseEvent(node, baseUrl)
         }
     }

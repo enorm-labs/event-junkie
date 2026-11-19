@@ -5,7 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -34,9 +34,7 @@ class DownstairsTicketListScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("div[id^=tickets_ticket_]")
-        logger.info { "Found ${items.size} Downstairs ticket(s) on $baseUrl" }
-
-        return items.mapSkippingFailures(logger, "Downstairs ticket") { item ->
+        return items.parseListing(logger, "Downstairs ticket", url = baseUrl) { item ->
             parseItem(item)
         }
     }

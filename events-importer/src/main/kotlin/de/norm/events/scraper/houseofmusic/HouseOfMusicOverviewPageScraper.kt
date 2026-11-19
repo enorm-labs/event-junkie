@@ -11,8 +11,8 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.mapWixEventStatus
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -46,8 +46,7 @@ class HouseOfMusicOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val events = WixEventsWarmupData.events(document, EventSource.HOUSE_OF_MUSIC) ?: return emptyList()
-        logger.info { "Found ${events.size()} event(s) in the House of Music Wix warmup payload" }
-        return events.mapSkippingFailures(logger, "House of Music event") { event(it, baseUrl) }
+        return events.parseListing(logger, "House of Music event") { event(it, baseUrl) }
     }
 
     private fun event(

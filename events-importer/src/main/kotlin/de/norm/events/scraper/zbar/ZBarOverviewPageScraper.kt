@@ -10,9 +10,9 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.selectFirstOrSelf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -45,8 +45,7 @@ class ZBarOverviewPageScraper {
         sourceUrl: String
     ): List<ScrapedEvent> {
         val dateLines = document.select(".entry-content p.has-secondary-background-color").filter { LATIN.containsMatchIn(it.text()) }
-        logger.info { "Found ${dateLines.size} date line(s) on the Z Bar page" }
-        return dateLines.mapSkippingFailures(logger, "a Z Bar night") { parseNight(it, sourceUrl) }.flatten()
+        return dateLines.parseListing(logger, "a Z Bar night") { parseNight(it, sourceUrl) }.flatten()
     }
 
     private fun parseNight(

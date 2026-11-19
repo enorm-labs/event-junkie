@@ -11,11 +11,11 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanShortDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -40,8 +40,7 @@ class GalilaeakircheOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val items = document.select("div.vsel-content.vsel-upcoming").distinctBy { it.id() }
-        logger.info { "Found ${items.size} event item(s) on the Galiläakirche programme" }
-        return items.mapSkippingFailures(logger, "Galiläakirche event item") { parseItem(it, baseUrl) }
+        return items.parseListing(logger, "Galiläakirche event item") { parseItem(it, baseUrl) }
     }
 
     private fun parseItem(

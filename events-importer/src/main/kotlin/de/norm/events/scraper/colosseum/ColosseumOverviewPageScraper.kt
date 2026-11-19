@@ -12,8 +12,8 @@ import de.norm.events.scraper.colosseum.ColosseumOverviewPageScraper.Companion.V
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isWixCheckoutOpen
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.mapWixEventStatus
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.parseWixTicketPrice
 import de.norm.events.scraper.resolveUrl
@@ -67,9 +67,7 @@ class ColosseumOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val events = WixEventsWarmupData.events(document, EventSource.COLOSSEUM) ?: return emptyList()
-        logger.info { "Found ${events.size()} event(s) in Colosseum Wix warmup payload" }
-
-        return events.mapSkippingFailures(logger, "Colosseum event") { node ->
+        return events.parseListing(logger, "Colosseum event") { node ->
             parseEvent(node, baseUrl)
         }
     }

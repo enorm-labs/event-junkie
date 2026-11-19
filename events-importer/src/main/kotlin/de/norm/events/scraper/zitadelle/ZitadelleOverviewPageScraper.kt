@@ -10,9 +10,9 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.extractEventSlug
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -53,9 +53,7 @@ class ZitadelleOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select("article.cmf-card")
-        logger.info { "Found ${cards.size} event card(s) on Zitadelle overview" }
-
-        return cards.mapSkippingFailures(logger, "Zitadelle event card") { card ->
+        return cards.parseListing(logger, "Zitadelle event card") { card ->
             parseCard(card, baseUrl)
         }
     }

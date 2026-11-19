@@ -12,8 +12,8 @@ import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.lastPathSegment
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -42,8 +42,7 @@ class Zimmer16OverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select("a[href*=yesticket.org/event/]:has(div.ytp-event-card)")
-        logger.info { "Found ${cards.size} YesTicket card(s) on the ZIMMER 16 homepage" }
-        return cards.mapSkippingFailures(logger, "ZIMMER 16 card") { parseCard(it, baseUrl) }
+        return cards.parseListing(logger, "ZIMMER 16 card") { parseCard(it, baseUrl) }
     }
 
     private fun parseCard(

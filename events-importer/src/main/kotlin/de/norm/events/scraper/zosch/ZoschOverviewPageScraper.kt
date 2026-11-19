@@ -10,7 +10,7 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -42,8 +42,7 @@ class ZoschOverviewPageScraper {
                 "No '.eventContainer' on the Zosch page (title '${document.title()}', ${document.outerHtml().length} chars) — not the programme"
             }
         val nights = container.select("div.event")
-        logger.info { "Found ${nights.size} night(s) on the Zosch page" }
-        return nights.mapSkippingFailures(logger, "Zosch night") { parseNight(it, baseUrl) }
+        return nights.parseListing(logger, "Zosch night") { parseNight(it, baseUrl) }
     }
 
     private fun parseNight(

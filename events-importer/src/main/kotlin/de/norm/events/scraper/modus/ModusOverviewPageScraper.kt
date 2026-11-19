@@ -7,9 +7,9 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -44,9 +44,7 @@ class ModusOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val tiles = document.select(".event-tiles .event-item")
-        logger.info { "Found ${tiles.size} event tile(s) on Modus overview" }
-
-        return tiles.mapSkippingFailures(logger, "Modus event tile") { tile ->
+        return tiles.parseListing(logger, "Modus event tile") { tile ->
             parseTile(tile, baseUrl)
         }
     }

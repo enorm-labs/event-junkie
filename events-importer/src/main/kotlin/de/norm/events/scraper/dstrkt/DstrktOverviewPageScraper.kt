@@ -8,8 +8,8 @@ import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.htmlParagraphText
-import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -31,8 +31,7 @@ class DstrktOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val records = WixEventsWarmupData.collectionRecords(document, COLLECTION, EventSource.DSTRKT) ?: return emptyList()
-        logger.info { "Found ${records.size()} record(s) in the DSTRKT UPCOMINGEVENTS collection" }
-        return records.mapSkippingFailures(logger, "DSTRKT event record") { parseRecord(it, baseUrl) }
+        return records.parseListing(logger, "DSTRKT event record") { parseRecord(it, baseUrl) }
     }
 
     private fun parseRecord(
