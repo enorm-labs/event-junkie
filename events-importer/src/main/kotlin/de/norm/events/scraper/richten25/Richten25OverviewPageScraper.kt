@@ -21,16 +21,18 @@ import java.time.LocalDate
  * embed whose source sits in the `props` of the page's Astro island, not in the rendered markup: a
  * `section.event-list` with an "Upcoming Events" heading and one `li` per night.
  *
- * Each night is `<strong>October 8, 2026: </strong>` and a lineup, its sets parted by `//`. A set reads either
+ * Each night is `<strong>October 8, 2026: </strong>` and a lineup, its sets parted by `//`. A date line can drop the comma and
+ * name the start before its colon: `November 19 2026 (starts at 19:30):` (#5297). A set reads either
  * `Name, Name & Name`, which bills each musician, or `Band: members`, which bills the band. A prefix with a word such as
- * `Series`, `Evening` or `Benefit` names the night, not an act, so its members are billed: `Solidarity Evening in Support
+ * `Series`, `Evening`, `Benefit` or `presents` names the night, not an act, so its members are billed: `Solidarity Evening in Support
  * of …: Laura.aLL, Carla Boregas, … and more..` (#3280). So does a count of sets, such as `3 SOLOS: Siri Salminen / Jean-Luc
  * Guionnet / …` (#4421), whose members a single `/` parts. The `and more..` tail announces nobody and is cut before the
  * split, because a bare `more..` would read as the band More. A second embed lists past nights and is not read.
  * The text cannot tell a band from a work's title, so `Work: performers` bills the title. Such a night needs a lineup pin (ADR-042).
  * A night whose text after its first colon holds clock times is a timetable, not a lineup: `Taiwanese Music in Live Exchange:
  * Workshops: 14:30–17:30 Concert: 19:30–21:00` names no performer, so it bills nobody, keeps the name as its title and starts at the
- * `Concert:` time (#5274). Every other night names no time. The page names no price or image.
+ * `Concert:` time (#5274), or else at the date line's time. Every other night starts at the date line's time, if it names one.
+ * The page names no price or image.
  */
 class Richten25OverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -71,12 +73,13 @@ class Richten25OverviewPageScraper {
         baseUrl: String
     ): ScrapedEvent? {
         val match = NIGHT.find(text.trim())
-        val date = match?.let { dateOf(it.groupValues[1]) }
+        val date = match?.let { dateOf("${it.groupValues[1]} ${it.groupValues[2]}, ${it.groupValues[3]}") }
         if (match == null || date == null) {
             logger.warn { "Richten25 night '$text' has no readable date, skipping" }
             return null
         }
-        val lineup = match.groupValues[2].trim()
+        val startTime = parseClock(match.groupValues[4])
+        val lineup = match.groupValues[5].trim()
         val event =
             ScrapedEvent(
                 title = lineup,
@@ -84,12 +87,13 @@ class Richten25OverviewPageScraper {
                 eventDate = date,
                 sourceUrl = baseUrl,
                 sourceId = "${EventSource.RICHTEN25.sourceIdPrefix}$date",
+                startTime = startTime,
                 artists = artistsOf(lineup)
             )
         val timetable = PREFIX.find(lineup)?.takeIf { CLOCK.containsMatchIn(it.groupValues[2]) } ?: return event
         return event.copy(
             title = timetable.groupValues[1].trim(),
-            startTime = CONCERT_TIME.find(timetable.groupValues[2])?.let { parseClock(it.groupValues[1]) },
+            startTime = CONCERT_TIME.find(timetable.groupValues[2])?.let { parseClock(it.groupValues[1]) } ?: startTime,
             artists = emptyList()
         )
     }
@@ -116,10 +120,10 @@ class Richten25OverviewPageScraper {
 
     private companion object {
         const val UPCOMING = "Upcoming Events"
-        val NIGHT = Regex("""^([A-Z][a-z]+ \d{1,2}, \d{4}):\s*(.+)$""")
+        val NIGHT = Regex("""^([A-Z][a-z]+) (\d{1,2}),? (\d{4})(?:\s*\((?i:starts at)\s*(\d{1,2}:\d{2})\))?:\s*(.+)$""")
         val SET_SEPARATOR = Regex("""\s*//\s*""")
         val PREFIX = Regex("""^\s*([^:,&]+?):\s*(.+)$""")
-        val NIGHT_NAME = Regex("""\b(?:series|evening|night|benefit|solidarity|festival)\b""", RegexOption.IGNORE_CASE)
+        val NIGHT_NAME = Regex("""\b(?:series|evening|night|benefit|solidarity|festival|presents)\b""", RegexOption.IGNORE_CASE)
         val FORMAT_LABEL = Regex("""\d+\s+(?:solos?|duos?|trios?|sets?)""", RegexOption.IGNORE_CASE)
         val MORE_TAIL = Regex("""\s+(?:and|&)\s+more\.*\s*$""", RegexOption.IGNORE_CASE)
         val CLOCK = Regex("""\b\d{1,2}:\d{2}\b""")
