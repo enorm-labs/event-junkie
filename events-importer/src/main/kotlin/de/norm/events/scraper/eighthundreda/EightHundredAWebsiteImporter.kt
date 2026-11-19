@@ -25,6 +25,11 @@ val EIGHT_HUNDRED_A_LIMITATIONS =
     VenueLimitations(
         EventSource.EIGHT_HUNDRED_A,
         AcceptedLimitation(LimitedAspect.GENRE, "the categories name a format, such as Music or Burlesque, not a style", verified = "2026-10-23"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "a donation night carries a suggested range and no single figure, so the range is kept as the note",
+            verified = "2026-11-19"
+        ),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "a row has one price, the ticket price", verified = "2026-10-23"),
         AcceptedLimitation(
             LimitedAspect.PROMOTERS,
