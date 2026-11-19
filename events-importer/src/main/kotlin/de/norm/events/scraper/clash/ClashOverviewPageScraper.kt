@@ -47,7 +47,7 @@ import java.time.LocalTime
  * A live-music (punk/ska) club that also hosts quiz, party and festival nights, so the type is
  * inferred from the title ([inferConcertVenueType] — CONCERT by default). Acts come from the
  * lineup subtitle ([parseArtists]). A DJ night has none and names its DJs in the panel, one per
- * line after a `… with DJs` line ([parsePanelDjs]).
+ * line after a `… with DJs` line ([parsePanelDjs]). A market is dropped ([MARKET_TITLE]).
  *
  * @see ClashWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://clash-berlin.de/">Clash Berlin</a>
@@ -80,6 +80,11 @@ class ClashOverviewPageScraper {
         val title = item.textAt(".gig-title")
         if (title.isNullOrBlank()) {
             logger.warn { "Clash event item has no title, skipping" }
+            return null
+        }
+        // A market is out of scope (EVENT_SCOPE.md §3.2): the `TATTOO XMAS - MARKET` (event 14758).
+        if (MARKET_TITLE.containsMatchIn(title)) {
+            logger.info { "Skipping Clash event '$title': a market, out of scope" }
             return null
         }
 
@@ -238,5 +243,8 @@ class ClashOverviewPageScraper {
 
         /** Leading lineup label on a subtitle ("Live:", "DJ:", "DJs:", "Line-up:"), stripped before splitting acts. */
         private val LINEUP_LABEL_PREFIX = Regex("""^\s*(?:live|djs?|line[\s-]?up)\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** A title word that ends in `markt`, or the word `market`, as Colosseum reads it. */
+        private val MARKET_TITLE = Regex("""markt(?!\p{L})|(?<!\p{L})market(?!\p{L})""", RegexOption.IGNORE_CASE)
     }
 }

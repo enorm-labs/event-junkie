@@ -1,5 +1,6 @@
 package de.norm.events.scraper.mikropol
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
@@ -38,6 +39,9 @@ import org.jsoup.nodes.Element
  * credit ("Trinity Music presents:") above the title. A sold-out / cancelled show carries a
  * `.canceledsoldout` badge (`Ausverkauft` / `Abgesagt`); a relocated show opens its title with
  * a "verlegt in den … –" note. No JSON-LD.
+ *
+ * A run over several days renders its `.eventdates` as a range (`8.01.2027 - 10.01.2027`), whose
+ * second date is the end. A title with `Fest` is a festival (`Berlin Bowie Fest 2027`, event 14865).
  *
  * The `Abendkasse` slot is empty on most pages, which stores no price. A free night prints
  * `<b>Abendkasse:</b> 0,00 €` there, and its notes say "Eintritt: Frei".
@@ -79,7 +83,8 @@ class MikropolDetailPageScraper {
         val description = content.selectFirst("div.eventnotes")?.descriptionText()
         val boxOffice = parseLabelledPrices(details).boxOffice
 
-        val eventType = inferConcertVenueType(title)
+        val eventType = mikropolEventType(title)
+        val dates = content.textAt("span.eventdates")?.split(DATE_RANGE_SEPARATOR).orEmpty()
         return ScrapedEvent(
             title = title,
             subtitle = support,
@@ -88,8 +93,9 @@ class MikropolDetailPageScraper {
             // Prefer the slug's ISO date prefix, then the German `.eventdates` rendering.
             eventDate =
                 parseIsoDate(slug.take(ISO_DATE_LENGTH))
-                    ?: parseGermanDate(content.textAt("span.eventdates"))
+                    ?: parseGermanDate(dates.firstOrNull())
                     ?: UNRESOLVED_EVENT_DATE,
+            endDate = dates.getOrNull(1)?.let(::parseGermanDate),
             doorsTime = labelledClock(details, DOORS_LABELS),
             startTime = labelledClock(details, START_LABELS),
             imageUrl =
@@ -124,6 +130,9 @@ class MikropolDetailPageScraper {
     private companion object {
         /** The Events-Manager sold-out badge text (`Ausverkauft`). */
         private const val SOLD_OUT_TEXT = "ausverkauft"
+
+        /** The dash between the two dates of a run: `8.01.2027 - 10.01.2027`. */
+        private val DATE_RANGE_SEPARATOR = Regex("""\s+[-–]\s+""")
     }
 }
 
@@ -141,3 +150,9 @@ internal fun withoutTrailingSupport(
         val cut = headliners.dropLast(act.length)
         if (headliners.endsWith(act, ignoreCase = true) && cut.endsWith(' ') && cut.isNotBlank()) cut.trimEnd() else headliners
     }
+
+/** The type a title names, a concert by default; `Fest` is a festival (`Berlin Bowie Fest 2027`, event 14865). */
+internal fun mikropolEventType(title: String): String = inferConcertVenueType(title, subtitle = null, venueKeywords = FESTIVAL_KEYWORDS)
+
+/** `Festival` is a shared cue already. */
+private val FESTIVAL_KEYWORDS = mapOf("fest" to EventType.FESTIVAL.name)

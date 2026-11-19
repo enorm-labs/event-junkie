@@ -37,7 +37,8 @@ class MetropolWebsiteImporter(
      * everything it carries — notably the times, labelled explicitly (`Einlass: … // Beginn: …`)
      * where the listing implies them by position. The listing is authoritative for the **support
      * acts**, which the detail `h1` omits, so subtitle and roster are rebuilt: headliner from the
-     * detail title, support acts from the listing, rather than either roster wholesale.
+     * detail title, support acts from the listing, rather than either roster wholesale. A party's
+     * DJs come from the detail text only.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -45,7 +46,7 @@ class MetropolWebsiteImporter(
     ): ScrapedEvent =
         primary.withGapsFrom(fallback).copy(
             // Rebuild from the detail headliner plus the listing's support acts.
-            artists = buildMetropolArtists(primary.title, fallback.subtitle, primary.eventType ?: fallback.eventType)
+            artists = buildMetropolArtists(primary.title, fallback.subtitle, primary.eventType ?: fallback.eventType) + primary.artists
         )
 }
 

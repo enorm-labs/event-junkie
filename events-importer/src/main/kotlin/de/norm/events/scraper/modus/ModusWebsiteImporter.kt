@@ -1,5 +1,6 @@
 package de.norm.events.scraper.modus
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
@@ -35,6 +36,12 @@ class ModusWebsiteImporter(
 
     override val eventSource: EventSource = EventSource.MODUS
     override val listsWholeProgramme: Boolean = true
+
+    /** A night the event page types as a party bills no act, so the listing's title act is not filled in (event 14869). */
+    override fun fillGapsFromOverview(
+        primary: ScrapedEvent,
+        fallback: ScrapedEvent
+    ): ScrapedEvent = primary.withGapsFrom(fallback).let { if (primary.eventType == EventType.PARTY.name) it.copy(artists = primary.artists) else it }
 
     override suspend fun importEvents(
         url: String,

@@ -41,6 +41,14 @@ class AcceptedLimitationsTest {
     }
 
     @Test
+    fun `a house genre limited to club nights skips a concert, as Humboldthain's event 14743`() {
+        AcceptedLimitations.houseGenre(EventSource.HUMBOLDTHAIN, "PARTY") shouldBe "Techno, House"
+        AcceptedLimitations.houseGenre(EventSource.HUMBOLDTHAIN, "CONCERT").shouldBeNull()
+        AcceptedLimitations.houseGenre(EventSource.HUMBOLDTHAIN, "QUIZ").shouldBeNull()
+        AcceptedLimitations.houseGenre(EventSource.TRESOR, "CONCERT") shouldBe "Techno"
+    }
+
+    @Test
     fun `a house language reaches every event of its source and no other`() {
         val show = ScrapedEvent(title = "Show", eventDate = LocalDate.of(2026, 10, 4), sourceUrl = "https://example.org", sourceId = "x:1")
         AcceptedLimitations.withHouseDefaults(EventSource.MEHRINGHOF, listOf(show)).single().houseLanguage shouldBe SpokenLanguage.GERMAN

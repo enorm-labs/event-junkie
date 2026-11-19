@@ -398,6 +398,7 @@ object AcceptedLimitations {
     /**
      * [source]'s [VenueLimitations.houseGenre] for an event of [eventType], or null. A screening,
      * an exhibition, a reading, a quiz or a comedy night at a techno club is not a techno night, so it gets none.
+     * A declaration with [VenueLimitations.houseGenreTypes] gives it to those types only.
      */
     fun houseGenre(
         source: EventSource,
@@ -405,8 +406,11 @@ object AcceptedLimitations {
     ): String? =
         declarations
             .firstOrNull { source in it.sources }
-            ?.houseGenre
-            ?.takeIf { eventType != null && eventType !in NON_MUSIC_TYPES }
+            ?.takeIf { declaration ->
+                eventType != null &&
+                    eventType !in NON_MUSIC_TYPES &&
+                    declaration.houseGenreTypes?.let { types -> types.any { it.name == eventType } } != false
+            }?.houseGenre
 
     /** [events] with [source]'s house genre filled in where an event names no genre of its own. */
     fun withHouseGenre(

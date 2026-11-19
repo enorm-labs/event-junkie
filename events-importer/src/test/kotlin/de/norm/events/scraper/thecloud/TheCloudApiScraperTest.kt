@@ -18,12 +18,17 @@ class TheCloudApiScraperTest {
 
     private fun event(slug: String) = page.events.single { it.sourceId == "the_cloud:$slug" }
 
-    private fun titled(title: String) =
-        scraper
-            .scrapePage(
-                """{"events": [{"slug": "a", "title": "$title", "url": "https://thecloud.berlin/event/a/", "start_date": "2026-11-07 18:00:00"}]}"""
-            ).events
-            .single()
+    private fun titled(
+        title: String,
+        description: String = ""
+    ) = scraper
+        .scrapePage(
+            """
+            {"events": [{"slug": "a", "title": "$title", "description": "$description",
+                         "url": "https://thecloud.berlin/event/a/", "start_date": "2026-11-07 18:00:00"}]}
+            """.trimIndent()
+        ).events
+        .single()
 
     @Test
     fun `reads every event of the one page`() {
@@ -78,6 +83,36 @@ class TheCloudApiScraperTest {
 
         show.eventType shouldBe EventType.CONCERT.name
         show.artists.map { it.name } shouldContainExactly listOf("QUEST PISTOLS")
+    }
+
+    @Test
+    fun `a tagline that says live at the room bills the act before the dash, as event 14855`() {
+        val show = titled("RONIS GOLIATH – THE GAME TOUR live @ THE CLOUD", "RONIS GOLIATH kommt mit seiner THE GAME TOUR live ins THE CLOUD!")
+
+        show.eventType shouldBe EventType.CONCERT.name
+        show.artists.map { it.name } shouldContainExactly listOf("RONIS GOLIATH")
+    }
+
+    @Test
+    fun `prose that calls the title's head live bills it, as event 14858`() {
+        val show = titled("SENIDAH – ZUM ERSTEN MAL IN BERLIN!", "<p>Erlebt SENIDAH live in Berlin – eine Nacht voller Hits.</p>")
+
+        show.eventType shouldBe EventType.CONCERT.name
+        show.artists.map { it.name } shouldContainExactly listOf("SENIDAH")
+    }
+
+    @Test
+    fun `a headed title with no live cue stays a party with no act, as event 14856`() {
+        listOf(
+            "FUNK KULTURE – BERLIN" to "<p>JCONBEATZ • GUS • SAULIN</p>",
+            "SENIDAH – ZUM ERSTEN MAL IN BERLIN!" to "<p>Eine exklusive Live-Show mit SENIDAH.</p>",
+            "BLACK OUT – NO LIGHTS, JUST VIBES." to "<p>Tickets: https://shotgun.live/en/events/blackout</p>"
+        ).forEach { (title, text) ->
+            val night = titled(title, text)
+
+            night.eventType shouldBe EventType.PARTY.name
+            night.artists.shouldBeEmpty()
+        }
     }
 
     @Test

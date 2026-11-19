@@ -1,5 +1,6 @@
 package de.norm.events.scraper.metropol
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
@@ -139,6 +140,44 @@ class MetropolDetailPageScraperTest {
     fun `derives no artists because the heading names the headliner alone`() {
         // The support acts live only on the listing; the importer rebuilds the roster there.
         scrape("thy-art-is-murder", "2026-08-04-thy-art-is-murder").artists shouldBe emptyList()
+    }
+
+    /** An inline page with an empty `EVENT TYPE`, as the four uncategorised rows of 2026-11-19 render it. */
+    private fun uncategorised(
+        title: String,
+        text: String
+    ): ScrapedEvent {
+        val sourceUrl = "https://metropol-berlin.de/event/2026-12-27-x"
+        val html =
+            """
+            <div class="em-event-single"><div class="event-info"><h1>$title</h1></div>
+            <div class="event-details"><p class="time">19:00 - 2:00</p><ul class="event-categories"></ul></div>
+            <div class="event-text grid-100">$text</div></div>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+    }
+
+    @Test
+    fun `an uncategorised night whose text bills DJs is a party of those DJs, as event 14867`() {
+        val event = uncategorised("NACKT-SCHLAGER-BALL", "<p>NACKT-SCHLAGER-BALL</p><p>Einlass bis 23 Uhr!</p><p>Mit den DJs Stern von Avalon und ITZY</p>")
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists.map { it.name to it.role } shouldBe listOf("Stern von Avalon" to ArtistRole.DJ, "ITZY" to ArtistRole.DJ)
+    }
+
+    @Test
+    fun `an uncategorised Fest is a festival, as event 14868`() {
+        val event = uncategorised("Berlin Bowie Fest 2027", "<p>TANGERINE DREAM will headline BERLIN BOWIE FEST.</p>")
+
+        event.eventType shouldBe EventType.FESTIVAL.name
+        event.artists shouldBe emptyList()
+    }
+
+    @Test
+    fun `an uncategorised row with no cue is a concert, as SPITE and The Pineapple Thief`() {
+        uncategorised("The Pineapple Thief", "<p>Seit über 25 Jahren zählen The Pineapple Thief zu den renommiertesten Bands.</p>")
+            .eventType shouldBe EventType.CONCERT.name
+        uncategorised("SPITE / EMMURE", "<p>SPITE: Spite attract outsiders.</p>").eventType shouldBe EventType.CONCERT.name
     }
 
     @Test

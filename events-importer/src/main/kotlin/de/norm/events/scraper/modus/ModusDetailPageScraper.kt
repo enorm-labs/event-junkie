@@ -55,9 +55,9 @@ class ModusDetailPageScraper {
         val slug = extractEventSlug(sourceUrl, "/event/")
         val cleanedTitle = cleanEventTitle(rawTitle)
         val title = cleanedTitle.text
-        val eventType = modusEventType(title)
         val dateLine = document.textAt(".event-view-right h2")
         val description = document.selectFirst(".event-description")?.descriptionText()?.replace(INVISIBLE_FORMAT_CHARS, "")
+        val eventType = modusEventType(title, description)
 
         return ScrapedEvent(
             title = title,

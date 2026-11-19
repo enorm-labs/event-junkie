@@ -26,6 +26,8 @@ import tools.jackson.databind.JsonNode
  *
  * - **Every event is filed under `Night Club`**, so a night is a party unless its title bills a live show
  *   (`LIVE ON STAGE: …`, `… LIVE IN BERLIN`, `… Live`), which is a concert of the act it names.
+ *   A title `<act> – <tagline>` is a concert of `<act>` too when the tagline says `live @` (`RONIS GOLIATH – THE GAME TOUR live @ THE CLOUD`)
+ *   or the prose says `<act> live` (`Erlebt SENIDAH live in Berlin`, event 14858).
  * - **The API time can be the doors**: when the prose prints `Einlass` at that time, the start is the `Start` or `Event` clock.
  * - **`website` is the promoter's ticket link**, copied from social media with `fbclid` and `utm_*` attached; those go.
  */
@@ -48,7 +50,7 @@ class TheCloudApiScraper {
         val flat = description?.replace('\n', ' ')
         val doors = labelledClock(flat, DOORS_LABELS)?.takeIf { it == start.toLocalTime() }
         val end = event.tecDateTime("end_date")?.takeIf { it.isAfter(start) }
-        val liveAct = if (LIVE_SHOW.containsMatchIn(title)) liveAct(title) else null
+        val liveAct = if (LIVE_SHOW.containsMatchIn(title)) liveAct(title) else headlinedLiveAct(title, flat)
 
         return ScrapedEvent(
             title = title,
@@ -83,6 +85,23 @@ class TheCloudApiScraper {
                     ?.trim()
             }?.takeIf { it.isNotEmpty() }
 
+    /** The `<act>` of a title `<act> – <tagline>` whose tagline is `live @ …`, or whose act the prose calls `<act> live`. */
+    private fun headlinedLiveAct(
+        title: String,
+        flat: String?
+    ): String? {
+        val head =
+            HEADED_TITLE
+                .find(title)
+                ?.groupValues
+                ?.get(1)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() } ?: return null
+        val tagline = title.substring(head.length)
+        val inProse = flat != null && Regex("""${Regex.escape(head)}\s+live\b(?!-)""", RegexOption.IGNORE_CASE).containsMatchIn(flat)
+        return head.takeIf { LIVE_AT.containsMatchIn(tagline) || inProse }
+    }
+
     /** [url] without its social-media tracking parameters. */
     private fun withoutTracking(url: String): String {
         val stripped = url.replace(TRACKING_PARAMETER, "")
@@ -101,6 +120,12 @@ class TheCloudApiScraper {
                 Regex("""^LIVE\s+ON\s+STAGE\s*:\s*(.+)$""", RegexOption.IGNORE_CASE),
                 Regex("""^(?:.+?\bPRÄSENTIERT\s+)?(.+?)\s*[—–-]?\s+$LIVE_CUE""", RegexOption.IGNORE_CASE)
             )
+
+        /** The head of a title before its first spaced dash: `SENIDAH – ZUM ERSTEN MAL IN BERLIN!`. */
+        val HEADED_TITLE = Regex("""^(.+?)\s+[—–-]\s+\S""")
+
+        /** `live @ THE CLOUD`, `live at The Cloud`: a show at this room, not a `Live Music Night`. */
+        val LIVE_AT = Regex("""\blive\s+(?:@|at\s)""", RegexOption.IGNORE_CASE)
 
         /** The words before the show's own clock when the API time is the doors: `START: 23:00`, `Event: 19:00–22:00`. */
         const val EVENT_START_LABELS = "$START_LABELS|event"

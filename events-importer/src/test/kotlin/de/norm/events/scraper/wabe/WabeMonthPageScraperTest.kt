@@ -150,6 +150,40 @@ class WabeMonthPageScraperTest {
         event.startTime shouldBe LocalTime.of(19, 0)
     }
 
+    private fun row(
+        category: String,
+        title: String,
+        performer: String = ""
+    ): ScrapedEvent {
+        val html =
+            """
+            <div id="content_area"><div class="j-module n j-hgrid">
+              <div class="cc-m-hgrid-column"><div class="j-module n j-text"><p>Donnerstag</p><p><strong>8</strong></p><p>Januar</p><p>20:00</p><p>$category</p></div></div>
+              <div class="cc-m-hgrid-column"><div class="j-module n j-text"><p><strong>$title</strong></p><p>$performer</p></div></div>
+              <div class="cc-m-hgrid-column last"><div class="j-module n j-text"><p>Saal</p></div></div>
+            </div></div>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, monthUrl("jan")), monthUrl("jan")).single()
+    }
+
+    @Test
+    fun `reads each part of a split category, the comedy winning over the music show, as event 14761`() {
+        val show = row("Musik-Show / Comedy", "Ein Star zum Anbeten", "SEBO SAM")
+
+        show.eventType shouldBe EventType.COMEDY.name
+        show.genre.shouldBeNull()
+        show.artists.map { it.name } shouldContainExactly listOf("Sebo Sam")
+    }
+
+    @Test
+    fun `keeps a split genre list a concert with both genres`() {
+        val concert = row("Jazz | Pop", "Neujahrskonzert")
+
+        concert.eventType shouldBe EventType.CONCERT.name
+        concert.genre shouldBe "Jazz, Pop"
+        row("Musik-Show / Blues", "Neujahrskonzert").genre shouldBe "Blues"
+    }
+
     @Test
     fun `reads nothing from a page without programme rows`() {
         val url = monthUrl("dez")

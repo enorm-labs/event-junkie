@@ -15,7 +15,6 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanMonthAbbreviation
@@ -85,7 +84,7 @@ class MetropolOverviewPageScraper {
                 ?.blankToNull() ?: return null
         val title = cleanEventTitle(stripRelocationPrefix(rawTitle)).text
         val support = row.textAt("h2.artist small.support")
-        val eventType = mapEventType(row.textAt("ul.event-categories"))
+        val eventType = metropolEventType(row.textAt("ul.event-categories"), title, support, description = null)
 
         return ScrapedEvent(
             title = title,
@@ -136,15 +135,15 @@ class MetropolOverviewPageScraper {
  * `small.support` line, in billing order. The shared [buildArtistsForEventType] cannot be used
  * directly because it reads support acts via `extractSupportFromSubtitle`, which requires an
  * explicit `"Support:"` marker; Metropol writes a bare `+`-joined list (`"Fit For An Autopsy +
- * Sun Eater + Protest The Hero"`), handed straight to [splitSupportActs]. A `PARTY` title is an
- * event name, not an act, so it yields none — the rule [buildArtistsForEventType] applies.
+ * Sun Eater + Protest The Hero"`), handed straight to [splitSupportActs]. Only a concert's title
+ * is an act: a party's, a festival's or an untyped row's is the event's name (event 14867).
  */
 internal fun buildMetropolArtists(
     title: String,
     supportLine: String?,
     eventType: String?
 ): List<ScrapedArtist> {
-    if (eventType == EventType.PARTY.name) return emptyList()
+    if (eventType != EventType.CONCERT.name) return emptyList()
     val supportActs =
         supportLine
             .orEmpty()

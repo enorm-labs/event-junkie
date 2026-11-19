@@ -222,6 +222,22 @@ class ClashOverviewPageScraperTest {
         """.trimIndent()
 
     @Test
+    fun `scrape drops a market and keeps the night beside it, as event 14758`() {
+        fun item(
+            title: String,
+            id: String
+        ) = """
+            <div class="item"><div class="gig-info"><div class="info-content">
+              <h3 class="gig-title">$title</h3>
+              <div class="collapse infofull" id="$id"><span class="dateTwo">13.12.26</span></div>
+            </div></div></div>
+            """
+        val html = """<div class="gigs-container">${item("TATTOO XMAS - MARKET", "1312202600001")}${item("22 JAHRE CLASH", "1312202600002")}</div>"""
+
+        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).map { it.title } shouldBe listOf("22 JAHRE CLASH")
+    }
+
+    @Test
     fun `scrape returns empty list for a page without events`() {
         val document = Jsoup.parse("<html><body><section id='events'></section></body></html>", baseUrl)
 

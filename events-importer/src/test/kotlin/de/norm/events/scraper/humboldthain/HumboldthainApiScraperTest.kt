@@ -34,6 +34,8 @@ class HumboldthainApiScraperTest {
 
     private fun eventTitled(title: String): ScrapedEvent = events.first { it.title == title }
 
+    private fun single(entry: String): ScrapedEvent = scraper.scrape("""{"data":{"widgets":{"w1":{"data":{"settings":{"events":[$entry]}}}}}}""").single()
+
     /** The row the importer stores, where the description is cut in two (#2986). */
     private fun stored(sourceId: String): EventEntity =
         events.single { it.sourceId == sourceId }.toEventEntity(venueId = 1L, venueSlug = "humboldthain-club", eventSourceId = 1L)
@@ -100,6 +102,33 @@ class HumboldthainApiScraperTest {
         event.eventDate shouldBe LocalDate.of(2026, 3, 20)
         event.artists.map { it.name } shouldContainExactly listOf("Heiße Assis")
         event.artists.single().role shouldBe ArtistRole.HEADLINER
+    }
+
+    @Test
+    fun `scrape reads the English CONCERT marker too, as event 14743`() {
+        val event = single("""{"id":"c","name":"CONCERT: Mutamapago & Ledlights","start":{"date":"2026-11-18","time":"19:30"}}""")
+
+        event.eventType shouldBe EventType.CONCERT.name
+        event.title shouldBe "Mutamapago & Ledlights"
+        event.artists.map { it.name } shouldContainExactly listOf("Mutamapago", "Ledlights")
+    }
+
+    @Test
+    fun `scrape types a night the prose calls a Gameshow as a quiz, as event 14744`() {
+        val event =
+            single(
+                """{"id":"g","name":"LAGUNA FORTUNA","start":{"date":"2026-11-27","time":"18:00"},
+                   "description":"<p>Denn: Nur Laguna Fortuna als wahre Gameshow der Herrin kann Dir helfen.</p>"}"""
+            )
+
+        event.eventType shouldBe EventType.QUIZ.name
+        event.artists shouldHaveSize 0
+    }
+
+    @Test
+    fun `scrape keeps a night with no marker and no game show a party`() {
+        single("""{"id":"p","name":"Groove District","start":{"date":"2026-11-28","time":"23:00"},"description":"<p>House all night.</p>"}""")
+            .eventType shouldBe EventType.PARTY.name
     }
 
     @Test

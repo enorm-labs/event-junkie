@@ -1,6 +1,7 @@
 package de.norm.events.scraper.humboldthain
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractJsonApiImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
@@ -57,5 +58,7 @@ val HUMBOLDTHAIN_LIMITATIONS =
             verified = "2026-11-14"
         ),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
-        houseGenre = "Techno, House"
+        houseGenre = "Techno, House",
+        // A `CONCERT:` night plays hip hop or jazz as often as techno (event 14743), so only a club night takes it.
+        houseGenreTypes = setOf(EventType.PARTY)
     )

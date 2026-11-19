@@ -94,6 +94,14 @@ class MetropolOverviewPageScraperTest {
     }
 
     @Test
+    fun `mints no act from the title of a festival or an untyped row, as event 14867`() {
+        buildMetropolArtists("Berlin Bowie Fest 2027", null, EventType.FESTIVAL.name).shouldBeEmpty()
+        buildMetropolArtists("NACKT-SCHLAGER-BALL", null, EventType.OTHER.name).shouldBeEmpty()
+        buildMetropolArtists("NACKT-SCHLAGER-BALL", null, null).shouldBeEmpty()
+        buildMetropolArtists("The Pineapple Thief", null, EventType.CONCERT.name).map { it.name } shouldBe listOf("The Pineapple Thief")
+    }
+
+    @Test
     fun `types the venue's party and derives no artists from its event name`() {
         val party = event("metropol:2026-11-21-frank-martini-party-of-the-century")
         party.eventType shouldBe EventType.PARTY.name

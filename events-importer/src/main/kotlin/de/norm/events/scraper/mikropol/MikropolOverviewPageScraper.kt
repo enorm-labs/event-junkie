@@ -7,7 +7,6 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
-import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
@@ -71,7 +70,7 @@ class MikropolOverviewPageScraper {
         val title = cleanEventTitle(stripRelocationPrefix(rawTitle)).text
         val support = card.textAt("span.support")
 
-        val eventType = inferConcertVenueType(title)
+        val eventType = mikropolEventType(title)
         return ScrapedEvent(
             title = title,
             subtitle = support,
