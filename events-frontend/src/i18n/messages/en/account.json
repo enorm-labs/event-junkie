@@ -114,6 +114,8 @@
     "offer": "Not playing Berlin yet?",
     "offerText": "Get told when “{q}” gets a Berlin date.",
     "offerTextAny": "Get told when an act gets a Berlin date.",
+    "offerNamesake": "A different “{q}”?",
+    "offerNamesakeText": "Waiting for another act of that name? Get told when it gets a Berlin date.",
     "open": "Get notified",
     "label": "Name of the act",
     "placeholder": "Artist or band …",

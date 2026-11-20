@@ -137,7 +137,7 @@ describe('SearchView', () => {
       expect(sections[sections.length - 1]?.text()).toContain('Not playing Berlin yet?')
     })
 
-    it('stays away when an artist carries the name searched, case and accents aside', async () => {
+    it('asks for another act of that name when an artist carries the name searched, case and accents aside', async () => {
       getMock.mockResolvedValue({
         venues: { items: [], total: 0 },
         events: { items: [], total: 0 },
@@ -148,6 +148,11 @@ describe('SearchView', () => {
       const view = await mountAt('/en/search?q=cafe%20tacvba')
 
       expect(offer(view)).toBeUndefined()
+      const sections = view.findAll('section')
+      const last = sections[sections.length - 1]!
+      expect(last.text()).toContain('A different “cafe tacvba”?')
+      expect(last.text()).toContain('Waiting for another act of that name?')
+      expect(last.find('a[rel="nofollow"]').exists()).toBe(true)
     })
 
     it('still shows when the search only forgave a typo and found a near name', async () => {

@@ -114,6 +114,8 @@
     "offer": "Spielt noch nicht in Berlin?",
     "offerText": "Lass dich benachrichtigen, sobald „{q}“ einen Termin in Berlin hat.",
     "offerTextAny": "Lass dich benachrichtigen, sobald ein Act einen Termin in Berlin hat.",
+    "offerNamesake": "Ein anderer Act namens „{q}“?",
+    "offerNamesakeText": "Wartest du auf einen anderen Act mit diesem Namen? Lass dich benachrichtigen, sobald er einen Termin in Berlin hat.",
     "open": "Benachrichtigen",
     "label": "Name des Acts",
     "placeholder": "Künstler*in oder Band …",

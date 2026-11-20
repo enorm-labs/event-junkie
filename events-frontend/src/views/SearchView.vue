@@ -67,14 +67,12 @@ const sections = computed(() => {
 })
 
 /**
- * No artist carries the name searched, so the act may not be on the site yet (#5214). A search for one we lack often still
- * finds an old event or a venue, and the search forgives typos, so `Nebelhorn` finds `DJ Nebelmaschine`: only an artist whose
- * name equals the term, case and accents aside, keeps the offer away. It reads the answer the page has, and asks nothing more.
+ * An artist on the site carries the name searched, case and accents aside. The offer to watch still shows (#5214): two acts
+ * can share a name, as the DJ Wilco and the band Wilco do, so it then asks for the other one.
  */
-const offerWatch = computed(() => {
-  if (!data.value) return false
+const namesake = computed(() => {
   const term = folded(q.value)
-  return !(data.value.artists?.items ?? []).some((artist) => folded(artist.name ?? '') === term)
+  return (data.value?.artists?.items ?? []).some((artist) => folded(artist.name ?? '') === term)
 })
 
 // The BFF stops counting at 100 (#2533), so a capped total reads "100+".
@@ -167,7 +165,7 @@ function linksOf(key: string): { to: string; name: string }[] {
           </template>
         </ul>
       </section>
-      <WatchOffer v-if="offerWatch" :q="q" />
+      <WatchOffer :namesake="namesake" :q="q" />
     </template>
   </ListPage>
 </template>
