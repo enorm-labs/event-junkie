@@ -85,6 +85,9 @@ an approval, a decision, a dispatch), **DRAFTED** (a new defect, with an issue d
 
 - **A still-red run**: `gh run view <id> --log-failed | tail -60`, and name the step that failed. A red agent workflow is usually its tool or its token, not
   the repository. A recovered run is one line.
+- **A failed `CodeQL - Code Quality` run** (event `dynamic`) whose `Analyze (java-kotlin)` job fails in `Autobuild` with `Could not find <artifact>` or
+  `Plugin … was not found`: KNOWN, #5318. Count it in that issue's window. On a pull request it blocks the merge and cannot be re-run: a no-change amend
+  and `git push --force-with-lease` start a new one. Reopen the question in #5318 when more than 1 in 10 of a week's runs fail.
 - **A stuck run or a disabled workflow**: ACT. Open the run and name what it waits on: a runner, an environment approval, a concurrency group.
   Cancel it only on the operator's word. A disabled workflow is enabled again with `gh workflow enable <path>`, also only on the operator's word.
 - **A missed schedule**: ACT. Name the workflow, its last scheduled run and `overdue_hours`, and check its `on.schedule` on `main`. A manual run is
