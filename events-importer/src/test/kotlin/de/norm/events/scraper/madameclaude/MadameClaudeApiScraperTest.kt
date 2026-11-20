@@ -204,4 +204,30 @@ class MadameClaudeApiScraperTest {
         concertArtists("drekka + Zimmermann / Lienhard").map { it.name } shouldContainExactly listOf("drekka", "Zimmermann / Lienhard")
         concertArtists("Brad Mehldau Trio").map { it.name } shouldContainExactly listOf("Brad Mehldau Trio")
     }
+
+    @Test
+    fun `bills the acts after a series lead-in, not the series (event 14977)`() {
+        val json =
+            """
+            [{"slug": "musik-scout", "date": "2026-12-03T20:00:00",
+              "title": {"rendered": "MUSIK SCOUT: Stirling Trig + Tontom + Cal De Luce + Rapha\u00ebl Barninka (DJ-Set)"},
+              "acf": {"event_type": "Live"}}]
+            """.trimIndent()
+        val concert = scraper.scrape(json).single()
+        concert.title shouldBe "MUSIK SCOUT: Stirling Trig + Tontom + Cal De Luce + Raphaël Barninka (DJ-Set)"
+        concert.artists.map { it.name to it.role } shouldContainExactly
+            listOf(
+                "Stirling Trig" to ArtistRole.HEADLINER,
+                "Tontom" to ArtistRole.HEADLINER,
+                "Cal De Luce" to ArtistRole.HEADLINER,
+                "Raphaël Barninka" to ArtistRole.DJ
+            )
+    }
+
+    @Test
+    fun `keeps a colon before a single act or inside a later act`() {
+        withoutSeriesLeadIn("Artist: Album Release Show") shouldBe "Artist: Album Release Show"
+        withoutSeriesLeadIn("Band + Artist: Work Title") shouldBe "Band + Artist: Work Title"
+        withoutSeriesLeadIn("MUSIK SCOUT: A + B") shouldBe "A + B"
+    }
 }

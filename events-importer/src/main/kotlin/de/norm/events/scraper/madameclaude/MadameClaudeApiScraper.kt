@@ -169,16 +169,21 @@ class MadameClaudeApiScraper {
      * - **Parties** — only a "(DJ-Set)" night names its DJs ([djSetArtistsFromTitle], role `DJ`);
      * a party titled as an event ("Summer Break Send-Off") mints none.
      * - **Everything else** (quiz, screening, festival) — the title names an event, no artists.
+     *
+     * A `<SERIES>: ` lead-in before a co-bill (`MUSIK SCOUT: Stirling Trig + Tontom`, event 14977) names the night, not an act,
+     * so [withoutSeriesLeadIn] cuts it first.
      */
     private fun buildArtists(
         title: String,
         eventType: String?
-    ): List<ScrapedArtist> =
-        when (eventType) {
-            EventType.CONCERT.name -> concertArtists(title)
-            EventType.PARTY.name -> if (isDjSetTitle(title)) djSetArtistsFromTitle(title) else emptyList()
+    ): List<ScrapedArtist> {
+        val billing = withoutSeriesLeadIn(title)
+        return when (eventType) {
+            EventType.CONCERT.name -> concertArtists(billing)
+            EventType.PARTY.name -> if (isDjSetTitle(billing)) djSetArtistsFromTitle(billing) else emptyList()
             else -> emptyList()
         }
+    }
 
     /**
      * Maps the ACF `event_status` to a domain [EventStatus] name.
@@ -309,6 +314,18 @@ private data class MadameClaudeMedia(
 
 /** The "(DJ-Set)" / "(DJ Set)" marker appended to a DJ-night title. */
 private val DJ_SET_TITLE_MARKER = Regex("""\(\s*dj[\s-]?set\s*\)""", RegexOption.IGNORE_CASE)
+
+/** A `"<series>: "` lead-in: no colon or `+` inside it, so a colon later in the title is never the cut. */
+private val SERIES_LEAD_IN = Regex("""^[^:+]{2,40}:\s+""")
+
+/**
+ * [title] without its [SERIES_LEAD_IN] when a `+` co-bill follows it. A colon before a single act stays
+ * (`Artist: Album Release`), because there the part before the colon can be the act.
+ */
+internal fun withoutSeriesLeadIn(title: String): String {
+    val rest = title.replaceFirst(SERIES_LEAD_IN, "")
+    return if (rest != title && DJ_ACT_SEPARATOR.containsMatchIn(rest)) rest else title
+}
 
 /** "+" separator between co-billed DJs (a "/" belongs to a single duo name). */
 private val DJ_ACT_SEPARATOR = Regex("""\s*\+\s*""")

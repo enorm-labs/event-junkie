@@ -231,6 +231,17 @@ class TempodromOverviewPageScraperTest {
     }
 
     @Test
+    fun `types a live radio play SHOW and bills no act from its title`() {
+        // Event 14998: typed CONCERT, billing "Bobby" and "Max: Geheime Mission auf dem Mond".
+        val play = scrapeOne("Bobby &amp; Max: Geheime Mission auf dem Mond", "Live Hörspiel 2028")
+        play.eventType shouldBe "SHOW"
+        play.typeIsFallback shouldBe false
+        play.artists.shouldBeEmpty()
+
+        scrapeOne("Die drei Fragezeichen", "LIVE-HÖRSPIEL Tour").eventType shouldBe "SHOW"
+    }
+
+    @Test
     fun `types a guest-and-host talk READING and bills no act`() {
         val talk = scrapeOne("MISSVERSTEHEN SIE MICH RICHTIG - Robert Habeck zu Gast bei Maja Göpel", "Der Realist mit Restzweifel")
 
