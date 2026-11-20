@@ -758,6 +758,12 @@ fall under the journalistic-editorial test. Naming someone costs one line and re
 It states explicitly what does _not_ apply. No commercial register entry, no VAT ID under § 27a UStG, no supervisory
 authority, no regulated professional title, and no participation in consumer arbitration.
 
+Its copyright section separates three rights. The code is under the BUSL-1.1. Descriptions and images stay with their
+rights holders. The collection of event data is ours, as a database under §§ 87a ff. UrhG. The imprint says that
+systematic or automated reuse of substantial parts needs a licence, unless the law permits it (#5335). It claims the
+collection, not the single facts. It is a notice, not Terms of Use, so it needs no consent (§7.6). The licence a partner signs
+is #5350.
+
 ### 8.3 The address
 
 § 5 DDG requires a _ladungsfähige Anschrift_, and a private individual has no company address to use. The decision was to **rent one from

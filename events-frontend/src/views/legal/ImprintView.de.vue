@@ -119,6 +119,13 @@ const { t } = useI18n()
         Rechteinhaber*innen und werden von dieser Lizenz nicht erfasst. Wer Rechte an hier gezeigtem
         Material hält und dessen Entfernung wünscht, schreibt mir. Ich kümmere mich umgehend darum.
       </p>
+      <p>
+        Die Sammlung der Veranstaltungsdaten auf dieser Website ist als Datenbank nach §§ 87a ff.
+        UrhG geschützt. Ich sammle, prüfe und pflege sie mit erheblichem Aufwand. Das systematische
+        oder automatisierte Abrufen und die Weiterverwendung wesentlicher Teile, etwa über die
+        Schnittstelle der Website, sind nur mit einer Lizenz erlaubt, soweit das Gesetz es nicht
+        ausdrücklich gestattet. Wer eine Lizenz möchte, schreibt mir über die Kontaktdaten oben.
+      </p>
     </section>
   </LegalPage>
 </template>

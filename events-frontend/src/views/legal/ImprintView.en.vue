@@ -112,6 +112,13 @@ const { t } = useI18n()
         licence. If you hold rights in material shown here and would like it removed, write to me
         and I will act promptly.
       </p>
+      <p>
+        The collection of event data on this website is protected as a database under §§ 87a ff.
+        UrhG. I collect, check and maintain it with substantial effort. Systematic or automated
+        retrieval and reuse of substantial parts, for example through the website's interface, need
+        a licence unless the law expressly permits it. If you would like a licence, write to me
+        using the contact details above.
+      </p>
     </section>
   </LegalPage>
 </template>
