@@ -124,6 +124,10 @@ secret observability-postgres-exporter && fail "staging write: postgres-exporter
 secret event-junkie-events-bff-db && fail "staging write: events-bff-db is Flux's, from git"
 want_header="Basic $(printf '%s' 'hello@event-junkie.de:zq9x-event-junkie-staging-o2-root-password' | base64 | tr -d '\n')"
 [ "$(key_of flux-system-openobserve-credentials O2_BASIC_AUTH_HEADER)" = "$want_header" ] || fail "staging write: wrong header"
+for ns in observability observability-agent; do
+    [ "$(key_of "$ns-openobserve-collector-auth" authorization)" = "$want_header" ] ||
+        fail "staging write: wrong or no collector header in $ns"
+done
 grep -q zq9x "$FAKE_LOG" && fail "staging write: a value reached a kubectl argument"
 grep -q -- '--server-side' "$FAKE_LOG" || fail "staging write: not a server-side apply"
 

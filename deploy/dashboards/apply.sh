@@ -92,10 +92,9 @@ done
 
 ssh_node() { ssh -o ConnectTimeout=10 -o BatchMode=yes -i "$SSH_KEY" "$NODE" "$@"; }
 
-# The credentials live in the flux-system copy of the Secret, NOT the observability one. The
-# observability copy holds only the four keys the chart itself reads; O2_BASIC_AUTH_HEADER is there
-# for Flux's `valuesFrom`, which resolves Secrets in the HelmRelease's own namespace. Reaching for
-# the observability copy produces a flat 401 that reads like a wrong password.
+# The header lives in the flux-system copy of openobserve-credentials, NOT the observability one,
+# which holds only the four keys the chart itself reads. Reaching for the observability copy
+# produces a flat 401 that reads like a wrong password.
 run_on_node() {
     ssh_node "
         AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
