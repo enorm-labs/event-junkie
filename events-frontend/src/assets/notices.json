@@ -1,5 +1,5 @@
 {
-  "componentCount": 379,
+  "componentCount": 380,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -1411,19 +1411,19 @@
         },
         {
           "name": "@full-ui/headless-calendar",
-          "version": "7.1.4",
+          "version": "7.1.5",
           "url": "https://github.com/fullcalendar/fullcalendar",
           "ecosystem": "frontend"
         },
         {
           "name": "@fullcalendar/core",
-          "version": "7.1.4",
+          "version": "7.1.5",
           "url": "https://github.com/fullcalendar/fullcalendar",
           "ecosystem": "frontend"
         },
         {
           "name": "@fullcalendar/vue3",
-          "version": "7.1.4",
+          "version": "7.1.5",
           "url": "https://github.com/fullcalendar/fullcalendar-vue",
           "ecosystem": "frontend"
         },
@@ -2056,6 +2056,12 @@
           "version": "0.6.2",
           "url": "https://github.com/sysgears/webpack-virtual-modules",
           "ecosystem": "frontend"
+        },
+        {
+          "name": "zustand",
+          "version": "5.1.0",
+          "url": "https://github.com/pmndrs/zustand",
+          "ecosystem": "frontend"
         }
       ]
     },
@@ -2101,7 +2107,7 @@
         },
         {
           "name": "maplibre-gl",
-          "version": "6.17.0",
+          "version": "6.19.0",
           "url": "https://github.com/maplibre/maplibre-gl-js",
           "ecosystem": "frontend"
         },
@@ -2149,7 +2155,7 @@
       "components": [
         {
           "name": "@lucide/vue",
-          "version": "1.72.0",
+          "version": "1.74.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
@@ -2161,13 +2167,13 @@
         },
         {
           "name": "@maplibre/geojson-vt",
-          "version": "6.3.0",
+          "version": "6.3.3",
           "url": "https://github.com/maplibre/geojson-vt",
           "ecosystem": "frontend"
         },
         {
           "name": "@maplibre/maplibre-gl-style-spec",
-          "version": "26.6.0",
+          "version": "26.8.0",
           "url": "https://github.com/maplibre/maplibre-style-spec",
           "ecosystem": "frontend"
         },
