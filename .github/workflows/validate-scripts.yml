@@ -125,6 +125,10 @@ jobs:
       - name: Assert what cluster-secrets.sh writes, checks and imports
         run: scripts/cluster-secrets-test.sh
 
+      # A rotation by hand lost a retry to zsh's `!`, a stale password manager and a pasted shell line (#5325).
+      - name: Assert what rotate-o2-root.sh changes and refuses
+        run: scripts/rotate-o2-root-test.sh
+
       # The key is a credential: it must reach curl on stdin, never in an argument (#4016).
       - name: Assert what tem-quota.sh prints and exits with
         run: scripts/tem-quota-test.sh
