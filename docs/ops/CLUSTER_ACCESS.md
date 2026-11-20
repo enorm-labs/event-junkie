@@ -310,6 +310,10 @@ a cluster.
 curl -X POST 'http://localhost:18081/api/admin/event-sources/<slug>/import?force=true'
 ```
 
+To see which accounts exist, run `scripts/accounts.sh staging` or `scripts/accounts.sh production`. It prints one row per account, oldest first.
+A row shows the address, the dates, the locale, the follows, the open reports and the allowlist flag. Use the address to set the flag with
+`PUT /api/admin/accounts/can-report` (`http/importer/reports.http`). The table holds addresses, so do not copy it into an issue or a pull request.
+
 That port is what the `staging` environment in `http/http-client.env.json` points `importer-host` at, so every `.http` file under `http/importer/` works against
 staging unchanged:
 
