@@ -55,15 +55,16 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 
 ## Across all of it
 
-| Document                                       | What it covers                                                                                                                                                         |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [LEGAL.md](LEGAL.md)                           | Licensing, privacy, accessibility — the site's own legal surface. Referenced from the product docs, the ops docs and the prompts alike — which is why it has no folder |
-| [SCRAPING_POSITION.md](SCRAPING_POSITION.md)   | Why we believe the import pipeline is lawful, and the risk we accept. Our own reasoning, checked by no lawyer                                                          |
-| [LEGAL_REVIEW_BRIEF.md](LEGAL_REVIEW_BRIEF.md) | What a qualified legal reviewer is handed — the system in one page, the deliberate omissions, and the questions worth paying for                                       |
-| [CREDENTIALS.md](CREDENTIALS.md)               | The credential inventory — what exists, what it unlocks and where it lives. **No secret values, ever**                                                                 |
-| [THREAT_MODEL.md](security/THREAT_MODEL.md)    | What an attacker can reach, what can go wrong at each trust boundary, and the file that stops it. STRIDE, ranked, with the open rows filed as issues                   |
-| [LINKS.md](LINKS.md)                           | Every external service, console and reference this project depends on, in one place                                                                                    |
-| [adr/](adr)                                    | Architecture decisions, with the reasoning. Flat and numbered; the numbering is the structure                                                                          |
+| Document                                             | What it covers                                                                                                                                                         |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [LEGAL.md](LEGAL.md)                                 | Licensing, privacy, accessibility — the site's own legal surface. Referenced from the product docs, the ops docs and the prompts alike — which is why it has no folder |
+| [SCRAPING_POSITION.md](SCRAPING_POSITION.md)         | Why we believe the import pipeline is lawful, and the risk we accept. Our own reasoning, checked by no lawyer                                                          |
+| [PARTNER_API_AGREEMENT.md](PARTNER_API_AGREEMENT.md) | The contract template a partner signs before the partner API sends it event facts. German, not yet reviewed by a lawyer                                                |
+| [LEGAL_REVIEW_BRIEF.md](LEGAL_REVIEW_BRIEF.md)       | What a qualified legal reviewer is handed — the system in one page, the deliberate omissions, and the questions worth paying for                                       |
+| [CREDENTIALS.md](CREDENTIALS.md)                     | The credential inventory — what exists, what it unlocks and where it lives. **No secret values, ever**                                                                 |
+| [THREAT_MODEL.md](security/THREAT_MODEL.md)          | What an attacker can reach, what can go wrong at each trust boundary, and the file that stops it. STRIDE, ranked, with the open rows filed as issues                   |
+| [LINKS.md](LINKS.md)                                 | Every external service, console and reference this project depends on, in one place                                                                                    |
+| [adr/](adr)                                          | Architecture decisions, with the reasoning. Flat and numbered; the numbering is the structure                                                                          |
 
 ## Elsewhere in the repository
 

@@ -703,7 +703,7 @@ at sign-up, and every later change would need fresh consent.
 **Terms of Use become necessary with any of these:**
 
 - content that a visitor publishes on the site (#399)
-- a paid feature
+- a paid feature that visitors buy on the site. The partner API (#5337) is paid, but each partner signs [PARTNER_API_AGREEMENT.md](PARTNER_API_AGREEMENT.md), so it does not trigger this
 - mail that the site sends on its own schedule, such as the digest (#3891)
 
 ### 7.7 Keeping the notice true
