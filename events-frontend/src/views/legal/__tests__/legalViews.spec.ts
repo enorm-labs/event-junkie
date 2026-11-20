@@ -78,6 +78,11 @@ const IMPRINT_ELEMENTS: Element[] = [
     en: /Germany/,
     de: /Deutschland/,
   },
+  {
+    what: 'our database right in the event data, and the route to a licence (#5335)',
+    en: /protected as a database under §§ 87a ff\. UrhG.*need a licence unless the law expressly permits it/s,
+    de: /als Datenbank nach §§ 87a ff\. UrhG geschützt.*nur mit einer Lizenz erlaubt, soweit das Gesetz es nicht ausdrücklich gestattet/s,
+  },
 ]
 
 // Art. 13 has twelve mandatory elements (docs/LEGAL.md §7.2); omitting one is invisible without

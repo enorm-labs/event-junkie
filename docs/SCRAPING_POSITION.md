@@ -159,6 +159,11 @@ Three things weigh the other way, and none of them is decisive:
 
 **We do not claim this is settled.** A venue that objects on this ground has a real argument, which is why §5 exists.
 
+**Our own collection is a database too.** Point 1 works for us here. Our investment goes into the collection itself:
+the importers, the checks and the cleanup. So Event Junkie can claim the same right against a party that copies our
+collection. The imprint says so, and it names the licence route (#5335). The claim covers the collection, not the
+facts of one venue. It also does not widen what we take from a venue.
+
 ### 3.3 Website terms and `robots.txt`
 
 **Our position:** we honour `robots.txt`. We do not treat a terms page as binding on us.
