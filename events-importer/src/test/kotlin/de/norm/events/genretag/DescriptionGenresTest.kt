@@ -16,6 +16,15 @@ class DescriptionGenresTest {
     }
 
     @Test
+    fun `an avant-garde pop act is Pop`() {
+        // Event 14886, Sophe at Kulturhaus Insel, had no genre: the hyphenated word is one key.
+        descriptionGenres(
+            "SOPHE macht Avantgarde-Pop, der Erinnerungen nicht einfach konserviert.\nBreakbeats treffen auf 80er-Synths, jazzige Arrangements."
+        ) shouldBe listOf("Pop")
+        descriptionGenres("An avant-pop trio from Leipzig") shouldBe listOf("Pop")
+    }
+
+    @Test
     fun `a genre in a support or guest clause is skipped`() {
         descriptionGenres("Indie pop from Leipzig. Support for a metal band.").shouldBe(listOf("Indie"))
         descriptionGenres("Jazz quartet, Support von einer Punk-Band") shouldBe listOf("Jazz")

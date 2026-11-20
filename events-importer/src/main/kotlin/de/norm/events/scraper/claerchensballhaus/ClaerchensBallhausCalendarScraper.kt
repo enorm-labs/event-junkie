@@ -28,7 +28,8 @@ import java.time.format.DateTimeFormatter
  * The `end` is not a real end: it is midnight, often of the first occurrence's day.
  *
  * There is no category. The text under the title names the format: a beginners' class followed by a `Tanzabend` or a
- * `Milonga` is a dance night, so a party. History talks, workshops, the wine dinner, the `Lesetreffen` reading meet-up and
+ * `Milonga` is a dance night, so a party. A tango night, titled `Tango` or with a `Milonga`, has the genre Tango; the page
+ * names no genre for the other nights. History talks, workshops, the wine dinner, the `Lesetreffen` reading meet-up and
  * the YesChoir! sing-along are out of scope. A children's concert is marked `for-children`.
  */
 class ClaerchensBallhausCalendarScraper {
@@ -78,6 +79,7 @@ class ClaerchensBallhausCalendarScraper {
             sourceUrl = permalink,
             sourceId = "${EventSource.CLAERCHENS_BALLHAUS.sourceIdPrefix}${start.format(KEY_TIME)}-${slugOf(permalink)}",
             ticketUrl = entry.stringOrNull("customLink")?.takeIf { TICKET_SHOP.containsMatchIn(it) },
+            genre = TANGO_GENRE.takeIf { TANGO_TITLE.matches(name) || MILONGA.containsMatchIn(text.orEmpty()) },
             artists = if (type == EventType.CONCERT.name && !HOUSE_SERIES.containsMatchIn(name)) actsOf(name, type) else emptyList()
         ).forChildrenIf(childrensShowPhrase(title, text))
     }
@@ -127,6 +129,11 @@ private val SING_ALONG = Regex("""werdet Teil""", RegexOption.IGNORE_CASE)
 private val YES_CHOIR = Regex("""\bYes\s?Choir\b""", RegexOption.IGNORE_CASE)
 private val READING = Regex("""\bSlam\b|\bSalon\b|\bLesung\b""", RegexOption.IGNORE_CASE)
 private val CONCERT = Regex("""Konzert|Kammermusik|Soprano|Tenors|Choir""", RegexOption.IGNORE_CASE)
+
+/** A plain `Tango` would repeat the title `Tango`, and a genre that repeats the title is not stored (#320). Its words resolve to Tango. */
+private const val TANGO_GENRE = "Tango Argentino"
+private val TANGO_TITLE = Regex("""\s*Tango\s*""", RegexOption.IGNORE_CASE)
+private val MILONGA = Regex("""\bMilonga\b""", RegexOption.IGNORE_CASE)
 private val DANCE_NIGHT = Regex("""Tanzabend|Milonga|Übungsstunde|\bParty\b""", RegexOption.IGNORE_CASE)
 
 /** The house's own concert series, the children's and family ones included, which name no act in the title. */

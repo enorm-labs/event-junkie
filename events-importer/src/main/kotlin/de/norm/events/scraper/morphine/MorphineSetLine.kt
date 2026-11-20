@@ -11,7 +11,8 @@ import de.norm.events.scraper.stripLineupBracket
 /**
  * The billed names on a `ul.lineup` set line, for the four shapes the venue writes beside a bare
  * name (#1674): a `<promoter> presents:` frame comes off the front, a `performs with <instrument>`
- * tail and a backing line-up ([stripEnsembleTail]) off the back, a ` - ` list is split when every segment is short enough to be an act (each
+ * tail, a lowercase ` / solos duos and trios` remark ([SET_REMARK]) and a backing line-up ([stripEnsembleTail]) off the back, a ` - ` list
+ * (a dash may lack its leading space, `Ignaz Schick- Anais Tuerlinckx`) is split when every segment is short enough to be an act (each
  * may carry a `Live`) and there are three or more of them, a pair whose one segment equals the
  * event [title] is a film or a work beside its performer, and a ` - ` tail that lists members
  * (`PICI - A & B`), dates a work ([WORK_MARKER]) or is left out of a title that bills the head
@@ -26,9 +27,9 @@ internal fun morphineSetLineActs(
     line: String,
     title: String
 ): List<String> {
-    val framed = stripEnsembleTail(line.replace(PRESENTS_FRAME, "").replace(PERFORMS_WITH_TAIL, ""))
-    val segments = framed.split(DASH).map { it.trim() }.filter { it.isNotBlank() }
-    val separators = DASH.findAll(framed).map { it.value.trim() }.toSet()
+    val framed = stripEnsembleTail(line.replace(PRESENTS_FRAME, "").replace(PERFORMS_WITH_TAIL, "").replace(SET_REMARK, ""))
+    val segments = framed.split(SET_DASH).map { it.trim() }.filter { it.isNotBlank() }
+    val separators = SET_DASH.findAll(framed).map { it.value.trim() }.toSet()
     val names =
         formatTitleHeadActs(framed, title) ?: when {
             segments.size >= MIN_DASH_LIST && separators.size > 1 -> segments.take(1)
@@ -110,6 +111,12 @@ private fun billsInTitle(
 
 /** `Uncanny Valley presents:` — the frame the venue puts before a guest promoter's bill. */
 private val PRESENTS_FRAME = Regex("""^.{2,60}?\s+(?:$PRESENTS_VERBS|pres\.?)\s*:?\s+""", RegexOption.IGNORE_CASE)
+
+/** `Tomomi Adachi - Ignaz Schick- Anais Tuerlinckx / solos duos and trios`: a slash tail all in lowercase says how they play, and names no act. */
+private val SET_REMARK = Regex("""\s+/\s+[\p{Ll}\s,&]+$""")
+
+/** A [DASH], or a dash that only the space after it separates from the next name: `Ignaz Schick- Anais Tuerlinckx` (event 14919). */
+private val SET_DASH = Regex("""\s+[-–—]\s+|(?<=\p{L})[-–—]\s+""")
 
 /** `Jakob Vasak performs with the Kobophon` — the instrument is not a co-act. */
 private val PERFORMS_WITH_TAIL = Regex("""\s+performs\s+(?:with|on)\s+.*$""", RegexOption.IGNORE_CASE)

@@ -104,6 +104,16 @@ class MorphineFieldMappingTest {
     }
 
     @Test
+    fun `reads a dash list whose dash lacks its leading space, and drops a lowercase remark after a slash`() {
+        // Event 14919 billed only Tomomi Adachi: the remark's `and` read the rest as his members.
+        val title = "Tomomi Adachi - Ignaz Schick- Anais Tuerlinckx"
+        morphineSetLineActs("$title / solos duos and trios", title) shouldBe listOf("Tomomi Adachi", "Ignaz Schick", "Anais Tuerlinckx")
+        // A hyphen inside a name and a capitalised slash co-bill stay as they were.
+        morphineSetLineActs("Le Révélateur Ciné-Concert - Réka Csiszér", "Le Révélateur Ciné-Concert") shouldBe listOf("Réka Csiszér")
+        morphineSetLineActs("Fred Frith / Verena Marisa", "x") shouldBe listOf("Fred Frith / Verena Marisa")
+    }
+
+    @Test
     fun `a dash tail that dates a work or times it keeps the act alone`() {
         // #2705: the work, its year, its length and its instrumentation are not acts.
         val work = "Mads Emil Dreyer - Repeater, Quietus (2024), 35’ For 8 percussion instruments, feedback system and lights"
