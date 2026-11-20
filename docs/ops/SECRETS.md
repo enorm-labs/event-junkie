@@ -112,11 +112,15 @@ all, so the signature is the second lock rather than the only one.
 No stored object is signed, and no URL survives a restart. It is the least dangerous of the seventeen on
 every axis, which is worth stating so a rebuild does not treat it as precious.
 
+**One command makes a new pair.** It writes both values to the Keychain and to the Secret, and then restarts the importer. It also creates the pair the first
+time:
+
 ```sh
-kubectl create secret generic event-junkie-imgproxy -n event-junkie \
-  --from-literal=IMGPROXY_KEY="$(openssl rand -hex 32)" \
-  --from-literal=IMGPROXY_SALT="$(openssl rand -hex 32)"
+scripts/cluster-secrets.sh staging --rotate event-junkie/event-junkie-imgproxy
 ```
+
+**Run it while no source is `RUNNING`.** The restart stops an import in flight. That source then stays `RUNNING` until the staleness guard marks it `FAILED`.
+`--rotate` refuses every other Secret. Each other value comes from a provider console, or a new one ends something, as with the VAPID pair.
 
 **Both values are hex, and imgproxy decodes them.** Signing with the ASCII of the hex string produces
 a signature imgproxy rejects. The error is a `403 Forbidden`, which reads like a wrong key rather

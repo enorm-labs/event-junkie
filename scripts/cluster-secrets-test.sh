@@ -37,6 +37,7 @@ while [ $# -gt 0 ]; do
         -s) item="$2"; shift ;;
         -w) if [ "$cmd" = add-generic-password ]; then value="$2"; shift; else print=1; fi ;;
         -a) shift ;;
+        -U) update=1 ;;
     esac
     shift
 done
@@ -46,7 +47,7 @@ case "$cmd" in
         [ -z "${print:-}" ] || { cat "$FAKE_KC/$item"; echo; }
         ;;
     add-generic-password)
-        [ ! -f "$FAKE_KC/$item" ] || exit 45
+        [ -n "${update:-}" ] || [ ! -f "$FAKE_KC/$item" ] || exit 45
         printf '%s' "$value" >"$FAKE_KC/$item"
         ;;
 esac
@@ -178,6 +179,44 @@ secret flux-system-github-dispatch && fail "skip and context: github-dispatch wa
 secret flux-system-sops-age || fail "skip and context: sops-age missing"
 grep -q -- '--context event-junkie-staging-next' "$FAKE_LOG" || fail "skip and context: wrong context: $(head -1 "$FAKE_LOG")"
 grep -q -- '--context event-junkie-staging ' "$FAKE_LOG" && fail "skip and context: reached the running cluster"
+
+# 9. --rotate refuses every Secret off its list, and one with no name, and changes nothing.
+rm -rf "${FAKE_CLUSTER:?}"/*
+FAKE_FLUX=1 run "rotate setup" 0 staging
+cp -R "$FAKE_KC" "$WORK/kc-before"
+cp -R "$FAKE_CLUSTER" "$WORK/cluster-before"
+run "rotate push" 1 staging --rotate event-junkie/event-junkie-push
+expect_out "rotate push" "ends every Web Push subscription"
+run "rotate dispatch" 1 staging --rotate flux-system/github-dispatch
+expect_out "rotate dispatch" "docs/ops/SECRETS.md has its rotation"
+run "rotate no name" 1 staging --rotate
+diff -r "$WORK/kc-before" "$FAKE_KC" >/dev/null || fail "rotate refusals: the Keychain changed"
+diff -r "$WORK/cluster-before" "$FAKE_CLUSTER" >/dev/null || fail "rotate refusals: the cluster changed"
+
+# 10. --rotate imgproxy: two new hex values, in the Keychain and that one Secret, then one restart.
+: >"$FAKE_LOG"
+FAKE_FLUX=1 run "rotate imgproxy" 0 staging --rotate event-junkie/event-junkie-imgproxy
+expect_out "rotate imgproxy" "rotated event-junkie/event-junkie-imgproxy on event-junkie-staging"
+new_key="$(cat "$FAKE_KC/event-junkie-staging-imgproxy-key")"
+new_salt="$(cat "$FAKE_KC/event-junkie-staging-imgproxy-salt")"
+for v in "$new_key" "$new_salt"; do
+    [[ "$v" =~ ^[0-9a-f]{64}$ ]] || fail "rotate imgproxy: a new value is not 64 hex characters"
+    grep -qF -- "$v" <<<"$OUT" && fail "rotate imgproxy: a new value reached the output"
+    grep -qF -- "$v" "$FAKE_LOG" && fail "rotate imgproxy: a new value reached a kubectl argument"
+done
+[ "$new_key" != "$new_salt" ] || fail "rotate imgproxy: key and salt are the same"
+[ "$(key_of event-junkie-event-junkie-imgproxy IMGPROXY_KEY)" = "$new_key" ] || fail "rotate imgproxy: the cluster key is not the new one"
+[ "$(key_of event-junkie-event-junkie-imgproxy IMGPROXY_SALT)" = "$new_salt" ] || fail "rotate imgproxy: the cluster salt is not the new one"
+cp "$FAKE_CLUSTER/event-junkie-event-junkie-imgproxy.json" "$WORK/cluster-before/"
+diff -r "$WORK/cluster-before" "$FAKE_CLUSTER" >/dev/null || fail "rotate imgproxy: another Secret changed"
+# Re-applying another Secret unchanged leaves the files equal, so count the applies: its namespace and the Secret.
+[ "$(grep -c -- '--server-side' "$FAKE_LOG")" = 2 ] || fail "rotate imgproxy: applied more than event-junkie-imgproxy"
+[ "$(grep -c 'rollout restart deployment/event-junkie-importer' "$FAKE_LOG")" = 1 ] || fail "rotate imgproxy: not one importer restart"
+grep -q 'rollout status deployment/event-junkie-importer' "$FAKE_LOG" || fail "rotate imgproxy: no wait for the restart"
+rm "$WORK/kc-before/event-junkie-staging-imgproxy-key" "$WORK/kc-before/event-junkie-staging-imgproxy-salt"
+cp "$FAKE_KC/event-junkie-staging-imgproxy-key" "$FAKE_KC/event-junkie-staging-imgproxy-salt" "$WORK/kc-before/"
+diff -r "$WORK/kc-before" "$FAKE_KC" >/dev/null || fail "rotate imgproxy: another Keychain item changed"
+run "rotate check" 0 staging --check
 
 if [ "$FAILURES" -gt 0 ]; then
     echo "cluster-secrets-test: $FAILURES failure(s)" >&2
