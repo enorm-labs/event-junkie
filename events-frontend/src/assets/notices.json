@@ -1,5 +1,5 @@
 {
-  "componentCount": 376,
+  "componentCount": 379,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -1429,25 +1429,25 @@
         },
         {
           "name": "@intlify/core-base",
-          "version": "11.4.18",
+          "version": "11.4.22",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/devtools-types",
-          "version": "11.4.18",
+          "version": "11.4.22",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/message-compiler",
-          "version": "11.4.18",
+          "version": "11.4.22",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/shared",
-          "version": "11.4.18",
+          "version": "11.4.22",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
@@ -1503,6 +1503,12 @@
           "name": "@phosphor-icons/vue",
           "version": "2.2.1",
           "url": "https://github.com/phosphor-icons/vue",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@rolldown/pluginutils",
+          "version": "1.0.1",
+          "url": "https://github.com/rolldown/plugins",
           "ecosystem": "frontend"
         },
         {
@@ -1681,7 +1687,7 @@
         },
         {
           "name": "chokidar",
-          "version": "5.0.0",
+          "version": "6.0.0",
           "url": "https://github.com/paulmillr/chokidar",
           "ecosystem": "frontend"
         },
@@ -1717,7 +1723,7 @@
         },
         {
           "name": "confbox",
-          "version": "0.3.1",
+          "version": "0.3.2",
           "url": "https://github.com/unjs/confbox",
           "ecosystem": "frontend"
         },
@@ -1788,6 +1794,12 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "local-pkg",
+          "version": "2.0.0",
+          "url": "https://github.com/antfu-collective/local-pkg",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "magic-string",
           "version": "0.30.21",
           "url": "https://github.com/Rich-Harris/magic-string",
@@ -1795,7 +1807,7 @@
         },
         {
           "name": "magic-string",
-          "version": "1.4.3",
+          "version": "1.4.5",
           "url": "https://github.com/Rich-Harris/magic-string",
           "ecosystem": "frontend"
         },
@@ -1938,6 +1950,12 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "quansync",
+          "version": "1.0.0",
+          "url": "https://github.com/quansync-dev/quansync",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "readdirp",
           "version": "5.1.1",
           "url": "https://github.com/paulmillr/readdirp",
@@ -2005,7 +2023,7 @@
         },
         {
           "name": "unplugin",
-          "version": "3.4.0",
+          "version": "3.7.0",
           "url": "https://github.com/unjs/unplugin",
           "ecosystem": "frontend"
         },
@@ -2023,13 +2041,13 @@
         },
         {
           "name": "vue-i18n",
-          "version": "11.4.18",
+          "version": "11.4.22",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "vue-router",
-          "version": "5.5.0",
+          "version": "5.5.1",
           "url": "https://github.com/vuejs/router",
           "ecosystem": "frontend"
         },
