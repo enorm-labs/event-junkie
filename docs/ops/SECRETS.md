@@ -241,14 +241,8 @@ rendered `OpenTelemetryCollector` resources or in the Helm release. **The Secret
 `CreateContainerConfigError`, and no log or metric reaches OpenObserve.
 
 **Rotate the root password, and all three copies go stale silently.** The collector keeps posting with the old header, and OpenObserve starts refusing. That
-looks like an ingestion outage, not a credential problem. Run the script again in the same change. Then restart both collectors, because a running pod keeps
-the old value:
-
-```sh
-scripts/cluster-secrets.sh staging
-kubectl --context event-junkie-staging -n observability delete pod -l app.kubernetes.io/managed-by=opentelemetry-operator
-kubectl --context event-junkie-staging -n observability-agent delete pod -l app.kubernetes.io/managed-by=opentelemetry-operator
-```
+looks like an ingestion outage, not a credential problem. [§Rotating the OpenObserve root password](#rotating-the-openobserve-root-password) has the
+procedure.
 
 **`-n flux-system`, and then again in `observability`.** `valuesFrom` resolves Secrets in the HelmRelease's own namespace, which is `flux-system` like every
 other release here. The chart's `existingRootUserSecret` reads from the release's _target_ namespace instead. **So this Secret has to exist in both**: the same
@@ -673,6 +667,63 @@ cluster secret, then drop the old recipient. Two recipients briefly, so nothing 
 Rotating a **secret's value** is the ordinary path — edit with `sops`, commit, let Flux apply it. For `events-bff-db` and `postgres-exporter`, change the role's password with `\password` first, then the file, then
 the Keychain item. Note that the old ciphertext stays in git history forever,
 which is the public-repository caveat above, restated: **rotation changes the future, not the past.**
+
+### Rotating the OpenObserve root password
+
+**The password lives in OpenObserve's own database, not in the Secret.** The Secret creates the root user at first boot only. A new value in the Secret does not
+change the login of a running instance. So change the password in OpenObserve first, then copy it to the Keychain and the cluster. The procedure takes about 15
+minutes per cluster. Do staging first.
+
+**From step 1 to step 4, OpenObserve refuses the collectors.** Do the steps without a break. Logs from that gap can be lost.
+
+1. Open the forward: `scripts/ej.sh up <env>`. OpenObserve is on port `5080` for staging and `25080` for production.
+
+2. Generate the new password in a shell that stays open until step 3. The suffix gives the four character classes OpenObserve requires. It is in single
+   quotes because zsh expands `!` in double quotes:
+
+    ```sh
+    NEW="$(openssl rand -base64 24 | tr -d '\n/+=')"'Aa1!'
+    ```
+
+3. Change the password through the API, and copy it to the Keychain. Set `PORT` and `ENV` first. A `200`, `200`, `401` result means the new password
+   works and the old one does not:
+
+    ```sh
+    OLD="$(security find-generic-password -s "event-junkie-$ENV-o2-root-password" -w | tr -d '\n')"
+    jq -n --arg o "$OLD" --arg n "$NEW" '{change_password: true, old_password: $o, new_password: $n}' |
+      curl -s -o /dev/null -w 'change: %{http_code}\n' -u "hello@event-junkie.de:$OLD" \
+        -X PUT -H 'Content-Type: application/json' --data @- \
+        "http://localhost:$PORT/api/default/users/hello@event-junkie.de"
+    curl -s -o /dev/null -w 'new: %{http_code}\n' -u "hello@event-junkie.de:$NEW" "http://localhost:$PORT/api/default/streams"
+    curl -s -o /dev/null -w 'old: %{http_code}\n' -u "hello@event-junkie.de:$OLD" "http://localhost:$PORT/api/default/streams"
+    security add-generic-password -U -a "$USER" -s "event-junkie-$ENV-o2-root-password" -w "$NEW"
+    unset OLD NEW
+    ```
+
+    If `change` is not `200`, stop. The old password is still the valid one.
+
+4. Write the four Secret copies and the header, then restart OpenObserve and both collectors. A running pod keeps the old value:
+
+    ```sh
+    scripts/cluster-secrets.sh "$ENV" && scripts/cluster-secrets.sh "$ENV" --check
+    kubectl --context "event-junkie-$ENV" -n observability rollout restart statefulset/openobserve-openobserve-standalone
+    kubectl --context "event-junkie-$ENV" -n observability rollout status statefulset/openobserve-openobserve-standalone --timeout=5m
+    kubectl --context "event-junkie-$ENV" -n observability delete pod -l app.kubernetes.io/managed-by=opentelemetry-operator
+    kubectl --context "event-junkie-$ENV" -n observability-agent delete pod -l app.kubernetes.io/managed-by=opentelemetry-operator
+    ```
+
+5. Check it. The collector logs show no `401`, and rows arrive again:
+
+    ```sh
+    kubectl --context "event-junkie-$ENV" -n observability logs statefulset/o2c-openobserve-collector-gateway-collector | grep -c -i unauthorized
+    scripts/o2-query.sh "$ENV" sql 'SELECT count(*) AS n, max(_timestamp) AS last FROM "default"' --hours 1
+    ```
+
+6. Copy the password to the password manager from the Keychain, not from the shell history:
+   `security find-generic-password -s "event-junkie-$ENV-o2-root-password" -w | tr -d '\n' | pbcopy`.
+
+**The password manager is not the source here.** `scripts/cluster-secrets.sh` reads the Keychain. If the two disagree, the Keychain is the one the cluster
+uses. `scripts/cluster-secrets.sh <env> --check` shows whether the cluster still agrees with it.
 
 ## What this does not solve
 
