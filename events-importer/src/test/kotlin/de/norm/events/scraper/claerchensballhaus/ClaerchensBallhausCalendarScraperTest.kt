@@ -1,6 +1,7 @@
 package de.norm.events.scraper.claerchensballhaus
 
 import de.norm.events.event.EventType
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -72,6 +73,17 @@ class ClaerchensBallhausCalendarScraperTest {
         salsa.description shouldBe "Tanzkurs: 19:00 - 20:15\nTanzabend: 20:15 - 0:00"
         salsa.artists.shouldBeEmpty()
         event("2026-11-04-1830-tango").eventType shouldBe EventType.PARTY.name
+    }
+
+    @Test
+    fun `gives a tango night the genre Tango, and no other night a genre`() {
+        // Event 14872, a Tango night on 2027-01-27, had no genre.
+        val tango = event("2026-11-04-1830-tango")
+
+        tango.description shouldBe "18:30 Uhr - Anfängerkurs\n19:30 Uhr - Alle Niveaus\n20:30 Uhr - Milonga"
+        normalizeGenre(tango.storedGenre()) shouldContainExactly listOf("Tango")
+        tango.eventType shouldBe EventType.PARTY.name
+        events.filter { it.genre != null }.map { it.title }.distinct() shouldContainExactly listOf("Tango")
     }
 
     @Test

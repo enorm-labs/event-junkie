@@ -14,9 +14,10 @@ class ChildrensShowTest {
             "Kinder-Halloween im PETER EDEL" to null,
             "Klavierfest Berlin-Weißensee 2027 - Familienkonzert" to null,
             "Linus Faber – Eine magische Elfenmission" to "Die große Familien-Zaubershow für Kinder ab 4 Jahre",
-            "ROLLER KIDZ" to "Rollschuhdisko für Kinder"
+            "ROLLER KIDZ" to "Rollschuhdisko für Kinder",
+            "Märchenhaftes Kinderfest" to null // event 14874, pfefferberg-theater
         ).map { (title, subtitle) -> childrensShowPhrase(title, subtitle) } shouldBe
-            listOf("KINDERPHILHARMONIE", "Kinder-Halloween", "Familienkonzert", "Familien-Zaubershow", "KIDZ")
+            listOf("KINDERPHILHARMONIE", "Kinder-Halloween", "Familienkonzert", "Familien-Zaubershow", "KIDZ", "Kinderfest")
     }
 
     @Test

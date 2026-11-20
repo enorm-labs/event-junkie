@@ -68,6 +68,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "altpop" to "Pop",
         "elektropop" to "Pop",
         "queerpop" to "Pop",
+        "avantgardepop" to "Pop",
+        "avantpop" to "Pop",
         "poppunk" to "Punk",
         "synthpop" to "Synthpop",
         "synthiepop" to "Synthpop",

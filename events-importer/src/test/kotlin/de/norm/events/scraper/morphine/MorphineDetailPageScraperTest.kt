@@ -113,6 +113,21 @@ class MorphineDetailPageScraperTest {
         event.startTime shouldBe LocalTime.of(20, 0)
     }
 
+    @Test
+    fun `bills all three acts of a dash list with a remark after a slash`() {
+        // Event 14919, the page as read on 2026-11-20: only Tomomi Adachi was billed.
+        val url = "http://www.morphinerecords.com/events/tomomi-adachi"
+        val html =
+            """<section class="content overlay"><div class="title">Tomomi Adachi - Ignaz Schick- Anais Tuerlinckx</div>
+<div class="block day">Saturday, 21.11.26, door  20:00 <ul class="lineup"><li><span>20:30</span>
+<span>Tomomi Adachi - Ignaz Schick- Anais Tuerlinckx / solos duos and trios</span></li></ul></div></section>"""
+
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.artists.map { it.name } shouldBe listOf("Tomomi Adachi", "Ignaz Schick", "Anais Tuerlinckx")
+        event.title shouldBe "Tomomi Adachi - Ignaz Schick- Anais Tuerlinckx"
+    }
+
     // #1674 — a guest promoter's bill on the set line: the frame comes off, the dash list splits.
     @Test
     fun `bills every act of a presented dash list and none of the frame`() {

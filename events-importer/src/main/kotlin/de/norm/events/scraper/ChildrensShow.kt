@@ -44,7 +44,7 @@ private val CHILDRENS_SHOW =
         listOf(
             """f(?:ü|ue)r\s+(?:kinder|kids|die\s+kleinen)\b""",
             """\bfamilien(?:konzert|vorstellung|-\w+|\w*show)""",
-            """\bkinder(?:philharmonie|theater|konzert|disco|disko|-\w+)""",
+            """\bkinder(?:philharmonie|theater|konzert|disco|disko|fest|-\w+)""",
             """\(\s*\d+\s*-\s*\d+\s*(?:monate|jahre)\s*\)""",
             """\bab\s+[1-9]\s+jahren?\b""",
             """\bkidz\b"""
