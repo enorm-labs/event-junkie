@@ -96,11 +96,41 @@ private fun sentenceGenres(
 /**
  * The lookup keys of one word. A hyphenated compound of a contextual key gives that key and the rest: `Industrial-Techno`, `Industrial-Pioniere`.
  * The first key keeps its hyphen, which marks it as music. A [formatCompound] gives its genre key and the rest: `K-POP-Party`.
+ * Any other word gives its [styleKey], or the [styleKey] of its last hyphenated part: `Haie-Hyperpop` is Hyperpop (event 14991).
+ * A genre in the first part is not read, so `Rock-Legende` and `Pop-Up` give nothing. Neither does a contextual last part (`post-industrial`),
+ * a [DANCE_NIGHT_NOUNS] one (`Kinder-Disco`) or a [NOT_A_GENRE_COMPOUND] (`cross-country`).
  */
 private fun wordKeys(word: String): List<String> {
     CONTEXTUAL_COMPOUND.matchEntire(word)?.let { return listOf(it.groupValues[1].lowercase() + "-", lookupKey(it.groupValues[2])) }
-    return formatCompound(word)?.toList() ?: listOf(lookupKey(word))
+    formatCompound(word)?.let { return it.toList() }
+    val key = lookupKey(word)
+    val lastPart = word.substringAfterLast('-', missingDelimiterValue = "")
+    val tailKey =
+        lastPart
+            .takeIf { it.isNotEmpty() && key !in NOT_A_GENRE_COMPOUND }
+            ?.let { styleKey(lookupKey(it)) }
+            ?.takeUnless { it in GENRE_ONLY_IN_MUSIC_CONTEXT || it in DANCE_NIGHT_NOUNS }
+    return listOf(styleKey(key) ?: tailKey ?: key)
 }
+
+/**
+ * [key] when the vocabulary knows it, or [key] without a [STYLE_SUFFIX] when the vocabulary knows the rest:
+ * `Indiesound` is Indie, `krautrockartige` is Krautrock (event 14992). `null` otherwise.
+ */
+private fun styleKey(key: String): String? =
+    when {
+        key in GENRE_SYNONYMS -> key
+        else -> STYLE_SUFFIX.find(key)?.let { key.substring(0, it.range.first) }?.takeIf { it in GENRE_SYNONYMS }
+    }
+
+/** Genre keys German also uses for a dance night, so a compound ending in one names the night: `Kinder-Disco`, `Kitschmas-Disco`. */
+private val DANCE_NIGHT_NOUNS = setOf("disco")
+
+/** Hyphenated words whose last part is a genre key and that name no genre: "tales of cross-country greyhound trips". */
+private val NOT_A_GENRE_COMPOUND = setOf("crosscountry")
+
+/** The endings that make a genre word describe a sound: `Indiesound`, `krautrockartig`, `krautrockartige`. */
+private val STYLE_SUFFIX = Regex("""(?:sound|artig(?:e|en|er|es)?)$""")
 
 /**
  * The genre key and the rest of a hyphenated word whose genre segments precede a [FORMAT_NOUNS] segment:

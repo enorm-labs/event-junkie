@@ -25,6 +25,31 @@ class DescriptionGenresTest {
     }
 
     @Test
+    fun `a hyphenated word whose last part is a genre gives that genre`() {
+        // Event 14991, Fliegende Haie at Kulturhaus Insel, had no genre.
+        descriptionGenres("Der Haie-Hyperpop ist seit der letzten Tour 2025 düsterer geworden, doch live energiegeladen wie eh und je.") shouldBe
+            listOf("Hyperpop")
+        descriptionGenres("Ein Abend mit Garagen-Punk aus Leipzig") shouldBe listOf("Punk")
+    }
+
+    @Test
+    fun `a hyphenated word gives nothing for a genre in its first part, a dance night or a trip`() {
+        descriptionGenres("Eine Rock-Legende kommt zurück, dazu ein Pop-Up-Store im Foyer.").shouldBeEmpty()
+        descriptionGenres("Danach wird bei der Kinder-Disco getanzt.").shouldBeEmpty()
+        descriptionGenres("Tales of cross-country greyhound trips").shouldBeEmpty()
+    }
+
+    @Test
+    fun `a genre word ending in -sound or -artig gives the genre`() {
+        // Event 14992, OVE at Kulturhaus Insel, had no genre.
+        descriptionGenres(
+            "Die Stücke wurden live eingespielt, sodass schrabbeliger Indiesound, verzerrte Gitarren und warme Synthesizer immer wieder " +
+                "in krautrockartige, verspielte Auswüchse münden."
+        ) shouldBe listOf("Indie", "Krautrock")
+        descriptionGenres("Ein jazzartiger Abend, ganz großartig, mit viel Sound.") shouldBe listOf("Jazz")
+    }
+
+    @Test
     fun `a genre in a support or guest clause is skipped`() {
         descriptionGenres("Indie pop from Leipzig. Support for a metal band.").shouldBe(listOf("Indie"))
         descriptionGenres("Jazz quartet, Support von einer Punk-Band") shouldBe listOf("Jazz")
@@ -65,7 +90,7 @@ class DescriptionGenresTest {
         descriptionGenres("Industrial noise from Leeds") shouldBe listOf("Industrial")
         descriptionGenres("A fragile art folk with industrial touches") shouldBe listOf("Folk", "Industrial")
         descriptionGenres("Noise, Industrial, Drone") shouldBe listOf("Industrial")
-        descriptionGenres("Drawing influence from 90s grunge and electro to industrial and dance-punk") shouldBe listOf("Industrial")
+        descriptionGenres("Drawing influence from 90s grunge and electro to industrial and dance-punk") shouldBe listOf("Industrial", "Punk")
         descriptionGenres("DJ-Set: Post-Punk, Batcave, Industrial, Electro") shouldBe listOf("Post-Punk", "Industrial")
         descriptionGenres("The fusion of metal, industrial, goth and pop") shouldBe listOf("Metal", "Industrial", "Pop")
         descriptionGenres("Fractured new wave, and industrial grime") shouldBe listOf("New Wave", "Industrial")

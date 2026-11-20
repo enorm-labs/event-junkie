@@ -56,6 +56,10 @@ The rules:
    A hyphenated word with a format noun gives the genre before the noun. The nouns are "Party", "Nacht", "Night", "Ball", "Duo", "Band" and
    "Produzent". Thus "K-POP-Party" gives K-Pop and "Techno-Produzenten-Duo" gives Techno. "House-Party" gives nothing, because "house" has another sense.
    This rule also reads the title and the subtitle. Thus the title "Jazz-Nacht" gives Jazz. No other word of the title counts.
+   Any other hyphenated word gives the genre of its last part. Thus "Haie-Hyperpop" gives Hyperpop, but "Rock-Legende" gives nothing.
+   An adjective key as the last part gives nothing, as in "post-industrial".
+   The last part "Disco" gives nothing too, because a "Kinder-Disco" is a dance night.
+   A genre word that ends in "-sound" or "-artig" gives its genre. Thus "Indiesound" gives Indie and "krautrockartige" gives Krautrock.
    The first three genres stay.
 5. **Each import computes the derived tags again** for the events of its source. An event that the admin API pinned keeps its tags (ADR-042).
 6. **A derived tag counts as a tag everywhere else.** "More like this" reads it. The venue programme families and the genre filter read it too.

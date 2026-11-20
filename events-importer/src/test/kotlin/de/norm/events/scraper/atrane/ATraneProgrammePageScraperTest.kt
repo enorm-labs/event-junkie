@@ -336,6 +336,21 @@ class ATraneProgrammePageScraperTest {
     }
 
     @Test
+    fun `bills the host when a programme follows his unnamed friends`() {
+        // Event 14963: only the special guest was billed.
+        val night =
+            session(
+                "DAVID HAYNES AND FRIENDS NEW YEAR SOUL SPECIAL",
+                "«DAVID HAYNES GOES INSTRUMENTAL»",
+                "SPECIAL GUEST: WILL JACOBS",
+                "FEAT: Paul Andrews-Max Bahr-Joshua-Benny Jud"
+            )
+
+        night.title shouldBe "DAVID HAYNES AND FRIENDS NEW YEAR SOUL SPECIAL"
+        night.artists.map { it.name to it.role } shouldBe listOf("DAVID HAYNES" to ArtistRole.HEADLINER, "WILL JACOBS" to ArtistRole.SUPPORT)
+    }
+
+    @Test
     fun `drops a sold-out banner in either language and a singular last-seat line`() {
         listOf("AUSVERKAUFT", "SOLD OUT", "Ausverkauft / Sold out", "LETZTE PLÄTZE", "Letzte Plaetze an der Bar").forEach { banner ->
             val night = card(listOf(banner, "A-TRANE PRÄSENTIERT:", "BILL PETRY", "«CLOSE YOUR EYES»"))

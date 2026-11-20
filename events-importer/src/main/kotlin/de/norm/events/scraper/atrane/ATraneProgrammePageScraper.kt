@@ -189,7 +189,8 @@ class ATraneProgrammePageScraper {
      * The act without the album or programme title it names in quotes, or the club's own name a homecoming adds
      * (`JC DOOK BACK AT A-TRANE`), a tour tail (`DOMINIC MILLER ON TOUR 2027`, event 13048)
      * and a residency label (`ARTIST IN RESIDENCE Jeremy Sassoon`). The unnamed
-     * cast of a weekly session goes too: `ANDREAS SCHMIDT & FRIENDS` bills the pianist who hosts it. A slash with
+     * cast of a weekly session goes too: `ANDREAS SCHMIDT & FRIENDS` bills the pianist who hosts it, and so does
+     * `DAVID HAYNES AND FRIENDS NEW YEAR SOUL SPECIAL` with the programme after it (event 14963). A slash with
      * a space on one side only (`Esther Kaiser/ Alexander Wienand`) is spaced, so the co-bill splits. An act that is
      * only a quoted name loses the quotes.
      */
@@ -239,7 +240,7 @@ class ATraneProgrammePageScraper {
         val VENUE_TAIL = Regex("""\s+(?:(?:back|live)\s+)?(?:at|im)\s+(?:the\s+)?a-?trane\s*$""", RegexOption.IGNORE_CASE)
         val TOUR_TAIL = Regex("""\s+on\s+tour(?:\s+\d{4})?\s*$""", RegexOption.IGNORE_CASE)
         val RESIDENCY_LABEL = Regex("""^\s*artist\s+in\s+residence\s*:?\s+""", RegexOption.IGNORE_CASE)
-        val FRIENDS_TAIL = Regex("""\s*(?:&|and|und)\s+(?:friends|freunde)\s*$""", RegexOption.IGNORE_CASE)
+        val FRIENDS_TAIL = Regex("""\s*(?:&|and|und)\s+(?:friends|freunde)(?:\s.*)?$""", RegexOption.IGNORE_CASE)
         val LOPSIDED_SLASH = Regex("""(?<=\S)/\s+|\s+/(?=\S)""")
         val START = Regex("""^\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{2}""")
         val START_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("y-M-d'T'H:mm")

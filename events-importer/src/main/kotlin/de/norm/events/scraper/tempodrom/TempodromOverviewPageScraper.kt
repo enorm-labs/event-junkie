@@ -230,7 +230,7 @@ private data class TempodromProduction(
 
 /**
  * The production [title] and [subtitle] bill, or `null` for an act's night. A film-music night is a
- * concert; a musical, a film with live orchestra, a gala or a tribute concert is a show. The
+ * concert; a musical, a film with live orchestra, a gala, a tribute concert or a live radio play is a show. The
  * orchestra a film names after `mit dem` plays it, so it is billed.
  */
 private fun tempodromProduction(
@@ -244,6 +244,9 @@ private fun tempodromProduction(
 
         // Loriot died in 2011: a night under his name stages his sketches, and the cast is not billed.
         LORIOT.matches(title) -> TempodromProduction(EventType.SHOW)
+
+        // A radio play staged live is a show, and its title names characters, not acts: "Bobby & Max: …" / "Live Hörspiel 2028" (event 14998).
+        listOfNotNull(title, subtitle).any { RADIO_PLAY.containsMatchIn(it) } -> TempodromProduction(EventType.SHOW)
 
         // A dance congress is days of workshops and parties, a festival rather than a concert: "Berlin Salsacongress 2027".
         DANCE_CONGRESS.containsMatchIn(title) -> TempodromProduction(EventType.FESTIVAL)
@@ -358,6 +361,9 @@ private val FILM_ORCHESTRA = Regex("""\bmit\s+dem\s+(\p{Lu}[^,|]*?(?i:orchester|
 
 /** An adjective in the dative after `dem`, made nominative for a neuter orchestra: "Deutschen" → "Deutsches". */
 private val DATIVE_ADJECTIVE = Regex("""\b(\p{Lu}\p{Ll}+)en\b(?=.*(?i:orchester))""")
+
+/** A radio play, in the title or the format line: "Live Hörspiel 2028". `Ö` is spelled out: the flag folds ASCII only. */
+private val RADIO_PLAY = Regex("""h(?:[öÖ]|oe)rspiel""", RegexOption.IGNORE_CASE)
 
 /** Loriot's name as the whole title. */
 private val LORIOT = Regex("""loriot""", RegexOption.IGNORE_CASE)
