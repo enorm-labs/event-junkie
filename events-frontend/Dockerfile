@@ -32,8 +32,9 @@
 # `pcre2 >= 10.49-r0` (#2298), `tiff >= 4.7.2-r0` (#2883), `libx11 >= 1.8.14-r0` (CVE-2026-88806),
 # `brotli-libs >= 1.2.1-r0` (CVE-2026-111497), `curl`/`libcurl >= 8.23.0-r0` (CVE-2026-92392),
 # `zlib >= 1.3.2-r1` (CVE-2026-85091), `musl`/`musl-utils >= 1.2.6-r3` (CVE-2026-107891) and
-# `libxslt >= 1.1.43-r4` (CVE-2026-87636, CVE-2026-9947), checked with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid|^pcre2|^tiff|^libx11|^brotli-libs|^curl|^libcurl|^zlib|^musl|^libxslt"'`
+# `libxslt >= 1.1.43-r4` (CVE-2026-87636, CVE-2026-9947) and `libxml2 >= 2.13.9-r3`
+# (CVE-2026-86144), checked with
+# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid|^pcre2|^tiff|^libx11|^brotli-libs|^curl|^libcurl|^zlib|^musl|^libxslt|^libxml2"'`
 # and `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, both
 # on `--platform linux/amd64`: Alpine builds each architecture separately, which is how #1118
 # verified clean and changed nothing.
@@ -62,6 +63,11 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 #   libexpat     CVE-2026-117610, a NULL pointer dereference, and CVE-2026-118370, a signed integer
 #                overflow, both in the XML parser. Fixed in 2.10.0-r0; the base ships 2.9.0-r0
 #                (#4417). Pulled in by fontconfig, the third libexpat episode after #1802 and #3537.
+#   libxml2      CVE-2026-86144, improper handling in the XML parser, allowing information
+#                disclosure, SSRF or denial of service. Fixed in 2.13.9-r3, which the v3.24 branch
+#                carries for both x86_64 and aarch64; this base is still on 3.24.2 and ships
+#                2.13.9-r2 (#5352). Pulled in by `nginx-module-xslt`, `nginx-module-njs` and
+#                libxslt, so nginx loads it and it is not waivable.
 #   libxslt      CVE-2026-87636, a type confusion, and CVE-2026-9947, a use after free, both in
 #                XSLT processing. Fixed in 1.1.43-r4, which Alpine 3.24.3 carries; this base is
 #                still on 3.24.2 and ships 1.1.43-r3. Pulled in by `nginx-module-xslt`, which the
@@ -79,11 +85,11 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 # Delete a package from this line once the base ships the fixed version or later: an upgrade kept
 # past its purpose hides that the base has caught up and quietly becomes the thing choosing the
 # version. Check with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^brotli-libs|^curl|^libcurl|^libexpat|^libxslt|^musl|^zlib"'`
+# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^brotli-libs|^curl|^libcurl|^libexpat|^libxml2|^libxslt|^musl|^zlib"'`
 # on the pinned digest. `USER 0` (root) because apk needs write access; the final `USER` below is
 # unaffected.
 USER 0
-RUN apk upgrade --no-cache brotli-libs curl libcurl libexpat libxslt musl musl-utils zlib
+RUN apk upgrade --no-cache brotli-libs curl libcurl libexpat libxml2 libxslt musl musl-utils zlib
 
 # Config first, bundle second, so the config layer stays cached.
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
