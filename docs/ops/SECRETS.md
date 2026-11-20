@@ -675,8 +675,20 @@ which is the public-repository caveat above, restated: **rotation changes the fu
 ### Rotating the OpenObserve root password
 
 **The password lives in OpenObserve's own database, not in the Secret.** The Secret creates the root user at first boot only. A new value in the Secret does not
-change the login of a running instance. So change the password in OpenObserve first, then copy it to the Keychain and the cluster. The procedure takes about 15
-minutes per cluster. Do staging first.
+change the login of a running instance. So change the password in OpenObserve first, then copy it to the Keychain and the cluster. Do staging first.
+
+**One command does all of it**, and stops at the first check that fails:
+
+```sh
+scripts/rotate-o2-root.sh staging --dry-run   # only the checks: the forward, and that the Keychain password logs in
+scripts/rotate-o2-root.sh staging
+```
+
+It changes the password through the API, and continues only when the new password logs in and the old one does not. Then it writes the Keychain, runs
+`scripts/cluster-secrets.sh`, restarts OpenObserve and both collectors, and checks the logs and the rows. If it stops after the change, it prints the commands
+that finish the job. At the end it prints the line that copies the password to the password manager. The run takes about 3 minutes.
+
+**The steps below are the same procedure by hand**, for when the script cannot run. It takes about 15 minutes per cluster.
 
 **From step 1 to step 4, OpenObserve refuses the collectors.** Do the steps without a break. Logs from that gap can be lost.
 
