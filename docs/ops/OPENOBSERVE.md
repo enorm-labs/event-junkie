@@ -375,9 +375,10 @@ The full inventory is [SECRETS.md](SECRETS.md). Two operational traps belong her
 **`openobserve-credentials` exists twice, in `flux-system` and `observability`**, with the same contents. `valuesFrom` resolves in the HelmRelease's namespace.
 The chart's `existingRootUserSecret` reads from the release's target namespace instead. Reaching for the wrong copy produces a flat 401 that reads like a wrong password.
 
-**`O2_BASIC_AUTH_HEADER` is derived, and goes stale silently.** The collector authenticates with a header rather than a user and password, and Flux's
-`valuesFrom` substitutes a value rather than composing one. Rotate the root password without re-deriving the header, and the collector keeps posting with the old
-one while OpenObserve refuses. That looks like an ingestion outage, not a credential problem.
+**The collector's header is derived, and goes stale silently.** The collectors send a `Basic` header, not a user and a password. They read it at start from
+`openobserve-collector-auth` in their own namespace. Rotate the root password without running `scripts/cluster-secrets.sh <env>` again, and the collector
+keeps posting with the old header while OpenObserve refuses. That looks like an ingestion outage, not a credential problem. After the script, restart both
+collectors. [SECRETS.md](SECRETS.md) §openobserve-credentials has the commands.
 
 **Changing the Secret restarts nothing.** The S3 keys reach the pod through `envFrom`, which references a Secret by name. The running pod therefore keeps the old value
 until something replaces it. `flux reconcile` will report success and `rollout status` will say the rollout is complete, both truthfully, with the old credential
@@ -438,14 +439,15 @@ kubectl --context event-junkie-staging -n observability logs o2c-openobserve-col
 kubectl --context event-junkie-staging top pod -n observability
 ```
 
-| Symptom                               | Almost always                                                                                                                                          |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Release failed, never started         | `openobserve-credentials` missing or malformed. Intended shape — a missing credential should stop the deploy, not produce a server nobody can log into |
-| `MemoryTableOverflowError`, 503s      | Stream count. **Not** the memory limit — see above                                                                                                     |
-| Collector 401s, OpenObserve fine      | `O2_BASIC_AUTH_HEADER` not re-derived after a password change                                                                                          |
-| Console empty after a rebuild         | Expected. Metadata is on the PVC; re-import the dashboards                                                                                             |
-| Panels empty, no errors               | Either no data yet, or the query. `apply.sh --check` distinguishes them                                                                                |
-| Ingestion stopped, no errors anywhere | Check the bucket. Objects written per data-hour tell you whether it is behind or refusing                                                              |
+| Symptom                                | Almost always                                                                                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Release failed, never started          | `openobserve-credentials` missing or malformed. Intended shape — a missing credential should stop the deploy, not produce a server nobody can log into |
+| `MemoryTableOverflowError`, 503s       | Stream count. **Not** the memory limit — see above                                                                                                     |
+| Collector 401s, OpenObserve fine       | Header not re-derived after a password change, or the collectors not restarted after it                                                                |
+| Collector `CreateContainerConfigError` | `openobserve-collector-auth` missing in that namespace. `scripts/cluster-secrets.sh <env>` writes it                                                   |
+| Console empty after a rebuild          | Expected. Metadata is on the PVC; re-import the dashboards                                                                                             |
+| Panels empty, no errors                | Either no data yet, or the query. `apply.sh --check` distinguishes them                                                                                |
+| Ingestion stopped, no errors anywhere  | Check the bucket. Objects written per data-hour tell you whether it is behind or refusing                                                              |
 
 Bucket-side check, which is the one that settles "is it actually storing anything":
 

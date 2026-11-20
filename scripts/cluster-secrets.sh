@@ -80,8 +80,12 @@ spec() {
         echo "$ns openobserve-credentials ZO_S3_ACCESS_KEY kc:event-junkie-o2-access-key"
         echo "$ns openobserve-credentials ZO_S3_SECRET_KEY kc:event-junkie-o2-secret-key"
     done
-    # The header is read only from flux-system: the collector's valuesFrom and the deploy/*/apply.sh scripts.
+    # The deploy/*/apply.sh scripts read the header from flux-system. Each collector reads its own
+    # namespace's one-key copy (#5316), and needs a restart to see a new value.
     echo "flux-system openobserve-credentials O2_BASIC_AUTH_HEADER derived:o2-header"
+    for ns in observability observability-agent; do
+        echo "$ns openobserve-collector-auth authorization derived:o2-header"
+    done
     echo "observability openobserve-smtp ZO_SMTP_PASSWORD kc:event-junkie-alerts-smtp-password"
     echo "event-junkie event-junkie-mail username kc:event-junkie-scaleway-project-id"
     echo "event-junkie event-junkie-mail password kc:event-junkie-$ENV-tem-secret-key"

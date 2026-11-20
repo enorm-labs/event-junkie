@@ -4,8 +4,8 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Sixteen objects.** Three are encrypted into git and restored by Flux: `events-db`, `events-bff-db` and `postgres-exporter`.
-  `scripts/cluster-secrets.sh <env>` creates the other thirteen from the Keychain, and `--check` compares them with it.
+- **Seventeen objects.** Three are encrypted into git and restored by Flux: `events-db`, `events-bff-db` and `postgres-exporter`.
+  `scripts/cluster-secrets.sh <env>` creates the other fourteen from the Keychain, and `--check` compares them with it.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
@@ -20,36 +20,37 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The sixteen objects, and where each comes from
+## The seventeen objects, and where each comes from
 
-| Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
-| ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
-| `events-db`               | `event-junkie`                                    | the `events` role's password                          | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8                |
-| `hetzner`                 | `cert-manager`                                    | an hcloud API token, **read+write** — staging only    | §8                                                             |
-| `openobserve-credentials` | `flux-system` **and** `observability` — see below | the root login and an `-o2` S3 keypair                | [SECRETS.md](SECRETS.md) §openobserve-credentials              |
-| `github-dispatch`         | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
-| `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                              | git, encrypted — §postgres-exporter, below                     |
-| `event-junkie-anthropic`  | `event-junkie`                                    | the Claude API key for every Anthropic caller         | §event-junkie-anthropic, below                                 |
-| `event-junkie-discogs`    | `event-junkie`                                    | the Discogs application's consumer key and secret     | §event-junkie-discogs, below                                   |
-| `event-junkie-instagram`  | `event-junkie`                                    | the Meta Page token for the Instagram drafts          | §event-junkie-instagram, below                                 |
-| `sops-age`                | `flux-system`                                     | the age key that decrypts the three database Secrets  | §3, below                                                      |
-| `event-junkie-images`     | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**    | §event-junkie-images, below                                    |
-| `event-junkie-imgproxy`   | `event-junkie`                                    | the key and salt that sign imgproxy URLs              | §event-junkie-imgproxy, below                                  |
-| `openobserve-smtp`        | `observability`                                   | the `alerts@` mailbox password, for the alert mail    | §openobserve-smtp, below                                       |
-| `event-junkie-mail`       | `event-junkie`                                    | the Scaleway TEM login the BFF sends mail with        | §event-junkie-mail, below                                      |
-| `events-bff-db`           | `event-junkie`                                    | the `bff` role's password, the BFF's own login        | git, encrypted — §events-bff-db, below                         |
-| `event-junkie-push`       | `event-junkie`                                    | the VAPID key pair the BFF signs Web Push with        | §event-junkie-push, below                                      |
-| `event-junkie-mail-quota` | `event-junkie`                                    | the read-only Scaleway key — production only          | §event-junkie-mail-quota, below                                |
+| Secret                       | Namespace                                         | Holds                                                  | Created at                                                     |
+| ---------------------------- | ------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------- |
+| `events-db`                  | `event-junkie`                                    | the `events` role's password                           | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8                |
+| `hetzner`                    | `cert-manager`                                    | an hcloud API token, **read+write** — staging only     | §8                                                             |
+| `openobserve-credentials`    | `flux-system` **and** `observability` — see below | the root login and an `-o2` S3 keypair                 | [SECRETS.md](SECRETS.md) §openobserve-credentials              |
+| `openobserve-collector-auth` | `observability` **and** `observability-agent`     | the root login as a `Basic` header, for the collectors | §openobserve-credentials, below                                |
+| `github-dispatch`            | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo  | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
+| `postgres-exporter`          | `observability`                                   | the `metrics` role's DSN                               | git, encrypted — §postgres-exporter, below                     |
+| `event-junkie-anthropic`     | `event-junkie`                                    | the Claude API key for every Anthropic caller          | §event-junkie-anthropic, below                                 |
+| `event-junkie-discogs`       | `event-junkie`                                    | the Discogs application's consumer key and secret      | §event-junkie-discogs, below                                   |
+| `event-junkie-instagram`     | `event-junkie`                                    | the Meta Page token for the Instagram drafts           | §event-junkie-instagram, below                                 |
+| `sops-age`                   | `flux-system`                                     | the age key that decrypts the three database Secrets   | §3, below                                                      |
+| `event-junkie-images`        | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**     | §event-junkie-images, below                                    |
+| `event-junkie-imgproxy`      | `event-junkie`                                    | the key and salt that sign imgproxy URLs               | §event-junkie-imgproxy, below                                  |
+| `openobserve-smtp`           | `observability`                                   | the `alerts@` mailbox password, for the alert mail     | §openobserve-smtp, below                                       |
+| `event-junkie-mail`          | `event-junkie`                                    | the Scaleway TEM login the BFF sends mail with         | §event-junkie-mail, below                                      |
+| `events-bff-db`              | `event-junkie`                                    | the `bff` role's password, the BFF's own login         | git, encrypted — §events-bff-db, below                         |
+| `event-junkie-push`          | `event-junkie`                                    | the VAPID key pair the BFF signs Web Push with         | §event-junkie-push, below                                      |
+| `event-junkie-mail-quota`    | `event-junkie`                                    | the read-only Scaleway key — production only           | §event-junkie-mail-quota, below                                |
 
 **`scripts/cluster-secrets.sh` carries the same list, with the Keychain item behind each key.** The sections below say why each Secret exists and how to make
 its value. A rebuild runs the script, not the commands below. Add a Secret to the table and to the script in the same change.
 
-**All sixteen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All seventeen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
-**Every one of these is per cluster.** The table lists sixteen objects, not sixteen values. Staging and production each hold their own copy. Two of them hold
+**Every one of these is per cluster.** The table lists seventeen objects, not seventeen values. Staging and production each hold their own copy. Two of them hold
 _different_ values on purpose: `github-dispatch`, so revoking one does not take both clusters down, and `openobserve-credentials`, since
-[#880](https://github.com/enorm-labs/event-junkie/issues/880).
+[#880](https://github.com/enorm-labs/event-junkie/issues/880). `openobserve-collector-auth` follows it, because the script derives it from that root password.
 
 **Only `github-dispatch` cannot be regenerated.** `hetzner` is the Keychain's `HCLOUD_TOKEN`, `sops-age` is `~/.config/sops/age/event-junkie.txt`, and
 `postgres-exporter` is an `ALTER ROLE` away. OpenObserve's root password can be brand new, because its PVC is `local-path` on the node's disk. The metadata DB
@@ -108,7 +109,7 @@ importer calling the sidecar. imgproxy also binds `127.0.0.1`. Nothing outside t
 all, so the signature is the second lock rather than the only one.
 
 **So losing it costs nothing.** Generate a fresh pair, restart the pod, and both sides agree again.
-No stored object is signed, and no URL survives a restart. It is the least dangerous of the sixteen on
+No stored object is signed, and no URL survives a restart. It is the least dangerous of the seventeen on
 every axis, which is worth stating so a rebuild does not treat it as precious.
 
 ```sh
@@ -138,24 +139,25 @@ For one operator the operational difference is otherwise small, and the deciding
 later" does not un-publish the bytes. That is fine for a value whose exposure requires a future break in X25519 — and it is a different conversation for each
 secret.
 
-| Secret                    | If the ciphertext were ever broken                                                                                        | Worth encrypting into a public repo?        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `events-db`               | A Postgres password for a server reachable only through the private network and WireGuard. Useless without network access | **Yes**                                     |
-| `github-dispatch`         | Triggering `repository_dispatch` workflows on `main`. **Stronger than `hetzner` and `events-db`** — see below             | **No** — see below                          |
-| `hetzner`                 | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                           |
-| `openobserve-credentials` | Admin login to every log and metric, **and** Object Storage keys reaching all three buckets                               | **No** — see below                          |
-| `event-junkie-anthropic`  | Someone else spends against one Anthropic workspace, up to its cap. No data of ours, no infrastructure                    | **No** — see below                          |
-| `event-junkie-discogs`    | Someone else searches Discogs as our application, at 60 requests a minute. No data of ours, no infrastructure             | **No** — as the Anthropic key               |
-| `event-junkie-instagram`  | Someone else reads public business accounts as our Meta app, against its rate limit. No data of ours, no write permission | **No** — as the Anthropic key               |
-| `openobserve-smtp`        | Mail sent as `alerts@`, and the alert mail read from that mailbox. Reset in konsoleH in a minute                          | **No** — one mailbox, two clusters          |
-| `events-bff-db`           | The `bff` role's Postgres password, for the same server as `events-db`. Useless without network access                    | **Yes** — as `events-db`                    |
-| `postgres-exporter`       | A DSN for the `metrics` role, which reads only the statistics views. Same server, useless without network access          | **Yes** — as `events-db`                    |
-| `event-junkie-mail`       | Someone else sends mail as `notify.event-junkie.de`, from anywhere, against the TEM quota and the domain's reputation     | **No** — as the Anthropic key               |
-| `event-junkie-mail-quota` | Someone else reads the project's Transactional Email, from anywhere. It sends nothing                                     | **No** — as the Anthropic key               |
-| `event-junkie-push`       | Someone else sends notifications as the site to that cluster's subscribers. It reads nothing                              | **No** — a new pair ends every subscription |
-| `event-junkie-images`     | Read and write on the image bucket, from anywhere. Every bucket of the project if no bucket policy narrows the key        | **No** — as the Anthropic key               |
-| `event-junkie-imgproxy`   | Someone can sign imgproxy URLs. Useless without access to the importer pod, because imgproxy binds `127.0.0.1`            | **No** — a new pair costs nothing           |
-| `sops-age`                | Not applicable. It is the key that decrypts the others                                                                    | **Never** — it is the key                   |
+| Secret                       | If the ciphertext were ever broken                                                                                        | Worth encrypting into a public repo?        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `events-db`                  | A Postgres password for a server reachable only through the private network and WireGuard. Useless without network access | **Yes**                                     |
+| `github-dispatch`            | Triggering `repository_dispatch` workflows on `main`. **Stronger than `hetzner` and `events-db`** — see below             | **No** — see below                          |
+| `hetzner`                    | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                           |
+| `openobserve-credentials`    | Admin login to every log and metric, **and** Object Storage keys reaching all three buckets                               | **No** — see below                          |
+| `openobserve-collector-auth` | Admin login to every log and metric. The same root login as above, without the S3 keys                                    | **No** — as `openobserve-credentials`       |
+| `event-junkie-anthropic`     | Someone else spends against one Anthropic workspace, up to its cap. No data of ours, no infrastructure                    | **No** — see below                          |
+| `event-junkie-discogs`       | Someone else searches Discogs as our application, at 60 requests a minute. No data of ours, no infrastructure             | **No** — as the Anthropic key               |
+| `event-junkie-instagram`     | Someone else reads public business accounts as our Meta app, against its rate limit. No data of ours, no write permission | **No** — as the Anthropic key               |
+| `openobserve-smtp`           | Mail sent as `alerts@`, and the alert mail read from that mailbox. Reset in konsoleH in a minute                          | **No** — one mailbox, two clusters          |
+| `events-bff-db`              | The `bff` role's Postgres password, for the same server as `events-db`. Useless without network access                    | **Yes** — as `events-db`                    |
+| `postgres-exporter`          | A DSN for the `metrics` role, which reads only the statistics views. Same server, useless without network access          | **Yes** — as `events-db`                    |
+| `event-junkie-mail`          | Someone else sends mail as `notify.event-junkie.de`, from anywhere, against the TEM quota and the domain's reputation     | **No** — as the Anthropic key               |
+| `event-junkie-mail-quota`    | Someone else reads the project's Transactional Email, from anywhere. It sends nothing                                     | **No** — as the Anthropic key               |
+| `event-junkie-push`          | Someone else sends notifications as the site to that cluster's subscribers. It reads nothing                              | **No** — a new pair ends every subscription |
+| `event-junkie-images`        | Read and write on the image bucket, from anywhere. Every bucket of the project if no bucket policy narrows the key        | **No** — as the Anthropic key               |
+| `event-junkie-imgproxy`      | Someone can sign imgproxy URLs. Useless without access to the importer pod, because imgproxy binds `127.0.0.1`            | **No** — a new pair costs nothing           |
+| `sops-age`                   | Not applicable. It is the key that decrypts the others                                                                    | **Never** — it is the key                   |
 
 **On `github-dispatch`.** The table's logic is exposure cost. A broken `github-dispatch` ciphertext buys `contents: write` on this repository. Under
 ADR-016, what lands on `main` is what the cluster runs, so repository write access is one branch-protection rule away from cluster access. That is the
@@ -226,26 +228,27 @@ kubectl --context event-junkie-staging create secret generic openobserve-credent
   --from-literal=ZO_S3_SECRET_KEY=<the -o2 secret key>
 ```
 
-**A fifth key, `O2_BASIC_AUTH_HEADER`, for the collector (#271 item 2).** The collector authenticates
-to OpenObserve with an HTTP header rather than with a user and a password. Flux's `valuesFrom`
-substitutes a value, and cannot compose one from two others. So the composed header is its own key:
+**The root login as an HTTP header, in three places.** The collectors and the `deploy/*/apply.sh` scripts send
+`Basic <base64 of email:password>`, not a user and a password. `scripts/cluster-secrets.sh` derives the header from the root password. There is nothing
+extra to store in the password manager. It writes the header to three places:
+
+- `O2_BASIC_AUTH_HEADER`, a fifth key in the `flux-system` copy of `openobserve-credentials`. The `apply.sh` scripts read it.
+- `openobserve-collector-auth`, key `authorization`, in `observability` for the gateway.
+- The same Secret in `observability-agent` for the agent DaemonSet. A `secretKeyRef` reads only from the pod's own namespace.
+
+**The collectors read it at start, from the env var `OO_AUTH`** (#5316). The exporters reference it as `${env:OO_AUTH}`. So the header is not in the
+rendered `OpenTelemetryCollector` resources or in the Helm release. **The Secret must exist before the collector starts.** If it does not, the pod stays in
+`CreateContainerConfigError`, and no log or metric reaches OpenObserve.
+
+**Rotate the root password, and all three copies go stale silently.** The collector keeps posting with the old header, and OpenObserve starts refusing. That
+looks like an ingestion outage, not a credential problem. Run the script again in the same change. Then restart both collectors, because a running pod keeps
+the old value:
 
 ```sh
-# Same password you used above. Derived, not new — nothing extra to store in the password manager.
-printf 'root password: '; read -rs OO_PASS; echo
-HDR="Basic $(printf '%s:%s' 'hello@event-junkie.de' "$OO_PASS" | base64)"
-
-kubectl --context event-junkie-staging patch secret openobserve-credentials -n flux-system \
-  -p "{\"stringData\":{\"O2_BASIC_AUTH_HEADER\":\"$HDR\"}}"
-
-unset OO_PASS HDR
+scripts/cluster-secrets.sh staging
+kubectl --context event-junkie-staging -n observability delete pod -l app.kubernetes.io/managed-by=opentelemetry-operator
+kubectl --context event-junkie-staging -n observability-agent delete pod -l app.kubernetes.io/managed-by=opentelemetry-operator
 ```
-
-**Only in `flux-system`** — this one is read by `valuesFrom`, which resolves in the HelmRelease's
-namespace, and the collector's chart never reads it directly. **Rotate the root password and this key
-goes stale silently.** The collector keeps posting with the old header, and OpenObserve starts
-refusing. That looks like an ingestion outage rather than a credential problem. Re-derive it in the
-same change.
 
 **`-n flux-system`, and then again in `observability`.** `valuesFrom` resolves Secrets in the HelmRelease's own namespace, which is `flux-system` like every
 other release here. The chart's `existingRootUserSecret` reads from the release's _target_ namespace instead. **So this Secret has to exist in both**: the same

@@ -109,20 +109,6 @@ spec:
         namespace: flux-system
       interval: 1h
 
-  # The collector authenticates to OpenObserve as the root user, from the same hand-made Secret the
-  # server reads — injected, because a credential under `spec.values` is a credential in a public
-  # repository (#598). The `Basic <base64 of email:password>` header is a separate key so the two
-  # halves never pass through Helm values in the clear.
-  valuesFrom:
-    - kind: Secret
-      name: openobserve-credentials
-      valuesKey: O2_BASIC_AUTH_HEADER
-      targetPath: exporters.otlphttp/openobserve.headers.Authorization
-    - kind: Secret
-      name: openobserve-credentials
-      valuesKey: O2_BASIC_AUTH_HEADER
-      targetPath: exporters.otlphttp/openobserve_k8s_events.headers.Authorization
-
   values:
     # **The only field either cluster patches** (#880, #953): it tags every metric, log and trace with
     # its cluster, which is what makes an exported panel say which one you were looking at. **No overlay
@@ -131,13 +117,21 @@ spec:
     # The operator is installed above as its own release; `true` here installs a second copy as a subchart.
     opentelemetry-operator:
       enabled: false
+    # **The root login's `Basic` header, read by the collector at start from `OO_AUTH`** (#5316). In
+    # `spec.values` it would be in a public repository (#598); through `valuesFrom` it was in the
+    # rendered `OpenTelemetryCollector` and the Helm release Secret. `extraEnv` below brings it from
+    # `openobserve-collector-auth`, which `scripts/cluster-secrets.sh` writes. Helm passes `${env:…}`
+    # through as text, and no Flux `postBuild` substitutes it.
     exporters:
       otlphttp/openobserve:
         # In-cluster, plain HTTP over the pod network; the ingress does not route OpenObserve, deliberately.
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
+        headers:
+          Authorization: ${env:OO_AUTH}
       otlphttp/openobserve_k8s_events:
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
         headers:
+          Authorization: ${env:OO_AUTH}
           stream-name: k8s_events
 
     # **Stripping the identity attributes that churn — metrics only.** Every metric arrives with ~29
@@ -170,6 +164,13 @@ spec:
       enabled: false
 
     gateway:
+      # A missing Secret holds the pod in `CreateContainerConfigError`: write it before this merges.
+      extraEnv:
+        - name: OO_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: openobserve-collector-auth
+              key: authorization
       # **What `restricted` asks of a pod that needs no privilege** (#709): the image runs as UID 10001, and
       # these four fields say so in a form Pod Security Admission can check.
       securityContext:
@@ -404,22 +405,6 @@ spec:
         namespace: flux-system
       interval: 1h
 
-  # The same credential, injected the same way (#598), for every exporter: the chart hands every collector
-  # the whole `exporters` map.
-  valuesFrom:
-    - kind: Secret
-      name: openobserve-credentials
-      valuesKey: O2_BASIC_AUTH_HEADER
-      targetPath: exporters.otlphttp/openobserve.headers.Authorization
-    - kind: Secret
-      name: openobserve-credentials
-      valuesKey: O2_BASIC_AUTH_HEADER
-      targetPath: exporters.otlphttp/openobserve_k8s_events.headers.Authorization
-    - kind: Secret
-      name: openobserve-credentials
-      valuesKey: O2_BASIC_AUTH_HEADER
-      targetPath: exporters.otlphttp/openobserve_smoke_test.headers.Authorization
-
   # **Giving the agent somewhere to remember how far it read (#950).** Without it, `filelog` re-reads
   # every container log from line one on a restart: the part older than 24h is refused by OpenObserve
   # in bursts and the part newer is ingested twice — 617 of 2,066 rows duplicated, 29.9%. With it,
@@ -479,21 +464,34 @@ spec:
     # The agent's `k8sattributes` still needs cluster RBAC, so the release brings its own ServiceAccount.
     gateway:
       enabled: false
+    # The header as the gateway's release reads it (#5316), on every exporter of this release. Not shared
+    # with the gateway: a header alone there would give it a `smoke_test` exporter with no endpoint.
     exporters:
       otlphttp/openobserve:
         # Fully qualified; plain HTTP over the pod network, not through the ingress.
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
+        headers:
+          Authorization: ${env:OO_AUTH}
       otlphttp/openobserve_k8s_events:
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
         headers:
+          Authorization: ${env:OO_AUTH}
           stream-name: k8s_events
       # The smoke hook's rows, kept 60 days by deploy/streams/ (#2393).
       otlphttp/openobserve_smoke_test:
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
         headers:
+          Authorization: ${env:OO_AUTH}
           stream-name: smoke_test
     # **The agent, unchanged by the move** (#709); the memory table above still covers its 640Mi limit.
     agent:
+      # The Secret's copy in this namespace, not the gateway's: a `secretKeyRef` reads only its own.
+      extraEnv:
+        - name: OO_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: openobserve-collector-auth
+              key: authorization
       # The offsets. `directory` is the mount added by the postRenderer above; the two halves are useless apart.
       extensions:
         file_storage:
