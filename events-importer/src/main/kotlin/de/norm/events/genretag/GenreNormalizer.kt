@@ -146,6 +146,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "dnb" to "Drum & Bass",
         // Post-punk / dark wave family
         "postpunk" to "Post-Punk",
+        // The spelling production stores; word by word, Schokoladen's "Psychedelic Post-Rock" (event 14988) lands on it too.
+        "postrock" to "Post-rock",
         "posthardcore" to "Post Hardcore",
         "posthc" to "Post Hardcore",
         "newwave" to "New Wave",
@@ -433,7 +435,9 @@ private val NON_GENRE_TOKENS: Set<String> =
         "creative",
         "social",
         "filth",
-        "whacking"
+        "whacking",
+        // A band's own coinage beside its genres, Schokoladen's "Doom/Sludge/Post-Noir" (event 14988).
+        "postnoir"
     )
 
 /**

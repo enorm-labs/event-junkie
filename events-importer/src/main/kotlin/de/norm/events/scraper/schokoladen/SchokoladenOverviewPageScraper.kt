@@ -1,6 +1,7 @@
 package de.norm.events.scraper.schokoladen
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -137,12 +138,14 @@ class SchokoladenOverviewPageScraper {
      * more than one comma-separated part loses its last, or its first when that is the country or
      * city code ("(Bln, punk)"), and a code or a spelled-out place is dropped wherever it stands.
      * A last part made only of known genres stays ("(Rocksteady, Reggae & Jamaican Jazz)").
-     * A one-part annotation is a genre unless it is a code ("(SWE)").
+     * A one-part annotation is a genre unless it is a code ("(SWE)"). A DJ's note that names no
+     * known genre credits the DJ's label or crew instead: "+ DJ Pivnoy Cowboy (Crunch Tapes / LVFT)".
      */
     private fun parseGenre(title: String): String? =
         GENRE_PARENTHETICAL
             .findAll(title)
             .filterNot { LEADING_BRACKETED_ACT.containsMatchIn(stripTitleStatusMarker(title)) }
+            .filterNot { isDjCreditNote(title, it) }
             .flatMap { genresFromAnnotation(it.groupValues[1]) }
             .distinct()
             .joinToString(", ")
@@ -230,7 +233,8 @@ class SchokoladenOverviewPageScraper {
      * `"<night> w/ <acts>"` title bills the acts only (`15 Jahre Gut Drauf – … mit mOck & Petula`,
      * `Weihnachtstrinken mit: Klinge Komplex`, #4183). The title is stored verbatim — only the derived
      * names are cleaned. Non-concert events (readings, specials) yield no artists unless a
-     * "Support:" line is present. The subtitle's aftershow DJs follow, from [aftershowDjs].
+     * "Support:" line is present or the title bills a `+ DJ` act ([titleDjs]). The subtitle's
+     * aftershow DJs follow, from [aftershowDjs].
      */
     private fun parseArtists(
         title: String,
@@ -251,7 +255,8 @@ class SchokoladenOverviewPageScraper {
                 .replace(QUOTED_WORK, "")
                 .replace(QUOTED_TOUR, "")
                 .trim()
-        return buildArtistsForEventType(artistTitle, subtitle, eventType, unpackWithFrame = true) + aftershowDjs(subtitle)
+        return (buildArtistsForEventType(artistTitle, subtitle, eventType, unpackWithFrame = true) + titleDjs(title, eventType) + aftershowDjs(subtitle))
+            .distinct()
     }
 
     /**
@@ -418,6 +423,40 @@ private fun genresFromAnnotation(annotation: String): List<String> {
                 .joinToString("/")
         }.filter { it.isNotBlank() }
 }
+
+/**
+ * Whether [note] follows a `DJ <name>` act and names no genre the vocabulary knows, so it credits the DJ's label or crew
+ * (event 14987). A DJ's genre note stays a genre: `DJ Mietze Fiebels (post-punk / new wave)`. An act that is no DJ keeps
+ * even an unknown word, because the venue coins genres there: `(ghost-pop)`.
+ */
+private fun isDjCreditNote(
+    title: String,
+    note: MatchResult
+): Boolean =
+    DJ_ACT_BEFORE_NOTE.containsMatchIn(title.substring(0, note.range.first)) &&
+        note.groupValues[1]
+            .split(',')
+            .flatMap { it.split(ANNOTATION_PIECE_SEPARATOR) }
+            .none { isGenreLabel(it.trim()) }
+
+/** A `DJ <name>` act that ends where the note starts, opening the title or after a `+`, `&` or `,`. */
+private val DJ_ACT_BEFORE_NOTE = Regex("""(?:^|[+&,])\s*(?:gast[\s-]?)?djs?\s+[^+&,()\[\]]+$""", RegexOption.IGNORE_CASE)
+
+/**
+ * The DJs a non-concert night bills in its title with a `+ DJ` act, `Kneipenabend / Bar Night + DJ Pivnoy Cowboy (…)`
+ * (event 14987), read as [aftershowDjs] reads a subtitle. A concert title bills its acts through the shared splitter.
+ */
+private fun titleDjs(
+    title: String,
+    eventType: String?
+): List<ScrapedArtist> {
+    if (eventType == EventType.CONCERT.name) return emptyList()
+    val leadIn = TITLE_DJ_LEAD_IN.find(title) ?: return emptyList()
+    return aftershowDjs(title.substring(leadIn.range.first))
+}
+
+/** The `+` in front of a `DJ` act in a title. */
+private val TITLE_DJ_LEAD_IN = Regex("""\+\s*(?=(?:gast[\s-]?)?djs?\s)""", RegexOption.IGNORE_CASE)
 
 /**
  * A two- or three-letter country or city code, possibly two of them ("bln/aus"), or a place the
