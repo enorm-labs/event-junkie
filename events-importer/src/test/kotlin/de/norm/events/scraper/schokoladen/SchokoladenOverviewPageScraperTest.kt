@@ -384,6 +384,33 @@ class SchokoladenOverviewPageScraperTest {
             // The title is a night, not an act; the subtitle's "& after 22h: DJ Anita Drink" is the one billed name.
             special.artists shouldContainExactly listOf(ScrapedArtist(name = "Anita Drink", role = ArtistRole.DJ))
         }
+
+        @Test
+        fun `bills the DJ of a bar night and reads the DJ's label note as no genre`() {
+            fun nightOf(
+                category: String,
+                title: String
+            ) = scraper
+                .scrape(
+                    Jsoup.parse(
+                        """
+                        <div class="event"><h6 class="category">$category</h6><h2 class="fw-bold">$title</h2>
+                          <h6 class="subtitle">cozy bar night &amp; indie, grunge, shoegaze, emo, post-punk vinyl listening evening</h6>
+                          <div class="event-info" id="e20261125" data-event-date="2026-11-25"></div></div>
+                        """.trimIndent(),
+                        baseUrl
+                    ),
+                    baseUrl
+                ).single()
+
+            // Event 14987: the note names the DJ's record label and agency.
+            val barNight = nightOf("Kneipe", "Kneipenabend / Bar Night + DJ Pivnoy Cowboy (Crunch Tapes / LVFT)")
+            barNight.genre.shouldBeNull()
+            barNight.artists shouldContainExactly listOf(ScrapedArtist(name = "Pivnoy Cowboy", role = ArtistRole.DJ))
+            // A DJ's note that names a known genre stays a genre, and a band's coined genre is kept.
+            nightOf("Kneipe", "Kneipenabend + DJ Mietze Fiebels (post-punk / new wave)").genre shouldBe "post-punk/new wave"
+            nightOf("Musik", "Daniel Benyamin (ghost-pop)").genre shouldBe "ghost-pop"
+        }
     }
 
     @Nested
