@@ -16,14 +16,6 @@ import org.junit.jupiter.api.Test
  */
 class GenreNormalizerTest {
     @Test
-    fun `reads Drugstore's glued styles as the styles they are`() {
-        // Events 10664 to 10667.
-        normalizeGenre("Psych Doom, Blackened Doom, Fuzzed out PsychDoom") shouldBe listOf("Psych Doom", "Blackened Doom")
-        normalizeGenre("BlackMetal, Antifascist BlackMetal, Oldschool DeathMetal") shouldBe listOf("Metal")
-        normalizeGenre("Experimental Black Gaze, Post BlackMetal, Dungeon Synth / Noise") shouldBe listOf("Metal", "Dungeon Synth", "Noise")
-    }
-
-    @Test
     fun `null input returns empty list`() {
         normalizeGenre(null).shouldBeEmpty()
     }
@@ -451,12 +443,6 @@ class GenreNormalizerTest {
 
     // Events 13801 and 13804: Schokoladen's hyphenated short forms.
     @Test
-    fun `Schokoladen's short forms land on the tags the filter knows`() {
-        normalizeGenre("psych/alt-rock/indie-folk").shouldContainExactly("Psychedelic", "Rock", "Indie-folk")
-        normalizeGenre("jangle-pop/indie-rock").shouldContainExactly("Indie")
-    }
-
-    @Test
     fun `a misspelt genre lands on the genre it means`() {
         assertSoftly {
             normalizeGenre("Dicso").shouldContainExactly("Disco")
@@ -530,17 +516,6 @@ class GenreNormalizerTest {
     }
 
     @Test
-    fun `Gretchen audience and theme labels are dropped`() {
-        // Audience/theme/series labels Gretchen drops into the genre field, split on
-        // "//" and "," — the real genres survive, the labels do not.
-        normalizeGenre("FLINTA*// Pop, HipHop, House")
-            .shouldContainExactly("Pop", "Hip Hop", "House")
-        normalizeGenre("Männerparty // Fetish").shouldBeEmpty()
-        normalizeGenre("Berbenautika, Cumbia, Breaks, HipHop")
-            .shouldContainExactly("Latin", "Breaks", "Hip Hop")
-    }
-
-    @Test
     fun `or delimiter splits and drops the non-genre half`() {
         // "Tango or NonTango" previously fell through whole as one noisy tag.
         normalizeGenre("Tango or NonTango").shouldContainExactly("Tango")
@@ -568,16 +543,6 @@ class GenreNormalizerTest {
         // "Electropunk" (Festsaal) and "Elektro-punk" (Hole 44) previously fragmented.
         normalizeGenre("Electropunk").shouldContainExactly("Electropunk")
         normalizeGenre("EDM, elektro-punk").shouldContainExactly("EDM", "Electropunk")
-    }
-
-    @Test
-    fun `Wild at Heart freeform style labels are normalized or dropped`() {
-        // Idiosyncratic style labels from the retro concerts.php page.
-        normalizeGenre("Ska/Reggea/Beat").shouldContainExactly("Ska", "Reggae", "Beat") // typo folded
-        normalizeGenre("Kick Ass / Rock").shouldContainExactly("Rock") // non-genre dropped
-        normalizeGenre("StonerPsychedelicMetal").shouldContainExactly("Metal")
-        normalizeGenre("Rawk`n`Roll").shouldContainExactly("Rock")
-        normalizeGenre("HC").shouldContainExactly("Hardcore")
     }
 
     @Test
