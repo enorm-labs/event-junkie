@@ -6,6 +6,9 @@
 #   scripts/cluster-secrets.sh <staging|production>            create or update all of them
 #   scripts/cluster-secrets.sh <staging|production> --check    compare the cluster with the Keychain; changes nothing
 #   scripts/cluster-secrets.sh <staging|production> --import   store a value the Keychain lacks, read from the cluster
+#   scripts/cluster-secrets.sh <staging|production> --rotate <namespace>/<secret>
+#                                                              new random values into the Keychain and the
+#                                                              cluster, then restart what reads them (#5327)
 #
 # The production rebuild restored fourteen objects by hand, and four values were in no Keychain item
 # at all. The VAPID pair lived only in its Secret, so the rebuild ended every Web Push subscription.
@@ -14,8 +17,11 @@
 # A write first resolves every value, and a missing Keychain item stops it before anything is
 # written. Values never reach an argument list or the terminal: each manifest is built in a 0700
 # temp dir and piped to `kubectl apply --server-side`, which also writes no last-applied annotation,
-# a second copy of the value. `--import` is the exception: `security add-generic-password -w` takes
-# the value as an argument, visible to `ps` for that moment. It never overwrites an item.
+# a second copy of the value. `--import` and `--rotate` are the exception: `security add-generic-password -w`
+# takes the value as an argument, visible to `ps` for that moment. `--import` never overwrites an item.
+#
+# `--rotate` takes only a Secret whose values this script can generate and whose loss costs nothing
+# (`rotation_of`). Every other one needs a provider console or ends something, and SECRETS.md has its rotation.
 #
 # `flux-system` exists only after `flux bootstrap` (CLUSTER_BOOTSTRAP.md §9). Without it the
 # Secrets there are skipped, and a second run after §9 adds them. The three database Secrets are not
@@ -48,11 +54,29 @@ case "$ENV" in
     *) die "expected staging or production, got '${ENV}'" ;;
 esac
 MODE="${2:-write}"
+ROTATE=""
 case "$MODE" in
-    write | --check | --import) ;;
+    write | --check | --import) [ $# -le 2 ] || die "too many arguments" ;;
+    --rotate)
+        ROTATE="${3:-}"
+        [ -n "$ROTATE" ] || die "--rotate needs <namespace>/<secret>"
+        [ $# -le 3 ] || die "too many arguments"
+        ;;
     *) die "unknown argument '$MODE'" ;;
 esac
-[ $# -le 2 ] || die "too many arguments"
+
+# The workload that reads a rotatable Secret, so the restart picks the new values up.
+rotation_of() {
+    case "$1" in
+        event-junkie/event-junkie-imgproxy) echo "deployment/event-junkie-importer" ;;
+        event-junkie/event-junkie-push) die "--rotate refuses $1: a new VAPID pair ends every Web Push subscription" ;;
+        *) die "--rotate refuses $1: its values come from a provider or a console. docs/ops/SECRETS.md has its rotation" ;;
+    esac
+}
+RESTART=""
+if [ -n "$ROTATE" ]; then
+    RESTART="$(rotation_of "$ROTATE")" || exit 1
+fi
 
 CTX="${EJ_KUBE_CONTEXT:-event-junkie-$ENV}"
 AGE_KEY="${EJ_AGE_KEY:-$HOME/.config/sops/age/event-junkie.txt}"
@@ -144,9 +168,33 @@ resolve() {
 
 umask 077
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+# Set from the Keychain write of a rotation until the restart is through, so a failure in between says how to catch up.
+PENDING=""
+cleanup() {
+    rm -rf "$WORK"
+    [ -z "$PENDING" ] || echo "cluster-secrets: the Keychain holds new values for $PENDING that $CTX may not." \
+        "Run scripts/cluster-secrets.sh $ENV, then kubectl --context $CTX -n ${PENDING%%/*} rollout restart $RESTART" >&2
+}
+trap cleanup EXIT
 SPEC="$WORK/spec"
 spec | awk -v skip=" ${EJ_SKIP_SECRETS:-} " 'index(skip, " " $1 "/" $2 " ") == 0' >"$SPEC"
+
+# A rotation narrows the spec to its one Secret, so the write below applies nothing else.
+if [ -n "$ROTATE" ]; then
+    command -v openssl >/dev/null || die "--rotate needs openssl"
+    awk -v want="$ROTATE" '$1 "/" $2 == want' "$SPEC" >"$WORK/rotate"
+    [ -s "$WORK/rotate" ] || die "$ROTATE is not a Secret of $ENV"
+    while read -r _ _ key source <&3; do
+        case "$source" in kc:*) ;; *) die "$ROTATE $key does not come from the Keychain" ;; esac
+    done 3<"$WORK/rotate"
+    PENDING="$ROTATE"
+    while read -r _ _ key source <&3; do
+        # Hex, because imgproxy decodes both values: raw bytes give a 403 that reads like a wrong key.
+        security add-generic-password -U -a "${USER:-$(id -un)}" -s "${source#kc:}" -w "$(openssl rand -hex 32)"
+        echo "cluster-secrets: ${source#kc:}: a new value in the Keychain"
+    done 3<"$WORK/rotate"
+    cp "$WORK/rotate" "$SPEC"
+fi
 
 flux_ready() { k get namespace flux-system >/dev/null 2>&1; }
 
@@ -231,3 +279,15 @@ for file in "$WORK"/obj/*/*; do
     done <"$file"
     echo "  $ns/$name:$lengths"
 done
+
+if [ -n "$ROTATE" ]; then
+    ns="${ROTATE%%/*}"
+    while read -r _ name key source <&3; do
+        cluster="$(k get secret "$name" -n "$ns" -o json | jq -r --arg k "$key" '.data[$k] // empty')"
+        [ "$cluster" = "$(resolve "$source")" ] || die "$ROTATE $key on $CTX differs from the Keychain after the write"
+    done 3<"$SPEC"
+    k -n "$ns" rollout restart "$RESTART" >/dev/null
+    k -n "$ns" rollout status "$RESTART" --timeout=5m >/dev/null
+    PENDING=""
+    echo "cluster-secrets: rotated $ROTATE on $CTX and restarted $RESTART"
+fi
