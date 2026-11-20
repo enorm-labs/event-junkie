@@ -255,7 +255,12 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         // Whole-token, so the `music` veto below keeps this one.
         "brazilianmusic" to "Brazilian Music",
         // Wild at Heart's "50`s Psycho"; [lookupKey] drops the backtick.
-        "50spsycho" to "Psychobilly"
+        "50spsycho" to "Psychobilly",
+        // Wild at Heart's "Kick-Ass-Rock": the `kickass` veto reads spaced words only, and a hyphen-part veto would drop
+        // "Singer-Songwriter".
+        "kickassrock" to "Rock",
+        // Wild at Heart's "Hoochie Coochie Trashabilly", three words, so only a known word keeps it.
+        "trashabilly" to "Trashabilly"
     )
 
 /**

@@ -180,6 +180,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "rockabilly" to ROCK,
         "rock-n-roll" to ROCK,
         "motorbilly" to ROCK,
+        "trashabilly" to ROCK,
         "crossover" to ROCK,
         "prog" to ROCK,
         // Punk & Hardcore
