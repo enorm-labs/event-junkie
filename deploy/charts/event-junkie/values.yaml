@@ -437,9 +437,8 @@ images:
       # carrying 94 fixable findings (#1273).
       # **Scan the candidate too, not just the newest tag.** v4.0.19 moved the base to ubuntu:26.04 and
       # brought in a second Go binary, `usr/bin/pebble`, with three HIGH findings; v4.0.20 dropped it again.
-      # v4.0.22, go-jose 4.1.7 and apt 3.2.1ubuntu0.1: clean on both architectures, which is what deleted
-      # the last two `.trivyignore` entries.
-      digest: "sha256:b2953f6a7417be7e8a88819da9d3428270ca942cff280f8e143406fb5f962ed0"
+      # v4.0.24, Go stdlib 1.27.4: no fixable finding on either architecture, and one Go binary.
+      digest: "sha256:5f3546e097bde5d2c568bf5110c4e3fb4af9bbe2cc5da6390067fda034a88db3"
       pullPolicy: IfNotPresent
     # A Secret holding IMGPROXY_KEY and IMGPROXY_SALT, both hex.
     existingSecret: "event-junkie-imgproxy"
