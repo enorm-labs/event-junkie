@@ -19,7 +19,7 @@
     "shadcn": "npx --yes shadcn-vue@2.8.2"
   },
   "dependencies": {
-    "@lucide/vue": "1.72.0",
+    "@lucide/vue": "1.74.0",
     "@tanstack/vue-table": "9.3.1",
     "@vueuse/core": "15.0.0",
     "class-variance-authority": "0.7.1",
@@ -28,17 +28,17 @@
     "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.5",
     "vue": "3.5.45",
-    "vue-router": "5.5.0"
+    "vue-router": "5.5.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.5",
-    "@tsconfig/node26": "26.0.1",
+    "@tsconfig/node26": "26.0.2",
     "@types/jsdom": "30.0.0",
     "@types/node": "26.6.6",
-    "@vitejs/plugin-vue": "6.0.10",
+    "@vitejs/plugin-vue": "6.0.11",
     "@vitest/eslint-plugin": "1.6.28",
     "@vue/eslint-config-typescript": "14.9.0",
-    "@vue/test-utils": "2.5.1",
+    "@vue/test-utils": "2.6.0",
     "@vue/tsconfig": "0.9.1",
     "eslint": "10.14.0",
     "eslint-config-prettier": "10.1.8",
@@ -46,7 +46,7 @@
     "eslint-plugin-vue": "10.12.1",
     "eslint-plugin-vuejs-accessibility": "2.6.3",
     "jiti": "2.7.0",
-    "jsdom": "31.0.0",
+    "jsdom": "31.0.1",
     "knip": "6.45.1",
     "npm-run-all2": "9.0.4",
     "oxfmt": "0.78.0",
