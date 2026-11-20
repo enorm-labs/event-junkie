@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 /**
- * The search page's offer when no artist matched (#5214): an act that is not on the site yet can be watched, and the visitor
- * hears of its first Berlin date. Nothing is asked of MusicBrainz before the press. Signed out, the button leads to sign-in,
- * which comes back here with `do=watch` and opens the picker.
+ * The search page's offer to watch an act that is not on the site yet (#5214): the visitor hears of its first Berlin date.
+ * With `namesake`, an artist on the site carries the name searched, and the offer asks for another act of that name.
+ * Nothing is asked of MusicBrainz before the press. Signed out, the button leads to sign-in, which comes back here with
+ * `do=watch` and opens the picker.
  */
 import { BellPlus } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
@@ -16,7 +17,7 @@ import { useSignInAction } from '@/composables/useSignInAction'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { signInReturn } from '@/lib/signInNext'
 
-const props = defineProps<{ q: string }>()
+const props = defineProps<{ q: string; namesake?: boolean }>()
 
 const { t } = useI18n()
 const route = useRoute()
@@ -55,9 +56,14 @@ watch(
 
 <template>
   <section v-if="account !== undefined" class="space-y-3">
-    <SectionLabel as="h2">{{ t('account.watch.offer') }}</SectionLabel>
+    <SectionLabel as="h2">{{
+      namesake ? t('account.watch.offerNamesake', { q }) : t('account.watch.offer')
+    }}</SectionLabel>
     <p class="text-body text-muted-foreground">
-      {{ q ? t('account.watch.offerText', { q }) : t('account.watch.offerTextAny') }}
+      <template v-if="namesake">{{ t('account.watch.offerNamesakeText', { q }) }}</template>
+      <template v-else>{{
+        q ? t('account.watch.offerText', { q }) : t('account.watch.offerTextAny')
+      }}</template>
     </p>
     <Button v-if="!account" as-child variant="outline">
       <RouterLink :to="signInLink" rel="nofollow">
