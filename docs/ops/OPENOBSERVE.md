@@ -377,8 +377,9 @@ The chart's `existingRootUserSecret` reads from the release's target namespace i
 
 **The collector's header is derived, and goes stale silently.** The collectors send a `Basic` header, not a user and a password. They read it at start from
 `openobserve-collector-auth` in their own namespace. Rotate the root password without running `scripts/cluster-secrets.sh <env>` again, and the collector
-keeps posting with the old header while OpenObserve refuses. That looks like an ingestion outage, not a credential problem. After the script, restart both
-collectors. [SECRETS.md](SECRETS.md) §openobserve-credentials has the commands.
+keeps posting with the old header while OpenObserve refuses. That looks like an ingestion outage, not a credential problem. The password itself lives in
+OpenObserve's database, so a rotation starts there. [SECRETS.md § Rotating the OpenObserve root password](SECRETS.md#rotating-the-openobserve-root-password)
+has the procedure.
 
 **Changing the Secret restarts nothing.** The S3 keys reach the pod through `envFrom`, which references a Secret by name. The running pod therefore keeps the old value
 until something replaces it. `flux reconcile` will report success and `rollout status` will say the rollout is complete, both truthfully, with the old credential
