@@ -205,8 +205,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
           {{ results && !loading ? t('search.status', { count: found }) : '' }}
         </p>
         <p v-if="status" class="px-4 py-3 text-body text-muted-foreground">{{ status }}</p>
+        <!-- Also with nothing found: the results page searches past events and offers to watch an act (#5214). -->
         <ListboxContent
-          v-if="groups.length"
+          v-if="groups.length || (results && !error)"
           :aria-label="t('search.resultsFor', { q })"
           class="min-h-0 flex-1 overflow-y-auto p-2"
         >
@@ -226,7 +227,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
               </span>
             </ListboxItem>
           </ListboxGroup>
-          <ListboxGroup class="border-t border-border pt-2">
+          <ListboxGroup :class="groups.length && 'border-t border-border pt-2'">
             <ListboxItem
               :value="searchPagePath"
               class="block cursor-pointer rounded-md px-2 py-1.5 text-body text-primary data-highlighted:bg-accent"

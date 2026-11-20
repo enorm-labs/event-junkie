@@ -154,6 +154,25 @@ describe('GlobalSearch', () => {
     expect(router.currentRoute.value.fullPath).toBe('/de/search?q=dj%20koze')
   })
 
+  it('links to the results page when nothing matched, for past events and the offer to watch an act', async () => {
+    getMock.mockResolvedValue({
+      events: { items: [], total: 0 },
+      venues: { items: [], total: 0 },
+      artists: { items: [], total: 0 },
+      promoters: { items: [], total: 0 },
+    })
+    await mountAt()
+    await search('the screenshots')
+
+    expect(wrapper!.text()).toContain('Nothing found for “the screenshots”.')
+    const options = wrapper!.findAll('[role="option"]')
+    expect(options.map((option) => option.text())).toEqual(['All results for “the screenshots”'])
+    await options[0]!.trigger('click')
+    await flushPromises()
+
+    expect(router.currentRoute.value.fullPath).toBe('/en/search?q=the%20screenshots')
+  })
+
   it('asks for a second character before it searches', async () => {
     await mountAt()
     await search('b')
