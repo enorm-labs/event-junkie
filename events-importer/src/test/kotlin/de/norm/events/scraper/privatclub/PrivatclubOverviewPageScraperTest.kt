@@ -196,6 +196,73 @@ class PrivatclubOverviewPageScraperTest {
     }
 
     @Nested
+    inner class SelfPromotingAct {
+        /** Event 15068, trimmed to the fields the scraper reads: the band is its own `Örtlicher Veranstalter`. */
+        private fun card(
+            title: String,
+            promoter: String,
+            type: String = "Konzert"
+        ) = """
+            <div class="event_wrapper skewed">
+                <a href="https://privatclub-berlin.de/event/mary-and-the-sharks/" class="event_header">
+                    <span class="datum_part1">Mo. 8.</span> <span class="datum_part2">März</span>
+                    <div class="zeile_typ"><div class="event_typ">$type</div></div>
+                    <span class="titel">$title</span>
+                </a>
+                <div class="event_detail">
+                    <div class="zeile content">
+                        <p>Eine Band aus Berlin.</p>
+                        <div class="veranstaltertext tk-proxima-nova">
+                            Örtlicher Veranstalter: $promoter
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """.trimIndent()
+
+        private fun scrape(html: String) = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        @Test
+        fun `bills a band named as its own promoter and credits no promoter`() {
+            val event = scrape(card("Mary And The Sharks", "Mary And The Sharks"))
+
+            event.artists shouldContainExactly
+                listOf(ScrapedArtist(name = "Mary And The Sharks", role = ArtistRole.HEADLINER, titleDerived = true))
+            event.promoters.shouldBeEmpty()
+        }
+
+        @Test
+        fun `compares the names by slug, so a linked name in other case still matches`() {
+            val event = scrape(card("Mary And The Sharks", """<a href="https://example.de/">MARY AND THE SHARKS</a>"""))
+
+            event.promoters.shouldBeEmpty()
+        }
+
+        @Test
+        fun `keeps a promoter whose name differs from the act`() {
+            val event = scrape(card("Mary And The Sharks", "Mojo Mojo Records"))
+
+            event.artists.map { it.name } shouldContainExactly listOf("Mary And The Sharks")
+            event.promoters shouldContainExactly listOf("Mojo Mojo Records")
+        }
+
+        @Test
+        fun `keeps a promoter whose name is only part of the act's`() {
+            val event = scrape(card("Mary And The Sharks", "Mary"))
+
+            event.promoters shouldContainExactly listOf("Mary")
+        }
+
+        @Test
+        fun `keeps the promoter of a party whose title names the night, not an act`() {
+            val event = scrape(card("Soul Explosion", "Soul Explosion", type = "Party"))
+
+            event.artists.shouldBeEmpty()
+            event.promoters shouldContainExactly listOf("Soul Explosion")
+        }
+    }
+
+    @Nested
     inner class StatusHandling {
         @Test
         fun `detects sold out status`() {
