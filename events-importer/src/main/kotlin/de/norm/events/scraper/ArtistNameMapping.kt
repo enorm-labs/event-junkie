@@ -103,7 +103,7 @@ fun headlinersFromTitle(
     if (isPresenterOwnEventTitle(title, subtitle)) return emptyList()
     anniversaryQuotedAct(title)?.let { return it }
     if (unpackWithFrame) withFrameActs(title)?.let { return it }
-    // `<act> feat. <guest>` mid-title: the guest is billed as support, the act goes on (#305).
+    // `<act> feat. <guest>` mid-title: the guest is billed GUEST, the act goes on (#305, #5359).
     // A `Vorprogramm:` names the support act, so it bills like `+ Support:` (#1841).
     // The quoted show goes before the split, which would cut `"HARMONY + ECSTASY"` at the `+` (#3622).
     val (billing, guests) =
@@ -227,14 +227,14 @@ fun hostedActsFromTitle(
 /** The `feat.` / `featuring` / `ft.` marker between an act and its guest, mid-title. */
 private val FEATURED_GUEST_MARKER = Regex("""\s+(?:feat\.?|featuring|ft\.)\s+""", RegexOption.IGNORE_CASE)
 
-/** The title's billing before a [FEATURED_GUEST_MARKER], and the guests after it as support acts. */
+/** The title's billing before a [FEATURED_GUEST_MARKER], and the guests after it as [ArtistRole.GUEST]. */
 private fun splitFeaturedGuests(title: String): Pair<String, List<ScrapedArtist>> {
     val marker = FEATURED_GUEST_MARKER.find(title) ?: return title to emptyList()
     val guests =
         splitSupportActs(title.substring(marker.range.last + 1))
             .map { stripArtistSuffix(it) }
             .filterNot(::isNonArtistName)
-            .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT, titleDerived = true) }
+            .map { ScrapedArtist(name = it, role = ArtistRole.GUEST, titleDerived = true) }
     return title.substring(0, marker.range.first) to guests
 }
 

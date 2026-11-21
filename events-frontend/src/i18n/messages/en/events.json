@@ -189,6 +189,7 @@
   "role": {
     "HEADLINER": "Headliner",
     "SUPPORT": "Support",
+    "GUEST": "Guest",
     "DJ": "DJ",
     "LIVE": "Live"
   },

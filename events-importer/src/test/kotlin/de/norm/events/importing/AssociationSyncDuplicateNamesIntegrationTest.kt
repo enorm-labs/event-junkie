@@ -288,7 +288,7 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
                 .toList()
                 .map { it.role }
                 .sorted() shouldBe
-                listOf("HEADLINER", "SUPPORT")
+                listOf("GUEST", "HEADLINER")
         }
     }
 

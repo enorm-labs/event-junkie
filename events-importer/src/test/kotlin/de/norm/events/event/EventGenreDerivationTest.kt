@@ -97,6 +97,29 @@ class EventGenreDerivationTest : BaseControllerTest() {
         updated.genreTags shouldBe listOf("Ambient")
     }
 
+    @Test
+    fun `a guest lends the event no genre`() {
+        val venue = createVenue("Derive Guest Venue")
+        val guest = createArtist("Derive Guest Act")
+        createEvent(venue.id, "test:derive-guest-1", guest, genre = "Soul")
+
+        val created =
+            webTestClient
+                .post()
+                .uri("/api/admin/events")
+                .bodyValue(
+                    request(venue.id, "manual:derive-guest-2", artist = null)
+                        .copy(artists = listOf(EventArtistRequest(artistId = guest.id, role = ArtistRole.GUEST)))
+                ).exchange()
+                .expectStatus()
+                .isCreated
+                .expectBody<EventResponse>()
+                .returnResult()
+                .responseBody!!
+
+        created.genreTags shouldBe emptyList()
+    }
+
     private fun request(
         venueId: Long,
         sourceId: String,

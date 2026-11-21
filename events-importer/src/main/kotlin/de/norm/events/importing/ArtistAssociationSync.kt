@@ -14,6 +14,7 @@ import de.norm.events.event.EventType
 import de.norm.events.musicbrainz.MusicBrainzMatcher
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.bracketAddsAct
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isSlugless
 import de.norm.events.scraper.splitBackToBack
@@ -324,12 +325,17 @@ internal fun artistRefusal(name: String): QualityFlagKind? =
         else -> null
     }
 
-/** [splitBracketedGuest] on one billing; a headliner's guest is support, as a `feat.` title bills it (#305). */
-internal fun splitGuest(artist: ScrapedArtist): List<ScrapedArtist> =
-    splitBracketedGuest(artist.name).mapIndexed { index, name ->
-        val role = if (index > 0 && artist.role == ArtistRole.HEADLINER) ArtistRole.SUPPORT else artist.role
+/**
+ * [splitBracketedGuest] on one billing. A headliner's featured guest is [ArtistRole.GUEST], as a `feat.` title bills it (#5359).
+ * An added act, `(+ Corrode)`, is support. Any other role passes to the guest unchanged.
+ */
+internal fun splitGuest(artist: ScrapedArtist): List<ScrapedArtist> {
+    val guestRole = if (bracketAddsAct(artist.name)) ArtistRole.SUPPORT else ArtistRole.GUEST
+    return splitBracketedGuest(artist.name).mapIndexed { index, name ->
+        val role = if (index > 0 && artist.role == ArtistRole.HEADLINER) guestRole else artist.role
         artist.copy(name = name, role = role)
     }
+}
 
 /**
  * A billed name that reaches a stored row whose name differs only by accents may be a different act, as `Göre`

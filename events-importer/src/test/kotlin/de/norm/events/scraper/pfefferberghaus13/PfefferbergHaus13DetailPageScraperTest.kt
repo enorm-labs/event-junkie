@@ -91,7 +91,7 @@ class PfefferbergHaus13DetailPageScraperTest {
     fun `bills the acts after a series name that leads a framed title`() {
         // Event 13165 on production.
         actsOf("¡VAMOS A BAILAR! – La Fiesta de la Salsa – CONEXIÓN feat. Mayelis", EventType.CONCERT.name, emptyList())
-            .map { it.name to it.role } shouldBe listOf("CONEXIÓN" to ArtistRole.HEADLINER, "Mayelis" to ArtistRole.SUPPORT)
+            .map { it.name to it.role } shouldBe listOf("CONEXIÓN" to ArtistRole.HEADLINER, "Mayelis" to ArtistRole.GUEST)
         framedBill("Soul Night mit Montigo Rim & Hiddit") shouldBe "Soul Night mit Montigo Rim & Hiddit"
         framedBill("Berlin Buddies – Geburtstagskonzert") shouldBe "Berlin Buddies – Geburtstagskonzert"
     }

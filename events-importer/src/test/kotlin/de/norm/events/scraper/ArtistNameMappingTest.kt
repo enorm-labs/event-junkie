@@ -860,13 +860,13 @@ class ArtistNameMappingTest {
             listOf("Lovataraxx", "Hysteric Helen", "Olgha")
     }
 
-    // #305 — a `feat.` guest mid-title is support, and the act keeps its year-ended night name off.
+    // #305, #5359 — a `feat.` guest mid-title is a guest, and the act keeps its year-ended night name off.
     @Test
-    fun `headlinersFromTitle bills a featured guest as support and keeps the act`() {
+    fun `headlinersFromTitle bills a featured guest as a guest and keeps the act`() {
         headlinersFromTitle("Stereoact: Ich liebe das Leben Party 2027 feat. Lena Marie Engel").map { it.name to it.role } shouldBe
-            listOf("Stereoact" to ArtistRole.HEADLINER, "Lena Marie Engel" to ArtistRole.SUPPORT)
+            listOf("Stereoact" to ArtistRole.HEADLINER, "Lena Marie Engel" to ArtistRole.GUEST)
         headlinersFromTitle("Kraftklub feat. Tokio Hotel & Casper").map { it.name to it.role } shouldBe
-            listOf("Kraftklub" to ArtistRole.HEADLINER, "Tokio Hotel" to ArtistRole.SUPPORT, "Casper" to ArtistRole.SUPPORT)
+            listOf("Kraftklub" to ArtistRole.HEADLINER, "Tokio Hotel" to ArtistRole.GUEST, "Casper" to ArtistRole.GUEST)
     }
 
     // #3160 — production titles: a night or series name is no act.

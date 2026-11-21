@@ -67,7 +67,7 @@ Valid enum values (stored as `TEXT`; anything else is a bug — parsers fall bac
 
 - `event.event_type`: `CONCERT`, `FESTIVAL`, `PARTY`, `QUIZ`, `SHOW`, `COMEDY`, `SCREENING`, `EXHIBITION`, `READING`, `OTHER`
 - `event.status`: `SCHEDULED`, `RELOCATED`, `CANCELLED`, `POSTPONED`
-- `event_artist.role`: `HEADLINER`, `SUPPORT`, `DJ`, `LIVE`
+- `event_artist.role`: `HEADLINER`, `SUPPORT`, `GUEST`, `DJ`, `LIVE`
 
 ## What to check
 

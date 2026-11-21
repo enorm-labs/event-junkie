@@ -33,7 +33,7 @@ export type EventStatus = (typeof EVENT_STATUSES)[number]
 export const MOVED_STATUSES: readonly string[] = ['RELOCATED', 'POSTPONED']
 
 /** `ArtistRole` in `events-core`, in its order. */
-export const ARTIST_ROLES = ['HEADLINER', 'SUPPORT', 'DJ', 'LIVE'] as const
+export const ARTIST_ROLES = ['HEADLINER', 'SUPPORT', 'GUEST', 'DJ', 'LIVE'] as const
 
 export type ArtistRole = (typeof ARTIST_ROLES)[number]
 

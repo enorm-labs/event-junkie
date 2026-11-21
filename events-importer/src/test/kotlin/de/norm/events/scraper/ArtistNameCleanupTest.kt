@@ -632,6 +632,14 @@ class ArtistNameCleanupTest {
         splitBracketedGuest("Sickboyrari (Black Kray)") shouldBe listOf("Sickboyrari (Black Kray)")
     }
 
+    @Test
+    fun `bracketAddsAct tells an added act from a featured one`() {
+        bracketAddsAct("Warhammer (+ Corrode)") shouldBe true
+        bracketAddsAct("Dosenstolz (feat. Tancred)") shouldBe false
+        bracketAddsAct("Lea (with Band)") shouldBe false
+        bracketAddsAct("Sickboyrari (Black Kray)") shouldBe false
+    }
+
     // #1564 — a line-up placeholder glued to the last act.
     @Test
     fun `stripArtistSuffix drops a more-to-come tail`() {

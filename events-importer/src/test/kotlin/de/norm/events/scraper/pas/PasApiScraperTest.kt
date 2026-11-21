@@ -1,5 +1,6 @@
 package de.norm.events.scraper.pas
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureText
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -165,7 +166,8 @@ class PasApiScraperTest {
             <p>Entrance in the courtyard, Aufgang II, 1OG<br>Doors 19:30, music a bit later</p>"""
         val night = variant("The Electrics + guests. Day I", description = description).shouldNotBeNull()
 
-        night.artists.map { it.name } shouldContainExactly listOf("The Electrics", "Tobias Delius", "Olaf Rupp")
+        night.artists.map { it.name to it.role } shouldContainExactly
+            listOf("The Electrics" to ArtistRole.HEADLINER, "Tobias Delius" to ArtistRole.GUEST, "Olaf Rupp" to ArtistRole.GUEST)
         variant("The Electrics + guests. Day II", description = "<p>The Electrics</p>").shouldNotBeNull().artists.map { it.name } shouldContainExactly
             listOf("The Electrics")
     }

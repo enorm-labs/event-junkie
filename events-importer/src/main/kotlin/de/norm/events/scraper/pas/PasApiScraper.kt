@@ -40,7 +40,7 @@ import tools.jackson.databind.JsonNode
  *   A surname billed alone (`Tuerlinckx & Cusack`) takes the full name from a credit line (`Anaïs Tuerlinckx – piano`).
  *   A colon that closes the title (`Iva Nova:`) leaves the stored title, and it still marks the title as a billing, not a series night.
  * - **A `+ guests` tail names no one** (`The Electrics + guests. Day I`, events 15059 and 15060): the band is billed, and so is
- *   each player the description credits below its lone `+` line.
+ *   each player the description credits below its lone `+` line, as a guest of the band.
  * - **A `Kick-off:` title names the occasion, not the acts** (`Kick-off: Jazzfest Community Week & Kiez-Session #1`), so it bills none.
  * - **The tags mix styles with formats**, so only the styles are the genre.
  */
@@ -130,7 +130,7 @@ class PasApiScraper {
     ): List<ScrapedArtist> {
         GUESTS_TAIL.find(title)?.let { tail ->
             val band = headlinersFromTitle(title.substring(0, tail.range.first))
-            return band + guestsCredited(descriptionHtml).map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+            return band + guestsCredited(descriptionHtml).map { ScrapedArtist(name = it, role = ArtistRole.GUEST) }
         }
         if (!BILLING_SEPARATOR.containsMatchIn(title) || KICK_OFF.containsMatchIn(title)) return emptyList()
         val billing =
