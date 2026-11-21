@@ -5,6 +5,7 @@ import de.norm.events.event.EventEntity
 import de.norm.events.event.EventFeature
 import de.norm.events.event.EventFeatureMatch
 import de.norm.events.event.EventFeatureRules
+import de.norm.events.event.EventSavedByHand
 import de.norm.events.event.PinnedField
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
@@ -145,4 +146,22 @@ class EventFeatureSync(
         } else {
             null
         }
+}
+
+/**
+ * Reads the event features of an event the admin app created or edited, as [EventFeatureSync] does on import (#5334).
+ * An import clears the event's flags before the sync, and an admin save does not, so this deletes the event's
+ * [QualityFlagKind.UNCERTAIN_PARTY_FEATURE] flags first: the table's key would refuse the same cue twice.
+ */
+@Service
+class AdminEventFeatureSync(
+    private val featureSync: EventFeatureSync,
+    private val qualityFlagRepository: EventQualityFlagRepository
+) : EventSavedByHand {
+    override suspend fun afterSave(event: EventEntity) {
+        val id = event.id ?: return
+        if (PinnedField.FEATURES.key in event.pinnedFields) return
+        qualityFlagRepository.deleteKind(id, QualityFlagKind.UNCERTAIN_PARTY_FEATURE)
+        featureSync.sync(listOf(event))
+    }
 }
