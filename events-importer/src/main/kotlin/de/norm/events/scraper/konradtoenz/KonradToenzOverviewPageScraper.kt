@@ -12,6 +12,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseListing
+import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -26,8 +27,13 @@ import java.time.LocalTime
  *
  * The page is typed by hand. A date line the pattern cannot read (`23.10.20256`) is skipped with a
  * `WARN`, never repaired; a weekday that contradicts the date keeps the printed date. DJs come from the
- * `mit DJ …` or `to DJ …` tail. A night typed as one paragraph runs the styles into the name
- * (`mit DJ Herr Siebendaum Funk & Disco Spezial`), so there the name stops at the first genre word.
+ * `mit DJ …` or `to DJ …` tail, or from a `DJ …` that ends the name (`… early 70s DJ Nolovigo`, event 15042). A `<br>`
+ * inside a paragraph breaks the line, so a style line typed below the name is still the style line. A night typed as one
+ * line runs the styles into the name (`mit DJ Herr Siebendaum Funk & Disco Spezial`), so there the name stops at the first
+ * genre word.
+ *
+ * A date the bar is shut or booked is no night: `Geschlossen!!!!`, `Geschlossene Veranstaltung!!!!` and an `Offener Abend!!`
+ * without a programme are dropped (events 15043, 15045–15047, 15049; EVENT_SCOPE.md).
  */
 class KonradToenzOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -44,7 +50,7 @@ class KonradToenzOverviewPageScraper {
         night: Element,
         sourceUrl: String
     ): ScrapedEvent? {
-        val lines = night.select("p").mapNotNull { it.text().clean().blankToNull() }
+        val lines = night.select("p").flatMap { it.textLines() }.mapNotNull { it.clean().blankToNull() }
         val dateIndex = lines.indexOfFirst { DATE_LINE_START.containsMatchIn(it) }
         if (dateIndex < 0) {
             logger.warn { "Konrad Tönz night without a date line, skipping: $lines" }
@@ -59,6 +65,10 @@ class KonradToenzOverviewPageScraper {
         val (title, style) = lines.drop(dateIndex + 1).let { it.firstOrNull() to it.drop(1).joinToString(" ").blankToNull() }
         if (title == null) {
             logger.warn { "Konrad Tönz night '$dateLine' has no name, skipping" }
+            return null
+        }
+        if (NOT_A_NIGHT.matches(title)) {
+            logger.info { "Konrad Tönz date $date is '$title', no night, skipping" }
             return null
         }
         return ScrapedEvent(
@@ -100,7 +110,7 @@ class KonradToenzOverviewPageScraper {
         title: String,
         stylesInTitle: Boolean
     ): List<ScrapedArtist> {
-        val tail = DJ_TAIL.find(title)?.groupValues?.get(1) ?: return emptyList()
+        val tail = (DJ_TAIL.find(title) ?: DJ_ENDS_NAME.find(title))?.groupValues?.get(1) ?: return emptyList()
         return (if (stylesInTitle) beforeFirstGenreWord(tail) else tail)
             .split(DJ_SEPARATOR)
             .mapNotNull { it.trim().replace(TRAILING_BANGS, "").blankToNull() }
@@ -135,6 +145,12 @@ class KonradToenzOverviewPageScraper {
 
         /** The acts after `mit DJ` or `to DJ`: `Rillenrodeo @ Tönz mit DJ gina d`orio & DJ johnboyadonis`, `Say yes! to DJ Nonoyesnonono!`. */
         val DJ_TAIL = Regex("""\b(?:mit|to)\s+(DJs?\s+.+)$""", RegexOption.IGNORE_CASE)
+
+        /** A name that ends on its DJ with no `mit` before it: `Soulblock- rare soul Music from the 60s to early 70s DJ Nolovigo`. */
+        val DJ_ENDS_NAME = Regex("""\s(DJs?\s+\S.*)$""")
+
+        /** The bar shut, booked for a private party, or open with no programme. */
+        val NOT_A_NIGHT = Regex("""(?:geschlossen|geschlossene\s+veranstaltung|offener\s+abend)\s*!*""", RegexOption.IGNORE_CASE)
 
         /** The exclamation a title ends on, `DJ Nonoyesnonono!`, which is not part of the name. */
         val TRAILING_BANGS = Regex("""!+$""")

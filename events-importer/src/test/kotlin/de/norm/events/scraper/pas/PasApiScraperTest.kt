@@ -46,7 +46,8 @@ class PasApiScraperTest {
     private fun variant(
         title: String,
         categories: List<String> = listOf("Concert"),
-        venue: String? = null
+        venue: String? = null,
+        description: String? = null
     ): ScrapedEvent? =
         JsonMapper().let { mapper ->
             val root = mapper.readTree(fixtureText("pas/pas-events.json")) as ObjectNode
@@ -56,6 +57,7 @@ class PasApiScraperTest {
             val categoryNodes = night.putArray("categories")
             categories.forEach { categoryNodes.addObject().put("name", it) }
             if (venue != null) night.putObject("venue").put("venue", venue)
+            if (description != null) night.put("description", description)
             events.removeAll()
             events.add(night)
             scraper.scrapePage(mapper.writeValueAsString(root)).events.singleOrNull()
@@ -153,6 +155,19 @@ class PasApiScraperTest {
 
         night.title shouldBe "Iva Nova"
         night.artists.map { it.name } shouldContainExactly listOf("Iva Nova")
+    }
+
+    @Test
+    fun `bills the band and the guests credited below the plus line for a plus guests title (events 15059, 15060)`() {
+        val description =
+            """<p>The Electrics: Day I at PAS</p>
+            <p>Axel Dörner &#8211; trumpet<br>Sture Ericson &#8211; saxophones<br>Joe Williamson &#8211; bass<br>Raymond Strid &#8211; drums<br>+<br>Tobias Delius &#8211; saxophones<br>Olaf Rupp &#8211; guitar</p>
+            <p>Entrance in the courtyard, Aufgang II, 1OG<br>Doors 19:30, music a bit later</p>"""
+        val night = variant("The Electrics + guests. Day I", description = description).shouldNotBeNull()
+
+        night.artists.map { it.name } shouldContainExactly listOf("The Electrics", "Tobias Delius", "Olaf Rupp")
+        variant("The Electrics + guests. Day II", description = "<p>The Electrics</p>").shouldNotBeNull().artists.map { it.name } shouldContainExactly
+            listOf("The Electrics")
     }
 
     @Test

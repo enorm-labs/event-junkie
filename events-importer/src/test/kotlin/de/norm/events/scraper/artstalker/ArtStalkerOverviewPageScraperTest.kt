@@ -114,6 +114,14 @@ class ArtStalkerOverviewPageScraperTest {
             listOf("FREE COMPANY" to ArtistRole.HEADLINER)
     }
 
+    @Test
+    fun `bills the DJ a party's tagline names (event 15018)`() {
+        val party = card("Die Early Bird Party: Der frühe Vogel tanzt den Beat - Mit DJ Louie Prima")
+
+        party.eventType shouldBe EventType.PARTY.name
+        party.artists.map { it.name to it.role } shouldBe listOf("DJ Louie Prima" to ArtistRole.DJ)
+    }
+
     private fun cardArtists(title: String) = card(title).artists.map { it.name to it.role }
 
     private fun card(title: String) =

@@ -27,7 +27,7 @@ import java.time.LocalDate
  * Pure parser for the "Anstehende Veranstaltungen" list on Beate Uwe's Elementor homepage. A night
  * is an icon list (`FR, 09.10.26 OKT` beside a calendar icon, `23:00` beside a clock) followed by
  * a text widget: the title paragraph, linked to the night's Resident Advisor page when there is
- * one, then a `w/ A, B b2b C, D (live)` lineup or a line of prose. Elementor nests each night one
+ * one, then a `w/ A, B b2b C, D (live)` lineup or a line of prose. A live act can also be marked `makeke *live` (event 15025). Elementor nests each night one
  * container deeper than the last, so a night is the pair in document order, not a shared parent.
  * The RA link is stored as the ticket link and never followed.
  */
@@ -108,14 +108,15 @@ class BeateUweOverviewPageScraper {
         }
     }
 
-    /** Comma-separated acts; a `b2b` pair bills both, `(live)` bills the act `LIVE`, and a `(… Set)` note comes off. */
+    /** Comma-separated acts; a `b2b` pair bills both, `(live)` or `*live` bills the act `LIVE`, and a `(… Set)` note comes off. */
     private fun parseLineup(text: String): List<ScrapedArtist> =
         text
             .split(OUTSIDE_PARENTHESES_COMMA)
             .flatMap { it.split(B2B_SEPARATOR) }
             .mapNotNull { act ->
                 val name =
-                    stripArtistSuffix(stripLineupBracket(act.replace(SET_NOTE, ""))).blankToNull()?.takeUnless(::isNonArtistName) ?: return@mapNotNull null
+                    stripArtistSuffix(stripLineupBracket(act.replace(SET_NOTE, "").replace(STAR_LIVE, ""))).blankToNull()?.takeUnless(::isNonArtistName)
+                        ?: return@mapNotNull null
                 ScrapedArtist(name = name, role = if (LIVE_MARK.containsMatchIn(act)) ArtistRole.LIVE else ArtistRole.DJ)
             }.distinctBy { it.name.lowercase() }
 
@@ -130,7 +131,10 @@ class BeateUweOverviewPageScraper {
         val LINEUP_PREFIX = Regex("""^w/\s*""", RegexOption.IGNORE_CASE)
         val OUTSIDE_PARENTHESES_COMMA = Regex(""",(?![^()]*\))""")
         val SET_NOTE = Regex("""\s*\([^()]*\bset\)\s*$""", RegexOption.IGNORE_CASE)
-        val LIVE_MARK = Regex("""\(\s*live\s*\)""", RegexOption.IGNORE_CASE)
+        val LIVE_MARK = Regex("""\(\s*live\s*\)|\*\s*live\b""", RegexOption.IGNORE_CASE)
+
+        /** The star-marked live note after a name, `makeke *live`. */
+        val STAR_LIVE = Regex("""\s*\*\s*live\s*$""", RegexOption.IGNORE_CASE)
         const val CENTURY = 100
         const val MILLENNIUM = 2000
     }

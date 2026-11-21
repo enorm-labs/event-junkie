@@ -63,6 +63,30 @@ class BeateUweOverviewPageScraperTest {
     }
 
     @Test
+    fun `a star-marked live act is billed LIVE without its marker (event 15025)`() {
+        val html =
+            """
+            <ul class="elementor-icon-list-items"><li><i class="far fa-calendar-alt"></i><span class="elementor-icon-list-text">SO, 13.12.26 DEZ</span></li>
+            <li><i class="far fa-clock"></i><span class="elementor-icon-list-text">17:00</span></li></ul>
+            <div class="elementor-widget-text-editor"><p>Beate Barfuß /// Serafin Audio Imprint Showcase</p>
+            <p>w/ Tvísker, Ed Noodle &amp; Mark Mywords, makeke *live, iorie, Amaru</p></div>
+            """.trimIndent()
+
+        scraper
+            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+            .single()
+            .artists
+            .map { it.name to it.role } shouldContainExactly
+            listOf(
+                "Tvísker" to ArtistRole.DJ,
+                "Ed Noodle & Mark Mywords" to ArtistRole.DJ,
+                "makeke" to ArtistRole.LIVE,
+                "iorie" to ArtistRole.DJ,
+                "Amaru" to ArtistRole.DJ
+            )
+    }
+
+    @Test
     fun `a b2b pair bills both acts and a stray comma space is tolerated`() {
         acts("2026-10-18") shouldContainExactly
             listOf(

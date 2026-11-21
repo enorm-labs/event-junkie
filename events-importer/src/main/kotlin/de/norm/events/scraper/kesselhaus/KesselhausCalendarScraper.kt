@@ -216,13 +216,21 @@ class KesselhausCalendarScraper(
             isClosedToPublic(subtitle) ||
             isClosedToPublic(pretitle)
 
-    /** A night filed as a concert but tagged as a party and not as a concert is a DJ night. */
+    /**
+     * A night filed as a concert but tagged as a party and not as a concert is a DJ night. A night filed under `Weitere`
+     * and tagged `spoken-word` is a talk, which EVENT_SCOPE.md §2 types a reading: Christoph Strasser's `Multimedia Vortrag`
+     * (event 15052).
+     */
     private fun eventTypeOf(
         category: String?,
         topics: Set<String>
     ): String {
         val type = mapEventType(category, CATEGORY_SYNONYMS) ?: EventType.OTHER.name
-        return if (type == EventType.CONCERT.name && PARTY_TOPIC in topics && CONCERT_TOPIC !in topics) EventType.PARTY.name else type
+        return when {
+            type == EventType.CONCERT.name && PARTY_TOPIC in topics && CONCERT_TOPIC !in topics -> EventType.PARTY.name
+            type == EventType.OTHER.name && SPOKEN_WORD_TOPIC in topics -> EventType.READING.name
+            else -> type
+        }
     }
 
     /**
@@ -332,6 +340,8 @@ class KesselhausCalendarScraper(
         private const val PARTY_TOPIC = "party"
         private val PARTY_PROSE = Regex("""\bparty\b""", RegexOption.IGNORE_CASE)
         private const val CONCERT_TOPIC = "concerts"
+
+        private const val SPOKEN_WORD_TOPIC = "spoken-word"
         private const val PRESALE = "ticket"
         private const val BOX_OFFICE = "box-office"
         private const val SOLD_OUT = "sold-out"

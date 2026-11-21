@@ -1,5 +1,6 @@
 package de.norm.events.scraper.pas
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
@@ -38,6 +39,8 @@ import tools.jackson.databind.JsonNode
  *   (`Music for Cosmos: RAFGAK`), and an ensemble opens a later set before its players (`RAFGAK: Bryan Eubanks & …`).
  *   A surname billed alone (`Tuerlinckx & Cusack`) takes the full name from a credit line (`Anaïs Tuerlinckx – piano`).
  *   A colon that closes the title (`Iva Nova:`) leaves the stored title, and it still marks the title as a billing, not a series night.
+ * - **A `+ guests` tail names no one** (`The Electrics + guests. Day I`, events 15059 and 15060): the band is billed, and so is
+ *   each player the description credits below its lone `+` line.
  * - **A `Kick-off:` title names the occasion, not the acts** (`Kick-off: Jazzfest Community Week & Kiez-Session #1`), so it bills none.
  * - **The tags mix styles with formats**, so only the styles are the genre.
  */
@@ -125,6 +128,10 @@ class PasApiScraper {
         title: String,
         descriptionHtml: String
     ): List<ScrapedArtist> {
+        GUESTS_TAIL.find(title)?.let { tail ->
+            val band = headlinersFromTitle(title.substring(0, tail.range.first))
+            return band + guestsCredited(descriptionHtml).map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+        }
         if (!BILLING_SEPARATOR.containsMatchIn(title) || KICK_OFF.containsMatchIn(title)) return emptyList()
         val billing =
             title
@@ -136,10 +143,16 @@ class PasApiScraper {
     }
 
     /** The players the description credits one per line, `Name – instrument` or `Name: instrument`. */
-    private fun creditedNames(descriptionHtml: String): List<String> =
-        descriptionHtml
-            .split(LINE_BREAK)
-            .mapNotNull { line -> CREDIT_LINE.find(decodeHtmlEntities(line.replace(TAG, "")).trim())?.groupValues?.get(1) }
+    private fun creditedNames(descriptionHtml: String): List<String> = descriptionLines(descriptionHtml).mapNotNull(::creditedName)
+
+    /** The players credited below the description's lone `+` line: the guests of a `+ guests` title. */
+    private fun guestsCredited(descriptionHtml: String): List<String> =
+        descriptionLines(descriptionHtml).dropWhile { it != "+" }.drop(1).mapNotNull(::creditedName)
+
+    private fun descriptionLines(descriptionHtml: String): List<String> =
+        descriptionHtml.split(LINE_BREAK).map { decodeHtmlEntities(it.replace(TAG, "")).trim() }
+
+    private fun creditedName(line: String): String? = CREDIT_LINE.find(line)?.groupValues?.get(1)
 
     /** A surname billed alone, as the one credited player of that surname; otherwise the act as billed. */
     private fun fullName(
@@ -162,6 +175,9 @@ class PasApiScraper {
 
         /** A title that bills more than one act, or an act after a series or label. A bare name is a series night. */
         val BILLING_SEPARATOR = Regex("""[/,&+:]""")
+
+        /** Unnamed guests after the band: `+ guests. Day I`. */
+        val GUESTS_TAIL = Regex("""\s*\+\s*guests\b.*$""", RegexOption.IGNORE_CASE)
 
         /** A title that opens a festival or a season, `Kick-off: …`: what follows the colon is the occasion. */
         val KICK_OFF = Regex("""^kick-?off\s*:""", RegexOption.IGNORE_CASE)
