@@ -116,23 +116,6 @@ class VenueImportedTest : BaseControllerTest() {
                 .isEqualTo(true)
         }
 
-    private fun expectSlugs(
-        uri: String,
-        vararg slugs: String
-    ) {
-        webTestClient
-            .get()
-            .uri(uri)
-            .exchange()
-            .expectStatus()
-            .isOk
-            .expectBody()
-            .jsonPath("$.totalElements")
-            .isEqualTo(slugs.size)
-            .jsonPath("$.content[*].slug")
-            .isEqualTo(slugs.toList())
-    }
-
     private suspend fun source(venueId: Long) {
         databaseClient
             .sql(

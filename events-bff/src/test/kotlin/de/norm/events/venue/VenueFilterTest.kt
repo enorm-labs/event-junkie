@@ -174,23 +174,6 @@ class VenueFilterTest : BaseControllerTest() {
                 .doesNotExist()
         }
 
-    private fun expectSlugs(
-        uri: String,
-        vararg slugs: String
-    ) {
-        webTestClient
-            .get()
-            .uri(uri)
-            .exchange()
-            .expectStatus()
-            .isOk
-            .expectBody()
-            .jsonPath("$.totalElements")
-            .isEqualTo(slugs.size)
-            .jsonPath("$.content[*].slug")
-            .isEqualTo(slugs.toList())
-    }
-
     private fun expectCounts(
         uri: String,
         counts: Map<String, Int>

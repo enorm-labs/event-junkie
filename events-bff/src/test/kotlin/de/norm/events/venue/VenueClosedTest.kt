@@ -85,21 +85,4 @@ class VenueClosedTest : BaseControllerTest() {
             .bind("slug", slug)
             .await()
     }
-
-    private fun expectSlugs(
-        uri: String,
-        vararg slugs: String
-    ) {
-        webTestClient
-            .get()
-            .uri(uri)
-            .exchange()
-            .expectStatus()
-            .isOk
-            .expectBody()
-            .jsonPath("$.totalElements")
-            .isEqualTo(slugs.size)
-            .jsonPath("$.content[*].slug")
-            .isEqualTo(slugs.toList())
-    }
 }
