@@ -36,19 +36,7 @@ class EventSpokenLanguageFilterTest : BaseControllerTest() {
             "language=en&eventType=READING" to emptyList(),
             "language=xx" to emptyList(),
             "eventType=COMEDY" to listOf("english-stand-up", "bilingual-open-mic", "unknown-language")
-        ).forEach { (query, slugs) ->
-            webTestClient
-                .get()
-                .uri("/events?$query")
-                .exchange()
-                .expectStatus()
-                .isOk
-                .expectBody()
-                .jsonPath("$.totalElements")
-                .isEqualTo(slugs.size)
-                .jsonPath("$.content[*].slug")
-                .isEqualTo(slugs)
-        }
+        ).forEach { (query, slugs) -> expectSlugs("/events?$query", slugs) }
     }
 
     @Test

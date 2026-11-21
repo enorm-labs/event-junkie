@@ -49,19 +49,7 @@ class EventHiddenFeatureFilterTest : BaseControllerTest() {
             "venue=marktplatz" to listOf("weihnachtsmarkt"),
             "q=Kasper" to listOf("kasper"),
             "q=Weihnachtsmarkt" to listOf("weihnachtsmarkt")
-        ).forEach { (query, slugs) ->
-            webTestClient
-                .get()
-                .uri("/events?$query")
-                .exchange()
-                .expectStatus()
-                .isOk
-                .expectBody()
-                .jsonPath("$.totalElements")
-                .isEqualTo(slugs.size)
-                .jsonPath("$.content[*].slug")
-                .isEqualTo(slugs)
-        }
+        ).forEach { (query, slugs) -> expectSlugs("/events?$query", slugs) }
     }
 
     @Test

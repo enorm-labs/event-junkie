@@ -101,11 +101,7 @@ class EventFestivalTest : BaseControllerTest() {
                     .isOk
                     .expectBody()
 
-            slugsOf("festival=fete&sort=eventDate")
-                .jsonPath("$.totalElements")
-                .isEqualTo(2)
-                .jsonPath("$.content[*].slug")
-                .isEqualTo(listOf("hall-set", "garden-set"))
+            expectSlugs("/events?festival=fete&sort=eventDate", "hall-set", "garden-set")
             slugsOf("festival=fete&venue=festival-garden")
                 .jsonPath("$.content[*].slug")
                 .isEqualTo(listOf("garden-set"))

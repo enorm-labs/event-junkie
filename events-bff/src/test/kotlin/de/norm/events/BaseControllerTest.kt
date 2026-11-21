@@ -82,6 +82,11 @@ abstract class BaseControllerTest {
     protected fun expectSlugs(
         uri: String,
         vararg slugs: String
+    ) = expectSlugs(uri, slugs.toList())
+
+    protected fun expectSlugs(
+        uri: String,
+        slugs: List<String>
     ) {
         webTestClient
             .get()
@@ -93,7 +98,7 @@ abstract class BaseControllerTest {
             .jsonPath("$.totalElements")
             .isEqualTo(slugs.size)
             .jsonPath("$.content[*].slug")
-            .isEqualTo(slugs.toList())
+            .isEqualTo(slugs)
     }
 
     /**

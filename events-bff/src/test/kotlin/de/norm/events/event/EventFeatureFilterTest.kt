@@ -45,19 +45,7 @@ class EventFeatureFilterTest : BaseControllerTest() {
             "eventType=COMEDY&feature=open-stage" to listOf("comedy-open-mic"),
             "eventType=PARTY&feature=open-stage" to emptyList(),
             "eventType=PARTY" to listOf("queer-open-end", "queer-only", "flinta-day-party", "techno-night")
-        ).forEach { (query, slugs) ->
-            webTestClient
-                .get()
-                .uri("/events?$query")
-                .exchange()
-                .expectStatus()
-                .isOk
-                .expectBody()
-                .jsonPath("$.totalElements")
-                .isEqualTo(slugs.size)
-                .jsonPath("$.content[*].slug")
-                .isEqualTo(slugs)
-        }
+        ).forEach { (query, slugs) -> expectSlugs("/events?$query", slugs) }
     }
 
     /** On now is the list with `running=true` over today. */
