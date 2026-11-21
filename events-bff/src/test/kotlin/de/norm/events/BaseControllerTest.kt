@@ -76,6 +76,27 @@ abstract class BaseControllerTest {
     }
 
     /**
+     * Asserts the paged list at [uri] answers exactly [slugs], in that order. The total is asserted
+     * beside them, so a page that holds the right slugs and reports a wrong count still fails.
+     */
+    protected fun expectSlugs(
+        uri: String,
+        vararg slugs: String
+    ) {
+        webTestClient
+            .get()
+            .uri(uri)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.totalElements")
+            .isEqualTo(slugs.size)
+            .jsonPath("$.content[*].slug")
+            .isEqualTo(slugs.toList())
+    }
+
+    /**
      * Truncates all domain tables before each test. The response cache is emptied with them (#269):
      * keyed on the request, a row deleted by TRUNCATE stays visible for the TTL. A zero TTL in the
      * test configuration would leave the caching path unexercised.
