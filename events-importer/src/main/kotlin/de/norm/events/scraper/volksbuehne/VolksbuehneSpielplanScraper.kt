@@ -93,8 +93,7 @@ class VolksbuehneSpielplanScraper(
                 EventType.PARTY -> ArtistRole.DJ
                 else -> return emptyList()
             }
-        val withLine = WITH_LINE.find(addition.orEmpty())?.groupValues?.get(1)
-        val names = withLine?.let(::splitNames) ?: addition.takeIf { type == EventType.CONCERT }?.let(::bareNames).orEmpty()
+        val names = addition?.let(::withLineNames) ?: addition.takeIf { type == EventType.CONCERT }?.let(::bareNames).orEmpty()
         return names.map { ScrapedArtist(name = it, role = role) }
     }
 
@@ -145,6 +144,17 @@ class VolksbuehneSpielplanScraper(
                 .filter { it.isNotBlank() }
                 .drop(1)
                 .joinToString("-")
+
+        /** The names of a `mit …` line, or null for a line that does not open with `mit`. */
+        private fun withLineNames(line: String): List<String>? =
+            WITH_LINE
+                .find(line)
+                ?.groupValues
+                ?.get(1)
+                ?.let(::splitNames)
+
+        /** The acts a concert's line names, after `mit` or bare. Also reads a concert page's second title line ([VolksbuehneEventPage]). */
+        fun concertNames(line: String): List<String> = withLineNames(line) ?: bareNames(line)
 
         /**
          * The names of a list line, without a `- live` tail, a group credit (`Workshop-Teilnehmer*innen`) or a non-act name.

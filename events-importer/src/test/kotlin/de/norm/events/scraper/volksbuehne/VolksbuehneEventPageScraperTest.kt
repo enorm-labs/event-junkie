@@ -140,6 +140,78 @@ class VolksbuehneEventPageScraperTest {
     }
 
     @Test
+    fun `bills the second title line's mit names on a concert page with no writer line (#5373)`() {
+        val page = scraper.scrape(fixtureDocument("volksbuehne/volksbuehne-event-low-signal.html", baseUri)).shouldNotBeNull()
+        val cast = listOf("Dirk Bell", "Isabel Lewis", "Mira Mann", "Sara Neidorf", "Claire Vivianne Sobottke")
+
+        page.eventType shouldBe EventType.CONCERT
+        page.writers.shouldBeEmpty()
+        page.cast shouldContainExactly cast
+        page.applyTo(event(EventType.SHOW, typeIsFallback = true)).artists shouldBe cast.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+    }
+
+    @Test
+    fun `bills a concert page's second title line that names the acts bare`() {
+        val page = scraper.scrape(fixtureDocument("volksbuehne/volksbuehne-event-low-signal-bare.html", baseUri)).shouldNotBeNull()
+
+        page.cast shouldContainExactly listOf("Mira Mann", "Isabel Lewis")
+        page.applyTo(event(EventType.SHOW, typeIsFallback = true)).artists.map { it.name } shouldContainExactly listOf("Mira Mann", "Isabel Lewis")
+    }
+
+    @Test
+    fun `leaves a staged work's cast line unbilled`() {
+        val html =
+            """<script type="application/ld+json">{"@type": "TheaterEvent", "name": "X"}</script>""" +
+                """<p class="production__title_addition_2">mit Anna Beispiel und Ben Muster</p>"""
+        val staged = scraper.scrape(Jsoup.parse(html)).shouldNotBeNull()
+        val cast = VolksbuehneEventPage(description = null, imageUrl = null, eventType = EventType.SHOW, cast = listOf("Anna Beispiel", "Ben Muster"))
+
+        staged.cast.shouldBeEmpty()
+        staged.applyTo(event(EventType.SHOW, typeIsFallback = true)).artists.shouldBeEmpty()
+        cast.applyTo(event(EventType.SHOW, typeIsFallback = true)).artists.shouldBeEmpty()
+        cast
+            .copy(eventType = EventType.CONCERT)
+            .applyTo(event(EventType.SHOW, typeIsFallback = false))
+            .artists
+            .shouldBeEmpty()
+    }
+
+    @Test
+    fun `prefers the writer line to the cast line`() {
+        val page =
+            VolksbuehneEventPage(
+                description = null,
+                imageUrl = null,
+                eventType = EventType.CONCERT,
+                writers = listOf("Mira Mann", "Isabel Lewis"),
+                cast = listOf("Dirk Bell")
+            )
+
+        page.applyTo(event(EventType.SHOW, typeIsFallback = true)).artists.map { it.name } shouldContainExactly listOf("Mira Mann", "Isabel Lewis")
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "Between Concert, Reading, Rehearsal, and Happening",
+            "Nach dem Roman von Anna Beispiel",
+            "Regie: Anna Beispiel"
+        ]
+    )
+    fun `reads no cast from a concert page's second title line that reads as a sentence or a credit`(line: String) {
+        val html =
+            """<script type="application/ld+json">{"@type": "MusicEvent", "name": "X"}</script>""" +
+                """<p class="production__title_addition_2">$line</p>"""
+
+        scraper
+            .scrape(Jsoup.parse(html))
+            .shouldNotBeNull()
+            .cast
+            .shouldBeEmpty()
+    }
+
+    @Test
     fun `types a festival bar as other`() {
         val html = """<script type="application/ld+json">{"@type": "SocialEvent", "name": "Community Bar"}</script>"""
 
