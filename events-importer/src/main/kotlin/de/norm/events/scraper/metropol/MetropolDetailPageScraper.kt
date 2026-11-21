@@ -145,7 +145,7 @@ internal fun metropolEventType(
     }
 
 /** The DJs a text line `Mit den DJs Stern von Avalon und ITZY` bills, in order. */
-internal fun metropolDjs(description: String?): List<ScrapedArtist> =
+private fun metropolDjs(description: String?): List<ScrapedArtist> =
     DJ_LINE
         .find(description.orEmpty())
         ?.groupValues
