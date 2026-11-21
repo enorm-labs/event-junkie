@@ -49,4 +49,10 @@ class StyleTailGenresTest {
         }
         knownGenresInStyleTail(null).shouldBeNull()
     }
+
+    @Test
+    fun `an unspaced ampersand stays inside R&B, and a spaced one still separates (#5363)`() {
+        knownGenresInStyleTail("R&B, Deep Soul, Northern Soul and Beat") shouldBe "R&B, Soul"
+        knownGenresInStyleTail("Psych, Disco, Kraut & Beat") shouldBe "Disco, Krautrock"
+    }
 }

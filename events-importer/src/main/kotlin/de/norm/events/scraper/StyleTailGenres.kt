@@ -23,8 +23,8 @@ fun knownGenresInStyleTail(tail: String?): String? =
 
 private fun knownGenres(text: String): List<String> = normalizeGenre(text).filter(::isGenreLabel)
 
-/** The separators a style tail puts between styles, acts and notes: `/`, `+`, `|`, `, `, `&`, a dash. */
-private val STYLE_TAIL_SEPARATOR = Regex("""\s*(?:[/+|,&]|\s-\s|-)\s*""")
+/** The separators a style tail puts between styles, acts and notes: `/`, `+`, `|`, `, `, a spaced `&`, a dash. `R&B` keeps its `&` (#5363). */
+private val STYLE_TAIL_SEPARATOR = Regex("""\s*(?:[/+|,]|\s&\s|\s-\s|-)\s*""")
 
 /** Where a run-together tail starts its next word: a lower-case letter followed by a capital. */
 private val CASE_CHANGE = Regex("""(?<=\p{Ll})(?=\p{Lu})""")

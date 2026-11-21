@@ -105,7 +105,25 @@ class KonradToenzOverviewPageScraperTest {
         event.title shouldBe "Soulblock- rare soul Music from the 60s to early 70s DJ Nolovigo"
         event.subtitle shouldBe "R&B, Deep Soul, Northern Soul and Beat"
         event.artists.map { it.name to it.role } shouldContainExactly listOf("DJ Nolovigo" to ArtistRole.DJ)
-        event.genre shouldBe "Soul"
+        event.genre shouldBe "R&B, Soul"
+    }
+
+    @Test
+    fun `a night whose name bills no DJ takes the DJane list of its style line, up to the first style word (event 15050)`() {
+        val event =
+            scraper
+                .scrape(
+                    section(
+                        "Donnerstag, den 31.12.2026 ab 21 Uhr",
+                        "Silvesternacht im Tönz!!!",
+                        "Wie immer keine teure Eintrittsparty!!! Aber wie immer der Sound der 60er &amp; 70er Jahre mit DJane Fräulein Philine &amp; " +
+                            "Turbo Pascal Disco, Kraut &amp; Beat, 70s Pop, and 80er NDW"
+                    ),
+                    baseUrl
+                ).single()
+
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Fräulein Philine" to ArtistRole.DJ, "DJ Turbo Pascal" to ArtistRole.DJ)
     }
 
     @Test
