@@ -64,6 +64,24 @@ class AssociationSyncArtistSlugOverrideIntegrationTest : BaseControllerTest() {
     }
 
     @Test
+    fun `Maschinenhaus's moé leaves the DJ moe dot that Gretchen and migas bill`() {
+        runBlocking {
+            val gretchen = persistEvent("gretchen:3635")
+            associationSyncService.resolveAndSyncAssociations(listOf(gretchen), listOf(scraped(gretchen, "moe.")))
+            val maschinenhaus = persistEvent("maschinenhaus:-P4skis7gSwqEw2uywwZ")
+            associationSyncService.resolveAndSyncAssociations(listOf(maschinenhaus), listOf(scraped(maschinenhaus, "moé")))
+            val migas = persistEvent("migas:moe")
+            associationSyncService.resolveAndSyncAssociations(listOf(migas), listOf(scraped(migas, "moe")))
+
+            billedSlugs(gretchen) shouldContainExactly listOf("moe")
+            billedSlugs(migas) shouldContainExactly listOf("moe")
+            billedSlugs(maschinenhaus) shouldContainExactly listOf("moe-2")
+            artistRepository.findBySlug("moe-2")?.name shouldBe "moé"
+            artistRepository.findBySlug("moe")?.name shouldBe "moe."
+        }
+    }
+
+    @Test
     fun `two acts with exactly one name end on two rows, by the source that bills each (#2954)`() {
         runBlocking {
             val weisseHase = persistEvent("derweissehase:2026-10-10-maschine")

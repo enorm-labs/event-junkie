@@ -92,7 +92,10 @@ private val ARTIST_SLUG_OVERRIDES: Map<String, String> =
     mapOf(
         // The German band Göre, billed by Monarch (kottimonarch.de). The US band Gore, billed by UFO im Velodrom
         // beside I Prevail, keeps `gore`.
-        "göre" to "goere"
+        "göre" to "goere",
+        // The Hamburg act moé, billed in concert by Maschinenhaus (V271). The DJ `moe.`, billed by Gretchen, migas and
+        // Renate, keeps `moe`.
+        "moé" to "moe-2"
     )
 
 /**

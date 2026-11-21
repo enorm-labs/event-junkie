@@ -30,6 +30,10 @@ class ArtistNormalizerTest {
             artistSlugFor("GÖRE") shouldBe "goere"
             // The act that held the slug first keeps it.
             artistSlugFor("Gore") shouldBe "gore"
+            artistSlugFor("moé", "maschinenhaus:-P4skis7gSwqEw2uywwZ") shouldBe "moe-2"
+            artistSlugFor("MOÉ") shouldBe "moe-2"
+            artistSlugFor("moe", "migas:moe") shouldBe "moe"
+            artistSlugFor("MOE.", "gretchen:3635") shouldBe "moe"
             // A name without an entry slugs its canonical form, as before.
             artistSlugFor("OXO86") shouldBe "oxo-86"
         }
