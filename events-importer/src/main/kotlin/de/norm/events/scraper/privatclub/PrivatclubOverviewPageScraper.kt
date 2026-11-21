@@ -29,6 +29,7 @@ import de.norm.events.scraper.schemaOffers
 import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
+import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -146,9 +147,6 @@ class PrivatclubOverviewPageScraper(
 
         val description = parseDescription(detail)
 
-        // "Örtlicher Veranstalter"
-        val promoters = parsePromoterName(detail)?.let { listOf(it) }.orEmpty()
-
         // Concerts: title is the headliner, support from the subtitle's "Support: <name>". A party bills the DJs of its
         // `DJs:` paragraph, else none. A contest night names no act. See buildArtistsForEventType.
         val artists =
@@ -157,6 +155,10 @@ class PrivatclubOverviewPageScraper(
                 eventType == EventType.PARTY.name -> parseDjs(detail)
                 else -> buildArtistsForEventType(title, subtitle, eventType)
             }
+
+        // "Örtlicher Veranstalter". A band named as its own promoter is the act, and the #1841 hold-back would bill nobody (#5372).
+        val titleActSlugs = artists.filter { it.titleDerived }.map { SlugGenerator.slugify(it.name) }.toSet()
+        val promoters = listOfNotNull(parsePromoterName(detail)).filterNot { SlugGenerator.slugify(it) in titleActSlugs }
 
         return ScrapedEvent(
             title = title,
