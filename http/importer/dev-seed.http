@@ -6848,7 +6848,7 @@ Content-Type: application/json
 {
     "venueId": {{venue_id_kulturhaus_spandau}},
     "name": "Kulturhaus Spandau",
-    "url": "https://kulturhaus-spandau.de/wp-json/eventmanager/v1/events",
+    "url": "https://kulturhaus-spandau.de/wp-json/eventmanager/v1/calendar/",
     "sourceType": "KULTURHAUS_SPANDAU",
     "enabled": true,
     "importIntervalMinutes": 1440,

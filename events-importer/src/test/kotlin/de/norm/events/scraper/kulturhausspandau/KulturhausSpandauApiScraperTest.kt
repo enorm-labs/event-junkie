@@ -8,6 +8,7 @@ import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.collections.shouldNotContainAnyOf
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -15,9 +16,12 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
-/** The `/wp-json/eventmanager/v1/events` response saved on 2026-10-23: 250 events, past ones included. */
+/**
+ * Most cases read the former `/events` list saved on 2026-10-23, 250 events, which carries the same `ID`, place `ID` and tier
+ * `name` as the calendar. The calendar cases read December 2026 and January 2027, saved on 2026-11-21.
+ */
 class KulturhausSpandauApiScraperTest {
-    private val events = KulturhausSpandauApiScraper().scrape(fixtureText("kulturhausspandau/kulturhausspandau-events.json"), SOURCE_URL)
+    private val events = KulturhausSpandauApiScraper().scrape(listOf(fixtureText("kulturhausspandau/kulturhausspandau-events.json")), SOURCE_URL)
     private val upcoming = events.filterNot { it.eventDate.isBefore(LocalDate.of(2026, 10, 23)) }
 
     private fun event(id: Long) = events.single { it.sourceId == "kulturhaus_spandau:$id" }
@@ -91,12 +95,12 @@ class KulturhausSpandauApiScraperTest {
         val json =
             """
             [{"ID":1,"title":"<p hidden_Simply Tina>","subtitle":"Simply Tina","start":"2026-12-03 20:00:00",
-              "permalink":"https://kulturhaus-spandau.de/ev_event/1/","place":{"street":"Mauerstr. 6"},"categories":[{"name":"Konzert"}]},
+              "permalink":"https://kulturhaus-spandau.de/ev_event/1/","place":{"ID":15},"categories":[{"name":"Konzert"}]},
              {"ID":2,"title":"<p-hidden_Benefiz-Kunst-Auktion>","subtitle":"Benefiz-Kunst-Auktion","start":"2026-12-04 18:00:00",
-              "permalink":"https://kulturhaus-spandau.de/ev_event/2/","place":{"street":"Mauerstr. 6"},"categories":[]}]
+              "permalink":"https://kulturhaus-spandau.de/ev_event/2/","place":{"ID":15},"categories":[]}]
             """.trimIndent()
 
-        val parsed = KulturhausSpandauApiScraper().scrape(json, SOURCE_URL).single()
+        val parsed = KulturhausSpandauApiScraper().scrape(listOf(json), SOURCE_URL).single()
 
         parsed.title shouldBe "Simply Tina"
         parsed.subtitle.shouldBeNull()
@@ -115,17 +119,43 @@ class KulturhausSpandauApiScraperTest {
         val json =
             """
             [{"ID":14195,"title":"Das Mitsingding","start":"2026-12-04 20:00:00",
-              "permalink":"https://kulturhaus-spandau.de/ev_event/14195/","place":{"street":"Mauerstr. 6"},"categories":[{"name":"Konzert"}],
+              "permalink":"https://kulturhaus-spandau.de/ev_event/14195/","place":{"ID":15},"categories":[{"name":"Konzert"}],
               "artists":[{"title":"Schalala <p hidden Bonse>"},{"title":"Nicolette <p hidden"},{"title":"<br>"},{"title":"Sascha Grammel"}]}]
             """.trimIndent()
 
-        val parsed = KulturhausSpandauApiScraper().scrape(json, SOURCE_URL).single()
+        val parsed = KulturhausSpandauApiScraper().scrape(listOf(json), SOURCE_URL).single()
 
         parsed.artists.map { it.name } shouldContainExactly listOf("Schalala", "Nicolette", "Sascha Grammel")
     }
 
+    @Test
+    fun `reads the calendar's months, which name a place by its ID and a tier by its name`() {
+        val months = listOf("2026-12", "2027-01").map { fixtureText("kulturhausspandau/kulturhausspandau-calendar-$it.json") }
+        val calendar = KulturhausSpandauApiScraper().scrape(months, SOURCE_URL)
+        val ids = calendar.map { it.sourceId.substringAfter(':').toLong() }
+
+        calendar shouldHaveSize 27
+        ids.shouldNotContainAnyOf(5014L, 14519L, 19024L, 19576L, 19767L)
+        val grammel = calendar.single { it.sourceId == "kulturhaus_spandau:7382" }
+        grammel.title shouldBe "LACHEN TUT GUT(es)!"
+        grammel.room shouldBe "Theatersaal"
+        grammel.soldOut shouldBe true
+        grammel.pricePresale shouldBe BigDecimal("30")
+    }
+
+    @Test
+    fun `keeps one event for an ID that two months both list`() {
+        val month =
+            """
+            [{"ID":7,"title":"Liederabend","start":"2026-12-31 20:00:00","end":"2027-01-01 01:00:00",
+              "permalink":"https://kulturhaus-spandau.de/ev_event/7/","place":{"ID":19,"title":"Theatersaal"},"categories":[{"name":"Konzert"}]}]
+            """.trimIndent()
+
+        KulturhausSpandauApiScraper().scrape(listOf(month, month), SOURCE_URL) shouldHaveSize 1
+    }
+
     private companion object {
-        const val SOURCE_URL = "https://kulturhaus-spandau.de/wp-json/eventmanager/v1/events"
+        const val SOURCE_URL = "https://kulturhaus-spandau.de/wp-json/eventmanager/v1/calendar/"
     }
 
     @Test

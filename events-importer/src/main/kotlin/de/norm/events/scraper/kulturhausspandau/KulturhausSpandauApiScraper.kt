@@ -23,11 +23,11 @@ import tools.jackson.databind.JsonNode
 import java.time.LocalDateTime
 
 /**
- * Pure parser for the theme's `/wp-json/eventmanager/v1/events`, which answers about 250 events, past ones included, with
- * place, categories, artists and price tiers but no text.
+ * Pure parser for the theme's `/wp-json/eventmanager/v1/calendar/` months, which carry place, categories, artists and price
+ * tiers but no text. An event that spans months comes back in each of them, so the first row of each `ID` counts.
  *
- * - **Only the house's own rooms are read.** The list also carries the district's events at the Zitadelle, which has its own
- *   importer, and in the Altstadt churches. A place counts when its street is the house's, `Mauerstr. 6`.
+ * - **Only the house's own rooms are read.** The calendar also carries the district's events at the Zitadelle, which has its
+ *   own importer, and in the Altstadt churches. A place counts by its `ID`, since the calendar names a place but no street.
  * - **The categories type the event and set the scope.** Tours, workshops and exhibitions are out (EVENT_SCOPE.md §3.2), and so
  *   is an auction. `Das Mitsingding` stays: two musicians play and the audience sings along. `Kinder und Familie` or a show
  *   for an age range under thirteen is marked `for-children` (§3.5).
@@ -39,17 +39,17 @@ class KulturhausSpandauApiScraper {
     private val logger = KotlinLogging.logger {}
 
     fun scrape(
-        json: String,
+        months: List<String>,
         sourceUrl: String
     ): List<ScrapedEvent> {
-        val nodes = SCRAPER_JSON.readTree(json).toList()
+        val nodes = months.flatMap { SCRAPER_JSON.readTree(it).toList() }.distinctBy { it.path("ID").asLong(0) }
         val events = nodes.mapSkippingFailures(logger, "Kulturhaus Spandau event") { toEvent(it) }
         logger.info { "Found ${nodes.size} Kulturhaus Spandau entr(ies), ${events.size} in the house and in scope from $sourceUrl" }
         return events
     }
 
     private fun toEvent(node: JsonNode): ScrapedEvent? {
-        if (node.path("place").stringOrNull("street") != HOUSE_STREET) return null
+        if (node.path("place").path("ID").asLong(0) !in HOUSE_PLACES) return null
         val id = node.path("ID").asLong(0).takeIf { it > 0 } ?: return null
         val rawTitle = node.stringOrNull("title")?.let { decodeHtmlEntities(it.replace(EDITOR_TAG, " ")) } ?: return null
         val subtitle = node.stringOrNull("subtitle")?.let(::decodeHtmlEntities)
@@ -63,7 +63,7 @@ class KulturhausSpandauApiScraper {
         val (title, kicker) = headline(cleanEventTitle(stripSoldOutMarker(rawTitle).trim(' ', '-', '–')).text, subtitle?.trim())
         val start = node.stringOrNull("start")?.let { LocalDateTime.parse(it, MYSQL_DATE_TIME) } ?: return null
         val end = node.stringOrNull("end")?.let { LocalDateTime.parse(it, MYSQL_DATE_TIME) }?.takeIf { it.isAfter(start) }
-        val admission = node.path("ticketprices").toList().firstOrNull { it.path("active").asBoolean(false) && it.stringOrNull("title") == "Eintritt" }
+        val admission = node.path("ticketprices").toList().firstOrNull { it.path("active").asBoolean(false) && it.stringOrNull("name") == "Eintritt" }
         val admissionText = admission?.stringOrNull("price")
         val type = typeOf(categories)
         return ScrapedEvent(
@@ -138,7 +138,8 @@ class KulturhausSpandauApiScraper {
         }
 }
 
-private const val HOUSE_STREET = "Mauerstr. 6"
+/** The house's own rooms at Mauerstr. 6: the house itself, the Theatersaal and the Galerie Kulturhaus. */
+private val HOUSE_PLACES = setOf(15L, 19L, 396L)
 private const val HOUSE_NAME = "Kulturhaus Spandau"
 private const val HOUSE_DISTRICT = "Spandau"
 private const val DISCIPLINE_LIST = " | "
