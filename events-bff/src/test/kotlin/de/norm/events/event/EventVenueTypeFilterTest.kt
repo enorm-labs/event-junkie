@@ -29,19 +29,7 @@ class EventVenueTypeFilterTest : BaseControllerTest() {
             "venueType=stadium" to emptyList(),
             "venueType=club&district=neukoelln" to emptyList(),
             "venueType=bar&district=neukoelln" to listOf("kneipe-quiz")
-        ).forEach { (query, slugs) ->
-            webTestClient
-                .get()
-                .uri("/events?$query")
-                .exchange()
-                .expectStatus()
-                .isOk
-                .expectBody()
-                .jsonPath("$.totalElements")
-                .isEqualTo(slugs.size)
-                .jsonPath("$.content[*].slug")
-                .isEqualTo(slugs)
-        }
+        ).forEach { (query, slugs) -> expectSlugs("/events?$query", slugs) }
     }
 
     @Test

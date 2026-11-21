@@ -75,19 +75,7 @@ class EventTimeOfDayFilterTest : BaseControllerTest() {
                 listOf("matinee", "afternoon", "rave", "afterhour", "open-air", "festival", "club-night", "day-show"),
             "timeOfDay=dawn" to emptyList(),
             "timeOfDay=dawn&timeOfDay=evening" to listOf("concert", "doors-only", "open-air", "festival")
-        ).forEach { (query, slugs) ->
-            webTestClient
-                .get()
-                .uri("/events?$query")
-                .exchange()
-                .expectStatus()
-                .isOk
-                .expectBody()
-                .jsonPath("$.totalElements")
-                .isEqualTo(slugs.size)
-                .jsonPath("$.content[*].slug")
-                .isEqualTo(slugs)
-        }
+        ).forEach { (query, slugs) -> expectSlugs("/events?$query", slugs) }
     }
 
     @Test
