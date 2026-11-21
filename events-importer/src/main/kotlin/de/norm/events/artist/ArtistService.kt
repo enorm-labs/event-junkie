@@ -23,6 +23,7 @@ class ArtistService(
     private val artistRepository: ArtistRepository,
     private val upcomingArtistStore: UpcomingArtistStore,
     private val slugAliasStore: ArtistSlugAliasStore,
+    private val rejectionStore: MusicBrainzRejectionStore,
     private val template: R2dbcEntityTemplate
 ) {
     private val logger = KotlinLogging.logger {}
@@ -174,6 +175,8 @@ class ArtistService(
         val id = saved.id
         val alreadyStored = saved.musicbrainzId == mbid && saved.musicbrainzMatch == MusicBrainzMatch.EXACT.name
         if (mbid == null || id == null || alreadyStored) return saved
+        // A person's own pick outranks an earlier rejection of the same id.
+        if (rejectionStore.remove(id, mbid)) logger.info { "Lifted the rejection of MusicBrainz id $mbid for artist $id" }
         artistRepository.storeMusicBrainzVerdict(id, MusicBrainzMatch.EXACT.name, mbid)
         logger.info { "Set the MusicBrainz id of artist $id by hand: $mbid" }
         return artistRepository.findById(id) ?: throw ArtistNotFoundException(id)

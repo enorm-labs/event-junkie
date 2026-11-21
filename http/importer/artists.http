@@ -128,6 +128,17 @@ Content-Type: application/json
     });
 %}
 
+### Reject the MusicBrainz match — a wrong EXACT: clears what it filled, sets AMBIGUOUS, and never picks that MBID again (V271)
+DELETE {{importer-host}}/api/admin/artists/{{artist_id}}/musicbrainz-id
+
+> {%
+    client.test("the rejected match is gone", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        client.assert(response.body.musicbrainzMatch === "AMBIGUOUS", "Expected musicbrainzMatch AMBIGUOUS");
+        client.assert(response.body.musicbrainzId == null, "Expected no MusicBrainz id");
+    });
+%}
+
 ### Remove the name's pin — the next enrichment may write MusicBrainz's letter case again
 DELETE {{importer-host}}/api/admin/artists/{{artist_id}}/pins/name
 

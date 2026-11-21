@@ -97,3 +97,6 @@ When the operator asks you to apply, run the dry run first and show it. Then run
 `skipped <id>: no longer AMBIGUOUS (<match>)` for a row someone settled since the file was written; a skip does not fail the run. For each other row,
 `--apply` sends one `PUT /api/admin/artists/{id}/musicbrainz-id`, which stores the MBID as the EXACT match and changes no other field. A `NOT stored` line
 is a row the importer refused (404: no such artist, 400: not a lowercase UUID) or did not store. Report each skipped and each `NOT stored` row.
+
+A wrong EXACT match is not in this queue. `DELETE /api/admin/artists/{id}/musicbrainz-id` rejects it: the importer clears what the enrichment copied,
+sets AMBIGUOUS and never picks that MBID for the row again. Send it only on the operator's word. A `PUT` of the same MBID later lifts the rejection.

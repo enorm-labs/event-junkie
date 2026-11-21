@@ -449,6 +449,17 @@ ALTER TABLE events.artist ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
+-- Name: artist_musicbrainz_rejection; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.artist_musicbrainz_rejection (
+    artist_id bigint NOT NULL,
+    musicbrainz_id text NOT NULL,
+    rejected_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT artist_musicbrainz_rejection_mbid_shape CHECK ((musicbrainz_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text))
+);
+
+--
 -- Name: artist_slug_alias; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -1230,6 +1241,13 @@ ALTER TABLE ONLY accounts.session
 
 ALTER TABLE ONLY accounts.sign_up
     ADD CONSTRAINT sign_up_pkey PRIMARY KEY (id);
+
+--
+-- Name: artist_musicbrainz_rejection artist_musicbrainz_rejection_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.artist_musicbrainz_rejection
+    ADD CONSTRAINT artist_musicbrainz_rejection_pkey PRIMARY KEY (artist_id, musicbrainz_id);
 
 --
 -- Name: artist artist_pkey; Type: CONSTRAINT; Schema: events; Owner: -
@@ -2016,6 +2034,13 @@ ALTER TABLE ONLY accounts.rsvp
 
 ALTER TABLE ONLY accounts.session
     ADD CONSTRAINT session_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
+
+--
+-- Name: artist_musicbrainz_rejection artist_musicbrainz_rejection_artist_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.artist_musicbrainz_rejection
+    ADD CONSTRAINT artist_musicbrainz_rejection_artist_id_fkey FOREIGN KEY (artist_id) REFERENCES events.artist(id) ON DELETE CASCADE;
 
 --
 -- Name: artist_slug_alias artist_slug_alias_artist_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
