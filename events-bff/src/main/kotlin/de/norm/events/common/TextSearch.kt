@@ -109,4 +109,4 @@ object TextSearch {
  * the whole catalogue at full page cost (#1456). PostgreSQL's default escape character is `\`, so
  * no `ESCAPE` clause is needed; the backslash goes first so an escaped `%` is not escaped twice.
  */
-fun String.escapeLike(): String = replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+internal fun String.escapeLike(): String = replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
