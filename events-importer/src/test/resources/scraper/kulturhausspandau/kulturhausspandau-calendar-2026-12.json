@@ -1,0 +1,1237 @@
+[
+  {
+    "ID": 19767,
+    "title": "<p-hidden_Benefiz-Kunst-Auktion>",
+    "subtitle": "Benefiz-Kunst-Auktion",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/19767/",
+    "start": "2026-12-04 18:00:00",
+    "end": "2026-12-04 20:00:00",
+    "break": false,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/10/net_Auktions-Hammer.jpg",
+    "place_id": 396,
+    "place": {
+      "ID": 396,
+      "title": "Galerie Kulturhaus",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 30,
+        "name": "Ausstellung"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 27,
+        "name": "Für Kunstfreunde"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "frei",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Benefiz-Kunst-Auktion Galerie Kulturhaus Ausstellung Für Kunstfreunde Im Rahmen der Spandauer Aktionswochen Inklusion findet am Fr., den 4.12. um 18 Uhr eine Kunstauktion in der Galerie Kulturhaus statt. Ausgewählte Arbeiten der letzten Ausstellung „ExperimenTiergarten“ können dabei ersteigert werden. Der Erlös dieser Auktion wird als Spende an die → Kurt-Richter-Stiftung zur Unterstützung notleidender Kinder überreicht. Die Auktion leitet Galerist Christof Weber. Die bei der Auktion ersteigerten Arbeiten werden vor Ort professionell verpackt und können am selben Abend mitgenommen werden. Wir weisen darauf hin, dass ausschließlich Barzahlungen möglich sind. → Zur Voransicht der Arbeiten, die zur Versteigerung stehen Neben den Arbeiten im Auktionskatalog werden zusätzlich drei unbekannte Arbeiten als \"Blind Date with Art\" versteigert. Kommen Sie und steigern Sie mit für einen guten Zweck!"
+  },
+  {
+    "ID": 19709,
+    "title": "Blindmalen mit Künstler Aydin Öztek.<p hidden KreativWerk_2.12.26>",
+    "subtitle": "#KreativWerk",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/blindmalen/",
+    "start": "2026-12-02 11:00:00",
+    "end": "2026-12-02 15:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2025/03/web_Kreativwerk-Bild-768x274.jpg",
+    "place_id": 396,
+    "place": {
+      "ID": 396,
+      "title": "Galerie Kulturhaus",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 30,
+        "name": "Ausstellung"
+      },
+      {
+        "term_id": 38,
+        "name": "Workshop"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 27,
+        "name": "Für Kunstfreunde"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "0",
+        "active": true,
+        "price": "Eintritt frei – Anmeldung erbeten",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Blindmalen mit Künstler Aydin Öztek. #KreativWerk Galerie Kulturhaus Ausstellung Workshop Für Kunstfreunde Für Tagsüber Aydın Öztek definiert die expressiv-abstrakte Malerei durch seine Lebensrealität neu und erkundet fortwährend ihre Grenzen. Im Workshop erläutert Künstler und Preisträger des Julius 2025 seine Technik. Teilnehmende können erproben, wie es ist, Bilder mit Assistenz „blind“ zu malen. / Teilnahme kostenfrei und ohne Vorkenntnisse / Anmeldung bis zum 30.11. | 030 333 40 22 | i-masked@example.de / Begrenzt auf 12 Teilnehmen / Material wird gestellt. Eigenes Material darf mitgebracht werden / In der Pause stehen Wasser und Kaffee zur Verfügung Anmeldung unter: 030 333 4022 | i-masked@example.de &nbsp;"
+  },
+  {
+    "ID": 19576,
+    "title": "Helmut Frelke. Holzmanifestationen.",
+    "subtitle": "Ausstellung",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/helmut-frelke-holzmanifestationen-2/",
+    "start": "2026-10-16 13:00:00",
+    "end": "2027-01-16 18:00:00",
+    "break": false,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/eintritt-frei/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/10/net_Helmut-Frelke_Uebergangsbild_Foto-Presse-768x1012.jpg",
+    "place_id": 396,
+    "place": {
+      "ID": 396,
+      "title": "Galerie Kulturhaus",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 30,
+        "name": "Ausstellung"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 27,
+        "name": "Für Kunstfreunde"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "frei!",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Helmut Frelke. Holzmanifestationen. Ausstellung Galerie Kulturhaus Ausstellung Für Kunstfreunde Tafelbilder aus der Maserung edler Hölze Die Ausstellung zeigt ausgewählte Tafelbilder des Spandauer Künstlers Helmut Frelke (*1951, Kasachstan). Seine Holzmalereien sind Ausdruck eines einzigartigen Dialogs zwischen Natur und kunsthistorischer Bildtradition. Das Edelholz als Material gibt durch seine Maserung die Bildwelten vor, die der Künstler gekonnt durch Schichten von Beize hervorhebt. So treten verborgene mythische Gestalten und biblische Szenen ans Licht, die im Wurzelholz bereits angelegt schienen. Ein bedeutender Teil der gezeigten Arbeiten widmet sich christlichen Motiven, die bei Frelke eine ganz eigene, zeitgenössische Sprache finden Ausstellungsdauer: 16.10.2026 - 16.01.2027"
+  },
+  {
+    "ID": 19249,
+    "title": "Hokus, Pokus, Weihnachtszauberei!<p hidden 17.12.>",
+    "subtitle": "Oliver Grammel",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/hokus-pokus-weihnachtszauberei/",
+    "start": "2026-12-17 10:00:00",
+    "end": "2026-12-17 10:45:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2021/09/net-Oliver-Grammel-Hokus-Pokus-Weihnachtszauberei-768x922.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      },
+      {
+        "term_id": 13,
+        "name": "Zauberei"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Oliver Grammel"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "0",
+        "active": true,
+        "price": "6,50 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Hokus, Pokus, Weihnachtszauberei! Oliver Grammel Kulturhaus Spandau Oliver Grammel Kinder und Familie Zauberei Für Kinder und Familien Für Tagsüber Bei dieser Zaubershow zum Mitmachen, Mitlachen und Mitzaubern werden die Augen groß wie Christbaumkugeln! Denn neben lustigem Hokus-Pokus, spannendem Abrakadabra und jeder Menge zauberhafter Überraschungen wird auch gemeinsam – Simsalabim – ein Weihnachtsbaum verzaubert. Und ehe man sich versieht - dreimal schwarzer Kater –staunen nicht nur die Kinder, sondern auch die Erwachsenen - Weihnachten kann so bezaubernd sein!"
+  },
+  {
+    "ID": 19024,
+    "title": "SinfonieOrchester Tempelhof &#8211; unplugged",
+    "subtitle": "Fabrice Richter-Reichhelm  &amp;",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/pop-meets-classic-unplugged/",
+    "start": "2026-12-05 19:00:00",
+    "end": "2026-12-05 21:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://www.eventbrite.de/e/fabrice-richter-reichhelm-sinfonieorchester-tempelhof-unplugged-tickets-1994137542069",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2024/02/net-Fabrice-Richter-Reichhelm-mit-Zeichnung-768x768.png",
+    "place_id": 474,
+    "place": {
+      "ID": 474,
+      "title": "Zitadelle",
+      "farbcode": "#ffcb64"
+    },
+    "categories": [
+      {
+        "term_id": 10,
+        "name": "Konzert"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 23,
+        "name": "Für Konzertfans"
+      },
+      {
+        "term_id": 24,
+        "name": "Für Musikliebhaber"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "18 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "15 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "SinfonieOrchester Tempelhof &#8211; unplugged Fabrice Richter-Reichhelm & Zitadelle Konzert Für Konzertfans Für Musikliebhaber Pop meets Classic - The Candlelight Concert Nach den erfolgreichen „Pop meets Classic“ Open-Air-Konzerten lädt Fabrice Richter-Reichhelm nun gemeinsam mit den Streichern des SinfonieOrchester Tempelhof (SOT) zu einem außergewöhnlichen Candlelight Concert in den stimmungsvollen Gotischen Saal der Zitadelle ein. Unplugged und eingebettet in die facettenreichen Arrangements des Orchesters entfalten seine Songs in intimer Atmosphäre eine ganz besondere Wirkung. Feinste musikalische Nuancen und seine berührenden Texte verschmelzen zu einem intensiven Klangerlebnis. Am Flügel wird Fabrice von seinem Vater Mathis Richter-Reichhelm, dem Dirigenten des SinfonieOrchester Tempelhof, begleitet. Freuen Sie sich auf einen unvergesslichen Konzertabend voller Emotionen, musikalischer Tiefe und inspirierender Lebensfreude. &nbsp;"
+  },
+  {
+    "ID": 18848,
+    "title": "Weihnacht<p hidden Schwarzblond>",
+    "subtitle": "Schwarzblonde",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/weihnacht/",
+    "start": "2026-12-16 17:00:00",
+    "end": "2026-12-16 19:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://www.eventbrite.de/e/schwarzblonde-weihnacht-tickets-1994673291510",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/06/net_SB_Weihnacht-768x934.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 3,
+        "name": "Show"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 24,
+        "name": "Für Musikliebhaber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Schwarzblond"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "18 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "15 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Weihnacht Schwarzblonde Theatersaal Schwarzblond Show Für Musikliebhaber Fine Art of Glamourtainment Sie sind glamourös, poetisch und sexy, romantisch und rockig. Kontrastreich wie Himmel und Hölle, wie Schwarz und Blond. Schwarzblond verbinden in ihrer Show Musik, Mode und Humor zu einem Bühnenerlebnis voller Überraschungen – und sind dabei alles außer gewöhnlich. Für alle großgebliebenen Kinder präsentieren sie die „Schwarzblonde Weihnacht“: ein funkelndes Fest, bei dem augenzwinkernde Poesie auf bittersüße Realität und leuchtende Regenbogenfarben trifft. Ein einzigartiges, exklusives und schwarzblondes Weihnachtserlebnis voller Glamour und Magie. &nbsp;"
+  },
+  {
+    "ID": 15224,
+    "title": "Herr Eichhorn und der erste Schnee",
+    "subtitle": "puppen.etc",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/herr-eichhorn-und-der-erste-schnee/",
+    "start": "2026-12-01 10:00:00",
+    "end": "2026-12-01 10:45:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2025/10/net_puppen.etc_Herr-Eichhorn-768x800.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "puppen.etc"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "6,50 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "mit JKS-Gutschein 4,50 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Herr Eichhorn und der erste Schnee puppen.etc Kulturhaus Spandau puppen.etc Kinder und Familie Für Kinder und Familien Für Tagsüber nach dem Kinderbuch von Sebastian Meschenmoser Wer kennt das nicht: das Warten auf den ersten Schnee im Winter und die Freude darüber, wenn die ersten Flocken rieseln, die Stille und das Knirschen unter den Schuhen. Schnee ist toll, für eine Weile sieht die Welt ganz anders aus. Aber was, wenn man noch nie Schnee gesehen hat? Herr Eichhorn, der Igel und der Bär verschlafen ja den Winter, sie wissen nicht, wie Schnee aussieht oder sich anfühlt und anhört. Der Bock hat gesagt, Schnee ist weiß, nass und kalt - also machen sich die Drei auf die Suche, das kann ja nicht so schwer sein. Als sie schon nicht mehr weiter wissen, fällt der erste Schnee. Sie brauchen ihn gar nicht zu suchen, er fällt ihnen vor die Nase. Sie müssen nur wach bleiben... Ein Stück über Freundschaft, wie auch über das Suchen und Finden."
+  },
+  {
+    "ID": 15162,
+    "title": "„OH! – Du Fröhliche!“",
+    "subtitle": "Tilly Creutzfeldt-Jakob &amp; Margot Schlönzke",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/oh-du-froehliche/",
+    "start": "2026-12-12 20:00:00",
+    "end": "2026-12-12 22:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://www.eventbrite.de/e/tilly-creutzfeldt-jakob-margot-schlonzke-oh-du-frohliche-tickets-1994672195231",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2025/09/net_TillyMargot©Magot-Schloenzke-e1758546609181-768x919.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 11,
+        "name": "Comedy und Kabarett"
+      },
+      {
+        "term_id": 3,
+        "name": "Show"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 25,
+        "name": "Für Theater- &amp; Kleinkunstfreunde"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "18 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "14 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "„OH! – Du Fröhliche!“ Tilly Creutzfeldt-Jakob & Margot Schlönzke Theatersaal Comedy und Kabarett Show Für Theater- &amp; Kleinkunstfreunde Frauen - genauso echt, wie der Weihnachtsmann Die charmanteste, spritzigste und musikalischste Weihnachtsshow der Stadt kommt zurück! Wenn Lametta auf Lachtränen trifft und Glühwein auf große Gefühle – dann ist wieder Zeit für Margot &amp; Tilly! Mit Humor, Herz und zwei glänzenden Stimmen feiern sie Weihnachten so, wie man es sich wünscht: überraschend, schwungvoll und mit einer großen Portion Esprit. Von Jazz bis Schlager, von Pop bis Swing: Margot &amp; Tilly schenken ihrem Publikum einen Abend voller Eleganz, Spielfreude und musikalischer Raffinesse. Das Programm funkelt, berührt und begeistert – ganz ohne Kitsch, aber mit jeder Menge Weihnachtsmagie. Hintersinnige Pointen, spritzige Dialoge und brillanter Gesang verbinden sich zu einer temperamentvollen Revue voller Kabarett und Comedy, die ein unvergessliches Adventserlebnis voller amüsanter Stimmung verspricht - warmherziger, spritziger und magischer denn je! &nbsp;"
+  },
+  {
+    "ID": 14519,
+    "title": "SPEZIAL <p hidden_KK_12.2026>",
+    "subtitle": "KlassiKlatsch",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/spezial/",
+    "start": "2026-12-13 16:00:00",
+    "end": "2026-12-13 18:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/06/net_Spezial_Foto-Presse-768x845.jpg",
+    "place_id": 474,
+    "place": {
+      "ID": 474,
+      "title": "Zitadelle",
+      "farbcode": "#ffcb64"
+    },
+    "categories": [
+      {
+        "term_id": 10,
+        "name": "Konzert"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 24,
+        "name": "Für Musikliebhaber"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Nikolaus Radeke"
+      },
+      {
+        "title": "Caspar Jörns"
+      },
+      {
+        "title": "Frauke Jörns"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": "0",
+        "active": true,
+        "price": "Spenden willkommen",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "SPEZIAL KlassiKlatsch Zitadelle Nikolaus Radeke Caspar Jörns Frauke Jörns Konzert Für Musikliebhaber Für Tagsüber Musik für Bilder - Bilder für Musik mit Caspar Jörns, Frauke Jörns und Nikolaus Radeke Das KlassiKlatsch Spezial 2026 im Gotischen Saal wird ein vielfältiges multimediales Konzerterlebnis. Das Team mit Caspar und Frauke Jörns am Flügel und Nikolaus Radeke für die Videotechnik gehen der wechselseitigen Beeinflussung von Musik und Bildender Kunst nach. Mit Bildern die zu Musik entstanden sind und Musikwerken die ihrerseits von Gemälden inspiriert wurden entsteht ein abwechslungsreiches Programm. Zu Kompositionen von Modest Mussorgsky, Jean Francaix, Arvo Pärt, Hans-Josef Winkler und Barbara Heller werden live Bilder animiert, die in enger Kooperation mit Berliner Werkstätten eigens für die Performance entstanden. Ein einzigartiges Erlebnis für Augen und Ohren, und für Alle. Bitte reservieren Sie Karten unter 030 - 333 40 22 oder per mail info[at]kulturhaus-spandau.de | Eine Online-Reservierung ist nicht möglich &nbsp;"
+  },
+  {
+    "ID": 14505,
+    "title": "Clowns-Theater<p hidden_4.12.26>",
+    "subtitle": "Clown Hops &amp; Hopsi",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/im-spielzeugzimmer-des-weihnachtsmannes/",
+    "start": "2026-12-04 10:00:00",
+    "end": "2026-12-04 11:00:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": 11,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2023/05/net_HopsHopsi_Weihnachtsprogramm_Fotograf-Christian-Rock-768x922.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Hops &#038; Hopsi"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "7,- €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Clowns-Theater Clown Hops & Hopsi Kulturhaus Spandau Hops &#038; Hopsi Kinder und Familie Für Kinder und Familien Für Tagsüber Im Spielzeugzimmer des Weihnachtsmannes Clown Hops und Hopsi präsentieren in ihrem circa einstündigen Programm ein hochwertiges Clowns-Theater mit Jonglage, Musik und Zauberei. Das Kinderprogramm ist pädagogisch wertvoll, abwechslungsreich und interaktiv gestaltet. Gemeinsam mit den Kindern erkunden Hops und Hopsi das Spielzeugzimmer des Weihnachtsmannes und finden viele spannende Dinge. Erlebt ein weihnachtliches, einzigartiges und mitreißendes Bühnenprogramm für die ganze Familie! Ideal auch für Kita- und Grundschulgruppen. Hops und Hopsi haben in jedem Jahr auch neue Nummern im Programm! Beliebt seit 1980! Bekannt auch von TikTok! &nbsp;"
+  },
+  {
+    "ID": 14203,
+    "title": "Weihnachtszauber<br><p hidden 16 Uhr>",
+    "subtitle": "Chris Hyde‘s ",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/weihnachtszauber/",
+    "start": "2026-12-06 16:00:00",
+    "end": "2026-12-06 17:10:00",
+    "break": false,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://www.eventbrite.de/e/chris-hydes-weihnachtszauber-tickets-1990167707186",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2025/04/net_Chris-Hyde-Weihnachtszauber_Foto-Presse-768x858.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 13,
+        "name": "Zauberei"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 25,
+        "name": "Für Theater- &amp; Kleinkunstfreunde"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "16 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "13 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Weihnachtszauber Chris Hyde‘s Kulturhaus Spandau Zauberei Für Theater- &amp; Kleinkunstfreunde Das perfekte weihnachtliche Zaubererlebnis für alle. Der Magier Chris Hyde bringt uns Weihnachtswunder hautnah, mit verblüffenden Klassikern und modernen Kunststücken. Gemeinsam wird gezaubert und wir werden aus dem Staunen und Wundern nicht mehr herauskommen - charmante wahre Zauberkunst für leuchtende Augen jeden Alters. [Altersempfehlung: ab 7 Jahre. | Dauer ca. 70 Minuten]"
+  },
+  {
+    "ID": 14195,
+    "title": "Das Mitsingding<p hidden_12.26>",
+    "subtitle": "Schalala",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/das-mitsingding-6/",
+    "start": "2026-12-04 19:00:00",
+    "end": "2026-12-04 21:30:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://www.eventbrite.de/e/schalala-das-mitsingding-tickets-1989079491303",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2025/04/net_Schalala_Stefanie-Bonse-Nicolette-768x1027.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 10,
+        "name": "Konzert"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 24,
+        "name": "Für Musikliebhaber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Schalala <p hidden Bonse>"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "15 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "12 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Das Mitsingding Schalala Theatersaal Schalala Konzert Für Musikliebhaber Ein Abend zum gemeinsamen fröhlichen Singen von Gassenhauern und Hits. Begleitet von Stefanie Bonse an der Gitarre und ihrer Mitmusikerin am Klavier treffen sich Schönsänger, Gernsänger, Herdensänger, Chorknaben und Unter-der-Dusche-Sänger zum Singen von Songs, die wir alle kennen. Von den Beatles über Robbie Williams bis Udo Lindenberg, vom Evergreen und Schlager bis zum Volkslied ist alles dabei. Damit alle auch ab der zweiten Strophe dabeibleiben, werden die Texte gut lesbar an die Wand projiziert. Der Abend gliedert sich in drei Sets, wobei das zweite Set jeweils einem bestimmten Thema gewidmet wird. Singen macht Spaß, zusammen singen macht noch mehr Spaß und am Ende war jeder Song ein Riesenspaß! &nbsp;"
+  },
+  {
+    "ID": 13030,
+    "title": "Eine rote Zipfelmütze",
+    "subtitle": "Cattu, der Traumfänger",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/eine-rote-zipfelmuetze/",
+    "start": "2026-12-08 10:00:00",
+    "end": "2026-12-08 10:50:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2021/09/net-Cattu-rote-Zipfelmuetze-Kopie-768x849.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "6,50 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Eine rote Zipfelmütze Cattu, der Traumfänger Kulturhaus Spandau Kinder und Familie Für Kinder und Familien Für Tagsüber Weihnachts-Zipfelmützen-Mitmach-Konzert Cattus Weihnachts-Programm nimmt uns mit auf eine beschwingte Reise: Wir tanzen einen wilden Schneeflocken-Tanz und begegnen Rudolf, dem Rentier mit der roten Nase. Sogar der Weihnachtsmann kommt vorbei, aber …, was hat er eigentlich an? Und … , was ist eine Weihnachts-Gurke? Ein musikalischer Weihnachts-Spaß für Groß und Klein! &nbsp;"
+  },
+  {
+    "ID": 12806,
+    "title": "Emil rettet das Weihnachtsfest <p hidden_10.12.26>",
+    "subtitle": "Ich &amp; Herr Meyer",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/emil-rettet-das-weihnachtsfest-2/",
+    "start": "2026-12-10 10:00:00",
+    "end": "2026-12-10 10:45:00",
+    "break": false,
+    "minimum_age": 4,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2020/10/q-net-emil-768x768.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "6,50 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Emil rettet das Weihnachtsfest Ich & Herr Meyer Kulturhaus Spandau Kinder und Familie Für Kinder und Familien Für Tagsüber Ein musikalisches Mit-mach-Weihnachtsmärchen Das Weihnachtsfest steht vor der Tür und beim Weihnachtsmann herrscht große Aufregung! Zwar sind die Geschenke gepackt und die Rentiere stehen bereit, aber der Weihnachtsschlitten ist kaputt! Er muss dringend repariert werden! Unterdessen haben die Weihnachtsferien begonnen. Der kleine Emil stapft von der Schule durch den Schnee. Zu Hause angekommen schickt ihn sein Vater gleich aufs Zimmer, um ungestört Weihnachtsgeschenke einpacken zu können. Emil wundert sich, denn er dachte, dass das der Weihnachtsmann macht. „Aber Emil, es gibt doch keinen Weihnachtsmann!“ sagt sein Vater. Doch Emil glaubt ganz fest an den Weihnachtsmann! Wird er es schaffen seinen Vater von der Existenz des Weihnachtsmannes zu überzeugen? Und wer repariert nun eigentlich den Schlitten? Begleitet Emil auf eine abenteuerliche Reise und seht, wie er das Weihnachtsfest doch noch retten kann! &nbsp;"
+  },
+  {
+    "ID": 9149,
+    "title": "Emil rettet das Weihnachtsfest <p hidden_11.12.26>",
+    "subtitle": "Ich &amp; Herr Meyer",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/emil-rettet-das-weihnachtsfest/",
+    "start": "2026-12-11 10:00:00",
+    "end": "2026-12-11 10:45:00",
+    "break": false,
+    "minimum_age": 4,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2020/10/q-net-emil-768x768.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "6,50 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Emil rettet das Weihnachtsfest Ich & Herr Meyer Kulturhaus Spandau Kinder und Familie Für Kinder und Familien Für Tagsüber Ein musikalisches Mit-mach-Weihnachtsmärchen Das Weihnachtsfest steht vor der Tür und beim Weihnachtsmann herrscht große Aufregung! Zwar sind die Geschenke gepackt und die Rentiere stehen bereit, aber der Weihnachtsschlitten ist kaputt! Er muss dringend repariert werden! Unterdessen haben die Weihnachtsferien begonnen. Der kleine Emil stapft von der Schule durch den Schnee. Zu Hause angekommen schickt ihn sein Vater gleich aufs Zimmer, um ungestört Weihnachtsgeschenke einpacken zu können. Emil wundert sich, denn er dachte, dass das der Weihnachtsmann macht. „Aber Emil, es gibt doch keinen Weihnachtsmann!“ sagt sein Vater. Doch Emil glaubt ganz fest an den Weihnachtsmann! Wird er es schaffen seinen Vater von der Existenz des Weihnachtsmannes zu überzeugen? Und wer repariert nun eigentlich den Schlitten? Begleitet Emil auf eine abenteuerliche Reise und seht, wie er das Weihnachtsfest doch noch retten kann! &nbsp;"
+  },
+  {
+    "ID": 9147,
+    "title": "Clowns-Theater<p hidden_3.12.26>",
+    "subtitle": "Clown Hops &amp; Hopsi",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/der-grosse-hopsini/",
+    "start": "2026-12-03 10:00:00",
+    "end": "2026-12-03 11:00:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": 11,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2023/05/net_HopsHopsi_Weihnachtsprogramm_Fotograf-Christian-Rock-768x922.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Hops &#038; Hopsi"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "7,- €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Clowns-Theater Clown Hops & Hopsi Kulturhaus Spandau Hops &#038; Hopsi Kinder und Familie Für Kinder und Familien Für Tagsüber Im Spielzeugzimmer des Weihnachtsmannes Clown Hops und Hopsi präsentieren in ihrem circa einstündigen Programm ein hochwertiges Clowns-Theater mit Jonglage, Musik und Zauberei. Das Kinderprogramm ist pädagogisch wertvoll, abwechslungsreich und interaktiv gestaltet. Gemeinsam mit den Kindern erkunden Hops und Hopsi das Spielzeugzimmer des Weihnachtsmannes und finden viele spannende Dinge. Erlebt ein weihnachtliches, einzigartiges und mitreißendes Bühnenprogramm für die ganze Familie! Ideal auch für Kita- und Grundschulgruppen. Hops und Hopsi haben in jedem Jahr auch neue Nummern im Programm! Beliebt seit 1980! Bekannt auch von TikTok! &nbsp;"
+  },
+  {
+    "ID": 4016,
+    "title": "Eine rote Zipfelmütze <p hidden_9.12.26>",
+    "subtitle": "Cattu, der Traumfänger",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/eine-rote-zipfelmuetze-2/",
+    "start": "2026-12-09 10:00:00",
+    "end": "2026-12-09 10:50:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2021/09/net-Cattu-rote-Zipfelmuetze-Kopie-768x849.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Cattu, der Traumfänger"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "",
+        "active": true,
+        "price": "6,50 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Eine rote Zipfelmütze Cattu, der Traumfänger Kulturhaus Spandau Cattu, der Traumfänger Kinder und Familie Für Kinder und Familien Für Tagsüber Weihnachts-Zipfelmützen-Mitmach-Konzert Cattus Weihnachts-Programm nimmt uns mit auf eine beschwingte Reise: Wir tanzen einen wilden Schneeflocken-Tanz und begegnen Rudolf, dem Rentier mit der roten Nase. Sogar der Weihnachtsmann kommt vorbei, aber …, was hat er eigentlich an? Und … , was ist eine Weihnachts-Gurke? Ein musikalischer Weihnachts-Spaß für Groß und Klein! &nbsp;"
+  },
+  {
+    "ID": 4010,
+    "title": "Hokus, Pokus, Weihnachtszauberei!",
+    "subtitle": "Oliver Grammel",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/hokus-pokus-weihnachtszauberei-5/",
+    "start": "2026-12-14 10:00:00",
+    "end": "2026-12-14 10:45:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2021/09/net-Oliver-Grammel-Hokus-Pokus-Weihnachtszauberei-768x922.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      },
+      {
+        "term_id": 13,
+        "name": "Zauberei"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Oliver Grammel"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "0",
+        "active": true,
+        "price": "6,50 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Hokus, Pokus, Weihnachtszauberei! Oliver Grammel Kulturhaus Spandau Oliver Grammel Kinder und Familie Zauberei Für Kinder und Familien Für Tagsüber Bei dieser Zaubershow zum Mitmachen, Mitlachen und Mitzaubern werden die Augen groß wie Christbaumkugeln! Denn neben lustigem Hokus-Pokus, spannendem Abrakadabra und jeder Menge zauberhafter Überraschungen wird auch gemeinsam – Simsalabim – ein Weihnachtsbaum verzaubert. Und ehe man sich versieht - dreimal schwarzer Kater –staunen nicht nur die Kinder, sondern auch die Erwachsenen - Weihnachten kann so bezaubernd sein!"
+  },
+  {
+    "ID": 766,
+    "title": "Weihnachten mit Alenka &#038; Frank<p hidden_Operetten 12.26>",
+    "subtitle": "Operetten zum Kaffee",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/weihnachten-mit-alenka-frank/",
+    "start": "2026-12-15 15:00:00",
+    "end": "2026-12-15 17:30:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://www.eventbrite.de/e/operetten-zum-kaffee-weihnachten-mit-alenka-frank-tickets-1529696095199",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2020/04/operette2016-960-768x752.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 10,
+        "name": "Konzert"
+      },
+      {
+        "term_id": 3,
+        "name": "Show"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 24,
+        "name": "Für Musikliebhaber"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "",
+        "active": true,
+        "price": "23 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "",
+        "active": true,
+        "price": "19 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Weihnachten mit Alenka &#038; Frank Operetten zum Kaffee Theatersaal Konzert Show Für Musikliebhaber Für Tagsüber von und mit Alenka Genzel &amp; Frank Matthias Alenka Genzel (Sopran) und Frank Matthias (Bariton) entführen ihr Publikum auf eine musikalische Reise rund um das Thema Operette – unterhaltsam, charmant und mit einer ebenso humorvollen wie aktuellen Moderation. Jeden Monat neu, mit beliebten Melodien auch aus Oper, klassischem Musical, Ufa-Filmen und Volkslied. Es wird gelacht, geschunkelt, gesungen und mitgesungen. Besonders in ihren temperamentvollen Duetten geht es turbulent und witzig zu, stets mit einem Augenzwinkern und viel Herzblut. Abgerundet wird das musikalische Vergnügen durch die Möglichkeit, vor der Veranstaltung, in der Pause oder im Anschluss Kaffee und Kuchen genießen zu können. &nbsp;"
+  }
+]

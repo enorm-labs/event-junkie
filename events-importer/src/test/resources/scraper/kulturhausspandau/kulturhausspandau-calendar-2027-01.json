@@ -1,0 +1,1052 @@
+[
+  {
+    "ID": 20372,
+    "title": "75 Jahre Magma &#8211; Das Jubiläum",
+    "subtitle": "Magma Theater Spandau",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/75-jahre-magma-das-jubilaeum/",
+    "start": "2027-01-16 16:30:00",
+    "end": "2027-01-16 23:59:00",
+    "break": false,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2022/09/magma-logo-768x1047.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 4,
+        "name": "Theater"
+      }
+    ],
+    "recommendations": [],
+    "artists": [
+      {
+        "title": "Magma Theater Spandau e.V."
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "7,50 € / Fan-Ticket 75 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "75 Jahre Magma &#8211; Das Jubiläum Magma Theater Spandau Kulturhaus Spandau Magma Theater Spandau e.V. Theater Weitere Infos folgen"
+  },
+  {
+    "ID": 20365,
+    "title": "Hochdruckgebiet",
+    "subtitle": "Ausstellungseröffnung",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/hochdruckgebiet/",
+    "start": "2027-01-21 18:00:00",
+    "end": "2027-01-21 21:00:00",
+    "break": false,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/11/net_Inspiration-Hunderwasser-2023-Linolschnitt-Tom-Dinse-768x844.jpg",
+    "place_id": 396,
+    "place": {
+      "ID": 396,
+      "title": "Galerie Kulturhaus",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 30,
+        "name": "Ausstellung"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 27,
+        "name": "Für Kunstfreunde"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Hochdruckgebiet Ausstellungseröffnung Galerie Kulturhaus Ausstellung Für Kunstfreunde KünstlerInnen aus dem Atelier Tageswerk (Neustrelitz) und der Macherei (Berlin) Hochdruckgebiete verheißen im Sommer sonnige, warme Tage, auf die wir uns freuen. Die Ausstellung Hochdruckgebiet zeigt grafische Arbeiten, überwiegend Hochdrucke wie Holz- und Linolschnitte, aber auch Materialdrucke, Mischtechniken und mit Farbstiften überarbeitete Drucke. Eingeladen sind Künstler*innen des Tageswerks (Neustrelitz) und der Macherei (Berlin), zweier Ateliers, die bereits kooperiert haben und für die Druckgrafik zentral ist. Das Tageswerk betreibt Kunstwerkstätten mit gut ausgestatteten Galerieräumen direkt in der Altstadt von Neustrelitz und bietet viele weitere Bildungsangebote. Die Macherei ist für künstlerische Projekte und Ausstellungsformate bekannt, etwa inklusive Zeitungsformate und eine Fernsehinterviewreihe mit Politikern zu Teilhabe, Inklusion und Selbstbestimmung. Die Vielzahl der Künstler*innen sorgt für vielfältige Themen und Umsetzungen. Gemeinsam ist die Suche nach einer Form, die ein Gefühl oder eine Geschichte transportiert, wobei Holz und Linoleum mit ihrem eigenen Charakter zur gefundenen Form beitragen. Begrüßung: Gregor Kempert, Bezirksstadtrat für Kultur und Maria Weber, Leitung Galerie Kulturhaus. Übersetzung in DGS Ausstellung: 22.01. - 17.04.2027"
+  },
+  {
+    "ID": 19576,
+    "title": "Helmut Frelke. Holzmanifestationen.",
+    "subtitle": "Ausstellung",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/helmut-frelke-holzmanifestationen-2/",
+    "start": "2026-10-16 13:00:00",
+    "end": "2027-01-16 18:00:00",
+    "break": false,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/eintritt-frei/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/10/net_Helmut-Frelke_Uebergangsbild_Foto-Presse-768x1012.jpg",
+    "place_id": 396,
+    "place": {
+      "ID": 396,
+      "title": "Galerie Kulturhaus",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 30,
+        "name": "Ausstellung"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 27,
+        "name": "Für Kunstfreunde"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "frei!",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Helmut Frelke. Holzmanifestationen. Ausstellung Galerie Kulturhaus Ausstellung Für Kunstfreunde Tafelbilder aus der Maserung edler Hölze Die Ausstellung zeigt ausgewählte Tafelbilder des Spandauer Künstlers Helmut Frelke (*1951, Kasachstan). Seine Holzmalereien sind Ausdruck eines einzigartigen Dialogs zwischen Natur und kunsthistorischer Bildtradition. Das Edelholz als Material gibt durch seine Maserung die Bildwelten vor, die der Künstler gekonnt durch Schichten von Beize hervorhebt. So treten verborgene mythische Gestalten und biblische Szenen ans Licht, die im Wurzelholz bereits angelegt schienen. Ein bedeutender Teil der gezeigten Arbeiten widmet sich christlichen Motiven, die bei Frelke eine ganz eigene, zeitgenössische Sprache finden Ausstellungsdauer: 16.10.2026 - 16.01.2027"
+  },
+  {
+    "ID": 19225,
+    "title": "Hops, der Oberkellner <p hidden_31.1.27_16>",
+    "subtitle": "Clown Hops &amp; Hopsi",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/hops-der-oberkellner-2/",
+    "start": "2027-01-31 16:00:00",
+    "end": "2027-01-31 17:00:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": 11,
+    "ticketlink": "https://kulturhaus-spandau.festiwa.re/app/resources/offer-categories/82",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/08/net_Hops_Oberkellner_Foto-Presse-e1786109431794.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Hops &#038; Hopsi"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "13 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Hops, der Oberkellner Clown Hops & Hopsi Theatersaal Hops &#038; Hopsi Kinder und Familie Für Kinder und Familien Für Tagsüber Die Kinder-Zaubershow Clown Hops und Hopsi spielen einen Restaurant-Besuch. Ein turbulenter Kindertheater-Spaß mit Jonglage, Musik und Zauberei. Das Kinderprogramm ist pädagogisch wertvoll, abwechslungsreich und interaktiv gestaltet. Erlebt ein einzigartiges und mitreißendes Bühnenprogramm für die ganze Familie! Hops und Hopsi haben auch in jedem Jahr neue Nummern im Programm! Beliebt seit 1980! Bekannt auch von TikTok! &nbsp; &nbsp;"
+  },
+  {
+    "ID": 18842,
+    "title": "Vom Bett, das nicht schlafen konnte",
+    "subtitle": "Theater Nicole Gospodarek",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/vom-bett-das-nicht-schlafen-konnte/",
+    "start": "2027-01-27 09:30:00",
+    "end": "2027-01-27 10:15:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/09/net_vom-Bett_Foto-Haik-Buechsenschuss.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      },
+      {
+        "term_id": 4,
+        "name": "Theater"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Theater Nicole Gospodarek"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "6,50 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "mit JKS-Schein 4,50 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Vom Bett, das nicht schlafen konnte Theater Nicole Gospodarek Kulturhaus Spandau Theater Nicole Gospodarek Kinder und Familie Theater Für Kinder und Familien Für Tagsüber Eine Geschichte übers Schlafen für aufgeweckte Menschen, frei nach Gerd Prokop An einem besonders stillen Abend, an dem kein Geräusch zu hören war, kein Auto und kein Flugzeug, und auch Großvater Josef ausgegangen war, dröhnte plötzlich ein schrecklicher Lärm durchs Haus. „Was war das?“, riefen Lampe, Hausschuhe und Katze entsetzt. Es war das Bett, das sich herumwarf, so dass das ganze Haus wackelte. Es konnte einfach nicht schlafen. Was sollte man tun?"
+  },
+  {
+    "ID": 15999,
+    "title": "Der kleine Eisbär",
+    "subtitle": "Figurentheater Ute Kahmann",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/der-kleine-eisbaer/",
+    "start": "2027-01-19 10:00:00",
+    "end": "2027-01-19 10:40:00",
+    "break": false,
+    "minimum_age": 4,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2025/11/net_Kahmann_Eisbaer_Foto-Presse-768x937.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Figurentheater Ute Kahmann"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "0",
+        "active": true,
+        "price": "7 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "0",
+        "active": true,
+        "price": "mit JKS-Gutschein 5 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Der kleine Eisbär Figurentheater Ute Kahmann Kulturhaus Spandau Figurentheater Ute Kahmann Kinder und Familie Für Kinder und Familien Für Tagsüber Nach dem Kinderbuchklassiker von Hanns de Beer Lars, der kleine Eisbär, sehnt sich nach den Abenteuern der weiten Welt. Als er eine Kiste findet, vor der ein lustiger Pappbär steht, dauert sein Spiel nicht lange und \"klapp\", ist er gefangen. Im Bauch eines Flugzeuges zerbricht seine Falle und er lernt das Walross Balthasar und das Braunbärmädchen Lea kennen. Bei einer Zwischenlandung können sie fliehen und zu dritt gelangen sie auf vergnügliche und abenteuerliche Weise zum Nordpol zurück. &nbsp;"
+  },
+  {
+    "ID": 15536,
+    "title": "Liederabend<p hidden klassiklatsch_1.27>",
+    "subtitle": "KlassiKlatsch",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/klassiklatsch-1/",
+    "start": "2027-01-24 16:00:00",
+    "end": "2027-01-24 18:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.de/ev_place/ticketreservierung/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2025/10/net_Flora-Joerns-Katja-Schroeder-768x827.jpg",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 10,
+        "name": "Konzert"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 24,
+        "name": "Für Musikliebhaber"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Katja Schröder"
+      },
+      {
+        "title": "Flo Jörns"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": "0",
+        "active": true,
+        "price": "Spenden willkommen",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Liederabend KlassiKlatsch Kulturhaus Spandau Katja Schröder Flo Jörns Konzert Für Musikliebhaber Für Tagsüber mit dem „Duo Unlaut“ In diesem Liederabend mit Werken des 20. Jahrhundert widmen sich Katja Schröder und Flo Jörns Liedern von Kurt Weill, Hanns Eisler, Amy Beach und Margeret Bonds. Jenseits von Realitätsflucht präsentiert sich das Kunstlied hierbei als musikalisches Plädoyer für Menschlichkeit und Gerechtigkeit. Bitte reservieren Sie Karten unter 030 - 333 40 22 oder per mail i-masked@example.de | Eine Online-Reservierung ist nicht möglich"
+  },
+  {
+    "ID": 15086,
+    "title": "LACHEN TUT GUT(es)!<br>-AUSVERKAUFT<p hidden_8.1.27>",
+    "subtitle": "Sascha Grammel",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/lachen-tut-gutes-copy/",
+    "start": "2027-01-08 20:00:00",
+    "end": "2027-01-08 22:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://www.eventbrite.de/e/sascha-grammel-lachen-tut-gutes-tickets-1984132786576",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2022/11/net-Sascha-Grammel_Foto-Sebastian-KonoPIX-768x1022.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 11,
+        "name": "Comedy und Kabarett"
+      },
+      {
+        "term_id": 3,
+        "name": "Show"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 25,
+        "name": "Für Theater- &amp; Kleinkunstfreunde"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Sascha Grammel"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "30 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "LACHEN TUT GUT(es)!-AUSVERKAUFT Sascha Grammel Theatersaal Sascha Grammel Comedy und Kabarett Show Für Theater- &amp; Kleinkunstfreunde Benefiz-Comedy-Show Was sich liest wie ein Schreibfehler, ist pure Absicht! Und eine der schönsten Ideen, wie man Humor und Hilfe, beste Unterhaltung und unbürokratische Unterstützung ganz einfach miteinander verbinden kann; Sascha Grammels Benefiz-Projekt Lachen tut Gut(es)! Beste Puppen-Comedy und ein hemmungslos grammeliges Bühnenspektakel. &nbsp; weitere Termine finden Sie auch in Saschas → Tourplan oder im → Kulturhaus Spandau"
+  },
+  {
+    "ID": 14794,
+    "title": "LACHEN TUT GUT(es)!<br>-AUSVERKAUFT<p hidden_9.1.27>",
+    "subtitle": "Sascha Grammel",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/lachen-tut-gutes-15/",
+    "start": "2027-01-09 20:00:00",
+    "end": "2027-01-09 22:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://www.eventbrite.de/e/sascha-grammel-lachen-tut-gutes-tickets-1984132946053",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2022/11/net-Sascha-Grammel_Foto-Sebastian-KonoPIX-768x1022.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 11,
+        "name": "Comedy und Kabarett"
+      },
+      {
+        "term_id": 3,
+        "name": "Show"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 25,
+        "name": "Für Theater- &amp; Kleinkunstfreunde"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Sascha Grammel"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "30 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "LACHEN TUT GUT(es)!-AUSVERKAUFT Sascha Grammel Theatersaal Sascha Grammel Comedy und Kabarett Show Für Theater- &amp; Kleinkunstfreunde Benefiz-Comedy-Show Was sich liest wie ein Schreibfehler, ist pure Absicht! Und eine der schönsten Ideen, wie man Humor und Hilfe, beste Unterhaltung und unbürokratische Unterstützung ganz einfach miteinander verbinden kann; Sascha Grammels Benefiz-Projekt Lachen tut Gut(es)! Beste Puppen-Comedy und ein hemmungslos grammeliges Bühnenspektakel. &nbsp; weitere Termine finden Sie auch in Saschas → Tourplan oder im → Kulturhaus Spandau"
+  },
+  {
+    "ID": 7382,
+    "title": "LACHEN TUT GUT(es)!<br>-AUSVERKAUFT<p hidden_10.1.27>",
+    "subtitle": "Sascha Grammel",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/lachen-tut-gutes-24/",
+    "start": "2027-01-10 18:00:00",
+    "end": "2027-01-10 20:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://www.eventbrite.de/e/sascha-grammel-lachen-tut-gutes-tickets-1984133111548",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2022/11/net-Sascha-Grammel_Foto-Sebastian-KonoPIX-768x1022.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 11,
+        "name": "Comedy und Kabarett"
+      },
+      {
+        "term_id": 3,
+        "name": "Show"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 25,
+        "name": "Für Theater- &amp; Kleinkunstfreunde"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Sascha Grammel"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "30 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "LACHEN TUT GUT(es)!-AUSVERKAUFT Sascha Grammel Theatersaal Sascha Grammel Comedy und Kabarett Show Für Theater- &amp; Kleinkunstfreunde Benefiz-Comedy-Show Was sich liest wie ein Schreibfehler, ist pure Absicht! Und eine der schönsten Ideen, wie man Humor und Hilfe, beste Unterhaltung und unbürokratische Unterstützung ganz einfach miteinander verbinden kann; Sascha Grammels Benefiz-Projekt Lachen tut Gut(es)! Beste Puppen-Comedy und ein hemmungslos grammeliges Bühnenspektakel. &nbsp; weitere Termine finden Sie auch in Saschas → Tourplan oder im → Kulturhaus Spandau"
+  },
+  {
+    "ID": 9488,
+    "title": "schneeschön &#038; bitterkalt",
+    "subtitle": "Theater Fusion",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/schneeschoen-bitterkalt-2/",
+    "start": "2027-01-20 11:00:00",
+    "end": "2027-01-20 11:40:00",
+    "break": false,
+    "minimum_age": 2,
+    "maximum_age": 5,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2023/07/net-schneeschoen_©Theater-Fusion.png",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "TheaterFusion"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "7 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "mit JKS-Gutschein 5 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "schneeschön &#038; bitterkalt Theater Fusion Kulturhaus Spandau TheaterFusion Kinder und Familie Für Kinder und Familien Für Tagsüber aus dem 'Jahreszeitenquartett' Es dreht sich alles um den Winter: Schlitterwonne und Glättesturz, anpummeln - wieder ausziehen. Schnee wirbelt durch die Luft und deckt die Äste des Apfelbaumes zu. Eine Flocke weht ins Mauseloch und weckt Mausekind Jakob. Er entdeckt seine erste Winterwelt: Schnee – sooo schön, aber sooo bitterkalt ! Was kann man damit anfangen? Eine Kugel – ein Mann – ein Schneemann! Jakob feiert die Winterfreuden und sinkt abends müde in sein kuscheliges Winternest."
+  },
+  {
+    "ID": 9483,
+    "title": "schneeschön &#038; bitterkalt",
+    "subtitle": "Theater Fusion",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/schneeschoen-bitterkalt/",
+    "start": "2027-01-20 09:30:00",
+    "end": "2027-01-20 10:10:00",
+    "break": false,
+    "minimum_age": 2,
+    "maximum_age": 5,
+    "ticketlink": "https://kulturhaus-spandau.de/tickets-reservieren/",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2023/07/net-schneeschoen_©Theater-Fusion.png",
+    "place_id": 15,
+    "place": {
+      "ID": 15,
+      "title": "Kulturhaus Spandau",
+      "farbcode": "#ff6060"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "TheaterFusion"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "7 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "999",
+        "active": true,
+        "price": "mit JKS-Gutschein 5 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "schneeschön &#038; bitterkalt Theater Fusion Kulturhaus Spandau TheaterFusion Kinder und Familie Für Kinder und Familien Für Tagsüber aus dem 'Jahreszeitenquartett' Es dreht sich alles um den Winter: Schlitterwonne und Glättesturz, anpummeln - wieder ausziehen. Schnee wirbelt durch die Luft und deckt die Äste des Apfelbaumes zu. Eine Flocke weht ins Mauseloch und weckt Mausekind Jakob. Er entdeckt seine erste Winterwelt: Schnee – sooo schön, aber sooo bitterkalt ! Was kann man damit anfangen? Eine Kugel – ein Mann – ein Schneemann! Jakob feiert die Winterfreuden und sinkt abends müde in sein kuscheliges Winternest."
+  },
+  {
+    "ID": 5014,
+    "title": "Zwei Flügel, zwei Stile",
+    "subtitle": "Frank Muschalle &amp; Lluis Coloma",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/blues-boogie-woogie/",
+    "start": "2027-01-17 17:00:00",
+    "end": "2027-01-17 19:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.festiware.app/shop/jahresprogramm?-cat=82",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/10/net_F.Muschalle_Foto-Stephan-Spaderna_L.Coloma_Foto-christophermag.com_-768x845.jpg",
+    "place_id": 474,
+    "place": {
+      "ID": 474,
+      "title": "Zitadelle",
+      "farbcode": "#ffcb64"
+    },
+    "categories": [
+      {
+        "term_id": 10,
+        "name": "Konzert"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 23,
+        "name": "Für Konzertfans"
+      },
+      {
+        "term_id": 24,
+        "name": "Für Musikliebhaber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Frank Muschalle"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "",
+        "active": true,
+        "price": "22 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "",
+        "active": true,
+        "price": "18 € / Schüler*innen/Studierende 10 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Zwei Flügel, zwei Stile Frank Muschalle & Lluis Coloma Zitadelle Frank Muschalle Konzert Für Konzertfans Für Musikliebhaber Ein musikalisches Feuerwerk des Blues &amp; Boogie Woogie Frank Muschalle aus Berlin und Lluis Coloma aus Barcelona treffen an zwei Flügeln aufeinander – und zeigen, wie unterschiedlich, vielseitig und aufregend Blues und Boogie-Woogie klingen können. Wenn diese zwei Ausnahme-Pianisten gleichzeitig an zwei Flügeln Platz nehmen, wird aus einem Konzert schnell ein musikalischer Schlagabtausch: verspielt, rhythmisch packend und voller überraschender Wendungen - vierhändig, zweihändig und garantiert nicht langweilig! Beide Musiker greifen die Ideen des anderen auf, treiben sie weiter und überraschen sich gegenseitig. Mal verschmelzen die beiden Spielweisen zu einem gemeinsamen Groove, mal entwickelt sich daraus ein rasantes musikalisches Duell. Das Ergebnis ist ein Konzert voller Energie, Virtuosität, Spontaneität und Spielfreude. Frank Muschalle &amp; Lluis Coloma – Berlin trifft Barcelona - zwei Flügel treffen aufeinander. &nbsp; &nbsp; Frank Muschalle Lluis Coloma &nbsp;"
+  },
+  {
+    "ID": 4575,
+    "title": "Hops, der Oberkellner <p hidden_31.1.27_14>",
+    "subtitle": "Clown Hops &amp; Hopsi",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/hops-und-hopsi/",
+    "start": "2027-01-31 14:00:00",
+    "end": "2027-01-31 15:00:00",
+    "break": false,
+    "minimum_age": 3,
+    "maximum_age": 11,
+    "ticketlink": "https://kulturhaus-spandau.festiwa.re/app/resources/offer-categories/82",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2026/08/net_Hops_Oberkellner_Foto-Presse-e1786109431794.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 9,
+        "name": "Kinder und Familie"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 26,
+        "name": "Für Kinder und Familien"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [
+      {
+        "title": "Hops &#038; Hopsi"
+      }
+    ],
+    "ticketprices": [
+      {
+        "position": "999",
+        "active": true,
+        "price": "13 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Hops, der Oberkellner Clown Hops & Hopsi Theatersaal Hops &#038; Hopsi Kinder und Familie Für Kinder und Familien Für Tagsüber Die Kinder-Zaubershow Clown Hops und Hopsi spielen einen Restaurant-Besuch. Ein turbulenter Kindertheater-Spaß mit Jonglage, Musik und Zauberei. Das Kinderprogramm ist pädagogisch wertvoll, abwechslungsreich und interaktiv gestaltet. Erlebt ein einzigartiges und mitreißendes Bühnenprogramm für die ganze Familie! Hops und Hopsi haben auch in jedem Jahr neue Nummern im Programm! Beliebt seit 1980! Bekannt auch von TikTok! &nbsp; &nbsp;"
+  },
+  {
+    "ID": 1891,
+    "title": "Spandau<p hidden_PoetrySlam 1.27>",
+    "subtitle": "Poetry Slam",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/1891/",
+    "start": "2027-01-23 20:00:00",
+    "end": "2027-01-23 22:00:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.festiware.app/shop/jahresprogramm?-cat=82",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2022/12/net_PoetrySlam_©-Kiezpoeten.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 11,
+        "name": "Comedy und Kabarett"
+      },
+      {
+        "term_id": 2,
+        "name": "Lesung"
+      },
+      {
+        "term_id": 12,
+        "name": "Vortrag"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 25,
+        "name": "Für Theater- &amp; Kleinkunstfreunde"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "",
+        "active": true,
+        "price": "14,- €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "",
+        "active": true,
+        "price": "8,- €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Spandau Poetry Slam Theatersaal Comedy und Kabarett Lesung Vortrag Für Theater- &amp; Kleinkunstfreunde Nur einen Katzensprung vom Bahnhof Spandau entfernt präsentiert Samson seit Jahren den Poetry Slam Spandau. Den besten Poetry Slam von Spandau. Den einzigen Poetry Slam in Spandau. Im Theatersaal des Kulturhaus Spandau treten erfahrene Wortkünstler:innen mit selbstverfassten Texten in einen höchst unterhaltsamen Wettstreit mit mutigen Auftrittswilligen aus der Nachbarschaft. Die Regeln sind immer gleich: alles muss selbstgeschrieben sein, keine Kostüme oder Requisiten, kein Gesang! Das Publikum entscheidet, wer den Abend als Sieger:in verlässt. Willkommen beim spandausten Poetry Slam der Welt. &nbsp;"
+  },
+  {
+    "ID": 1885,
+    "title": "Das beschwipste Neujahrskonzert<p hidden_Operetten 1.27>",
+    "subtitle": "Operetten zum Kaffee",
+    "permalink": "https://kulturhaus-spandau.de/ev_event/neujahr/",
+    "start": "2027-01-12 15:00:00",
+    "end": "2027-01-12 17:15:00",
+    "break": true,
+    "minimum_age": null,
+    "maximum_age": null,
+    "ticketlink": "https://kulturhaus-spandau.festiware.app/shop/jahresprogramm?-cat=82",
+    "mainpicture": "https://kulturhaus-spandau.de/wp-content/uploads/2020/04/operette2016-960-768x752.jpg",
+    "place_id": 19,
+    "place": {
+      "ID": 19,
+      "title": "Theatersaal",
+      "farbcode": "#dd5656"
+    },
+    "categories": [
+      {
+        "term_id": 10,
+        "name": "Konzert"
+      }
+    ],
+    "recommendations": [
+      {
+        "term_id": 23,
+        "name": "Für Konzertfans"
+      },
+      {
+        "term_id": 28,
+        "name": "Für Tagsüber"
+      }
+    ],
+    "artists": [],
+    "ticketprices": [
+      {
+        "position": "",
+        "active": true,
+        "price": "23 €",
+        "name": "Eintritt"
+      },
+      {
+        "position": "",
+        "active": true,
+        "price": "19 €",
+        "name": "ermäßigt"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Kinder"
+      },
+      {
+        "position": 0,
+        "active": false,
+        "price": "",
+        "name": "Eintritt frei"
+      }
+    ],
+    "search": "Das beschwipste Neujahrskonzert Operetten zum Kaffee Theatersaal Konzert Für Konzertfans Für Tagsüber von und mit Alenka Genzel &amp; Frank Matthias Alenka Genzel (Sopran) und Frank Matthias (Bariton) entführen ihr Publikum auf eine musikalische Reise rund um das Thema Operette – unterhaltsam, charmant und mit einer ebenso humorvollen wie aktuellen Moderation. Jeden Monat neu, mit beliebten Melodien auch aus Oper, klassischem Musical, Ufa-Filmen und Volkslied. Es wird gelacht, geschunkelt, gesungen und mitgesungen. Besonders in ihren temperamentvollen Duetten geht es turbulent und witzig zu, stets mit einem Augenzwinkern und viel Herzblut. Abgerundet wird das musikalische Vergnügen durch die Möglichkeit, vor der Veranstaltung, in der Pause oder im Anschluss Kaffee und Kuchen genießen zu können. &nbsp; &nbsp;"
+  }
+]
