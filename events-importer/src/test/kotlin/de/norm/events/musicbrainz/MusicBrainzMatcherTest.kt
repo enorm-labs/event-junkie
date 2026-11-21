@@ -48,6 +48,22 @@ class MusicBrainzMatcherTest {
             MusicBrainzMatcher.decide("Pici", listOf(candidate("Pici Mazzei", country = "IT"))) shouldBe MusicBrainzVerdict.NONE
         }
 
+        // V271: `wilco` is a Frannz Club DJ, and the one MusicBrainz Wilco is the Chicago band.
+        @Test
+        fun `a rejected candidate never counts, and a name only it carries is AMBIGUOUS, not NONE`() {
+            val band = candidate("Wilco", id = "band", country = "US")
+
+            MusicBrainzMatcher.decide("Wilco", listOf(band)) shouldBe MusicBrainzVerdict(MusicBrainzMatch.EXACT, "band")
+            MusicBrainzMatcher.decide("Wilco", listOf(band), rejected = setOf("band")) shouldBe MusicBrainzVerdict.AMBIGUOUS
+        }
+
+        @Test
+        fun `with one of two namesakes rejected, the other is EXACT`() {
+            val candidates = listOf(candidate("Gomez", id = "band", country = "GB"), candidate("Gomez", id = "dj", country = "DE"))
+
+            MusicBrainzMatcher.decide("Gomez", candidates, rejected = setOf("dj")) shouldBe MusicBrainzVerdict(MusicBrainzMatch.EXACT, "band")
+        }
+
         @Test
         fun `Andy is AMBIGUOUS, because only an alias of Horace Andy carries the name`() {
             val candidates =

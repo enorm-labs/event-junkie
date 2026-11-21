@@ -4,6 +4,7 @@ import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.MusicBrainzMatch
+import de.norm.events.artist.MusicBrainzRejectionStore
 import de.norm.events.musicbrainz.MusicBrainzCandidate
 import de.norm.events.musicbrainz.MusicBrainzClient
 import de.norm.events.musicbrainz.MusicBrainzProperties
@@ -33,6 +34,9 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var artistRepository: ArtistRepository
 
+    @Autowired
+    private lateinit var rejectionStore: MusicBrainzRejectionStore
+
     private val client = mockk<MusicBrainzClient>()
     private val metricsRegistry = SimpleMeterRegistry()
     private val metrics = EnrichmentMetrics(metricsRegistry)
@@ -41,6 +45,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
         MusicBrainzLookupService(
             artistRepository = artistRepository,
             client = client,
+            rejectionStore = rejectionStore,
             properties = MusicBrainzProperties(maxPerRun = maxPerRun),
             metrics = metrics
         )
@@ -210,14 +215,33 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
     }
 
     @Test
+    fun `a rejected MBID is never stored again for that row, and the row stays out of the Discogs queue`() {
+        runBlocking {
+            val id = requireNotNull(artist("Wilco").id)
+            rejectionStore.add(id, BAND)
+            coEvery { client.search("Wilco") } returns listOf(candidate("Wilco", BAND, "US"))
+
+            service().sweep(setOf(id)).stored shouldBe 1
+
+            val stored = artistRepository.findById(id).shouldNotBeNull()
+            stored.musicbrainzMatch shouldBe MusicBrainzMatch.AMBIGUOUS.name
+            stored.musicbrainzId.shouldBeNull()
+        }
+    }
+
+    @Test
     fun `disabled means no lookup at all`() {
         runBlocking {
             val id = requireNotNull(artist("Anyone").id)
-            val disabled = MusicBrainzLookupService(artistRepository, client, MusicBrainzProperties(enabled = false), metrics)
+            val disabled = MusicBrainzLookupService(artistRepository, client, rejectionStore, MusicBrainzProperties(enabled = false), metrics)
 
             disabled.sweep(setOf(id)) shouldBe LookupPass.OFF
 
             matchOf(id) shouldBe MusicBrainzMatch.UNCHECKED.name
         }
+    }
+
+    private companion object {
+        const val BAND = "9e53f84d-ef44-4c16-9677-5fd4d78cbd7d"
     }
 }

@@ -24,6 +24,9 @@ class ArtistControllerTest : BaseControllerTest() {
     @Autowired
     private lateinit var artistRepository: ArtistRepository
 
+    @Autowired
+    private lateinit var rejectionStore: MusicBrainzRejectionStore
+
     /** Creates an artist via the API and returns the persisted [ArtistResponse]. */
     private fun createArtist(request: ArtistRequest = ArtistRequestFixtures.adicts()): ArtistResponse =
         webTestClient
@@ -548,6 +551,70 @@ class ArtistControllerTest : BaseControllerTest() {
         }
         getArtist(created.id).musicbrainzMatch shouldBe MusicBrainzMatch.UNCHECKED
     }
+
+    @Test
+    fun `DELETE musicbrainz-id clears a wrong match and what it filled, keeps a venue's text, and never takes the id back`() {
+        val created =
+            createArtist(
+                ArtistRequestFixtures.adicts(instagramUrl = null).copy(description = "Resident DJ der Dämonenball-Nächte.")
+            )
+        verdict(created, MusicBrainzMatch.EXACT)
+        runBlocking {
+            enrichmentStore.store(
+                created.id,
+                mapOf(
+                    "instagram_url" to "https://www.instagram.com/band/",
+                    "artist_type" to "GROUP",
+                    "image_url" to "https://upload.wikimedia.org/band.jpg",
+                    "image_attribution" to "Photographer, via Wikimedia Commons",
+                    "image_licence_id" to "CC-BY-SA-4.0",
+                    "image_source_url" to "https://commons.wikimedia.org/wiki/File:Band.jpg"
+                )
+            )
+        }
+
+        val after = deleteMusicBrainzId(created.id)
+
+        assertSoftly(after) {
+            musicbrainzMatch shouldBe MusicBrainzMatch.AMBIGUOUS
+            musicbrainzId shouldBe null
+            instagramUrl shouldBe null
+            artistType shouldBe null
+            imageUrl shouldBe null
+            imageSourceUrl shouldBe null
+            description shouldBe "Resident DJ der Dämonenball-Nächte."
+        }
+        runBlocking {
+            artistRepository.findNeedingMusicBrainzLookup(listOf(created.id)).toList() shouldBe emptyList()
+            rejectionStore.rejectedIds(created.id) shouldBe setOf(MBID)
+        }
+        // A row with no EXACT match changes nothing.
+        deleteMusicBrainzId(created.id) shouldBe after
+        // A person's own pick of the rejected id lifts the rejection.
+        putMusicBrainzId(created.id, MBID).musicbrainzMatch shouldBe MusicBrainzMatch.EXACT
+        runBlocking { rejectionStore.rejectedIds(created.id) shouldBe emptySet() }
+    }
+
+    @Test
+    fun `DELETE musicbrainz-id answers 404 for an unknown artist`() {
+        webTestClient
+            .delete()
+            .uri("/api/admin/artists/99999/musicbrainz-id")
+            .exchange()
+            .expectStatus()
+            .isNotFound
+    }
+
+    private fun deleteMusicBrainzId(id: Long): ArtistResponse =
+        webTestClient
+            .delete()
+            .uri("/api/admin/artists/$id/musicbrainz-id")
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody<ArtistResponse>()
+            .returnResult()
+            .responseBody!!
 
     private fun getArtist(id: Long): ArtistResponse =
         webTestClient
