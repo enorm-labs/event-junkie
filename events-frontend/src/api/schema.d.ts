@@ -2723,7 +2723,7 @@ export interface components {
              * @example HEADLINER
              * @enum {string}
              */
-            role?: "HEADLINER" | "SUPPORT" | "DJ" | "LIVE";
+            role?: "HEADLINER" | "SUPPORT" | "GUEST" | "DJ" | "LIVE";
             /**
              * Format: int32
              * @description Position in the lineup — lower numbers appear first

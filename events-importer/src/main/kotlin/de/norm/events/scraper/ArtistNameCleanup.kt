@@ -96,13 +96,16 @@ private const val TOUR_REGION = """(?:europa|europe|european|welt|world|deutschl
  */
 fun splitBracketedGuest(name: String): List<String> {
     val match = BRACKETED_GUEST.find(name.trim()) ?: return listOf(name)
-    val (head, guest) = match.destructured
+    val (head, _, guest) = match.destructured
     return listOf(head.trim(), guest.trim()).filter { it.isNotBlank() }.ifEmpty { listOf(name) }
 }
 
+/** Whether [name]'s trailing guest bracket adds an act, `Warhammer (+ Corrode)`, rather than featuring one, `Dosenstolz (feat. Tancred)`. */
+fun bracketAddsAct(name: String): Boolean = BRACKETED_GUEST.find(name.trim())?.groupValues?.get(2) == "+"
+
 /** A trailing `(feat. X)`, `(ft. X)`, `(featuring X)`, `(with X)`, `(w/ X)` or `(+ X)`. */
 private val BRACKETED_GUEST =
-    Regex("""^(.+?)\s*\((?:feat\.?|ft\.?|featuring|with|w/|\+)\s*([^()]+)\)$""", RegexOption.IGNORE_CASE)
+    Regex("""^(.+?)\s*\((feat\.?|ft\.?|featuring|with|w/|\+)\s*([^()]+)\)$""", RegexOption.IGNORE_CASE)
 
 /**
  * Strips a trailing tour/live/anniversary suffix or format annotation from an act name.

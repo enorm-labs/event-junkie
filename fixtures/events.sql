@@ -222,7 +222,7 @@ WHERE e.source_id = 'fixture-multi-bill';
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'fixture-multi-bill' AND g.slug = 'jazz';
 
--- A festival: three days by the venue's own word (ADR-029), three artists on two stages, a promoter. The running order
+-- A festival: three days by the venue's own word (ADR-029), five artists on two stages, one as a guest, a promoter. The running order
 -- (#2002) gives one set a start and an end past midnight, one a start alone, and leaves the third without.
 INSERT INTO events.event (venue_id, title, subtitle, description, description_language, event_type, slug, event_date, doors_time, start_time,
                           end_date, end_time, source_url, source_id, ticket_url, genre, price_presale, price_box_office)
@@ -240,7 +240,8 @@ FROM events.event e
          CROSS JOIN (VALUES ('dj-uberdruck', 'HEADLINER', 0, 'Hauptbühne', INTERVAL '22 hours', INTERVAL '26 hours'),
                             ('dj-nachtfalter', 'DJ', 1, 'Garten', INTERVAL '18 hours', NULL::interval),
                             ('rauhfaser', 'SUPPORT', 2, 'Hauptbühne', NULL::interval, NULL::interval),
-                            ('mobius-trio', 'LIVE', 3, 'Garten', NULL::interval, NULL::interval))
+                            ('mobius-trio', 'LIVE', 3, 'Garten', NULL::interval, NULL::interval),
+                            ('anna-kessel', 'GUEST', 4, 'Garten', NULL::interval, NULL::interval))
     AS r(slug, role, billing_order, stage, starts_after, ends_after)
          JOIN events.artist a ON a.slug = r.slug
 WHERE e.source_id = 'fixture-festival';

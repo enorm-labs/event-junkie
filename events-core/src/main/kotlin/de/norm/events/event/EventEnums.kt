@@ -68,6 +68,9 @@ enum class ArtistRole {
     /** Supporting act listed below the headliner */
     SUPPORT,
 
+    /** An act that plays with the headliner, in its set: the `feat.` singer, the guest saxophonist (#5359). */
+    GUEST,
+
     /** DJ set, typically at aftershow parties or festivals */
     DJ,
 

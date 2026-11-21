@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service
  * Derives genre tags for the events whose source publishes none (ADR-047). Runs inside the import transaction, after the genre sync, and
  * inside an admin create or edit, after the line-up is written (#5262).
  *
- * A music event takes the source tags its billed acts carry on their other events, past or upcoming. A support act does not count, and a
+ * A music event takes the source tags its billed acts carry on their other events, past or upcoming. A support act or a guest does not count, and a
  * DJ billing and a live billing do not lend each other tags: one name can be a resident DJ and a band (#4411).
  * An event still untagged takes the decades its title bills as a party ([titleDecadeGenres]), the genre of a hyphenated format word in
  * its title ([titleCompoundGenres]) and the genre words of its description ([descriptionGenres]).
@@ -128,7 +128,7 @@ class GenreDerivationService(
 
     /**
      * The mapped Wikidata genres of each event's billed acts, in billing order, at most [MAX_WIKIDATA_GENRES] per event. A support
-     * act does not count. Only an `EXACT` row counts, so a match an operator reset does not tag with the old act's genres.
+     * act or a guest does not count. Only an `EXACT` row counts, so a match an operator reset does not tag with the old act's genres.
      */
     private suspend fun wikidataGenres(eventIds: Set<Long>): Map<Long, List<String>> {
         if (eventIds.isEmpty()) return emptyMap()
@@ -176,7 +176,7 @@ class GenreDerivationService(
             SELECT ea.event_id, a.wikidata_genres
             FROM $EVENTS_SCHEMA.event_artist ea
             JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id
-            WHERE ea.event_id = ANY(:ids) AND ea.role <> 'SUPPORT'
+            WHERE ea.event_id = ANY(:ids) AND ea.role NOT IN ('SUPPORT', 'GUEST')
                 AND a.musicbrainz_match = 'EXACT' AND cardinality(a.wikidata_genres) > 0
             ORDER BY ea.event_id, ea.billing_order, ea.artist_id
             """.trimIndent()
@@ -190,7 +190,7 @@ class GenreDerivationService(
                 AND (other.role = 'DJ') = (ea.role = 'DJ')
             JOIN $EVENTS_SCHEMA.event_genre_tag egt ON egt.event_id = other.event_id AND egt.origin = 'SOURCE'
             JOIN $EVENTS_SCHEMA.genre_tag gt ON gt.id = egt.genre_tag_id
-            WHERE ea.event_id = ANY(:ids) AND ea.role <> 'SUPPORT'
+            WHERE ea.event_id = ANY(:ids) AND ea.role NOT IN ('SUPPORT', 'GUEST')
             GROUP BY ea.event_id, egt.genre_tag_id, gt.name
             ORDER BY ea.event_id, count(DISTINCT other.event_id) DESC, gt.name
             """.trimIndent()

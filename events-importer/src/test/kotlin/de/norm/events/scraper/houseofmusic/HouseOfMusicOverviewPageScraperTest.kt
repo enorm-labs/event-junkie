@@ -136,9 +136,9 @@ class HouseOfMusicOverviewPageScraperTest {
         val night = retitled("Jonny Mahoro feat. In Your Pocket")
         val long = retitled("The Big Berlin Brass Collective and Friends feat. The Smoky Mountain Youth Choir")
 
-        night.artists.map { it.name to it.role } shouldBe listOf("Jonny Mahoro" to ArtistRole.HEADLINER, "In Your Pocket" to ArtistRole.SUPPORT)
+        night.artists.map { it.name to it.role } shouldBe listOf("Jonny Mahoro" to ArtistRole.HEADLINER, "In Your Pocket" to ArtistRole.GUEST)
         long.artists.map { it.name to it.role } shouldBe
-            listOf("The Big Berlin Brass Collective and Friends" to ArtistRole.HEADLINER, "The Smoky Mountain Youth Choir" to ArtistRole.SUPPORT)
+            listOf("The Big Berlin Brass Collective and Friends" to ArtistRole.HEADLINER, "The Smoky Mountain Youth Choir" to ArtistRole.GUEST)
     }
 
     @Test

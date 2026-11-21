@@ -49,7 +49,7 @@ class Donau115ApiScraperTest {
         night.imageUrl shouldBe "https://res.cloudinary.com/dci7i3mni/image/upload/v1792757833/xkdthfbybwr6tgzrcj0x.jpg"
         night.description!! shouldStartWith "After several critically acclaimed tours"
         night.artists.map { it.name to it.role } shouldContainExactly
-            listOf("THE BEST THING SINCE SLICED BREAD" to ArtistRole.HEADLINER, "Tríne Kalniņa" to ArtistRole.SUPPORT)
+            listOf("THE BEST THING SINCE SLICED BREAD" to ArtistRole.HEADLINER, "Tríne Kalniņa" to ArtistRole.GUEST)
     }
 
     @Test
