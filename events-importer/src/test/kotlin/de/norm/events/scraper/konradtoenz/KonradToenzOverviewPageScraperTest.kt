@@ -91,6 +91,40 @@ class KonradToenzOverviewPageScraperTest {
     }
 
     @Test
+    fun `a style line below a line break is the style line, and a DJ that ends the name is billed (event 15042)`() {
+        val event =
+            scraper
+                .scrape(
+                    section(
+                        "Freitag, den 18.12.2026 ab 21 Uhr",
+                        "Soulblock- rare soul Music from the 60s to early 70s DJ Nolovigo<br>R&amp;B, Deep Soul, Northern Soul and Beat"
+                    ),
+                    baseUrl
+                ).single()
+
+        event.title shouldBe "Soulblock- rare soul Music from the 60s to early 70s DJ Nolovigo"
+        event.subtitle shouldBe "R&B, Deep Soul, Northern Soul and Beat"
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("DJ Nolovigo" to ArtistRole.DJ)
+        event.genre shouldBe "Soul"
+    }
+
+    @Test
+    fun `a date the bar is shut, booked or open with no programme is no night (events 15043, 15045, 15049)`() {
+        val page =
+            Jsoup.parse(
+                listOf(
+                    "Samstag, den 19.12.2026&nbsp;" to "<strong>Geschlossene Veranstaltung!!!!</strong>",
+                    "Donnerstag, den 24.12.2026" to "<strong>Geschlossen!!!!</strong>",
+                    "Mittwoch, den 30.12.2026 ab 21 Uhr" to "Offener Abend!!",
+                    "Sonntag, den 27.12.2026 ab 21 Uhr" to "Jazz-Nacht im Tönz"
+                ).joinToString("") { (date, name) -> """<section class="container events-dates"><p>$date</p><p>$name</p></section>""" },
+                baseUrl
+            )
+
+        scraper.scrape(page, baseUrl).map { it.title } shouldContainExactly listOf("Jazz-Nacht im Tönz")
+    }
+
+    @Test
     fun `an empty paragraph after the date line is ignored`() {
         val event = night("2026-11-21")
 

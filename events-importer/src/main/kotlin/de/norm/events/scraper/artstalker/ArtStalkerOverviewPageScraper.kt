@@ -1,11 +1,15 @@
 package de.norm.events.scraper.artstalker
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
@@ -22,7 +26,8 @@ private val logger = KotlinLogging.logger {}
  * Pure parser for the shop's listing, one `a[data-sync-id]` card per event in the
  * `[data-testid=event-list]` list: `time[datetime]` is the start, the `h2` the title, and the
  * "ab … €" line the cheapest online ticket, fees included. The type and the artists are read here,
- * from the title alone ([splitTagline]); the event page adds nothing that decides either.
+ * from the title alone ([splitTagline]); the event page adds nothing that decides either. A party
+ * names no act in its title, but a `Mit DJ …` tagline bills its DJ (event 15018).
  */
 class ArtStalkerOverviewPageScraper {
     fun scrape(document: Document): List<ScrapedEvent> =
@@ -61,11 +66,32 @@ class ArtStalkerOverviewPageScraper {
             sourceId = "${EventSource.ART_STALKER.sourceIdPrefix}$id",
             ticketUrl = url,
             pricePresale = parsePriceValue(card.textAt(".c-list-item-event__event-min-price")),
-            artists = if (openStage) emptyList() else buildArtistsForEventType(billedActs(title), subtitle, eventType)
+            artists =
+                when {
+                    openStage -> emptyList()
+                    eventType == EventType.PARTY.name -> taglineDjs(subtitle)
+                    else -> buildArtistsForEventType(billedActs(title), subtitle, eventType)
+                }
         )
     }
 
+    /** The DJs a party's tagline names: `Mit DJ Louie Prima`. */
+    private fun taglineDjs(subtitle: String?): List<ScrapedArtist> =
+        TAGLINE_DJS
+            .find(subtitle.orEmpty())
+            ?.groupValues
+            ?.get(1)
+            ?.split(DJ_SEPARATOR)
+            .orEmpty()
+            .mapNotNull { it.trim().blankToNull() }
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+
     private companion object {
+        /** A tagline that only names the night's DJs. */
+        val TAGLINE_DJS = Regex("""^mit\s+(DJs?\s+.+)$""", RegexOption.IGNORE_CASE)
+        val DJ_SEPARATOR = Regex("""\s+(?:&|und)\s+|,\s*""", RegexOption.IGNORE_CASE)
+
         /** The music school's student showcase, a house format that is no concert of a billed act. */
         val VENUE_FORMATS = mapOf("musikschule" to EventType.OTHER.name)
 

@@ -362,6 +362,24 @@ class ATraneProgrammePageScraperTest {
     }
 
     @Test
+    fun `drops an added-show banner above the credit (event 15063)`() {
+        val night =
+            card(
+                listOf(
+                    "ZUSATZKONZERT-EXTRA CONCERT",
+                    "A-TRANE PRÄSENTIERT WEIHNACHTSZEIT TAG1:",
+                    "Atrin Madani & Band",
+                    "Annual Christmas Special",
+                    "Feat: Hila Kulik-Olaf Casimir-Marc Michel"
+                )
+            )
+
+        night.title shouldBe "Atrin Madani & Band"
+        night.subtitle shouldBe "Annual Christmas Special · Feat: Hila Kulik-Olaf Casimir-Marc Michel"
+        night.artists.map { it.name } shouldBe listOf("Atrin Madani")
+    }
+
+    @Test
     fun `names the act without its quoted album title`() {
         on(LocalDate.of(2026, 12, 5)).artists.map { it.name } shouldBe listOf("MIKE RUSSELL")
         on(LocalDate.of(2026, 10, 7)).artists.map { it.name } shouldBe listOf("ENEMY")

@@ -163,6 +163,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Kesselhaus          | `KesselhausCalendarScraper.isInvitationOnly`                 | A ticket label or subtitle that says `nur für geladene Gäste`, `Geschlossene Gesellschaft` or `Privatveranstaltung`                  |
 | Peter Edel          | `isClosedToPublic` (`PeterEdelOverviewPageScraper.parseBox`) | An info line or ticket column that says `nur für geladene Gäste`, `Geschlossene Gesellschaft` or `Privatveranstaltung`               |
 | Bar Tausend         | `TausendOverviewPageScraper.CLOSED_EVENT_ACT`                | The act `Closed Event`: a private booking. The words `geschlossene Veranstaltung` alone are not enough                               |
+| Konrad Tönz         | `NOT_A_NIGHT` (`KonradToenzOverviewPageScraper.kt`)          | A night named only `Geschlossen`, `Geschlossene Veranstaltung` or `Offener Abend`: the bar is shut, booked or open with no programme |
 | ausland             | `AuslandOverviewPageScraper.parseItem`                       | A title that names a `workshop`                                                                                                      |
 | Weltwirtschaft      | `WeltwirtschaftApiScraper.BRUNCH`                            | A title that names a `Brunch`                                                                                                        |
 | Galiläakirche       | `isOutOfScope` (`GalilaeakircheOverviewPageScraper.kt`)      | A title that names a `Markt` or an `Auktion`, whatever category it is filed under                                                    |
@@ -322,7 +323,8 @@ The one that is still open is open on _sequencing_, not on principle.
 | **Online-only livestream?**                                                                  | ❌ **No**                     | —                | Settled. There is no venue to go to. A public viewing at a venue is a `SCREENING` and stays in                           |
 
 **The opening hours of a bar are not a night.** Crack Bellmer lists its bar opening as `BELLMER BAR` at 19:00, with no
-genre and no lineup. `BAR_OPENING` in `CrackBellmerOverviewPageScraper.kt` drops it.
+genre and no lineup. `BAR_OPENING` in `CrackBellmerOverviewPageScraper.kt` drops it. Konrad Tönz lists such an evening as `Offener Abend!!`.
+`NOT_A_NIGHT` in `KonradToenzOverviewPageScraper.kt` drops it.
 
 **What the two yeses unlock.** A comedy or theatre venue can be moved out of [Blocked](EVENT_DATA_SOURCES.md) and
 scaffolded like any other source. No ADR, no model change, no further discussion. Prioritise them by programme richness

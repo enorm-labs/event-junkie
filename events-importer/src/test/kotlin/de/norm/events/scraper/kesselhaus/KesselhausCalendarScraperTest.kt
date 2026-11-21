@@ -338,6 +338,20 @@ class KesselhausCalendarScraperTest {
     }
 
     @Test
+    fun `types a spoken-word talk filed under Weitere a reading (event 15052)`() {
+        val page =
+            calendarPage(
+                Card("talk", "Christoph Strasser", "Multimedia Vortrag", venue = "maschinenhaus", category = "Weitere", topics = listOf("spoken-word")),
+                Card("other", "Hausflohmarkt", "", venue = "maschinenhaus", category = "Weitere", topics = emptyList())
+            )
+
+        val events = maschinenhaus.scrape(Jsoup.parse(page, url), url).associateBy { it.title }
+
+        events.getValue("Christoph Strasser").eventType shouldBe EventType.READING.name
+        events.getValue("Hausflohmarkt").eventType shouldBe EventType.OTHER.name
+    }
+
+    @Test
     fun `marks a postponed show on the date it left and keeps the row it moved to (#5099)`() {
         // Verbatim subtitle of RE6CE, calendar id -P3jNNUJlKQBoQEIt5tm. Every card here is dated 2027-01-09.
         val left = "Die Show wird vom 09.01.27 auf den 27.05.27 verschoben!"

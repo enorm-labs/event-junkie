@@ -34,7 +34,11 @@ val BEATE_UWE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the site prints no end time", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.IMAGE, "the list carries no pictures", verified = "2026-10-17"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the site names no style per night; every night takes the club's House default, which its own text names",
+            verified = "2026-11-21"
+        ),
         AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price", verified = "2026-10-17"),
         AcceptedLimitation(
             LimitedAspect.PROMOTERS,
@@ -44,5 +48,10 @@ val BEATE_UWE_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear", verified = "2026-10-17"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site publishes no page per night, so every night points at the homepage", verified = "2026-10-17")
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "the site publishes no page per night, so every night points at the homepage",
+            verified = "2026-10-17"
+        ),
+        houseGenre = "House"
     )

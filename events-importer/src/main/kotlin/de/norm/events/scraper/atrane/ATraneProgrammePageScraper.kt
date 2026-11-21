@@ -48,8 +48,8 @@ import java.time.format.DateTimeFormatter
  * `SPECIAL GUESTS:` line is split on `&` and commas. A `MEETS` line bills the act it names, its quoted
  * name alone when members follow (`MEETS "THE SHAWN & WOLF» Shawn Grocott & Wolfgang Meyer`). A title that only leads in to the act
  * (`WEIHNACHTLICH BESINNLICHES MIT:`) joins the line below it, the act, to make the title (#4548).
- * An availability banner (`LETZTEN PLÄTZE AN DER BAR`, `AUSVERKAUFT`) can head the lines; it is
- * dropped like the credit (#3165).
+ * An availability banner (`LETZTEN PLÄTZE AN DER BAR`, `AUSVERKAUFT`) or an added-show banner
+ * (`ZUSATZKONZERT-EXTRA CONCERT`, event 15063) can head the lines; it is dropped like the credit (#3165).
  *
  * Some cards print an admission time in their markup: a winter-Sunday subtitle (`EINLASS 17.00 UHR
  * KONZERTBEGINN: 18.00 UHR`), a day-of seats notice (`EINLASS: 19.00 UR`) or a one-night special
@@ -249,7 +249,8 @@ class ATraneProgrammePageScraper {
         val CLOSED = Regex("""geschlossen|closed""", RegexOption.IGNORE_CASE)
         val ELSEWHERE = Regex("""(?:präsentiert|presents)\s+(?:im|in|at)\s+(?!a-trane)""", RegexOption.IGNORE_CASE)
         val PRESENTER = Regex("""^a-trane\s+(?:präsentiert|presents)""", RegexOption.IGNORE_CASE)
-        val BANNER = Regex("""^letzten?\s+pl(?:ä|ae)tze\b|last\s+seats\b|ausverkauft|sold\s*out""", RegexOption.IGNORE_CASE)
+        val BANNER =
+            Regex("""^letzten?\s+pl(?:ä|ae)tze\b|last\s+seats\b|ausverkauft|sold\s*out|^zusatzkonzert\b|^extra\s+concert\b""", RegexOption.IGNORE_CASE)
         val TONIGHT_WITH = Regex("""^(?:tag\s*\d+\s+)?heute\b.*?\bmit:""", RegexOption.IGNORE_CASE)
         val GUESTS_LABEL = Regex("""^heute\s+mit:""", RegexOption.IGNORE_CASE)
         val SPECIAL_GUEST = Regex("""^(?:featuring\s+)?special\s+guest(s?)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
