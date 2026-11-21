@@ -157,6 +157,39 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `bills each act of a one-comma title the description names, and only the act of a dashed tagline with a comma`() {
+        // Event 15072, "Yellow Sessions Invites: Deniz Tekin & Soft Analog", 21 March 2027 (#5371).
+        val bill = "https://www.so36.com/produkte/100654-tickets-deniz-tekin-soft-analog-so36-berlin-am-21-03-2027"
+        scraper.scrape(fixtureDocument("so36/so36-detail-comma-bill.html", bill), bill)!!.artists.map { it.name to it.role } shouldBe
+            listOf("DENIZ TEKIN" to ArtistRole.HEADLINER, "SOFT ANALOG" to ArtistRole.HEADLINER)
+
+        // The comma sits in the tagline after the dash, which names no act.
+        val butlers = "https://www.so36.com/produkte/93678-tickets-the-butlers-40-years-ska-soulpower-so36-berlin-am-12-12-2026"
+        scraper.scrape(fixtureDocument("so36/so36-detail-dash-tagline-ampersand.html", butlers), butlers)!!.artists.map { it.name to it.role } shouldBe
+            listOf("THE BUTLERS" to ArtistRole.HEADLINER)
+        val suli = "https://www.so36.com/produkte/103168-tickets-suli-puschban-ja-genau-so36-berlin-am-28-02-2027"
+        scraper.scrape(fixtureDocument("so36/so36-detail-dash-tagline-comma.html", suli), suli)!!.artists.map { it.name to it.role } shouldBe
+            listOf("SULI PUSCHBAN" to ArtistRole.HEADLINER)
+    }
+
+    @Test
+    fun `keeps a one-comma title whole when the description names it whole or misses one of its parts`() {
+        fun acts(
+            title: String,
+            description: String
+        ): List<String> {
+            val url = "https://www.so36.com/produkte/100654-tickets-deniz-tekin-soft-analog-so36-berlin-am-21-03-2027"
+            val document = fixtureDocument("so36/so36-detail-comma-bill.html", url)
+            document.selectFirst("h1 [itemprop=name]")!!.text(title)
+            document.selectFirst(".product_description")!!.html("<p>$description</p>")
+            return scraper.scrape(document, url)!!.artists.map { it.name }
+        }
+
+        acts("HEY, NOTHING", "Hey, Nothing kommen mit neuem Album.") shouldBe listOf("HEY, NOTHING")
+        acts("DENIZ TEKIN, SOFT ANALOG", "Deniz Tekin spielt ihr neues Album.") shouldBe listOf("DENIZ TEKIN, SOFT ANALOG")
+    }
+
+    @Test
     fun `bills the act of a show-dash-act title that the description names alone`() {
         // Event 12027: "HERE WE ARE - BRIGADE LOCO" celebrates "10 years of Brigade Loco", 6 February 2027.
         val url = "https://www.so36.com/produkte/97728-tickets-here-we-are-brigade-loco-so36-berlin-am-06-02-2027"

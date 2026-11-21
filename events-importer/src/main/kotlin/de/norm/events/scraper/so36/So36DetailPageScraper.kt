@@ -102,7 +102,7 @@ class So36DetailPageScraper {
                     .ifEmpty { labelledBandList(document) }
                     .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
             } else {
-                parseArtists(document, showNamedAct(title, description) ?: title, subtitle, eventType)
+                parseArtists(document, showNamedAct(title, description) ?: title, subtitle, eventType, description)
             }
         val merchantPromoter = merchant?.takeUnless { billsAct(artists, it) }
         if (!houseNight && merchantPromoter == null) logger.debug { "Dropping merchant '$merchant' of '$sourceUrl': it is a billed act" }
@@ -234,12 +234,16 @@ class So36DetailPageScraper {
      *
      * A ` | ` splits the billing from a tag the venue adds (`SADSVIT | HYPHEN DASH`, whose ticket
      * line is `SADSVIT | Ticket`), so only the part before it is read.
+     *
+     * The [description] decides a title's single comma, as at every venue that passes one (#1832):
+     * `DENIZ TEKIN, SOFT ANALOG` is two acts because the blurb names both (#5371).
      */
     private fun parseArtists(
         document: Document,
         title: String,
         subtitle: String?,
-        eventType: String?
+        eventType: String?,
+        description: String?
     ): List<ScrapedArtist> {
         if (eventType == EventType.COMEDY.name && SOLO_PROGRAMME.matches(subtitle?.trim().orEmpty())) return headlinersFromTitle(title)
         if (eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) return performersBilledWith(subtitle)
@@ -250,7 +254,7 @@ class So36DetailPageScraper {
             parseSupportActs(subtitle)
                 .ifEmpty { descriptionSupport(document) }
                 .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
-        return headlinersFromTitle(title.substringBefore(" | "), unpackWithFrame = true) + supportActs
+        return headlinersFromTitle(title.substringBefore(" | "), unpackWithFrame = true, description = description) + supportActs
     }
 
     /**
