@@ -420,6 +420,7 @@ Core entity representing a single music event at a venue on a specific date.
 `pinned_fields`, by its name in the request. `PATCH /api/admin/events/{id}` changes only the fields that it sends, and pins them the same way. `lineup`, `promoters` and `genres` pin the join tables.
 The edit rewrites the genre tags and pins `genres` only when the `genre` text changes. Otherwise the stored tags stay, derived tags too.
 After the save, the edit derives the tags again from the lineup, unless `genres` is pinned (#5262).
+After the save, a create or an edit also reads the event features off the text, unless `features` is pinned (#5334).
 `PUT /api/admin/events/{id}/features` sets the event features and pins `features`. The importer keeps a
 pinned field and updates every other field. A pinned title, date or venue also keeps the slug, and a pinned date keeps
 the end. A hand edit keeps the slug when it changes none of the title, the date and the venue. So a second sitting keeps its
@@ -662,7 +663,7 @@ The primary key is `(event_id, feature)`. The vocabulary is `flinta-only`, `quee
 has one or two kinds, as `christmas-market-<kind>`: `traditional`, `historic`, `craft`, `funfair`, `kiez` or `alternative`. Where `venue_character_tag` has the same fact, the
 two share the slug. **Each night stands alone: no venue tag fills a night that says nothing.** The importer's
 `EventFeatureRules` reads the features off the stored title, subtitle and description, with keyword rules in German and
-English. Every import replaces the rows of the events it saved. A description the licence withholds is not stored, so it
+English. Every import replaces the rows of the events it saved. An admin create or edit replaces the rows of its event too (#5334). A description the licence withholds is not stored, so it
 sets nothing. `PUT /api/admin/events/{id}/features` sets the rows by hand and pins `features` (ADR-042). The import
 then keeps the rows and adds no cue. A feature that no text set has the phrase `set by hand`. The PUT also deletes the
 `UNCERTAIN_PARTY_FEATURE` flags of the event. A cue the rules cannot settle sets no feature. Examples are a bare `FLINTA*` and a FLINTA* phrase
