@@ -27,7 +27,8 @@ import java.time.LocalTime
  *
  * The page is typed by hand. A date line the pattern cannot read (`23.10.20256`) is skipped with a
  * `WARN`, never repaired; a weekday that contradicts the date keeps the printed date. DJs come from the
- * `mit DJ …` or `to DJ …` tail, or from a `DJ …` that ends the name (`… early 70s DJ Nolovigo`, event 15042). A `<br>`
+ * `mit DJ …`, `mit DJane …` or `to DJ …` tail, or from a `DJ …` that ends the name (`… early 70s DJ Nolovigo`, event 15042). A
+ * night whose name bills no DJ takes them from its style line, up to the first genre word (event 15050). A `<br>`
  * inside a paragraph breaks the line, so a style line typed below the name is still the style line. A night typed as one
  * line runs the styles into the name (`mit DJ Herr Siebendaum Funk & Disco Spezial`), so there the name stops at the first
  * genre word.
@@ -80,7 +81,7 @@ class KonradToenzOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.KONRAD_TOENZ.sourceIdPrefix}$date",
             genre = knownGenresInStyleTail(style),
-            artists = djsIn(title, stylesInTitle = style == null)
+            artists = djsIn(title, stylesInTitle = style == null).ifEmpty { djsIn(style.orEmpty(), stylesInTitle = true) }
         )
     }
 
@@ -111,17 +112,32 @@ class KonradToenzOverviewPageScraper {
         stylesInTitle: Boolean
     ): List<ScrapedArtist> {
         val tail = (DJ_TAIL.find(title) ?: DJ_ENDS_NAME.find(title))?.groupValues?.get(1) ?: return emptyList()
-        return (if (stylesInTitle) beforeFirstGenreWord(tail) else tail)
-            .split(DJ_SEPARATOR)
-            .mapNotNull { it.trim().replace(TRAILING_BANGS, "").blankToNull() }
+        val names =
+            (if (stylesInTitle) beforeFirstGenreWord(tail) else tail)
+                .split(DJ_SEPARATOR)
+                .mapNotNull { it.trim().replace(TRAILING_BANGS, "").blankToNull() }
+        return (if (DJANE_OPENER.containsMatchIn(tail)) djaneListNames(names) else names)
             .filterNot(::isNonArtistName)
             .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
+    /**
+     * `DJane Fräulein Philine & Turbo Pascal` names two DJs under one opener. The opener comes off the first name, and a later name
+     * without its own `DJ` takes it, as the page bills its DJs elsewhere: `Fräulein Philine`, `DJ Turbo Pascal` (event 15050).
+     */
+    private fun djaneListNames(names: List<String>): List<String> =
+        names.mapIndexed { index, name ->
+            when {
+                index == 0 -> name.replace(DJANE_OPENER, "")
+                DJ_WORD.containsMatchIn(name) -> name
+                else -> "DJ $name"
+            }
+        }
+
     /** `DJ Herr Siebendaum Funk & Disco Spezial` → `DJ Herr Siebendaum`; empty when no name precedes the styles. */
     private fun beforeFirstGenreWord(tail: String): String {
         val words = tail.split(' ')
-        val name = words.drop(1).takeWhile { !isGenreLabel(it) }
+        val name = words.drop(1).takeWhile { !isGenreLabel(it.trimEnd(',', ';')) }
         return if (name.isEmpty()) "" else (listOf(words.first()) + name).joinToString(" ")
     }
 
@@ -143,8 +159,17 @@ class KonradToenzOverviewPageScraper {
         /** `ab 21 Uhr`, `ab 21:30 Uhr`. */
         val START = Regex("""\bab\s+(\d{1,2})(?:[:.](\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
 
-        /** The acts after `mit DJ` or `to DJ`: `Rillenrodeo @ Tönz mit DJ gina d`orio & DJ johnboyadonis`, `Say yes! to DJ Nonoyesnonono!`. */
-        val DJ_TAIL = Regex("""\b(?:mit|to)\s+(DJs?\s+.+)$""", RegexOption.IGNORE_CASE)
+        /**
+         * The acts after `mit DJ`, `mit DJane` or `to DJ`: `Rillenrodeo @ Tönz mit DJ gina d`orio & DJ johnboyadonis`,
+         * `Say yes! to DJ Nonoyesnonono!`, `mit DJane Fräulein Philine & Turbo Pascal`.
+         */
+        val DJ_TAIL = Regex("""\b(?:mit|to)\s+(DJ(?:ane)?s?\s+.+)$""", RegexOption.IGNORE_CASE)
+
+        /** The `DJane` or `DJanes` that opens a list of DJs. */
+        val DJANE_OPENER = Regex("""^DJanes?\s+""", RegexOption.IGNORE_CASE)
+
+        /** A name that carries its own `DJ` word. */
+        val DJ_WORD = Regex("""^DJ(?:ane)?s?\s""", RegexOption.IGNORE_CASE)
 
         /** A name that ends on its DJ with no `mit` before it: `Soulblock- rare soul Music from the 60s to early 70s DJ Nolovigo`. */
         val DJ_ENDS_NAME = Regex("""\s(DJs?\s+\S.*)$""")
