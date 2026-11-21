@@ -28,7 +28,8 @@ import org.springframework.web.server.ServerWebInputException
 @RequestMapping("/api/admin/artists")
 @Tag(name = "Admin: Artists", description = "Admin CRUD endpoints for managing artists")
 class ArtistController(
-    private val artistService: ArtistService
+    private val artistService: ArtistService,
+    private val rejectionService: MusicBrainzRejectionService
 ) {
     @GetMapping
     @Operation(
@@ -92,6 +93,17 @@ class ArtistController(
         @PathVariable id: Long,
         @Valid @RequestBody request: MusicBrainzIdRequest
     ): ArtistResponse = artistService.setMusicBrainzId(id, requireNotNull(request.musicbrainzId))
+
+    /**
+     * Rejects a wrong EXACT MusicBrainz match: the lookup never picks that MBID for this row again, and what the
+     * enrichment copied from it is cleared. The row is AMBIGUOUS afterwards, in the review queue.
+     */
+    @DeleteMapping("/{id}/musicbrainz-id")
+    @Operation(summary = "Reject the artist's EXACT MusicBrainz match, clear what it filled, and never pick that MBID again")
+    suspend fun rejectMusicBrainzMatch(
+        @Parameter(description = "Database ID of the artist.", example = "1")
+        @PathVariable id: Long
+    ): ArtistResponse = rejectionService.reject(id)
 
     /**
      * Removes the pin a hand edit set on the name (ADR-042). The next enrichment reads the row again

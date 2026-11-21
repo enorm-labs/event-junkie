@@ -3,6 +3,7 @@ package de.norm.events.enrichment
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.MusicBrainzMatch
+import de.norm.events.artist.MusicBrainzRejectionStore
 import de.norm.events.musicbrainz.MusicBrainzClient
 import de.norm.events.musicbrainz.MusicBrainzMatcher
 import de.norm.events.musicbrainz.MusicBrainzProperties
@@ -32,6 +33,7 @@ import kotlin.time.TimeMark
 class MusicBrainzLookupService(
     private val artistRepository: ArtistRepository,
     private val client: MusicBrainzClient,
+    private val rejectionStore: MusicBrainzRejectionStore,
     private val properties: MusicBrainzProperties,
     private val metrics: EnrichmentMetrics
 ) {
@@ -68,7 +70,7 @@ class MusicBrainzLookupService(
 
     private suspend fun lookup(artist: ArtistEntity) {
         val id = artist.requiredId()
-        val verdict = MusicBrainzMatcher.decide(artist.name, client.search(artist.name))
+        val verdict = MusicBrainzMatcher.decide(artist.name, client.search(artist.name), rejectionStore.rejectedIds(id))
         metrics.recordMusicBrainzLookup(verdict.match.name.lowercase())
         artistRepository.storeMusicBrainzVerdict(id, verdict.match.name, verdict.musicbrainzId)
         if (verdict.match == MusicBrainzMatch.NONE) reportHead(artist.name)

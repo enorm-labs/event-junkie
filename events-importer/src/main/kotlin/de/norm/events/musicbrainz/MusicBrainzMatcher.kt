@@ -37,6 +37,8 @@ enum class CandidateNameMatch {
  * 2. One counting candidate is EXACT. Several narrow to `country = DE`; exactly one left is EXACT.
  *    Anything else is AMBIGUOUS.
  * 3. No candidate at all is NONE — which is what a title stored as an act looks like.
+ * 4. A candidate a person rejected for this row (V271) never counts. A name only rejected candidates
+ *    carry is AMBIGUOUS, not NONE, so the Discogs sweep does not match the same namesake there.
  */
 object MusicBrainzMatcher {
     private const val GERMANY = "DE"
@@ -69,11 +71,13 @@ object MusicBrainzMatcher {
 
     fun decide(
         name: String,
-        candidates: List<MusicBrainzCandidate>
+        candidates: List<MusicBrainzCandidate>,
+        rejected: Set<String> = emptySet()
     ): MusicBrainzVerdict {
         val wanted = fold(name)
-        val byName = candidates.filter { fold(it.name) == wanted }
+        val (rejectedByName, byName) = candidates.filter { fold(it.name) == wanted }.partition { it.id in rejected }
         if (byName.isEmpty()) {
+            if (rejectedByName.isNotEmpty()) return MusicBrainzVerdict.AMBIGUOUS
             val byOtherName = candidates.any { candidate -> candidate.otherNames().any { fold(it) == wanted } }
             return if (byOtherName) MusicBrainzVerdict.AMBIGUOUS else MusicBrainzVerdict.NONE
         }
