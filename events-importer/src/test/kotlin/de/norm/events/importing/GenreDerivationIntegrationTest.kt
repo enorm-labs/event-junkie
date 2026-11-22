@@ -38,6 +38,9 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var genreTagRepository: GenreTagRepository
 
+    @Autowired
+    private lateinit var eventSourceRepository: EventSourceRepository
+
     /** What the lookup tick stores for an act: an EXACT match and its Wikidata genres (ADR-060). */
     private suspend fun readGenres(
         name: String,
@@ -60,9 +63,24 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
         eventType: String = "CONCERT",
         status: String = "SCHEDULED",
         title: String = "Night $sourceId",
-        subtitle: String? = null
+        subtitle: String? = null,
+        sourceType: String? = null,
+        genre: String? = null
     ): EventEntity {
         val venue = venueRepository.save(VenueEntity(name = "Venue $sourceId", slug = "venue-${sourceId.replace(':', '-')}"))
+        val eventSourceId =
+            sourceType?.let {
+                eventSourceRepository
+                    .save(
+                        EventSourceEntity(
+                            venueId = requireNotNull(venue.id),
+                            name = "Source $sourceId",
+                            slug = "source-${sourceId.replace(':', '-')}",
+                            url = "https://example.com/",
+                            sourceType = it
+                        )
+                    ).id
+            }
         return eventRepository.save(
             EventEntity(
                 venueId = requireNotNull(venue.id),
@@ -73,7 +91,9 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
                 sourceId = sourceId,
                 description = description,
                 eventType = eventType,
-                status = status
+                status = status,
+                eventSourceId = eventSourceId,
+                genre = genre
             )
         )
     }
@@ -178,6 +198,22 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
 
             tagsOf(described) shouldBe mapOf("Jazz" to "DESCRIPTION")
             tagsOf(supported) shouldBe emptyMap()
+        }
+    }
+
+    /** Der Weiße Hase's house Techno on a goth night made its DJs techno DJs at Frannz Club (#5387). */
+    @Test
+    fun `a house genre lends no tag to the acts' other nights, and a genre the house venue publishes still does`() {
+        runBlocking {
+            val house = persistEvent("der-weisse-hase:1", eventType = "PARTY", sourceType = "DER_WEISSE_HASE", genre = "Techno")
+            sync(house, listOf("Bjoern" to ArtistRole.DJ), genre = "Techno")
+            val published = persistEvent("kitkatclub:1", eventType = "PARTY", sourceType = "KITKATCLUB", genre = "Post-Punk")
+            sync(published, listOf("Wilco" to ArtistRole.DJ), genre = "Post-Punk")
+            val frannz = persistEvent("frannz:1", eventType = "PARTY", sourceType = "FRANNZ")
+            sync(frannz, listOf("Bjoern" to ArtistRole.DJ, "Wilco" to ArtistRole.DJ))
+
+            tagsOf(house) shouldBe mapOf("Techno" to "SOURCE")
+            tagsOf(frannz) shouldBe mapOf("Post-Punk" to "ARTIST")
         }
     }
 

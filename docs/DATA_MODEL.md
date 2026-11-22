@@ -627,7 +627,8 @@ Links events to their normalized genre tags (many-to-many).
 
 Unique constraint on `(event_id, genre_tag_id)` prevents duplicate tag-event associations.
 
-`origin` is `SOURCE` for a tag that the event's source published. The importer derives `ARTIST` and `DESCRIPTION` tags only for an event with no `SOURCE`
+`origin` is `SOURCE` for a tag that the event's source published. A venue's house genre is a `SOURCE` tag too. Its event then stores the house
+genre's text in `event.genre`. Only by that text can the `ARTIST` derivation know the tag and skip it (#5387). The importer derives `ARTIST` and `DESCRIPTION` tags only for an event with no `SOURCE`
 tag (ADR-047). An admin create or edit derives them too, unless the event pins `genres`. A `WIKIDATA` tag comes from the acts' Wikidata genres in `artist.wikidata_genres`, only when no other origin gives a tag (ADR-060). The public
 event detail returns the derived tags in `derivedGenreTags`.
 

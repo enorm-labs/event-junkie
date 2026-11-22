@@ -436,6 +436,11 @@ object AcceptedLimitations {
         events: List<ScrapedEvent>
     ): List<ScrapedEvent> = withHouseLanguage(source, withHouseGenre(source, events))
 
+    /** The house genre of each source that declares one, keyed by [EventSource] name (`event_source.source_type`). */
+    val houseGenres: Map<String, String> by lazy {
+        declarations.flatMap { declaration -> declaration.houseGenre?.let { genre -> declaration.sources.map { it.name to genre } }.orEmpty() }.toMap()
+    }
+
     /**
      * The genre families each source's house genre maps to, keyed by [EventSource] name (`event_source.source_type`).
      * `VenueProgrammeStore` keeps these families without the event thresholds: the house genre is already a
