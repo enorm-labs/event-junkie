@@ -10,6 +10,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.lazyImgSrcAt
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -31,20 +32,10 @@ class SpeakeazyOverviewPageScraper {
     fun scrape(
         document: Document,
         sourceUrl: String
-    ): List<ScrapedEvent> {
-        val articles = document.select("article.eventlist-event--upcoming")
-        logger.info { "Found ${articles.size} upcoming event(s) on the Speakeazy listing" }
-
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip one malformed event without aborting the import
-        return articles.mapNotNull { article ->
-            try {
-                parseArticle(article, sourceUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse a Speakeazy event, skipping" }
-                null
-            }
+    ): List<ScrapedEvent> =
+        document.select("article.eventlist-event--upcoming").parseListing(logger, "a Speakeazy upcoming event", url = sourceUrl) { article ->
+            parseArticle(article, sourceUrl)
         }
-    }
 
     private fun parseArticle(
         article: Element,
