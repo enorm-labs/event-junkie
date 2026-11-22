@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zigzag
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
@@ -91,6 +92,17 @@ class ZigZagOverviewPageScraperTest {
     @Test
     fun `keeps the act of a title that ends in a word ending in and, then Beyond`() {
         singleNight("Thousand Beyond").artists.map { it.name } shouldBe listOf("Thousand Beyond")
+    }
+
+    @Test
+    fun `marks a night titled with the dashed cancelled marker as cancelled, and bills its act`() {
+        // /program-mai/jefflor, #4219: the title is the site's only cancelled marker.
+        val night = singleNight("----ABGESAGT----- Jeff Lorber Fusion")
+        night.artists.map { it.name } shouldBe listOf("Jeff Lorber Fusion")
+
+        val entity = night.toEventEntity(venueId = 1, venueSlug = "zig-zag-jazz-club", eventSourceId = 1)
+        entity.status shouldBe EventStatus.CANCELLED.name
+        entity.title shouldBe "Jeff Lorber Fusion"
     }
 
     private fun singleNight(title: String): ScrapedEvent {
