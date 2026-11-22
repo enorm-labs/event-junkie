@@ -13,6 +13,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripArtistSuffix
@@ -44,14 +45,8 @@ class UfaFabrikMonthPageScraper {
                     ?.take(ISO_DATE_LENGTH)
                     ?.let(::parseIsoDate)
             if (date == null) return@flatMap emptyList()
-            day.select("li.calendar-view-day__row").mapNotNull { row ->
-                @Suppress("TooGenericExceptionCaught") // One malformed row must not abort the month
-                try {
-                    parseRow(row, date)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Skipping a ufaFabrik row on $date that failed to parse" }
-                    null
-                }
+            day.select("li.calendar-view-day__row").mapSkippingFailures(logger, "a ufaFabrik row on $date") { row ->
+                parseRow(row, date)
             }
         }
 

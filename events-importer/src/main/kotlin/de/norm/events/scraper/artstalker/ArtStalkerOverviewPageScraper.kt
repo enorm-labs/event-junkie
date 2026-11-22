@@ -11,6 +11,7 @@ import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parsePriceValue
@@ -31,15 +32,9 @@ private val logger = KotlinLogging.logger {}
  */
 class ArtStalkerOverviewPageScraper {
     fun scrape(document: Document): List<ScrapedEvent> =
-        document.select("[data-testid=event-list] a[data-sync-id]").mapNotNull { card ->
-            @Suppress("TooGenericExceptionCaught") // One malformed card must not abort the listing
-            try {
-                parseCard(card)
-            } catch (e: Exception) {
-                logger.warn(e) { "Skipping an ART Stalker card that failed to parse: ${card.attr("href")}" }
-                null
-            }
-        }
+        document
+            .select("[data-testid=event-list] a[data-sync-id]")
+            .mapSkippingFailures(logger, { card -> "an ART Stalker card: ${card.attr("href")}" }) { parseCard(it) }
 
     private fun parseCard(card: Element): ScrapedEvent? {
         val url = card.absUrl("href")
