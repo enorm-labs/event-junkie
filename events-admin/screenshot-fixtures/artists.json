@@ -72,10 +72,17 @@
       "name": "Mira",
       "slug": "mira",
       "musicbrainzMatch": "AMBIGUOUS"
+    },
+    {
+      "id": 1851,
+      "name": "Wilco",
+      "slug": "wilco",
+      "musicbrainzMatch": "EXACT",
+      "musicbrainzId": "9e53f84d-ef44-4c16-9677-5fd4d78cbd7d"
     }
   ],
   "page": 0,
   "size": 20,
-  "totalElements": 14,
+  "totalElements": 15,
   "totalPages": 1
 }

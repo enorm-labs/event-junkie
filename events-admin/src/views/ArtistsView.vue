@@ -12,6 +12,7 @@ import {
 } from '@/api/artists'
 import { fetchAllVenues } from '@/api/venues'
 import ArtistReview from '@/components/ArtistReview.vue'
+import MatchedArtistSearch from '@/components/MatchedArtistSearch.vue'
 import PagerButtons from '@/components/PagerButtons.vue'
 import { useLoad } from '@/composables/useLoad'
 import { publicOrigin } from '@/lib/environments'
@@ -54,13 +55,17 @@ const origin = publicOrigin(import.meta.env.MODE)
 watch(page, reload, { immediate: true })
 onMounted(() => Promise.all([loadVenueNames(), loadWatched()]))
 
-/** What is left: the total the importer counted, less what this page matched since. */
+/** What is left: the total the importer counted, less what this page matched since, plus what it rejected. */
 const matched = ref(0)
+const rejected = ref(0)
 watch(result, (loaded) => {
   artists.value = loaded ? [...loaded.content] : []
   matched.value = 0
+  rejected.value = 0
 })
-const left = computed(() => Math.max(0, (result.value?.totalElements ?? 0) - matched.value))
+const left = computed(() =>
+  Math.max(0, (result.value?.totalElements ?? 0) - matched.value + rejected.value),
+)
 const hasNext = computed(() => page.value + 1 < (result.value?.totalPages ?? 0))
 
 function goTo(next: number) {
@@ -74,6 +79,15 @@ function onMatched(artist: ReviewArtist, candidate: MusicBrainzCandidate) {
   if (artists.value.some((a) => a.id === artist.id)) matched.value++
   artists.value = artists.value.filter((a) => a.id !== artist.id)
   notice.value = `${artist.name} is matched to ${candidate.name} on MusicBrainz.`
+}
+
+// A rejected row is AMBIGUOUS now, so it heads the list to be reviewed (#5381).
+function onRejected(artist: ReviewArtist) {
+  if (!artists.value.some((a) => a.id === artist.id)) {
+    artists.value = [artist, ...artists.value]
+    rejected.value++
+  }
+  notice.value = `The MusicBrainz match of ${artist.name} is rejected. It is in the list below.`
 }
 </script>
 
@@ -96,6 +110,8 @@ function onMatched(artist: ReviewArtist, candidate: MusicBrainzCandidate) {
       />
     </div>
   </div>
+
+  <MatchedArtistSearch :origin="origin" @rejected="onRejected" />
 
   <p v-if="notice" class="text-sm" role="status">{{ notice }}</p>
 

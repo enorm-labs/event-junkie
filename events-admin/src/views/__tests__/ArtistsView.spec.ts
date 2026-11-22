@@ -70,6 +70,8 @@ let billed: AdminEvent[] = []
 let candidates: MusicBrainzCandidate[] = []
 let candidateStatus = 200
 let watchedRows: ReviewArtist[] = []
+let matchedRows: ReviewArtist[] = []
+let rejectStatus = 200
 const fetchMock = vi.fn<typeof fetch>()
 
 beforeEach(() => {
@@ -81,10 +83,25 @@ beforeEach(() => {
   candidates = []
   watchedRows = []
   candidateStatus = 200
+  matchedRows = [
+    { id: 1851, name: 'Wilco', slug: 'wilco', musicbrainzMatch: 'EXACT', musicbrainzId: 'band-1' },
+  ]
+  rejectStatus = 200
   fetchMock.mockImplementation(async (input, init) => {
     const url = String(input)
     const method = init?.method ?? 'GET'
     if (method === 'GET' && url === '/api/admin/artists/watched') return json(watchedRows)
+    if (
+      method === 'GET' &&
+      url.startsWith('/api/admin/artists?') &&
+      url.includes('musicbrainzMatch=EXACT')
+    ) {
+      return json({ content: matchedRows, totalElements: matchedRows.length, totalPages: 1 })
+    }
+    if (method === 'DELETE' && url === '/api/admin/artists/1851/musicbrainz-id') {
+      if (rejectStatus !== 200) return json({ detail: 'Artist 1851 not found' }, rejectStatus)
+      return json({ ...matchedRows[0], musicbrainzMatch: 'AMBIGUOUS', musicbrainzId: null })
+    }
     if (method === 'GET' && url.startsWith('/api/admin/artists?')) {
       return json({ content: listed, totalElements: 121, totalPages })
     }
@@ -372,6 +389,86 @@ describe('ArtistsView', () => {
 
       expect(wrapper.find('[data-testid="watched"]').exists()).toBe(false)
       expect(wrapper.find('[data-testid="left-count"]').text()).toBe('121 to review')
+    })
+  })
+
+  describe('matched artists', () => {
+    async function searchWilco(wrapper: Wrapper) {
+      await wrapper.find('#matched-name').setValue('wilco')
+      await wrapper.find('[data-testid="matched-search"] form').trigger('submit')
+      await flushPromises()
+    }
+
+    function deletes() {
+      return fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')
+    }
+
+    it('lists the EXACT rows a name search finds, with both links', async () => {
+      const { wrapper } = await mountView()
+
+      await searchWilco(wrapper)
+
+      const row = wrapper.find('[data-testid="matched-artist"]')
+      expect(row.text()).toContain('Wilco')
+      const links = row.findAll('a').map((a) => a.attributes('href'))
+      expect(links[0]).toMatch(/\/en\/artists\/wilco$/)
+      expect(links[1]).toBe('https://musicbrainz.org/artist/band-1')
+      const search = fetchMock.mock.calls.find(([url]) => String(url).includes('EXACT'))!
+      expect(new URL(String(search[0]), 'http://admin').searchParams.get('name')).toBe('wilco')
+    })
+
+    it('says so when the search finds nothing', async () => {
+      matchedRows = []
+      const { wrapper } = await mountView()
+
+      await searchWilco(wrapper)
+
+      expect(wrapper.find('[data-testid="no-matched"]').exists()).toBe(true)
+    })
+
+    it('asks for a confirmation, then DELETEs once and moves the row to the review list', async () => {
+      const { wrapper } = await mountView()
+      await searchWilco(wrapper)
+
+      await wrapper.find('[data-testid="matched-artist"] button').trigger('click')
+      expect(deletes()).toHaveLength(0)
+      await wrapper.find('[data-testid="confirm-reject"] button').trigger('click')
+      await flushPromises()
+
+      expect(deletes()).toHaveLength(1)
+      expect(wrapper.find('[data-testid="matched-artist"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="no-matched"]').exists()).toBe(false)
+      expect(wrapper.findAll('[data-testid="review-artist"]')[0]!.text()).toContain('Wilco')
+      expect(wrapper.find('[role="status"]').text()).toContain('Wilco is rejected')
+      expect(wrapper.find('[data-testid="left-count"]').text()).toBe('122 to review')
+    })
+
+    it('Cancel sends nothing', async () => {
+      const { wrapper } = await mountView()
+      await searchWilco(wrapper)
+
+      await wrapper.find('[data-testid="matched-artist"] button').trigger('click')
+      await wrapper.findAll('[data-testid="confirm-reject"] button')[1]!.trigger('click')
+      await flushPromises()
+
+      expect(deletes()).toHaveLength(0)
+      expect(wrapper.find('[data-testid="confirm-reject"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="matched-artist"]').exists()).toBe(true)
+    })
+
+    it('shows a failed rejection and keeps the row', async () => {
+      rejectStatus = 404
+      const { wrapper } = await mountView()
+      await searchWilco(wrapper)
+
+      await wrapper.find('[data-testid="matched-artist"] button').trigger('click')
+      await wrapper.find('[data-testid="confirm-reject"] button').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="confirm-reject"] [role="alert"]').text()).toContain(
+        'Artist 1851 not found',
+      )
+      expect(wrapper.find('[data-testid="matched-artist"]').exists()).toBe(true)
     })
   })
 })

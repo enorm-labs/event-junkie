@@ -13,6 +13,8 @@ export interface ReviewArtist {
   name: string
   slug: string
   musicbrainzMatch: string
+  /** The MBID of an EXACT match; null otherwise. */
+  musicbrainzId?: string | null
   /** How many visitors wait for an act of this name (#5214); only the watched list sends it. */
   watchers?: number
 }
@@ -103,6 +105,49 @@ export async function setMusicBrainzId(
     body: JSON.stringify({ musicbrainzId }),
   })
   await failOnError(response, `PUT ${path}`)
+  return (await response.json()) as ReviewArtist
+}
+
+/** How many matched artists a name search lists. A search narrows; it never pages. */
+export const MATCHED_SEARCH_SIZE = 20
+
+export function matchedSearchUrl(term: string): string {
+  const params = new URLSearchParams({
+    name: term,
+    musicbrainzMatch: 'EXACT',
+    page: '0',
+    size: String(MATCHED_SEARCH_SIZE),
+    sort: 'name,asc',
+  })
+  return `/api/admin/artists?${params}`
+}
+
+/** The EXACT artists whose name contains [term], ignoring case: where a wrong match is found (#5381). */
+export async function searchMatchedArtists(
+  term: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<ReviewArtist[]> {
+  const response = await fetchFn(matchedSearchUrl(term), {
+    headers: { Accept: 'application/json' },
+  })
+  await failOnError(response, 'GET /api/admin/artists')
+  return ((await response.json()) as ReviewPage).content
+}
+
+/**
+ * Rejects artist [id]'s EXACT match (#5378): the importer clears what the enrichment copied, sets AMBIGUOUS, and never
+ * picks that MBID for the row again.
+ */
+export async function rejectMusicBrainzMatch(
+  id: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<ReviewArtist> {
+  const path = `/api/admin/artists/${id}/musicbrainz-id`
+  const response = await fetchFn(path, {
+    method: 'DELETE',
+    headers: { Accept: 'application/json' },
+  })
+  await failOnError(response, `DELETE ${path}`)
   return (await response.json()) as ReviewArtist
 }
 
