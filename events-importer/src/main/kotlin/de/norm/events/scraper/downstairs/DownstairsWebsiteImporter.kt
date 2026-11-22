@@ -30,7 +30,8 @@ import org.springframework.stereotype.Component
  * per show: the nights of one title differ in time and tiers (Allstars at 18:00 and 20:00, and on
  * New Year's Eve). A failed page leaves the list's fields, flagged so the upsert keeps what it stored.
  * A show sold elsewhere takes the other seller's text and stays flagged, so it keeps its stored image,
- * doors and price.
+ * doors and price. A show sold through rausgegangen redirects there, and rausgegangen bars crawlers in
+ * `robots.txt` and answers 403 (#5403), so that night keeps only its list row.
  *
  * It implements [EventImporter] directly because every list page is read through `fetchTurboFrame`.
  * `AbstractSinglePageWebsiteImporter` reads its entry page and its later listing pages without the `Turbo-Frame` header,
@@ -100,6 +101,11 @@ val DOWNSTAIRS_LIMITATIONS =
             LimitedAspect.PRICE,
             "a show the club sells through another ticket shop links there, and that shop's page gives only the text, so the night keeps no price",
             verified = "2026-10-26"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "a show the club sells through rausgegangen redirects there, and that shop bars crawlers and answers 403, so the night has no text, image or doors",
+            verified = "2026-11-22"
         ),
         AcceptedLimitation(LimitedAspect.END_TIME, "the shop gives every performance the same 6 a.m. end", verified = "2026-10-03"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the club's own nights bill a format, and the comedians appear only in prose", verified = "2026-10-03"),
