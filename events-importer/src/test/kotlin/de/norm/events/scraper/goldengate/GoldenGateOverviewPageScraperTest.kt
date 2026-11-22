@@ -1,8 +1,13 @@
 package de.norm.events.scraper.goldengate
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
@@ -17,6 +22,7 @@ import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -44,6 +50,18 @@ class GoldenGateOverviewPageScraperTest {
             texts.joinToString("") { """<h2 class="elementor-heading-title">$it</h2>""" },
             baseUrl
         )
+
+    private fun <T> withScraperWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
+        val logger = LoggerFactory.getLogger(GoldenGateOverviewPageScraper::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        return try {
+            block() to appender.list.filter { it.level == Level.WARN }
+        } finally {
+            logger.detachAppender(appender)
+            appender.stop()
+        }
+    }
 
     @Test
     fun `stores every night Techno, House, the club's sound, since the venue names no style`() {
@@ -197,5 +215,91 @@ class GoldenGateOverviewPageScraperTest {
     @Test
     fun `keeps the printed date of a lone night with a mismatched weekday, since nothing confirms the correction`() {
         scraper.scrape(headings("Sa. 03. September 2026 - 23:59", "Klubnacht"), baseUrl).single().eventDate shouldBe LocalDate.of(2026, 9, 3)
+    }
+
+    @Test
+    fun `stores a block under one range heading as one row from its first day to its last, as on the live page of 22 November 2026`() {
+        val (parsed, warnings) =
+            withWeekdayWarnings { scraper.scrape(fixtureDocument("goldengate/goldengate-overview-date-range.html", baseUrl), baseUrl) }
+        val anniversary = parsed.single()
+        anniversary.title shouldBe "24th GG Anniversary"
+        anniversary.eventDate shouldBe LocalDate.of(2026, 11, 19)
+        anniversary.endDate shouldBe LocalDate.of(2026, 11, 22)
+        anniversary.startTime.shouldBeNull()
+        anniversary.sourceId shouldBe "golden_gate:2026-11-19-24th-gg-anniversary"
+        // 23 roster lines; two back-to-back billings each split in two.
+        anniversary.artists shouldHaveSize 25
+        anniversary.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
+        anniversary.artists.map { it.name }.takeLast(6) shouldContainExactly
+            listOf("Najeh", "Click Click", "Nils Ohrmann", "Serene", "Philosofia", "Slurm McKenzie")
+        warnings.shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads the first day of a range in the month before when the range crosses a month`() {
+        val parsed = scraper.scrape(headings("So.29 - Di. 1. Dezember 2026", "Klubnacht", "SaPu"), baseUrl).single()
+        parsed.eventDate shouldBe LocalDate.of(2026, 11, 29)
+        parsed.endDate shouldBe LocalDate.of(2026, 12, 1)
+    }
+
+    @Test
+    fun `reads the first day of a range in the year before when the range crosses New Year`() {
+        val parsed = scraper.scrape(headings("Do.31 - Sa. 2. Januar 2027", "Silvester", "SaPu"), baseUrl).single()
+        parsed.eventDate shouldBe LocalDate.of(2026, 12, 31)
+        parsed.endDate shouldBe LocalDate.of(2027, 1, 2)
+        parsed.sourceId shouldBe "golden_gate:2026-12-31-silvester"
+    }
+
+    @Test
+    fun `keeps the printed first day of a range whose weekday does not match, and says so`() {
+        // 19 November 2026 is a Thursday; neither 19 October (Monday) nor 19 December (Saturday) is a Friday.
+        val (parsed, warnings) = withWeekdayWarnings { scraper.scrape(headings("Fr.19 - So. 22. November 2026", "24th GG Anniversary", "Coco"), baseUrl) }
+        parsed.single().eventDate shouldBe LocalDate.of(2026, 11, 19)
+        parsed.single().endDate shouldBe LocalDate.of(2026, 11, 22)
+        warnings.single().formattedMessage shouldContain "Fr.19 - So. 22. November 2026"
+    }
+
+    @Test
+    fun `reads a single night beside a range heading`() {
+        val parsed =
+            scraper.scrape(
+                headings(
+                    "Do.19 - So. 22. November 2026",
+                    "24th GG Anniversary",
+                    "Anderson<br>Coco",
+                    "Do. 26. November 2026 - 23:59",
+                    "Donnerdogge",
+                    "Neco"
+                ),
+                baseUrl
+            )
+        parsed.map { Triple(it.title, it.eventDate, it.endDate) } shouldContainExactly
+            listOf(
+                Triple("24th GG Anniversary", LocalDate.of(2026, 11, 19), LocalDate.of(2026, 11, 22)),
+                Triple("Donnerdogge", LocalDate.of(2026, 11, 26), null)
+            )
+        parsed.first().artists.map { it.name } shouldContainExactly listOf("Anderson", "Coco")
+    }
+
+    @Test
+    fun `warns when a roster stands under a heading no pattern reads as a date`() {
+        val (parsed, warnings) =
+            withScraperWarnings {
+                scraper.scrape(
+                    headings("Do 19.–22.11.2026", "24th GG Anniversary", "Anderson<br>Coco<br>Hagel"),
+                    baseUrl
+                )
+            }
+        parsed.shouldBeEmpty()
+        val warning = warnings.single()
+        warning.formattedMessage shouldContain "no date line opens a night"
+        warning.keyValuePairs.single { it.key == LogFields.DATE_HEADING }.value shouldBe "Do 19.–22.11.2026"
+    }
+
+    @Test
+    fun `does not warn about a page between two blocks, whose headings hold no roster`() {
+        withScraperWarnings { scraper.scrape(headings("Tickets an der Tür.<br>Tickets available at the door.", "enter", "SHOPPING"), baseUrl) }
+            .second
+            .shouldBeEmpty()
     }
 }
