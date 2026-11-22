@@ -133,6 +133,16 @@ jobs:
           distribution: temurin
           java-version: 25
 
+      # Read-only: restores the Gradle User Home that `Build & Test` saves on main, and saves nothing, so
+      # #589's eviction cannot return. Without it autobuild downloads every dependency cold, and Maven
+      # Central or the plugin portal answering one POM with a non-POM failed four pushes to main in three
+      # days, each on a different artifact.
+      - name: Set up Gradle
+        if: steps.relevance.outputs.value == 'true' && matrix.language == 'java-kotlin'
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-read-only: true
+
       - name: Initialize CodeQL
         if: steps.relevance.outputs.value == 'true'
         uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
@@ -144,8 +154,8 @@ jobs:
           # **Off, because it was evicting every other cache in the repository** (#589). `java-kotlin` stored
           # ~333 MB of Gradle dependencies per run, 8.99 GB within a day, past GitHub's 10 GB limit — and what
           # GitHub evicted was the Playwright browser cache, so the frontend job took a 500–900s install every
-          # run and died on its own timeout six times running. The cost is ~two minutes on `Analyze
-          # (java-kotlin)`; the Gradle cache that shortens the feedback loop belongs to `Build & Test`.
+          # run and died on its own timeout six times running. `Set up Gradle` above reads `Build & Test`'s
+          # cache instead.
           dependency-caching: false
           # No `queries:` input: the **default** suite, which default setup ran, so this migration changes where
           # CodeQL runs and not what it finds. `security-extended` is a separate decision with its own noise
