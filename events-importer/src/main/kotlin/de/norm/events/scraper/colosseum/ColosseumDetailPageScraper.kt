@@ -37,7 +37,7 @@ import java.time.LocalTime
  * Several tiers give the lowest as the price and the range as the note.
  *
  * **The event's own text also names its type**, where the listing gives none: a comedian, a
- * concert or a composer ([typeOf]). That text is also the description, `Einlass` and `Beginn` lines
+ * concert or a composer, or a podcast recorded live ([typeOf]). That text is also the description, `Einlass` and `Beginn` lines
  * included, as the venue wrote them (#4686). The cloned `about` block stays out, for the reason in
  * [ColosseumWebsiteImporter]'s KDoc.
  *
@@ -97,31 +97,38 @@ class ColosseumDetailPageScraper {
                 label.lowercase() to LocalTime.of(hour.toInt(), minute.ifEmpty { "0" }.toInt())
             }
 
-    /**
-     * The type the event's own text names, or null: a comedian or stand-up first, then a concert,
-     * a composer or a pianist. The listing has no category, so [ColosseumWebsiteImporter] uses it
-     * only where the title and the strapline give no cue (#2992).
-     */
-    private fun typeOf(paragraphs: List<String>): String? {
-        val text = paragraphs.joinToString(" ")
-        return when {
-            COMEDY_TEXT.containsMatchIn(text) -> EventType.COMEDY.name
-            CONCERT_TEXT.containsMatchIn(text) -> EventType.CONCERT.name
-            else -> null
+    internal companion object {
+        /**
+         * The type the event's own text names, or null: a comedian or stand-up first, then a concert,
+         * a composer or a pianist, then a podcast recorded on stage as a show. The listing has no category, so
+         * [ColosseumWebsiteImporter] uses it only where the title and the strapline give no cue (#2992).
+         */
+        fun typeOf(paragraphs: List<String>): String? {
+            val text = paragraphs.joinToString(" ")
+            return when {
+                COMEDY_TEXT.containsMatchIn(text) -> EventType.COMEDY.name
+                CONCERT_TEXT.containsMatchIn(text) -> EventType.CONCERT.name
+                PODCAST_TEXT.containsMatchIn(text) -> EventType.SHOW.name
+                else -> null
+            }
         }
-    }
 
-    private companion object {
-        const val EINLASS = "einlass"
-        const val BEGINN = "beginn"
+        private const val EINLASS = "einlass"
+        private const val BEGINN = "beginn"
 
         /** `Stand-up-Comedy`, `Comedians`, `Kabarett`: the act is a comedian. */
-        val COMEDY_TEXT = Regex("""stand-?up|comedian|comedy|kabarett""", RegexOption.IGNORE_CASE)
+        private val COMEDY_TEXT = Regex("""stand-?up|comedian|comedy|kabarett""", RegexOption.IGNORE_CASE)
 
         /** `Konzert`, `concert`, `composer and pianist`: the night is music. */
-        val CONCERT_TEXT = Regex("""konzert|concert|composer|komponist|pianist""", RegexOption.IGNORE_CASE)
+        private val CONCERT_TEXT = Regex("""konzert|concert|composer|komponist|pianist""", RegexOption.IGNORE_CASE)
+
+        /**
+         * `Der Podcast bietet …`: the night is a podcast recorded live. A concert that names a sponsor podcast types as a concert first,
+         * and a guest's bio (`Autor, Podcaster`) is not the word.
+         */
+        private val PODCAST_TEXT = Regex("""(?<!\p{L})podcast(?!\p{L})""", RegexOption.IGNORE_CASE)
 
         /** `Einlass: 18:30 Uhr`, and `Beginn: 20 Uhr` — the house writes the minutes only sometimes. */
-        val TIME_LINE = Regex("""^\s*(Einlass|Beginn)\s*:?\s*(\d{1,2})(?::(\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
+        private val TIME_LINE = Regex("""^\s*(Einlass|Beginn)\s*:?\s*(\d{1,2})(?::(\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
     }
 }

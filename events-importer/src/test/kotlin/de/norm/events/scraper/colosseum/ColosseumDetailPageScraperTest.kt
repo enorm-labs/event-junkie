@@ -11,6 +11,8 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -87,6 +89,25 @@ class ColosseumDetailPageScraperTest {
         scrape("colosseum-detail-sandberg.html").shouldNotBeNull().eventType shouldBe EventType.CONCERT.name
         // A talk with a DJ names neither.
         scrape("colosseum-detail-gysi.html").shouldNotBeNull().eventType.shouldBeNull()
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            // Event 15077.
+            "Der Podcast bietet einen geschützten Raum, in dem Menschen ihre Geschichten erzählen. | SHOW",
+            "Ein Konzert, präsentiert vom Podcast der Woche. | CONCERT",
+            "Stand-up-Comedy aus dem Podcast. | COMEDY",
+            "Ein Gespräch mit einem DJ. | ''",
+            "Er ist Rechtsanwalt, Autor, Podcaster und Politiker. | ''"
+        ]
+    )
+    fun `types a podcast recorded live as a show, after the comedy and concert cues`(
+        paragraph: String,
+        type: String
+    ) {
+        ColosseumDetailPageScraper.typeOf(listOf(paragraph)) shouldBe type.ifEmpty { null }
     }
 
     @Test

@@ -14,6 +14,7 @@ import de.norm.events.scraper.descriptionText
 import de.norm.events.scraper.encodeForUri
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.lazyImgSrcAt
@@ -148,17 +149,19 @@ class PrivatclubOverviewPageScraper(
         val description = parseDescription(detail)
 
         // Concerts: title is the headliner, support from the subtitle's "Support: <name>". A party bills the DJs of its
-        // `DJs:` paragraph, else none. A contest night names no act. See buildArtistsForEventType.
+        // `DJs:` paragraph, else the DJ its subtitle names. A contest night names no act. See buildArtistsForEventType.
+        val partyDjs = subtitleDjs(subtitle).takeIf { eventType == EventType.PARTY.name }
         val artists =
             when {
                 eventTypeText.equals(SONG_SLAM, ignoreCase = true) || CONTEST_TITLE.containsMatchIn(title) -> emptyList()
-                eventType == EventType.PARTY.name -> parseDjs(detail)
+                eventType == EventType.PARTY.name -> parseDjs(detail).ifEmpty { partyDjs?.djs.orEmpty() }
                 else -> buildArtistsForEventType(title, subtitle, eventType)
             }
 
-        // "Örtlicher Veranstalter". A band named as its own promoter is the act, and the #1841 hold-back would bill nobody (#5372).
+        // "Örtlicher Veranstalter", else the collective a party's subtitle names. A band named as its own promoter is the act, and the
+        // #1841 hold-back would bill nobody (#5372).
         val titleActSlugs = artists.filter { it.titleDerived }.map { SlugGenerator.slugify(it.name) }.toSet()
-        val promoters = listOfNotNull(parsePromoterName(detail)).filterNot { SlugGenerator.slugify(it) in titleActSlugs }
+        val promoters = listOfNotNull(parsePromoterName(detail) ?: partyDjs?.collective).filterNot { SlugGenerator.slugify(it) in titleActSlugs }
 
         return ScrapedEvent(
             title = title,
@@ -435,6 +438,54 @@ private fun parseDjs(detail: Element?): List<ScrapedArtist> {
         }?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         .orEmpty()
 }
+
+/** The DJs a party's subtitle names, and the collective they come from (`mit DJ Spencer vom Karrera Klub`). */
+private data class SubtitleDjs(
+    val djs: List<ScrapedArtist>,
+    val collective: String?
+)
+
+/**
+ * The DJ a party's subtitle names: the whole subtitle as `DJ King Dynamite`, or the tail after its last `mit`, as in `die Indieparty mit eavo im
+ * Privatclub` or `Die Indie-Frühparty am Sonntag mit DJ Spencer vom Karrera Klub!` (event 10927). A `vom` collective is the night's promoter.
+ * A part of more than [MAX_DJ_WORDS] words makes the tail a phrase (`mit den schönsten Hits der Achtziger`), and it bills nobody.
+ */
+private fun subtitleDjs(subtitle: String?): SubtitleDjs? {
+    val text = subtitle?.trim()?.trimEnd('!', '.') ?: return null
+    val tail = if (DJ_SUBTITLE.matches(text)) text else WITH_TAIL.find(text)?.groupValues?.get(1) ?: return null
+    val collective =
+        COLLECTIVE_TAIL
+            .find(tail)
+            ?.groupValues
+            ?.get(1)
+            ?.trim()
+    val names =
+        tail
+            .replace(COLLECTIVE_TAIL, "")
+            .replace(HOUSE_TAIL, "")
+            .split(DJ_SEPARATOR)
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+    if (names.isEmpty() || names.any { it.split(' ').size > MAX_DJ_WORDS }) return null
+    val djs = names.filterNot(::isNonArtistName).ifEmpty { return null }
+    return SubtitleDjs(djs.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }, collective?.takeIf { it.isNotEmpty() })
+}
+
+private const val MAX_DJ_WORDS = 3
+
+/** A subtitle that is only a DJ's name: `DJ NADJ`, `DJ King Dynamite`. */
+private val DJ_SUBTITLE = Regex("""DJ\s+\S+(?:\s+\S+){0,2}""")
+
+/** The names after a subtitle's last `mit`. */
+private val WITH_TAIL = Regex("""(?:^|\s)mit\s+((?:(?!\smit\s).)+)$""", RegexOption.IGNORE_CASE)
+
+/** `vom Karrera Klub`: the collective the DJ comes from. */
+private val COLLECTIVE_TAIL = Regex("""\s+vom\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+/** `im Privatclub`: the house itself, not a name. */
+private val HOUSE_TAIL = Regex("""\s+im\s+Privatclub$""", RegexOption.IGNORE_CASE)
+
+private val DJ_SEPARATOR = Regex("""\s*(?:,|\+|&|\bund\b)\s*""")
 
 /** The label line of a party's DJ paragraph. */
 private val DJ_LABEL = Regex("""djs?\s*:""", RegexOption.IGNORE_CASE)

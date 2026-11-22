@@ -4,6 +4,7 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parsePriceValue
@@ -13,7 +14,8 @@ import org.jsoup.nodes.Document
  * Parser for a Haus der Statistik event page (`/event/<slug>/`): the excerpt and the paragraphs
  * below it as the description, a `Doors: 19:00 | Show: 20:00` line as the two times, the
  * `Ticket/Kostenbeteiligung` cell as the price and the full-size picture. A cell that is only a figure (`15`) is the
- * presale price, and any other cell (`freier Eintritt`) is the price note. The listing's time span opens at the doors,
+ * presale price, and any other cell (`freier Eintritt`) is the price note. A page with no price cell can name free entry in its text
+ * (`Eintritt frei, Spenden willkommen`). The listing's time span opens at the doors,
  * so a stated show time replaces its start.
  */
 class HausDerStatistikEventPageScraper {
@@ -36,6 +38,7 @@ class HausDerStatistikEventPageScraper {
             startTime = labelledClock(text, START_LABELS) ?: event.startTime,
             pricePresale = price ?: event.pricePresale,
             priceNote = priceCell.takeIf { price == null },
+            free = event.free || (priceCell == null && hasFreeEntryPhrase(text)),
             imageUrl = content.imgSrcAt("figure img") ?: event.imageUrl
         )
     }
