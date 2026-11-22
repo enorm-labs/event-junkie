@@ -254,6 +254,7 @@ class PromoterNormalizerTest {
             canonicalPromoterName("BOSSA FM") shouldBe "Bossa FM"
             canonicalPromoterName("Bossa FM") shouldBe "Bossa FM"
             canonicalPromoterName("IHK Berlin") shouldBe "IHK Berlin"
+            canonicalPromoterName("Root PGR GmbH") shouldBe "Root PGR"
             // Three letters and not on the list: nothing distinguishes it from a shouted word.
             canonicalPromoterName("MIND Enterprises") shouldBe "Mind Enterprises"
         }
