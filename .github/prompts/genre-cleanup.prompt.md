@@ -89,7 +89,8 @@ One pull request for the batch:
    after `git fetch`). `DROP` rows are a `DELETE FROM genre_tag WHERE slug IN (…)`, as V141. `FOLD` rows are a temporary fold table, a rename when no
    survivor exists, an `INSERT … ON CONFLICT DO NOTHING` of the links and a delete, as V242. A `FOLD` that also rewrites the stored `genre` text
    follows V233. Copy the header comment the other data fixes carry. A migration that does more than delete ships with a migration test:
-   `FoldDecadeAndSwingGenreTagsMigrationTest` plants rows on a database migrated to the version before.
+   it plants rows on a database migrated to the version before. The test goes once production has run it;
+   `git log --all -- '**/FoldDecadeAndSwingGenreTagsMigrationTest.kt'` finds V242's.
 4. **The gate.** `./gradlew ktlintFormat`, then `./gradlew clean build detektMain detektTest`, then [`/open-pr`](open-pr.prompt.md). The normalizer
    half reaches new rows at the next import after the release. The migration half reaches the stored rows at the deploy.
 
