@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tresor
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.fixtureText
@@ -63,6 +64,45 @@ class TresorDetailPageScraperTest {
 
         night.artists.filter { it.stage == "Globus" }.map { it.name } shouldBe listOf("Stella Zekri", "CRYME")
         night.artists.map { it.name } shouldContain "Samuel Kerridge"
+    }
+
+    @Test
+    fun `bills an act live when its subtitle or its name marks it live, and only then`() {
+        // #5400: the event page marks Sue Léwig `LIVE` in `.lineup-subtitle` alone; Lady Starlight carries it in the name too.
+        val url = "https://tresorberlin.com/event/20261123-singularity/"
+        val html =
+            """
+            <html><head><title>Singularity | Tresor Berlin</title></head><body class="single-event"><main class="main-content"><div class="floor"><div class="floor-name">Tresor</div>
+            <a class="lineup-item"><div class="lineup-time">23:00-01:00</div><div class="lineup-name">Sue Léwig</div>
+            <div class="lineup-subtitle small">LIVE</div></a>
+            <a class="lineup-item"><div class="lineup-time">01:00-02:00</div><div class="lineup-name">.VRIL &amp; Cecilia Tosh</div>
+            <div class="lineup-subtitle small">LIVE Hybrid</div></a>
+            <a class="lineup-item"><div class="lineup-time">02:00-03:00</div><div class="lineup-name">Lady Starlight LIVE</div>
+            <div class="lineup-subtitle small">LIVE</div></a>
+            <a class="lineup-item"><div class="lineup-time">03:00-04:00</div><div class="lineup-name">Daniel Boubet</div>
+            <div class="lineup-subtitle small">Live Visuals</div></a>
+            <a class="lineup-item"><div class="lineup-time">04:00-END</div><div class="lineup-name">Sarah Sommers</div></a>
+            </div></main></body></html>
+            """.trimIndent()
+
+        scraper
+            .scrape(Jsoup.parse(html, url), url)
+            .shouldNotBeNull()
+            .artists
+            .map { it.name to it.role } shouldBe
+            listOf(
+                "Sue Léwig" to ArtistRole.LIVE,
+                ".VRIL & Cecilia Tosh" to ArtistRole.LIVE,
+                "Lady Starlight" to ArtistRole.LIVE,
+                "Daniel Boubet" to ArtistRole.DJ,
+                "Sarah Sommers" to ArtistRole.DJ
+            )
+    }
+
+    @Test
+    fun `keeps an act whose subtitle names live visuals a DJ`() {
+        val aquabahn = scrape("tresor-detail-blurb.html", "20260807-tresor-aquabahn-x-mechatronica").shouldNotBeNull()
+        aquabahn.artists.single { it.name.startsWith("Daniel Boubet") }.role shouldBe ArtistRole.DJ
     }
 
     @Test

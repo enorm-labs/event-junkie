@@ -107,10 +107,11 @@ private val PROGRAMME_DATE_RANGE = Regex("""\b\d{1,2}\.\d{1,2}\.?\s*[-–]\s*\d{
 internal const val EVENT_PATH_PREFIX = "/event/"
 
 /**
- * The DJs grouped by floor. Both pages mark the lineup up the same way — a floor block naming
+ * The acts grouped by floor. Both pages mark the lineup up the same way — a floor block naming
  * the floor and listing its artists — so this is shared. An unannounced slot is billed `???`,
  * names nobody and is dropped; an act on two floors of one night is kept once, because
  * `event_artist` is `UNIQUE (event_id, artist_id)` and a second row would fail the whole import.
+ * A slot is [ArtistRole.DJ] unless its name ends in a live format (#5400).
  */
 internal fun parseLineup(root: Element): List<ScrapedArtist> =
     root
@@ -118,9 +119,16 @@ internal fun parseLineup(root: Element): List<ScrapedArtist> =
         .flatMap { floor ->
             val stage = floor.textAt(".floor-name")?.let(::normalizeFloor)
             floor.select(".floor-artist, .lineup-name").flatMap { slot ->
-                splitActs(slot.text().trim()).map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage) }
+                val text = slot.text().trim()
+                splitActs(text).map { ScrapedArtist(name = it, role = slotRole(text), stage = stage) }
             }
         }.distinctBy { it.name.lowercase() }
+
+/** [ArtistRole.LIVE] for a slot billed `Marc Houle LIVE`, `Fireground [LIVE]` or `… LIVE Hybrid`; else [ArtistRole.DJ]. */
+internal fun slotRole(slot: String): ArtistRole = if (LIVE_MARK.containsMatchIn(slot)) ArtistRole.LIVE else ArtistRole.DJ
+
+/** A trailing live format, bracketed or bare; end-anchored like [SET_FORMAT_NOTE], so `Live Visuals` is not one. */
+private val LIVE_MARK = Regex("""(?:\[\s*live(?:\s+(?:set|hybrid))?\s*]|\s+live(?:\s+(?:set|hybrid))?)\s*$""", RegexOption.IGNORE_CASE)
 
 /**
  * Splits one billed slot into its acts and drops what is not one. A slot may bill a

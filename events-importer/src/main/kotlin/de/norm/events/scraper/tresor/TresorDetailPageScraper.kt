@@ -93,7 +93,9 @@ class TresorDetailPageScraper {
      * The lineup per floor, each act with its slot's start and end (#2002). A floor's first slot
      * before noon is already the next day, as the Globus floor opening at `00:00` is; each later
      * slot starting earlier than the one before has crossed midnight. `END` and a missing time
-     * leave the end unknown, and without the night's date no slot gets a time at all.
+     * leave the end unknown, and without the night's date no slot gets a time at all. An act is
+     * [ArtistRole.LIVE] when its `.lineup-subtitle` reads `LIVE` or `LIVE Hybrid`, or its name ends
+     * in a live format; a subtitle such as `Live Visuals` leaves it [ArtistRole.DJ] (#5400).
      */
     private fun parseRunningOrder(
         content: Element,
@@ -105,8 +107,9 @@ class TresorDetailPageScraper {
                 val stage = floor.textAt(".floor-name")?.let(::normalizeFloor)
                 val sets = floorSetTimes(floor.select(".lineup-item").map { it.textAt(".lineup-time").orEmpty() }, eventDate)
                 floor.select(".lineup-item").zip(sets).flatMap { (item, set) ->
-                    splitActs(item.textAt(".lineup-name").orEmpty())
-                        .map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage, setStart = set.first, setEnd = set.second) }
+                    val name = item.textAt(".lineup-name").orEmpty()
+                    val role = if (LIVE_SUBTITLE.matches(item.textAt(".lineup-subtitle").orEmpty())) ArtistRole.LIVE else slotRole(name)
+                    splitActs(name).map { ScrapedArtist(name = it, role = role, stage = stage, setStart = set.first, setEnd = set.second) }
                 }
             }.distinctBy { it.name.lowercase() }
 
@@ -198,6 +201,9 @@ class TresorDetailPageScraper {
 
         /** The underscore rule separating the event's blurb from the standing policy text. */
         val POLICY_RULE = Regex("""_{5,}""")
+
+        /** A `.lineup-subtitle` that bills a live set: `LIVE`, `LIVE Hybrid`. */
+        val LIVE_SUBTITLE = Regex("""live(?:\s+(?:set|hybrid))?""", RegexOption.IGNORE_CASE)
 
         /** A numbered Resident Advisor event page. */
         val RA_EVENT_URL = Regex("""^https://(www\.)?ra\.co/events/\d+/?$""")

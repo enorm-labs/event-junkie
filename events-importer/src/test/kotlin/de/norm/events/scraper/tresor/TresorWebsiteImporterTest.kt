@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tresor
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -7,6 +8,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.fixtureDocument
+import de.norm.events.scraper.fixtureText
 import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -96,6 +98,21 @@ class TresorWebsiteImporterTest {
                 "https://tresorberlin.com/wp-content/uploads/2026/06/aspiration-180x140-oil-on-canvas-2024-ch-e1782818421888-1536x1536.jpg"
             // The listing's lineup takes the event page's set times (#2002).
             klubnacht.artists.first { it.name == "Janina" }.setStart shouldBe Instant.parse("2026-08-01T22:00:00Z")
+        }
+
+    @Test
+    fun `bills a listing act live when only the event page's subtitle marks it`() =
+        runTest {
+            // #5400: Sue Léwig's listing slot carries no mark; her event page's `.lineup-subtitle` reads `LIVE`.
+            val marked =
+                fixtureText("tresor/tresor-detail-klubnacht.html")
+                    .replace(Regex("""(<div class="lineup-name">\s*Developer\s*</div>)"""), "\$1<div class=\"lineup-subtitle small\">LIVE</div>")
+            coEvery { htmlFetcher.fetchDocument(klubnachtUrl) } returns Jsoup.parse(marked, klubnachtUrl)
+
+            val artists = event(importer.importEvents(listingUrl), "20260801-tresor-klubnacht").artists
+
+            artists.single { it.name == "Developer" }.role shouldBe ArtistRole.LIVE
+            artists.filterNot { it.name == "Developer" }.map { it.role }.distinct() shouldBe listOf(ArtistRole.DJ)
         }
 
     @Test

@@ -1,13 +1,16 @@
 package de.norm.events.scraper.tresor
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.withSetTimesFrom
+import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -40,7 +43,8 @@ class TresorWebsiteImporter(
      * source of start time, blurb and set times. The **title** keeps the listing's value, because
      * the event page renders no heading and its document title carries the site name; the lineup
      * prefers the listing's too, as the one the venue curates as the programme, and takes the event
-     * page's set times.
+     * page's set times. An act the event page bills live is live: its `.lineup-subtitle` can be the
+     * only mark, as Sue Léwig's is (#5400).
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -49,10 +53,17 @@ class TresorWebsiteImporter(
         primary.withGapsFrom(fallback).copy(
             title = fallback.title,
             artists =
-                fallback.artists.ifEmpty { primary.artists }.withSetTimesFrom(primary.artists) {
-                    logger.warn { "Running-order slot '${it.name}' matches no act on the listing; its set time is dropped" }
-                }
+                fallback.artists
+                    .ifEmpty { primary.artists }
+                    .withSetTimesFrom(primary.artists) {
+                        logger.warn { "Running-order slot '${it.name}' matches no act on the listing; its set time is dropped" }
+                    }.withLiveRolesFrom(primary.artists)
         )
+
+    private fun List<ScrapedArtist>.withLiveRolesFrom(runningOrder: List<ScrapedArtist>): List<ScrapedArtist> {
+        val live = runningOrder.filter { it.role == ArtistRole.LIVE }.mapTo(mutableSetOf()) { SlugGenerator.slugify(it.name) }
+        return map { if (SlugGenerator.slugify(it.name) in live) it.copy(role = ArtistRole.LIVE) else it }
+    }
 }
 
 val TRESOR_LIMITATIONS =
