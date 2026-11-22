@@ -10,6 +10,7 @@ import de.norm.events.scraper.stripArtistSuffix
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
@@ -86,11 +87,42 @@ class TresorOverviewPageScraperTest {
     }
 
     @Test
-    fun `bills every act as a DJ`() {
-        events.flatMap { it.artists }.all { it.role == ArtistRole.DJ } shouldBe true
+    fun `bills an act marked live as LIVE and every other act as a DJ`() {
+        val live = events.flatMap { it.artists }.filter { it.role == ArtistRole.LIVE }.map { it.name }
+        // #5400: the snapshot marks these `LIVE` or `[LIVE]` after the name.
+        live shouldContainExactlyInAnyOrder
+            listOf(
+                "KOLOAH",
+                "Ngly",
+                "Shackleton",
+                "Nihil",
+                "Arsenal Mikebe",
+                "Substance",
+                "dreamcastmoe",
+                "BETIX",
+                "Fireground",
+                "Samuel Kerridge",
+                "Feral",
+                "Civic Instruction",
+                "Kerrie",
+                "INDACID"
+            )
+        events.flatMap { it.artists }.filterNot { it.name in live }.all { it.role == ArtistRole.DJ } shouldBe true
         // 152 billed on the floors, plus the host of the one New Faces night with no line-up (#339).
         events.sumOf { it.artists.size } shouldBe 153
         events.single { it.title == "Tresor New Faces hosted by Secret Keywords" }.artists.map { it.name } shouldBe listOf("Secret Keywords")
+    }
+
+    @Test
+    fun `reads the live mark bare, bracketed and as LIVE Hybrid, and nowhere else in a name`() {
+        slotRole("Marc Houle LIVE") shouldBe ArtistRole.LIVE
+        slotRole("Fireground [LIVE]") shouldBe ArtistRole.LIVE
+        slotRole("Colin Benders LIVE ") shouldBe ArtistRole.LIVE
+        slotRole(".VRIL & Cecilia Tosh LIVE Hybrid") shouldBe ArtistRole.LIVE
+        slotRole("Sarah Sommers") shouldBe ArtistRole.DJ
+        slotRole("Live Rhythm Unit") shouldBe ArtistRole.DJ
+        slotRole("Daniel Boubet - Live Visuals") shouldBe ArtistRole.DJ
+        slotRole("Delivery") shouldBe ArtistRole.DJ
     }
 
     @Test

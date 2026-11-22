@@ -92,6 +92,26 @@ class AssociationSyncSetTimesIntegrationTest : BaseControllerTest() {
     }
 
     @Test
+    fun `a role the venue changes reaches the existing row`() {
+        runBlocking {
+            // #5400: Tresor's acts were stored DJ before the scraper read the LIVE mark.
+            val sourceId = "set-times:role"
+            val event = persistEvent(sourceId)
+            val eventIds = listOf(requireNotNull(event.id))
+            val act = ScrapedArtist(name = "Sue Léwig", role = ArtistRole.DJ, stage = "Tresor")
+
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, act)))
+            val before = eventArtistRepository.findByEventIdIn(eventIds).toList().single()
+
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, act.copy(role = ArtistRole.LIVE))))
+            val after = eventArtistRepository.findByEventIdIn(eventIds).toList().single()
+
+            after.id shouldBe before.id
+            after.role shouldBe ArtistRole.LIVE.name
+        }
+    }
+
+    @Test
     fun `set times read back equal to the scrape, so an unchanged running order writes nothing`() {
         runBlocking {
             val sourceId = "set-times:2"
