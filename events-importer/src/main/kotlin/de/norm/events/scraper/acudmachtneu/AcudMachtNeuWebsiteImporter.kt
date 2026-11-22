@@ -56,7 +56,11 @@ val ACUD_MACHT_NEU_LIMITATIONS =
             verified = "2026-10-17"
         ),
         AcceptedLimitation(LimitedAspect.END_TIME, "the site prints one time per event and an end only in free text", verified = "2026-10-17"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the site links a presale shop and prints only the door price", verified = "2026-10-17"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE_PRESALE,
+            "the site links a presale shop and prints one price, a presale price only where the page says presale only",
+            verified = "2026-11-22"
+        ),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "some pages print only a presale link and no door price", verified = "2026-10-19"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names a collective only in the event text", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-17"),

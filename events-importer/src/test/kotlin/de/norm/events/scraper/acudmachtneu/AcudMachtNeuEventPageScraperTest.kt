@@ -1,5 +1,6 @@
 package de.norm.events.scraper.acudmachtneu
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -191,6 +192,35 @@ class AcudMachtNeuEventPageScraperTest {
         infoLink.ticketUrl.shouldBeNull()
         prose.ticketUrl.shouldBeNull()
         labelFirst.ticketUrl shouldBe "https://example.de/ra"
+    }
+
+    @Test
+    fun `reads a presale-only amount as the presale price, the tier below it as the note, and the DJ block as the only act`() {
+        // Event 2397.
+        val event = scrape("acudmachtneu-event-sunday-school.html", "https://acudmachtneu.de/events/2397/sunday-school-4th-anniversary")
+
+        event.pricePresale?.toPlainString() shouldBe "15"
+        event.priceBoxOffice.shouldBeNull()
+        event.priceNote shouldBe "10 € ballroom community (limited)"
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("amowia gorgeous gucci" to ArtistRole.DJ)
+    }
+
+    @Test
+    fun `keeps a door price without presale only, a range on a presale-only page as the note, and a dj block beside a line up`() {
+        val door = scrapeContent("<strong>Entrance:</strong> 15 € general admission<br />10 € members")
+        val range = scrapeContent("<strong>Entrance:</strong> 10-15 €<br /><a href=\"https://ra.co/events/1\">PRESALE ONLY</a>")
+        val both = scrapeContent("Line up<br />Jeroen</p><p>// DJs:<br />Anna<br />Jeroen")
+        val mcOnly = scrapeContent("// mc:<br />Anna</p><p>// judges:<br />Bert")
+
+        door.priceBoxOffice?.toPlainString() shouldBe "15"
+        door.pricePresale.shouldBeNull()
+        door.priceNote.shouldBeNull()
+        range.pricePresale.shouldBeNull()
+        range.priceBoxOffice.shouldBeNull()
+        range.priceNote shouldBe "10-15 €"
+        both.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Jeroen" to ArtistRole.HEADLINER, "Anna" to ArtistRole.DJ)
+        mcOnly.artists.shouldBeEmpty()
     }
 
     @Test

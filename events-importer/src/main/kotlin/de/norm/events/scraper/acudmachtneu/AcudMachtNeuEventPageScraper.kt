@@ -1,5 +1,6 @@
 package de.norm.events.scraper.acudmachtneu
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -22,7 +23,8 @@ import java.time.LocalTime
  * Pure parser for one ACUD event page. The header line names the room and one time, `ACUD CLUB 20h → Concert`. The
  * text below repeats the facts in free form: a labelled `Start:` there wins over the header's time, which is sometimes
  * the doors time. `Doors:`, `Entrance:`, `Tickets: 16E` and `FREE ENTRY` lines, a ticket link after `Presale:`,
- * `Ticketing` or `presale link:`, or one that reads `PRESALE ONLY`, and a `Line up` paragraph are read where present.
+ * `Ticketing` or `presale link:`, or one that reads `PRESALE ONLY`, and a `Line up` or `// dj:` paragraph are read where present.
+ * `PRESALE ONLY` makes the entrance amount a presale price, and the amount lines below it the note.
  * The paragraph names one act per line, or a festival's acts on one line between
  * slashes (`ABIGAIL TOLL / ACTIVEMIRROR /CALVIN LOVE`). A heading can carry a qualifier, `Lineup (A-Z):`, and an act its
  * crew in brackets, `Hayaku [astral.lab]`: the name is billed without either.
@@ -46,8 +48,10 @@ class AcudMachtNeuEventPageScraper {
         val text = content?.let { htmlParagraphText(it.html()) }
         val lines = text?.lines().orEmpty()
         val startTime = lines.firstNotNullOfOrNull { labelledClock(it, START_LABELS) } ?: header?.let(::headerTime)
-        val entrance = lines.firstNotNullOfOrNull(::labelledPrice) ?: lines.firstOrNull { FREE_ENTRY.containsMatchIn(it) }?.trim()
-        val doorPrice = euroAmounts(entrance).singleOrNull()?.takeUnless { RANGE.containsMatchIn(entrance.orEmpty()) }
+        val entranceLine = lines.indexOfFirst { labelledPrice(it) != null }
+        val entrance = lines.getOrNull(entranceLine)?.let(::labelledPrice) ?: lines.firstOrNull { FREE_ENTRY.containsMatchIn(it) }?.trim()
+        val amount = euroAmounts(entrance).singleOrNull()?.takeUnless { RANGE.containsMatchIn(entrance.orEmpty()) }
+        val presaleOnly = amount != null && lines.any { PRESALE_ONLY.containsMatchIn(it) }
         return ScrapedEvent(
             title = title,
             description = text,
@@ -57,8 +61,9 @@ class AcudMachtNeuEventPageScraper {
             room = header?.groupValues?.get(1)?.let(::roomName),
             imageUrl = article.selectFirst(".event-article__figure img[src]")?.absUrl("src").blankToNull(),
             ticketUrl = content?.let(::ticketUrl),
-            priceBoxOffice = doorPrice,
-            priceNote = entrance?.takeIf { doorPrice == null },
+            priceBoxOffice = amount.takeUnless { presaleOnly },
+            pricePresale = amount.takeIf { presaleOnly },
+            priceNote = if (amount == null) entrance else lowerTiers(lines, entranceLine).takeIf { presaleOnly },
             sourceUrl = sourceUrl,
             sourceId = acudMachtNeuSourceId(sourceUrl),
             artists = content?.let(::lineUp).orEmpty()
@@ -89,6 +94,19 @@ class AcudMachtNeuEventPageScraper {
                 ?.get(1)
                 ?.takeIf { euroAmounts(it).isNotEmpty() }
     }
+
+    /** The amount lines right below the entrance line, `10 € ballroom community (limited)`, kept as the venue wrote them. */
+    private fun lowerTiers(
+        lines: List<String>,
+        entranceLine: Int
+    ): String? =
+        lines
+            .drop(entranceLine + 1)
+            .takeIf { entranceLine >= 0 }
+            .orEmpty()
+            .takeWhile { euroAmounts(it.replace(LETTER_E_EURO, "$1 €")).isNotEmpty() }
+            .joinToString("\n") { it.trim() }
+            .blankToNull()
 
     private fun headerTime(match: MatchResult): LocalTime? {
         val (_, hour, minute) = match.destructured
@@ -128,21 +146,31 @@ class AcudMachtNeuEventPageScraper {
     /** Blank text or a line break between a label and its link. */
     private fun Node.isSpacing(): Boolean = (this is TextNode && isBlank) || (this is Element && normalName() == "br")
 
-    /** The acts of the paragraph headed `Line up` or `LINE UP`; `Name – Track` bills the name, `Name [crew]` the name. */
-    private fun lineUp(content: Element): List<ScrapedArtist> {
-        val paragraph = content.select("p").firstOrNull { LINE_UP.containsMatchIn(it.text()) } ?: return emptyList()
+    /**
+     * The acts of the paragraph headed `Line up` or `LINE UP`, then the DJs of one headed `// dj:`. `Name – Track` bills the
+     * name, `Name [crew]` the name. A `// mc:` or `// judges:` paragraph stays prose: no [ArtistRole] fits a host or a judge.
+     */
+    private fun lineUp(content: Element): List<ScrapedArtist> =
+        (acts(content, LINE_UP, ArtistRole.HEADLINER) + acts(content, DJ_BLOCK, ArtistRole.DJ)).distinctBy { it.name.lowercase() }
+
+    private fun acts(
+        content: Element,
+        heading: Regex,
+        role: ArtistRole
+    ): List<ScrapedArtist> {
+        val paragraph = content.select("p").firstOrNull { heading.containsMatchIn(it.text()) } ?: return emptyList()
         return htmlParagraphText(paragraph.html())
             .orEmpty()
             .lines()
-            .dropWhile { !LINE_UP.containsMatchIn(it) }
-            .map { it.replace(LINE_UP, "") }
+            .dropWhile { !heading.containsMatchIn(it) }
+            .map { it.replace(heading, "") }
             .flatMap { it.split(SLASH_SEPARATOR) }
             .map { it.split(TRACK_TAIL, limit = 2).first() }
             .flatMap(::splitBackToBack)
             .map { it.replace(CREW_TAG, "") }
             .mapNotNull { it.blankToNull() }
             .filterNot(::isNonArtistName)
-            .map { ScrapedArtist(name = it) }
+            .map { ScrapedArtist(name = it, role = role) }
     }
 
     private companion object {
@@ -174,6 +202,12 @@ class AcudMachtNeuEventPageScraper {
 
         /** A qualifier in brackets, `Lineup (A-Z):`, only before a colon or the line's end, so `Line up (band) X` keeps its act. */
         val LINE_UP = Regex("""^\s*line[\s-]?up\s*(?:\([^()]*\)\s*(?::|$)|:)?\s*""", RegexOption.IGNORE_CASE)
+
+        /** `// dj:` or `// djs:` heading the DJs, the way the venue heads `// mc:` and `// judges:` too. */
+        val DJ_BLOCK = Regex("""^\s*//\s*djs?\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** The page's word that no door sale exists, as a ticket link's text or in a line. */
+        val PRESALE_ONLY = Regex("""\bpresale\s+only\b""", RegexOption.IGNORE_CASE)
 
         /** One trailing `[crew]` after a space; a name that is all brackets, or `Name[x]`, stays. */
         val CREW_TAG = Regex("""(?<=\S)\s+\[[^\[\]]*]\s*$""")
