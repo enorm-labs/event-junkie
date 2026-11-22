@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service
  *
  * A music event takes the source tags its billed acts carry on their other events, past or upcoming. A support act or a guest does not count, and a
  * DJ billing and a live billing do not lend each other tags: one name can be a resident DJ and a band (#4411).
+ * A house genre does not count either: it is the venue's word for its programme, not for the act (#5387).
  * An event still untagged takes the decades its title bills as a party ([titleDecadeGenres]), the genre of a hyphenated format word in
  * its title ([titleCompoundGenres]), and the genre words of its subtitle and then of its description ([descriptionGenres]).
  * An event still untagged takes the mapped Wikidata genres of its acts ([WIKIDATA_GENRES], ADR-060).
@@ -32,7 +33,8 @@ import org.springframework.stereotype.Service
 class GenreDerivationService(
     private val databaseClient: DatabaseClient,
     private val eventGenreTagRepository: EventGenreTagRepository,
-    private val genreTagRepository: GenreTagRepository
+    private val genreTagRepository: GenreTagRepository,
+    private val houseGenres: HouseGenres
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -114,12 +116,18 @@ class GenreDerivationService(
                 descriptionGenres(event.description)
         ).distinct().take(MAX_TEXT_GENRES)
 
-    /** The source tags the billed acts of each event carry elsewhere, most frequent first, at most [MAX_ARTIST_GENRES] per event. */
+    /**
+     * The source tags the billed acts of each event carry elsewhere, most frequent first, at most [MAX_ARTIST_GENRES] per event.
+     * An event whose stored genre is its source's house genre lends none. The house genre is stored as a source tag, so the stored
+     * genre text is the one mark of it. A venue that publishes exactly its house genre's text on a night lends no tag from that night either.
+     */
     private suspend fun artistTagIds(eventIds: Set<Long>): Map<Long, List<Long>> {
         if (eventIds.isEmpty()) return emptyMap()
+        val houseKeys = houseGenres.bySourceType().map { (sourceType, genre) -> "$sourceType$HOUSE_KEY_SEPARATOR$genre" }
         return databaseClient
             .sql(ARTIST_TAGS)
             .bind("ids", eventIds.toTypedArray())
+            .bind("house", houseKeys.toTypedArray())
             .map { row, _ -> row.long("event_id") to row.long("genre_tag_id") }
             .all()
             .collectList()
@@ -172,6 +180,7 @@ class GenreDerivationService(
         const val MAX_ARTIST_GENRES = 3
         const val MAX_TEXT_GENRES = 3
         const val MAX_WIKIDATA_GENRES = 3
+        const val HOUSE_KEY_SEPARATOR = "|"
 
         val WIKIDATA_ACT_GENRES =
             """
@@ -183,7 +192,7 @@ class GenreDerivationService(
             ORDER BY ea.event_id, ea.billing_order, ea.artist_id
             """.trimIndent()
 
-        /** Ties break on the tag name, so a re-import derives the same tags. */
+        /** Ties break on the tag name, so a re-import derives the same tags. `:house` holds `source_type|house genre` keys. */
         val ARTIST_TAGS =
             """
             SELECT ea.event_id, egt.genre_tag_id
@@ -192,7 +201,10 @@ class GenreDerivationService(
                 AND (other.role = 'DJ') = (ea.role = 'DJ')
             JOIN $EVENTS_SCHEMA.event_genre_tag egt ON egt.event_id = other.event_id AND egt.origin = 'SOURCE'
             JOIN $EVENTS_SCHEMA.genre_tag gt ON gt.id = egt.genre_tag_id
+            JOIN $EVENTS_SCHEMA.event oe ON oe.id = other.event_id
+            LEFT JOIN $EVENTS_SCHEMA.event_source es ON es.id = oe.event_source_id
             WHERE ea.event_id = ANY(:ids) AND ea.role NOT IN ('SUPPORT', 'GUEST')
+                AND (es.source_type || '$HOUSE_KEY_SEPARATOR' || oe.genre = ANY(:house)) IS NOT TRUE
             GROUP BY ea.event_id, egt.genre_tag_id, gt.name
             ORDER BY ea.event_id, count(DISTINCT other.event_id) DESC, gt.name
             """.trimIndent()
