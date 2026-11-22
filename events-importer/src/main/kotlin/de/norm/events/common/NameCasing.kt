@@ -195,7 +195,9 @@ private val ACRONYMS: Set<String> =
         // Studio IIII's `JAXX TMS` (#4224).
         "TMS",
         // The Berlin chamber of commerce in a promoter credit, `IHK Berlin` (#5000).
-        "IHK"
+        "IHK",
+        // Hole 44's tour promoter `Root PGR GmbH` (#5399).
+        "PGR"
     )
 
 /**
