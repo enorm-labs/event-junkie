@@ -221,6 +221,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "grindcore" to METAL,
         "ndh" to METAL,
         "sludge" to METAL,
+        "doom" to METAL,
         "metalcore" to METAL,
         "metal-hc-punk" to METAL,
         "deathcore" to METAL,

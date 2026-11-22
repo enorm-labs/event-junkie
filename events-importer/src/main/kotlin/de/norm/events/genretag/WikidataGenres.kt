@@ -115,6 +115,7 @@ val WIKIDATA_GENRES: Map<String, String> =
         "Q487914" to "Punk", // pop-punk
         "Q2118402" to "Punk", // German punk
         "Q1990122" to "Punk", // Celtic punk
+        "Q1425661" to "Punk", // folk punk
         "Q460674" to "Ska", // ska punk
         "Q383615" to "Streetpunk", // street punk
         "Q274401" to "Streetpunk", // oi!
