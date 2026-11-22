@@ -123,6 +123,53 @@ class VolksbuehneSpielplanScraperTest {
     }
 
     @Test
+    fun `bills a concert's title as its headliner when the page path joins the title and the first guest`() {
+        val rows =
+            VolksbuehneSpielplanScraper(
+                VolksbuehneHouse.ROSA_LUXEMBURG_PLATZ
+            ).scrape(fixtureDocument("volksbuehne/volksbuehne-spielplan-2026-11-16.html", url), url)
+        val billed = { title: String -> rows.first { it.title == title }.artists.map { it.name } }
+
+        rows.first { it.title == "Daniel Blumberg" }.artists shouldContainExactly
+            listOf("Daniel Blumberg", "Gibrana Cervantes", "Geraldo Salas").map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+        billed("Vergessene Arbeitskämpfe – Ein Punk-Abend") shouldContainExactly listOf("Limboboys", "Isolationsgemeinschaft")
+        billed("KCMD x DAAD") shouldContainExactly listOf("Alex Chorny", "Shasha Chen")
+        billed("Low Signal").shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "daniel-blumberg-gibrana-cervantes | Daniel Blumberg;Gibrana Cervantes;Geraldo Salas",
+            "daniel-blumberg | Gibrana Cervantes;Geraldo Salas",
+            "daniel-blumberg-geraldo-salas | Gibrana Cervantes;Geraldo Salas",
+            "daniel-blumberg-gibrana-cervantes-live | Gibrana Cervantes;Geraldo Salas"
+        ]
+    )
+    fun `bills the title only for a page path of exactly the title and the first guest`(
+        production: String,
+        names: String
+    ) {
+        val html =
+            """
+            <section id="performances"><ul><li class="activity">
+              <p class="activity__time"><time datetime="2026-12-14T20:30:00+01:00">20:30</time></p>
+              <p class="activity__stage">Große Bühne</p>
+              <h3 class="activity__title"><a href="/produktionen/$production/20261214-1930/">Daniel Blumberg</a></h3>
+              <p class="activity__title_addition">Gibrana Cervantes &amp; Geraldo Salas</p>
+              <p class="activity__production-type-label">Konzert</p>
+            </li></ul></section>
+            """.trimIndent()
+
+        VolksbuehneSpielplanScraper(VolksbuehneHouse.ROSA_LUXEMBURG_PLATZ)
+            .scrape(Jsoup.parse(html, url), url)
+            .single()
+            .artists
+            .map { it.name } shouldBe names.split(';')
+    }
+
+    @Test
     fun `types a talk and a screening from the format label, and a series evening keys on its page`() {
         val talk = main.first { it.title == "Mapping the Right: Folge 1" }
         val screening = main.first { it.title == "A Friend in Berlin" }

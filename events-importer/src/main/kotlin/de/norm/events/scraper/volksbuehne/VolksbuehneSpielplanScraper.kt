@@ -14,6 +14,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.textAt
+import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -75,17 +76,20 @@ class VolksbuehneSpielplanScraper(
             ticketUrl = row.attrAt("a.ticket-button[href]", "href"),
             soldOut = row.selectFirst(".ticket-status--sold-out") != null,
             free = hasFreeEntryPhrase(row.textAt(".ticket-note")),
-            artists = artists(type, addition)
+            artists = artists(type, title, addition, page)
         ).forChildrenIf(childrensShowPhrase(title, addition))
     }
 
     /**
      * The performers of a concert or a party, from its `mit A, B und C` line; a staged work's line names a cast or a host alike.
-     * A concert's addition may also name its acts bare, alone or after a `<title> ·` ([bareNames]).
+     * A concert's addition may also name its acts bare, alone or after a `<title> ·` ([bareNames]). Then the title is
+     * an act too when the page path joins the two ([titleIsAct]).
      */
     private fun artists(
         type: EventType?,
-        addition: String?
+        title: String,
+        addition: String?,
+        page: String
     ): List<ScrapedArtist> {
         val role =
             when (type) {
@@ -93,7 +97,13 @@ class VolksbuehneSpielplanScraper(
                 EventType.PARTY -> ArtistRole.DJ
                 else -> return emptyList()
             }
-        val names = addition?.let(::withLineNames) ?: addition.takeIf { type == EventType.CONCERT }?.let(::bareNames).orEmpty()
+        val names =
+            addition?.let(::withLineNames)
+                ?: addition
+                    .takeIf { type == EventType.CONCERT }
+                    ?.let(::bareNames)
+                    ?.let { bare -> if (titleIsAct(title, bare, page)) listOf(title) + bare else bare }
+                    .orEmpty()
         return names.map { ScrapedArtist(name = it, role = role) }
     }
 
@@ -144,6 +154,25 @@ class VolksbuehneSpielplanScraper(
                 .filter { it.isNotBlank() }
                 .drop(1)
                 .joinToString("-")
+
+        /**
+         * A concert titled with its headliner has a path of the title and the first guest (`daniel-blumberg-gibrana-cervantes`).
+         * A programme title such as `Low Signal` has no such path. A title with an umlaut never matches, because the path writes `ae`.
+         */
+        private fun titleIsAct(
+            title: String,
+            bareNames: List<String>,
+            page: String
+        ): Boolean {
+            val production =
+                URI(page)
+                    .path
+                    .split('/')
+                    .filter { it.isNotBlank() }
+                    .getOrNull(1) ?: return false
+            val first = bareNames.firstOrNull() ?: return false
+            return production == "${SlugGenerator.slugify(title)}-${SlugGenerator.slugify(first)}"
+        }
 
         /** The names of a `mit …` line, or null for a line that does not open with `mit`. */
         private fun withLineNames(line: String): List<String>? =
