@@ -935,6 +935,10 @@ class ArtistNameMappingTest {
     fun `buildArtistsForEventType reads a solo bill off a comedy title as it does a show's`() {
         buildArtistsForEventType("Arnd Schimkat - LACHEN MACHEN", null, "COMEDY").map { it.name } shouldBe listOf("Arnd Schimkat")
         buildArtistsForEventType("Comedy, Pizza and Shots – SHOWCASE FRIDAY", null, "COMEDY").shouldBeEmpty()
+        // Event 15131 at Downstairs: a family name with lower-case particles.
+        buildArtistsForEventType("Yannick de la Pêche - Try Out", null, "COMEDY").map { it.name } shouldBe listOf("Yannick de la Pêche")
+        buildArtistsForEventType("Ildiko von Kürthy - Alt genug", null, "COMEDY").map { it.name } shouldBe listOf("Ildiko von Kürthy")
+        buildArtistsForEventType("Die Rückkehr der Jedi – Ein Abend", null, "SHOW").shouldBeEmpty()
     }
 
     // #315 — a variety or comedy house bills a solo act as `<Performer> – <Show>`.

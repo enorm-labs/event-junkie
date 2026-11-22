@@ -56,4 +56,18 @@ class AbstandWebsiteImporterTest {
             )
         parseAbstandBill("Konzert mit tollen Bands aus Berlin").artists.shouldBeEmpty()
     }
+
+    @Test
+    fun `bills a band that stands alone on its line, and keeps a sentence and a heading out`() {
+        // Event 15120, as radar publishes it: one band per paragraph, one bracket left open.
+        val birthday =
+            parseAbstandBill(
+                "Geburtstagskonzi (Part Two):\n\nOT Sauloch (Gossenrock aus Berlin)\n\n1312 Mindestlohn (Deutschpunkaus Berlin)\n\n" +
+                    "Veto (Punkrock aus Werder (Havel)\n\nWie immer natürlich mit kalten Getränken und netter Gesellschaft."
+            )
+        birthday.artists.map { it.name to it.role } shouldBe
+            listOf("OT Sauloch" to ArtistRole.HEADLINER, "1312 Mindestlohn" to ArtistRole.SUPPORT, "Veto" to ArtistRole.SUPPORT)
+        parseAbstandBill("Heute spielen ganz viele tolle Bands (siehe Plakat)").artists.shouldBeEmpty()
+        parseAbstandBill("Konzert mit Diapers (Synthpunk)").artists.map { it.name } shouldBe listOf("Diapers")
+    }
 }

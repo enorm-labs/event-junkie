@@ -385,13 +385,20 @@ fun buildArtistList(
 }
 
 /**
- * The `"<Performer> – <Show>"` idiom every variety and comedy house bills a solo act with (#315):
- * a person-shaped head — two to four capitalised words — before a dash or colon, and a show after
- * it. Cosmic Comedy derives its `Comedy Special` acts the same way; a production title
- * (`DIE KLIMA-MONOLOGE`) has no such head and yields nothing, and neither does a head whose show
- * names a staging format ([STAGING_FORMAT]).
+ * The lower-case particles of a family name: `Yannick de la Pêche`, `Ildiko von Kürthy`. Never `der`, which is
+ * as often a German article: `Die Rückkehr der Jedi – …`.
  */
-private val SOLO_BILL = Regex("""^(\p{Lu}[\p{L}'.-]*(?:\s+\p{Lu}[\p{L}'.-]*){1,3})\s*(?:[-–—]|:)\s+(\S.*)$""")
+private const val NAME_PARTICLE = """(?:von|van|de|la|le|du|da|di|del|dos|ten|ter|zu)"""
+
+/**
+ * The `"<Performer> – <Show>"` idiom every variety and comedy house bills a solo act with (#315):
+ * a person-shaped head — two to four capitalised words, with a [NAME_PARTICLE] between them — before
+ * a dash or colon, and a show after it. Cosmic Comedy derives its `Comedy Special` acts the same way;
+ * a production title (`DIE KLIMA-MONOLOGE`) has no such head and yields nothing, and neither does a
+ * head whose show names a staging format ([STAGING_FORMAT]).
+ */
+private val SOLO_BILL =
+    Regex("""^(\p{Lu}[\p{L}'.-]*(?:\s+(?:$NAME_PARTICLE\s+){0,2}\p{Lu}[\p{L}'.-]*){1,3})\s*(?:[-–—]|:)\s+(\S.*)$""")
 
 /**
  * A format after the dash that makes the head a production, not a performer: `Die Bettwurst – Das Musical!`,
