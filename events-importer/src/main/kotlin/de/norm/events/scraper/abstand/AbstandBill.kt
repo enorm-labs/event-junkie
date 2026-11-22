@@ -8,9 +8,9 @@ import de.norm.events.scraper.splitSupportActs
 
 /**
  * Abstand's bill, read from a radar description. Each band is a name with a bracket after it, in a list after
- * `mit` or one per `- ` line: `Konzert mit Accion Mutante (Crust legends Stuttgart), Necromorph (…) und Iron
- * Kindl Pest (…)`. **The bracket is what makes a name a band**: prose of any other shape bills no one. The bracket
- * mixes genre and home town, so no genre is read. A `mit DJs A, B und C` list bills the DJs.
+ * `mit`, one per `- ` line, or alone on its line: `Konzert mit Accion Mutante (Crust legends Stuttgart), Necromorph (…) und Iron
+ * Kindl Pest (…)`, `Riot Chaos (Anarchopunk aus Tschechien)`. **The bracket is what makes a name a band**: prose of any other
+ * shape bills no one. The bracket mixes genre and home town, so no genre is read. A `mit DJs A, B und C` list bills the DJs.
  */
 internal fun parseAbstandBill(description: String?): Lineup {
     // radar's editor puts a non-breaking space after `mit`, which `\s` does not match.
@@ -19,7 +19,9 @@ internal fun parseAbstandBill(description: String?): Lineup {
         ACT_LIST
             .findAll(text)
             .flatMap { list -> BRACKETED_NAME.findAll(list.groupValues[1]).map { it.groupValues[1].replace(LIST_JOINER, "").trim() } }
+            .plus(bandsAloneOnALine(text))
             .filterNot { it.isBlank() || isNonArtistName(it) }
+            .distinctBy { it.lowercase() }
             .toList()
     val djs = DJ_LIST.findAll(text).flatMap { splitSupportActs(it.groupValues[1]) }.filterNot(::isNonArtistName)
     val artists =
@@ -28,12 +30,31 @@ internal fun parseAbstandBill(description: String?): Lineup {
     return Lineup(artists = artists.distinctBy { it.name.lowercase() })
 }
 
+private fun bandsAloneOnALine(text: String): Sequence<String> =
+    BAND_LINE
+        .findAll(text)
+        .map { it.groupValues[1].replace(LIST_JOINER, "").trim() }
+        .filter { it.split(' ').size <= MAX_BAND_LINE_WORDS && !MIT.containsMatchIn(it) }
+
 /** A run of `<name> (<bracket>)` items after `mit` or a `- ` line start, joined by `,`, `/` or `und`. */
 private val ACT_LIST =
     Regex("""(?:\bmit|^\s*-)\s+((?:[^,()/\n]+?\s*\([^()\n]*\)\s*(?:,|/|\bund\b)?\s*)+)""", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
 
 /** One `<name> (<bracket>)` item of an [ACT_LIST]. */
 private val BRACKETED_NAME = Regex("""([^,()/\n]+?)\s*\([^()\n]*\)""")
+
+/**
+ * A line that is one `<name> (<bracket>)`, as in event 15119. The bracket may hold one more bracket and lose its own
+ * closing one: `Veto (Punkrock aus Werder (Havel)`.
+ */
+private val BAND_LINE =
+    Regex("""^\s*([^()\n]+?)\s*\([^()\n]*(?:\([^()\n]*\)[^()\n]*)?\)?\s*$""", RegexOption.MULTILINE)
+
+/** A `mit` before the bracket makes the line an [ACT_LIST], which bills its bands already. */
+private val MIT = Regex("""\bmit\b""", RegexOption.IGNORE_CASE)
+
+/** More words than this before the bracket of a [BAND_LINE] are a sentence, not a band. */
+private const val MAX_BAND_LINE_WORDS = 4
 
 /** The `und` that joins the last item of a list, or the dash of a `- ` line, left in front of a name. */
 private val LIST_JOINER = Regex("""^\s*(?:und\s+|-\s*)""", RegexOption.IGNORE_CASE)
