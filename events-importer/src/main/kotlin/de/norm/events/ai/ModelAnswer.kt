@@ -38,6 +38,10 @@ object ModelAnswer {
     private val MAX_PRICE = BigDecimal("500")
 
     private val CODE_FENCE = Regex("^```(?:json)?\\s*|\\s*```$")
+
+    /** A fenced block, each fence at the start of a line. A JSON string holds no raw newline, so no valid object starts one (#5404). */
+    private val FENCED_BLOCK = Regex("^```(?:json)?\\s*(.*?)\\s*^```", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
+
     private val TIME = Regex("^([01]?\\d|2[0-3])[:.]([0-5]\\d)$")
 
     /** A number with its decimals or minutes: "18,50", "20.00", "19:30". Its digits up to the first separator are the number it names. */
@@ -61,13 +65,16 @@ object ModelAnswer {
     /**
      * The object the model answered, or null when the text parses as something other than an object.
      *
-     * A model fences its JSON often enough that stripping the fence belongs here, not at a call site.
+     * A model fences its JSON often enough that stripping the fence belongs here, not at a call site. When the text
+     * holds a fenced block, the first one is the answer, and prose before or after it is dropped (#5404).
      *
      * @throws UnparseableAnswer for text that is no JSON at all. The caller logs it and counts it, because the
      *   name of the answer is the part worth reading.
      */
     fun jsonObject(raw: String): JsonNode? {
-        val text = closeLowNineQuotes(raw.trim().replace(CODE_FENCE, ""))
+        val trimmed = raw.trim()
+        val unfenced = FENCED_BLOCK.find(trimmed)?.groupValues?.get(1) ?: trimmed.replace(CODE_FENCE, "")
+        val text = closeLowNineQuotes(unfenced)
         return try {
             mapper.readTree(text).takeIf { it.isObject }
         } catch (e: JacksonException) {

@@ -63,6 +63,61 @@ class ModelAnswerTest {
     }
 
     @Test
+    fun `a fenced object with prose after its closing fence is the object`() {
+        val raw =
+            """```json
+            |{"eventType": {"value": ""}}
+            |```
+            |
+            |The page names no event type, so the value is empty.
+            """.trimMargin()
+
+        ModelAnswer
+            .jsonObject(raw)
+            ?.path("eventType")
+            ?.path("value")
+            ?.asString() shouldBe ""
+    }
+
+    @Test
+    fun `a fenced object with prose before its opening fence is the object`() {
+        val raw =
+            """Here is the answer:
+            |
+            |```
+            |{"confidence": 0.9}
+            |```
+            """.trimMargin()
+
+        ModelAnswer.jsonObject(raw)?.path("confidence")?.asDouble() shouldBe 0.9
+    }
+
+    @Test
+    fun `of two fenced blocks the first is the answer`() {
+        val raw =
+            """```json
+            |{"value": "first"}
+            |```
+            |Or, read differently:
+            |```json
+            |{"value": "second"}
+            |```
+            """.trimMargin()
+
+        ModelAnswer.jsonObject(raw)?.path("value")?.asString() shouldBe "first"
+    }
+
+    @Test
+    fun `a fence inside a string of an unfenced object is part of the string`() {
+        ModelAnswer.jsonObject("""{"evidence": "```json {} ```"}""")?.path("evidence")?.asString() shouldBe "```json {} ```"
+    }
+
+    @Test
+    fun `prose with no object around a fence is no JSON`() {
+        shouldThrow<UnparseableAnswer> { ModelAnswer.jsonObject("Sorry, I cannot read this flyer.\n```\nno answer\n```") }
+    }
+
+    @Test
     fun `text that parses as no object is null, not an error`() {
         ModelAnswer.jsonObject("[1, 2]") shouldBe null
     }
