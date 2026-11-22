@@ -296,6 +296,8 @@ private val NON_GENRE_TOKENS: Set<String> =
         "presents",
         "present",
         "podcast",
+        // BKA Theater's show night (`bka_theater:4751`).
+        "livepodcast",
         "markt",
         "support",
         "openair",
@@ -317,6 +319,8 @@ private val NON_GENRE_TOKENS: Set<String> =
         // Audience / theme / series labels Gretchen pushes into the genre field. [lookupKey] strips
         // non-ASCII letters: "Männerparty" is "mnnerparty", "FLINTA*" is "flinta".
         "flinta",
+        // Orangerie Neukölln's "house, community" (CURA Berlin).
+        "community",
         "mnnerparty",
         "fetish",
         "berbenautika",

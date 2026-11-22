@@ -148,6 +148,7 @@ class GenreNormalizerTest {
         normalizeGenre("Ballett").shouldBeEmpty()
         normalizeGenre("Tanz").shouldBeEmpty()
         normalizeGenre("Diskussion").shouldBeEmpty()
+        normalizeGenre("Livepodcast").shouldBeEmpty()
         normalizeGenre("Kultur").shouldBeEmpty()
         normalizeGenre("Kunst").shouldBeEmpty()
         normalizeGenre("Tribute").shouldBeEmpty()
@@ -210,6 +211,7 @@ class GenreNormalizerTest {
         normalizeGenre("Berlin Techno").shouldContainExactly("Techno")
         normalizeGenre("Comedy, Soul").shouldContainExactly("Soul")
         normalizeGenre("Tribute, Rock").shouldContainExactly("Rock")
+        normalizeGenre("house, community").shouldContainExactly("House")
     }
 
     @Test
