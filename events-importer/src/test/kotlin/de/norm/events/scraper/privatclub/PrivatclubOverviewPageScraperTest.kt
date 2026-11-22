@@ -11,6 +11,8 @@ import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
@@ -112,12 +114,12 @@ class PrivatclubOverviewPageScraperTest {
         }
 
         @Test
-        fun `party events do not extract artists`() {
+        fun `a party bills the DJ its subtitle names after mit`() {
             val document = fixtureDocument(overviewHtml, baseUrl)
             val events = scraper.scrape(document, baseUrl)
             val party = events.first { it.title == "This Charming Man" }
 
-            party.artists.shouldBeEmpty()
+            party.artists.map { it.name to it.role } shouldBe listOf("DJ Spencer" to ArtistRole.DJ)
         }
     }
 
@@ -151,13 +153,15 @@ class PrivatclubOverviewPageScraperTest {
         private fun card(
             type: String,
             title: String,
-            content: String = ""
+            content: String = "",
+            subtitle: String = ""
         ) = """
             <div class="event_wrapper skewed">
                 <a href="https://privatclub-berlin.de/event/x/" class="event_header">
                     <span class="datum_part1">Fr. 19.</span> <span class="datum_part2">Februar</span>
                     <div class="zeile_typ"><div class="event_typ">$type</div></div>
                     <span class="titel">$title</span>
+                    <span class="untertitel">$subtitle</span>
                 </a>
                 <div class="event_detail"><div class="zeile content">$content</div></div>
             </div>
@@ -183,6 +187,49 @@ class PrivatclubOverviewPageScraperTest {
             val event = scraper.scrape(Jsoup.parse(card("Party", "Soul Explosion", "<p>Dj King Dynamite begann 1998.</p>"), baseUrl), baseUrl).single()
 
             event.artists.shouldBeEmpty()
+        }
+
+        @ParameterizedTest
+        @CsvSource(
+            delimiter = '|',
+            value = [
+                // Event 10927.
+                "Every Day Is Like Sunday? Die Indie-Frühparty am Sonntag mit DJ Spencer vom Karrera Klub! | DJ Spencer | Karrera Klub",
+                "DJ King Dynamite | DJ King Dynamite | ''",
+                "DJ NADJ | DJ NADJ | ''",
+                "die Indieparty mit eavo im Privatclub | eavo | ''",
+                "New Wave & Postpunk mit Eavo | Eavo | ''",
+                "Disco All Night | '' | ''",
+                "Berlins originale Latin Cumbia Party | '' | ''",
+                "Ein Abend mit den schönsten Hits der Achtziger und Neunziger | '' | ''"
+            ]
+        )
+        fun `bills the DJ a party's subtitle names, and its collective as the promoter`(
+            subtitle: String,
+            dj: String,
+            promoter: String
+        ) {
+            val event = scraper.scrape(Jsoup.parse(card("Party", "Every Day Is Like Sunday?", subtitle = subtitle), baseUrl), baseUrl).single()
+
+            event.artists.map { it.name to it.role } shouldBe listOfNotNull(dj.ifEmpty { null }?.let { it to ArtistRole.DJ })
+            event.promoters shouldBe listOfNotNull(promoter.ifEmpty { null })
+        }
+
+        @Test
+        fun `prefers the DJ paragraph over the subtitle`() {
+            val html =
+                card(
+                    "Party",
+                    "Dance Dance Revolution",
+                    "<p>DJs:<br />\n&#8211; Palme (Factory)</p>",
+                    subtitle = "mit DJ Spencer vom Karrera Klub"
+                )
+
+            scraper
+                .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+                .single()
+                .artists
+                .map { it.name } shouldBe listOf("Palme")
         }
 
         @Test

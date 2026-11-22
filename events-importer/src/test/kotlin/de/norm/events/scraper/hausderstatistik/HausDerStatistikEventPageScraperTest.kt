@@ -9,6 +9,8 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -60,6 +62,32 @@ class HausDerStatistikEventPageScraperTest {
         val listed = listed("weg", "2026-10-16")
 
         scraper.scrape(listed, Jsoup.parse("<main><p>Seite nicht gefunden</p></main>", listed.sourceUrl)).shouldBeNull()
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "Eintritt frei, Spenden willkommen | '' | true",
+            "Eintritt frei, Spenden willkommen | <p><strong>Ticket/Kostenbeteiligung</strong><br>15</p> | false",
+            "Spenden willkommen | '' | false"
+        ]
+    )
+    fun `marks free entry that the text names when the page has no price cell`(
+        line: String,
+        sidebar: String,
+        free: Boolean
+    ) {
+        // Event 15065.
+        val listed = listed("das-vetomat-wird-20-jahre", "2026-12-12")
+        val page =
+            Jsoup.parse(
+                """<article class="event"><div class="entry-content"><div class="column is-8"><p>Wir laden euch herzlich ein.</p><p>$line</p></div>
+                <div class="column is-4">$sidebar</div></div></article>""",
+                listed.sourceUrl
+            )
+
+        scraper.scrape(listed, page).shouldNotBeNull().free shouldBe free
     }
 
     @Test
