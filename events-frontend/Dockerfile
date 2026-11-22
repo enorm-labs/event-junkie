@@ -27,14 +27,15 @@
 # is the conservative alternative.
 #
 # Verify the package, never the digest: #770 was triaged against a digest that had moved while
-# still shipping the vulnerable openssl. This pin must satisfy `libssl3 >= 3.5.8-r0` (#770),
+# still shipping the vulnerable openssl. This pin must satisfy
+# `libssl3`/`libcrypto3 >= 3.5.9-r1` (#770, CVE-2026-107496),
 # `libexpat >= 2.10.0-r0` (#1802, #3537, #4417), `libuuid >= 2.42.3-r1` (#1117),
 # `pcre2 >= 10.49-r0` (#2298), `tiff >= 4.7.2-r0` (#2883), `libx11 >= 1.8.14-r0` (CVE-2026-88806),
 # `brotli-libs >= 1.2.1-r0` (CVE-2026-111497), `curl`/`libcurl >= 8.23.0-r0` (CVE-2026-92392),
 # `zlib >= 1.3.2-r1` (CVE-2026-85091), `musl`/`musl-utils >= 1.2.6-r3` (CVE-2026-107891) and
 # `libxslt >= 1.1.43-r4` (CVE-2026-87636, CVE-2026-9947) and `libxml2 >= 2.13.9-r3`
 # (CVE-2026-86144), checked with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid|^pcre2|^tiff|^libx11|^brotli-libs|^curl|^libcurl|^zlib|^musl|^libxslt|^libxml2"'`
+# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libcrypto3|^libexpat|^libuuid|^pcre2|^tiff|^libx11|^brotli-libs|^curl|^libcurl|^zlib|^musl|^libxslt|^libxml2"'`
 # and `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, both
 # on `--platform linux/amd64`: Alpine builds each architecture separately, which is how #1118
 # verified clean and changed nothing.
@@ -53,13 +54,25 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 # Base-image CVE fixes that have not arrived upstream. Each is fixed in Alpine 3.24 for both
 # x86_64 and aarch64 while the pinned base still ships the vulnerable version, and in each case a
 # digest bump was not available — `1.31-alpine` already resolves to the digest above, so there is
-# nothing newer to pin. This is what blocks `release.yml` at *Scan the images*, and a fixable
-# finding is fixed rather than waived.
+# nothing newer to pin. Most of these block `release.yml` at *Scan the images*, and a fixable
+# finding is fixed rather than waived. The openssl pair is the exception and says so on its own
+# entry: below the gate's threshold, upgraded because it is in the TLS path.
 #
 #   brotli-libs  CVE-2026-111497, an out-of-bounds write in the Brotli decoder. Fixed in
 #                1.2.1-r0; the base ships 1.2.0-r1.
 #   curl         CVE-2026-92392, a use-after-free in HTTP/2 upload handling, raised against both
 #   libcurl      `curl` and `libcurl`. Fixed in 8.23.0-r0; the base ships 8.22.0-r0.
+#   libcrypto3   CVE-2026-107496, a denial of service via a crafted EC certificate in CMS
+#   libssl3      encryption, CVE-2026-95691, a denial of service via overlapping QUIC CRYPTO frame
+#                processing, CVE-2026-95692, an out-of-bounds read in AES-GCM-SIV, CVE-2026-88822,
+#                an information disclosure via uninitialized memory in QUIC peer detection, and
+#                CVE-2026-88823, a message authentication bypass via a zero-length AAD update, all
+#                raised against both `libcrypto3` and `libssl3`. Fixed in 3.5.9-r1, which the v3.24
+#                branch carries for both x86_64 and aarch64; the base ships 3.5.9-r0. These five are
+#                MEDIUM and LOW, so unlike the rest of this line they do not block the gate, which
+#                reads CRITICAL and HIGH only. They are upgraded because openssl is the TLS stack
+#                nginx terminates every HTTPS request with, which makes them reachable and not
+#                waivable, and because the mechanism was already here.
 #   libexpat     CVE-2026-117610, a NULL pointer dereference, and CVE-2026-118370, a signed integer
 #                overflow, both in the XML parser. Fixed in 2.10.0-r0; the base ships 2.9.0-r0
 #                (#4417). Pulled in by fontconfig, the third libexpat episode after #1802 and #3537.
@@ -85,11 +98,12 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 # Delete a package from this line once the base ships the fixed version or later: an upgrade kept
 # past its purpose hides that the base has caught up and quietly becomes the thing choosing the
 # version. Check with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^brotli-libs|^curl|^libcurl|^libexpat|^libxml2|^libxslt|^musl|^zlib"'`
+# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^brotli-libs|^curl|^libcrypto3|^libcurl|^libexpat|^libssl3|^libxml2|^libxslt|^musl|^zlib"'`
 # on the pinned digest. `USER 0` (root) because apk needs write access; the final `USER` below is
 # unaffected.
 USER 0
-RUN apk upgrade --no-cache brotli-libs curl libcurl libexpat libxml2 libxslt musl musl-utils zlib
+RUN apk upgrade --no-cache brotli-libs curl libcrypto3 libcurl libexpat libssl3 libxml2 libxslt \
+    musl musl-utils zlib
 
 # Config first, bundle second, so the config layer stays cached.
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
