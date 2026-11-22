@@ -59,13 +59,15 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
         description: String? = null,
         eventType: String = "CONCERT",
         status: String = "SCHEDULED",
-        title: String = "Night $sourceId"
+        title: String = "Night $sourceId",
+        subtitle: String? = null
     ): EventEntity {
         val venue = venueRepository.save(VenueEntity(name = "Venue $sourceId", slug = "venue-${sourceId.replace(':', '-')}"))
         return eventRepository.save(
             EventEntity(
                 venueId = requireNotNull(venue.id),
                 title = title,
+                subtitle = subtitle,
                 slug = "night-${sourceId.replace(':', '-')}",
                 eventDate = LocalDate.of(2026, 11, 1),
                 sourceId = sourceId,
@@ -210,6 +212,49 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
             sync(night)
 
             tagsOf(night) shouldBe mapOf("Jazz" to GenreTagOrigin.DESCRIPTION.name)
+        }
+    }
+
+    @Test
+    fun `an untagged night takes the genre words of its subtitle (#5388)`() {
+        runBlocking {
+            val night = persistEvent("so36:subtitle", eventType = "PARTY", title = "LA CASA DEL PERREO", subtitle = "Reggaeton * Urban Latin")
+            sync(night)
+
+            tagsOf(night) shouldBe mapOf("Latin" to GenreTagOrigin.DESCRIPTION.name)
+        }
+    }
+
+    @Test
+    fun `a subtitle that is a tour name or a support line gives no genre`() {
+        runBlocking {
+            val tour = persistEvent("so36:tour", subtitle = "NEMO TOUR 2027")
+            sync(tour)
+            val support = persistEvent("so36:support", subtitle = "Support: Kann Karate (Metal)")
+            sync(support)
+
+            tagsOf(tour) shouldBe emptyMap()
+            tagsOf(support) shouldBe emptyMap()
+        }
+    }
+
+    @Test
+    fun `a subtitle's genre words do not touch an event with a source tag`() {
+        runBlocking {
+            val night = persistEvent("so36:subtitle-source", eventType = "PARTY", subtitle = "Reggaeton * Urban Latin")
+            sync(night, genre = "Techno")
+
+            tagsOf(night) shouldBe mapOf("Techno" to "SOURCE")
+        }
+    }
+
+    @Test
+    fun `the subtitle's genre words rank before the description's, at most three in all`() {
+        runBlocking {
+            val night = persistEvent("so36:subtitle-order", subtitle = "Jazz", description = "Punk, Techno, Metal und Soul")
+            sync(night)
+
+            tagsOf(night) shouldBe mapOf("Jazz" to "DESCRIPTION", "Punk" to "DESCRIPTION", "Techno" to "DESCRIPTION")
         }
     }
 

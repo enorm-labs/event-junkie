@@ -60,6 +60,8 @@ The rules:
    An adjective key as the last part gives nothing, as in "post-industrial".
    The last part "Disco" gives nothing too, because a "Kinder-Disco" is a dance night.
    A genre word that ends in "-sound" or "-artig" gives its genre. Thus "Indiesound" gives Indie and "krautrockartige" gives Krautrock.
+   The genre words of the subtitle count too, before those of the description (#5388). A subtitle is short and often a genre line. Thus the subtitle
+   "Reggaeton \* Urban Latin" gives Latin. A tour name such as "NEMO TOUR 2027" gives nothing.
    The first three genres stay.
 5. **Each import computes the derived tags again** for the events of its source. An event that the admin API pinned keeps its tags (ADR-042).
 6. **A derived tag counts as a tag everywhere else.** "More like this" reads it. The venue programme families and the genre filter read it too.
