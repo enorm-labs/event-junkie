@@ -5,7 +5,10 @@ import {
   fetchReviewPage,
   fetchUpcomingEvents,
   lifeSpan,
+  matchedSearchUrl,
   type MusicBrainzCandidate,
+  rejectMusicBrainzMatch,
+  searchMatchedArtists,
   setMusicBrainzId,
 } from '../artists'
 import { json } from '@/lib/__tests__/jsonResponse'
@@ -120,5 +123,53 @@ describe('lifeSpan', () => {
     expect(lifeSpan(candidate({ founded: '1976' }))).toBe('1976–')
     expect(lifeSpan(candidate({ dissolved: '1989' }))).toBe('–1989')
     expect(lifeSpan(candidate())).toBeNull()
+  })
+})
+
+describe('searchMatchedArtists', () => {
+  it('asks for the EXACT rows whose name contains the term, by name', async () => {
+    const row = {
+      id: 1851,
+      name: 'Wilco',
+      slug: 'wilco',
+      musicbrainzMatch: 'EXACT',
+      musicbrainzId: 'b1',
+    }
+    const fetchFn = vi.fn<typeof fetch>(async () => json({ content: [row], totalElements: 1 }))
+
+    expect(await searchMatchedArtists('wil co', fetchFn)).toEqual([row])
+    const params = new URL(String(fetchFn.mock.calls[0]![0]), 'http://admin').searchParams
+    expect(params.get('name')).toBe('wil co')
+    expect(params.get('musicbrainzMatch')).toBe('EXACT')
+    expect(params.get('sort')).toBe('name,asc')
+    expect(matchedSearchUrl('x')).toContain('size=20')
+  })
+})
+
+describe('rejectMusicBrainzMatch', () => {
+  it('DELETEs the match and returns the AMBIGUOUS row', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      json({
+        id: 1851,
+        name: 'Wilco',
+        slug: 'wilco',
+        musicbrainzMatch: 'AMBIGUOUS',
+        musicbrainzId: null,
+      }),
+    )
+
+    const saved = await rejectMusicBrainzMatch(1851, fetchFn)
+
+    expect(saved.musicbrainzMatch).toBe('AMBIGUOUS')
+    const [url, init] = fetchFn.mock.calls[0]!
+    expect(String(url)).toBe('/api/admin/artists/1851/musicbrainz-id')
+    expect(init?.method).toBe('DELETE')
+  })
+
+  it('throws on a refusal', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => json({ detail: 'Artist 9 not found' }, 404))
+    await expect(rejectMusicBrainzMatch(9, fetchFn)).rejects.toThrow(
+      'HTTP 404 — Artist 9 not found',
+    )
   })
 })

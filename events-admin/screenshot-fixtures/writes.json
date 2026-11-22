@@ -189,5 +189,23 @@
       "message": "Event classification started for source '{slug}'",
       "sourceSlug": "{slug}"
     }
+  },
+  {
+    "method": "DELETE",
+    "path": "artists/1851/musicbrainz-id",
+    "status": 200,
+    "body": {
+      "id": 1851,
+      "name": "Wilco",
+      "slug": "wilco",
+      "musicbrainzMatch": "AMBIGUOUS",
+      "musicbrainzId": null
+    },
+    "then": {
+      "artists/wilco": {
+        "musicbrainzMatch": "AMBIGUOUS",
+        "musicbrainzId": null
+      }
+    }
   }
 ]
