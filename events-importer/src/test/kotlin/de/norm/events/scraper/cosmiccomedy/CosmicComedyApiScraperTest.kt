@@ -40,6 +40,17 @@ class CosmicComedyApiScraperTest {
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
+    /** The ticket link of a one-event page whose event carries [description] and no `website`. */
+    private fun ticketUrlOf(description: String): String? =
+        scraper
+            .scrapePage(
+                """{"events":[{"slug":"juampi-gonzalez-oveja-negra-%c2%b7-berlin","start_date":"2026-11-22 20:00:00",""" +
+                    """"title":"Juampi Gonz\u00e1lez &#8211; Oveja Negra","categories":[{"name":"Solo Show"}],""" +
+                    """"description":"$description"}]}"""
+            ).events
+            .single()
+            .ticketUrl
+
     @Test
     fun `parses a full page and hands back the API's own cursor`() {
         pageOne.events shouldHaveSize 50
@@ -191,6 +202,46 @@ class CosmicComedyApiScraperTest {
     }
 
     @Test
+    fun `falls back to a description link whose text names tickets (#5398)`() {
+        // Neither event sets a website or embeds the Universe widget; each links a visiting act's own shop.
+        event("cosmic_comedy:tereza-hossa-live-in-berlin").ticketUrl!! shouldStartWith
+            "https://loveyourartist.com/en/profiles/spokes-gmbh-5OQQ41/events/tereza-hossa-berlin-"
+        event("cosmic_comedy:the-hilarious-deep-amazing-berlin-comedy-show-with-gilli-apter").ticketUrl shouldBe
+            "https://www.tickettailor.com/events/gilliaptercomedy/2169585"
+    }
+
+    @Test
+    fun `reads a Spanish ENTRADAS link as the ticket link`() {
+        // Event 3758: the enterticket.es link is the only one in its body.
+        ticketUrlOf(ENTRADAS_LINK) shouldBe ENTRADAS_URL
+    }
+
+    @Test
+    fun `takes no description link whose text does not name tickets`() {
+        // The host's own site and a press review sit in the same descriptions.
+        val description =
+            "<p>Hosted by <a href='https://dharmandersingh.com/'>Dharmander Singh</a>, " +
+                "praised by <a href='http://derstandard.at/'>derstandard.at</a>.</p>"
+        ticketUrlOf(description).shouldBeNull()
+        // A comedian whose night names no shop at all keeps no link.
+        event("cosmic_comedy:mike-rice-cruel-little-man").ticketUrl.shouldBeNull()
+    }
+
+    @Test
+    fun `skips a tickets link back to the club's own site for the next one`() {
+        val description =
+            "<p><a href='https://comedyclubberlin.com/events/'>All tickets</a></p>" +
+                "<p><a href='mailto:w-masked@example.de'>Tickets by mail</a></p>$ENTRADAS_LINK"
+        ticketUrlOf(description) shouldBe ENTRADAS_URL
+    }
+
+    @Test
+    fun `prefers the embedded widget to a tickets link in the text`() {
+        val description = "<div data-widget-type='universe' data-target-id=\\\"abc123\\\"></div>$ENTRADAS_LINK"
+        ticketUrlOf(description) shouldBe "https://www.universe.com/events/abc123"
+    }
+
+    @Test
     fun `stores the organizer as the promoter, and none where the API states none`() {
         event("cosmic_comedy:turbopaolo-il-poliziotto-del-formaggio-2026").promoters shouldBe listOf("Trinity Music")
         // The club sets itself as organizer on its own nights, and leaves the field empty on 28.
@@ -231,3 +282,7 @@ class CosmicComedyApiScraperTest {
         empty.nextPageUrl.shouldBeNull()
     }
 }
+
+private const val ENTRADAS_URL = "https://www.enterticket.es/eventos/juampi-gonzalez-oveja-negra-berlin-855103"
+
+private const val ENTRADAS_LINK = "<p><a href='$ENTRADAS_URL'>ENTRADAS</a></p>"

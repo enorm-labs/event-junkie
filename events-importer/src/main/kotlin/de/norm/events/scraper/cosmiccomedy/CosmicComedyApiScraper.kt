@@ -20,6 +20,7 @@ import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
+import java.net.URI
 
 /**
  * Pure JSON parser for Cosmic Comedy Berlin's **The Events Calendar** REST API
@@ -38,7 +39,8 @@ import tools.jackson.databind.JsonNode
  * - **No prices anywhere.** `cost` and `cost_details` are empty on every event.
  * - **Sold out is only in the title** (`LATE SHOW (SOLD OUT!!!)`): the API has no stock field.
  * - **The description opens with an embedded Universe ticket widget**, whose target id is the
- * ticket link where the event sets no `website`.
+ * ticket link where the event sets no `website`. A visiting act's night can link its own shop in
+ * the text instead (`Tickets for …`, `ENTRADAS`), and that link is the fallback after the widget.
  * - **A house night bills its comedians in the description**, one per line under a
  * `★★★★★ THE ACTS ★★★★★` heading, each with a country code: `Ayla Merino (MEX)`.
  *
@@ -142,17 +144,49 @@ class CosmicComedyApiScraper {
     /**
      * The ticket link: the event's own `website` where set, otherwise the Universe listing embedded
      * as a widget in the description. That widget is the club's season listing for its recurring
-     * nights, so most events share one URL — still where their tickets are sold. Events with
-     * neither are stored without a link rather than pointing at the front page.
+     * nights, so most events share one URL — still where their tickets are sold. A visiting act's
+     * night has neither and links its shop in the text, so the last fallback is [descriptionTicketLink].
+     * Events with none are stored without a link rather than pointing at the front page.
      */
-    private fun ticketUrl(event: JsonNode): String? =
-        event.path("website").asString("").takeIf { it.isNotBlank() }
+    private fun ticketUrl(event: JsonNode): String? {
+        val description = event.path("description").asString("")
+        return event.path("website").asString("").takeIf { it.isNotBlank() }
             ?: UNIVERSE_WIDGET_PATTERN
-                .find(event.path("description").asString(""))
+                .find(description)
                 ?.groupValues
                 ?.get(1)
                 ?.let { "$UNIVERSE_EVENT_BASE$it" }
+            ?: descriptionTicketLink(description)
+    }
+
+    /**
+     * The first link in [description] whose text names tickets (#5398): `Tickets for TEREZA HOSSA @ Cosmic Comedy` to
+     * loveyourartist.com, `ENTRADAS` to enterticket.es. The text decides, because the same descriptions also link the
+     * host's own site and a press review. A link back to the club's own site is not a shop.
+     */
+    private fun descriptionTicketLink(description: String): String? =
+        description.takeIf { it.isNotBlank() }?.let { html ->
+            Jsoup
+                .parseBodyFragment(html)
+                .select("a[href]")
+                .firstOrNull { anchor -> TICKET_LINK_TEXT.containsMatchIn(anchor.text()) && isOffSiteHttpLink(anchor.attr("href")) }
+                ?.attr("href")
+                ?.trim()
+        }
+
+    private fun isOffSiteHttpLink(href: String): Boolean {
+        val host = runCatching { URI(href.trim()) }.getOrNull()?.takeIf { it.scheme in HTTP_SCHEMES }?.host ?: return false
+        return !host.equals(CLUB_HOST, ignoreCase = true) && !host.endsWith(".$CLUB_HOST", ignoreCase = true)
+    }
 }
+
+/** The words a description's link to a ticket shop says: English, Spanish, German (#5398). */
+private val TICKET_LINK_TEXT = Regex("""\b(?:tickets?|entradas|karten)\b""", RegexOption.IGNORE_CASE)
+
+/** The club's own host, whose pages are never the ticket shop. */
+private const val CLUB_HOST = "comedyclubberlin.com"
+
+private val HTTP_SCHEMES = setOf("http", "https")
 
 /** The categories the club puts on a night with a named act rather than its house showcase (#5123). */
 private val PERFORMER_CATEGORIES = listOf("Comedy Special", "Solo Show")
