@@ -1,6 +1,7 @@
 package de.norm.events.scraper.aeg
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.stubFetcher
@@ -10,6 +11,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 
 /**
@@ -82,5 +84,39 @@ class AegCoBillMergeTest {
     fun `bills no act off a bare-name comedy title without a detail page`() =
         runTest {
             importedEvent(null, overviewPage = "ubereatsmusichall-overview-solo-comedy.html").artists shouldBe emptyList()
+        }
+
+    @Test
+    fun `bills no headliner for a tribute show the description quotes under the title, as event 15199`() =
+        runTest {
+            val detail = "https://www.uber-eats-music-hall.de/events/detail/roger-waters-presents-legacy/2027-11-11-2000"
+            val overview =
+                """
+                <div class="event-list"><div class="active-date entry clearfix" data-category="3" data-date="2027-11">
+                  <div class="details"><div class="date"><span class="m-date__singleDate"><span class="m-date__weekday">Donnerstag, </span>
+                    <span class="m-date__day">11. </span><span class="m-date__month">Nov. </span><span class="m-date__year">2027, </span>
+                    <span class="m-date__hour"> 20:00 Uhr</span></span></div>
+                  <h3 class="event-title"><a href="$detail" title="Mehr Infos">ROGER WATERS PRESENTS LEGACY</a></h3></div>
+                </div></div>
+                """.trimIndent()
+            val detailPage =
+                """
+                <h1 class="summary">ROGER WATERS PRESENTS LEGACY in der Uber Eats Music Hall</h1>
+                <div class="event_body">
+                  <p>Am 11. November 2027 kommt "ROGER WATERS PRESENTS LEGACY - A Pink Floyd Tribute Show" in die Uber Eats Music Hall nach Berlin.</p>
+                  <p>Gründungsmitglied Roger Waters übernimmt persönlich die Regie.</p>
+                  <p><strong>Support Act: Blancmange</strong></p>
+                </div>
+                """.trimIndent()
+            coEvery { htmlFetcher.fetch(overviewUrl, any(), any(), any()) } returns
+                FetchResult.Success(Jsoup.parse(overview, overviewUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(detail) } returns Jsoup.parse(detailPage, detail)
+
+            val result = UberEatsMusicHallWebsiteImporter(htmlFetcher).importEvents(overviewUrl, null, null)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val event = result.events.single()
+            event.eventType shouldBe "CONCERT"
+            event.artists.map { it.name to it.role } shouldBe listOf("Blancmange" to ArtistRole.SUPPORT)
         }
 }

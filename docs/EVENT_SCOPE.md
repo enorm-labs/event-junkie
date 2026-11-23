@@ -192,17 +192,18 @@ Not modelled and not imported. Arena Berlin is the clearest case. All five of it
 deGUT, BUCHBERLIN, Einstieg Berlin. That is why it sits in _Blocked_ despite being trivially scrapable, and the blocker
 there was never the markup.
 
-Seven imported venues mix one into their programme. Each drops it on the words its page uses:
+Eight imported venues mix one into their programme. Each drops it on the words its page uses:
 
-| Venue                | Predicate                                        | Signal                                                     |
-| -------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
-| Uber Eats Music Hall | `billsTradeFairOrConference` (`TradeFair.kt`)    | A `…messe`, `Konferenz`, `Conference`, `Kongress` or `B2B` |
-| Theater im Delphi    | `billsTradeFairOrConference`                     | The same words in the title                                |
-| silent green         | `SilentGreenEventFields.isSilentGreenConference` | `Konferenz` the only category label, or the same words     |
-| Alte Münze           | `AlteMuenzeApiScraper.isProgramme`               | The `Tagung` category, or the same words in the title      |
-| ZK/U                 | `billsTradeFairOrConference`                     | The same words in the title or the subtitle                |
-| Pastiche             | `PasticheProgrammePageScraper.isOutOfScope`      | A `Record Fair` in the title or format line                |
-| Humboldt Forum       | `typeOf` (`HumboldtForumApiScraper.kt`)          | The `Konferenz/Symposium` category, which gives no type    |
+| Venue                 | Predicate                                        | Signal                                                     |
+| --------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
+| Uber Eats Music Hall  | `billsTradeFairOrConference` (`TradeFair.kt`)    | A `…messe`, `Konferenz`, `Conference`, `Kongress` or `B2B` |
+| Theater im Delphi     | `billsTradeFairOrConference`                     | The same words in the title                                |
+| silent green          | `SilentGreenEventFields.isSilentGreenConference` | `Konferenz` the only category label, or the same words     |
+| Alte Münze            | `AlteMuenzeApiScraper.isProgramme`               | The `Tagung` category, or the same words in the title      |
+| ZK/U                  | `billsTradeFairOrConference`                     | The same words in the title or the subtitle                |
+| Pastiche              | `PasticheProgrammePageScraper.isOutOfScope`      | A `Record Fair` in the title or format line                |
+| Humboldt Forum        | `typeOf` (`HumboldtForumApiScraper.kt`)          | The `Konferenz/Symposium` category, which gives no type    |
+| House of Music Berlin | `HouseOfMusicOverviewPageScraper.isConference`   | The same words in the title, or the name `MetalCon`        |
 
 A bare `Messe` is not a fair: SO36 bills a band of that name.
 

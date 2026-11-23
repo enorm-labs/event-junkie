@@ -25,6 +25,7 @@ import org.jsoup.nodes.Element
  * and the venue's format tags. The tags type the row, and a row whose every tag is a
  * participation format is dropped ([isParticipationFormat]). The venue leaves some open days of an
  * exhibition without a tag, so a title such as `Exhibition is open! <show>` types the row too.
+ * A `Film` tag types a screening, also beside `Workshop` (event 15209).
  */
 class HausDerStatistikMonthPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -83,7 +84,8 @@ class HausDerStatistikMonthPageScraper {
                 "musik" to EventType.CONCERT.name,
                 "live-act" to EventType.CONCERT.name,
                 "vortrag" to EventType.READING.name,
-                "diskussion" to EventType.READING.name
+                "diskussion" to EventType.READING.name,
+                "film" to EventType.SCREENING.name
             )
 
         /**
