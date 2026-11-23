@@ -5,8 +5,8 @@
 #
 # The fake `curl` keeps the root password in a file and answers like OpenObserve: 200 or 401 from the
 # Authorization header it is given, and the PUT changes the stored password. Fakes for `security` and
-# `kubectl` keep a Keychain and the collector pods. `cluster-secrets.sh` and `o2-query.sh` are replaced
-# by recorders. No password may reach the output or any fake's argument log.
+# `kubectl` keep a Keychain and the collector pods. `cluster-secrets.sh`, `o2-query.sh` and
+# `deploy/alerts/apply.sh` are replaced by recorders. No password may reach the output or any fake's argument log.
 #
 # Usage: scripts/rotate-o2-root-test.sh — reaches no network, writes only under a temp dir it removes.
 
@@ -27,7 +27,7 @@ BIN="$WORK/bin"
 export FAKE="$WORK/state"
 mkdir -p "$BIN" "$FAKE/kc"
 export PATH="$BIN:$PATH" EJ_SETTLE_SECONDS=0 EJ_POLL_SECONDS=0
-export EJ_CLUSTER_SECRETS="$BIN/cluster-secrets" EJ_O2_QUERY="$BIN/o2-query"
+export EJ_CLUSTER_SECRETS="$BIN/cluster-secrets" EJ_O2_QUERY="$BIN/o2-query" EJ_ALERTS_APPLY="$BIN/alerts-apply"
 ITEM=event-junkie-staging-o2-root-password
 # Quotes and a dollar sign, so a password pasted into a config or a command line would break it.
 # shellcheck disable=SC2016
@@ -138,6 +138,19 @@ cat >"$BIN/o2-query" <<'EOF'
 #!/usr/bin/env bash
 if [ -n "${FAKE_ROWS:-}" ]; then echo "$FAKE_ROWS"; else echo '[{"n":7}]'; fi
 EOF
+# FAKE_DRIFT=1 leaves record-only on the old password, as before #5425. Another rule's drift must not matter.
+cat >"$BIN/alerts-apply" <<'EOF'
+#!/usr/bin/env bash
+echo "$EJ_NODE${*:+ $*}" >>"$FAKE/alerts.log"
+[ "${1:-}" = --diff ] || exit 0
+if [ -n "${FAKE_DRIFT:-}" ]; then
+    printf '%-30s DIFFERS     1 field\n    headers.Authorization\n' "record-only (destination)"
+else
+    printf '%-30s in sync\n' "record-only (destination)"
+fi
+printf '%-30s DIFFERS     1 field\n' ej-site-down
+exit 1
+EOF
 chmod +x "$BIN"/*
 
 FAILURES=0
@@ -218,12 +231,16 @@ staging --check" ] || fail "rotate: cluster-secrets ran as: $(cat "$FAKE/cluster
 [ "$(grep -c 'delete pod' "$FAKE/kubectl.log")" = 2 ] || fail "rotate: not two collector deletes"
 grep -q -- '--context event-junkie-staging ' "$FAKE/kubectl.log" || fail "rotate: wrong context"
 expect_out "rotate" "7 row(s) since the restart"
+[ "$(cat "$FAKE/alerts.log")" = "ops@10.10.1.1
+ops@10.10.1.1 --diff" ] || fail "rotate: apply.sh ran as: $(cat "$FAKE/alerts.log")"
+expect_out "rotate" "record-only is in sync"
 
 # 6. A stop after the Keychain write names the commands that finish it.
 reset
 FAKE_CS_FAIL=1 run "cluster-secrets fails" 1 staging
 expect_out "cluster-secrets fails" "OpenObserve and the Keychain hold the new password"
 expect_out "cluster-secrets fails" "scripts/cluster-secrets.sh staging && scripts/cluster-secrets.sh staging --check"
+expect_out "cluster-secrets fails" "EJ_NODE=ops@10.10.1.1 deploy/alerts/apply.sh && EJ_NODE=ops@10.10.1.1 deploy/alerts/apply.sh --diff"
 [ "$(kc $ITEM)" = "$(cat "$FAKE/o2-password")" ] || fail "cluster-secrets fails: the Keychain lost the new password"
 
 # 7. The checks after the restart: Unauthorized lines, and no rows.
@@ -236,8 +253,15 @@ expect_out "no rows" "no rows in"
 reset
 FAKE_ROWS='refused' run "query refused" 1 staging
 expect_out "query refused" "gave no row count"
+expect_out "query refused" "EJ_NODE=ops@10.10.1.1 deploy/alerts/apply.sh --diff"
 
-# 8. Arguments.
+# 8. apply.sh leaves the alert destination on the old password: stop, and name the commands.
+reset
+FAKE_DRIFT=1 run "destination drifted" 1 staging
+expect_out "destination drifted" "does not report record-only in sync on ops@10.10.1.1"
+expect_out "destination drifted" "EJ_NODE=ops@10.10.1.1 deploy/alerts/apply.sh --diff"
+
+# 9. Arguments.
 run "no env" 1
 run "bad flag" 1 staging --force
 

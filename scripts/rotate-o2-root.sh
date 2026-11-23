@@ -9,7 +9,9 @@
 # The password lives in OpenObserve's own database. The Secret creates the root user at first boot
 # only, so the change starts at the API: PUT the new password, then require the new one to answer 200
 # and the old one 401. Only then the Keychain, `cluster-secrets.sh` for the four Secret copies and the
-# header, and a restart of OpenObserve and both collectors, which read the values at start.
+# header, and a restart of OpenObserve and both collectors, which read the values at start. Last,
+# `deploy/alerts/apply.sh` for this cluster: the `record-only` alert destination stores the root
+# header itself, so no restart reaches it (#5425).
 # SECRETS.md § Rotating the OpenObserve root password has the same steps by hand.
 #
 # The Keychain password must answer 200 before anything changes. That also proves the port reaches
@@ -20,10 +22,12 @@
 # cluster-secrets.sh. curl reads an Authorization header from a file in a 0700 temp dir, and jq reads
 # the passwords from its environment. A run that stops after the PUT says where, and what finishes it.
 #
-# EJ_KUBE_CONTEXT names another context. EJ_CLUSTER_SECRETS and EJ_O2_QUERY replace the two scripts it
-# calls, and EJ_SETTLE_SECONDS (60) and EJ_POLL_SECONDS (3) the waits, for rotate-o2-root-test.sh.
+# EJ_KUBE_CONTEXT names another context. EJ_CLUSTER_SECRETS, EJ_O2_QUERY and EJ_ALERTS_APPLY replace the
+# three scripts it calls, and EJ_SETTLE_SECONDS (60) and EJ_POLL_SECONDS (3) the waits, for
+# rotate-o2-root-test.sh.
 #
-# Requires: the WireGuard tunnel, kubectl, jq, curl, openssl, base64, security (macOS).
+# Requires: the WireGuard tunnel, kubectl, jq, curl, openssl, base64, security (macOS), and ssh and
+# python3 for apply.sh.
 
 set -euo pipefail
 
@@ -41,8 +45,8 @@ die() {
 
 ENV="${1:-}"
 case "$ENV" in
-    staging) PORT=5080 ;;
-    production) PORT=25080 ;;
+    staging) PORT=5080 NODE=ops@10.10.1.1 ;;
+    production) PORT=25080 NODE=ops@10.10.0.1 ;;
     *) die "expected staging or production, got '${ENV}'" ;;
 esac
 DRY_RUN=""
@@ -53,13 +57,14 @@ case "${2:-}" in
 esac
 [ $# -le 2 ] || die "too many arguments"
 
-for tool in kubectl jq curl openssl base64 security; do
+for tool in kubectl jq curl openssl base64 security ssh python3; do
     command -v "$tool" >/dev/null || die "needs $tool"
 done
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLUSTER_SECRETS="${EJ_CLUSTER_SECRETS:-$REPO_ROOT/scripts/cluster-secrets.sh}"
 O2_QUERY="${EJ_O2_QUERY:-$REPO_ROOT/scripts/o2-query.sh}"
+ALERTS_APPLY="${EJ_ALERTS_APPLY:-$REPO_ROOT/deploy/alerts/apply.sh}"
 SETTLE="${EJ_SETTLE_SECONDS:-60}"
 POLL="${EJ_POLL_SECONDS:-3}"
 CTX="${EJ_KUBE_CONTEXT:-event-junkie-$ENV}"
@@ -87,9 +92,12 @@ cleanup() {
             echo "  kubectl --context $CTX -n observability rollout restart statefulset/openobserve-openobserve-standalone" >&2
             echo "  kubectl --context $CTX -n observability delete pod -l $COLLECTORS" >&2
             echo "  kubectl --context $CTX -n observability-agent delete pod -l $COLLECTORS" >&2
+            echo "  EJ_NODE=$NODE deploy/alerts/apply.sh && EJ_NODE=$NODE deploy/alerts/apply.sh --diff" >&2
             ;;
         restarted)
-            echo "rotate-o2-root: the rotation is through; only a check after it failed. SECRETS.md § Rotating has the checks." >&2
+            echo "rotate-o2-root: the rotation is through; a check after it failed. SECRETS.md § Rotating has the checks." >&2
+            echo "rotate-o2-root: the record-only alert destination can still hold the old password. Finish with:" >&2
+            echo "  EJ_NODE=$NODE deploy/alerts/apply.sh && EJ_NODE=$NODE deploy/alerts/apply.sh --diff" >&2
             ;;
     esac
 }
@@ -205,7 +213,16 @@ done
 rows="$("$O2_QUERY" "$ENV" sql "SELECT count(*) AS n FROM \"default\" WHERE _timestamp > $since" --hours 1 | jq -r '.[0].n // 0')" || rows=""
 [[ "$rows" =~ ^[0-9]+$ ]] || die "o2-query.sh gave no row count for the ${SETTLE}s after the restart"
 [ "$rows" -gt 0 ] || die "no rows in \"default\" in the ${SETTLE}s after the restart"
-STAGE=""
 echo "rotate-o2-root: no Unauthorized in the collector logs, $rows row(s) since the restart"
+
+# --diff fails on any drift, so only the record-only line decides. It prints header values as hashes.
+EJ_NODE="$NODE" "$ALERTS_APPLY" >/dev/null
+drift="$(EJ_NODE="$NODE" "$ALERTS_APPLY" --diff 2>&1)" || true
+if ! grep -qE '^record-only \(destination\) +in sync$' <<<"$drift"; then
+    printf '%s\n' "$drift" >&2
+    die "deploy/alerts/apply.sh --diff does not report record-only in sync on $NODE"
+fi
+STAGE=""
+echo "rotate-o2-root: the alerts are re-applied, and record-only is in sync"
 echo "rotate-o2-root: rotated on $CTX. Copy it to the password manager with:"
 printf '  security find-generic-password -s %s -w | tr -d %s | pbcopy\n' "$ITEM" "'\\n'"
