@@ -280,8 +280,10 @@ could connect the term to a session. So the BFF does not log the term. The acces
 `/api/me/musicbrainz/artists`, and the client logs only the length of the term. The answers stay in memory for one day.
 Nothing writes them to a disk. `MusicBrainzSearchTest` and `WatchFlowTest` check the headers and the log. If the BFF
 starts to send something from the visitor, or logs the term with a session, this decision is wrong. Then MusicBrainz
-receives visitor data, and this paragraph must be decided again. The watch itself is account data in the row below. The
-notice paragraph "Acts, die hier noch nicht spielen" names the search.
+receives visitor data, and this paragraph must be decided again. Once a month the BFF reads each watched id again, to
+move a watch whose id MusicBrainz merged into another ([#5225](https://github.com/enorm-labs/event-junkie/issues/5225)).
+That request carries the id, the format and our `User-Agent`, and nothing of an account. The watch itself is account
+data in the row below. The notice paragraph "Acts, die hier noch nicht spielen" names the search.
 
 **The Wikimedia Foundation is a second source of the same kind** (ADR-031 step C,
 [#1568](https://github.com/enorm-labs/event-junkie/issues/1568)). For an exact match the importer reads the artist's

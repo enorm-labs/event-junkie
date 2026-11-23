@@ -382,6 +382,7 @@ CREATE TABLE accounts.push_cursor (
     sent_until timestamp with time zone DEFAULT now() NOT NULL,
     changes_until timestamp with time zone DEFAULT now() NOT NULL,
     reminders_until date DEFAULT ((now() AT TIME ZONE 'Europe/Berlin'::text))::date NOT NULL,
+    watches_checked_until date DEFAULT (date_trunc('month'::text, (now() AT TIME ZONE 'Europe/Berlin'::text)))::date NOT NULL,
     CONSTRAINT push_cursor_id_check CHECK (id)
 );
 
