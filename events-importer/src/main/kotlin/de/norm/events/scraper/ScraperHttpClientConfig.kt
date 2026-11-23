@@ -1,5 +1,7 @@
 package de.norm.events.scraper
 
+import kotlinx.coroutines.CoroutineDispatcher
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
@@ -75,7 +77,8 @@ private const val ROBOTS_MAX_HEADER_SIZE = 32 * 1024
  * redirecting entry or detail URLs: Alte Kantine links each event as a `?p=<id>` permalink that
  * 301-redirects to its canonical `/portfolio/<slug>/` page (ADR-007 best-practice #6). The
  * [RedirectFollowingFilter] is the outermost filter of [SCRAPER_WEB_CLIENT] and sends each hop through
- * the whole chain, so a hop to another host passes that host's `robots.txt` check and throttle.
+ * the whole chain, so a hop to another host passes that host's `robots.txt` check and throttle. It also refuses a
+ * hop to a private address before sending it ([RedirectTargetGuard], #5444).
  * [SCRAPER_BASE_WEB_CLIENT] lets Reactor Netty follow a `robots.txt` redirect, which RFC 9309 §2.3.1.2
  * permits. Scrapers receive the final document either way. The
  * response body size limit is controlled by the standard `spring.http.codecs.max-in-memory-size`
@@ -119,16 +122,19 @@ class ScraperHttpClientConfig {
             .build()
 
     @Bean(SCRAPER_WEB_CLIENT)
+    @Suppress("LongParameterList") // One parameter per filter's collaborator; a holder type would only hide the wiring.
     fun scraperWebClient(
         webClientBuilder: WebClient.Builder,
         scraperProperties: ScraperProperties,
         connectionProvider: ConnectionProvider,
         throttle: PerHostThrottlingFilter,
-        rulesCache: RobotsRulesCache
+        rulesCache: RobotsRulesCache,
+        redirectGuard: RedirectTargetGuard,
+        @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher
     ): WebClient =
         baseClient(webClientBuilder, scraperProperties, connectionProvider, followRedirect = false)
-            // First of all, so every hop passes the host filters, the robots check and the throttle of its own host.
-            .filters { it.add(0, RedirectFollowingFilter()) }
+            // First of all, so every hop passes the SSRF guard, the host filters, the robots check and the throttle of its own host.
+            .filters { it.add(0, RedirectFollowingFilter(redirectGuard, ioDispatcher)) }
             // Ordered before the throttle so the robots.txt fetch behind this filter is itself
             // throttled — see RobotsTxtFilter's KDoc.
             .filter(RobotsTxtFilter(rulesCache, scraperProperties.robotsEnforced))

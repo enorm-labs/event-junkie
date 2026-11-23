@@ -1,11 +1,13 @@
 package de.norm.events.venuecheck
 
+import de.norm.events.scraper.RedirectRefusedException
 import de.norm.events.scraper.RobotsDisallowedException
 import de.norm.events.scraper.RobotsRulesCache
 import de.norm.events.scraper.ScraperHttpClientConfig
 import de.norm.events.scraper.ScraperProperties
 import io.kotest.matchers.shouldBe
 import io.netty.channel.ConnectTimeoutException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -172,6 +174,9 @@ class VenueSiteProberTest {
         prober.classify(url, ConnectTimeoutException("slow")).outcome shouldBe SiteOutcome.TIMEOUT
         prober.classify(url, ConnectException("refused")).outcome shouldBe SiteOutcome.CONNECTION
         prober.classify(url, IllegalStateException("odd")).outcome shouldBe SiteOutcome.OTHER
+        // A redirect to a private address is a failed probe, not a crash of the pass (#5444).
+        prober.classify(url, RedirectRefusedException("example.test", "169.254.169.254", "resolves to a blocked address")).outcome shouldBe
+            SiteOutcome.OTHER
         prober.classify(url, RobotsDisallowedException(url, "https://example.test/robots.txt")).outcome shouldBe SiteOutcome.SKIPPED
         // A 4xx on robots.txt never reaches here as a disallow; if one did, it says nothing about the site.
         prober.classify(url, RobotsDisallowedException(url, null, unreadableStatus = 403)).outcome shouldBe SiteOutcome.SKIPPED
@@ -209,7 +214,8 @@ class VenueSiteProberTest {
         val throttle = config.perHostThrottlingFilter(properties)
         val base = config.scraperBaseWebClient(WebClient.builder(), properties, connections, throttle)
         val client =
-            config.scraperWebClient(WebClient.builder(), properties, connections, throttle, RobotsRulesCache(base, properties))
+            // Permits loopback, where the server under test listens; RedirectFollowingFilterTest covers the guard.
+            config.scraperWebClient(WebClient.builder(), properties, connections, throttle, RobotsRulesCache(base, properties), { null }, Dispatchers.IO)
         return VenueSiteProber(client)
     }
 }

@@ -1,5 +1,6 @@
 package de.norm.events.image
 
+import de.norm.events.scraper.RedirectRefusedException
 import de.norm.events.scraper.SCRAPER_WEB_CLIENT
 import de.norm.events.scraper.encodeForUri
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -94,13 +95,22 @@ class ImageFetcher(
         ) {
             // The reason is logged and never reaches a metric tag: unbounded cardinality.
             logger.debug(e) { "Image fetch failed for $target" }
+            rejection(e)
+        }
+    }
+
+    /** The [ImageFetchResult.Rejected] for a fault the fetch threw. */
+    private fun rejection(e: Exception): ImageFetchResult.Rejected {
+        val refused = e.causes().filterIsInstance<RedirectRefusedException>().firstOrNull()
+        return when {
+            // The same refusal as the check in [fetch], one hop later (#5444); not a transport fault.
+            refused != null -> ImageFetchResult.Rejected("redirect refused: ${refused.reason}")
+
             // The codec's own limit fires before `describe` sees the bytes, so without this an oversized
             // image is recorded as a transport fault, and an operator chases the network.
-            if (e.isBufferLimit()) {
-                ImageFetchResult.Rejected("larger than the ${properties.maxBytes} byte buffer limit")
-            } else {
-                ImageFetchResult.Rejected("fetch failed: ${e.javaClass.simpleName}")
-            }
+            e.causes().any { it is DataBufferLimitException } -> ImageFetchResult.Rejected("larger than the ${properties.maxBytes} byte buffer limit")
+
+            else -> ImageFetchResult.Rejected("fetch failed: ${e.javaClass.simpleName}")
         }
     }
 
@@ -174,8 +184,8 @@ class ImageFetcher(
 
     private fun sha256(bytes: ByteArray): String = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
 
-    /** Whether this fault, or anything under it, is the codec refusing an oversized body. */
-    private fun Throwable.isBufferLimit(): Boolean = generateSequence(this) { it.cause.takeIf { cause -> cause !== it } }.any { it is DataBufferLimitException }
+    /** This fault and everything under it. */
+    private fun Throwable.causes(): Sequence<Throwable> = generateSequence(this) { it.cause.takeIf { cause -> cause !== it } }
 
     /**
      * Whether these bytes open with [prefix], as unsigned values. The parentheses around `and` are

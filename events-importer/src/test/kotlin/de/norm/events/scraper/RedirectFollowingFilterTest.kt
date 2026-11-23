@@ -4,11 +4,14 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import de.norm.events.image.ImageUrlValidator
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
+import kotlinx.coroutines.Dispatchers
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -16,6 +19,8 @@ import mockwebserver3.RecordedRequest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.http.HttpMethod
@@ -23,6 +28,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
 import reactor.netty.resources.ConnectionProvider
 import java.net.InetAddress
+import java.net.URI
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -33,6 +39,9 @@ import kotlin.time.TimeMark
  * [RedirectFollowingFilter] inside the real [SCRAPER_WEB_CLIENT] (#5417). Two servers stand for two hosts:
  * the venue at `127.0.0.1` and another host at `localhost`, because [RobotsRulesCache] and
  * [PerHostThrottlingFilter] key on the host name, not the port.
+ *
+ * The guard is the real [ImageUrlValidator] with the two servers' ports let through, so a hop between them stands for
+ * a hop to a public host, and every other loopback, private or metadata address is refused as on the cluster (#5444).
  */
 class RedirectFollowingFilterTest {
     private val config = ScraperHttpClientConfig()
@@ -41,16 +50,21 @@ class RedirectFollowingFilterTest {
     private lateinit var venue: Host
     private lateinit var other: Host
 
+    /** A loopback server the guard does not let through, so a test can show it received nothing. */
+    private lateinit var internal: Host
+
     @BeforeEach
     fun start() {
         venue = Host("127.0.0.1")
         other = Host("localhost")
+        internal = Host("127.0.0.1")
     }
 
     @AfterEach
     fun stop() {
         venue.server.close()
         other.server.close()
+        internal.server.close()
         if (::provider.isInitialized) provider.dispose()
     }
 
@@ -73,6 +87,46 @@ class RedirectFollowingFilterTest {
         shouldThrow<RobotsDisallowedException> { get(client(), venue.url("/ticket")) }.url shouldBe other.url("/shop/tickets")
 
         other.paths shouldContainExactly listOf("/robots.txt")
+    }
+
+    @Test
+    fun `refuses a hop to a loopback address and sends it nothing`() {
+        venue.routes["/p"] = redirect(302, internal.url("/admin"))
+        internal.routes["/admin"] = page("never")
+
+        shouldThrow<RedirectRefusedException> { get(client(), venue.url("/p")) }.reason shouldBe "resolves to a blocked address"
+
+        internal.requests.shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["http://169.254.169.254/latest/meta-data/", "http://$PRIVATE_HOST/", "file:///etc/passwd"])
+    fun `refuses a hop to the metadata address, to a host that resolves to a private address, and to another scheme`(location: String) {
+        venue.routes["/p"] = redirect(302, location)
+
+        val refused = shouldThrow<RedirectRefusedException> { get(client(), venue.url("/p")) }
+
+        refused.fromHost shouldBe "127.0.0.1"
+        refused.targetHost shouldBe URI(location).host
+    }
+
+    @Test
+    fun `logs a refused hop once as a WARN with both hosts and the reason, and no query string`() {
+        venue.routes["/p?id=7"] = redirect(302, "http://169.254.169.254/latest/meta-data/?token=secret")
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        val logger = LoggerFactory.getLogger(RedirectFollowingFilter::class.java) as Logger
+        logger.addAppender(appender)
+
+        try {
+            shouldThrow<RedirectRefusedException> { get(client(), venue.url("/p?id=7")) }.message shouldNotContain "?"
+        } finally {
+            logger.detachAppender(appender)
+        }
+
+        val line = appender.list.single()
+        line.level shouldBe Level.WARN
+        line.formattedMessage shouldBe "Refused a 302 redirect from 127.0.0.1 to 169.254.169.254: resolves to a blocked address"
+        line.keyValuePairs.associate { it.key to it.value } shouldBe mapOf(LogFields.HTTP_STATUS to 302)
     }
 
     @Test
@@ -168,8 +222,17 @@ class RedirectFollowingFilterTest {
                 webClient = config.scraperBaseWebClient(WebClient.builder(), properties, provider, throttle),
                 scraperProperties = properties
             )
-        return config.scraperWebClient(WebClient.builder(), properties, provider, throttle, rules)
+        return config.scraperWebClient(WebClient.builder(), properties, provider, throttle, rules, guard(), Dispatchers.IO)
     }
+
+    /** The real guard, except that it lets the two servers' ports through and resolves [PRIVATE_HOST] to `10.1.1.10`. */
+    private fun guard() =
+        object : ImageUrlValidator() {
+            override fun reject(url: String): String? = if (URI(url).port in setOf(venue.server.port, other.server.port)) null else super.reject(url)
+
+            override fun resolve(host: String): Array<InetAddress> =
+                if (host == PRIVATE_HOST) arrayOf(InetAddress.getByAddress(host, byteArrayOf(10, 1, 1, 10))) else super.resolve(host)
+        }
 
     private fun get(
         client: WebClient,
@@ -245,5 +308,6 @@ class RedirectFollowingFilterTest {
 
     private companion object {
         const val MAX = RedirectFollowingFilter.MAX_HOPS
+        const val PRIVATE_HOST = "intranet.test"
     }
 }
