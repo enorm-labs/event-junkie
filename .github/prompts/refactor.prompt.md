@@ -52,6 +52,9 @@ cohesive responsibility is finished, and splitting it produces churn and a worse
 
 Before a deduplication, grep for the constant or string the copies share. A scan reports pairs, and the map panel it reported twice had a third copy (#4275).
 
+A shared helper moves every caller's module onto the helper's module. Run `git grep allowedDependencies` first: a module that declares `[]` fails
+`ModularityTests`, and widening it is a decision for the PR body, not a side effect (#5422).
+
 ## What is not in scope, and why each one bites
 
 - **Anything that changes an API shape.** A BFF response field, a database column, a public function signature another module calls. Those are features or
