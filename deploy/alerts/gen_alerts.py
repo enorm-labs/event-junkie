@@ -1129,7 +1129,8 @@ rule(
 # bursting at 11.7/s for five minutes come several times a day, and the 30-minute window
 # averages them out. 5/s is twice the worst half hour. Our own weekly Nuclei pass is
 # throttled in dast.yml to stay under it. Two passes at once exceed it, so scheduled
-# jobs run only in this repository (#3090).
+# jobs run only in this repository (#3090). Traefik creates a `code` series at the first
+# request with that code, so a cluster that has answered no 4xx yet reads empty (#5426).
 rule(
     "ej-4xx-flood",
     "More than 5 client errors a second for 30 minutes, against a week's worst of 2.6/s "
@@ -1143,6 +1144,7 @@ rule(
     period_minutes=30,
     frequency_minutes=10,
     silence_minutes=6 * 60,
+    failure_only=True,
 )
 
 # --- Whose DNS broke, ours or the venue's ----------------------------------------
