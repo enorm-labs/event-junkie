@@ -11,7 +11,6 @@ import java.util.Locale
  */
 object PlanChangePush {
     const val TAG = "plan-changes"
-    private const val MAX_BODY = 120
     private val germanDate = DateTimeFormatter.ofPattern("EE d.M.", Locale.GERMAN)
     private val englishDate = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)
 
@@ -29,7 +28,7 @@ object PlanChangePush {
         } else {
             PushMessage(
                 title = if (german) "${changes.size} Änderungen an deinen Plänen" else "${changes.size} changes to your plans",
-                body = shorten(changes.joinToString(", ") { it.title }),
+                body = shortenPushBody(changes.joinToString(", ") { it.title }),
                 url = "/${first.locale}/my-calendar",
                 tag = TAG
             )
@@ -48,6 +47,4 @@ object PlanChangePush {
             PlanChange.TIME -> if (german) "Neue Uhrzeit" else "Time changed"
             PlanChange.VENUE -> if (german) "Neuer Ort" else "Venue changed"
         }
-
-    private fun shorten(text: String): String = if (text.length <= MAX_BODY) text else text.take(MAX_BODY - 1).trimEnd(' ', ',') + "…"
 }

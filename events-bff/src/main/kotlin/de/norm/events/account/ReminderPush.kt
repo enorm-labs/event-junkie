@@ -10,7 +10,6 @@ import de.norm.events.push.PushMessage
 object ReminderPush {
     /** One tag for every reminder, so a second send replaces the first on the device (#4167). */
     const val TAG = "reminder"
-    private const val MAX_BODY = 120
 
     fun message(events: List<ReminderDue>): PushMessage {
         val first = events.first()
@@ -26,12 +25,10 @@ object ReminderPush {
         } else {
             PushMessage(
                 title = if (german) "Heute: ${events.size} deiner Events, zuerst $named" else "Today: ${events.size} of your events, first $named",
-                body = shorten(events.joinToString(", ") { it.title }),
+                body = shortenPushBody(events.joinToString(", ") { it.title }),
                 url = "/${first.locale}/my-calendar",
                 tag = TAG
             )
         }
     }
-
-    private fun shorten(text: String): String = if (text.length <= MAX_BODY) text else text.take(MAX_BODY - 1).trimEnd(' ', ',') + "…"
 }

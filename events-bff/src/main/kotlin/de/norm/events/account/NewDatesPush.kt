@@ -11,7 +11,6 @@ import java.util.Locale
  */
 object NewDatesPush {
     const val TAG = "new-dates"
-    private const val MAX_BODY = 120
     private val germanDate = DateTimeFormatter.ofPattern("EE d.M.", Locale.GERMAN)
     private val englishDate = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)
 
@@ -29,12 +28,10 @@ object NewDatesPush {
         } else {
             PushMessage(
                 title = if (german) "${dates.size} neue Termine" else "${dates.size} new dates",
-                body = shorten(dates.joinToString(", ") { it.title }),
+                body = shortenPushBody(dates.joinToString(", ") { it.title }),
                 url = "/${first.locale}/following",
                 tag = TAG
             )
         }
     }
-
-    private fun shorten(text: String): String = if (text.length <= MAX_BODY) text else text.take(MAX_BODY - 1).trimEnd(' ', ',') + "…"
 }
