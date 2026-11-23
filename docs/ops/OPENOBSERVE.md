@@ -99,7 +99,7 @@ cd deploy/alerts && ./apply.sh
 Expect one burst of `ArrowJsonEncodeError` a few seconds after boot. The Arrow schema for a stream is still being inferred while its first rows arrive. It
 resolves on the retry and does not recur. Seen once on 2026-09-01: four lines in one second, and none after.
 
-**The bucket holds the live prefixes of both clusters, the retired prefixes that a `retire-*` rule still empties, and the orphaned `files/` root corpus.** One other object,
+**The bucket holds the live prefixes of both clusters, a retired prefix while a `retire-*` rule empties it, and the orphaned `files/` root corpus.** One other object,
 `o2_test/check.txt`, was a 19-byte connectivity probe from the ADR-015 setup. It was deleted on 2026-09-01, so the check above has no known exception.
 Its metadata showed `rule-id="backstop-expiry"`. That is the useful part: the 90-day lifecycle rule covers the whole bucket, not only the corpus.
 
