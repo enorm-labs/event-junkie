@@ -685,8 +685,9 @@ scripts/rotate-o2-root.sh staging
 ```
 
 It changes the password through the API, and continues only when the new password logs in and the old one does not. Then it writes the Keychain, runs
-`scripts/cluster-secrets.sh`, restarts OpenObserve and both collectors, and checks the logs and the rows. If it stops after the change, it prints the commands
-that finish the job. At the end it prints the line that copies the password to the password manager. The run takes about 3 minutes.
+`scripts/cluster-secrets.sh`, restarts OpenObserve and both collectors, and checks the logs and the rows. Last, it runs `deploy/alerts/apply.sh` and
+`--diff` for the cluster, because the `record-only` alert destination stores the root header. If it stops after the change, it prints the commands that
+finish the job. At the end it prints the line that copies the password to the password manager. The run takes about 3 minutes.
 
 **The steps below are the same procedure by hand**, for when the script cannot run. It takes about 15 minutes per cluster.
 
@@ -735,7 +736,15 @@ that finish the job. At the end it prints the line that copies the password to t
     scripts/o2-query.sh "$ENV" sql 'SELECT count(*) AS n, max(_timestamp) AS last FROM "default"' --hours 1
     ```
 
-6. Copy the password to the password manager from the Keychain, not from the shell history:
+6. Apply the alerts again. The `record-only` destination stores the root header, and the restart does not change it. `EJ_NODE` selects the cluster:
+   `ops@10.10.1.1` for staging, `ops@10.10.0.1` for production. The `--diff` line for `record-only (destination)` must say `in sync`:
+
+    ```sh
+    EJ_NODE=ops@10.10.1.1 deploy/alerts/apply.sh
+    EJ_NODE=ops@10.10.1.1 deploy/alerts/apply.sh --diff
+    ```
+
+7. Copy the password to the password manager from the Keychain, not from the shell history:
    `security find-generic-password -s "event-junkie-$ENV-o2-root-password" -w | tr -d '\n' | pbcopy`.
 
 **The password manager is not the source here.** `scripts/cluster-secrets.sh` reads the Keychain. If the two disagree, the Keychain is the one the cluster

@@ -109,6 +109,9 @@ value under `headers` is treated that way rather than `Authorization` by name, s
 remembering to extend a list. A value the server returns empty or asterisked reports `cannot compare` rather than a verdict, because silence that reads as
 health is the failure this whole check exists to remove.
 
+**A root-password rotation leaves `record-only` on the old password until `apply.sh` runs.** The destination stores the header, and no restart touches it,
+so `scripts/rotate-o2-root.sh` runs `apply.sh` and `--diff` for its cluster and stops unless `record-only` is in sync (#5425).
+
 `test_diff_alerts.py` is what holds that property down — it fabricates two credentials, asserts neither appears in the output, and needs no cluster.
 `validate-python.yml` runs it on every pull request that touches a `.py` file. By hand:
 

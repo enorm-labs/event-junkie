@@ -381,6 +381,10 @@ keeps posting with the old header while OpenObserve refuses. That looks like an 
 OpenObserve's database, so a rotation starts there. [SECRETS.md § Rotating the OpenObserve root password](SECRETS.md#rotating-the-openobserve-root-password)
 has the procedure.
 
+**The `record-only` alert destination stores the header too.** `deploy/alerts/apply.sh` writes the root header into the destination, and a restart does not
+change it. After a rotation, OpenObserve refuses the POST that writes a firing to `alert_history`. Run `apply.sh` for the cluster again after each rotation.
+`scripts/rotate-o2-root.sh` does this, and stops when `apply.sh --diff` does not report `record-only` in sync.
+
 **Changing the Secret restarts nothing.** The S3 keys reach the pod through `envFrom`, which references a Secret by name. The running pod therefore keeps the old value
 until something replaces it. `flux reconcile` will report success and `rollout status` will say the rollout is complete, both truthfully, with the old credential
 still in place:
