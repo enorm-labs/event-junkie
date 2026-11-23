@@ -3,7 +3,7 @@
 Upstream: <https://github.com/danyuchn/asd-ste100-skill>, MIT, © Dustin Yuchen Teng — `LICENSE` is kept
 verbatim beside this file.
 
-Vendored at commit `707362731928d0d92526c066df15dbbe6a378c07` (2026-11-17).
+Vendored at commit `65c8ab6ef5fcb3619c8e6daca43e68627f3d7b4a` (2026-11-20).
 
 `scripts/ste-lint.py` is upstream's linter, which `SKILL.md` tells the agent to run. It is not
 `scripts/ste_lint.py` at the repository root, which is this repository's own docs gate. `ruff.toml`
