@@ -625,8 +625,8 @@ conflict, a model sides with the vibe.
 ## 6. How this maps to code
 
 - **Colour / radius / type tokens** → `events-frontend/src/assets/main.css` (`:root` + `.dark`). Re-theming is CSS-variable edits only (ADR-010).
-- **Page titles & tagline** → already implemented in `src/composables/usePageTitle.ts`
-  (`APP_NAME`, `TAGLINE`, `HOME_TITLE`) and `index.html` (title + OG/Twitter tags).
+- **Page titles & tagline** → the constants `APP_NAME`, `TAGLINE` and `HOME_TITLE` in `src/lib/pageMeta.ts`, written into the document head by
+  `src/composables/usePageMeta.ts`, plus `index.html` (title + OG/Twitter tags).
 - **Regenerating the outlined type** → `scripts/outline-text.sh`. Every wordmark and caption in `docs/branding/` is **outlined glyphs, not `<text>`**, because a
   renderer substitutes a missing font silently — a `<text>` logo looks fine while being the wrong typeface. The script is what produced them and reproduces them
   byte for byte; it pins fontTools, since a version that rounds differently would redraw committed artwork.

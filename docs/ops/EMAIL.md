@@ -339,19 +339,10 @@ Confirm that it shows in the mail client you read.** Record the date here.
 | 2026-08-21 | the maintainer | Both addresses delivered to the mailbox and forward |
 | 2026-09-24 | the maintainer | Both addresses shown in the IMAP client, no forward |
 
-## 8. What else changes, and what is still open
+## 8. What is still open
 
-Ordering the mailbox was the small half. These are the edits that close #274 rather than merely paying for it:
-
-| File                                 | Change                                                                                                   | State                    |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `SECURITY.md`                        | Named registration as the blocker; it never was. `security@` now works and is offered as the alternative | **Done** 2026-08-21      |
-| `docs/LINKS.md`                      | The "do not exist yet" paragraph                                                                         | **Done** 2026-08-21      |
-| `docs/CREDENTIALS.md` row 7          | Provider chosen, konsoleH login stored — its own credential, not the Cloud one                           | **Done** 2026-08-21      |
-| `events-frontend/src/lib/legal.ts`   | Nothing to change: Hetzner adds no processor, so `PROCESSOR_CONTRACTS_PENDING` stays `false`             | **Done** — by not acting |
-| `.github/ISSUE_TEMPLATE/config.yml`  | The advisory link is labelled for security but really carries privacy requests. #274 asks for a revisit  | **Open**                 |
-| `docs/LEGAL.md` §7.3a and the notice | Email as a processed category, with its retention. `hello@` and `security@` carry no forward             | **Done** 2026-09-24      |
-| `docs/ops/COSTS.md`                  | A new line — **after the first invoice**, with a real number rather than the order form's                | **Open**, deliberately   |
+The mailbox line in [COSTS.md](COSTS.md) uses the price from the order form, and its source column says **Contracted**. Replace it with the amount
+from a Hetzner invoice, and set the source to that invoice.
 
 ## 9. Product mail — `notify.event-junkie.de` through Scaleway
 
