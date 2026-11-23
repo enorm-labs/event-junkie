@@ -1,12 +1,13 @@
 package de.norm.events.instagram
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.bindNullable
+import de.norm.events.common.required
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
-import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
@@ -118,25 +119,25 @@ class InstagramDraftRepository(
                 .bind("mediaId", draft.post.mediaId)
                 .bind("permalink", draft.post.permalink)
                 .bind("postedAt", draft.post.postedAt)
-                .bindOrNull("caption", draft.post.caption.takeIf { draft.status == DraftStatus.PENDING }, String::class.java)
-                .bindOrNull("flyerText", draft.event?.flyerText.takeIf { draft.status == DraftStatus.PENDING }, String::class.java)
-                .bindOrNull("eventDate", draft.event?.date, LocalDate::class.java)
-                .bindOrNull("startTime", draft.event?.startTime, LocalTime::class.java)
-                .bindOrNull("doorsTime", draft.event?.doorsTime, LocalTime::class.java)
-                .bindOrNull("title", draft.event?.title, String::class.java)
+                .bindNullable("caption", draft.post.caption.takeIf { draft.status == DraftStatus.PENDING }, String::class.java)
+                .bindNullable("flyerText", draft.event?.flyerText.takeIf { draft.status == DraftStatus.PENDING }, String::class.java)
+                .bindNullable("eventDate", draft.event?.date, LocalDate::class.java)
+                .bindNullable("startTime", draft.event?.startTime, LocalTime::class.java)
+                .bindNullable("doorsTime", draft.event?.doorsTime, LocalTime::class.java)
+                .bindNullable("title", draft.event?.title, String::class.java)
                 .bind(
                     "acts",
                     draft.event
                         ?.acts
                         .orEmpty()
                         .toTypedArray()
-                ).bindOrNull("pricePresale", draft.event?.pricePresale, BigDecimal::class.java)
-                .bindOrNull("priceBoxOffice", draft.event?.priceBoxOffice, BigDecimal::class.java)
-                .bindOrNull("evidence", draft.event?.evidence, String::class.java)
-                .bindOrNull("confidence", draft.event?.confidence, Double::class.javaObjectType)
-                .bindOrNull("model", draft.model, String::class.java)
+                ).bindNullable("pricePresale", draft.event?.pricePresale, BigDecimal::class.java)
+                .bindNullable("priceBoxOffice", draft.event?.priceBoxOffice, BigDecimal::class.java)
+                .bindNullable("evidence", draft.event?.evidence, String::class.java)
+                .bindNullable("confidence", draft.event?.confidence, Double::class.javaObjectType)
+                .bindNullable("model", draft.model, String::class.java)
                 .bind("status", draft.status.name)
-                .bindOrNull("eventId", draft.eventId, Long::class.javaObjectType)
+                .bindNullable("eventId", draft.eventId, Long::class.javaObjectType)
                 .fetch()
                 .rowsUpdated()
                 .awaitSingle()
@@ -194,7 +195,7 @@ class InstagramDraftRepository(
                     "FROM $EVENTS_SCHEMA.instagram_draft t WHERE t.id = :id AND t.status = 'PENDING' " +
                     "AND d.venue_id = t.venue_id AND d.event_date = t.event_date AND d.status = 'PENDING'"
             ).bind("status", status.name)
-            .bindOrNull("eventId", eventId, Long::class.javaObjectType)
+            .bindNullable("eventId", eventId, Long::class.javaObjectType)
             .bind("id", id)
             .fetch()
             .rowsUpdated()
@@ -208,12 +209,6 @@ class InstagramDraftRepository(
             .fetch()
             .rowsUpdated()
             .awaitSingle()
-
-    private fun <T : Any> DatabaseClient.GenericExecuteSpec.bindOrNull(
-        name: String,
-        value: T?,
-        type: Class<T>
-    ): DatabaseClient.GenericExecuteSpec = if (value == null) bindNull(name, type) else bind(name, value)
 
     private fun Readable.toDraft(): DraftRow =
         DraftRow(
@@ -239,11 +234,6 @@ class InstagramDraftRepository(
             eventId = get("event_id", Number::class.java)?.toLong(),
             createdAt = required("created_at", OffsetDateTime::class.java)
         )
-
-    private fun <T : Any> Readable.required(
-        column: String,
-        type: Class<T>
-    ): T = requireNotNull(get(column, type)) { "Column '$column' is missing from the instagram_draft projection" }
 
     private companion object {
         const val COLUMNS =

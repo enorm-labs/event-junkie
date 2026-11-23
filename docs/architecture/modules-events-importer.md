@@ -32,6 +32,7 @@ flowchart TD
     venuecheck["venuecheck"]
     wikimedia["wikimedia"]
 
+    account --> common
     artist --> common
     artist --> slug
     dataquality --> ai

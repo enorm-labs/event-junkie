@@ -1,6 +1,6 @@
 package de.norm.events.account
 
-import io.r2dbc.spi.Readable
+import de.norm.events.common.required
 import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.flow
@@ -41,8 +41,3 @@ class WatchCounts(
             .toMap()
     }
 }
-
-private fun <T : Any> Readable.required(
-    column: String,
-    type: Class<T>
-): T = requireNotNull(get(column, type)) { "Column '$column' is missing from the watch count" }

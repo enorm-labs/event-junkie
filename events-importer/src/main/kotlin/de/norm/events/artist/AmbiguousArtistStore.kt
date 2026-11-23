@@ -1,7 +1,8 @@
 package de.norm.events.artist
 
 import de.norm.events.EVENTS_SCHEMA
-import io.r2dbc.spi.Readable
+import de.norm.events.common.required
+import de.norm.events.common.string
 import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.flow
@@ -26,14 +27,7 @@ class AmbiguousArtistStore(
     suspend fun all(): List<AmbiguousArtist> =
         databaseClient
             .sql("SELECT id, name, slug FROM $EVENTS_SCHEMA.artist WHERE musicbrainz_match = 'AMBIGUOUS' ORDER BY name, id")
-            .map { row, _ -> AmbiguousArtist(row.required("id", Long::class.javaObjectType), row.required("name"), row.required("slug")) }
+            .map { row, _ -> AmbiguousArtist(row.required("id", Long::class.javaObjectType), row.string("name"), row.string("slug")) }
             .flow()
             .toList()
 }
-
-private fun Readable.required(column: String): String = required(column, String::class.java)
-
-private fun <T : Any> Readable.required(
-    column: String,
-    type: Class<T>
-): T = requireNotNull(get(column, type)) { "Column '$column' is missing from the AMBIGUOUS artist read" }

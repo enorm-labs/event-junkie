@@ -1,7 +1,9 @@
 package de.norm.events.venuecheck
 
 import de.norm.events.EVENTS_SCHEMA
-import io.r2dbc.spi.Readable
+import de.norm.events.common.bindNullable
+import de.norm.events.common.long
+import de.norm.events.common.string
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
@@ -154,14 +156,4 @@ class VenueSiteCheckStore(
                 )
             }.flow()
             .toList()
-
-    private fun Readable.long(name: String): Long = requireNotNull(get(name, Number::class.java)).toLong()
-
-    private fun Readable.string(name: String): String = requireNotNull(get(name, String::class.java))
-
-    private fun <T : Any> DatabaseClient.GenericExecuteSpec.bindNullable(
-        name: String,
-        value: Any?,
-        type: Class<T>
-    ): DatabaseClient.GenericExecuteSpec = if (value == null) bindNull(name, type) else bind(name, value)
 }
