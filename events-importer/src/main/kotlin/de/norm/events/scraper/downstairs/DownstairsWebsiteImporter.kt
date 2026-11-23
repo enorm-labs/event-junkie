@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component
  * New Year's Eve). A failed page leaves the list's fields, flagged so the upsert keeps what it stored.
  * A show sold elsewhere takes the other seller's text and stays flagged, so it keeps its stored image,
  * doors and price. A show sold through rausgegangen redirects there, and rausgegangen bars crawlers in
- * `robots.txt` and answers 403 (#5403), so that night keeps only its list row.
+ * `robots.txt` (#5403). The scraper client refuses that hop (#5417), so that night keeps only its list row.
  *
  * It implements [EventImporter] directly because every list page is read through `fetchTurboFrame`.
  * `AbstractSinglePageWebsiteImporter` reads its entry page and its later listing pages without the `Turbo-Frame` header,

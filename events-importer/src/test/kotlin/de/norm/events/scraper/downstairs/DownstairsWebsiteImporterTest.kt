@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.RobotsDisallowedException
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.stubFetcher
 import io.kotest.matchers.collections.shouldHaveSize
@@ -82,6 +83,26 @@ class DownstairsWebsiteImporterTest {
                 .first()
                 .description
                 .shouldBeNull()
+        }
+
+    @Test
+    fun `keeps the list row of a show whose ticket page redirects to a host that bars crawlers, and the run succeeds`() =
+        runTest {
+            val first = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events
+            val barred = first.first()
+            coEvery { htmlFetcher.fetchDocument(barred.sourceUrl) } throws
+                RobotsDisallowedException("https://rausgegangen.de/x/catalog/tickets", "https://rausgegangen.de/robots.txt")
+
+            val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.complete shouldBe true
+            result.events.map { it.sourceId } shouldBe first.map { it.sourceId }
+            val row = result.events.first { it.sourceId == barred.sourceId }
+            row.title shouldBe barred.title
+            row.startTime shouldBe barred.startTime
+            row.description.shouldBeNull()
+            row.detailUnavailable shouldBe true
+            result.events.filter { it.detailUnavailable } shouldHaveSize 1
         }
 
     @Test
