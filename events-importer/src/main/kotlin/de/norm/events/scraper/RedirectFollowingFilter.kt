@@ -2,10 +2,12 @@ package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.slf4j.MDCContext
+import kotlinx.coroutines.withContext
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.web.reactive.function.BodyInserters
@@ -23,6 +25,18 @@ class RedirectFailedException(
 ) : RuntimeException("Redirect from $url not followed: $reason")
 
 /**
+ * Raised when a redirect points at a URL the [RedirectTargetGuard] refuses (#5444). Nothing was sent to it.
+ *
+ * The message names the hosts and not the URLs, because it reaches the log and `event_source.last_error`, and a
+ * query string has no place in either.
+ */
+class RedirectRefusedException(
+    val fromHost: String?,
+    val targetHost: String?,
+    val reason: String
+) : RuntimeException("Redirect from $fromHost to $targetHost refused: $reason")
+
+/**
  * Follows a scraper request's redirects in the filter chain, so each hop is a request of its own (#5417).
  *
  * It is the outermost filter of [SCRAPER_WEB_CLIENT], and the client below it follows no redirect. A
@@ -33,8 +47,16 @@ class RedirectFailedException(
  * 301, 302, 307 and 308 keep the method and the body; 303 becomes a `GET` without a body, as Reactor
  * Netty did. A hop to another host drops the `Cookie` and `Authorization` headers, because they belong
  * to the first host, and logs one `INFO` line with both hosts.
+ *
+ * **Every hop passes [guard] before it is sent** (#5444). A public page that redirects to `169.254.169.254` or to a
+ * host that resolves to `10.x` fails with [RedirectRefusedException] and one `WARN` line, and the target receives
+ * nothing. The first request is the caller's to check: `ImageFetcher` asks the same guard before it sends one. The
+ * guard resolves the host, so it runs on [ioDispatcher] and not on the event loop.
  */
-class RedirectFollowingFilter : ExchangeFilterFunction {
+class RedirectFollowingFilter(
+    private val guard: RedirectTargetGuard,
+    private val ioDispatcher: CoroutineDispatcher
+) : ExchangeFilterFunction {
     private val logger = KotlinLogging.logger {}
 
     override fun filter(
@@ -60,9 +82,23 @@ class RedirectFollowingFilter : ExchangeFilterFunction {
             val target =
                 runCatching { current.url().resolve(location) }.getOrNull()
                     ?: throw RedirectFailedException(current.url().toString(), "Location '$location' is not a URL")
+            refuseIfGuarded(current, status, target)
             current = hop(current, status, target)
             hops++
         }
+    }
+
+    private suspend fun refuseIfGuarded(
+        from: ClientRequest,
+        status: Int,
+        target: URI
+    ) {
+        val reason = withContext(ioDispatcher) { guard.reject(target.toString()) } ?: return
+        logger.at(Level.WARN) {
+            message = "Refused a $status redirect from ${from.url().host} to ${target.host}: $reason"
+            payload = mapOf(LogFields.HTTP_STATUS to status)
+        }
+        throw RedirectRefusedException(from.url().host, target.host, reason)
     }
 
     private fun hop(

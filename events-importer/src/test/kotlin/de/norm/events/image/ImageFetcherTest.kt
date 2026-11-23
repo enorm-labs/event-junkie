@@ -1,6 +1,7 @@
 package de.norm.events.image
 
 import de.norm.events.scraper.PLAIN_SCRAPER_USER_AGENT
+import de.norm.events.scraper.RobotsRulesCache
 import de.norm.events.scraper.ScraperHttpClientConfig
 import de.norm.events.scraper.ScraperProperties
 import io.kotest.matchers.shouldBe
@@ -9,8 +10,10 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
+import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
 import okio.Buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -87,6 +90,42 @@ class ImageFetcherTest {
             fetcher(plainUserAgentHosts = setOf(server.hostName)).fetch(url())
 
             server.takeRequest().headers["User-Agent"] shouldBe PLAIN_SCRAPER_USER_AGENT
+        }
+
+    // The first URL passes the check, and the hop it redirects to must not (#5444). Through the client the
+    // importer uses, whose redirect filter asks the real guard: only the first URL is stubbed permissive.
+    @Test
+    fun `refuses an image whose URL redirects to a private address`() =
+        runTest {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        if (request.target == "/robots.txt") {
+                            MockResponse
+                                .Builder()
+                                .code(200)
+                                .body("User-agent: *\nAllow: /\n")
+                                .build()
+                        } else {
+                            MockResponse
+                                .Builder()
+                                .code(302)
+                                .addHeader("Location", "http://169.254.169.254/latest/meta-data/")
+                                .build()
+                        }
+                }
+            val fetcher =
+                ImageFetcher(
+                    webClient = redirectFollowingWebClient(),
+                    ioDispatcher = Dispatchers.IO,
+                    validator = permissiveValidator(),
+                    properties = ImageProperties(fetchEnabled = true)
+                )
+
+            val result = fetcher.fetch(url())
+
+            result.shouldBeInstanceOf<ImageFetchResult.Rejected>()
+            result.reason shouldBe "redirect refused: resolves to a blocked address"
         }
 
     @Test
@@ -357,6 +396,24 @@ class ImageFetcherTest {
 }
 
 private val PNG_MAGIC_BYTES = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
+
+/** The importer's [de.norm.events.scraper.SCRAPER_WEB_CLIENT], with the real redirect guard. */
+private fun redirectFollowingWebClient(): WebClient {
+    val properties = ScraperProperties(politeDelayMillis = 0)
+    val config = ScraperHttpClientConfig()
+    val connections = config.scraperConnectionProvider(properties)
+    val throttle = config.perHostThrottlingFilter(properties)
+    val base = config.scraperBaseWebClient(WebClient.builder(), properties, connections, throttle)
+    return config.scraperWebClient(
+        WebClient.builder(),
+        properties,
+        connections,
+        throttle,
+        RobotsRulesCache(base, properties),
+        ImageUrlValidator(),
+        Dispatchers.IO
+    )
+}
 
 private fun testWebClient(plainUserAgentHosts: Set<String>): WebClient {
     val properties = ScraperProperties(politeDelayMillis = 0, plainUserAgentHosts = plainUserAgentHosts)

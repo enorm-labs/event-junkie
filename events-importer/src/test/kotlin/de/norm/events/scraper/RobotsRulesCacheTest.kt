@@ -7,6 +7,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import mockwebserver3.MockResponse
@@ -407,7 +408,9 @@ class RobotsRulesCacheTest {
                         scraperProperties = properties,
                         connectionProvider = config.scraperConnectionProvider(properties),
                         throttle = config.perHostThrottlingFilter(properties),
-                        rulesCache = cache(properties = properties)
+                        rulesCache = cache(properties = properties),
+                        redirectGuard = { null },
+                        ioDispatcher = Dispatchers.IO
                     )
 
                 withContext(LogContext.forImportRun("tipi-am-kanzleramt")) {

@@ -1,5 +1,6 @@
 package de.norm.events.image
 
+import de.norm.events.scraper.RedirectTargetGuard
 import org.springframework.stereotype.Component
 import java.net.InetAddress
 import java.net.URI
@@ -23,12 +24,16 @@ import java.net.UnknownHostException
  * custom resolver on the connector, which is worth doing when this leaves the importer's own
  * network; it is recorded rather than pretended away.
  *
+ * **It also guards every redirect hop of the scraper client** (#5444). [ImageFetcher] checks the
+ * first URL, and the scraper's `RedirectFollowingFilter` asks this class about each `Location` before
+ * it sends the hop, for images, scraped pages and venue-site probes alike.
+ *
  * **`open` only so a test can permit loopback.** [ImageFetcher]'s own suite runs against a local
  * HTTP server, which this class refuses by design. The refusal is asserted in [ImageUrlValidatorTest]
  * against the real implementation, so overriding it there costs no coverage of the control itself.
  */
 @Component
-open class ImageUrlValidator {
+open class ImageUrlValidator : RedirectTargetGuard {
     /**
      * The reason a URL was refused, or null when it may be fetched.
      *
@@ -36,7 +41,7 @@ open class ImageUrlValidator {
      * that reads top to bottom is one a reviewer can check; the nested form hides which condition
      * admitted a URL.
      */
-    open fun reject(url: String): String? {
+    override fun reject(url: String): String? {
         val uri =
             try {
                 URI(url)
@@ -54,7 +59,7 @@ open class ImageUrlValidator {
 
         val addresses =
             try {
-                InetAddress.getAllByName(host)
+                resolve(host)
             } catch (_: UnknownHostException) {
                 return "host does not resolve"
             }
@@ -63,6 +68,9 @@ open class ImageUrlValidator {
         // admitted on the public one and connected on whichever the client picks.
         return addresses.firstOrNull { it.isBlocked() }?.let { "resolves to a blocked address" }
     }
+
+    /** The host's addresses. `open` so a test can make a name resolve to a private address without DNS. */
+    protected open fun resolve(host: String): Array<InetAddress> = InetAddress.getAllByName(host)
 
     /**
      * Whether one address is somewhere the importer must not be pointed at.
