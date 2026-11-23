@@ -227,9 +227,9 @@ so `./gradlew` builds with the wrong JDK or refuses to start. Claude Code's `Ses
   On a long job compile first, restart once, then import.
 - **A parser fix at a one-page venue whose page has not changed is a 304 forever.** The cached `ETag` / `Last-Modified` skip the import on schedule and manual trigger
   alike. Do not clear the columns; `POST /api/admin/event-sources/<slug>/import?force=true` (#1159) fetches unconditionally and stores fresh validators.
-- **Re-keying a live source collides with its own today-dated rows.** A new `sourceId` shape stales every old row, but `removeStaleEvents` spares **today**,
-  so a today-dated row keeps its slug while its replacement claims the same one. Re-key on a day the venue is dark, or clear that source's rows first —
-  and check which before importing.
+- **Re-keying a live source collides with its own today-dated rows.** A new `sourceId` shape stales every old row, but after 06:00 `removeStaleEvents` spares **today**,
+  so a today-dated row keeps its slug while its replacement claims the same one. Re-key before 06:00 Berlin, on a day the venue is dark, or clear that
+  source's rows first — and check which before importing.
 - **Do not truncate `<service>.log` while the service runs.** The process keeps its offset, so later writes land behind NUL padding, `grep` calls the file
   binary and `grep -c` prints nothing — which reads as a clean result. Restart to get a clean log; `grep -a` reads a truncated one. **A zero count from a log
   you truncated is not evidence.**

@@ -73,5 +73,5 @@ fun List<ScrapedEvent>.foldIntoRuns(runIds: Set<String>): List<ScrapedEvent> =
 /** A start at or after this is a night, and gets the grace (#299). */
 private val LATE_START: LocalTime = LocalTime.of(22, 0)
 
-/** When last night is over for the importer (#299). The BFF and the frontend share the hour. */
-private val GRACE_ENDS: LocalTime = LocalTime.of(6, 0)
+/** When last night is over for the importer (#299), and for its stale cleanup (#5239). The BFF and the frontend share the hour. */
+internal val GRACE_ENDS: LocalTime = LocalTime.of(6, 0)
