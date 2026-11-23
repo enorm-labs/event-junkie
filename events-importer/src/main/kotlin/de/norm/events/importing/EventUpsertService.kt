@@ -8,6 +8,7 @@ import de.norm.events.event.EventRepository
 import de.norm.events.event.PinnedField
 import de.norm.events.licence.SourceLicences
 import de.norm.events.promoter.canonicalPromoterName
+import de.norm.events.scraper.GRACE_ENDS
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dropPastEvents
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 /**
@@ -121,8 +123,8 @@ class EventUpsertService(
     /**
      * Drops scraped events dated before today. Calendar-style sources publish the whole standing
      * programme, and [removeStaleEvents] never prunes past-dated rows, so re-importing would
-     * resurrect them every run. Same-day events are kept, matching the `tomorrow` lower bound used
-     * for cleanup. Existing past rows are untouched, simply not re-upserted.
+     * resurrect them every run. Same-day events are kept: the cleanup window never starts before
+     * today. Existing past rows are untouched, simply not re-upserted.
      */
     private fun dropPastEvents(
         scrapedEvents: List<ScrapedEvent>,
@@ -346,7 +348,7 @@ class EventUpsertService(
      * discriminator the slug does not — Velomax appends the session time, because one permalink
      * serves several sittings. A venue that moves a published start time therefore moves the row's
      * identity while its slug stands still, and the insert lands on the slug the old row holds. The
-     * stale sweep does not free it: [removeStaleEvents] starts tomorrow, and the identity of a
+     * stale sweep does not free it: after 06:00 [removeStaleEvents] starts tomorrow, and the identity of a
      * same-day event moves while the event is still listed (#1719).
      *
      * A stored row of **this** source whose own `sourceId` this scrape does not claim is that event
@@ -470,7 +472,11 @@ class EventUpsertService(
      *
      * The window starts tomorrow, not today: many venues stop listing an event once the day begins,
      * so `today` would delete same-day events that are happening. A genuinely cancelled today-event
-     * stays for at most a few hours until it is past.
+     * stays until it is past. One exception: before [GRACE_ENDS] (06:00) on [clock], a scrape that
+     * lists an event dated today starts the window today. A nightly import after midnight runs
+     * before the day's nights begin, and a venue that still lists one of them has not begun to drop
+     * them, so a missing today-row is one the venue replaced (#5239). A scrape with no today-event
+     * may come from a scraper that drops today's nights itself, so its window starts tomorrow.
      *
      * The window ends at the latest scraped date, so events on pages we did not fetch survive. An
      * [StaleCleanup.OPEN_ENDED] scrape has no such pages, and its window has no end: a far-future
@@ -495,21 +501,24 @@ class EventUpsertService(
             return emptyList()
         }
 
-        val tomorrow = LocalDate.now(clock).plusDays(1)
+        val windowStart = staleWindowStart(scrapedEvents)
         val maxScrapedDate = scrapedEvents.maxOf { it.eventDate }
         val scrapedSourceIds = scrapedEvents.map { it.sourceId }.toSet()
 
-        // All events from this source within the cleanup window, from tomorrow (KDoc).
         val existingEvents =
             if (staleCleanup == StaleCleanup.OPEN_ENDED) {
-                eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, tomorrow)
+                eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, windowStart)
             } else {
-                eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, fromDate = tomorrow, toDate = maxScrapedDate)
+                eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, fromDate = windowStart, toDate = maxScrapedDate)
             }.toList()
 
-        val (kept, staleEvents) = existingEvents.filter { it.sourceId !in scrapedSourceIds }.partition { it.sourceId in spared }
+        val (kept, unlisted) = existingEvents.filter { it.sourceId !in scrapedSourceIds }.partition { it.sourceId in spared }
         if (kept.isNotEmpty()) {
             logger.info { "Kept ${kept.size} event(s) on event source $eventSourceId out of the stale cleanup: their pages failed to load" }
+        }
+        val (rekeyed, staleEvents) = unlisted.partition { it.isRekeyedToday(scrapedEvents) }
+        if (rekeyed.isNotEmpty()) {
+            logger.info { "Kept ${rekeyed.size} today-event(s) on event source $eventSourceId for the slug match: listed under a new source id" }
         }
 
         if (staleEvents.isNotEmpty()) {
@@ -521,10 +530,28 @@ class EventUpsertService(
                     payload = mapOf(LogFields.EVENT_ID to event.id, LogFields.EVENT_SOURCE_ID to event.sourceId)
                 }
             }
-            val window = if (staleCleanup == StaleCleanup.OPEN_ENDED) "from $tomorrow, open-ended" else "from $tomorrow to $maxScrapedDate"
+            val window = if (staleCleanup == StaleCleanup.OPEN_ENDED) "from $windowStart, open-ended" else "from $windowStart to $maxScrapedDate"
             logger.info { "Removed ${staleEvents.size} stale event(s) no longer listed on event source $eventSourceId ($window)" }
         }
         return staleEvents
+    }
+
+    /** The first day [removeStaleEvents] reaches: today before [GRACE_ENDS] when the scrape lists a today-event, else tomorrow (KDoc). */
+    private fun staleWindowStart(scrapedEvents: List<ScrapedEvent>): LocalDate {
+        val now = LocalDateTime.now(clock)
+        val today = now.toLocalDate()
+        val nightImport = now.toLocalTime() < GRACE_ENDS && scrapedEvents.any { it.eventDate == today }
+        return if (nightImport) today else today.plusDays(1)
+    }
+
+    /**
+     * A today-row the scrape still lists under a new `sourceId`, by date and title. Deleting it would
+     * give the event a new `id` and drop its RSVPs, so [resolveBySlug] takes it instead (#1719).
+     */
+    private fun EventEntity.isRekeyedToday(scrapedEvents: List<ScrapedEvent>): Boolean {
+        if (eventDate != LocalDate.now(clock)) return false
+        val title = title.normalizedTitle()
+        return scrapedEvents.any { it.eventDate == eventDate && it.storedTitle().normalizedTitle() == title }
     }
 
     /**
@@ -699,10 +726,10 @@ private val WHITESPACE = Regex("\\s+")
 
 /** How far one run's stale cleanup reaches ([EventUpsertService.upsertAndCleanup]). */
 enum class StaleCleanup {
-    /** From tomorrow to the scrape's last date: pages the run did not fetch keep their events. */
+    /** From tomorrow (or today, before 06:00) to the scrape's last date: pages the run did not fetch keep their events. */
     WINDOWED,
 
-    /** From tomorrow, with no end: the scrape is the source's whole programme (#1974). */
+    /** From tomorrow (or today, before 06:00), with no end: the scrape is the source's whole programme (#1974). */
     OPEN_ENDED,
 
     /** None: a page that holds events failed, so a missing event may still be listed (#1980). */

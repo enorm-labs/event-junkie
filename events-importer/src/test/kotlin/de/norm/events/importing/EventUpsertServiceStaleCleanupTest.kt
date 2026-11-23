@@ -1,7 +1,9 @@
 package de.norm.events.importing
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.event.EventStatus
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -15,6 +17,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.EnumSource
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
@@ -77,20 +82,22 @@ class EventUpsertServiceStaleCleanupTest {
         eventSourceId = eventSourceId
     )
 
+    private fun serviceAt(clock: Clock) =
+        EventUpsertService(
+            eventRepository = eventRepository,
+            associationSyncService = associationSyncService,
+            clock = clock,
+            performerTyping = PerformerTyping(mockk(), eventRepository),
+            contentStamp = mockk(relaxed = true),
+            enrichmentRepository = mockk(relaxed = true),
+            featureSync = mockk(relaxed = true),
+            changeLog = mockk(relaxed = true),
+            actTitleCasing = ActTitleCasing(mockk())
+        )
+
     @BeforeEach
     fun setUp() {
-        service =
-            EventUpsertService(
-                eventRepository = eventRepository,
-                associationSyncService = associationSyncService,
-                clock = fixedClock,
-                performerTyping = PerformerTyping(mockk(), eventRepository),
-                contentStamp = mockk(relaxed = true),
-                enrichmentRepository = mockk(relaxed = true),
-                featureSync = mockk(relaxed = true),
-                changeLog = mockk(relaxed = true),
-                actTitleCasing = ActTitleCasing(mockk())
-            )
+        service = serviceAt(fixedClock)
 
         // Default stubs for the upsert pipeline (we're testing stale cleanup, not upsert)
         coEvery { eventRepository.findBySourceIdIn(any()) } returns emptyFlow()
@@ -189,6 +196,140 @@ class EventUpsertServiceStaleCleanupTest {
                 coVerify(exactly = 0) {
                     eventRepository.deleteByIdIn(any())
                 }
+            }
+    }
+
+    /**
+     * A nightly import after midnight: before 06:00 Berlin, a scrape that still lists a today-event
+     * starts the window today, so a night the venue replaced is removed (#5239).
+     */
+    @Nested
+    inner class NightImport {
+        private val stored = mutableListOf<EventEntity>()
+
+        private fun berlinClockAt(time: LocalTime): Clock = Clock.fixed(today.atTime(time).atZone(BERLIN).toInstant(), BERLIN)
+
+        @BeforeEach
+        fun storeRows() {
+            stored.clear()
+            coEvery {
+                eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, any(), any())
+            } answers { stored.filter { row -> row.eventDate in secondArg<LocalDate>()..thirdArg<LocalDate>() }.asFlow() }
+            coEvery {
+                eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, any())
+            } answers { stored.filter { row -> row.eventDate >= secondArg<LocalDate>() }.asFlow() }
+        }
+
+        private val replacement = scrapedEvent(title = "Replacement Night", eventDate = today, sourceId = "src:replacement")
+        private val replaced = existingEvent(id = 1L, eventDate = today, sourceId = "src:replaced", title = "Replaced Night")
+
+        @Test
+        fun `an import at 01-30 whose scrape holds a different today-event removes the missing today-row`() =
+            runTest {
+                stored += replaced
+
+                serviceAt(berlinClockAt(LocalTime.of(1, 30))).upsertAndCleanup(listOf(replacement), venueId, venueSlug, eventSourceId)
+
+                coVerify { eventRepository.deleteByIdIn(listOf(1L)) }
+            }
+
+        @Test
+        fun `an import at 01-30 whose scrape holds no today-event keeps the today-row`() =
+            runTest {
+                stored += replaced
+                val later = scrapedEvent(title = "Later", eventDate = tomorrow, sourceId = "src:later")
+
+                serviceAt(berlinClockAt(LocalTime.of(1, 30))).upsertAndCleanup(listOf(later), venueId, venueSlug, eventSourceId)
+
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+            }
+
+        @Test
+        fun `an import at 01-30 keeps a today-row the scrape lists under a new source id, for the slug match`() =
+            runTest {
+                stored += replaced
+                val rekeyed = scrapedEvent(title = " replaced  NIGHT ", eventDate = today, sourceId = "src:replaced-v2")
+
+                serviceAt(berlinClockAt(LocalTime.of(1, 30))).upsertAndCleanup(listOf(rekeyed), venueId, venueSlug, eventSourceId)
+
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+            }
+
+        @Test
+        fun `an import at 12-00 keeps the today-row`() =
+            runTest {
+                stored += replaced
+
+                serviceAt(berlinClockAt(LocalTime.NOON)).upsertAndCleanup(listOf(replacement), venueId, venueSlug, eventSourceId)
+
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+            }
+
+        @ParameterizedTest(name = "{0} starts the window {1} days out")
+        @CsvSource("00:00, 0", "05:59, 0", "06:00, 1", "23:59, 1")
+        fun `the window starts today until 06-00 and tomorrow from then`(
+            time: LocalTime,
+            daysOut: Long
+        ) = runTest {
+            val fromDate = slot<LocalDate>()
+            coEvery {
+                eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, capture(fromDate), any())
+            } returns emptyFlow()
+
+            serviceAt(berlinClockAt(time)).upsertAndCleanup(listOf(replacement), venueId, venueSlug, eventSourceId)
+
+            fromDate.captured shouldBe today.plusDays(daysOut)
+        }
+
+        @ParameterizedTest
+        @EnumSource(EventStatus::class)
+        fun `removes a missing today-row whatever its status`(status: EventStatus) =
+            runTest {
+                stored += replaced.copy(status = status.name)
+
+                serviceAt(berlinClockAt(LocalTime.of(1, 30))).upsertAndCleanup(listOf(replacement), venueId, venueSlug, eventSourceId)
+
+                coVerify { eventRepository.deleteByIdIn(listOf(1L)) }
+            }
+
+        @Test
+        fun `keeps last night's event that runs past midnight`() =
+            runTest {
+                val overMidnight =
+                    existingEvent(id = 2L, eventDate = yesterday, sourceId = "src:last-night").copy(
+                        startTime = LocalTime.of(23, 0),
+                        endDate = today,
+                        endTime = LocalTime.of(6, 0)
+                    )
+                stored += listOf(overMidnight, replaced)
+
+                serviceAt(berlinClockAt(LocalTime.of(1, 30))).upsertAndCleanup(listOf(replacement), venueId, venueSlug, eventSourceId)
+
+                coVerify { eventRepository.deleteByIdIn(listOf(1L)) }
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(match { 2L in it }) }
+            }
+
+        @Test
+        fun `starts an open-ended window today too`() =
+            runTest {
+                val farOut = existingEvent(id = 3L, eventDate = today.plusDays(200), sourceId = "src:far-out")
+                stored += listOf(replaced, farOut)
+
+                serviceAt(berlinClockAt(LocalTime.of(1, 30)))
+                    .upsertAndCleanup(listOf(replacement), venueId, venueSlug, eventSourceId, staleCleanup = StaleCleanup.OPEN_ENDED)
+
+                coVerify { eventRepository.deleteByIdIn(listOf(1L, 3L)) }
+            }
+
+        @Test
+        fun `a skipped cleanup deletes nothing at night either`() =
+            runTest {
+                stored += replaced
+
+                serviceAt(berlinClockAt(LocalTime.of(1, 30)))
+                    .upsertAndCleanup(listOf(replacement), venueId, venueSlug, eventSourceId, staleCleanup = StaleCleanup.SKIPPED)
+
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
             }
     }
 
