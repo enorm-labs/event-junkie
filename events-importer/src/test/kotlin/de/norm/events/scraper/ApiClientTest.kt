@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -109,6 +110,8 @@ private fun testScraperWebClient(): WebClient {
         webClientBuilder = WebClient.builder(),
         scraperProperties = properties,
         connectionProvider = config.scraperConnectionProvider(properties),
-        throttle = config.perHostThrottlingFilter(properties)
+        throttle = config.perHostThrottlingFilter(properties),
+        redirectGuard = { null },
+        ioDispatcher = Dispatchers.IO
     )
 }

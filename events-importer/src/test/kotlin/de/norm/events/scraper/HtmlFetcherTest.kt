@@ -456,6 +456,8 @@ private fun testScraperWebClient(): WebClient {
         webClientBuilder = WebClient.builder(),
         scraperProperties = properties,
         connectionProvider = config.scraperConnectionProvider(properties),
-        throttle = config.perHostThrottlingFilter(properties)
+        throttle = config.perHostThrottlingFilter(properties),
+        redirectGuard = { null },
+        ioDispatcher = Dispatchers.IO
     )
 }

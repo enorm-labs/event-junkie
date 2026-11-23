@@ -212,7 +212,7 @@ class VenueSiteProberTest {
         val config = ScraperHttpClientConfig()
         val connections = config.scraperConnectionProvider(properties)
         val throttle = config.perHostThrottlingFilter(properties)
-        val base = config.scraperBaseWebClient(WebClient.builder(), properties, connections, throttle)
+        val base = config.scraperBaseWebClient(WebClient.builder(), properties, connections, throttle, { null }, Dispatchers.IO)
         val client =
             // Permits loopback, where the server under test listens; RedirectFollowingFilterTest covers the guard.
             config.scraperWebClient(WebClient.builder(), properties, connections, throttle, RobotsRulesCache(base, properties), { null }, Dispatchers.IO)

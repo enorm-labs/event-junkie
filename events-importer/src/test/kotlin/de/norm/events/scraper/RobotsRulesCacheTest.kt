@@ -3,6 +3,7 @@ package de.norm.events.scraper
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import de.norm.events.image.ImageUrlValidator
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBody
+import java.net.URI
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -58,7 +60,8 @@ class RobotsRulesCacheTest {
         clock: Clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
         ttl: Duration = Duration.ofHours(24),
         maxCrawlDelay: Duration = Duration.ofSeconds(300),
-        properties: ScraperProperties = properties(ttl, maxCrawlDelay)
+        properties: ScraperProperties = properties(ttl, maxCrawlDelay),
+        redirectGuard: RedirectTargetGuard = RedirectTargetGuard { null }
     ): RobotsRulesCache {
         val config = ScraperHttpClientConfig()
         return RobotsRulesCache(
@@ -67,7 +70,9 @@ class RobotsRulesCacheTest {
                     webClientBuilder = WebClient.builder(),
                     scraperProperties = properties,
                     connectionProvider = config.scraperConnectionProvider(properties),
-                    throttle = config.perHostThrottlingFilter(properties)
+                    throttle = config.perHostThrottlingFilter(properties),
+                    redirectGuard = redirectGuard,
+                    ioDispatcher = Dispatchers.IO
                 ),
             scraperProperties = properties,
             clock = clock
@@ -438,6 +443,69 @@ class RobotsRulesCacheTest {
                 cache().check(url("/events"))
 
                 appender.list.single().level shouldBe LogbackLevel.INFO
+            }
+    }
+
+    /** A `robots.txt` that redirects: each hop passes the SSRF guard before it is sent (#5446). */
+    @Nested
+    inner class Redirects {
+        private fun enqueueRedirect(location: String) =
+            server.enqueue(
+                MockResponse
+                    .Builder()
+                    .code(302)
+                    .addHeader("Location", location)
+                    .build()
+            )
+
+        @Test
+        fun `follows five redirects to the file and obeys it, as RFC 9309 asks`() =
+            runTest {
+                (1..RedirectFollowingFilter.MAX_HOPS).forEach { enqueueRedirect("/robots-$it.txt") }
+                enqueueRobots("User-agent: *\nDisallow: /private\n")
+
+                cache().check(url("/private")).allowed shouldBe false
+            }
+
+        @Test
+        fun `permits everything after a sixth redirect, as for an unreachable host`() =
+            runTest {
+                (0..RedirectFollowingFilter.MAX_HOPS).forEach { enqueueRedirect("/robots-$it.txt") }
+
+                cache().check(url("/private")).allowed shouldBe true
+            }
+
+        @Test
+        fun `sends nothing to a loopback address a robots txt redirects to, and permits everything`() =
+            runTest {
+                val internal = MockWebServer().apply { start() }
+                val appender = ListAppender<ILoggingEvent>().apply { start() }
+                val logger = LoggerFactory.getLogger(RobotsRulesCache::class.java) as Logger
+                logger.addAppender(appender)
+                try {
+                    internal.enqueue(
+                        MockResponse
+                            .Builder()
+                            .code(200)
+                            .body("User-agent: *\nDisallow: /\n")
+                            .build()
+                    )
+                    enqueueRedirect(internal.url("/robots.txt").toString())
+
+                    cache(redirectGuard = guardPermitting(server.port)).check(url("/private")).allowed shouldBe true
+
+                    internal.requestCount shouldBe 0
+                    appender.list.single { it.level == LogbackLevel.WARN }.formattedMessage shouldContain "as unrestricted"
+                } finally {
+                    logger.detachAppender(appender)
+                    internal.close()
+                }
+            }
+
+        /** The real guard, except that it lets [port] through, so the venue's own server stands for a public host. */
+        private fun guardPermitting(port: Int) =
+            object : ImageUrlValidator() {
+                override fun reject(url: String): String? = if (URI(url).port == port) null else super.reject(url)
             }
     }
 
