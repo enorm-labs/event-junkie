@@ -43,6 +43,10 @@ class SisyphosWebsiteImporterTest {
     private fun importerAt(time: LocalDateTime): SisyphosWebsiteImporter =
         SisyphosWebsiteImporter(apiClient, htmlFetcher, Clock.fixed(time.atZone(BERLIN).toInstant(), BERLIN))
 
+    /** A calendar feed with one night per opening and closing, as UTC instants. */
+    private fun calendar(vararg nights: Pair<String, String>): String =
+        nights.joinToString(",", "[", "]") { (opens, closes) -> """{"title": "NIGHT", "startRaw": "$opens", "endRaw": "$closes"}""" }
+
     private suspend fun SisyphosWebsiteImporter.run(): ImportResult.Success {
         val result = importEvents(feedUrl)
         result.shouldBeInstanceOf<ImportResult.Success>()
@@ -123,13 +127,65 @@ class SisyphosWebsiteImporterTest {
     fun `inside the window the weekend's calendar night takes the sisy fan line-up`() =
         runTest {
             val result = importerAt(saturday).run()
-            result.events shouldHaveSize 9
+            result.events.map { it.sourceId } shouldBe
+                listOf(
+                    "sisyphos:2026-09-25",
+                    "sisyphos:2026-10-02",
+                    "sisyphos:2026-10-10",
+                    "sisyphos:2026-10-23",
+                    "sisyphos:2026-11-14",
+                    "sisyphos:2026-11-27",
+                    "sisyphos:2027-01-01"
+                )
             val weekend = result.events.single { it.sourceId == "sisyphos:2026-09-25" }
             weekend.title shouldBe "HAPPY RAVE HAPPY LIFE"
             weekend.startTime shouldBe LocalTime.of(22, 0)
             weekend.artists.shouldNotBeEmpty()
             weekend.lineupSourceUrl shouldBe "https://sisy.fan/events/from/25.09.2026/to/28.09.2026"
             coVerify(exactly = 1) { htmlFetcher.fetchDocument("https://sisy.fan/") }
+        }
+
+    @Test
+    fun `inside the window a night that ended yesterday is left out, and today's night takes the line-up`() =
+        runTest {
+            coEvery { apiClient.fetchJson(calendarUrl) } returns
+                calendar(
+                    "2026-09-24T12:00:00.000Z" to "2026-09-24T20:00:00.000Z",
+                    "2026-09-25T20:00:00.000Z" to "2026-09-28T08:00:00.000Z",
+                    "2026-09-26T12:00:00.000Z" to "2026-09-26T21:00:00.000Z"
+                )
+            coEvery { apiClient.fetchJson(feedUrl) } returns """{"products": []}"""
+            val result = importerAt(LocalDateTime.of(2026, 9, 25, 23, 0)).run()
+            result.events.map { it.sourceId } shouldBe listOf("sisyphos:2026-09-25", "sisyphos:2026-09-26")
+            val (today, tomorrow) = result.events
+            today.artists.shouldNotBeEmpty()
+            tomorrow.artists.shouldBeEmpty()
+        }
+
+    @Test
+    fun `inside the window yesterday's night that runs past midnight into today is kept`() =
+        runTest {
+            coEvery { apiClient.fetchJson(calendarUrl) } returns
+                calendar(
+                    "2026-09-23T12:00:00.000Z" to "2026-09-23T20:00:00.000Z",
+                    "2026-09-24T21:00:00.000Z" to "2026-09-25T04:00:00.000Z",
+                    "2026-09-25T20:00:00.000Z" to "2026-09-28T08:00:00.000Z"
+                )
+            coEvery { apiClient.fetchJson(feedUrl) } returns """{"products": []}"""
+            val result = importerAt(LocalDateTime.of(2026, 9, 25, 23, 0)).run()
+            result.events.map { it.sourceId } shouldBe listOf("sisyphos:2026-09-24", "sisyphos:2026-09-25")
+            val (yesterday, today) = result.events
+            yesterday.artists.shouldBeEmpty()
+            today.artists.shouldNotBeEmpty()
+        }
+
+    @Test
+    fun `early on Sunday the Friday weekend still runs and keeps the line-up`() =
+        runTest {
+            val result = importerAt(LocalDateTime.of(2026, 9, 27, 2, 0)).run()
+            result.events shouldHaveSize 7
+            val weekend = result.events.single { it.sourceId == "sisyphos:2026-09-25" }
+            weekend.artists.shouldNotBeEmpty()
         }
 
     @Test
