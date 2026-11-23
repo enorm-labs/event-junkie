@@ -1,6 +1,7 @@
 package de.norm.events.instagram
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.required
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.awaitSingle
@@ -74,9 +75,4 @@ class InstagramVenueRepository(
             name = required("name", String::class.java),
             instagramUrl = get("instagram_url", String::class.java)
         )
-
-    private fun <T : Any> Readable.required(
-        column: String,
-        type: Class<T>
-    ): T = requireNotNull(get(column, type)) { "Column '$column' is missing from the venue projection" }
 }

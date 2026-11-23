@@ -1,7 +1,7 @@
 package de.norm.events.dataquality
 
 import de.norm.events.EVENTS_SCHEMA
-import io.r2dbc.spi.Readable
+import de.norm.events.common.required
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
@@ -175,15 +175,3 @@ data class WorklistRow(
     /** Null for an issue no person can dismiss. */
     val fingerprint: String?
 )
-
-/**
- * Reads a column the projection declares NOT NULL, naming it when it is absent.
- *
- * The columns come from a hand-written `SELECT`, so a null means the projection and this mapping
- * have drifted apart. Saying which column drifted beats the bare `NullPointerException` that `!!`
- * would raise here.
- */
-private fun <T : Any> Readable.required(
-    column: String,
-    type: Class<T>
-): T = requireNotNull(get(column, type)) { "Column '$column' is missing from the data-quality worklist projection" }

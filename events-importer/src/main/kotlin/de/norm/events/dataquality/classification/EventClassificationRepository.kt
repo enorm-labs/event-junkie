@@ -1,16 +1,17 @@
 package de.norm.events.dataquality.classification
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.bindNullable
+import de.norm.events.common.long
+import de.norm.events.common.string
 import de.norm.events.dataquality.QualityIssue
 import de.norm.events.importing.QualityFlagKind
-import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
-import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 import java.time.LocalTime
@@ -218,12 +219,12 @@ class EventClassificationRepository(
                 """.trimIndent()
             ).bind("eventId", suggestion.eventId)
             .bind("field", suggestion.field)
-            .bindNullable("storedValue", suggestion.storedValue)
+            .bindNullable("storedValue", suggestion.storedValue, String::class.java)
             .bind("proposedValue", suggestion.proposedValue)
             .bind("evidence", suggestion.evidence)
             .bind("confidence", suggestion.confidence)
             .bind("checkName", checkName)
-            .bindNullable("model", suggestion.model)
+            .bindNullable("model", suggestion.model, String::class.java)
             .map { row, _ ->
                 when {
                     row.get("inserted", Boolean::class.javaObjectType) == true -> SuggestionInsert.INSERTED
@@ -254,15 +255,6 @@ class EventClassificationRepository(
             .rowsUpdated()
             .awaitSingle()
     }
-
-    private fun DatabaseClient.GenericExecuteSpec.bindNullable(
-        name: String,
-        value: String?
-    ) = if (value == null) bindNull(name, String::class.java) else bind(name, value)
-
-    private fun Readable.long(column: String): Long = requireNotNull(get(column, Number::class.java)) { "Column '$column' is null" }.toLong()
-
-    private fun Readable.string(column: String): String = requireNotNull(get(column, String::class.java)) { "Column '$column' is null" }
 
     private companion object {
         /**

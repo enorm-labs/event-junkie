@@ -1,9 +1,10 @@
 package de.norm.events.dataquality.flyer
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.long
+import de.norm.events.common.string
 import de.norm.events.event.EventType
 import de.norm.events.event.PinnedField
-import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
@@ -99,10 +100,6 @@ class FlyerRepository(
             .rowsUpdated()
             .awaitSingle()
     }
-
-    private fun Readable.long(column: String): Long = requireNotNull(get(column, Number::class.java)) { "Column '$column' is null" }.toLong()
-
-    private fun Readable.string(column: String): String = requireNotNull(get(column, String::class.java)) { "Column '$column' is null" }
 
     private companion object {
         /** The types whose flyers bill acts. A comedy or reading flyer names a performer the text check already reads. */

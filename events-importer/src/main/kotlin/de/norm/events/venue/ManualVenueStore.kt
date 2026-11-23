@@ -1,7 +1,7 @@
 package de.norm.events.venue
 
 import de.norm.events.EVENTS_SCHEMA
-import io.r2dbc.spi.Readable
+import de.norm.events.common.string
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitSingle
@@ -83,8 +83,6 @@ class ManualVenueStore(
             .fetch()
             .rowsUpdated()
             .awaitSingle() > 0
-
-    private fun Readable.string(name: String): String = requireNotNull(get(name, String::class.java))
 
     private companion object {
         // EventFeature.CHRISTMAS_MARKET's slug; the venue module may not depend on the event module.

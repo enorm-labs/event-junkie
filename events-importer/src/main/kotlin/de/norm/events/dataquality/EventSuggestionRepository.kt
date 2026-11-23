@@ -1,6 +1,7 @@
 package de.norm.events.dataquality
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.required
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.awaitSingle
@@ -198,11 +199,6 @@ class EventSuggestionRepository(
             createdAt = required("created_at", OffsetDateTime::class.java),
             showEventIds = get("show_event_ids", Array<Long>::class.java)?.toList().orEmpty()
         )
-
-    private fun <T : Any> Readable.required(
-        column: String,
-        type: Class<T>
-    ): T = requireNotNull(get(column, type)) { "Column '$column' is missing from the event_suggestion projection" }
 
     private companion object {
         const val COLUMNS =
