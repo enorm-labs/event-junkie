@@ -17,6 +17,7 @@ import io.kotest.matchers.string.shouldContain
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.Dispatcher
@@ -344,7 +345,9 @@ class VenueSiteCheckIntegrationTest : BaseControllerTest() {
             WebClient.builder(),
             properties,
             config.scraperConnectionProvider(properties),
-            config.perHostThrottlingFilter(properties)
+            config.perHostThrottlingFilter(properties),
+            { null },
+            Dispatchers.IO
         )
     }
 }

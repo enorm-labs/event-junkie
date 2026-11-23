@@ -219,7 +219,7 @@ class RedirectFollowingFilterTest {
         provider = config.scraperConnectionProvider(properties)
         val rules =
             RobotsRulesCache(
-                webClient = config.scraperBaseWebClient(WebClient.builder(), properties, provider, throttle),
+                webClient = config.scraperBaseWebClient(WebClient.builder(), properties, provider, throttle, { null }, Dispatchers.IO),
                 scraperProperties = properties
             )
         return config.scraperWebClient(WebClient.builder(), properties, provider, throttle, rules, guard(), Dispatchers.IO)

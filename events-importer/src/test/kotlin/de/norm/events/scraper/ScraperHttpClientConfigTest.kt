@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.Dispatchers
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.AfterEach
@@ -70,7 +71,9 @@ class ScraperHttpClientConfigTest {
             webClientBuilder = WebClient.builder(),
             scraperProperties = properties,
             connectionProvider = provider,
-            throttle = config.perHostThrottlingFilter(properties)
+            throttle = config.perHostThrottlingFilter(properties),
+            redirectGuard = { null },
+            ioDispatcher = Dispatchers.IO
         )
     }
 

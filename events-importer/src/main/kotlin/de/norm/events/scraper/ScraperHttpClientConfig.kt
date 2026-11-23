@@ -30,6 +30,11 @@ const val SCRAPER_WEB_CLIENT = "scraperWebClient"
  * client that checks `robots.txt` first is a recursion. A separate bean rather than a re-entrancy
  * flag on the request: the flag would have to be set correctly at one call site forever, and a bean
  * cannot be forgotten.
+ *
+ * It follows a `robots.txt` redirect through its own [RedirectFollowingFilter], up to
+ * [RedirectFollowingFilter.MAX_HOPS], the five RFC 9309 §2.3.1.2 asks for. Every hop passes the
+ * [RedirectTargetGuard] before it is sent, so a `robots.txt` that redirects to a private address
+ * fails the fetch, and [RobotsRulesCache] reads that as an unreachable host (#5446).
  */
 const val SCRAPER_BASE_WEB_CLIENT = "scraperBaseWebClient"
 
@@ -79,8 +84,8 @@ private const val ROBOTS_MAX_HEADER_SIZE = 32 * 1024
  * [RedirectFollowingFilter] is the outermost filter of [SCRAPER_WEB_CLIENT] and sends each hop through
  * the whole chain, so a hop to another host passes that host's `robots.txt` check and throttle. It also refuses a
  * hop to a private address before sending it ([RedirectTargetGuard], #5444).
- * [SCRAPER_BASE_WEB_CLIENT] lets Reactor Netty follow a `robots.txt` redirect, which RFC 9309 §2.3.1.2
- * permits. Scrapers receive the final document either way. The
+ * [SCRAPER_BASE_WEB_CLIENT] follows a `robots.txt` redirect through a filter of its own, with the same guard (#5446).
+ * Scrapers receive the final document either way. The
  * response body size limit is controlled by the standard `spring.http.codecs.max-in-memory-size`
  * property (defaults to 256KB; set to 8MB in application.yaml for large venue pages, API payloads and images).
  */
@@ -111,13 +116,19 @@ class ScraperHttpClientConfig {
             .build()
 
     @Bean(SCRAPER_BASE_WEB_CLIENT)
+    @Suppress("LongParameterList") // As on scraperWebClient: one parameter per filter's collaborator.
     fun scraperBaseWebClient(
         webClientBuilder: WebClient.Builder,
         scraperProperties: ScraperProperties,
         connectionProvider: ConnectionProvider,
-        throttle: PerHostThrottlingFilter
+        throttle: PerHostThrottlingFilter,
+        redirectGuard: RedirectTargetGuard,
+        @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher
     ): WebClient =
-        baseClient(webClientBuilder, scraperProperties, connectionProvider, followRedirect = true, maxHeaderSize = ROBOTS_MAX_HEADER_SIZE)
+        baseClient(webClientBuilder, scraperProperties, connectionProvider, maxHeaderSize = ROBOTS_MAX_HEADER_SIZE)
+            // First of all, so every hop passes the SSRF guard, the host filters and the throttle of its own host.
+            // No RobotsTxtFilter: this client is the one that reads robots.txt.
+            .filters { it.add(0, RedirectFollowingFilter(redirectGuard, ioDispatcher)) }
             .filter(throttle)
             .build()
 
@@ -132,7 +143,7 @@ class ScraperHttpClientConfig {
         redirectGuard: RedirectTargetGuard,
         @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher
     ): WebClient =
-        baseClient(webClientBuilder, scraperProperties, connectionProvider, followRedirect = false)
+        baseClient(webClientBuilder, scraperProperties, connectionProvider)
             // First of all, so every hop passes the SSRF guard, the host filters, the robots check and the throttle of its own host.
             .filters { it.add(0, RedirectFollowingFilter(redirectGuard, ioDispatcher)) }
             // Ordered before the throttle so the robots.txt fetch behind this filter is itself
@@ -142,14 +153,12 @@ class ScraperHttpClientConfig {
             .build()
 
     /**
-     * Pool, connector, timeouts and `User-Agent` — everything both clients share — and the two settings they differ in:
-     * whether Reactor Netty follows a redirect, and a header limit only one of them raises.
+     * Pool, connector, timeouts and `User-Agent` — everything both clients share — and a header limit only one of them raises.
      */
     private fun baseClient(
         webClientBuilder: WebClient.Builder,
         scraperProperties: ScraperProperties,
         connectionProvider: ConnectionProvider,
-        followRedirect: Boolean,
         maxHeaderSize: Int? = null
     ): WebClient.Builder =
         webClientBuilder
@@ -158,7 +167,8 @@ class ScraperHttpClientConfig {
                     HttpClient
                         .create(connectionProvider)
                         .let { client -> maxHeaderSize?.let { size -> client.httpResponseDecoder { it.maxHeaderSize(size) } } ?: client }
-                        .followRedirect(followRedirect)
+                        // Each client follows redirects in its RedirectFollowingFilter, where every hop is checked.
+                        .followRedirect(false)
                         // Sends `Accept-Encoding` and decodes what comes back. Reactor Netty does
                         // neither by default, and Uber Arena answers `Content-Encoding: gzip` even
                         // to a request that asked for `identity` — Jsoup then parsed 18 KB of gzip

@@ -512,7 +512,9 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
                                     .builder(),
                             scraperProperties = scraper,
                             connectionProvider = config.scraperConnectionProvider(scraper),
-                            throttle = config.perHostThrottlingFilter(scraper)
+                            throttle = config.perHostThrottlingFilter(scraper),
+                            redirectGuard = { null },
+                            ioDispatcher = kotlinx.coroutines.Dispatchers.IO
                         ),
                     ioDispatcher = kotlinx.coroutines.Dispatchers.IO,
                     // MockWebServer listens on loopback, which the real guard refuses by design.

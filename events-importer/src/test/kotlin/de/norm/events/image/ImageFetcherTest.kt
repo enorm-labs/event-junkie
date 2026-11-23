@@ -403,7 +403,7 @@ private fun redirectFollowingWebClient(): WebClient {
     val config = ScraperHttpClientConfig()
     val connections = config.scraperConnectionProvider(properties)
     val throttle = config.perHostThrottlingFilter(properties)
-    val base = config.scraperBaseWebClient(WebClient.builder(), properties, connections, throttle)
+    val base = config.scraperBaseWebClient(WebClient.builder(), properties, connections, throttle, { null }, Dispatchers.IO)
     return config.scraperWebClient(
         WebClient.builder(),
         properties,
@@ -422,6 +422,8 @@ private fun testWebClient(plainUserAgentHosts: Set<String>): WebClient {
         webClientBuilder = WebClient.builder(),
         scraperProperties = properties,
         connectionProvider = config.scraperConnectionProvider(properties),
-        throttle = config.perHostThrottlingFilter(properties)
+        throttle = config.perHostThrottlingFilter(properties),
+        redirectGuard = { null },
+        ioDispatcher = Dispatchers.IO
     )
 }
