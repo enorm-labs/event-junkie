@@ -1,6 +1,7 @@
 package de.norm.events.account
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.required
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
@@ -67,19 +68,19 @@ class ReportAdminStore(
             .sql("UPDATE accounts.account SET can_report = :enabled WHERE lower(email) = lower(:email) RETURNING id")
             .bind("enabled", enabled)
             .bind("email", email.trim())
-            .map { row, _ -> requireNotNull(row.get("id", UUID::class.java)) }
+            .map { row, _ -> row.required("id", UUID::class.java) }
             .awaitOneOrNull()
 
     private fun toRow(row: Readable) =
         ReportRow(
-            eventId = requireNotNull(row.get("event_id", Long::class.javaObjectType)),
-            slug = requireNotNull(row.get("slug", String::class.java)),
-            title = requireNotNull(row.get("title", String::class.java)),
-            eventDate = requireNotNull(row.get("event_date", LocalDate::class.java)),
+            eventId = row.required("event_id", Long::class.javaObjectType),
+            slug = row.required("slug", String::class.java),
+            title = row.required("title", String::class.java),
+            eventDate = row.required("event_date", LocalDate::class.java),
             venue = row.get("venue", String::class.java),
             sourceSlug = row.get("source_slug", String::class.java),
-            problems = requireNotNull(row.get("problems", Array<String>::class.java)).toList(),
+            problems = row.required("problems", Array<String>::class.java).toList(),
             note = row.get("note", String::class.java),
-            updatedAt = requireNotNull(row.get("updated_at", Instant::class.java))
+            updatedAt = row.required("updated_at", Instant::class.java)
         )
 }

@@ -1,6 +1,7 @@
 package de.norm.events.account
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.required
 import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.flow
@@ -37,13 +38,13 @@ class AccountAdminStore(
                 """.trimIndent()
             ).map { row, _ ->
                 AccountRow(
-                    email = requireNotNull(row.get("email", String::class.java)),
-                    locale = requireNotNull(row.get("locale", String::class.java)),
-                    createdAt = requireNotNull(row.get("created_at", Instant::class.java)),
-                    lastSignInAt = requireNotNull(row.get("last_sign_in_at", Instant::class.java)),
-                    canReport = requireNotNull(row.get("can_report", Boolean::class.javaObjectType)),
-                    follows = requireNotNull(row.get("follows", Long::class.javaObjectType)),
-                    openReports = requireNotNull(row.get("open_reports", Long::class.javaObjectType))
+                    email = row.required("email", String::class.java),
+                    locale = row.required("locale", String::class.java),
+                    createdAt = row.required("created_at", Instant::class.java),
+                    lastSignInAt = row.required("last_sign_in_at", Instant::class.java),
+                    canReport = row.required("can_report", Boolean::class.javaObjectType),
+                    follows = row.required("follows", Long::class.javaObjectType),
+                    openReports = row.required("open_reports", Long::class.javaObjectType)
                 )
             }.flow()
             .toList()

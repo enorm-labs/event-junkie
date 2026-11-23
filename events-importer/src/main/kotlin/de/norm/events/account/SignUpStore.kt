@@ -1,5 +1,6 @@
 package de.norm.events.account
 
+import de.norm.events.common.required
 import io.r2dbc.spi.Readable
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.awaitSingle
@@ -35,7 +36,7 @@ class SignUpStore(
 
     private fun toState(row: Readable) =
         SignUpState(
-            open = requireNotNull(row.get("open", Boolean::class.javaObjectType)),
-            changedAt = requireNotNull(row.get("changed_at", Instant::class.java))
+            open = row.required("open", Boolean::class.javaObjectType),
+            changedAt = row.required("changed_at", Instant::class.java)
         )
 }
