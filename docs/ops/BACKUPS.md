@@ -10,16 +10,16 @@ and the single highest-risk item the decision creates**. Everything here exists 
 
 ## The short version
 
-|                 |                                                                                                                            |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **What**        | PostgreSQL only — WAL streamed continuously, plus a base backup nightly at 02:30                                           |
-| **With**        | [`wal-g`](https://wal-g.readthedocs.io/PostgreSQL/) v3.0.9, installed by `infra/modules/environment/cloud-init/backups.sh` |
-| **Where**       | `s3://event-junkie-backups/<environment>/`, Hetzner Object Storage, `fsn1`                                                 |
-| **Window**      | 30 days of point-in-time recovery                                                                                          |
-| **RPO**         | ≤ 5 minutes (`archive_timeout = 300`), lower under load                                                                    |
-| **RTO**         | ~12 s measured on a 40 MB cluster — see §9, and do not trust that number as it grows                                       |
-| **Verified by** | `walg check`, hourly: a backup exists, is younger than 26 hours, and the volume is under 85%                               |
-| **Rehearsed**   | 2026-09-09, staging, both full replay and PITR — [#862](https://github.com/enorm-labs/event-junkie/issues/862)             |
+|                 |                                                                                                                             |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **What**        | PostgreSQL only — WAL streamed continuously, plus a base backup nightly at 02:30                                            |
+| **With**        | [`wal-g`](https://wal-g.readthedocs.io/PostgreSQL/) v3.0.10, installed by `infra/modules/environment/cloud-init/backups.sh` |
+| **Where**       | `s3://event-junkie-backups/<environment>/`, Hetzner Object Storage, `fsn1`                                                  |
+| **Window**      | 30 days of point-in-time recovery                                                                                           |
+| **RPO**         | ≤ 5 minutes (`archive_timeout = 300`), lower under load                                                                     |
+| **RTO**         | ~12 s measured on a 40 MB cluster — see §9, and do not trust that number as it grows                                        |
+| **Verified by** | `walg check`, hourly: a backup exists, is younger than 26 hours, and the volume is under 85%                                |
+| **Rehearsed**   | 2026-09-09, staging, both full replay and PITR — [#862](https://github.com/enorm-labs/event-junkie/issues/862)              |
 
 ## 1. What is backed up, and what is not
 
@@ -199,7 +199,7 @@ It prints both pins against upstream, exits 1 when either is behind, and compute
 together from the release's own `.sha256` files. Both nodes are x86 today:
 
 ```sh
-V=v3.0.9
+V=v3.0.10
 for a in amd64 aarch64; do
   printf '%-8s %s\n' "$a" "$(curl -fsSL "https://github.com/wal-g/wal-g/releases/download/$V/wal-g-pg-24.04-$a.tar.gz.sha256" | cut -d' ' -f1)"
 done
