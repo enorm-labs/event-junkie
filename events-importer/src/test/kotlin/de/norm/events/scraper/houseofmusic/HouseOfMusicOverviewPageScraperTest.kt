@@ -104,6 +104,19 @@ class HouseOfMusicOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a conference and keeps a meetup, as event 15202`() {
+        fun titlesWith(title: String) =
+            HouseOfMusicOverviewPageScraper()
+                .scrape(Jsoup.parse(fixtureText(laterHtml).replace("House of Music Quiz", title), baseUrl), baseUrl)
+                .map { it.title }
+
+        // A weekend of talks, panels and masterclasses for guitar musicians, EVENT_SCOPE.md §3.3.
+        titlesWith("MetalCon 16.04. - 17.04.").none { it.contains("MetalCon", ignoreCase = true) } shouldBe true
+        titlesWith("Producer Conference Berlin").none { it.contains("Conference") } shouldBe true
+        titlesWith("FLINTA* Connect (Xmas Edition)").any { it.equals("FLINTA* Connect (Xmas Edition)", ignoreCase = true) } shouldBe true
+    }
+
+    @Test
     fun `reads the acts after a series name and w-slash as a lineup`() {
         val night = titledLater("jazzexzess w/ Luise Volkmann’s Punk-Jazz-Projekt + Vehicle/Passenger")
 

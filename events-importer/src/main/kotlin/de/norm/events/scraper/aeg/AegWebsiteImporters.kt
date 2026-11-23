@@ -12,6 +12,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.isTributeShowTitle
 import org.springframework.stereotype.Component
 
 /**
@@ -70,6 +71,10 @@ abstract class AbstractAegVenueImporter(
      * grow**, so a listing that already bills a co-bill correctly is never rebuilt, and the description
      * can only ever add acts the title already named. An empty one grows when a bare-name comedy title
      * is introduced as a performer: `der Comedian Till Reiners`.
+     *
+     * A listing roster bills no one when the description's first quoted billing starts with the title and names a tribute
+     * show: `"ROGER WATERS PRESENTS LEGACY - A Pink Floyd Tribute Show"` is a production Waters directs, not a set he plays
+     * (event 15199). The support acts stay.
      */
     private fun billedActs(
         primary: ScrapedEvent,
@@ -90,6 +95,7 @@ abstract class AbstractAegVenueImporter(
         val roster = lineUp.ifEmpty { fallback.artists }
         // The flat text, as before the stored description kept its lines (#4778).
         val description = pageDescription?.replace('\n', ' ')
+        if (!pageBilled && description != null && billsTributeShow(fallback.title, description)) return emptyList()
         if (pageBilled || roster.size > 1 || description.isNullOrBlank()) return roster
         val corroborated =
             buildArtistsForEventType(
@@ -99,6 +105,19 @@ abstract class AbstractAegVenueImporter(
                 description = description
             )
         return corroborated.takeIf { it.size > roster.size } ?: roster
+    }
+
+    private fun billsTributeShow(
+        title: String,
+        description: String
+    ): Boolean {
+        val quoted =
+            QUOTED_BILLING
+                .find(description)
+                ?.groupValues
+                ?.get(1)
+                ?.trim() ?: return false
+        return quoted.startsWith(title.trim(), ignoreCase = true) && isTributeShowTitle(quoted)
     }
 }
 
@@ -160,5 +179,8 @@ internal fun statusAfterNotice(
     } else {
         listingStatus
     }
+
+/** The first quoted span of a description, in straight or German quotes: `kommt "<billing>" in die Uber Eats Music Hall`. */
+private val QUOTED_BILLING = Regex("""["„“”]([^"„“”]+)["“”]""")
 
 private val MAKE_UP_DATE = Regex("""\b(?:Nachholtermin|Ersatztermin)\b""", RegexOption.IGNORE_CASE)

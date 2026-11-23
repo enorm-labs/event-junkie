@@ -1,5 +1,6 @@
 package de.norm.events.scraper.baiz
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
@@ -58,6 +59,41 @@ class BaizWebsiteImporterTest {
             types["Kunstbühne ENGEL IM HAUS,"] shouldBe "READING"
             types["Flamenco es diferente"] shouldBe "SHOW"
             types["Wello Rauschs Karaoke Gala"] shouldBe "PARTY"
+        }
+
+    private suspend fun importTitled(
+        title: String,
+        category: String = "music/concert"
+    ): ScrapedEvent {
+        coEvery { apiClient.fetchJson(any()) } returns
+            """
+            {"count": 1, "result": {"601000": {
+              "title": "$title",
+              "url": "https://radar.squat.net/en/node/601000",
+              "date_time": [{"time_start": "2026-12-12T20:00:00+01:00", "time_end": "2026-12-12T20:00:00+01:00"}],
+              "body": {"value": "<p>Eintritt gegen Spende</p>"},
+              "category": [{"name": "$category"}]
+            }}}
+            """.trimIndent()
+        val result = importer.importEvents(url)
+        result.shouldBeInstanceOf<ImportResult.Success>()
+        return result.events.single()
+    }
+
+    @Test
+    fun `bills the act a concert title names after mit, as events 15179 and 15185`() =
+        runTest {
+            importTitled("Rote Weihnachten - Solikonzert mit dem Olga Benario Chor").artists.map { it.name to it.role } shouldBe
+                listOf("Olga Benario Chor" to ArtistRole.HEADLINER)
+            importTitled("Liederabend mit Tobias Thiele zwischen Havanna und Berlin").artists.map { it.name } shouldBe listOf("Tobias Thiele")
+        }
+
+    @Test
+    fun `bills no one for a concert title without mit, or a mit title of another type`() =
+        runTest {
+            importTitled("Roda de choro").artists.shouldBeEmpty()
+            importTitled("Konzert DUO AQUAMARINE AVE MARIS STELLA").artists.shouldBeEmpty()
+            importTitled("Theater mit Tallercito", category = "theater").artists.shouldBeEmpty()
         }
 
     @Test

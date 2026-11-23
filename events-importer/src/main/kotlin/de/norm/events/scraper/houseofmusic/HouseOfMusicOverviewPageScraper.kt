@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WixEventsWarmupData
+import de.norm.events.scraper.billsTradeFairOrConference
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferConcertVenueType
@@ -37,6 +38,9 @@ import java.net.URI
  * The house also lets its room to a meetup (`Ableton User Group Berlin: Track Feedback Session`, `FLINTA* Connect
  * (Xmas Edition)`) and a film night (`Free DrinkWatchTalk short movie evening`). Its own words type these, and they bill no act. A title that names a
  * concert stays one, so a soundtrack concert is not read as a film night.
+ *
+ * A conference is dropped, EVENT_SCOPE.md §3.3: the shared trade-fair words, or the house's own `MetalCon`, a weekend of talks
+ * and masterclasses for guitar musicians (event 15202). A meetup such as `FLINTA* Connect` stays.
  */
 class HouseOfMusicOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -46,8 +50,14 @@ class HouseOfMusicOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val events = WixEventsWarmupData.events(document, EventSource.HOUSE_OF_MUSIC) ?: return emptyList()
-        return events.parseListing(logger, "House of Music event") { event(it, baseUrl) }
+        return events.parseListing(logger, "House of Music event") { event(it, baseUrl) }.filterNot { event ->
+            isConference(event.title).also { conference ->
+                if (conference) logger.info { "Skipping House of Music conference '${event.title}': out of scope" }
+            }
+        }
     }
+
+    private fun isConference(title: String): Boolean = billsTradeFairOrConference(title, null) || METAL_CON.containsMatchIn(title)
 
     private fun event(
         node: JsonNode,
@@ -116,6 +126,8 @@ class HouseOfMusicOverviewPageScraper {
     }
 
     private companion object {
+        /** The house's guitar conference, by its exact name; a broader `…Con` would catch a band. */
+        val METAL_CON = Regex("""\bmetalcon\b""", RegexOption.IGNORE_CASE)
         val SEPARATOR = Regex("""\s+[|\-–]\s+""")
         val LABEL_LIST = Regex("""^[^:;]+:\s*[^;]+(?:;[^;]+)+$""")
         val OCCASION = Regex("""\b(?:album|release|pre event|concert|konzert|showcase)\b""", RegexOption.IGNORE_CASE)

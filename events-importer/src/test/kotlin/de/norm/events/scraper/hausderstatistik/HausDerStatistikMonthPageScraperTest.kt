@@ -66,6 +66,23 @@ class HausDerStatistikMonthPageScraperTest {
     }
 
     @Test
+    fun `types a film tag as a screening, also beside a workshop tag, as event 15209`() {
+        val html =
+            """
+            <div class="listing">
+              <div class="teaser event"><time datetime="2026-12-04T18:00:00+01:00">04.12.</time>
+                <a href="https://hausderstatistik.org/event/film-workshop-grains-of-sand/" rel="bookmark"><div class="teaser__header"><p class="title is-4">Film &amp; Workshop: GRAINS OF SAND</p></div></a>
+                <div class="button-group"><a class="button">Workshop</a><a class="button">Film</a></div></div>
+            </div>
+            """.trimIndent()
+
+        val film = scraper.scrape(Jsoup.parse(html, monthUrl), monthUrl).single()
+
+        film.eventType shouldBe EventType.SCREENING.name
+        film.artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `drops workshops, meetings and cooking from the whole programme`() {
         val titles = scraper.scrape(fixtureDocument(entryHtml, monthUrl), monthUrl).map { it.title }
 
