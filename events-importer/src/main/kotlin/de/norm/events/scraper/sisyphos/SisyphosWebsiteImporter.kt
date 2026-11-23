@@ -34,12 +34,13 @@ import kotlin.coroutines.cancellation.CancellationException
  * night that contains a sisy.fan weekend's first set takes its line-up; any other weekend is an
  * event of its own.
  *
- * A run that did not read sisy.fan leaves out the nights dated today or earlier. Otherwise a run
- * early on Sunday would store a merged weekend again without its line-up, because the line-up is
- * replaced by the scrape's (`AssociationSyncService`). A run without the calendar is incomplete,
- * so the stale cleanup cannot remove the nights it did not read. A run without the shop stays
- * complete, as the cleanup ends before the shop-only nights. It joins the shop nights of the last
- * good read in this process, and marks its nights [ScrapedEvent.detailUnavailable], so the upsert
+ * A run that did not read sisy.fan leaves out the nights dated today or earlier. Otherwise a run early
+ * on Sunday would store a merged weekend again without its line-up, because the line-up is replaced by
+ * the scrape's (`AssociationSyncService`). A run that read sisy.fan leaves out only the nights that
+ * ended before today: Friday's weekend still takes the line-up on Saturday. A run without the calendar
+ * is incomplete, so the stale cleanup cannot remove the nights it did not read. A run without the shop
+ * stays complete, as the cleanup ends before the shop-only nights. It joins the shop nights of the
+ * last good read in this process, and marks its nights [ScrapedEvent.detailUnavailable], so the upsert
  * keeps a stored price after a restart too (#4696). The run fails only when all three sites fail.
  *
  * The shop's bot protection answers the importer `429` from a hosting address, while
@@ -77,7 +78,10 @@ class SisyphosWebsiteImporter(
 
         val joined = joinShop(calendar.getOrDefault(emptyList()), shop.getOrDefault(lastShopNights))
         val nights = if (shop.isFailure) joined.map { it.copy(detailUnavailable = true) } else joined
-        val events = weekends?.let { mergeWeekends(nights, it) } ?: nights.filter { it.eventDate.isAfter(now.toLocalDate()) }
+        val today = now.toLocalDate()
+        val events =
+            weekends?.let { mergeWeekends(nights.filter { night -> !(night.endDate ?: night.eventDate).isBefore(today) }, it) }
+                ?: nights.filter { it.eventDate.isAfter(today) }
         logger.info {
             "Scraped ${calendar.getOrNull()?.size ?: "no"} calendar night(s), ${shop.getOrNull()?.size ?: "no"} shop night(s) " +
                 "and ${weekends?.size ?: "no"} sisy.fan weekend(s) for Sisyphos; importing ${events.size} event(s)"
