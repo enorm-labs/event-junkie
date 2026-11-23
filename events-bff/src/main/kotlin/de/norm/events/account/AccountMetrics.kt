@@ -123,7 +123,10 @@ class AccountMetrics(
         /** `bff.account.passkey{outcome}`: passkeys registered, used to sign in, renamed and deleted, and the refusals (#3888). */
         private const val PASSKEY = "bff.account.passkey"
 
-        /** `bff.account.watch{action}`: acts watched by MusicBrainz id, unwatched, and turned into artist follows (#5214). */
+        /**
+         * `bff.account.watch{action}`: acts watched by MusicBrainz id, unwatched, turned into artist follows (#5214), and
+         * moved to a merge's survivor (#5225).
+         */
         const val WATCH = "bff.account.watch"
 
         /** `bff.account.follow{action,kind}`: follows and unfollows (#3889). */
@@ -232,7 +235,10 @@ enum class WatchAction(
     UNWATCH("unwatch"),
 
     /** An artist row with the watched id got the verdict EXACT, and the watch became an artist follow. */
-    CONVERTED("converted")
+    CONVERTED("converted"),
+
+    /** MusicBrainz merged the watched id into another, and the watch moved to the survivor (#5225). */
+    MOVED("moved")
 }
 
 enum class SavedSearchAction(

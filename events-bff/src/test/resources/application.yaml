@@ -106,6 +106,8 @@ app:
   watch:
     conversion-delay: PT5M
     conversion-initial-delay: PT10M
+    merge-check-delay: PT1H
+    merge-check-initial-delay: PT10M
   api:
     max-page-size: 100
     cache:

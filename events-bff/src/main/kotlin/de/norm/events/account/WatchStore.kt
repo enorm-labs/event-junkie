@@ -4,6 +4,7 @@ import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
+import org.springframework.r2dbc.core.awaitOne
 import org.springframework.r2dbc.core.awaitRowsUpdated
 import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Component
@@ -79,6 +80,55 @@ class WatchStore(
             .bind("mbid", mbid)
             .fetch()
             .awaitRowsUpdated() > 0
+
+    /** Every watched MusicBrainz id once, in order. */
+    suspend fun ids(): List<String> =
+        db
+            .sql("SELECT DISTINCT mbid FROM accounts.follow WHERE kind = 'watch' ORDER BY mbid")
+            .map { row -> row.required("mbid", String::class.java) }
+            .flow()
+            .toList()
+
+    /**
+     * Moves the cursor to [month], the first day of a Berlin month, and answers true, or false when another run claimed it
+     * already. The row lock hands the month to one replica (V275).
+     */
+    suspend fun claimMonth(month: LocalDate): Boolean =
+        db
+            .sql("UPDATE accounts.push_cursor SET watches_checked_until = :month WHERE watches_checked_until < :month")
+            .bind("month", month)
+            .fetch()
+            .awaitRowsUpdated() > 0
+
+    /**
+     * Moves every watch on [old] to [survivor], the id MusicBrainz merged it into, with the survivor's [name] (#5225). An
+     * account that watches both keeps the survivor's row, and its row on [old] is deleted. Answers how many watches moved
+     * or were folded into the one already there.
+     */
+    suspend fun move(
+        old: String,
+        survivor: String,
+        name: String
+    ): Long =
+        db
+            .sql(
+                """
+                WITH folded AS (
+                    DELETE FROM accounts.follow o WHERE o.kind = 'watch' AND o.mbid = :old
+                    AND EXISTS (SELECT 1 FROM accounts.follow s WHERE s.kind = 'watch' AND s.account_id = o.account_id AND s.mbid = :survivor)
+                    RETURNING o.id
+                ), moved AS (
+                    UPDATE accounts.follow SET mbid = :survivor, name = :name
+                    WHERE kind = 'watch' AND mbid = :old AND id NOT IN (SELECT id FROM folded)
+                    RETURNING id
+                )
+                SELECT (SELECT count(*) FROM folded) + (SELECT count(*) FROM moved) AS changed
+                """.trimIndent()
+            ).bind("old", old)
+            .bind("survivor", survivor)
+            .bind("name", name)
+            .map { row -> row.required("changed", Long::class.javaObjectType) }
+            .awaitOne()
 
     /** The slug of an artist row with the verdict EXACT for each of [mbids] that has one. The lowest id wins a shared id. */
     suspend fun artistSlugs(mbids: Collection<String>): Map<String, String> {

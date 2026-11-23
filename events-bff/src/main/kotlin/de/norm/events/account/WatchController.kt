@@ -121,7 +121,7 @@ class WatchController(
         logger.info { "Watch ${action.tag}" }
     }
 
-    private companion object {
+    internal companion object {
         const val WATCH = "watch"
         const val INSTANT = "instant"
         const val MIN_TERM = 3

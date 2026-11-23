@@ -129,6 +129,10 @@ app:
     # How often watches are checked against the artist rows' MusicBrainz verdicts (#5214).
     conversion-delay: PT5M
     conversion-initial-delay: PT2M
+    # The check of the watched ids for MusicBrainz merges (#5225): a run every hour, which claims each Berlin month once
+    # and reads every watched id at the pace above.
+    merge-check-delay: PT1H
+    merge-check-initial-delay: PT15M
 
 # `info` joins the default `health`. It must NOT be routed through the public ingress: the
 # browser gets `GET /meta`, a curated contract (docs/LEGAL.md §4.4), and the chart sets
