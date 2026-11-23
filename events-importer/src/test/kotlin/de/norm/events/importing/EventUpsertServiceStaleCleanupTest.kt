@@ -1,6 +1,7 @@
 package de.norm.events.importing
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.EventChangeLog
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventStatus
@@ -33,6 +34,7 @@ import java.time.ZoneOffset
 class EventUpsertServiceStaleCleanupTest {
     private val eventRepository: EventRepository = mockk(relaxed = true)
     private val associationSyncService: AssociationSyncService = mockk(relaxed = true)
+    private val changeLog: EventChangeLog = mockk(relaxed = true)
 
     /** Fixed "today" for all tests — 2026-06-15. */
     private val today = LocalDate.of(2026, 6, 15)
@@ -91,7 +93,7 @@ class EventUpsertServiceStaleCleanupTest {
             contentStamp = mockk(relaxed = true),
             enrichmentRepository = mockk(relaxed = true),
             featureSync = mockk(relaxed = true),
-            changeLog = mockk(relaxed = true),
+            changeLog = changeLog,
             actTitleCasing = ActTitleCasing(mockk())
         )
 
@@ -330,6 +332,119 @@ class EventUpsertServiceStaleCleanupTest {
                     .upsertAndCleanup(listOf(replacement), venueId, venueSlug, eventSourceId, staleCleanup = StaleCleanup.SKIPPED)
 
                 coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+            }
+    }
+
+    /**
+     * A source whose `sourceId` shape changed lists every event under a new id. A row whose date and
+     * title stand still keeps its `id` through the slug match, and so its RSVPs (#5434).
+     */
+    @Nested
+    inner class Rekey {
+        private val stored = mutableListOf<EventEntity>()
+        private val saved = slot<Iterable<EventEntity>>()
+
+        @BeforeEach
+        fun storeRows() {
+            stored.clear()
+            coEvery {
+                eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, any(), any())
+            } answers { stored.filter { row -> row.eventDate in secondArg<LocalDate>()..thirdArg<LocalDate>() }.asFlow() }
+            coEvery {
+                eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, any())
+            } answers { stored.filter { row -> row.eventDate >= secondArg<LocalDate>() }.asFlow() }
+            coEvery { eventRepository.findBySourceIdIn(any()) } answers {
+                val ids = firstArg<Collection<String>>()
+                stored.filter { row -> row.sourceId in ids }.asFlow()
+            }
+            coEvery { eventRepository.findBySlugIn(any()) } answers {
+                val slugs = firstArg<Collection<String>>()
+                stored.filter { row -> row.slug in slugs }.asFlow()
+            }
+            coEvery { eventRepository.deleteByIdIn(any()) } answers { stored.removeAll { row -> row.id in firstArg<Collection<Long>>() } }
+            coEvery { eventRepository.saveAll(capture(saved)) } answers {
+                saved.captured.mapIndexed { index, entity -> entity.copy(id = entity.id ?: (100L + index)) }.asFlow()
+            }
+        }
+
+        private fun storedRow(
+            id: Long,
+            title: String,
+            eventDate: LocalDate,
+            sourceId: String,
+            slugSuffix: String = ""
+        ) = existingEvent(id, eventDate, sourceId, title).copy(slug = "$eventDate-$venueSlug-${title.lowercase()}$slugSuffix")
+
+        @Test
+        fun `a row dated tomorrow, re-keyed with date and title unchanged, keeps its id`() =
+            runTest {
+                stored += storedRow(1L, "Rekeyed", tomorrow, "src:old-shape/1")
+
+                service.upsertAndCleanup(listOf(scrapedEvent("Rekeyed", tomorrow, "src:new-shape/1")), venueId, venueSlug, eventSourceId)
+
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+                saved.captured.map { it.id to it.sourceId } shouldBe listOf(1L to "src:new-shape/1")
+                coVerify(exactly = 0) { changeLog.record(any(), match { it.isNotEmpty() }) }
+            }
+
+        @Test
+        fun `a row dated tomorrow whose title the scrape no longer lists is removed`() =
+            runTest {
+                stored += storedRow(1L, "Cancelled", tomorrow, "src:old-shape/1")
+
+                service.upsertAndCleanup(listOf(scrapedEvent("Other", tomorrow, "src:new-shape/2")), venueId, venueSlug, eventSourceId)
+
+                coVerify { eventRepository.deleteByIdIn(listOf(1L)) }
+                saved.captured.map { it.id to it.sourceId } shouldBe listOf(null to "src:new-shape/2")
+            }
+
+        @Test
+        fun `a cancelled sitting is removed although its twin is still listed under its known id`() =
+            runTest {
+                // Velomax keys a sitting on its time: the 20:00 twin keeps its id, so it is no re-key of the 15:00 one.
+                stored += storedRow(1L, "Spin", tomorrow, "velomax:spin@1500", "-1500")
+                stored += storedRow(2L, "Spin", tomorrow, "velomax:spin@2000", "-2000")
+
+                service.upsertAndCleanup(
+                    listOf(scrapedEvent("Spin", tomorrow, "velomax:spin@2000", LocalTime.of(20, 0))),
+                    venueId,
+                    venueSlug,
+                    eventSourceId
+                )
+
+                coVerify { eventRepository.deleteByIdIn(listOf(1L)) }
+            }
+
+        @Test
+        fun `two re-keyed sittings each keep their own id`() =
+            runTest {
+                stored += storedRow(1L, "Spin", tomorrow, "velomax:spin@1500", "-1500")
+                stored += storedRow(2L, "Spin", tomorrow, "velomax:spin@2000", "-2000")
+
+                service.upsertAndCleanup(
+                    listOf(
+                        scrapedEvent("Spin", tomorrow, "velomax:spin/1500", LocalTime.of(15, 0)),
+                        scrapedEvent("Spin", tomorrow, "velomax:spin/2000", LocalTime.of(20, 0))
+                    ),
+                    venueId,
+                    venueSlug,
+                    eventSourceId
+                )
+
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+                saved.captured.map { it.id to it.sourceId } shouldBe listOf(1L to "velomax:spin/1500", 2L to "velomax:spin/2000")
+            }
+
+        @Test
+        fun `a re-keyed row whose date moved is removed and its move is logged`() =
+            runTest {
+                val dayAfter = tomorrow.plusDays(1)
+                stored += storedRow(1L, "Moved", tomorrow, "src:moved@$tomorrow")
+
+                service.upsertAndCleanup(listOf(scrapedEvent("Moved", dayAfter, "src:moved@$dayAfter")), venueId, venueSlug, eventSourceId)
+
+                coVerify { eventRepository.deleteByIdIn(listOf(1L)) }
+                coVerify { changeLog.record(any(), mapOf(100L to 1L)) }
             }
     }
 

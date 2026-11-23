@@ -353,9 +353,11 @@ class EventUpsertService(
      *
      * A stored row of **this** source whose own `sourceId` this scrape does not claim is that event
      * under a new identity: the entity is rebuilt on it, keeping `id` and `createdAt` and writing the
-     * **new** `sourceId`. Anything else — another source's row, or one this scrape already matched —
-     * cannot be taken, so the incoming event is dropped rather than left to fail the whole batch: one
-     * `executeMany` carries the run, and a violation inside it aborts the transaction.
+     * **new** `sourceId`. A re-keyed source reaches it on every date: [removeStaleEvents] keeps a row
+     * whose date and title a newly keyed scraped event shares, so the row is here to take (#5434).
+     * Anything else — another source's row, or one this scrape already matched — cannot be taken,
+     * so the incoming event is dropped rather than left to fail the whole batch: one `executeMany`
+     * carries the run, and a violation inside it aborts the transaction.
      *
      * @param candidates each scraped event beside the entity built for it.
      * @param build rebuilds one entity on a different existing row.
@@ -485,6 +487,11 @@ class EventUpsertService(
      * (#1980). A [spared] row is listed but was dropped because its own page failed, so only that
      * row is kept (#4793).
      *
+     * A row the source re-keyed is not stale: a scraped event shares its date and normalised title,
+     * under a `sourceId` no stored row carries. The row stays for [resolveBySlug], which keeps its
+     * `id` and so its RSVPs (#5434). A row whose date or title changed too is removed, and
+     * [recordDateMoves] pairs a moved date with its insert.
+     *
      * @param scrapedEvents the current scrape, for the date range and the set of known sourceIds.
      * @param eventSourceId the owning [EventSourceEntity]'s id, to query by FK.
      * @return the deleted rows.
@@ -516,9 +523,11 @@ class EventUpsertService(
         if (kept.isNotEmpty()) {
             logger.info { "Kept ${kept.size} event(s) on event source $eventSourceId out of the stale cleanup: their pages failed to load" }
         }
-        val (rekeyed, staleEvents) = unlisted.partition { it.isRekeyedToday(scrapedEvents) }
+        val storedSourceIds = existingEvents.mapTo(mutableSetOf()) { it.sourceId }
+        val newlyKeyed = scrapedEvents.filter { it.sourceId !in storedSourceIds }
+        val (rekeyed, staleEvents) = unlisted.partition { it.isRekeyedIn(newlyKeyed) }
         if (rekeyed.isNotEmpty()) {
-            logger.info { "Kept ${rekeyed.size} today-event(s) on event source $eventSourceId for the slug match: listed under a new source id" }
+            logger.info { "Kept ${rekeyed.size} event(s) on event source $eventSourceId for the slug match: listed under a new source id" }
         }
 
         if (staleEvents.isNotEmpty()) {
@@ -545,13 +554,14 @@ class EventUpsertService(
     }
 
     /**
-     * A today-row the scrape still lists under a new `sourceId`, by date and title. Deleting it would
-     * give the event a new `id` and drop its RSVPs, so [resolveBySlug] takes it instead (#1719).
+     * A row the scrape still lists under a new `sourceId`, by date and normalised title. Deleting it
+     * would give the event a new `id` and drop its RSVPs, so [resolveBySlug] takes it instead (#1719,
+     * #5434). [newlyKeyed] holds only the scraped events no stored row carries, so a cancelled second
+     * sitting does not hide behind its listed twin.
      */
-    private fun EventEntity.isRekeyedToday(scrapedEvents: List<ScrapedEvent>): Boolean {
-        if (eventDate != LocalDate.now(clock)) return false
+    private fun EventEntity.isRekeyedIn(newlyKeyed: List<ScrapedEvent>): Boolean {
         val title = title.normalizedTitle()
-        return scrapedEvents.any { it.eventDate == eventDate && it.storedTitle().normalizedTitle() == title }
+        return newlyKeyed.any { it.eventDate == eventDate && it.storedTitle().normalizedTitle() == title }
     }
 
     /**
