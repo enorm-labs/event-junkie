@@ -11,12 +11,12 @@ import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.germanDecimalOrNull
+import de.norm.events.scraper.isTicketShop
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
-import java.net.URI
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -106,7 +106,7 @@ class BallhausWeddingOverviewPageScraper {
 
     private fun ticketLinks(paragraph: Element): List<String> = paragraph.select("a[href]").filter { it.text().trim() == "Tickets" }.map { it.attr("href") }
 
-    private fun shopLinks(paragraph: Element): List<String> = paragraph.select("a[href]").map { it.attr("href") }.filter(::isTicketShop)
+    private fun shopLinks(paragraph: Element): List<String> = paragraph.select("a[href]").map { it.attr("href") }.filter { isTicketShop(it, TICKET_SHOPS) }
 
     private fun entryOf(
         match: MatchResult,
@@ -217,11 +217,6 @@ private fun blockYear(
     val best = votes.values.max()
     val winners = votes.filterValues { it == best }.keys
     return winners.singleOrNull() ?: headingYear?.takeIf { it in winners } ?: today.year
-}
-
-private fun isTicketShop(url: String): Boolean {
-    val host = runCatching { URI(url).host }.getOrNull() ?: return false
-    return TICKET_SHOPS.any { host == it || host.endsWith(".$it") }
 }
 
 private fun safeDate(

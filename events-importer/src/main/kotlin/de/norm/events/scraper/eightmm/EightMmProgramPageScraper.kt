@@ -39,6 +39,7 @@ import java.util.Locale
  * - **A `<name> [(<act>)] DJ SET` title bills its DJ** the same way: `Camisa Dj set`, `Wedding (CPN) DJ SET`. A name with a dash,
  *   a colon or a plus is a night's frame and bills nobody: `Halloween Weekend - Prayforevilspirit DJ SET`, and so does one that
  *   describes several people: `Manny and Jakob from Die Anstalt DJ SET`. This narrows #3717, which billed nobody for any DJ set.
+ *   A `Residency` at the end of the name is not part of it: `Jeff Clark Residency DJ Set` bills Jeff Clark (#5497).
  *   Every other DJ title is free-form and bills nobody.
  */
 class EightMmProgramPageScraper(
@@ -117,7 +118,10 @@ class EightMmProgramPageScraper(
             ?.firstNotNullOfOrNull { it.find(title) }
             ?.groups
             ?.get("name")
-            ?.let { ScrapedArtist(name = deshout(it.value.trim()), role = ArtistRole.DJ) }
+            ?.value
+            ?.trim()
+            ?.takeUnless { it.equals(HOUSE, ignoreCase = true) }
+            ?.let { ScrapedArtist(name = deshout(it), role = ArtistRole.DJ) }
 
     private companion object {
         /** Squarespace puts U+202F before the meridiem, which `\s` does not match. */
@@ -134,9 +138,13 @@ class EightMmProgramPageScraper(
         /**
          * `<name> DJ SET`, with an optional bracket after the name. A dash, colon or plus marks a night's frame instead, and an
          * `and`, `&`, `from` or `with` a description of several people: `Manny and Jakob from Die Anstalt DJ SET`.
+         * A bare `Residency DJ Set` names nobody.
          */
         val DJ_SET =
-            Regex("""^(?!.*\b(?:and|from|with)\s)(?<name>[^()\-–—:+&]+?)\s*(?:\([^)]+\))?\s+DJ[\s-]*SET\s*$""", RegexOption.IGNORE_CASE)
+            Regex(
+                """^(?!.*\b(?:and|from|with)\s)(?!RESIDENCY\s*(?:\(|DJ\b))(?<name>[^()\-–—:+&]+?)(?:\s+RESIDENCY)?\s*(?:\([^)]+\))?\s+DJ[\s-]*SET\s*$""",
+                RegexOption.IGNORE_CASE
+            )
 
         const val HOUSE = "8MM"
 

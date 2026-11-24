@@ -56,7 +56,11 @@ val EIGHT_MM_LIMITATIONS =
             verified = "2026-11-24"
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; bands keep the door money", verified = "2026-10-18"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "a blurb points to the venue's Instagram for tickets, never to a shop", verified = "2026-10-18"),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "only a blurb that links a ticket shop gives a ticket link; most link nothing, or an Instagram page",
+            verified = "2026-11-24"
+        ),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing flags an event sold out", verified = "2026-10-18"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing flags an event cancelled", verified = "2026-10-18"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "a guest promoter is named only inside the title or the blurb", verified = "2026-10-18")

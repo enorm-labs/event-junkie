@@ -11,15 +11,18 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.isTicketShop
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.stripTitleStatusMarker
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 
 /**
  * Reads an 8MM event page into its listing event: the blurb, and the `Doors: 19:00` / `Show: 20:30` lines a concert
  * blurb ends with. The calendar's own time is a slot the venue rarely edits, so a stated show time replaces it.
  * A page without a blurb leaves the event as listed; the footer's `sqs-html-content` sits outside the `article`.
+ * A blurb's link to a ticket shop is the ticket link; every other link is an act's or a DJ's own page.
  *
  * A title outside the house frame bills nobody, so a blurb's `Line up -` list bills that night instead: the
  * festival days name their acts only there, slash-separated, ending in `+ MORE` (event 12287).
@@ -32,16 +35,21 @@ class EightMmEventPageScraper {
         event: ScrapedEvent,
         document: Document
     ): ScrapedEvent {
+        val blurb = document.selectFirst("article.eventitem .eventitem-column-content .sqs-html-content")
+        val ticketUrl = event.ticketUrl ?: blurb?.let(::shopLink)
         val description =
-            htmlParagraphText(document.selectFirst("article.eventitem .eventitem-column-content .sqs-html-content")?.html())
-                ?: return event.copy(artists = event.artists.ifEmpty { liveTitleActs(event) })
+            htmlParagraphText(blurb?.html())
+                ?: return event.copy(ticketUrl = ticketUrl, artists = event.artists.ifEmpty { liveTitleActs(event) })
         return event.copy(
             description = description,
+            ticketUrl = ticketUrl,
             doorsTime = labelledClock(description, DOORS_LABELS),
             startTime = labelledClock(description, START_LABELS) ?: event.startTime,
             artists = event.artists.ifEmpty { lineUp(description) }.ifEmpty { liveTitleActs(event) }
         )
     }
+
+    private fun shopLink(blurb: Element): String? = blurb.select("a[href]").map { it.absUrl("href") }.firstOrNull { isTicketShop(it, TICKET_SHOPS) }
 
     /** The acts of the blurb's `Line up -` list, on the label's line or the next one with text; none without the label. */
     private fun lineUp(description: String): List<ScrapedArtist> {
@@ -72,6 +80,8 @@ class EightMmEventPageScraper {
     }
 
     private companion object {
+        val TICKET_SHOPS = setOf("eventim-light.com", "reservix.de", "tixforgigs.com")
+
         val LINE_UP_LABEL = Regex("""^$LINE_UP_WORD\s*[-–:]\s*""", RegexOption.IGNORE_CASE)
 
         /** A `with`, a colon or a dash in front of `Live plus` marks a night's frame, which is not part of a name. */
