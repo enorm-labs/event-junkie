@@ -5,42 +5,23 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import type { AdminEvent } from '@/api/events'
 import EventEditor from '@/components/EventEditor.vue'
 import EventsView from '@/views/EventsView.vue'
+import { adminEvent } from '@/lib/__tests__/adminEvent'
 import { json } from '@/lib/__tests__/jsonResponse'
 
 const LONG_TITLE =
   'An Extraordinarily Long Evening of Improvised Jazz, Spoken Word and Open Decks Until the Sun Comes Up Over the Spree'
 
 function event(overrides: Partial<AdminEvent>): AdminEvent {
-  return {
+  return adminEvent({
     id: 1,
     venueId: 3,
     title: 'Open Stage',
-    subtitle: null,
-    description: null,
     eventType: 'SHOW',
-    status: 'SCHEDULED',
     slug: '2026-10-14-open-stage',
     eventDate: '2026-10-14',
-    doorsTime: null,
-    startTime: '20:00:00',
-    imageUrl: null,
-    sourceUrl: null,
     sourceId: 'venue:1',
-    ticketUrl: null,
-    facebookEventUrl: null,
-    genre: null,
-    genreTags: [],
-    pricePresale: null,
-    priceBoxOffice: null,
-    priceCurrency: 'EUR',
-    priceNote: null,
-    soldOut: false,
-    free: false,
-    artists: [],
-    promoterIds: [],
-    pinnedFields: [],
     ...overrides,
-  }
+  })
 }
 
 let found: AdminEvent[] = []

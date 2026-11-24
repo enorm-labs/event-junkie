@@ -16,36 +16,18 @@ import { EVENT_FEATURES } from '@/api/events'
 import type { Festival, fetchFestivals } from '@/api/festivals'
 import type { fetchNames, NamedRow, searchByName } from '@/api/names'
 import EventEditor from '@/components/EventEditor.vue'
+import { adminEvent } from '@/lib/__tests__/adminEvent'
 
-const stored: AdminEvent = {
+const stored = adminEvent({
   id: 418,
   venueId: 7,
   title: 'Die Nerven',
-  subtitle: null,
-  description: null,
   eventType: 'OTHER',
-  status: 'SCHEDULED',
   slug: '2026-09-12-badehaus-die-nerven',
   eventDate: '2026-09-12',
-  doorsTime: null,
-  startTime: '20:00:00',
-  imageUrl: null,
-  sourceUrl: null,
   sourceId: 'badehaus:die-nerven',
-  ticketUrl: null,
-  facebookEventUrl: null,
-  genre: null,
-  genreTags: [],
-  pricePresale: null,
-  priceBoxOffice: null,
-  priceCurrency: 'EUR',
-  priceNote: null,
-  soldOut: false,
-  free: false,
-  artists: [],
-  promoterIds: [],
   pinnedFields: ['title'],
-}
+})
 
 const api = vi.hoisted(() => ({
   fetchEvent: vi.fn<typeof fetchEvent>(),

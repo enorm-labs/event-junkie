@@ -2,9 +2,9 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
-import type { AdminEvent } from '@/api/events'
 import type { Suggestion } from '@/api/suggestions'
 import SuggestionsView from '@/views/SuggestionsView.vue'
+import { adminEvent } from '@/lib/__tests__/adminEvent'
 import { json } from '@/lib/__tests__/jsonResponse'
 
 function suggestion(overrides: Partial<Suggestion>): Suggestion {
@@ -29,35 +29,16 @@ function suggestion(overrides: Partial<Suggestion>): Suggestion {
   }
 }
 
-const event: AdminEvent = {
+const event = adminEvent({
   id: 7,
   venueId: 3,
   title: 'Ash Rivers',
-  subtitle: null,
   description: 'Einlass 19 Uhr, Beginn 20 Uhr',
-  eventType: 'CONCERT',
-  status: 'SCHEDULED',
   slug: '2026-10-24-ash-rivers',
   eventDate: '2026-10-24',
-  doorsTime: null,
   startTime: null,
-  imageUrl: null,
-  sourceUrl: null,
   sourceId: 'venue:a',
-  ticketUrl: null,
-  facebookEventUrl: null,
-  genre: null,
-  genreTags: [],
-  pricePresale: null,
-  priceBoxOffice: null,
-  priceCurrency: 'EUR',
-  priceNote: null,
-  soldOut: false,
-  free: false,
-  artists: [],
-  promoterIds: [],
-  pinnedFields: [],
-}
+})
 
 let listed: Suggestion[] = []
 let acceptStatus = 200

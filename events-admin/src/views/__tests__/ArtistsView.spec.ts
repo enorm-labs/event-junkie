@@ -5,6 +5,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import type { MusicBrainzCandidate, ReviewArtist } from '@/api/artists'
 import type { AdminEvent } from '@/api/events'
 import ArtistsView from '@/views/ArtistsView.vue'
+import { adminEvent } from '@/lib/__tests__/adminEvent'
 import { json } from '@/lib/__tests__/jsonResponse'
 
 const LONG_NAME =
@@ -15,36 +16,16 @@ function artist(id: number, name: string): ReviewArtist {
 }
 
 function event(overrides: Partial<AdminEvent>): AdminEvent {
-  return {
+  return adminEvent({
     id: 1,
     venueId: 3,
     title: 'Accept live',
-    subtitle: null,
-    description: null,
-    eventType: 'CONCERT',
-    status: 'SCHEDULED',
     slug: '2026-10-20-accept-live',
     eventDate: '2026-10-20',
-    doorsTime: null,
-    startTime: '20:00:00',
-    imageUrl: null,
-    sourceUrl: null,
     sourceId: 'venue:1',
-    ticketUrl: null,
-    facebookEventUrl: null,
-    genre: null,
-    genreTags: [],
-    pricePresale: null,
-    priceBoxOffice: null,
-    priceCurrency: 'EUR',
-    priceNote: null,
-    soldOut: false,
-    free: false,
     artists: [{ artistId: 9, role: 'HEADLINER', billingOrder: 0, stage: null }],
-    promoterIds: [],
-    pinnedFields: [],
     ...overrides,
-  }
+  })
 }
 
 function candidate(overrides: Partial<MusicBrainzCandidate>): MusicBrainzCandidate {

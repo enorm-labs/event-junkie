@@ -3,39 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AdminEvent } from '@/api/events'
 import PicksView from '@/views/PicksView.vue'
+import { adminEvent } from '@/lib/__tests__/adminEvent'
 import { json } from '@/lib/__tests__/jsonResponse'
 
 function event(id: number, title: string, eventDate: string, featuredUntil: string | null) {
-  return {
+  return adminEvent({
     id,
     venueId: 7,
     title,
-    subtitle: null,
-    description: null,
-    eventType: 'CONCERT',
-    status: 'SCHEDULED',
     slug: `slug-${id}`,
     eventDate,
-    doorsTime: null,
-    startTime: '20:00:00',
-    imageUrl: null,
-    sourceUrl: null,
     sourceId: `test:${id}`,
-    ticketUrl: null,
-    facebookEventUrl: null,
     genre: ' Noise Rock',
-    genreTags: [],
-    pricePresale: null,
-    priceBoxOffice: null,
-    priceCurrency: 'EUR',
-    priceNote: null,
-    soldOut: false,
-    free: false,
-    artists: [],
-    promoterIds: [],
-    pinnedFields: [],
     featuredUntil,
-  } satisfies AdminEvent
+  })
 }
 
 let picks: AdminEvent[] = []
