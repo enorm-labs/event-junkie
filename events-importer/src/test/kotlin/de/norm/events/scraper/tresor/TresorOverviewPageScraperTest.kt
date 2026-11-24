@@ -144,6 +144,13 @@ class TresorOverviewPageScraperTest {
         acts.none { it.contains('[') } shouldBe true
     }
 
+    // Tresor x RA25 (2026-11-21) billed Appleblim twice.
+    @Test
+    fun `strips a bracketed set note, and keeps a bracket that names no set`() {
+        splitActs("Appleblim (Grime Set)") shouldBe listOf("Appleblim")
+        splitActs("Set (Grime)") shouldBe listOf("Set (Grime)")
+    }
+
     @Test
     fun `drops a listening session, whose line names a release and not a performer`() {
         listOf(

@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -26,6 +27,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
@@ -46,6 +48,7 @@ import java.time.MonthDay
  * with no rule is a description — a garden evening, a film night, a residency's schedule notes
  * — and yields **no** artists, rather than minting "free entry till 20:00" or a film synopsis.
  * A sentence under a floor ends that floor: Hot Mess bills one DJ, then its blurb (event 11857).
+ * Shortly before a night the lines carry their set times (`02:30 Per Hammar`), which are the sets' starts.
  *
  * Dates carry a weekday but no year, so the year comes from the weekday ([inferYearForWeekday]).
  *
@@ -92,7 +95,7 @@ class KaterOverviewPageScraper(
         }
 
         val body = lines.drop(1)
-        val lineup = parseLineup(body)
+        val lineup = parseLineup(body, schedule)
         val description = describe(body).takeIf { it.isNotBlank() }
 
         return ScrapedEvent(
@@ -136,13 +139,19 @@ class KaterOverviewPageScraper(
      * the venue's own signal that the prose is a description, and reading it as acts would mint
      * schedule notes and film synopses as artists.
      */
-    private fun parseLineup(body: List<String>): List<ScrapedArtist> {
+    private fun parseLineup(
+        body: List<String>,
+        schedule: Schedule
+    ): List<ScrapedArtist> {
         if (body.none { FLOOR_RULE.matches(it) }) return emptyList()
 
         val artists = mutableListOf<ScrapedArtist>()
         var stage: String? = null
         var expectFloorName = false
-        for (line in body) {
+        var clock = schedule.floorClock()
+        for (printed in body) {
+            val slot = SLOT_TIME.find(printed)
+            val line = printed.replace(SLOT_TIME, "")
             when {
                 FLOOR_RULE.matches(line) -> {
                     expectFloorName = true
@@ -152,6 +161,7 @@ class KaterOverviewPageScraper(
                     // A `SPECIALS` block lists the night's side programme, so no stage means its lines bill nobody (#2967).
                     stage = line.replace(FLOOR_PRESENTER_SUFFIX, "").trim().takeIf { it.isNotBlank() && !SPECIALS_FLOOR.matches(it) }
                     expectFloorName = false
+                    clock = schedule.floorClock()
                 }
 
                 stage != null && readsAsProse(line) -> {
@@ -163,7 +173,8 @@ class KaterOverviewPageScraper(
                 // The Noise`, a second floor's own heading printed without the floor rule above it,
                 // so the acts under it continue under the stage in hand (#1679).
                 stage != null && !NOTE_LINE.containsMatchIn(line) && !WEEKDAY_HEADING.containsMatchIn(line) -> {
-                    artists += splitActs(line).map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage) }
+                    val start = clock?.startOf(slot)
+                    artists += splitActs(line).map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage, setStart = start) }
                 }
             }
         }
@@ -201,7 +212,14 @@ class KaterOverviewPageScraper(
         val startTime: LocalTime?,
         val endDate: LocalDate?,
         val endTime: LocalTime?
-    )
+    ) {
+        /**
+         * The clock that dates one floor's set times, or `null` for a night longer than one: a floor of a whole weekend may
+         * open on any of its days. A first set printed earlier than the doors is past midnight.
+         */
+        fun floorClock(): RunningOrderClock? =
+            RunningOrderClock(date, dayBreak = startTime ?: LocalTime.NOON).takeIf { endDate == null || endDate <= date.plusDays(1) }
+    }
 
     /**
      * Parses the summary's opening `Wd. DD.MM HH:mm — Wd. DD.MM HH:mm` line. Both halves are
@@ -265,6 +283,9 @@ class KaterOverviewPageScraper(
         val WEEKDAY_HEADING =
             Regex("""^(?:mon|tues|wednes|thurs|fri|satur|sun)day(?:\s+by\s+\S|(?:\s+night)?\s*$)""", RegexOption.IGNORE_CASE)
 
+        /** The set time a line opens with, with or without its end: `02:30 Per Hammar`. */
+        val SLOT_TIME = Regex("""^(\d{1,2}:\d{2})(?:\s*[-–—]\s*\d{1,2}:\d{2})?\s+(?=\S)""")
+
         val SENTENCE_END = Regex("""[.!?]$""")
 
         /** Longest an act may be before it reads as prose rather than a name, as at Renate. */
@@ -293,3 +314,6 @@ class KaterOverviewPageScraper(
         val SCHEDULE_PATTERN = Regex("""^$HALF(?:\s*[—–-]\s*$HALF)?""")
     }
 }
+
+/** The instant of a printed set time, or `null` without one. */
+private fun RunningOrderClock.startOf(slot: MatchResult?): Instant? = parseTime(slot?.groupValues?.get(1))?.let { slot(it).first }

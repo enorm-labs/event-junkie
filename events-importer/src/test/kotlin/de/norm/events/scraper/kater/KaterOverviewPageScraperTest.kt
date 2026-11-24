@@ -178,6 +178,51 @@ class KaterOverviewPageScraperTest {
         artists shouldContainExactly listOf(ScrapedArtist("Mona Moore", ArtistRole.DJ, "HOPPER"))
     }
 
+    private fun timedNight(schedule: String) =
+        Jsoup.parse(
+            """
+            <article class="post-1961 event type-event" id="event-1961">
+                <header class="entry-header"><h2 class="toggle-article">
+                    <span class="date-header">21.11.</span><span class="date-title">Katernacht</span>
+                </h2></header>
+                <div class="entry-summary">
+                    <p>$schedule</p>
+                    <p>__________________<br />HOPPER</p>
+                    <p>00:00 Gti<br />02:30 Per Hammar b2b Naicet<br />05:00 Hanna Baertig</p>
+                    <p>__________________<br />EXTRAEXTRA</p>
+                    <p>23:00 Reza Jalilian<br />01:00 Special Guest<br />03:30 – 06:00 Kotelett<br />Nick Ton Pere</p>
+                </div>
+            </article>
+            """.trimIndent(),
+            baseUrl
+        )
+
+    // Events 5011 and 6777 billed `02:30 Per Hammar` as the act's name.
+    @Test
+    fun `reads a leading clock as the set's start, per floor and across midnight`() {
+        val artists = scraper.scrape(timedNight("Sa. 21.11 22:00 — So. 22.11 10:00"), baseUrl).single().artists
+
+        fun at(time: String) = Instant.parse("2026-11-$time:00Z")
+        artists shouldContainExactly
+            listOf(
+                ScrapedArtist("Gti", ArtistRole.DJ, "HOPPER", setStart = at("21T23:00")),
+                ScrapedArtist("Per Hammar", ArtistRole.DJ, "HOPPER", setStart = at("22T01:30")),
+                ScrapedArtist("Naicet", ArtistRole.DJ, "HOPPER", setStart = at("22T01:30")),
+                ScrapedArtist("Hanna Baertig", ArtistRole.DJ, "HOPPER", setStart = at("22T04:00")),
+                ScrapedArtist("Reza Jalilian", ArtistRole.DJ, "EXTRAEXTRA", setStart = at("21T22:00")),
+                ScrapedArtist("Kotelett", ArtistRole.DJ, "EXTRAEXTRA", setStart = at("22T02:30")),
+                ScrapedArtist("Nick Ton Pere", ArtistRole.DJ, "EXTRAEXTRA")
+            )
+    }
+
+    @Test
+    fun `strips the clock but dates no set on a night longer than one`() {
+        val artists = scraper.scrape(timedNight("Sa. 21.11 22:00 — Di. 24.11 14:00"), baseUrl).single().artists
+
+        artists.first() shouldBe ScrapedArtist("Gti", ArtistRole.DJ, "HOPPER")
+        artists.mapNotNull { it.setStart }.shouldBeEmpty()
+    }
+
     @Test
     fun `ends a floor at the blurb printed under its DJ`() {
         // Event 11857 (Kater post 1987), from the homepage on 2026-10-29.

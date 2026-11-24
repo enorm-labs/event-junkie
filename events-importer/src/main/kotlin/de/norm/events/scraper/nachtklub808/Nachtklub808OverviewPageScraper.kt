@@ -111,7 +111,7 @@ class Nachtklub808OverviewPageScraper {
     private fun JsonNode.value(field: String): String = path(field).path(1).asString("")
 
     private companion object {
-        val HOST = Regex("""\(\s*host\s*\)""", RegexOption.IGNORE_CASE)
+        val HOST = Regex("""[(\[]\s*host\s*[)\]]""", RegexOption.IGNORE_CASE)
     }
 }
 

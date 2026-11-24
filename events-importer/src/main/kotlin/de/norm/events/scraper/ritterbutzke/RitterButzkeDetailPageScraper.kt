@@ -146,7 +146,7 @@ class RitterButzkeDetailPageScraper(
             .filter { isAfter(label, it) }
             .mapNotNull { it.text().trim().takeIf { name -> name.isNotBlank() } }
             .distinct()
-            .filterNot { isNonArtistName(it) }
+            .filterNot { isNonArtistName(it) || FLOOR_TAKEOVER.containsMatchIn(it) }
             .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
@@ -160,7 +160,7 @@ class RitterButzkeDetailPageScraper(
             .orEmpty()
             .mapNotNull { it.schemaName() }
             .distinct()
-            .filterNot { isNonArtistName(it) }
+            .filterNot { isNonArtistName(it) || FLOOR_TAKEOVER.containsMatchIn(it) }
             .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
     /** Whether [candidate] follows the `Line Up:` [label] in document order. */
@@ -204,6 +204,9 @@ private val START_TIME_PATTERN = Regex("""ab\s+(\d{1,2}:\d{2})""", RegexOption.I
  * style; the refund notice and video embed after them carry classes.
  */
 private const val LINEUP_ROW_SELECTOR = "div[style*=padding-left]"
+
+/** A floor's takeover, which heads the DJs it brings: `Huettenbar Takeover`. */
+private val FLOOR_TAKEOVER = Regex("""\stakeover$""", RegexOption.IGNORE_CASE)
 
 /** The label introducing the DJ roster. */
 private val LINEUP_LABEL = Regex("""^\s*line\s*up\s*:""", RegexOption.IGNORE_CASE)

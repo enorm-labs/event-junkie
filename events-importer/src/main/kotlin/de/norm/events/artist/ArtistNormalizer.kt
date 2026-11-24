@@ -221,6 +221,17 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "djhaukepauke" to "DJ HaukePauke",
         "djhighscore" to "High Score",
         "rabbigreen" to "Rabbi Green",
+        // The same, decided by the operator (V279): Frannz, MAXXIM and Eschschloraque each billing one DJ with and without
+        // `DJ `, Renate and MAXXIM spacing a name two ways, and one rare name at Kreuzwerk and Tresor.
+        "djheymycommander" to "Hey my Commander",
+        "djstan" to "Stan",
+        "djmig" to "Mig",
+        "djisamelnagera" to "Isamel Nagera",
+        "djonef" to "DJ One F",
+        "djbarox" to "Barox",
+        "youngoldmann" to "youngoldmann",
+        "elliephunk" to "elliephunk",
+        "djvolvox" to "Volvox",
         // Frannz bills `JULIAN TSF`, and the de-shouter would write the initials `Tsf` (#5299).
         "juliantsf" to "Julian TSF"
     )

@@ -136,7 +136,7 @@ class MbiaOverviewPageScraper {
         val LIVE_SUFFIX = Regex("""\s+live$""", RegexOption.IGNORE_CASE)
 
         /** A placeholder or a note on the floor, not an act. */
-        val NOT_AN_ACT = Regex("""tba|tbc|all night long.*|contest winner""", RegexOption.IGNORE_CASE)
+        val NOT_AN_ACT = Regex("""tba|tbc|all night long.*|contest winner|.*\bb(?:irth)?-?day bash\b.*""", RegexOption.IGNORE_CASE)
     }
 }
 

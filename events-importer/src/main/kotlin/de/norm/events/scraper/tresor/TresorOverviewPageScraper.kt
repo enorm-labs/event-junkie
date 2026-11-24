@@ -187,7 +187,8 @@ private val RELEASE_TITLE = Regex("""\s+['"‘’“„]([^'"‘’“”„]+)[
 private val SET_FORMAT_NOTE =
     Regex(
         """\s*\[\s*(?:live(?:\s+set)?|dj\s+set|all\s+night\s+long|closing|opening)\s*]\s*$""" +
-            """|\s+(?:live(?:\s+set)?|all\s+night\s+long)\s*$""",
+            """|\s+(?:live(?:\s+set)?|all\s+night\s+long)\s*$""" +
+            """|\s*\(\s*\p{L}+\s+set\s*\)\s*$""",
         RegexOption.IGNORE_CASE
     )
 
