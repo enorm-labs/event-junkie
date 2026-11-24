@@ -124,6 +124,28 @@ class EightMmProgramPageScraperTest {
         billed("N.O DJ SET (Noah + Olga)").shouldBeEmpty()
     }
 
+    // Event 15194 was listed as the first title, and then as the one with the plus.
+    @Test
+    fun `a trailing Residency is no part of the DJ's name`() {
+        fun billed(title: String) =
+            EightMmProgramPageScraper(Clock.fixed(Instant.parse("2026-10-01T10:00:00Z"), ZoneId.of("Europe/Berlin")))
+                .scrape(Jsoup.parse(listing(title), sourceUrl), sourceUrl)
+                .single()
+                .artists
+                .map { it.name to it.role }
+
+        billed("Jeff Clark Residency DJ Set") shouldContainExactly listOf("Jeff Clark" to ArtistRole.DJ)
+        billed("JEFF CLARK RESIDENCY DJ SET") shouldContainExactly listOf("Jeff Clark" to ArtistRole.DJ)
+        billed("jeff clark residency (Black Lips) dj set").map { it.first.lowercase() } shouldContainExactly listOf("jeff clark")
+        billed("Residency Club DJ Set") shouldContainExactly listOf("Residency Club" to ArtistRole.DJ)
+        billed("Residencya DJ Set") shouldContainExactly listOf("Residencya" to ArtistRole.DJ)
+        billed("Residency DJ Set").shouldBeEmpty()
+        billed("RESIDENCY (CPN) DJ SET").shouldBeEmpty()
+        billed("8MM Residency DJ Set").shouldBeEmpty()
+        billed("Obi Blanche + Kristina Tica Dj set").shouldBeEmpty()
+        billed("Disco déplorable (Helsinki, Finland) and Unknown Callers DJ SET").shouldBeEmpty()
+    }
+
     @Test
     fun `a night's own title bills nobody`() {
         fun billed(title: String) =

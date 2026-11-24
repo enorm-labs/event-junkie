@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasFreeEntryPhrase
+import de.norm.events.scraper.isTicketShop
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parsePriceValue
@@ -179,7 +180,7 @@ class SlaughterhouseOverviewPageScraper {
     /** A field line, or a line that is only a ticket shop's link, which [ticketUrlOf] reads. */
     private fun isFieldLine(line: String): Boolean =
         FIELD_LINE.containsMatchIn(line) || PRICE_LINE.containsMatchIn(line) || STYLE_LINE.matches(line) || DIVIDER.matches(line) ||
-            (BARE_LINK.matches(line) && isTicketShop(line.trim().let { if ("://" in it) it else "https://$it" }))
+            (BARE_LINK.matches(line) && isTicketShop(line.trim().let { if ("://" in it) it else "https://$it" }, TICKET_SHOPS))
 
     /** The link on a `Tickets:` line, or else the first link to a ticket shop, each unwrapped from Facebook's redirect. */
     private fun ticketUrlOf(blocks: List<Element>): String? {
@@ -193,12 +194,7 @@ class SlaughterhouseOverviewPageScraper {
                     ?.let { TICKETS.containsMatchIn(it) } == true
             }
         return labelled?.absUrl("href")?.let(::unwrapFacebookRedirect)
-            ?: links.map { unwrapFacebookRedirect(it.absUrl("href")) }.firstOrNull(::isTicketShop)
-    }
-
-    private fun isTicketShop(url: String): Boolean {
-        val host = runCatching { URI(url).host }.getOrNull()?.lowercase() ?: return false
-        return TICKET_SHOPS.any { host == it || host.endsWith(".$it") }
+            ?: links.map { unwrapFacebookRedirect(it.absUrl("href")) }.firstOrNull { isTicketShop(it, TICKET_SHOPS) }
     }
 
     private fun unwrapFacebookRedirect(url: String): String {

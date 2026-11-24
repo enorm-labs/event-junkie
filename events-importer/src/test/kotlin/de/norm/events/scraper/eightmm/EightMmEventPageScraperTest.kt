@@ -140,6 +140,53 @@ class EightMmEventPageScraperTest {
         billed("PLAYROOM LIVE - BLANCO TETA", blurb = "").map { it.name } shouldBe listOf("BLANCO TETA")
     }
 
+    private fun ticketUrl(
+        blurb: String,
+        listed: ScrapedEvent = listed("RMFC LIVE in 8MM")
+    ) = scraper
+        .enrich(
+            listed,
+            Jsoup.parse(
+                """<article class="eventitem"><a href="https://www.eventim-light.com/de/a/1/e/outside">Map</a>
+                <div class="eventitem-column-content"><div class="sqs-html-content">$blurb</div></div></article>
+                <footer><div class="sqs-html-content"><a href="https://www.eventim-light.com/de/a/1">Tickets</a></div></footer>"""
+            )
+        ).ticketUrl
+
+    // Event 15198.
+    @Test
+    fun `reads a ticket shop's link from the blurb`() {
+        val shop = "https://www.eventim-light.com/de/a/5f002783c9f8d46492128f51/e/6ac76eb3b6cf4c5d7dcdf4b2"
+
+        ticketUrl("""<p>Live show: 21:00</p><p><a href="$shop">$shop</a></p>""") shouldBe shop
+        ticketUrl("""<p><a href="https://www.instagram.com/8mmbar/">8mmbar</a> <a href="$shop">Tickets</a></p>""") shouldBe shop
+        ticketUrl("""<p><a href="$shop">Tickets</a> <a href="https://www.tixforgigs.com/Event/1">More</a></p>""") shouldBe shop
+        // A linked poster with no text beside it.
+        ticketUrl("""<a href="$shop"><img src="x.jpg"></a>""") shouldBe shop
+    }
+
+    @Test
+    fun `reads no ticket link from any other link of the blurb`() {
+        ticketUrl("""<p>Tickets: <a href="https://www.instagram.com/8mmbar/">8mmbar</a></p>""").shouldBeNull()
+        ticketUrl("""<p><a href="https://noteventim-light.com/e/1">x</a> <a href="/program">y</a> <a href="mailto:w-masked@example.de">z</a></p>""")
+            .shouldBeNull()
+        ticketUrl("""<p><a href="https://www.instagram.com/eventim-light.com">x</a></p>""").shouldBeNull()
+        ticketUrl("<p>A blurb.</p>").shouldBeNull()
+        ticketUrl("").shouldBeNull()
+        scraper
+            .enrich(listed("RMFC LIVE in 8MM"), fixtureDocument("eightmm/eightmm-event-rmfc.html", "https://www.8mmbar.de/program"))
+            .ticketUrl
+            .shouldBeNull()
+    }
+
+    @Test
+    fun `keeps a ticket link the listed event has`() {
+        val listed = listed("RMFC LIVE in 8MM").copy(ticketUrl = "https://example.de/tickets")
+
+        ticketUrl("""<p><a href="https://www.eventim-light.com/de/a/1/e/2">Tickets</a></p>""", listed) shouldBe "https://example.de/tickets"
+        ticketUrl("<p>A blurb.</p>", listed) shouldBe "https://example.de/tickets"
+    }
+
     @Test
     fun `a page without a blurb leaves the listed event`() {
         val listed = listed("JEFF CLARK (BLACK LIPS) SUNDAY'S IN OCTOBER DJ RESIDENCY")
