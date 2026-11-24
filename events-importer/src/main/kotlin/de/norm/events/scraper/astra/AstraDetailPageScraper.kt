@@ -2,6 +2,7 @@ package de.norm.events.scraper.astra
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -142,7 +143,7 @@ class AstraDetailPageScraper {
 
     private companion object {
         /** `Line-Up:`, `Lineup:` or `Line up:` opening a line; the colon keeps prose that starts so out. */
-        val LINEUP_LABEL = Regex("""^\s*line\s*-?\s*up\s*:\s*""", RegexOption.IGNORE_CASE)
+        val LINEUP_LABEL = Regex("""^\s*$LINE_UP_WORD\s*:\s*""", RegexOption.IGNORE_CASE)
 
         /** One printed slot: `23:30`, `22.00 Uhr`, `(23:30 - 01:00)`. */
         const val SLOT = """\(?\d{1,2}[:.]\d{2}(?:\s*[-–]\s*\d{1,2}[:.]\d{2})?(?:\s*uhr)?\)?"""

@@ -7,6 +7,7 @@ import de.norm.events.scraper.COUNTRY_NAMES
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.START_LABELS
@@ -336,7 +337,7 @@ private fun lineupActs(
 }
 
 /** A line that is only the `LINEUP:` label; the colon keeps a `THE LINEUP` prose heading out. */
-private val LINEUP_LABEL = Regex("""^\W*line-?up\s*:\s*$""", RegexOption.IGNORE_CASE)
+private val LINEUP_LABEL = Regex("""^\W*$LINE_UP_WORD\s*:\s*$""", RegexOption.IGNORE_CASE)
 
 /** The venue's `///WER: Interpreten: …` data-sheet line, capturing the names after the label. */
 private val PERFORMER_LINE = Regex("""^/*\s*WER\s*:\s*Interpret\S*\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)

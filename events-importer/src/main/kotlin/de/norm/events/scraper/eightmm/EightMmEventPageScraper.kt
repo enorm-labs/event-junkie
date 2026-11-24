@@ -4,6 +4,7 @@ import de.norm.events.common.deshout
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -71,7 +72,7 @@ class EightMmEventPageScraper {
     }
 
     private companion object {
-        val LINE_UP_LABEL = Regex("""^line[\s-]?up\s*[-–:]\s*""", RegexOption.IGNORE_CASE)
+        val LINE_UP_LABEL = Regex("""^$LINE_UP_WORD\s*[-–:]\s*""", RegexOption.IGNORE_CASE)
 
         /** A `with`, a colon or a dash in front of `Live plus` marks a night's frame, which is not part of a name. */
         val LIVE_SHAPES =

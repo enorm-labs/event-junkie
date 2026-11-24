@@ -20,6 +20,7 @@ import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitDjList
 import de.norm.events.scraper.stripArtistPrefix
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.supamolly.SupamollyOverviewPageScraper.Companion.PROGRAMME_POSTER_TITLE
@@ -206,7 +207,7 @@ class SupamollyOverviewPageScraper {
         }
         (AFTER_PARTY_DJ_LABEL.find(name) ?: DJ_LIST_LABEL.find(name))?.let { label ->
             val list = name.substring(label.range.last + 1)
-            return (commaListActs(list) ?: list.split(DJ_LIST_SEPARATOR)).map { BilledAct(stripArtistSuffix(it.trim().replace(DJ_CREW, "")), ArtistRole.DJ) }
+            return (commaListActs(list) ?: splitDjList(list)).map { BilledAct(stripArtistSuffix(it.trim().replace(DJ_CREW, "")), ArtistRole.DJ) }
         }
         LIVE_LABEL.find(name)?.let { label ->
             return listOf(BilledAct(stripArtistSuffix(name.substring(label.range.last + 1)), ArtistRole.LIVE))
@@ -326,9 +327,6 @@ class SupamollyOverviewPageScraper {
 
         /** A `Djs` / `DJ's` label in front of a list of DJs: `Djs Bain, Berry T, Kite & Domske`. */
         private val DJ_LIST_LABEL = Regex("""^dj'?s\b\s*:?\s*""", RegexOption.IGNORE_CASE)
-
-        /** Where a DJ list without a closing conjunction after a comma splits: `Djs A & B`, `Djs A und B`, `Djs A, B`. */
-        private val DJ_LIST_SEPARATOR = Regex("""\s*(?:,|&|\+)\s*|\s+und\s+""", RegexOption.IGNORE_CASE)
 
         /** An inline `HH:MM Uhr` schedule in an act name — the signature of a programme note, not a performer. */
         private val SCHEDULE_NOTE_PATTERN = Regex("""\d{1,2}[:.]\d{2}\s*uhr""", RegexOption.IGNORE_CASE)

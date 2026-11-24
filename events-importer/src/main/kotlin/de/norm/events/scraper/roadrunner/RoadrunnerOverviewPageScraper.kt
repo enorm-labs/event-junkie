@@ -6,6 +6,7 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -419,7 +420,7 @@ class RoadrunnerOverviewPageScraper(
         private val LINEUP_LABEL = Regex("""^(live|featuring|support|record\s+hop)\s*:\s*(.*)$""", RegexOption.IGNORE_CASE)
 
         /** A `LINEUP -` or `LINE-UP:` label opening a paragraph's first line. */
-        private val DASH_LINEUP_LABEL = Regex("""^line[\s-]?up\s*[:\-–]""", RegexOption.IGNORE_CASE)
+        private val DASH_LINEUP_LABEL = Regex("""^$LINE_UP_WORD\s*[:\-–]""", RegexOption.IGNORE_CASE)
 
         /** The `- ` that opens one act's line under a [DASH_LINEUP_LABEL]. */
         private val DASH_LINE = Regex("""^[-–]\s+""")

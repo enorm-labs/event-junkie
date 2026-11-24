@@ -5,6 +5,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HH_MM_LENGTH
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -241,7 +242,7 @@ class SodaDetailPageScraper {
         val LIVE_LINE = Regex("""^LIVE\b""")
 
         /** The line that opens the DJ list: `Booking` on a club night, `Line Up:` on a Social Club night. */
-        val BOOKING_HEADING = Regex("""booking|line\s?-?up:?""", RegexOption.IGNORE_CASE)
+        val BOOKING_HEADING = Regex("""booking|$LINE_UP_WORD:?""", RegexOption.IGNORE_CASE)
 
         /** The rule of asterisks that closes the DJ list. */
         const val RULE = "***"

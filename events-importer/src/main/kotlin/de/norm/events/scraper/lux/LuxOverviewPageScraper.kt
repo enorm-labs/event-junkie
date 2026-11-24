@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.detectFree
+import de.norm.events.scraper.endsAsSentence
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -120,10 +121,7 @@ class LuxOverviewPageScraper(
             .distinct()
 
     /** A bolded blurb sentence (event 14812, #5295): a long line, or a shorter one that ends like a sentence. */
-    private fun isProse(line: String): Boolean {
-        val words = line.split(WHITESPACE).size
-        return words > MAX_ACT_WORDS || (words >= MIN_SENTENCE_WORDS && SENTENCE_END.containsMatchIn(line))
-    }
+    private fun isProse(line: String): Boolean = line.split(WHITESPACE).size > MAX_ACT_WORDS || endsAsSentence(line, MIN_SENTENCE_WORDS)
 
     private fun Element.flatTextAt(selector: String): String? = selectFirst(selector)?.text()?.collapseWhitespace().blankToNull()
 
@@ -148,7 +146,6 @@ class LuxOverviewPageScraper(
         val WITH_LEAD = Regex("""^(?:with|w/|mit)\s+""", RegexOption.IGNORE_CASE)
 
         val WHITESPACE = Regex("""\s+""")
-        val SENTENCE_END = Regex("""[.!?]$""")
 
         /** `DJ Foo b2b DJ Bar` is five words; a billing line longer than six is a sentence. */
         const val MAX_ACT_WORDS = 6

@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -249,6 +250,6 @@ class StudioIiiiOverviewPageScraper(
         const val MIN_NOTE_LOWERCASE_WORDS = 2
         val MORE_TBA = Regex("""\s*(?:&|\+|and)\s*more(?:\s+tba)?\.*$""", RegexOption.IGNORE_CASE)
         val SERIAL_CONJUNCTION = Regex("""^\s*(?:and|&)\s+""", RegexOption.IGNORE_CASE)
-        val LINE_UP_LABEL = Regex("""^line[\s-]?up\s*:\s*""", RegexOption.IGNORE_CASE)
+        val LINE_UP_LABEL = Regex("""^$LINE_UP_WORD\s*:\s*""", RegexOption.IGNORE_CASE)
     }
 }

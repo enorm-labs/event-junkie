@@ -3,6 +3,7 @@ package de.norm.events.scraper.derweissehase
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -205,7 +206,7 @@ class DerWeisseHaseOverviewPageScraper {
          * The heading the club puts above a roster: `LINE UP` on most nights, `Musikanten:` on some. Matched whole and
          * case-insensitively, so a note written as an `<h4>` never opens the roster.
          */
-        private val LINE_UP_HEADING = Regex("""(?:line\s*-?\s*up|musikanten):?""", RegexOption.IGNORE_CASE)
+        private val LINE_UP_HEADING = Regex("""(?:$LINE_UP_WORD|musikanten):?""", RegexOption.IGNORE_CASE)
 
         /**
          * A note line about entry: "free entry until midnight*", "Women & FLINTA free until 1 AM",

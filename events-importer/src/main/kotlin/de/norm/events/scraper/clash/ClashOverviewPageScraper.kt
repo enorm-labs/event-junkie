@@ -6,6 +6,7 @@ import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -242,7 +243,7 @@ class ClashOverviewPageScraper {
         private val TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")
 
         /** Leading lineup label on a subtitle ("Live:", "DJ:", "DJs:", "Line-up:"), stripped before splitting acts. */
-        private val LINEUP_LABEL_PREFIX = Regex("""^\s*(?:live|djs?|line[\s-]?up)\s*:\s*""", RegexOption.IGNORE_CASE)
+        private val LINEUP_LABEL_PREFIX = Regex("""^\s*(?:live|djs?|$LINE_UP_WORD)\s*:\s*""", RegexOption.IGNORE_CASE)
 
         /** A title word that ends in `markt`, or the word `market`, as Colosseum reads it. */
         private val MARKET_TITLE = Regex("""markt(?!\p{L})|(?<!\p{L})market(?!\p{L})""", RegexOption.IGNORE_CASE)

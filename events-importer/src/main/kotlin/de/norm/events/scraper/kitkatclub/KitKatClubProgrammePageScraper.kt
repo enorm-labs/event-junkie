@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -229,7 +230,7 @@ class KitKatClubProgrammePageScraper(
         /** `20-22 Uhr`, `ab 22 Uhr`, `(ab ca. 1 Uhr)`. */
         val TIME_PHRASE = Regex("""\(?\b(?:ab\s+(?:ca\.\s*)?)?\d{1,2}(?:[:.]\d{2})?(?:\s*-\s*\d{1,2}(?:[:.]\d{2})?)?\s*Uhr\)?""", RegexOption.IGNORE_CASE)
 
-        val GENERIC_ROOM = Regex("""(?:weitere\s+)?decks?|line\s*up""", RegexOption.IGNORE_CASE)
+        val GENERIC_ROOM = Regex("""(?:weitere\s+)?decks?|$LINE_UP_WORD""", RegexOption.IGNORE_CASE)
 
         const val MAX_ROOM_WORDS = 3
 

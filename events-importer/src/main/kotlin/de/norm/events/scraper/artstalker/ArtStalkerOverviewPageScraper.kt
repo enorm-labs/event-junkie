@@ -15,6 +15,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.splitDjList
 import de.norm.events.scraper.stripFriendsTail
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -76,7 +77,7 @@ class ArtStalkerOverviewPageScraper {
             .find(subtitle.orEmpty())
             ?.groupValues
             ?.get(1)
-            ?.split(DJ_SEPARATOR)
+            ?.let(::splitDjList)
             .orEmpty()
             .mapNotNull { it.trim().blankToNull() }
             .filterNot(::isNonArtistName)
@@ -85,7 +86,6 @@ class ArtStalkerOverviewPageScraper {
     private companion object {
         /** A tagline that only names the night's DJs. */
         val TAGLINE_DJS = Regex("""^mit\s+(DJs?\s+.+)$""", RegexOption.IGNORE_CASE)
-        val DJ_SEPARATOR = Regex("""\s+(?:&|und)\s+|,\s*""", RegexOption.IGNORE_CASE)
 
         /** The music school's student showcase, a house format that is no concert of a billed act. */
         val VENUE_FORMATS = mapOf("musikschule" to EventType.OTHER.name)

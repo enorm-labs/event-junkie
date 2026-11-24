@@ -3,6 +3,7 @@ package de.norm.events.scraper.aeg
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -140,7 +141,7 @@ class AegDetailPageScraper {
     private fun parseDoorsTime(text: String?): LocalTime? = labelledClock(text, DOORS_LABELS)
 
     private companion object {
-        val LINE_UP_LABEL = Regex("""\bline[ -]?up\s*:""", RegexOption.IGNORE_CASE)
+        val LINE_UP_LABEL = Regex("""\b$LINE_UP_WORD\s*:""", RegexOption.IGNORE_CASE)
 
         val SUPPORT_PARAGRAPH = Regex("""(?:$SUPPORT_LABELS)\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
     }
