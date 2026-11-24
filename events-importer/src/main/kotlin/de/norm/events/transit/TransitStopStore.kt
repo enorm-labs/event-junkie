@@ -1,6 +1,7 @@
 package de.norm.events.transit
 
 import de.norm.events.EVENTS_SCHEMA
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Repository
@@ -24,6 +25,14 @@ class TransitStopStore(
             stations.chunked(BATCH_SIZE).forEach { chunk -> insert(chunk, importedAt) }
         }
     }
+
+    /** The newest `imported_at` of any station, or `null` before the first import. */
+    suspend fun newestImportedAt(): Instant? =
+        databaseClient
+            .sql("SELECT imported_at FROM $EVENTS_SCHEMA.transit_stop ORDER BY imported_at DESC LIMIT 1")
+            .map { row, _ -> requireNotNull(row.get("imported_at", Instant::class.java)) }
+            .one()
+            .awaitSingleOrNull()
 
     /** One statement per chunk: the lines travel joined by `|`, which no line name holds, because `unnest` flattens a 2-D array. */
     private suspend fun insert(

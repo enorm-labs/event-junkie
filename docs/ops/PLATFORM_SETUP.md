@@ -860,6 +860,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.discogs.unchecked`                     | Gauge                                 | `NONE` rows still owed a Discogs verdict. 0 where the lookup is off                       |
 | `importer.artists.lookup_tick.last_success`      | Gauge                                 | Epoch seconds of the last finished lookup tick; 0 while off                               |
 | `importer.venues.site_check.last_success`        | Gauge                                 | Epoch seconds of the last finished site check; seeded at start from the table             |
+| `importer.transit_stops.import.last_success`     | Gauge                                 | Epoch seconds of the last import that replaced the stations; seeded at start              |
 | `instagram.pass.last_success`                    | Gauge                                 | Epoch seconds of the last ended Instagram pass; the start time first; 0 while off         |
 | `images.sweep.candidates{kind}`                  | Gauge                                 | What the last sweep would delete, whether or not it may. rows / strays                    |
 | `images.sweep.deleted{kind}`                     | Counter                               | What it removed. Moves only while `app.images.sweep.enabled` is on                        |
