@@ -2,16 +2,16 @@ package de.norm.events.scraper.tresor
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
-import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SlotJoins
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hostedActsFromTitle
-import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseActSlot
 import de.norm.events.scraper.parseBasicIsoDatePrefix
 import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
@@ -118,17 +118,8 @@ internal fun parseLineup(root: Element): List<ScrapedArtist> =
         .select(".event-floor, .floor")
         .flatMap { floor ->
             val stage = floor.textAt(".floor-name")?.let(::normalizeFloor)
-            floor.select(".floor-artist, .lineup-name").flatMap { slot ->
-                val text = slot.text().trim()
-                splitActs(text).map { ScrapedArtist(name = it, role = slotRole(text), stage = stage) }
-            }
+            floor.select(".floor-artist, .lineup-name").flatMap { slot -> actsOf(slot.text().trim(), stage) }
         }.distinctBy { it.name.lowercase() }
-
-/** [ArtistRole.LIVE] for a slot billed `Marc Houle LIVE`, `Fireground [LIVE]` or `… LIVE Hybrid`; else [ArtistRole.DJ]. */
-internal fun slotRole(slot: String): ArtistRole = if (LIVE_MARK.containsMatchIn(slot)) ArtistRole.LIVE else ArtistRole.DJ
-
-/** A trailing live format, bracketed or bare; end-anchored like [SET_FORMAT_NOTE], so `Live Visuals` is not one. */
-private val LIVE_MARK = Regex("""(?:\[\s*live(?:\s+(?:set|hybrid))?\s*]|\s+live(?:\s+(?:set|hybrid))?)\s*$""", RegexOption.IGNORE_CASE)
 
 /**
  * Splits one billed slot into its acts and drops what is not one. A slot may bill a
@@ -141,17 +132,16 @@ private val LIVE_MARK = Regex("""(?:\[\s*live(?:\s+(?:set|hybrid))?\s*]|\s+live(
  * line names the label's catalogue number or a compilation as often as an artist
  * (`Listening Session: Tresor.299 XOR Gate – Conic Sections`, `Tresor048X Infiniti Collection`).
  */
-internal fun splitActs(slot: String): List<String> =
+internal fun actsOf(
+    slot: String,
+    stage: String?
+): List<ScrapedArtist> =
     if (LISTENING_SESSION.containsMatchIn(slot)) {
         emptyList()
     } else {
-        slot
-            .split(B2B_SEPARATOR)
-            .map(::stripSetFormatNote)
-            // A format in *front* of the act ("Live: Shackleton") names the slot, not the performer.
-            .map(::stripFormatLabel)
-            .map(::stripReleaseTitle)
-            .filter { it.isNotBlank() && !isUnannouncedAct(it) && !HOST_CREDIT.containsMatchIn(it) }
+        // A format in *front* of the act ("Live: Shackleton") names the slot, not the performer.
+        parseActSlot(slot, SlotJoins.B2B, stage) { stripReleaseTitle(stripFormatLabel(stripSetFormatNote(it))) }
+            .filterNot { UNANNOUNCED_SLOT.matches(it.name) || HOST_CREDIT.containsMatchIn(it.name) }
     }
 
 /** A slot opening with `Listening Session`, after the room the `Globus …` programme line puts first. */
@@ -206,9 +196,6 @@ internal fun normalizeFloor(label: String): String = FLOORS.firstOrNull { label.
 
 /** The venue's three rooms, longest first so `Aurora Bar` is not shadowed by a prefix. */
 private val FLOORS = listOf("Aurora Bar", "Tresor", "Globus")
-
-/** The placeholder for a slot not yet announced, alongside the shared non-artist filter. */
-private fun isUnannouncedAct(name: String): Boolean = UNANNOUNCED_SLOT.matches(name) || isNonArtistName(name)
 
 /** `???` — the venue's own "act to be announced" billing. */
 private val UNANNOUNCED_SLOT = Regex("""\?{2,}""")

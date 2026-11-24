@@ -1,24 +1,23 @@
 package de.norm.events.scraper.minimalbar
 
 import de.norm.events.common.BERLIN
-import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SlotJoins
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.flightStringOrNull
-import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonArrayAt
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.nextFlightPayload
+import de.norm.events.scraper.parseActSlot
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
-import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.slug.SlugGenerator
@@ -118,7 +117,7 @@ class MinimalBarOverviewPageScraper {
             .joinToString(", ")
             .ifEmpty { null }
 
-    /** Each act of the night as a DJ, with the set start the venue gives it. */
+    /** Each act of the night, a DJ unless it is marked live, with the set start the venue gives it. */
     private fun lineup(
         node: JsonNode,
         night: LocalDate
@@ -129,22 +128,20 @@ class MinimalBarOverviewPageScraper {
             .flatMap { slot ->
                 val billing = text(slot, "name") ?: return@flatMap emptyList()
                 val setStart = parseTime(text(slot, "time"))?.let { clock.slot(it).first }
-                actsOf(billing).map { ScrapedArtist(name = it, role = ArtistRole.DJ, setStart = setStart) }
+                actsOf(billing).map { it.copy(setStart = setStart) }
             }.distinctBy { SlugGenerator.slugify(it.name) }
     }
 
-    private fun actsOf(billing: String): List<String> =
-        splitSegmentOnConjunctions(billing.collapseWhitespace())
-            .map { act ->
-                stripArtistSuffix(
-                    act
-                        .trim()
-                        .replace(CREW_TAIL, "")
-                        .replace(HOUSE_TAG, "")
-                        .replace(LABEL_TAG, "")
-                        .let(::stripLineupBracket)
-                )
-            }.filterNot(::isNonArtistName)
+    private fun actsOf(billing: String): List<ScrapedArtist> =
+        parseActSlot(billing.collapseWhitespace(), SlotJoins.CONJUNCTIONS) { act ->
+            stripArtistSuffix(
+                act
+                    .replace(CREW_TAIL, "")
+                    .replace(HOUSE_TAG, "")
+                    .replace(LABEL_TAG, "")
+                    .let(::stripLineupBracket)
+            )
+        }
 
     private fun text(
         node: JsonNode,

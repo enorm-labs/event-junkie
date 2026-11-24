@@ -149,6 +149,8 @@ class RenateOverviewPageScraperTest {
     fun `groups the DJs by the floor they play on`() {
         val night = event(LocalDate.of(2026, 8, 7), "Renate Klubnacht")
         stageOf(night, "GARDEN") shouldContainExactly listOf("SERA")
+        // Billed `SERA (Live)` (#5487).
+        night.artists.single { it.name == "SERA" }.role shouldBe ArtistRole.LIVE
         stageOf(night, "GREEN") shouldContainExactly listOf("Cleymoore", "NOB", "So-Fi")
         stageOf(night, "BLACK") shouldContainExactly listOf("Delta Division", "Mruda", "N ska")
     }
@@ -306,8 +308,12 @@ class RenateOverviewPageScraperTest {
     }
 
     @Test
-    fun `bills every act as a DJ`() {
-        events.flatMap { it.artists }.all { it.role == ArtistRole.DJ } shouldBe true
+    fun `bills every act as a DJ but the ones marked live`() {
+        val (live, djs) = events.flatMap { it.artists }.partition { it.role == ArtistRole.LIVE }
+        // `Pés de Barro (live Band)` and `Cee (hybrid live)` are the two longer marks.
+        live.map { it.name }.distinct() shouldContainExactly
+            listOf("SERA", "Sameer Rahat", "Pés de Barro", "Bakläxa", "Cee", "Das Beat", "Firtzi Ernst", "Schatz")
+        djs.all { it.role == ArtistRole.DJ } shouldBe true
     }
 
     @Test

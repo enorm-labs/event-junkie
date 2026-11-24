@@ -108,8 +108,10 @@ class TresorDetailPageScraper {
                 val sets = floorSetTimes(floor.select(".lineup-item").map { it.textAt(".lineup-time").orEmpty() }, eventDate)
                 floor.select(".lineup-item").zip(sets).flatMap { (item, set) ->
                     val name = item.textAt(".lineup-name").orEmpty()
-                    val role = if (LIVE_SUBTITLE.matches(item.textAt(".lineup-subtitle").orEmpty())) ArtistRole.LIVE else slotRole(name)
-                    splitActs(name).map { ScrapedArtist(name = it, role = role, stage = stage, setStart = set.first, setEnd = set.second) }
+                    val markedLive = LIVE_SUBTITLE.matches(item.textAt(".lineup-subtitle").orEmpty())
+                    actsOf(name, stage).map {
+                        it.copy(role = if (markedLive) ArtistRole.LIVE else it.role, setStart = set.first, setEnd = set.second)
+                    }
                 }
             }.distinctBy { it.name.lowercase() }
 
