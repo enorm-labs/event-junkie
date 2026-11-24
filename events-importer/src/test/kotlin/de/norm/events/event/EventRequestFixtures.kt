@@ -1,5 +1,8 @@
 package de.norm.events.event
 
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.module.kotlin.kotlinModule
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -113,3 +116,16 @@ object EventRequestFixtures {
             promoterIds = promoterIds
         )
 }
+
+/**
+ * The request as the wire carries it, so a test can tell a missing field from an explicit null.
+ *
+ * `put`, `putNull` and `remove` on the result send a field the DTO would not let a test leave out,
+ * null out or misspell.
+ */
+fun EventRequest.asJsonObject(): ObjectNode = FIXTURE_MAPPER.valueToTree(this)
+
+/** Field names straight onto the wire, for a test that sends a value no [EventRequest] property would hold. */
+fun jsonBody(fields: Map<String, String?>): String = FIXTURE_MAPPER.writeValueAsString(fields)
+
+private val FIXTURE_MAPPER = JsonMapper.builder().addModule(kotlinModule()).build()
