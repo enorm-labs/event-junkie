@@ -32,8 +32,8 @@ import java.util.Locale
  * - **The residency repeats one slug on each date**, so the `sourceId` keeps the `/program/<y>/<m>/<d>/` path.
  * - **A `LIVE` title is a concert, a `DJ` title a party**; the bands come from a concert's title only.
  * - **Only a title in the house frame bills its acts**: `8MM Live: <acts>`, `8MM + <promoter> pres: <acts>` or
- *   `<acts> LIVE in 8MM`. Any other title names the night, as `KOROWA — A Night of Live and Dark Sounds` or
- *   `8MM X UNKNOWN CALLERS HALLOWEEN`, and bills nobody. The acts of such a night are only in the blurb's prose.
+ *   `<acts> LIVE in 8MM`. Any other title names the night here, as `KOROWA — A Night of Live and Dark Sounds` or
+ *   `8MM X UNKNOWN CALLERS HALLOWEEN`, and bills nobody. [EightMmEventPageScraper] reads the acts of such a night.
  *   The house's own `8MM` is never an act.
  * - **A `<name> (<act>) … DJ RESIDENCY` title bills its DJ**; the bracketed band names where the DJ comes from and does not play.
  * - **A `<name> [(<act>)] DJ SET` title bills its DJ** the same way: `Camisa Dj set`, `Wedding (CPN) DJ SET`. A name with a dash,

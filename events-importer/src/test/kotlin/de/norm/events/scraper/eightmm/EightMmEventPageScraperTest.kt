@@ -1,9 +1,12 @@
 package de.norm.events.scraper.eightmm
 
+import de.norm.events.artist.canonicalArtistName
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -74,6 +77,67 @@ class EightMmEventPageScraperTest {
         val listed = listed("8MM Live: SOFT PALMS").copy(artists = listOf(ScrapedArtist(name = "SOFT PALMS", role = ArtistRole.HEADLINER)))
 
         scraper.enrich(listed, Jsoup.parse(html)).artists.map { it.name } shouldBe listOf("SOFT PALMS")
+    }
+
+    private fun billed(
+        title: String,
+        blurb: String = "<p>A blurb.</p>",
+        eventType: EventType = EventType.CONCERT
+    ) = scraper
+        .enrich(
+            listed(title).copy(eventType = eventType.name),
+            Jsoup.parse("""<article class="eventitem"><div class="eventitem-column-content"><div class="sqs-html-content">$blurb</div></div></article>""")
+        ).artists
+
+    // Event 15198.
+    @Test
+    fun `bills the act in front of Live plus`() {
+        val act = billed("Martin Bisi Band Live plus the screening of short film BC45").single()
+
+        act.name shouldBe "Martin Bisi Band"
+        act.role shouldBe ArtistRole.HEADLINER
+        act.titleDerived shouldBe true
+        // A night's frame in front of the act is no part of its name.
+        billed("Playroom: BLANCO TETA Live plus friends").shouldBeEmpty()
+        billed("A Night with BLANCO TETA Live plus friends").shouldBeEmpty()
+    }
+
+    // Event 15197.
+    @Test
+    fun `bills the act after LIVE and a dash`() {
+        val act = billed("PLAYROOM LIVE - BLANCO TETA").single()
+
+        canonicalArtistName(act.name) shouldBe "Blanco Teta"
+        act.role shouldBe ArtistRole.HEADLINER
+        act.titleDerived shouldBe true
+        billed("PLAYROOM LIVE - BLANCO TETA (CANCELLED)").map { it.name } shouldBe listOf("BLANCO TETA")
+        billed("PLAYROOM LIVE - TBA").shouldBeEmpty()
+    }
+
+    // Event 15196.
+    @Test
+    fun `bills the act between with and LIVE, and not the house's DJs`() {
+        val act = billed("24 Years 8MM with LES BIG BYRD LIVE + 8MM All star Djs").single()
+
+        canonicalArtistName(act.name) shouldBe "Les Big Byrd"
+        act.role shouldBe ArtistRole.HEADLINER
+        act.titleDerived shouldBe true
+        billed("PLAYROOM LIVE - BLANCO TETA + 8MM All star Djs").map { it.name } shouldBe listOf("BLANCO TETA")
+    }
+
+    @Test
+    fun `a title in no LIVE shape bills nobody`() {
+        billed("KOROWA — A Night of Live and Dark Sounds").shouldBeEmpty()
+        billed("Romantic Fiction and Reformation Club present: Equinoxious live at 8MM.").shouldBeEmpty()
+        billed("8MM X UNKNOWN CALLERS HALLOWEEN").shouldBeEmpty()
+        billed("A Very Long Night of ${"Endless ".repeat(40)}Feedback LIVE").shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads a LIVE title only on a concert, and after the line-up list`() {
+        billed("PLAYROOM LIVE - BLANCO TETA", eventType = EventType.PARTY).shouldBeEmpty()
+        billed("PLAYROOM LIVE - BLANCO TETA", blurb = "<p>Line up - YARD / LYZZA</p>").map { it.name } shouldBe listOf("Yard", "Lyzza")
+        billed("PLAYROOM LIVE - BLANCO TETA", blurb = "").map { it.name } shouldBe listOf("BLANCO TETA")
     }
 
     @Test

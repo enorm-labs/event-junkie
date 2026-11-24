@@ -51,9 +51,9 @@ val EIGHT_MM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "nothing on the calendar or the event pages names a style", verified = "2026-10-18"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "a DJ night bills nobody but a Name (Band) … DJ Residency or a Name DJ Set; a concert bills only from the house frame, " +
-                "else from a blurb's `Line up -` list",
-            verified = "2026-11-10"
+            "a DJ night bills only a Name (Band) … DJ Residency or a Name DJ Set; a concert only the house frame, else a blurb's " +
+                "`Line up -` list, else `<act> Live plus`, `with <act> LIVE +` or `LIVE - <act>`; any other bills nobody",
+            verified = "2026-11-24"
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; bands keep the door money", verified = "2026-10-18"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "a blurb points to the venue's Instagram for tickets, never to a shop", verified = "2026-10-18"),
