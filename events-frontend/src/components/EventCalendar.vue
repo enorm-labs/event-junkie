@@ -307,6 +307,15 @@ const options = computed<CalendarOptions>(() => ({
 .event-calendar :deep(.ej-title) {
   font-size: var(--text-section);
   line-height: var(--text-section--line-height);
+  white-space: normal;
+}
+
+/*
+ * The theme keeps the title on one line in a section that never shrinks, so a week across two months was
+ * wider than a phone: the page zoomed out, and Back landed at the wrong scroll.
+ */
+.event-calendar :deep(:has(> .ej-title)) {
+  flex-shrink: 1;
 }
 
 /* An estimated start, written as the cards write it: `~20:00`, in italics. */
