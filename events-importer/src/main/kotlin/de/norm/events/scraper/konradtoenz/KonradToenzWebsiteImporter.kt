@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.RobotsRulesCache
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -12,8 +13,10 @@ import org.springframework.stereotype.Component
  * Website importer for Konrad Tönz, a one-page site builder (sitehub "webcard") with no API. The home
  * page's events block lists the whole programme, about six weeks of nights ([KonradToenzOverviewPageScraper]).
  *
- * The source URL is plain `http`: the `https` host serves a self-signed certificate. `robots.txt` redirects
- * there, so the robots check logs a `WARN` and allows the fetch; the file disallows only `/impressum`.
+ * The source URL is plain `http`: the `https` host serves one self-signed certificate (`CN=balancer2`, until 2030), so no
+ * added intermediate repairs it. `robots.txt` redirects there, so the robots check logs a `WARN` and allows the fetch; the
+ * file disallows only `/impressum`. The `WARN` stays: the fallback in [RobotsRulesCache] serves every host,
+ * and a lower level would hide a venue whose certificate newly breaks (#5298).
  * The bar holds one night a date and the site has no page per night, so the date is the night's identity.
  *
  * @see <a href="http://www.konradtoenzbar.de/#events">Konrad Tönz events</a>
