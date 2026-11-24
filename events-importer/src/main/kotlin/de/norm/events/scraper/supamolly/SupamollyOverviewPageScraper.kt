@@ -49,7 +49,7 @@ import java.time.LocalTime
  * `td.date .uhr`. A programme note ([isProgrammeNote]) stays the title but is never an artist, so [inferUnmarkedTitleType]
  * types the night instead of defaulting to a concert. It is the social's name, any name with an inline `HH:MM Uhr`, which no
  * performer states, or a party's name ([PARTY_NIGHT_PATTERN]).
- * - **A block can carry a role label.** `Lieve: Subact` (sic) bills one act `LIVE`; `Djs Bain, Berry T, Kite & Domske` four `DJ`s.
+ * - **A block can frame its act** in a role label (`Lieve:`, `Vorprogram:`, `Aftershow Djs …`), an origin or a festival ([billedActs]).
  * - **A night's name can fill an act slot, its DJ in the note.** [nightDj] bills `DjTerror Wave …` as `DJ Terror Wave` (#3564).
  * - **An act's note is sometimes its style.** `.beschr` holds `Punk Rock` as often as
  * `Kaffee & Kuchen ab 19:30`, so only the genres the vocabulary knows become the night's
@@ -121,7 +121,7 @@ class SupamollyOverviewPageScraper {
             description = blocks.mapNotNull { it.description }.joinToString("\n").takeIf { it.isNotBlank() },
             genre = parseGenre(blocks.mapNotNull { it.description }),
             // Artist-less nights are the venue's socials and film/quiz evenings, not gigs — see class KDoc.
-            eventType = if (artists.isEmpty()) inferUnmarkedTitleType(title) else inferConcertVenueType(title),
+            eventType = if (artists.isEmpty()) inferUnmarkedTitleType(title) else inferConcertVenueType(titleWithoutAfterParty(actNames, title)),
             eventDate = eventDate,
             // The `.uhr` cell is the displayed time; the id's trailing HHMM is the same value, used as fallback.
             startTime = parseTime(row.textAt("td.date .uhr")) ?: parseStampTime(stamp),
@@ -186,25 +186,34 @@ class SupamollyOverviewPageScraper {
 
     /**
      * One block's acts. The name loses a leading co-bill conjunction (`"& Support"` → `"Support"`, so
-     * [isNonArtistName] sees the bare role label), a founding tagline ([FOUNDING_TAGLINE]) and a
-     * trailing tour/live/format tail ([stripArtistSuffix]). A [DJ_LIST_LABEL] block splits into `DJ`
-     * acts, a [LIVE_LABEL] block bills one `LIVE` act and an [AFTER_PARTY_LEAD_IN] block one `DJ` or
-     * `SUPPORT` act; any other block is one act without a role.
+     * [isNonArtistName] sees the bare role label), a founding tagline ([FOUNDING_TAGLINE]), an origin ([ORIGIN_TAIL]),
+     * a named night's lead-in ([NAMED_NIGHT_LEAD_IN]) and a trailing tour/live/format tail ([stripArtistSuffix]).
+     * A [DJ_LIST_LABEL] block splits into `DJ` acts, also behind an after-show word ([AFTER_PARTY_DJ_LABEL]),
+     * a [LIVE_LABEL] block bills one `LIVE` act, a [SUPPORT_LABEL] block one `SUPPORT` act and an [AFTER_PARTY_LEAD_IN]
+     * block one `DJ` or `SUPPORT` act; any other block is one act without a role.
      */
     private fun billedActs(block: String): List<BilledAct> {
-        val name = block.replaceFirst(LEADING_CONJUNCTION, "").replace(FOUNDING_TAGLINE, "").trim()
+        val name =
+            block
+                .replaceFirst(LEADING_CONJUNCTION, "")
+                .replace(FOUNDING_TAGLINE, "")
+                .replace(ORIGIN_TAIL, "")
+                .replaceFirst(NAMED_NIGHT_LEAD_IN, "")
+                .trim()
         AFTER_PARTY_LEAD_IN.find(name)?.let { label ->
             val act = stripArtistSuffix(name.substring(label.range.last + 1))
             return listOf(BilledAct(act, if (DJ_NAME_PREFIX.containsMatchIn(act)) ArtistRole.DJ else ArtistRole.SUPPORT))
         }
-        DJ_LIST_LABEL.find(name)?.let { label ->
+        (AFTER_PARTY_DJ_LABEL.find(name) ?: DJ_LIST_LABEL.find(name))?.let { label ->
             val list = name.substring(label.range.last + 1)
-            return (commaListActs(list) ?: list.split(DJ_LIST_SEPARATOR)).map { BilledAct(stripArtistSuffix(it.trim()), ArtistRole.DJ) }
+            return (commaListActs(list) ?: list.split(DJ_LIST_SEPARATOR)).map { BilledAct(stripArtistSuffix(it.trim().replace(DJ_CREW, "")), ArtistRole.DJ) }
         }
         LIVE_LABEL.find(name)?.let { label ->
             return listOf(BilledAct(stripArtistSuffix(name.substring(label.range.last + 1)), ArtistRole.LIVE))
         }
-        return listOf(BilledAct(stripArtistSuffix(stripArtistPrefix(name)), role = null))
+        val support = SUPPORT_LABEL.find(name)
+        val act = support?.let { name.substring(it.range.last + 1) } ?: stripArtistPrefix(name)
+        return listOf(BilledAct(stripArtistSuffix(act), role = support?.let { ArtistRole.SUPPORT }))
     }
 
     /**
@@ -279,6 +288,15 @@ class SupamollyOverviewPageScraper {
         /** A band's founding tagline after its name: `Skarface est.1991 La France` bills Skarface. */
         private val FOUNDING_TAGLINE = Regex("""\s+est\.?\s*(?:19|20)\d{2}\b.*$""", RegexOption.IGNORE_CASE)
 
+        /** An origin after the name: `St Mincer aus Prag`, `Gelbes Pep aus Düsseldorf`. The place is one capitalised word. */
+        private val ORIGIN_TAIL = Regex("""(?<=\S)\s+aus\s+\p{Lu}[\p{L}-]+$""")
+
+        /** A named night in front of its band. Named, because `mit` is also part of a band's name. */
+        private val NAMED_NIGHT_LEAD_IN = Regex("""^Skanta Klaus\s+mit\s+""", RegexOption.IGNORE_CASE)
+
+        /** A `Vorprogramm:` label, also as the venue's `Vorprogram:`. */
+        private val SUPPORT_LABEL = Regex("""^vorprogramm?\s*:\s*""", RegexOption.IGNORE_CASE)
+
         /** A leading `&` / `+` co-bill conjunction on an act name ("& Support" → "Support"). */
         private val LEADING_CONJUNCTION = Regex("""^\s*[&+]\s*""")
 
@@ -300,9 +318,8 @@ class SupamollyOverviewPageScraper {
         /** A `Live:` label, also as the venue's `Lieve:` typo. The act it labels is billed `LIVE`. */
         private val LIVE_LABEL = Regex("""^(?:live|lieve)\s*:\s*""", RegexOption.IGNORE_CASE)
 
-        /** An after-party lead-in before the act who plays it: `Danach Party mit DJ Spikey Mikey`, `Aftershow mit …`. */
-        private val AFTER_PARTY_LEAD_IN =
-            Regex("""^(?:danach|anschließend|after(?:show)?)(?:[- ]?party)?\s+mit\s+""", RegexOption.IGNORE_CASE)
+        /** A DJ's crew in a closing bracket: `Antamauna (Soullab)`. */
+        private val DJ_CREW = Regex("""(?<=\S)\s*\([^()]+\)$""")
 
         /** A `DJ` before a single name, as the after-party act carries it. */
         private val DJ_NAME_PREFIX = Regex("""^dj\b""", RegexOption.IGNORE_CASE)
@@ -310,8 +327,8 @@ class SupamollyOverviewPageScraper {
         /** A `Djs` / `DJ's` label in front of a list of DJs: `Djs Bain, Berry T, Kite & Domske`. */
         private val DJ_LIST_LABEL = Regex("""^dj'?s\b\s*:?\s*""", RegexOption.IGNORE_CASE)
 
-        /** Where a DJ list without a closing conjunction splits: `Djs A & B`, `Djs A, B`. */
-        private val DJ_LIST_SEPARATOR = Regex("""\s*(?:,|&|\+)\s*""")
+        /** Where a DJ list without a closing conjunction after a comma splits: `Djs A & B`, `Djs A und B`, `Djs A, B`. */
+        private val DJ_LIST_SEPARATOR = Regex("""\s*(?:,|&|\+)\s*|\s+und\s+""", RegexOption.IGNORE_CASE)
 
         /** An inline `HH:MM Uhr` schedule in an act name — the signature of a programme note, not a performer. */
         private val SCHEDULE_NOTE_PATTERN = Regex("""\d{1,2}[:.]\d{2}\s*uhr""", RegexOption.IGNORE_CASE)
@@ -320,3 +337,20 @@ class SupamollyOverviewPageScraper {
         private const val FLYER_THUMBNAIL_SEGMENT = "/flyer/small/"
     }
 }
+
+/** The title the type is read from: an after-party's block follows the concert, so its `DJs` or `Party` types nothing. */
+private fun titleWithoutAfterParty(
+    actNames: List<String>,
+    title: String
+): String {
+    val mainActs = actNames.filterNot { AFTER_PARTY_LEAD_IN.containsMatchIn(it) || AFTER_PARTY_DJ_LABEL.containsMatchIn(it) }
+    return if (mainActs.isEmpty() || mainActs.size == actNames.size) title else cleanEventTitle(mainActs.joinToString(", ")).text
+}
+
+/** An after-party lead-in before the act who plays it: `Danach Party mit DJ Spikey Mikey`, `Aftershow mit …`. */
+private val AFTER_PARTY_LEAD_IN =
+    Regex("""^(?:danach|anschließend|after(?:show)?)(?:[- ]?party)?\s+mit\s+""", RegexOption.IGNORE_CASE)
+
+/** An after-show's DJ list: `Aftershow Djs Antamauna (Soullab) und Bass-T`. */
+private val AFTER_PARTY_DJ_LABEL =
+    Regex("""^after(?:[- ]?show)?(?:[- ]?party)?\s*:?\s+dj'?s\b\s*:?\s*""", RegexOption.IGNORE_CASE)
