@@ -115,7 +115,8 @@ class PfefferbergHaus13DetailPageScraper {
                 ?.nextElementSibling()
                 ?.takeIf { it.tagName() == "ul" }
                 ?.select("li")
-                ?.map { it.text().trim() }
+                ?.map { actName(it.text()) }
+                ?.filter { it.isNotEmpty() }
         return plain ?: intros.flatMap(::blurbedActsAfter).distinctBy { it.lowercase() }
     }
 
@@ -185,13 +186,26 @@ internal fun blurbedAct(item: Element): String? {
         } else {
             BLURBED_ITEM.matchEntire(text)?.destructured?.let { (name, blurb) -> name to blurb } ?: return null
         }
-    val isAct = name.split(WHITESPACE).size <= MAX_NAME_WORDS && blurb.firstOrNull()?.isLetter() == true && blurb.split(WHITESPACE).size >= MIN_BLURB_WORDS
-    return name.takeIf { isAct }
+    val act = actName(name)
+    val isAct =
+        act.isNotEmpty() && act.split(WHITESPACE).size <= MAX_NAME_WORDS && blurb.firstOrNull()?.isLetter() == true &&
+            blurb.split(WHITESPACE).size >= MIN_BLURB_WORDS
+    return act.takeIf { isAct }
 }
+
+/** The name before a bracketed genre or an `aus <Ort>` origin, without an `und`, `&` or `,` that joins it to the next item. */
+internal fun actName(item: String): String =
+    item
+        .replace('\u00A0', ' ')
+        .replace(GENRE_OR_ORIGIN, "")
+        .replace(TRAILING_JOINER, "")
+        .trim()
 
 private val LISTED_LINEUP_TYPES = setOf(EventType.CONCERT.name, EventType.FESTIVAL.name)
 private val LEADING_SEPARATOR = Regex("""^\s*(?:[–-]|:)\s+""")
 private val BLURBED_ITEM = Regex("""(\S.*?)(?:\s+[–-]|:)\s+(.+)""")
+private val GENRE_OR_ORIGIN = Regex("""\s+(?:\(|aus\s+\p{Lu}).*""", RegexOption.DOT_MATCHES_ALL)
+private val TRAILING_JOINER = Regex("""(?:\s*[,&]|\s+und)\s*$""")
 private const val MAX_NAME_WORDS = 5
 private const val MIN_BLURB_WORDS = 4
 private val READING = Regex("""premiere|lesung|kontrovers|diskussion|podium|vortrag|gespräch""", RegexOption.IGNORE_CASE)
