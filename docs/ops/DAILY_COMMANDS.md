@@ -277,7 +277,8 @@ scripts/upstream-node-pins.sh                        # are k3s and wal-g behind 
 ```
 
 **Neither pin bump is routine, and neither needs a rebuild.** `node-pin-reminder.yml` opens an issue weekly when either is behind, and never a pull request.
-[`K3S_UPGRADE.md`](K3S_UPGRADE.md) is the k3s procedure and [`BACKUPS.md`](BACKUPS.md) §8 the wal-g one.
+[`K3S_UPGRADE.md`](K3S_UPGRADE.md) is the k3s procedure. `scripts/walg-upgrade.sh <env>` installs the wal-g pin in place, and
+[`BACKUPS.md`](BACKUPS.md) §8 says how and why.
 
 **Only `--probe` answers the question.** The advertisement disagreed with the order path three times out of four, in both directions.
 

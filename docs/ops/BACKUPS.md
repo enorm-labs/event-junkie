@@ -209,64 +209,55 @@ The `aarch64` asset name maps to the `arm64` key in `walg_checksums`. The script
 than fetching it beside the tarball is the point. A checksum fetched from the host that served the file verifies only that the download completed.
 
 **It changes `user_data`, which no apply delivers.** This is the one that matters. Bumping Trivy edits a workflow. Bumping `wal-g` changes what every node that
-runs PostgreSQL boots with, production included. `servers.tf` ignores `user_data` (#4129), so the new version reaches a running node only by hand or at its
-next rebuild. So:
+runs PostgreSQL boots with, production included. `servers.tf` ignores `user_data` (#4129). So the new version reaches a running node only through
+`scripts/walg-upgrade.sh` or at its next rebuild. So:
 
 - **Do not take it because it is available.** The reminder says a newer release exists, and that is all it says. Bump for a reason — a fix you need, an
-  advisory — and install it by hand (below) or take a rebuild deliberately. Keep `docs/ops/CLUSTER_BOOTSTRAP.md` § _Rebuilding a node_ open while you do.
-- **Or install ahead of the rebuild.** Bump the variable, put the new binary on the node by hand, and let the next natural rebuild find the work already done.
-  _Installing ahead of the rebuild_ below is the procedure, and it is not the one line it looks like. Every plan warns `booted another user_data` after the
-  bump, which is honest, because `user_data` genuinely differs.
+  advisory — and install it with `scripts/walg-upgrade.sh` (below) or take a rebuild deliberately. Keep `docs/ops/CLUSTER_BOOTSTRAP.md` § _Rebuilding a
+  node_ open while you do.
+- **Or install ahead of the rebuild.** Bump the variable, install the new binary on the running node, and let the next natural rebuild find the work already
+  done. _Installing ahead of the rebuild_ below is the procedure. Every plan warns `booted another user_data` after the bump, which is honest, because
+  `user_data` genuinely differs.
 - **Never let the pin drift from what is installed.** A node rebuilt six months later would silently downgrade to whatever the variable still says.
 
 ### Installing ahead of the rebuild
 
-Both nodes took `v3.0.9` this way on 2026-09-04 ([#1091](https://github.com/enorm-labs/event-junkie/issues/1091)). Two things make it less obvious than that
-bullet sounds, and both were found by doing it.
+Both nodes took `v3.0.9` this way on 2026-09-04 ([#1091](https://github.com/enorm-labs/event-junkie/issues/1091)) and `v3.0.10` on 2026-11-24
+([#5433](https://github.com/enorm-labs/event-junkie/issues/5433)). Bump `walg_version` and both `walg_checksums` first. Then, with the tunnel up, run:
 
-**Do not simply run `/opt/event-junkie/backups.sh`.** It ends with `systemctl restart postgresql@18-main`, because `archive_mode` needs a restart rather than a
-reload. That is correct at boot and disproportionate here. The binary is the only part of that script a version bump changes. The env file, the `walg`
+```sh
+scripts/walg-upgrade.sh staging --dry-run   # installed against pinned, and bootstrap.env's lines; changes nothing
+scripts/walg-upgrade.sh staging
+scripts/walg-upgrade.sh production
+```
+
+The script reads the tag and both checksums from `variables.tf`. It finds the node from `database.host` in the cluster's `helm-release.yaml`, as `db-dump.sh`
+does. Staging's database is on its k3s node. Production's database is a separate node, and the script reaches it through the k3s node
+(`-J ops@10.10.0.1`). On the node, the script does these steps:
+
+1. It prints the installed version, the pinned version and the three `WALG_` lines of `/etc/event-junkie/bootstrap.env`.
+2. It downloads the release asset for the node's architecture and checks it against the pinned SHA-256. On a mismatch, it stops before the install.
+3. It installs the binary to `/usr/local/bin/wal-g`.
+4. It patches the three `WALG_` lines in `bootstrap.env` and reads them back.
+5. It writes one WAL record, switches the segment and waits for `archived_count` to rise.
+6. It runs `sudo -u postgres walg check`.
+
+When the binary is current, the script skips steps 2 and 3. When `bootstrap.env` is current, it skips step 4. So a second run only proves the archive
+again. The header of the script gives the exit codes.
+
+**The script does not run `/opt/event-junkie/backups.sh`.** That script ends with `systemctl restart postgresql@18-main`, because `archive_mode` needs a
+restart rather than a reload. That is correct at boot and too much here. The binary is the only part that a version bump changes. The env file, the `walg`
 dispatcher and the two systemd units are byte-identical at any version.
 
-**Patch `/etc/event-junkie/bootstrap.env` in the same breath.** It holds the node's own copy of `WALG_VERSION`, rendered from `user_data` at boot, and
-installing a binary does not touch it. Leave it stale and the script's guard reads a mismatch on the next hand run, then reinstalls the **old** version.
-Installing ahead of the rebuild without this step is a downgrade waiting for its trigger.
+**The script also patches `bootstrap.env`.** The file holds the node's own copy of `WALG_VERSION`, rendered from `user_data` at boot. Installing
+a binary does not change it. A stale copy makes the guard in `backups.sh` read a mismatch on the next run, and then it reinstalls the **old** version. `sed`
+succeeds when no line matches, so the script reads the lines back and fails when they differ.
 
-So, per node, with the tag and both checksums already pinned in `variables.tf`:
-
-```sh
-T=$(mktemp -d)
-curl -fsSL --retry 3 -o "$T/w.tgz" \
-  "https://github.com/wal-g/wal-g/releases/download/$V/wal-g-pg-24.04-$A.tar.gz"
-echo "$SHA  $T/w.tgz" | sha256sum -c -     # aborts before install if the bytes differ
-tar -xzf "$T/w.tgz" -C "$T"
-sudo install -m 0755 "$T/wal-g-pg-24.04-$A" /usr/local/bin/wal-g
-rm -rf "$T"
-sudo sed -i -e "s|^WALG_VERSION=.*|WALG_VERSION=$V|" \
-            -e "s|^WALG_SHA256_AMD64=.*|WALG_SHA256_AMD64=<amd64 pin>|" \
-            -e "s|^WALG_SHA256_ARM64=.*|WALG_SHA256_ARM64=<arm64 pin>|" \
-  /etc/event-junkie/bootstrap.env
-```
-
-`$A` is `amd64` or `aarch64` from `dpkg --print-architecture`, and `$SHA` is that architecture's pinned value.
-
-**Then prove it archives, rather than that it exists.** A version string proves the download. Only a segment travelling through `archive_command` proves the
-backup path, which is the thing a stale or broken binary takes away silently.
-
-```sh
-sudo -u postgres psql -c "select pg_switch_wal()"
-sudo -u postgres psql -x -c "select archived_count, last_archived_wal, failed_count from pg_stat_archiver"
-```
-
-`archived_count` must rise. **On an idle database it will not.** At a segment boundary `pg_switch_wal()` returns an address like `0/B6000000` and does nothing,
-because there is no WAL to switch. That is exactly what production did, an hour after its last write, and the version string alone would have looked like
-success. Emit one record first:
-
-```sh
-sudo -u postgres psql -c "select pg_logical_emit_message(false, \$\$walg\$\$, \$\$archive probe\$\$)"
-```
-
-It writes a WAL record and changes no data, which is the point of using it rather than a table.
+**The proof is that a segment archives, not that the version string changed.** A version string proves the download. Only a segment that goes through
+`archive_command` proves the backup path, and a stale or broken binary breaks that path silently. **On an idle database `pg_switch_wal()` does nothing.** At a
+segment boundary it returns an address like `0/B6000000`, because there is no WAL to switch. Production did exactly that, an hour after its last write. So the
+script first calls `pg_logical_emit_message`, which writes a WAL record and changes no data. `failed_count` counts every failure since `stats_reset`. The script
+prints `last_failed_time` and `stats_reset` beside it, so you can tell an old failure from a new one.
 
 **The floor on staleness is lower than it looks.** `wal-g` is on the recovery path, not the request path. Nothing about a stale version shows up in monitoring,
 and the moment you find out is the moment you are already restoring. Re-read this section when the quarterly drill comes round

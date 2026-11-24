@@ -169,9 +169,11 @@ jobs:
                   '## Done when',
                   '',
                   '- [ ] `walg_version` and both `walg_checksums` entries move in the same commit',
-                  '- [ ] Both environments are on the new version, staging first',
+                  '- [ ] Both environments are on the new version, staging first: `scripts/walg-upgrade.sh staging`, then `production`, ' +
+                    'installs it in place, patches `bootstrap.env` and proves the archive',
                   '- [ ] Only if this was taken as a rebuild: `/etc/wal-g/credentials.env` rewritten on each node — it is deliberately not in `user_data`',
-                  '- [ ] `sudo -u postgres walg check` passes on each node, which is the assertion that matters rather than the unit state',
+                  '- [ ] `sudo -u postgres walg check` passes on each node, which is the assertion that matters rather than the unit state. ' +
+                    '`walg-upgrade.sh` runs it last',
                 ].join('\n'),
               });
             }
