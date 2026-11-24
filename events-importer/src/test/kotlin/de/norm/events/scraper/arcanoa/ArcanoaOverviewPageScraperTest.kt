@@ -329,6 +329,23 @@ class ArcanoaOverviewPageScraperTest {
         }
 
         @Test
+        fun `splits a night whose weekday carries a dot, and reads its start and its reading (event 15277)`() {
+            val events =
+                scraper.scrape(
+                    fragment("Sa 05.12.Live: Captain Zorx Stimmungskanone<br>So. 06.12. Live: ab 18 Uhr Zarras - Lesung \"Mieser Strudel ohne Sahne\""),
+                    baseUrl
+                )
+
+            events.map { it.title } shouldContainExactly listOf("Captain Zorx Stimmungskanone", "Zarras")
+            events.map { it.eventDate } shouldContainExactly listOf(LocalDate.of(2026, 12, 5), LocalDate.of(2026, 12, 6))
+            events.map { it.eventType } shouldContainExactly listOf(EventType.CONCERT.name, EventType.READING.name)
+            events.last().startTime shouldBe LocalTime.of(18, 0)
+            events.last().endTime.shouldBeNull()
+            events.last().subtitle shouldBe "Lesung \"Mieser Strudel ohne Sahne\""
+            events.last().artists.map { it.name } shouldContainExactly listOf("Zarras")
+        }
+
+        @Test
         fun `ignores a gesperrt heading that is not a month name`() {
             val document =
                 Jsoup.parse(

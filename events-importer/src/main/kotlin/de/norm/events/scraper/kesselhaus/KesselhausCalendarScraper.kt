@@ -140,7 +140,7 @@ class KesselhausCalendarScraper(
         val topics = base.path("topics").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
         val category = card.textAt(".category")
         val ceilidh = CEILIDH.containsMatchIn(title)
-        val eventType = if (ceilidh) EventType.CONCERT.name else eventTypeOf(category, topics)
+        val eventType = if (ceilidh) EventType.CONCERT.name else eventTypeOf(title, category, topics)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle ?: text.stringOrNull("pretitle"),
@@ -219,15 +219,17 @@ class KesselhausCalendarScraper(
     /**
      * A night filed as a concert but tagged as a party and not as a concert is a DJ night. A night filed under `Weitere`
      * and tagged `spoken-word` is a talk, which EVENT_SCOPE.md §2 types a reading: Christoph Strasser's `Multimedia Vortrag`
-     * (event 15052).
+     * (event 15052). A musical filed there is a show (event 15290).
      */
     private fun eventTypeOf(
+        title: String,
         category: String?,
         topics: Set<String>
     ): String {
         val type = mapEventType(category, CATEGORY_SYNONYMS) ?: EventType.OTHER.name
         return when {
             type == EventType.CONCERT.name && PARTY_TOPIC in topics && CONCERT_TOPIC !in topics -> EventType.PARTY.name
+            type == EventType.OTHER.name && MUSICAL.containsMatchIn(title) -> EventType.SHOW.name
             type == EventType.OTHER.name && SPOKEN_WORD_TOPIC in topics -> EventType.READING.name
             else -> type
         }
@@ -338,6 +340,7 @@ class KesselhausCalendarScraper(
         /** An event card; a month's first card also has a `separator` twin with the same id and no content. */
         private const val CARD = "div.item[data-id][data-use=default]"
         private const val PARTY_TOPIC = "party"
+        private val MUSICAL = Regex("""\bmusical\b""", RegexOption.IGNORE_CASE)
         private val PARTY_PROSE = Regex("""\bparty\b""", RegexOption.IGNORE_CASE)
         private const val CONCERT_TOPIC = "concerts"
 

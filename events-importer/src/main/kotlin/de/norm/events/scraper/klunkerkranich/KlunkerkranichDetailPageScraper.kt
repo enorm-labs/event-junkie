@@ -170,7 +170,7 @@ class KlunkerkranichDetailPageScraper {
         const val NO_SOUNDCLOUD = "no clouds"
 
         /** The venue's `*live` marker, ignored when a line is compared with the title. */
-        val LIVE_MARKER = Regex("""\*\s*live\b""", RegexOption.IGNORE_CASE)
+        val LIVE_MARKER = Regex("""\*\s*(?:live|hybrid)\b""", RegexOption.IGNORE_CASE)
 
         /** The separators between a title's parts — "Django Lassi – HEAP Album Release | DJ Seraphim", "HIVE TEA * DRAG SHOWS". */
         val TITLE_PART_SEPARATOR = Regex("""[|–—*]""")

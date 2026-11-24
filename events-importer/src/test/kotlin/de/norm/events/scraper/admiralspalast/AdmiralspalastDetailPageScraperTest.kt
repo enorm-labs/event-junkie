@@ -297,4 +297,16 @@ class AdmiralspalastDetailPageScraperTest {
                 Arguments.of("Crown Ballet - Schwanensee mit Orchester", "Tanz/Ballett", listOf("Crown Ballet"))
             )
     }
+
+    @Test
+    fun `bills the reader a title names before liest (event 15250)`() {
+        val document = fixtureDocument("admiralspalast/admiralspalast-detail-single.html", "https://www.admiralspalast.theater/veranstaltung/ben-becker.html")
+        document.select("#eventlist .item .value.eventname").forEach { it.text("Ben Becker liest: Eine Weihnachtsgeschichte von Charles Dickens") }
+        document.select(".field.description .value .text").forEach { it.html("<p>Ben Becker bringt den Klassiker als szenische Lesung auf die Bühne.</p>") }
+
+        val event = scraper.scrape(document, "https://www.admiralspalast.theater/veranstaltung/ben-becker.html", "Lesung").first()
+
+        event.title shouldBe "Ben Becker liest: Eine Weihnachtsgeschichte von Charles Dickens"
+        event.artists.map { it.name } shouldBe listOf("Ben Becker")
+    }
 }

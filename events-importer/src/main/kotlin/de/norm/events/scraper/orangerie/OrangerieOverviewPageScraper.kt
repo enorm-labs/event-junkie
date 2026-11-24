@@ -30,7 +30,7 @@ import tools.jackson.databind.JsonNode
  *
  * A schema.org `ItemList` of `Event`s carries the name, the dated start and the price, so it decides the rows.
  * Each `div.card` with the same `h3.card-title` adds the cover, the style tags and the Rausgegangen ticket link.
- * A `tag-food` tag names a food pop-up, not a style, so it never reaches the genre.
+ * A `tag-food` tag names a food pop-up and a `Musikbingo` tag a game night, not a style, so neither reaches the genre.
  */
 class OrangerieOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -64,6 +64,7 @@ class OrangerieOverviewPageScraper {
                 .let { (food, style) -> food to style.map(::tagText).filter { it.isNotBlank() } }
         val eventType =
             when {
+                tags.any(BINGO_TAG::containsMatchIn) -> EventType.QUIZ
                 tags.any { it.equals(CONCERT_TAG, ignoreCase = true) } || name.startsWith(LIVE_SERIES) -> EventType.CONCERT
                 tags.isEmpty() && foodTags.isNotEmpty() -> EventType.OTHER
                 else -> EventType.PARTY
@@ -84,10 +85,11 @@ class OrangerieOverviewPageScraper {
             sourceUrl = baseUrl,
             sourceId = EventSource.ORANGERIE_NEUKOELLN.dateTitleId(date, name),
             ticketUrl = card?.selectFirst("a.og-act-link[title=Rausgegangen]")?.attr("abs:href")?.ifBlank { null },
-            genre = tags.filterNot { it.equals(CONCERT_TAG, ignoreCase = true) }.joinToString(", ").ifBlank { null },
+            genre = tags.filterNot { it.equals(CONCERT_TAG, ignoreCase = true) || BINGO_TAG.containsMatchIn(it) }.joinToString(", ").ifBlank { null },
             priceBoxOffice = price?.takeIf { it.signum() > 0 },
             free = price?.signum() == 0,
-            artists = artists(name, eventType)
+            artists = artists(name, eventType),
+            promoters = listOfNotNull(name.takeIf { presentsTheNight(it, node.stringOrNull("description")) })
         )
     }
 
@@ -111,11 +113,20 @@ class OrangerieOverviewPageScraper {
             .map { ScrapedArtist(name = it, role = role) }
     }
 
+    /** Whether the description says `präsentiert von` the crew the night is named after: `DUCT TAPE` (event 15288). */
+    private fun presentsTheNight(
+        name: String,
+        description: String?
+    ): Boolean = description != null && Regex("""präsentiert\s+von\s+${Regex.escape(name)}(?![\p{L}\d])""").containsMatchIn(description)
+
     /** A bilingual tag holds a `lang="de"` and a `lang="en"` span, which `text()` would run together. */
     private fun tagText(tag: Element): String = (tag.selectFirst("[lang=en]") ?: tag).text().trim()
 
     private companion object {
         const val CONCERT_TAG = "Concert"
+
+        /** `Musikbingo mit verschiedenen Musikgenres`: a game night (EVENT_SCOPE.md §2). */
+        val BINGO_TAG = Regex("""bingo\b""", RegexOption.IGNORE_CASE)
         const val FOOD_TAG = "tag-food"
         const val LIVE_SERIES = "Parkside Sessions"
         const val WITH = " w/ "

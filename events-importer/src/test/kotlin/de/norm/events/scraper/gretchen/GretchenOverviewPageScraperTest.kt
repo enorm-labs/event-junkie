@@ -877,4 +877,34 @@ class GretchenOverviewPageScraperTest {
             .map { it.name } shouldContainExactly
             listOf("The Swag", "backtracked", "Marian Tone")
     }
+
+    @Test
+    fun `bills a sound system's crew by name`() {
+        // Event 15226.
+        val gig =
+            """
+            <div class="gig"><div class="date">Fr. <strong>15.01.2027</strong> Doors: 23.00</div>
+            <div class="title"><h2><a href="detail.php?id=3661">DUBBLE THE BASS</a></h2></div>
+            <span class="lineup"><p>King David Soundsystem with Puppa D. at the controls feat. on the mic Fyah Bantu &amp; Joseph "Still Cool" Blue <br />Masada Soundsystem with Dub Jewel, RiddimBwoy, Forward Sisters, Tom Tom &amp; Señor W on the decks feat. Longfingah on the mic<br /></p></span></div>
+            """.trimIndent()
+
+        scraper
+            .scrape(Jsoup.parse(gig, baseUrl), baseUrl)
+            .single()
+            .artists
+            .map { it.name } shouldContainExactly
+            listOf(
+                "King David Soundsystem",
+                "Puppa D.",
+                "Fyah Bantu",
+                "Joseph \"Still Cool\" Blue",
+                "Masada Soundsystem",
+                "Dub Jewel",
+                "RiddimBwoy",
+                "Forward Sisters",
+                "Tom Tom",
+                "Señor W",
+                "Longfingah"
+            )
+    }
 }

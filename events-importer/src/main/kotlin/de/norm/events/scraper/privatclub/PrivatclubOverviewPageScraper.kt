@@ -161,7 +161,11 @@ class PrivatclubOverviewPageScraper(
         // "Örtlicher Veranstalter", else the collective a party's subtitle names. A band named as its own promoter is the act, and the
         // #1841 hold-back would bill nobody (#5372).
         val titleActSlugs = artists.filter { it.titleDerived }.map { SlugGenerator.slugify(it.name) }.toSet()
-        val promoters = listOfNotNull(parsePromoterName(detail) ?: partyDjs?.collective).filterNot { SlugGenerator.slugify(it) in titleActSlugs }
+        val promoters =
+            listOfNotNull(parsePromoterName(detail) ?: partyDjs?.collective ?: title.takeIf { isCollectiveNight(it, eventType) }).filterNot {
+                SlugGenerator.slugify(it) in
+                    titleActSlugs
+            }
 
         return ScrapedEvent(
             title = title,
@@ -448,6 +452,7 @@ private data class SubtitleDjs(
 /**
  * The DJ a party's subtitle names: the whole subtitle as `DJ King Dynamite`, or the tail after its last `mit`, as in `die Indieparty mit eavo im
  * Privatclub` or `Die Indie-Frühparty am Sonntag mit DJ Spencer vom Karrera Klub!` (event 10927). A `vom` collective is the night's promoter.
+ * `mit den DJs Christian & Spencer` gives each name its `DJ` (event 15303).
  * A part of more than [MAX_DJ_WORDS] words makes the tail a phrase (`mit den schönsten Hits der Achtziger`), and it bills nobody.
  */
 private fun subtitleDjs(subtitle: String?): SubtitleDjs? {
@@ -459,13 +464,16 @@ private fun subtitleDjs(subtitle: String?): SubtitleDjs? {
             ?.groupValues
             ?.get(1)
             ?.trim()
+    val sharedLabel = SHARED_DJ_LABEL.find(tail)
     val names =
         tail
+            .removePrefix(sharedLabel?.value.orEmpty())
             .replace(COLLECTIVE_TAIL, "")
             .replace(HOUSE_TAIL, "")
             .split(DJ_SEPARATOR)
             .map { it.trim() }
             .filter { it.isNotEmpty() }
+            .map { if (sharedLabel == null) it else "DJ $it" }
     if (names.isEmpty() || names.any { it.split(' ').size > MAX_DJ_WORDS }) return null
     val djs = names.filterNot(::isNonArtistName).ifEmpty { return null }
     return SubtitleDjs(djs.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }, collective?.takeIf { it.isNotEmpty() })
@@ -478,6 +486,17 @@ private val DJ_SUBTITLE = Regex("""DJ\s+\S+(?:\s+\S+){0,2}""")
 
 /** The names after a subtitle's last `mit`. */
 private val WITH_TAIL = Regex("""(?:^|\s)mit\s+((?:(?!\smit\s).)+)$""", RegexOption.IGNORE_CASE)
+
+/** `den DJs`, one label for every name after it. */
+private val SHARED_DJ_LABEL = Regex("""^(?:den\s+)?DJs\s+""", RegexOption.IGNORE_CASE)
+
+/** The booking agencies that name a party after themselves, in lower case; the page credits them nowhere else. */
+private val COLLECTIVE_NIGHTS = setOf("karrera klub")
+
+private fun isCollectiveNight(
+    title: String,
+    eventType: String?
+): Boolean = eventType == EventType.PARTY.name && title.lowercase() in COLLECTIVE_NIGHTS
 
 /** `vom Karrera Klub`: the collective the DJ comes from. */
 private val COLLECTIVE_TAIL = Regex("""\s+vom\s+(.+)$""", RegexOption.IGNORE_CASE)

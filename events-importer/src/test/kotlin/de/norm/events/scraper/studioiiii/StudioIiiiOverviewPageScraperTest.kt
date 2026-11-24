@@ -340,4 +340,44 @@ class StudioIiiiOverviewPageScraperTest {
     fun `a page without cover blocks yields nothing`() {
         scraper.scrape(Jsoup.parse("<html><body><p>Closed</p></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    @Test
+    fun `a sentence that introduces the night and its heading bill nobody (event 15299)`() {
+        val sentence =
+            "FOR THIS EDITION, WE INVITE PROF. DR. HENRICH, ONE OF CHARITÉ’S LEADING EXPERTS IN CHILDBIRTH AND PREGNANCY, TO EXPLORE THE " +
+                "SCIENCE OF BIRTH AND HUMAN DEVELOPMENT, WHAT WE INHERIT FROM OUR PARENTS, AND JUST HOW MUCH OF IT WE CAN BLAME ON THEM. " +
+                "THE GOOD, THE BAD AND EVERYTHING IN BETWEEN."
+
+        val event = scrapeOne(cover("THUR 26 NOVEMBER 8PM", title = "ARCHIVE ABEL", descr = "BLAME YOUR PARENTS<br>$sentence"))
+
+        event.artists.shouldBeEmpty()
+        event.description shouldBe "BLAME YOUR PARENTS\n$sentence"
+    }
+
+    @Test
+    fun `an act beside a sentence stays billed`() {
+        val event = scrapeOne(cover("FRI 23 OCTOBER 9PM", descr = "ANA, BEN<br>WE OPEN THE GARDEN AGAIN UNTIL THE SUN IS BACK<br>CARA"))
+
+        event.artists.map { it.name } shouldContainExactly listOf("ANA", "BEN", "CARA")
+    }
+
+    @Test
+    fun `a hyphenated DJ-SETS credit bills its names (event 15300)`() {
+        val event =
+            scrapeOne(
+                cover("FRI 27 NOVEMBER 10PM-11AM", descr = "ELECTRONIC HOUSE MUSIC DJ-SETS BY KEV KOKO, DJ EIVISSA, LEONA JACEWSKA & GIULIA GUTTERER, FRÆDO")
+            )
+
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("KEV KOKO", "DJ EIVISSA", "LEONA JACEWSKA", "GIULIA GUTTERER", "FRÆDO").map { it to ArtistRole.DJ }
+    }
+
+    @Test
+    fun `a set credit goes on after a line break and stops at the next credit (event 15301)`() {
+        val descr =
+            "SPECIAL BRAZILIAN NIGHT WITH FILM SCREENING BY TERROR MANDELÃO, PERFORMANCE BY DIANNA JACKSAN MANZAMUSSA, DANCE CLASS WITH " +
+                "MALLO SANTO AND DJ-SETS BY SAZE,<br>XD ERICA, BIEU S2, & VV$. VISUALS BY KLEITON BASSI"
+
+        scrapeOne(cover("SAT 28 NOVEMBER 9.30PM", descr = descr)).artists.map { it.name } shouldContainExactly listOf("SAZE", "XD ERICA", "BIEU S2", "VV$")
+    }
 }

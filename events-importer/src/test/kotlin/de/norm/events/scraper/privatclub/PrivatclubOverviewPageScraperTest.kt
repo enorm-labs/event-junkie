@@ -216,6 +216,16 @@ class PrivatclubOverviewPageScraperTest {
         }
 
         @Test
+        fun `labels every DJ of a shared label, and credits the agency a party is named after (event 15303)`() {
+            val html = card("Party", "Karrera Klub", subtitle = "Indie Disko mit den DJs Christian & Spencer")
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.map { it.name to it.role } shouldBe listOf("DJ Christian" to ArtistRole.DJ, "DJ Spencer" to ArtistRole.DJ)
+            event.promoters shouldBe listOf("Karrera Klub")
+        }
+
+        @Test
         fun `prefers the DJ paragraph over the subtitle`() {
             val html =
                 card(

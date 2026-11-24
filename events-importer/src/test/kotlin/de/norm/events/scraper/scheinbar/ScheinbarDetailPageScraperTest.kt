@@ -46,4 +46,15 @@ class ScheinbarDetailPageScraperTest {
 
         scraper.scrape(Jsoup.parse(html)).artists.map { it.name } shouldContainExactly listOf("Anna Bolika", "Ben Hur")
     }
+
+    @Test
+    fun `reads the guests a host's prose names (event 15296)`() {
+        fun names(text: String) = scraper.scrape(Jsoup.parse("""<article class="progFloat"><p>$text</p></article>""")).artists.map { it.name }
+
+        names(
+            "Grund genug, dass Horst Blue und seine Gäste Katharina Hoffmann, Birgit Breuer, Tom van Orten und Mai Horlemann gemeinsam aufatmen."
+        ) shouldContainExactly
+            listOf("Katharina Hoffmann", "Birgit Breuer", "Tom van Orten", "Mai Horlemann")
+        names("Er begrüßt seine Gäste auf der Bühne.").shouldBeEmpty()
+    }
 }
