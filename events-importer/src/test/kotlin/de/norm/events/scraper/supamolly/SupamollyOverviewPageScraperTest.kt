@@ -398,6 +398,45 @@ class SupamollyOverviewPageScraperTest {
                 listOf(ScrapedArtist("Anna", ArtistRole.DJ), ScrapedArtist("Bo", ArtistRole.DJ))
         }
 
+        @Test
+        fun `bills a labelled support and an after-show's DJs, and types the night by its concert`() {
+            // Event 15310.
+            val event =
+                billing("Downtown Steppas", "Vorprogram: Wolara Drums", "Aftershow Djs Antamauna (Soullab) und Bass-T")
+
+            event.eventType shouldBe "CONCERT"
+            event.title shouldBe "Downtown Steppas, Vorprogram: Wolara Drums, Aftershow Djs Antamauna (Soullab) und Bass-T"
+            event.artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("Downtown Steppas", ArtistRole.HEADLINER),
+                    ScrapedArtist("Wolara Drums", ArtistRole.SUPPORT),
+                    ScrapedArtist("Antamauna", ArtistRole.DJ),
+                    ScrapedArtist("Bass-T", ArtistRole.DJ)
+                )
+        }
+
+        @Test
+        fun `bills the band behind the Skanta Klaus festival, and keeps a mit inside a band's name`() {
+            // Event 15311.
+            billing("Skanta Klaus mit Les Calcatoggios", "Port Royal", "Kapelle mit Hut").artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("Les Calcatoggios", ArtistRole.HEADLINER),
+                    ScrapedArtist("Port Royal", ArtistRole.SUPPORT),
+                    ScrapedArtist("Kapelle mit Hut", ArtistRole.SUPPORT)
+                )
+        }
+
+        @Test
+        fun `cuts an origin after the act's name`() {
+            // Event 15312.
+            billing("Necromorph", "St Mincer aus Prag", "Raus aus dem Haus").artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("Necromorph", ArtistRole.HEADLINER),
+                    ScrapedArtist("St Mincer", ArtistRole.SUPPORT),
+                    ScrapedArtist("Raus aus dem Haus", ArtistRole.SUPPORT)
+                )
+        }
+
         private fun billing(vararg acts: String): ScrapedEvent {
             val blocks = acts.joinToString("") { """<div class="even"><div class="tit"><b>$it</b></div></div>""" }
             val document = Jsoup.parse("""<table><tr class="event" id="202611272130"><td class="evcont">$blocks</td></tr></table>""", baseUrl)
