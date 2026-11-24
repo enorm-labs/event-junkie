@@ -10,10 +10,6 @@ import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
-import de.norm.events.scraper.splitBackToBack
-import de.norm.events.scraper.splitOnEmoji
-import de.norm.events.scraper.stripArtistSuffix
-import de.norm.events.scraper.stripTitleStatusMarker
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
@@ -262,17 +258,10 @@ class AssociationSyncService(
         event: ScrapedEvent,
         heldBack: List<ScrapedArtist>
     ): List<Pair<QualityFlagKind, String>> {
-        val artists =
-            event.artists
-                .map { it.copy(name = stripTitleStatusMarker(it.name)) }
-                .flatMap(::splitGuest)
-                .flatMap { artist -> splitOnEmoji(artist) }
-                .flatMap { artist -> splitBackToBack(artist) }
-                .mapNotNull { artist -> artistRefusal(stripArtistSuffix(artist.name))?.let { it to artist.name.trim() } }
         val promoters = heldBack.map { QualityFlagKind.HELD_BACK_PROMOTER_NAME to it.name.trim() }
         val genre = event.genre?.takeIf { event.genreRepeatsTitle() }?.let { QualityFlagKind.GENRE_EQUALS_TITLE to it.trim() }
         val nonGenres = nonGenreTokens(event.storedGenre()).map { QualityFlagKind.NON_GENRE_TOKEN to it }
-        return artists + promoters + listOfNotNull(genre) + nonGenres
+        return refusedArtists(event) + promoters + listOfNotNull(genre) + nonGenres
     }
 }
 
