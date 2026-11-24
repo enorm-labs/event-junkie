@@ -10,6 +10,7 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalTime
@@ -102,6 +103,17 @@ class MbiaOverviewPageScraperTest {
             .artists
             .first()
             .name shouldBe "Diztorted"
+    }
+
+    // `PsyLab – Escape the Grey` (2026-11-28) billed its birthday note.
+    @Test
+    fun `drops a birthday note printed among the acts`() {
+        val html =
+            fixtureDocument("mbia/mbia-veranstaltungen.html", baseUrl).outerHtml().replace("Vansessy", "Klausis BDay Bash (FYT Bunker Floor)")
+
+        val night = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single { it.title == "Nyctophilia Halloween SPCL" }
+
+        night.artists.take(2).map { it.name } shouldContainExactly listOf("NYXEA", "SON!CA")
     }
 
     @Test

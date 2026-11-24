@@ -136,6 +136,13 @@ class MigasOverviewPageScraperTest {
         session.artists.shouldBeEmpty()
     }
 
+    // Event of 2027-01-09: the guests bring the songs.
+    @Test
+    fun `scrape mints no artist for the Listening Club, and keeps a guest whose name only opens with it`() {
+        scrapeOne(title = "Listening Club", category = "listening session").artists.shouldBeEmpty()
+        scrapeOne(title = "Listening Clubbers", category = "listening session").artists.shouldNotBeEmpty()
+    }
+
     @Test
     fun `scrape keeps billing a guest session named for its guest`() {
         scrapeOne(title = "modú", category = "listening session").artists shouldContainExactly

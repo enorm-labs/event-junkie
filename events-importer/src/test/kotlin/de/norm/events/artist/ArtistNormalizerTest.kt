@@ -430,6 +430,23 @@ class ArtistNormalizerTest {
         }
     }
 
+    @Test
+    fun `folds the V279 merges onto the survivor and keeps a DJ apart from the act of the same name`() {
+        assertSoftly {
+            artistSlugFor("DJ Hey, my Commander") shouldBe "hey-my-commander"
+            artistSlugFor("DJ Stan") shouldBe "stan"
+            artistSlugFor("DJ Mig") shouldBe "mig"
+            artistSlugFor("DJ Isamel Nagera") shouldBe "isamel-nagera"
+            artistSlugFor("DJ Onef") shouldBe "dj-one-f"
+            artistSlugFor("DJ Barox") shouldBe "barox"
+            artistSlugFor("young oldmann") shouldBe "youngoldmann"
+            artistSlugFor("Ellie Phunk") shouldBe "elliephunk"
+            artistSlugFor("Dj Volvox") shouldBe "volvox"
+            artistSlugFor("DJ Mala") shouldBe "dj-mala"
+            artistSlugFor("DJ Spy") shouldBe "dj-spy"
+        }
+    }
+
     // The lookup key keeps every letter, so a billing in another script never collapses onto a correction (#4611).
     @Test
     fun `keys a correction on every letter of the billing`() {

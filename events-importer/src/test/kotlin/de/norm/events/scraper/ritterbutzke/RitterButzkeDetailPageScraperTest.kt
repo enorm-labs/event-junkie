@@ -87,6 +87,24 @@ class RitterButzkeDetailPageScraperTest {
         scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.artists.map { it.name } shouldBe listOf("LEXY & K-PAUL")
     }
 
+    // 211126-AlanFitzpatrick billed the floor's takeover.
+    @Test
+    fun `drops a floor takeover from the performers and from the rendered rows`() {
+        val sourceUrl = "https://club.ritterbutzke.com/event/211126-AlanFitzpatrick"
+        val jsonLd =
+            """
+            <script type="application/ld+json">[{"@type": "MusicEvent", "name": "Night", "performer":
+            [{"@type": "MusicGroup", "name": "Solvane"}, {"@type": "MusicGroup", "name": "Huettenbar Takeover"}]}]</script>
+            """.trimIndent()
+        val rows =
+            """<h1>Night</h1><div><p>Line Up:</p><div style="padding-left: 1rem">Solvane</div>
+            <div style="padding-left: 1rem">Huettenbar Takeover</div></div>"""
+        listOf(jsonLd, "").forEach { head ->
+            val document = Jsoup.parse("<html><head>$head</head><body>$rows</body></html>", sourceUrl)
+            scraper.scrape(document, sourceUrl)!!.artists.map { it.name } shouldBe listOf("Solvane")
+        }
+    }
+
     @Test
     fun `reads the pretix widget's shop url`() {
         // The widget renders client-side; its `event` attribute is the only server-rendered copy.

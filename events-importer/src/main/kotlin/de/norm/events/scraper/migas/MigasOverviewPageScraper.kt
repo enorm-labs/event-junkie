@@ -144,10 +144,11 @@ class MigasOverviewPageScraper {
      * co-bills split by [headlinersFromTitle]). Everyone migas books plays records, so the role
      * is always `DJ`. An album-playback night ([isAlbumPlayback]) yields **no** artists: its
      * title names the record, and minting "Kyuss" would assert the band appears at the venue.
-     * A hosted session ([isHostedSession]) yields none either: its host leads it but plays nothing.
+     * A hosted session ([isHostedSession]) yields none either: its host leads it but plays nothing. Nor does the monthly
+     * [AUDIENCE_SESSION], where the guests bring the songs.
      */
     private fun artistsFor(title: String): List<ScrapedArtist> =
-        if (isAlbumPlayback(title) || isHostedSession(title)) {
+        if (isAlbumPlayback(title) || isHostedSession(title) || title.equals(AUDIENCE_SESSION, ignoreCase = true)) {
             emptyList()
         } else {
             headlinersFromTitle(title).map { it.copy(role = ARTIST_ROLE_DJ) }
@@ -211,6 +212,8 @@ class MigasOverviewPageScraper {
          * The comma keeps it off a bare guest name such as "modú".
          */
         val HOSTED_SESSION_PATTERN = Regex(""",\s*(?:$PRESENTED_BY_WORDS)\s+\S""", RegexOption.IGNORE_CASE)
+
+        const val AUDIENCE_SESSION = "Listening Club"
 
         fun isHostedSession(title: String): Boolean = HOSTED_SESSION_PATTERN.containsMatchIn(title)
     }

@@ -31,6 +31,19 @@ class Nachtklub808OverviewPageScraperTest {
         events.first { it.eventDate == LocalDate.of(2026, 10, 2) }.artists.map { it.name } shouldBe listOf("MAXXX", "NO A\$\$ETS", "GATO", "Ufo361")
     }
 
+    // Event of 2026-11-20 billed `Amber Rose [Host]`.
+    @Test
+    fun `reads a host in square brackets too`() {
+        val html = fixtureDocument("nachtklub808/nachtklub808-overview.html", baseUrl).outerHtml().replace("Ufo361 (Host)", "Ufo361 [Host]")
+
+        Nachtklub808OverviewPageScraper()
+            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+            .first { it.eventDate == LocalDate.of(2026, 10, 2) }
+            .artists
+            .last()
+            .name shouldBe "Ufo361"
+    }
+
     @Test
     fun `strips markup from a summer pop-up name, gives it no club hours and keys a second row on the date apart`() {
         val popUps = events.filter { it.eventDate == LocalDate.of(2026, 8, 8) }
