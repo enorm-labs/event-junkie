@@ -165,7 +165,7 @@ function enumLabel(namespace: string, value: string): string {
               {{ set.entry.artist.name }}
             </RouterLink>
             <template v-else>{{ set.entry.artist?.name }}</template>
-            <ListenLinks :artist="set.entry.artist" />
+            <ListenLinks :artist="set.entry.artist" :role="set.entry.role" />
           </span>
           <span v-if="showRoles && set.entry.role" class="shrink-0 text-meta text-muted-foreground">
             {{ enumLabel('events.role', set.entry.role) }}
@@ -192,7 +192,7 @@ function enumLabel(namespace: string, value: string): string {
             {{ entry.artist.name }}
           </RouterLink>
           <template v-else>{{ entry.artist?.name }}</template>
-          <ListenLinks :artist="entry.artist" />
+          <ListenLinks :artist="entry.artist" :role="entry.role" />
         </span>
         <div class="flex shrink-0 items-center gap-2 text-meta text-muted-foreground">
           <span v-if="entry.stage">{{ entry.stage }}</span>

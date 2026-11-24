@@ -7,10 +7,10 @@ import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.awaitRowsUpdated
 import java.time.LocalDate
 
-/** Each line-up artist carries the Bandcamp and SoundCloud links the event page offers beside the act (#2723). */
+/** Each line-up artist carries the listen links the event page offers beside the act (#2723, #5486). */
 class EventLineupListenLinksTest : BaseControllerTest() {
     @Test
-    fun `GET event by slug carries each line-up artist's Bandcamp and SoundCloud links, and none where the artist has none`(): Unit =
+    fun `GET event by slug carries each line-up artist's listen links, and none where the artist has none`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
             val headliner = insertArtist("The Adicts", "the-adicts")
@@ -22,7 +22,8 @@ class EventLineupListenLinksTest : BaseControllerTest() {
                 .sql(
                     """
                     UPDATE events.artist
-                    SET bandcamp_url = 'https://theadicts.bandcamp.com/', soundcloud_url = 'https://soundcloud.com/the-adicts'
+                    SET bandcamp_url = 'https://theadicts.bandcamp.com/', soundcloud_url = 'https://soundcloud.com/the-adicts',
+                        youtube_url = 'https://www.youtube.com/@theadicts', spotify_url = 'https://open.spotify.com/artist/the-adicts'
                     WHERE id = :id
                     """.trimIndent()
                 ).bind("id", headliner)
@@ -40,11 +41,19 @@ class EventLineupListenLinksTest : BaseControllerTest() {
                 .isEqualTo("https://theadicts.bandcamp.com/")
                 .jsonPath("$.lineup[0].artist.soundcloudUrl")
                 .isEqualTo("https://soundcloud.com/the-adicts")
+                .jsonPath("$.lineup[0].artist.youtubeUrl")
+                .isEqualTo("https://www.youtube.com/@theadicts")
+                .jsonPath("$.lineup[0].artist.spotifyUrl")
+                .isEqualTo("https://open.spotify.com/artist/the-adicts")
                 .jsonPath("$.lineup[1].artist.slug")
                 .isEqualTo("maid-of-ace")
                 .jsonPath("$.lineup[1].artist.bandcampUrl")
                 .doesNotExist()
                 .jsonPath("$.lineup[1].artist.soundcloudUrl")
+                .doesNotExist()
+                .jsonPath("$.lineup[1].artist.youtubeUrl")
+                .doesNotExist()
+                .jsonPath("$.lineup[1].artist.spotifyUrl")
                 .doesNotExist()
         }
 }
