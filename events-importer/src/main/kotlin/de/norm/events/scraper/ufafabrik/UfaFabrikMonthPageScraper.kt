@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
+import de.norm.events.scraper.CONCESSION_LABELS
 import de.norm.events.scraper.CONJUNCTION_TAIL_MARKERS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
@@ -22,6 +23,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
 
 private val logger = KotlinLogging.logger {}
@@ -63,7 +65,10 @@ class UfaFabrikMonthPageScraper {
                 ?.groupValues
                 ?.get(1)
         if (link == null || node == null || title.isEmpty()) return null
-        val prices = row.prices()
+        val tiers = row.priceTiers()
+        val prices = tiers.toMap()
+        val admission = prices[ADMISSION_LABEL] ?: childrensAdmission(prices)
+        val named = namedTiers(tiers).takeIf { admission == null && prices.labelled(PRESALE_LABEL) == null && prices.labelled(BOX_OFFICE_LABEL) == null }
         val time = parseTime(row.textAt(".views-field-field-time"))
         val subtitle = row.textAt(".views-field-field-subtitle")
         val label = row.textAt(".views-field-field-genre")
@@ -82,17 +87,18 @@ class UfaFabrikMonthPageScraper {
             sourceId = "${EventSource.UFA_FABRIK.sourceIdPrefix}$node-$date-${time?.toString()?.replace(":", "") ?: "0000"}",
             ticketUrl = row.selectFirst(".buy-tickets a[href]")?.absUrl("href"),
             genre = genre,
-            pricePresale = prices.labelled(PRESALE_LABEL) ?: prices[ADMISSION_LABEL] ?: childrensAdmission(prices),
-            priceBoxOffice = prices.labelled(BOX_OFFICE_LABEL) ?: prices[ADMISSION_LABEL] ?: childrensAdmission(prices),
+            pricePresale = prices.labelled(PRESALE_LABEL) ?: admission ?: named?.minOf { it.second },
+            priceBoxOffice = prices.labelled(BOX_OFFICE_LABEL) ?: admission,
+            priceNote = named?.let(::tierNote),
             soldOut = row.selectFirst(".sold-out.event-banner") != null,
             status = if (row.selectFirst(".canceled.event-banner") != null) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
             artists = ufaFabrikArtists(title, subtitle, eventType, label)
         ).forChildrenIf(childrensPriceLabel(prices.keys))
     }
 
-    /** The labelled prices of a row, `Eintritt` to 20.00, `Ermäßigt` to 15.00. */
-    private fun Element.prices(): Map<String, BigDecimal?> =
-        select(".paragraph--type--event-price").associate { it.textAt(".field--name-field-name").orEmpty() to it.priceValue() }
+    /** The labelled prices of a row in page order, `Eintritt` to 20.00, `Ermäßigt` to 15.00; a label can repeat. */
+    private fun Element.priceTiers(): List<Pair<String, BigDecimal?>> =
+        select(".paragraph--type--event-price").map { it.textAt(".field--name-field-name").orEmpty() to it.priceValue() }
 
     private fun Element.priceValue(): BigDecimal? = selectFirst(".field--name-field-value[content]")?.attr("content")?.toBigDecimalOrNull()
 
@@ -173,6 +179,30 @@ private val MIT = Regex("""\s+mit\s+(\S+)""", RegexOption.IGNORE_CASE)
 
 /** The shared band-tail words plus German possessives: `X mit seiner Band` is one act. */
 private val MIT_TAIL_MARKERS: Set<String> = CONJUNCTION_TAIL_MARKERS + setOf("seiner", "seinem", "ihrer", "ihrem", "seinen", "ihren")
+
+/**
+ * The tiers of a row that prices itself by names of its own, `VIP` and `General` (#5453): every amount but a concession's
+ * or a children's group rate, or null when none is left. The lowest is the presale, a "from" figure (DATA_MODEL.md, #2083).
+ */
+internal fun namedTiers(prices: List<Pair<String, BigDecimal?>>): List<Pair<String, BigDecimal>>? =
+    prices
+        .mapNotNull { (label, amount) -> amount?.let { label.trim().trimEnd(':') to it } }
+        .filterNot { (label, _) -> NOT_A_TIER.containsMatchIn(label) || CHILD_PRICE_LABEL.containsMatchIn(label) }
+        .ifEmpty { null }
+
+/** Every tier with its amount, a repeated label once: `VIP 44,00 € · General 38,50 €`, `Pay what you can 20,00 € / 10,00 €`. */
+internal fun tierNote(tiers: List<Pair<String, BigDecimal>>): String =
+    tiers.groupBy({ it.first }, { it.second }).entries.joinToString(" · ") { (label, amounts) -> tierText(label, amounts) }
+
+private fun tierText(
+    label: String,
+    amounts: List<BigDecimal>
+): String = listOf(label, amounts.joinToString(" / ", transform = ::euros)).filter(String::isNotEmpty).joinToString(" ")
+
+private fun euros(amount: BigDecimal): String = "${amount.setScale(2, RoundingMode.HALF_UP).toPlainString().replace('.', ',')} €"
+
+/** A concession rate, the shared [CONCESSION_LABELS] and the house's `Studenten (nur im VVK)`. */
+private val NOT_A_TIER = Regex("""(?<!\p{L})(?:$CONCESSION_LABELS|studenten)(?!\p{L})""", RegexOption.IGNORE_CASE)
 
 /**
  * The price label that marks a show for children (EVENT_SCOPE.md §3.5), or null: the house prices those per child, Kita

@@ -262,6 +262,48 @@ class UfaFabrikMonthPageScraperTest {
     }
 
     @Test
+    fun `prices a row that names its own tiers by the lowest, and names every tier`() {
+        val week = month("ufafabrik-spielplan-2026-11-24.html")
+        week.single { it.title == "EUROPIANTUR 2026" }.let {
+            it.pricePresale shouldBe BigDecimal("38.50")
+            it.priceBoxOffice.shouldBeNull()
+            it.priceNote shouldBe "VIP 44,00 € · General 38,50 €"
+        }
+        week.single { it.title == "20 Jahre The Incredible Herrengedeck" }.let {
+            it.pricePresale shouldBe BigDecimal("10.00")
+            it.priceNote shouldBe "Pay what you can 20,00 € / 15,00 € / 10,00 €"
+        }
+        // `Eintritt` beside `Ermäßigt` and `Studenten (nur im VVK)` keeps its one figure and no note
+        week.filter { it.priceNote == null }.map { it.title to it.pricePresale } shouldBe
+            listOf(
+                "ZweitZeuge - Opa war ein Nazi" to BigDecimal("24.00"),
+                "Scéalta" to BigDecimal("27.00"),
+                "Café am Nil" to BigDecimal("30.00"),
+                "Liebe? Krieg!" to BigDecimal("21.00"),
+                "Café am Nil" to BigDecimal("30.00"),
+                "Hänsel und Gretel - Ein musikalisches Märchen nach Engelbert Humperdinck" to BigDecimal("15.00")
+            )
+        week.filter { it.priceNote == null }.forEach { it.priceBoxOffice shouldBe it.pricePresale }
+        (october + month("ufafabrik-program-202611.html") + month("ufafabrik-program-202612.html")).mapNotNull { it.priceNote }.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a concession or a children's group rate is never a tier`() {
+        namedTiers(listOf("VIP" to BigDecimal("44.00"), "Ermäßigt" to BigDecimal("30.00"), "Studenten (nur im VVK)" to BigDecimal("12.00"))) shouldBe
+            listOf("VIP" to BigDecimal("44.00"))
+        namedTiers(listOf("Kita-Kind" to BigDecimal("5.00"), "Erzieher*innen:" to BigDecimal("0.00"))).shouldBeNull()
+        namedTiers(listOf("Ermäßigt" to BigDecimal("15.00"), "Solidaritätspreis" to null)).shouldBeNull()
+        namedTiers(emptyList()).shouldBeNull()
+    }
+
+    @Test
+    fun `names a repeated tier once and an unlabelled one by its amount`() {
+        tierNote(listOf("Pay what you can" to BigDecimal("20.00"), "Pay what you can" to BigDecimal("10.00"))) shouldBe
+            "Pay what you can 20,00 € / 10,00 €"
+        tierNote(listOf("" to BigDecimal("8"), "Late" to BigDecimal("12.5"))) shouldBe "8,00 € · Late 12,50 €"
+    }
+
+    @Test
     fun `an empty month yields nothing`() {
         UfaFabrikMonthPageScraper().scrape(Jsoup.parse("<table></table>", baseUrl)).shouldBeEmpty()
     }
