@@ -148,4 +148,19 @@ class LabsaalCalendarScraperTest {
         scraper.scrape(calendar).shouldBeEmpty()
         scraper.scrape("BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n").shouldBeEmpty()
     }
+
+    @Test
+    fun `scrape types a run the description invites to see an exhibition (event 15282)`() {
+        fun typeOf(description: String) =
+            scraper
+                .scrape(
+                    "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nDTSTART;TZID=Europe/Berlin:20261205T080000\r\n" +
+                        "SUMMARY:Weniger ist mehr – minimalistische Fotografie in s/w\r\nURL:https://labsaal.de/events/843-550/\r\n" +
+                        "DESCRIPTION:$description\r\nCATEGORIES:Alle Veranstaltungen\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+                ).single()
+                .eventType
+
+        typeOf("Wir laden euch ein\\, die Ausstellung entweder zu den Öffnungszeiten oder während einer Veranstaltung anzusehen.") shouldBe "EXHIBITION"
+        typeOf("Der Abend erinnert an die Ausstellung des letzten Jahres.") shouldBe "OTHER"
+    }
 }

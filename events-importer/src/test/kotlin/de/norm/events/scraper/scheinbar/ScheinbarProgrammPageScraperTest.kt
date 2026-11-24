@@ -81,4 +81,20 @@ class ScheinbarProgrammPageScraperTest {
         show.priceBoxOffice shouldBe BigDecimal("18.00")
         show.priceNote shouldBe "18,00 / 15,00 €"
     }
+
+    @Test
+    fun `bills the host of a show with unnamed guests alone`() {
+        // Event 15296: the programme page names the guests.
+        val html =
+            """
+            <h2 class="month">Dezember 2026</h2><ul class="programm_uebersicht"><li><a href="/programm/horst-blue-aufatmen/">
+            <div class="date_time"><div class="date">27</div><div class="time">20:00</div></div>
+            <div class="prog_desc"><span class="h3 rot">Horst Blue &amp; Gäste</span> <span class="h2 gruen">Das große Aufatmen</span></div></a></li></ul>
+            """.trimIndent()
+
+        val show = scraper.scrape(Jsoup.parse(html, url), url).single()
+
+        show.title shouldBe "Horst Blue & Gäste"
+        show.artists.map { it.name } shouldContainExactly listOf("Horst Blue")
+    }
 }

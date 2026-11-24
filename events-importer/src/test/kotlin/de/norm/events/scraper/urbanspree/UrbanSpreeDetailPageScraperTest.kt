@@ -401,4 +401,31 @@ class UrbanSpreeDetailPageScraperTest {
             .artists
             .map { it.name } shouldContainExactly listOf("NAARI", "DJ JONAS POPPE")
     }
+
+    @Test
+    fun `scrape bills a Klubnacht's acts from one bio per paragraph, and splits the house's co-brand (event 15276)`() {
+        val url = "https://www.urbanspree.com/program/concerts/urban-spree-klubnacht-x-recess.html"
+        val paragraphs =
+            listOf(
+                "URBAN SPREE KLUBNACHT x RECESS",
+                "Urban Spree Klubnacht joins forces with Recess for a special night dedicated to underground electronic music.",
+                "AIRSHPD is the live project of Italian multi-instrumentalist, producer and visual artist Jacopo Aluzzi. Founder of a label, he plays live.",
+                "Katiusha, Berlin-based DJ and producer originally from London, is known for her eclectic approach.",
+                "MXX, co-founder of Recess, is a Berlin-based producer, DJ and live modular artist.",
+                "Superamas, Berlin-based DJ and producer, is also behind the Recess collective. Four different approaches, one shared space."
+            ).joinToString("") { "<div><span>$it</span></div>" }
+        val html =
+            """
+            <div id="pseudo-card"><h1 class="title">Urban Spree KLUBNACHT x RECESS</h1><span class="parent-name">Concerts</span>
+            <ul class="ct-dates"><li class="infos">Nov 27, 2026</li><li class="infos">23:59</li></ul></div>
+            <div class="ct-info"><div class="info-label">Promoter</div><div class="info-data">Urban Spree x Recess</div></div>
+            <div class="rte tv-content">$paragraphs</div>
+            """.trimIndent()
+
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("AIRSHPD" to ArtistRole.LIVE, "Katiusha" to ArtistRole.DJ, "MXX" to ArtistRole.DJ, "Superamas" to ArtistRole.DJ)
+        event.promoters shouldContainExactly listOf("Urban Spree", "Recess")
+    }
 }

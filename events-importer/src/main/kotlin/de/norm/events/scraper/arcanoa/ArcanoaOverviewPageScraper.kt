@@ -1,6 +1,7 @@
 package de.norm.events.scraper.arcanoa
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
@@ -9,6 +10,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.endOn
+import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.knownGenresInStyleTail
@@ -146,8 +148,9 @@ class ArcanoaOverviewPageScraper(
         val subtitle = rawSubtitle?.let { normalizeDashSpacing(it.trimStart('+', '-', ' ')) }?.takeIf { it.isNotBlank() }
         val start = entry.start ?: startTime
         // An open stage, a jam or a SpielleuteSession is live music with no billed act, so it stays a concert (#2992).
-        val eventType = inferConcertVenueType(title)
-        val artists = parseArtists(title, subtitle, eventType)
+        val reading = subtitle != null && READING_TAIL.containsMatchIn(subtitle)
+        val eventType = if (reading) EventType.READING.name else inferConcertVenueType(title)
+        val artists = if (reading) headlinersFromTitle(title) else parseArtists(title, subtitle, eventType)
 
         return ScrapedEvent(
             title = title,
@@ -217,8 +220,8 @@ class ArcanoaOverviewPageScraper(
         val month: Int,
         val body: String
     ) {
-        /** The night's own hours leading [body] ([TIME_RANGE_PREFIX]), or `null`. */
-        private val leadingHours = TIME_RANGE_PREFIX.find(body)
+        /** The night's own hours leading [body] ([TIME_RANGE_PREFIX], [FROM_HOUR_PREFIX]), or `null`. */
+        private val leadingHours = TIME_RANGE_PREFIX.find(body) ?: FROM_HOUR_PREFIX.find(body)
 
         /** [body] without its leading hours: the title and the style tail. */
         val text: String = leadingHours?.let { body.substring(it.range.last + 1) } ?: body
@@ -227,7 +230,13 @@ class ArcanoaOverviewPageScraper(
         val start: LocalTime? = clockTime(leadingHours?.groups[1], leadingHours?.groups[2])
 
         /** The end the leading hours give, or `null`. */
-        val end: LocalTime? = clockTime(leadingHours?.groups[3], leadingHours?.groups[4])
+        val end: LocalTime? =
+            leadingHours?.takeIf { it.groups.size > END_HOUR_GROUP }?.let {
+                clockTime(
+                    it.groups[END_HOUR_GROUP],
+                    it.groups[END_HOUR_GROUP + 1]
+                )
+            }
 
         /** The day [end] falls on, for a night on [eventDate] that starts at [start]. */
         fun endDate(
@@ -276,11 +285,11 @@ class ArcanoaOverviewPageScraper(
 
         /**
          * Opens a programme entry: a German weekday abbreviation, a `DD.MM.` date, and the venue's
-         * redundant "Live:" label — `"Mi 22.07.Live: "`. The label is optional; the venue omits it on
-         * the occasional line.
+         * redundant "Live:" label — `"Mi 22.07.Live: "`. The label and a dot after the weekday (`"So. 06.12. Live:"`)
+         * are optional.
          */
         private val ENTRY_PATTERN =
-            Regex("""\b(Mo|Di|Mi|Do|Fr|Sa|So)\s+(\d{1,2})\.(\d{1,2})\.\s*(?:Live\s*:)?\s*""")
+            Regex("""\b(Mo|Di|Mi|Do|Fr|Sa|So)\.?\s+(\d{1,2})\.(\d{1,2})\.\s*(?:Live\s*:)?\s*""")
 
         /** The month block's shared start time, e.g. "Veranstaltungsbeginn: 20 Uhr" or "20.30 Uhr". */
         private val START_TIME_PATTERN =
@@ -292,6 +301,14 @@ class ArcanoaOverviewPageScraper(
          */
         private val TIME_RANGE_PREFIX =
             Regex("""^(\d{1,2})(?:[.:](\d{2}))?(?:\s*-\s*(\d{1,2})(?:[.:](\d{2}))?)?\s*Uhr\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        private const val END_HOUR_GROUP = 3
+
+        /** A start alone, with no colon after it: `"ab 18 Uhr Zarras - Lesung …"` (event 15277). */
+        private val FROM_HOUR_PREFIX = Regex("""^ab\s+(\d{1,2})(?:[.:](\d{2}))?\s*Uhr\s+""", RegexOption.IGNORE_CASE)
+
+        /** A style tail that names a reading, whose title is then the reader: `"Lesung "Mieser Strudel ohne Sahne""`. */
+        private val READING_TAIL = Regex("""^lesung\b""", RegexOption.IGNORE_CASE)
 
         /** A dash with whitespace on both sides — the cleanest title/style separator. */
         private val SPACED_DASH_PATTERN = Regex("""\s+-\s+""")

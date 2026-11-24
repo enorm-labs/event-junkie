@@ -293,7 +293,7 @@ class GretchenOverviewPageScraper {
      * instrument-credited member list, a bare "+ guests" or "+ more"); stripped of a role prefix
      * ([stripCreditPrefix]: "Support:", "+ Show:", "Opening DJ-Set by"; a support or opening-set remainder
      * `A & B` is two acts, [splitCreditList]); split on `feat.`/`ft.`
-     * ([splitFeaturedActs]: "Mop Mop ft. Anthony Joseph"); cleaned of country/`*live*`/`+tag`
+     * ([splitFeaturedActs]: "Mop Mop ft. Anthony Joseph"); freed of a sound system's jobs ([splitSoundsystemCrew]); cleaned of country/`*live*`/`+tag`
      * decorations; split at a ` x ` co-bill ([splitCrossBilled]: "Marthe X Pilani Bubu"); stripped
      * of a format suffix ([stripArtistSuffix]: "Acid Arab DJ-Set"); and dropped if [isNonArtistName]
      * or [isProseNote]. First survivor is headliner, the rest support.
@@ -306,6 +306,7 @@ class GretchenOverviewPageScraper {
                 .map { if (LIST_CREDIT_PREFIX.containsMatchIn(it)) it else stripCreditPrefix(it).replaceFirst(ROOM_LABEL, "") }
                 .flatMap { it.split(PADDED_PLUS) }
                 .flatMap { splitFeaturedActs(it) }
+                .flatMap(::splitSoundsystemCrew)
                 .map(::cleanArtistName)
                 // A credit after `ft.` (`Àbáse ft. special guests: A & B`) is only exposed by the cut above.
                 .flatMap { if (CREDIT_PREFIX_PATTERN.containsMatchIn(it)) splitCreditList(it) else listOf(it) }
@@ -379,6 +380,15 @@ class GretchenOverviewPageScraper {
     private fun splitFeaturedActs(line: String): List<String> {
         val parts = line.split(COLLAB_SEPARATOR).map { it.trim() }.filter { it.isNotBlank() }
         return parts.ifEmpty { listOf(line) }
+    }
+
+    /**
+     * The crew of a sound system, whose part says who does what: `Dub Jewel, Tom Tom & Señor W on the decks`, `Puppa D. at the
+     * controls`, `on the mic Fyah Bantu & Joseph "Still Cool" Blue` (event 15226). Only such a part is a list of names.
+     */
+    private fun splitSoundsystemCrew(part: String): List<String> {
+        val names = part.replace(CREW_JOB, "").trim()
+        return if (names == part.trim() || names.isEmpty()) listOf(part) else splitSupportActs(names)
     }
 
     /**
@@ -496,6 +506,9 @@ class GretchenOverviewPageScraper {
 
         /** A `*…*` decoration the page never closed, at the end of a line: `Tontom (BR) *live` (#1761). */
         private val LONE_TRAILING_STAR = Regex("""\s*\*[^*\s]+\s*$""")
+
+        /** A sound system's job before or after its names: `on the mic`, `at the controls`. */
+        private val CREW_JOB = Regex("""^on\s+the\s+(?:mic|decks)\s+|\s+(?:on\s+the\s+(?:mic|decks)|at\s+the\s+controls)\s*$""", RegexOption.IGNORE_CASE)
 
         /** A trailing `(country)` / `(label/country)` annotation on a lineup line. */
         private val TRAILING_PARENS = Regex("""\s*\([^)]*\)\s*$""")

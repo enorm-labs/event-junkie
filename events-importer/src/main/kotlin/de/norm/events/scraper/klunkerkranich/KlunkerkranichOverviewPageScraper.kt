@@ -213,7 +213,12 @@ class KlunkerkranichOverviewPageScraper(
                 LIVE_MARKER.containsMatchIn(billing) -> if (sectionRole == ArtistRole.DJ) ArtistRole.LIVE else sectionRole
                 else -> sectionRole
             }
-        val unmarked = billing.replaceFirst(DJ_SECTION_LABEL, "").replace(LIVE_MARKER, "").trim()
+        val unmarked =
+            billing
+                .replaceFirst(DJ_SECTION_LABEL, "")
+                .replace(LIVE_MARKER, "")
+                .replace(HYBRID_MARKER, "")
+                .trim()
         knownBillingActs(unmarked)?.let { acts -> return acts.map { ScrapedArtist(name = it, role = role) } }
         val collective = COLLECTIVE_PREFIX.find(unmarked)
         val members = collective?.let { unmarked.substring(it.range.last + 1) } ?: unmarked
@@ -281,5 +286,8 @@ class KlunkerkranichOverviewPageScraper(
 
         /** The venue's `*live` annotation, marking an act that plays rather than spins. */
         val LIVE_MARKER = Regex("""\s*\*\s*live\b\.?""", RegexOption.IGNORE_CASE)
+
+        /** The `*hybrid` annotation, a set of records and live parts, which keeps the section's role (event 15219). */
+        val HYBRID_MARKER = Regex("""\s*\*\s*hybrid\b\.?""", RegexOption.IGNORE_CASE)
     }
 }

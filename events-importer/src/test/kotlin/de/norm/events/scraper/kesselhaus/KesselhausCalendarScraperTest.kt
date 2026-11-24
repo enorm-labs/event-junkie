@@ -352,6 +352,14 @@ class KesselhausCalendarScraperTest {
     }
 
     @Test
+    fun `types a musical filed under Weitere a show (event 15290)`() {
+        val title = "Mein Freund Arthur - Das Electronic Dance Musical"
+        val page = calendarPage(Card("musical", title, "", venue = "maschinenhaus", category = "Weitere", topics = emptyList()))
+
+        maschinenhaus.scrape(Jsoup.parse(page, url), url).single().eventType shouldBe EventType.SHOW.name
+    }
+
+    @Test
     fun `marks a postponed show on the date it left and keeps the row it moved to (#5099)`() {
         // Verbatim subtitle of RE6CE, calendar id -P3jNNUJlKQBoQEIt5tm. Every card here is dated 2027-01-09.
         val left = "Die Show wird vom 09.01.27 auf den 27.05.27 verschoben!"

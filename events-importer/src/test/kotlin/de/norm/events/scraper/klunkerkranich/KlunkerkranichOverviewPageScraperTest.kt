@@ -142,6 +142,12 @@ class KlunkerkranichOverviewPageScraperTest {
     }
 
     @Test
+    fun `takes the hybrid annotation off a billing and keeps its role (event 15219)`() {
+        billing("FERNAB ÜBER DEN DÄCHERN w. Druschke, Kahl & Kaemena *hybrid, kayḆe, emsi").map { it.name to it.role } shouldContainExactly
+            listOf("Druschke", "Kahl", "Kaemena", "kayḆe", "emsi").map { it to ArtistRole.DJ }
+    }
+
+    @Test
     fun `still splits the billings the conjunction rule exists for`() {
         // A shared slot, and a collective whose unnamed cast is dropped rather than minted.
         billing("THE COOLEST KIDS IN TOWN w. Big Leg b2b *n8").map { it.name } shouldContainExactly listOf("Big Leg", "*n8")

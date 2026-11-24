@@ -173,4 +173,23 @@ class OrangerieOverviewPageScraperTest {
                 """<body>$cards</body></html>"""
         return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
     }
+
+    @Test
+    fun `types a Musikbingo a quiz and credits the crew that presents it (event 15288)`() {
+        val html =
+            """<html><head><script type="application/ld+json">{"@type":"ItemList","itemListElement":[{"@type":"Event","name":"DUCT TAPE",""" +
+                """"startDate":"2026-12-17T19:00:00+01:00","description":"Drei Runden, präsentiert von DUCT TAPE, Berlins Drag-Kollektiv."},""" +
+                """{"@type":"Event","name":"DUCT","startDate":"2026-12-18T19:00:00+01:00","description":"präsentiert von DUCTWERK"}]}</script></head><body>""" +
+                """<div class="card"><h3 class="card-title">DUCT TAPE</h3><span class="og-genres">""" +
+                """<span class="event-tag tag-special">Musikbingo mit verschiedenen Musikgenres</span></span></div></body></html>"""
+
+        val (bingo, other) = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        bingo.eventType shouldBe EventType.QUIZ.name
+        bingo.genre.shouldBeNull()
+        bingo.promoters shouldContainExactly listOf("DUCT TAPE")
+        bingo.artists.shouldBeEmpty()
+        other.eventType shouldBe EventType.PARTY.name
+        other.promoters.shouldBeEmpty()
+    }
 }

@@ -381,6 +381,7 @@ class GenreNormalizerTest {
         normalizeGenre("Drum'n'Bass").shouldContainExactly("Drum & Bass")
         normalizeGenre("Drum & Bass").shouldContainExactly("Drum & Bass")
         normalizeGenre("DnB").shouldContainExactly("Drum & Bass")
+        normalizeGenre("DnB, UKG").shouldContainExactly("Drum & Bass", "UK Garage")
         normalizeGenre("D&B").shouldContainExactly("Drum & Bass")
         normalizeGenre("Techno, Drum & Bass, House")
             .shouldContainExactlyInAnyOrder("Techno", "Drum & Bass", "House")

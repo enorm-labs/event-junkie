@@ -145,6 +145,9 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         // Drum & Bass (delimiter-embedding name; see DRUM_AND_BASS_REGEX pre-pass)
         "drumnbass" to "Drum & Bass",
         "dnb" to "Drum & Bass",
+        // The initialism VOID Club prints (event 15252); the spelled-out tag already has a family.
+        "ukg" to "UK Garage",
+        "ukgarage" to "UK Garage",
         // Post-punk / dark wave family
         "postpunk" to "Post-Punk",
         // The spelling production stores; word by word, Schokoladen's "Psychedelic Post-Rock" (event 14988) lands on it too.

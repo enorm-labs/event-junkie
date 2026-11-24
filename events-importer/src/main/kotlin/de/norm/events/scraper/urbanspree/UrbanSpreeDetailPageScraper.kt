@@ -108,7 +108,7 @@ class UrbanSpreeDetailPageScraper {
         val titleArtists =
             buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
                 .map { withoutDjAffiliation(it.copy(name = urbanSpreeActName(it.name))) }
-        val artists = titleArtists.ifEmpty { urbanSpreeClubNightLineUp(title, description) }
+        val artists = titleArtists.ifEmpty { urbanSpreeClubNightLineUp(title, description, blurb?.descriptionText()) }
         // A Concerts night whose running order bills DJ sets is a club night.
         val billsDjSets = titleArtists.isEmpty() && artists.any { it.role == DJ_ROLE }
         return ScrapedEvent(
@@ -227,10 +227,25 @@ class UrbanSpreeDetailPageScraper {
          */
         private val SINGLE_NAMES_WITH_AMPERSAND = setOf("pure obsessions & red nights")
 
+        private const val HOUSE = "Urban Spree"
+
+        /** The venue's co-branded night, `Urban Spree x Recess` (event 15276); group 1 or 2 is the partner. Any other ` x ` stays one name. */
+        private val HOUSE_CO_BRAND = Regex("""$HOUSE\s+x\s+(.+)|(.+?)\s+x\s+$HOUSE""", RegexOption.IGNORE_CASE)
+
         /** The credit as one promoter, or as the two the venue joined. */
         private fun splitPromoters(credit: String): List<String> {
             val trimmed = credit.trim()
-            return if (trimmed.lowercase() in SINGLE_NAMES_WITH_AMPERSAND) listOf(trimmed) else trimmed.split(CO_PROMOTER_SEPARATOR).map { it.trim() }
+            val partner =
+                HOUSE_CO_BRAND
+                    .matchEntire(trimmed)
+                    ?.groupValues
+                    ?.drop(1)
+                    ?.firstOrNull { it.isNotEmpty() }
+            return when {
+                trimmed.lowercase() in SINGLE_NAMES_WITH_AMPERSAND -> listOf(trimmed)
+                partner != null -> listOf(HOUSE, partner.trim())
+                else -> trimmed.split(CO_PROMOTER_SEPARATOR).map { it.trim() }
+            }
         }
 
         /** English hero date rendering, e.g. "Dec 12, 2026" / "Dec 05, 2026". */

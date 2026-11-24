@@ -33,7 +33,7 @@ import java.time.MonthDay
  * lines and a line-up text. The year comes from the English weekday, or the nearest date without one.
  *
  * Line-up lines are split into DJs, without a leading `LINE UP:` label or the prose before `… AND DJS`. A line
- * with "by" credits an installation or a curator, and a ticket line is a notice: both become the description.
+ * with "by" credits an installation or a curator, a ticket line is a notice, and a sentence introduces the night: all become the description.
  * A credit line still bills the names after `DJ SETS BY`, `LIVE SETS BY`, `LIVE PERFORMANCES BY`, `DJ PERFORMANCES WITH`
  * or `MUSIC BY`, up to the end of that sentence, and the names between `JOINED BY` and `ON THE DECKS`. A line that opens
  * with `AND` or `&` goes on with the line before it. A title line `INVITES <act>` bills that act first. A night with
@@ -86,7 +86,8 @@ class StudioIiiiOverviewPageScraper(
                 .orEmpty()
                 .filterNot { SAVE_THE_DATE.matches(it) }
                 .let(::joinContinuations)
-        val (notes, lineup) = text.partition { CREDIT.containsMatchIn(it) || NOTICE.containsMatchIn(it) }
+        val introduction = introductionLines(text.filterNot(::isEditorNote))
+        val (notes, lineup) = text.partition { CREDIT.containsMatchIn(it) || NOTICE.containsMatchIn(it) || it in introduction }
         val invited = lineupActs(titleLines.mapNotNull { INVITES.matchEntire(it.trim())?.groupValues?.get(1) })
         val djs = (invited + lineupActs(lineup.map(::afterProse)) + notes.flatMap(::setActs)).distinctBy { it.name.lowercase() }
         val cuedType = cuedType(title, notes, djs)
@@ -148,7 +149,7 @@ class StudioIiiiOverviewPageScraper(
         ).flatMap { (labelRoom, text) ->
             text
                 .split(ACT_SEPARATOR)
-                .map { it.replace(MORE_TBA, "").trim() }
+                .map { it.replace(MORE_TBA, "").replace(SERIAL_CONJUNCTION, "").trim() }
                 .flatMap(::splitSegmentOnConjunctions)
                 .mapNotNull { part -> lineupAct(part, role, labelRoom) }
         }.distinctBy { it.name }
@@ -219,18 +220,18 @@ class StudioIiiiOverviewPageScraper(
         val CREDIT = Regex("""\bby\b""", RegexOption.IGNORE_CASE)
 
         /** The credits that name acts; group 1 tells a live set from a DJ set, and group 2 is a `JOINED BY` that needs [ON_THE_DECKS]. */
-        val SET_CREDIT = Regex("""\b(?:(DJ|LIVE)\s+(?:SETS?\s+BY|PERFORMANCES?\s+(?:BY|WITH))|MUSIC\s+BY|(JOINED)\s+BY)\s+""", RegexOption.IGNORE_CASE)
+        val SET_CREDIT = Regex("""\b(?:(DJ|LIVE)[\s-]+(?:SETS?\s+BY|PERFORMANCES?\s+(?:BY|WITH))|MUSIC\s+BY|(JOINED)\s+BY)\s+""", RegexOption.IGNORE_CASE)
         const val JOINED_GROUP = 2
         val ON_THE_DECKS = Regex("""\s+ON\s+THE\s+DECKS\b""", RegexOption.IGNORE_CASE)
         val INVITES = Regex("""INVITES\s+(.+)""", RegexOption.IGNORE_CASE)
 
         /**
-         * The stop that ends a sentence: after a word of two letters that is not `FEAT.`, `JR.` and the like, before a space or the
+         * The stop that ends a sentence: after a word of two letters, or a letter and a `$`, that is not `FEAT.`, `JR.` and the like, before a space or the
          * next credit, `G LA SOSITA.DJ SETS BY` (Wasted Summer); or a colon or `//`.
          */
         val SENTENCE_END =
             Regex(
-                """(?<=\p{L}{2})(?<!\b(?:feat|ft|vs|jr|sr|dr|st|mr|mrs|ms|bros|inc|co))\.(?=\s|$|(?:DJ|LIVE|MUSIC)\s)|[:;]|\s//\s""",
+                """(?<=\p{L}[\p{L}$])(?<!\b(?:feat|ft|vs|jr|sr|dr|st|mr|mrs|ms|bros|inc|co))\.(?=\s|$|(?:DJ|LIVE|MUSIC)\s)|[:;]|\s//\s""",
                 RegexOption.IGNORE_CASE
             )
         val SET_SEPARATOR = Regex("""\s*,\s*|\s+(?:&|and)\s+""", RegexOption.IGNORE_CASE)
@@ -247,6 +248,7 @@ class StudioIiiiOverviewPageScraper(
         val LOWERCASE_WORD = Regex("""\p{Ll}{2,}""")
         const val MIN_NOTE_LOWERCASE_WORDS = 2
         val MORE_TBA = Regex("""\s*(?:&|\+|and)\s*more(?:\s+tba)?\.*$""", RegexOption.IGNORE_CASE)
+        val SERIAL_CONJUNCTION = Regex("""^\s*(?:and|&)\s+""", RegexOption.IGNORE_CASE)
         val LINE_UP_LABEL = Regex("""^line[\s-]?up\s*:\s*""", RegexOption.IGNORE_CASE)
     }
 }

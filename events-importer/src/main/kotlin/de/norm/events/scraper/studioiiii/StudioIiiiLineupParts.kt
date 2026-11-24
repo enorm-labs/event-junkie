@@ -46,10 +46,28 @@ internal fun afterProse(text: String): String {
     return text.substring(marker.range.last + 1)
 }
 
-/** A line that opens with `AND` or `&` goes on with the line before it: `WITH DJ SETS BY CLEO` / `AND LUCIA LU` (event 14674). */
+/**
+ * The lines that introduce the night in a sentence, `FOR THIS EDITION, WE INVITE PROF. DR. …`, and the heading line right before one,
+ * `BLAME YOUR PARENTS` (event 15299). A sentence holds a [PROSE_WORD] and a run of [MIN_SENTENCE_WORDS] words with no act separator.
+ */
+internal fun introductionLines(lines: List<String>): Set<String> {
+    val sentences = lines.indices.filter { isSentence(lines[it]) }
+    val headings = sentences.map { it - 1 }.filter { it >= 0 && PROSE_WORD.containsMatchIn(lines[it]) && !BILL_SEPARATOR.containsMatchIn(lines[it]) }
+    return (sentences + headings).mapTo(mutableSetOf()) { lines[it] }
+}
+
+private fun isSentence(line: String): Boolean =
+    afterProse(line) == line &&
+        PROSE_WORD.containsMatchIn(line) &&
+        line.split(BILL_SEPARATOR).any { part -> part.split(WHITESPACE).count { it.isNotBlank() } >= MIN_SENTENCE_WORDS }
+
+/**
+ * A line that opens with `AND` or `&` goes on with the line before it: `WITH DJ SETS BY CLEO` / `AND LUCIA LU` (event 14674).
+ * So does any line after a set credit that ends in a comma: `… AND DJ-SETS BY SAZE,` / `XD ERICA, …` (event 15301).
+ */
 internal fun joinContinuations(lines: List<String>): List<String> =
     lines.fold(mutableListOf()) { joined, line ->
-        if (joined.isNotEmpty() && CONTINUATION.containsMatchIn(line)) {
+        if (joined.isNotEmpty() && (CONTINUATION.containsMatchIn(line) || OPEN_SET_CREDIT.containsMatchIn(joined.last()))) {
             joined[joined.lastIndex] = "${joined.last().trimEnd()} ${line.trim()}"
         } else {
             joined += line
@@ -69,5 +87,16 @@ private val ROOM_LABEL = Regex("""\s*\b(\p{L}*room)\s*:\s*""", RegexOption.IGNOR
 /** `DJS` or `WITH` after a word, where prose hands over to the names. */
 private val PROSE_MARKER = Regex("""(?<=\p{L}\s)(?:DJS|WITH)\s+""", RegexOption.IGNORE_CASE)
 private const val MIN_PROSE_WORDS = 3
+
+/** A set credit whose list goes on: a comma ends the line. */
+private val OPEN_SET_CREDIT = Regex("""\b(?:SETS?|PERFORMANCES?|MUSIC)\s+(?:BY|WITH)\b.*,\s*$""", RegexOption.IGNORE_CASE)
+
+private const val MIN_SENTENCE_WORDS = 9
+
+/** A pronoun or a form of _be_, which a line-up does not hold beside a long run of words. */
+private val PROSE_WORD = Regex("""\b(?:we|us|our|you|your|they|them|their|it|is|are)\b""", RegexOption.IGNORE_CASE)
+
+/** What separates two acts of a line-up line. */
+private val BILL_SEPARATOR = Regex("""[,/&:]|\b(?:and|b2b|vs|feat|ft)\b""", RegexOption.IGNORE_CASE)
 
 private val CONTINUATION = Regex("""^\s*(?:and|&)\s""", RegexOption.IGNORE_CASE)

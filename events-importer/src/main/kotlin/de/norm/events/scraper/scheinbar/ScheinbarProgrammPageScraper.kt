@@ -25,7 +25,7 @@ import java.time.Month
  * The two lines take two shapes. The Open Stage nights read `Open Stage Varieté präsentiert von` /
  * `<host>`: the host is the one constant act of the night and is billed. A guest show reads
  * `<performers>` / `<programme>`, and the performers are split from the first line. A first line
- * `<presenter> präsentiert:` bills the presenter alone.
+ * `<presenter> präsentiert:` bills the presenter alone, and an `& Gäste` tail bills nobody: the programme page names the guests.
  */
 class ScheinbarProgrammPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -86,7 +86,7 @@ class ScheinbarProgrammPageScraper {
         return when {
             host != null -> listOf(ScrapedArtist(name = host))
             presenter != null -> listOf(ScrapedArtist(name = presenter))
-            else -> headlinersFromTitle(first)
+            else -> headlinersFromTitle(first.replace(GUESTS_TAIL, ""))
         }
     }
 
@@ -101,6 +101,7 @@ class ScheinbarProgrammPageScraper {
     private companion object {
         const val PRESENTED_BY = "präsentiert von"
         val PRESENTER = Regex("""(.+?)\s+präsentiert:""")
+        val GUESTS_TAIL = Regex("""\s+(?:&|und)\s+Gäste\s*$""", RegexOption.IGNORE_CASE)
         val AMOUNT = Regex("""\d+,\d{2}""")
         val GERMAN_MONTHS = GERMAN_MONTH_NAMES.map { it.lowercase() }
     }

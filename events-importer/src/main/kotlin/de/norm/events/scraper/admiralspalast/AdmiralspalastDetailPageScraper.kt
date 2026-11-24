@@ -172,7 +172,8 @@ class AdmiralspalastDetailPageScraper {
     ): List<ScrapedArtist> {
         if (SLAM.containsMatchIn(title)) return emptyList()
         if (BALLET_AFTER_WORK.containsMatchIn(title)) return balletCompany(title)
-        if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle = null, eventType = eventType, description = description)
+        val actTitle = if (eventType == EventType.READING.name) title.replaceFirst(READER, ": ") else title
+        if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(actTitle, subtitle = null, eventType = eventType, description = description)
         ensembleAfterMit(title)?.let { return listOf(it) }
         TRIBUTE_FRAME.find(title)?.let { frame -> return ensembleAfter(title.substring(frame.range.last + 1)) }
         // The shared builder still decides on the whole title whether it bills anyone: `Top Gun: Maverick – in Concert`.
@@ -300,6 +301,9 @@ class AdmiralspalastDetailPageScraper {
 
         /** The dash between the act and its programme: `Soweto Gospel Choir - JOY!`. */
         val PROGRAMME_DASH = Regex("""\s+[-–—]\s+""")
+
+        /** `Ben Becker liest: <work>`: the reader opens the title (event 15250). */
+        val READER = Regex("""\s+liest\s*:\s+""", RegexOption.IGNORE_CASE)
 
         /** A dash, then `Ballet` or `Ballett`: the title opens with the work, not the company. */
         val BALLET_AFTER_WORK = Regex("""\s[-–—]\s.*\bballett?\b""", RegexOption.IGNORE_CASE)
