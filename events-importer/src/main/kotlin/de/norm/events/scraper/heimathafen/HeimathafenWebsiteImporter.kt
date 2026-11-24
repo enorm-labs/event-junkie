@@ -102,5 +102,6 @@ val HEIMATHAFEN_LIMITATIONS =
             "the house's productions and slams are billed by their title, and the cast appears only in prose",
             verified = "2026-11-15"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "only a few `events_tag-*` slugs name a style, so shows and readings carry none", verified = "2026-10-13")
+        AcceptedLimitation(LimitedAspect.GENRE, "only a few `events_tag-*` slugs name a style, so shows and readings carry none", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "a sold-out date shows no shop link", verified = "2026-11-24")
     )

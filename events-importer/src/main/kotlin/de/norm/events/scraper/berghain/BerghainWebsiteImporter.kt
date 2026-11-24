@@ -181,5 +181,6 @@ val BERGHAIN_LIMITATIONS =
             "the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights",
             verified = "2026-10-13"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "some Kantine concert pages print no figure in their tickets block", verified = "2026-10-06")
+        AcceptedLimitation(LimitedAspect.PRICE, "some Kantine concert pages print no figure in their tickets block", verified = "2026-10-06"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "a sold-out Kantine concert shows no shop link", verified = "2026-11-24")
     )

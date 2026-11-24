@@ -100,14 +100,24 @@ class ZigZagHallWebsiteImporter(
     override val keepsElsewhere: Boolean = true
 }
 
-val ZIG_ZAG_LIMITATIONS =
+private val ZIG_ZAG_SHARED_LIMITATIONS =
+    listOf(
+        AcceptedLimitation(LimitedAspect.END_TIME, "the end time is a calendar default, 23:59 on most nights", verified = "2026-10-01"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the club presents every night itself, in both houses", verified = "2026-10-01"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-01")
+    )
+
+val ZIG_ZAG_HALL_LIMITATIONS = VenueLimitations(setOf(EventSource.ZIG_ZAG_HALL), ZIG_ZAG_SHARED_LIMITATIONS)
+
+/** The presale text is "Für dieses Konzert steht kein Online-Vorverkauf zur Verfügung"; the reservation is paid at the door. */
+val ZIG_ZAG_JAZZ_CLUB_LIMITATIONS =
     VenueLimitations(
-        sources = setOf(EventSource.ZIG_ZAG_HALL, EventSource.ZIG_ZAG_JAZZ_CLUB),
-        limitations =
-            listOf(
-                AcceptedLimitation(LimitedAspect.END_TIME, "the end time is a calendar default, 23:59 on most nights", verified = "2026-10-01"),
-                AcceptedLimitation(LimitedAspect.PROMOTERS, "the club presents every night itself, in both houses", verified = "2026-10-01"),
-                AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status", verified = "2026-10-01")
+        setOf(EventSource.ZIG_ZAG_JAZZ_CLUB),
+        ZIG_ZAG_SHARED_LIMITATIONS +
+            AcceptedLimitation(
+                LimitedAspect.TICKET_URL,
+                "a night without online presale takes reservations paid at the door, and links no shop",
+                verified = "2026-11-24"
             )
     )
 
