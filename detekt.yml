@@ -145,3 +145,8 @@ event-junkie:
     # Beside coroutines>SuspendFunSwallowedCancellation, which misses two shapes of try/catch (#4638).
     excludes: ['**/test/**']
 
+  PrivateLineUpPattern:
+    active: true
+    # A venue that needs its own spelling takes `@Suppress("PrivateLineUpPattern")` with a reason (#5487).
+    excludes: ['**/test/**']
+
