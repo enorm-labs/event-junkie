@@ -10,6 +10,7 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -17,8 +18,8 @@ import java.time.Clock
 /**
  * Shared importer for the two Zig Zag venues, a Squarespace site.
  *
- * `/programmneu` lists both venues' programmes ([ZigZagOverviewPageScraper] keeps one); each event
- * page adds the start and doors times, the admission, the ticket link and the blurb
+ * `/programmneu` lists both venues' programmes; [ZigZagOverviewPageScraper] keeps one, and for the
+ * hall also the items that only their page can place. Each event page adds the start and doors times, the admission, the ticket link and the blurb
  * ([ZigZagDetailPageScraper]). Its line-up bills a night whose title names no act, such as a
  * tribute or the jam session; a title's act stays the only one billed. A failed or empty page
  * keeps the listing row, flagged so the upsert keeps the stored fields (see #2471). The
@@ -37,8 +38,11 @@ abstract class AbstractZigZagWebsiteImporter(
 
     private val detailPageScraper = ZigZagDetailPageScraper()
 
-    /** Whether a night whose page names a location other than the club's is still this venue's. */
-    protected abstract val keepsElsewhere: Boolean
+    /** Whether [event]'s page, which parsed to [detail], says that the night is this venue's. */
+    protected abstract fun isHere(
+        event: ScrapedEvent,
+        detail: ZigZagDetail
+    ): Boolean
 
     override val listedLine: ((Int) -> String)? = null
 
@@ -54,16 +58,18 @@ abstract class AbstractZigZagWebsiteImporter(
     override val eventPageReader =
         EventPageReader({ _, document -> detailPageScraper.scrape(document).takeUnless(ZigZagDetail::isEmpty) }, ::withDetail)
 
-    /** The event with its page's fields, or null when the page moves it elsewhere. */
+    /** The event with its page's fields, or null when the page gives it to another house. */
     private fun withDetail(
         event: ScrapedEvent,
         detail: ZigZagDetail
     ): ScrapedEvent? {
-        if (detail.elsewhere && !keepsElsewhere) {
-            logger.info { "Dropping '${event.title}': its page names another location" }
+        if (!isHere(event, detail)) {
+            // Every club night reaches the hall's run as a candidate, so its drop is not worth an INFO line.
+            logger.at(if (event.venueUnconfirmed) Level.DEBUG else Level.INFO) { message = "Dropping '${event.title}': its page names another location" }
             return null
         }
         return event.copy(
+            venueUnconfirmed = false,
             description = detail.description,
             descriptionAlt = detail.descriptionAlt,
             startTime = detail.startTime,
@@ -85,19 +91,29 @@ class ZigZagJazzClubWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     clock: Clock = Clock.system(BERLIN)
 ) : AbstractZigZagWebsiteImporter(htmlFetcher, EventSource.ZIG_ZAG_JAZZ_CLUB, clock) {
-    override val keepsElsewhere: Boolean = false
+    override fun isHere(
+        event: ScrapedEvent,
+        detail: ZigZagDetail
+    ): Boolean = !detail.elsewhere
 }
 
 /**
- * Zig Zag Hall — the items titled `ZIG ZAG HALL: …`. Every hall page points away from the club,
- * since the hall is the other location, so none is dropped for it.
+ * Zig Zag Hall — the items titled `ZIG ZAG HALL: …`, and the items without that prefix whose page
+ * names the hall's address (#5474). A prefixed night needs no address, because its page can name
+ * the location only in an image. A night whose page names another place or none is not the hall's,
+ * and one whose page failed is left out with its stored event spared.
  */
 @Component
 class ZigZagHallWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     clock: Clock = Clock.system(BERLIN)
 ) : AbstractZigZagWebsiteImporter(htmlFetcher, EventSource.ZIG_ZAG_HALL, clock) {
-    override val keepsElsewhere: Boolean = true
+    override val doneLine: (kept: Int, listed: Int) -> String = { kept, listed -> "Kept $kept of $listed listed night(s) for $eventSource" }
+
+    override fun isHere(
+        event: ScrapedEvent,
+        detail: ZigZagDetail
+    ): Boolean = !event.venueUnconfirmed || detail.atHall
 }
 
 private val ZIG_ZAG_SHARED_LIMITATIONS =

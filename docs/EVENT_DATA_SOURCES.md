@@ -229,7 +229,7 @@ schema change.
 | Z Bar                            | https://zbarberlin.com/kulturprogramm/                                   | Bar          | WordPress.com page typed by hand; date line per night     |
 | Zebrano-Theater                  | https://www.zebrano-theater.de/programm.html                             | Theater      | Hand-written month tables + event pages                   |
 | Zenner                           | https://zenner.berlin/programm                                           | Club         | Gatsby/Sanity page-data JSON; UTC dates; archive          |
-| Zig Zag Hall                     | https://www.zigzag-jazzclub.berlin/programmneu                           | Concert Hall | Shares the Zig Zag list; `ZIG ZAG HALL:` items only       |
+| Zig Zag Hall                     | https://www.zigzag-jazzclub.berlin/programmneu                           | Concert Hall | Shares the list; prefixed items, or the page's address    |
 | Zig Zag Jazz Club                | https://www.zigzag-jazzclub.berlin/programmneu                           | Club         | Squarespace list + event pages; Hall items dropped        |
 | ZIMMER 16                        | https://zimmer16.com/                                                    | Other        | YesTicket cards + event pages; next 20 only               |
 | Zita Club & Bar                  | https://zita-club.de/                                                    | Club         | Events-Manager iCal + event pages for tags, price         |

@@ -22,6 +22,8 @@ data class ZigZagDetail(
     val price: BigDecimal?,
     val ticketUrl: String?,
     val elsewhere: Boolean,
+    /** The location text names the Zig Zag Hall's address. */
+    val atHall: Boolean = false,
     val artists: List<ScrapedArtist> = emptyList()
 )
 
@@ -32,8 +34,10 @@ data class ZigZagDetail(
  * "Beginn: 20:00 Uhr (Einlass ab 19:00 Uhr)", "Eintritt: 25€", "Mitglieder: 12,50€" and a
  * "Location:" line. Times and prices are read from that block only, so a blurb's "show" or "€" is
  * never one. The JSON-LD `startDate` is the doors time, so it is not read. A two-show night prints
- * two "Beginn" lines, and the first is kept. A hall page names its location only in an image, so
- * [ZigZagDetail.elsewhere] means something on a club page only.
+ * two "Beginn" lines, and the first is kept. A hall page names its location in an image, or in a
+ * heading after the "location:" line (`Gasometer Schöneberg, Torgauer Strasse 12-15`), so
+ * [ZigZagDetail.elsewhere] means something on a club page only, and [ZigZagDetail.atHall] reads the
+ * headings too.
  *
  * The line-up comes before the "(for English please scroll down)" line, one musician a line:
  * `Name - instrument (country)` in `h3` or `p` elements, or in one `h3` broken by `<br>`. The dash
@@ -56,10 +60,18 @@ class ZigZagDetailPageScraper {
             doorsTime = labelledClock(tickets, DOORS_LABELS),
             price = ADMISSION.find(tickets)?.let { euroAmounts(it.value).firstOrNull() },
             ticketUrl = document.selectFirst(".eventitem-column-content a[href*=eventim]")?.absUrl("href")?.ifEmpty { null },
+            atHall = LOCATION.find(ticketsWithHeadings(document))?.let { HALL_ADDRESS.containsMatchIn(it.value) } ?: false,
             elsewhere = LOCATION.find(tickets)?.let { HOME_ADDRESS !in it.value.lowercase() } ?: false,
             artists = lineup(document)
         )
     }
+
+    private fun ticketsWithHeadings(document: Document): String =
+        document
+            .select(".eventitem-column-content")
+            .select("p, h1, h2, h3, h4")
+            .dropWhile { !TICKETS_HEADING.matches(it.text().trim()) }
+            .joinToString(" ") { it.text() }
 
     private fun lineup(document: Document): List<ScrapedArtist> =
         document
@@ -88,6 +100,9 @@ class ZigZagDetailPageScraper {
 
     private companion object {
         const val HOME_ADDRESS = "hauptstr"
+
+        /** The marks the hall's address prints: the building, its street and its campus. */
+        val HALL_ADDRESS = Regex("""gasometer|torgauer\s+str|\beuref\b""", RegexOption.IGNORE_CASE)
 
         val TICKETS_HEADING = Regex("""tickets\s*:""", RegexOption.IGNORE_CASE)
         val ENGLISH_BELOW = Regex("""\(for english please scroll down\)""", RegexOption.IGNORE_CASE)

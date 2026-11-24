@@ -24,7 +24,8 @@ class ZigZagOverviewPageScraperTest {
     private val sourceUrl = "https://www.zigzag-jazzclub.berlin/programmneu"
     private val programme = "zigzag/zigzag-programm.html"
     private val events = ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_JAZZ_CLUB, clock).scrape(fixtureDocument(programme, sourceUrl), sourceUrl)
-    private val hall = ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_HALL, clock).scrape(fixtureDocument(programme, sourceUrl), sourceUrl)
+    private val hallCandidates = ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_HALL, clock).scrape(fixtureDocument(programme, sourceUrl), sourceUrl)
+    private val hall = hallCandidates.filterNot { it.venueUnconfirmed }
 
     private fun on(date: LocalDate): ScrapedEvent = events.single { it.eventDate == date }
 
@@ -136,6 +137,15 @@ class ZigZagOverviewPageScraperTest {
         night.sourceId shouldBe "zig_zag_hall:jasmorduk"
         night.genre shouldBe "Jazz"
         night.artists.map { it.name } shouldBe listOf("Jason Moran")
+    }
+
+    @Test
+    fun `leaves an item without the prefix to its page for the hall, and not for the club`() {
+        hallCandidates shouldHaveSize 55
+        val candidate = hallCandidates.single { it.eventDate == LocalDate.of(2026, 10, 1) }
+        candidate.venueUnconfirmed shouldBe true
+        candidate.sourceId shouldBe "zig_zag_hall:rsgolivi"
+        events.filter { it.venueUnconfirmed }.shouldBeEmpty()
     }
 
     @Test

@@ -66,6 +66,39 @@ class ZigZagDetailPageScraperTest {
         detail.description!! shouldStartWith "Seit seinem eindrucksvollen Auftauchen"
     }
 
+    // Event 5215's page: the address is a heading, not a paragraph.
+    @Test
+    fun `reads the hall's address and ticket link from a hall page that names them in text`() {
+        val detail = page("zigzag-hall-detail-address.html")
+
+        detail.atHall shouldBe true
+        detail.startTime shouldBe LocalTime.of(20, 0)
+        detail.doorsTime shouldBe LocalTime.of(19, 0)
+        detail.ticketUrl!! shouldStartWith "https://www.eventim-light.com/de/a/665710997ed5f05a0e32f0e9/e/"
+    }
+
+    @Test
+    fun `reads no hall address from a club page, a page that names a third place, or one that names it in an image`() {
+        page("zigzag-detail-club.html").atHall shouldBe false
+        page("zigzag-detail.html").atHall shouldBe false
+        page("zigzag-detail-elsewhere.html").atHall shouldBe false
+        page("zigzag-hall-detail.html").atHall shouldBe false
+    }
+
+    @Test
+    fun `reads the hall's address from the location text only`() {
+        fun atHall(
+            blurb: String,
+            location: String
+        ) = scraper
+            .scrape(Jsoup.parse("<div class=\"eventitem-column-content\"><p>$blurb</p><p>Tickets:</p><p>Location: $location</p></div>"))
+            .atHall
+
+        atHall("Live at the Gasometer, EUREF-Campus. Location: Torgauer Str. 12", "Hauptstr. 89, 12159 Berlin") shouldBe false
+        atHall("Rock &amp; Roll Hall of Fame", "EUREF-Campus 17, 10829 Berlin") shouldBe true
+        atHall("Rock &amp; Roll Hall of Fame", "Torgauer Straße 12-15") shouldBe true
+    }
+
     @Test
     fun `bills a tribute night's line-up by name, without instrument or country`() {
         val detail = page("zigzag-detail-tribute.html")

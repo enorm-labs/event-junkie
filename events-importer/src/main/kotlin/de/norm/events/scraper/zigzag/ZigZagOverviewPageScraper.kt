@@ -23,9 +23,11 @@ import java.time.LocalDate
  *
  * Each item prints the title, an English date with its year (`October 1, 2026`), a thumbnail and an
  * excerpt whose first paragraph is the style in brackets (`(Soul, Jazz)`). The collection carries
- * both venues: items titled `ZIG ZAG HALL: …` are the hall's, the rest the club's. [eventSource]
- * keeps one venue's items, and the hall's lose the prefix. The featured block repeats a night and
- * can still show yesterday's, so a night is kept once and a past one is dropped.
+ * both venues, and the venue titles most hall nights `ZIG ZAG HALL: …`. The club's run skips those.
+ * The hall's run takes the prefix off and keeps every item, because the prefix can be missing
+ * (#5474): an item without it is [ScrapedEvent.venueUnconfirmed] until its page names the hall. The
+ * featured block repeats a night and can still show yesterday's, so a night is kept once and a past
+ * one is dropped.
  */
 class ZigZagOverviewPageScraper(
     private val eventSource: EventSource,
@@ -54,8 +56,9 @@ class ZigZagOverviewPageScraper(
     ): ScrapedEvent? {
         val link = item.selectFirst("a.summary-title-link[href]") ?: error("No event link found")
         val listed = link.text().trim().ifEmpty { error("No title found") }
-        if (listed.startsWith(HALL_PREFIX, ignoreCase = true) != hall) return null
-        val title = if (hall) listed.substring(HALL_PREFIX.length).trim() else listed
+        val prefixed = listed.startsWith(HALL_PREFIX, ignoreCase = true)
+        if (prefixed && !hall) return null
+        val title = if (prefixed) listed.substring(HALL_PREFIX.length).trim() else listed
 
         val eventDate = parseDate(item.textAt("time.summary-metadata-item--date"))
         if (eventDate == null) {
@@ -77,7 +80,8 @@ class ZigZagOverviewPageScraper(
                     ?.groupValues
                     ?.get(1)
                     ?.trim(),
-            artists = if (NO_ACT.containsMatchIn(title)) emptyList() else buildArtistsForEventType(actOf(title), null, EventType.CONCERT.name)
+            artists = if (NO_ACT.containsMatchIn(title)) emptyList() else buildArtistsForEventType(actOf(title), null, EventType.CONCERT.name),
+            venueUnconfirmed = hall && !prefixed
         )
     }
 
