@@ -174,15 +174,40 @@ class BarJederVernunftShowPageScraperTest {
     }
 
     @Test
-    fun `applyTo bills a one-word comedy act the blurb names, a duo of full names and a duo with an unnamed band`() {
+    fun `applyTo bills a one-word comedy act the blurb names, and a duo with an unnamed band`() {
         val show =
             BarJederVernunftShow(genre = "Musik-Comedy", pricePresale = null, priceNote = null, description = "Dann ist es soweit: Ass-Dur feiert Weihnachten.")
 
         show.applyTo(occurrence(title = "Ass-Dur")).artists.map { it.name } shouldBe listOf("Ass-Dur")
         show.applyTo(occurrence(title = "Lebefrau")).artists shouldHaveSize 0
-        show.applyTo(occurrence(title = "Christoph Maria Herbst & Moritz Netenjakob")).artists.map { it.name } shouldBe
-            listOf("Christoph Maria Herbst & Moritz Netenjakob")
         show.applyTo(occurrence(title = "Pigor & Eichhorn mit Band")).artists.map { it.name } shouldBe listOf("Pigor & Eichhorn")
+    }
+
+    @Test
+    fun `applyTo bills two acts when both sides of an ampersand are full names, and one duo otherwise (#5468)`() {
+        fun billed(
+            title: String,
+            genre: String = "Musik-Comedy",
+            blurb: String? = null
+        ) = BarJederVernunftShow(genre = genre, pricePresale = null, priceNote = null, description = blurb)
+            .applyTo(occurrence(title = title))
+            .artists
+            .map { it.name to it.role }
+
+        fun headliners(vararg names: String) = names.map { it to ArtistRole.HEADLINER }
+
+        billed("Rebecca Carrington & Martina Colli") shouldBe headliners("Rebecca Carrington", "Martina Colli")
+        billed(
+            "Pasquale Aleardi & Die Phonauten",
+            genre = "Musik-Show",
+            blurb = "Pasquale Aleardi und die Phonauten – drei Lausbuben mit Tiefgang."
+        ) shouldBe headliners("Pasquale Aleardi", "Die Phonauten")
+        billed("Christoph Maria Herbst & Moritz Netenjakob", genre = "Satire") shouldBe headliners("Christoph Maria Herbst", "Moritz Netenjakob")
+        billed("Rebecca Carrington & Martina Colli & Band") shouldBe headliners("Rebecca Carrington", "Martina Colli")
+        billed("Carrington-Brown & Suli Puschban") shouldBe headliners("Carrington-Brown & Suli Puschban")
+        billed("Anna Mateur & Feinde", genre = "Musik-Kabarett") shouldBe headliners("Anna Mateur & Feinde")
+        billed("Heller & Bolam", genre = "Musik-Show", blurb = "Heller & Bolam singen.") shouldBe headliners("Heller & Bolam")
+        billed("Moon & Honey", genre = "Musik-Show", blurb = "Moon & Honey spielen Jazz.") shouldBe headliners("Moon & Honey")
     }
 
     @Test

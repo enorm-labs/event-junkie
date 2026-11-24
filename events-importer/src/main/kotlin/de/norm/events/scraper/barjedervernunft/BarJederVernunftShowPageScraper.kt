@@ -140,6 +140,8 @@ data class BarJederVernunftShow(
  * names, so `Gitte` vouches for `Gitte Haenning`. Any other `SHOW` needs the blurb to open with the title, `Rainald
  * Grebe ist Autor, …` (event 11998), because a production carries a name too. One word needs the blurb to name it:
  * `Rock4` and `Ass-Dur`, not `Silvestergala`. `Oh What A Night!`, `SAGO Song Salon` and `CABARET` bill nobody.
+ *
+ * Two names joined by `&` are read by [actsOfDuo].
  */
 private fun performerOfShow(
     title: String,
@@ -159,7 +161,17 @@ private fun performerOfShow(
     val actShaped = PERFORMER_NAME.matches(act) || PERFORMER_DUO.matches(act) || NAMED_BAND.matches(act)
     val oneWordAct = ONE_WORD_NAME.matches(act) && namedInBlurb(act, description)
     if (!vouched || !(actShaped || oneWordAct)) return emptyList()
-    return listOf(ScrapedArtist(name = act, role = ArtistRole.HEADLINER, titleDerived = true))
+    return actsOfDuo(act).map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
+}
+
+/**
+ * The acts a [PERFORMER_DUO] names: each side when both have two or more words, `Rebecca Carrington & Martina Colli`
+ * (event 4759), otherwise the one duo, `Siegfried & Joy` or `Ursli & Toni Pfister`. A hyphenated word is one word, so
+ * `Carrington-Brown & Suli Puschban` is one duo. The shared `nameTitleActs` splits a title with one one-word side.
+ */
+private fun actsOfDuo(act: String): List<String> {
+    val sides = act.split(DUO_JOIN)
+    return if (PERFORMER_DUO.matches(act) && sides.all { WORD_GAP.containsMatchIn(it) }) sides else listOf(act)
 }
 
 /**
@@ -217,10 +229,14 @@ private const val NAME_WORD = """\p{Lu}\p{Ll}[\p{L}'-]*"""
  */
 private val PERFORMER_NAME = Regex("""^$NAME_WORD(?:\s+(?:von\s+|van\s+|zu\s+)?$NAME_WORD){1,2}$""")
 
-/** Two performers billed as one act, one to three words a side: `Siegfried & Joy` (event 13924), `Christoph Maria Herbst & Moritz Netenjakob`. */
+/** Two names joined by `&`, one to three words a side. [actsOfDuo] decides whether they are one act or two. */
 private const val DUO_NAME = """$NAME_WORD(?:\s+$NAME_WORD){0,2}"""
 
 private val PERFORMER_DUO = Regex("""^$DUO_NAME\s+&\s+$DUO_NAME$""")
+
+private val DUO_JOIN = Regex("""\s+&\s+""")
+
+private val WORD_GAP = Regex("""\s""")
 
 /** A band named for its leader, `Gustav Peter Wöhler Band`. */
 private val NAMED_BAND = Regex("""^$NAME_WORD(?:\s+$NAME_WORD){0,2}\s+Band$""")
