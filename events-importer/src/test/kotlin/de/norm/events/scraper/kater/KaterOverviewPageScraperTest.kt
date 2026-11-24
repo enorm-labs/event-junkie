@@ -87,7 +87,8 @@ class KaterOverviewPageScraperTest {
                 ScrapedArtist("Mystigrix", ArtistRole.DJ, "ACID BOGEN"),
                 ScrapedArtist("Josiane", ArtistRole.DJ, "ACID BOGEN"),
                 ScrapedArtist("TDKK", ArtistRole.DJ, "ACID BOGEN"),
-                ScrapedArtist("Vovolectr0", ArtistRole.DJ, "ACID BOGEN")
+                // Billed `Vovolectr0 [LIVE]` (#5487).
+                ScrapedArtist("Vovolectr0", ArtistRole.LIVE, "ACID BOGEN")
             )
     }
 

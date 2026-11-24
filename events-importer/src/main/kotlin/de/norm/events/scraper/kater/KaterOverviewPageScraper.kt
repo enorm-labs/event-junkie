@@ -3,23 +3,22 @@ package de.norm.events.scraper.kater
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
-import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SlotJoins
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isScreeningTitle
+import de.norm.events.scraper.parseActSlot
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
-import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
@@ -174,7 +173,7 @@ class KaterOverviewPageScraper(
                 // so the acts under it continue under the stage in hand (#1679).
                 stage != null && !NOTE_LINE.containsMatchIn(line) && !WEEKDAY_HEADING.containsMatchIn(line) -> {
                     val start = clock?.startOf(slot)
-                    artists += splitActs(line).map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage, setStart = start) }
+                    artists += actsOf(line, stage).map { it.copy(setStart = start) }
                 }
             }
         }
@@ -187,7 +186,7 @@ class KaterOverviewPageScraper(
      */
     private fun readsAsProse(line: String): Boolean =
         (SENTENCE_END.containsMatchIn(line) && line.split(WHITESPACE).size >= MIN_SENTENCE_WORDS) ||
-            splitActs(line).any { it.split(WHITESPACE).size > MAX_ACT_WORDS }
+            actsOf(line).any { it.name.split(WHITESPACE).size > MAX_ACT_WORDS }
 
     /** The lines that are not part of a floor block — the event's own blurb, if it has one. */
     private fun describe(body: List<String>): String {
@@ -196,15 +195,14 @@ class KaterOverviewPageScraper(
     }
 
     /**
-     * Splits an act line at a `b2b` marker and at safe `&`/`and`/`und` boundaries — but a
-     * **parenthesised** line is never split, because the brackets hold a duo's member list rather
-     * than a second slot ("Double Penetration (FLOWWW b2b Joe Cleen)" is one act). A trailing
-     * `[LIVE]` marker is stripped, as is any tail [stripArtistSuffix] recognises.
+     * The acts of one line. A trailing `[LIVE]` marker sets the role and comes off the name, as does any tail
+     * [stripArtistSuffix] recognises. A duo billed with its members, `Double Penetration (FLOWWW b2b Joe Cleen)`, is one act.
      */
-    private fun splitActs(line: String): List<String> =
-        (if (line.contains('(')) listOf(line) else line.split(B2B_SEPARATOR).flatMap(::splitSegmentOnConjunctions))
-            .map { stripArtistSuffix(stripLineupBracket(it.replace(FORMAT_MARKER, "").trim())) }
-            .filter { it.isNotBlank() && !isNonArtistName(it) }
+    private fun actsOf(
+        line: String,
+        stage: String? = null
+    ): List<ScrapedArtist> =
+        parseActSlot(line, SlotJoins.B2B_AND_CONJUNCTIONS, stage) { stripArtistSuffix(stripLineupBracket(it.replace(FORMAT_MARKER, "").trim())) }
 
     /** A night's span, once each half's year has been inferred. */
     private data class Schedule(

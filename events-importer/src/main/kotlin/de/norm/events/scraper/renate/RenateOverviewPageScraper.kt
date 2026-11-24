@@ -3,10 +3,10 @@ package de.norm.events.scraper.renate
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
-import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SlotJoins
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.crewNames
@@ -16,11 +16,11 @@ import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseActSlot
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseNumericDayMonth
-import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripFriendsTail
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
@@ -168,7 +168,7 @@ class RenateOverviewPageScraper(
                 }
 
                 current != null && isActLine(line) -> {
-                    artists += splitActs(line).map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = current) }
+                    artists += parseActSlot(line, SlotJoins.B2B_AND_CONJUNCTIONS, current, ::stripLineupBracket)
                 }
             }
         }
@@ -253,15 +253,6 @@ class RenateOverviewPageScraper(
 
     /** True when [line] is the venue's "more acts to come" placeholder rather than a name. */
     private fun isUnannouncedAct(line: String): Boolean = isNonArtistName(line) || isNonArtistName(line.replaceFirst(MORE_PREFIX, "").trim())
-
-    /**
-     * Splits an act line at `b2b` and at safe `&`/`and`/`und` boundaries, leaving a parenthesised
-     * name whole — Kater's rule, where the brackets hold a duo's members.
-     */
-    private fun splitActs(line: String): List<String> =
-        (if (line.contains('(')) listOf(line) else line.split(B2B_SEPARATOR).flatMap(::splitSegmentOnConjunctions))
-            .map { stripLineupBracket(it.trim()) }
-            .filter { it.isNotBlank() && !isNonArtistName(it) }
 
     private companion object {
         /** Fewer lines than this under a bare badge is a note, not a line-up. */

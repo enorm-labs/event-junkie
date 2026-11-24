@@ -1,12 +1,11 @@
 package de.norm.events.scraper.voidclub
 
 import de.norm.events.common.BERLIN
-import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
-import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SlotJoins
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
@@ -14,10 +13,9 @@ import de.norm.events.scraper.crewPairFromTitle
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hostingCrewsFromTitle
 import de.norm.events.scraper.inferYearForWeekday
-import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseActSlot
 import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
-import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.stripLineupBracket
 import de.norm.events.scraper.textAt
@@ -193,9 +191,8 @@ class VoidClubOverviewPageScraper(
             .also { it.select(".void-event-label").remove() }
             .text()
             .split(',')
-            .flatMap(::splitActs)
-            .distinctBy { it.lowercase() }
-            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+            .flatMap(::actsOf)
+            .distinctBy { it.name.lowercase() }
     }
 
     /**
@@ -224,19 +221,14 @@ class VoidClubOverviewPageScraper(
      * duo name, `Alex Pastore & Krushak as Intervention`, are the act `Intervention`. A bracket after the act is its crew
      * or its members, so `Primal Rhapsody (DAHRAXT)` bills `Primal Rhapsody`.
      */
-    private fun splitActs(segment: String): List<String> {
+    private fun actsOf(segment: String): List<ScrapedArtist> {
         val act = segment.replace(UNANNOUNCED_TAIL, "").trim()
         if (STRAY_ORIGIN_TAG.matches(act)) return emptyList()
         val alias = MEMBERS_AS_ALIAS.matchEntire(act)?.groupValues?.get(1)
-        val acts =
-            when {
-                '(' in act -> listOf(act)
-                alias != null -> listOf(alias)
-                else -> act.split(B2B_SEPARATOR).flatMap(::splitCrossBilled)
-            }
-        return acts
-            .map { stripLineupBracket(stripArtistSuffix(it)) }
-            .filter { it.isNotBlank() && !isNonArtistName(it) }
+        val isAlias = alias != null && '(' !in act
+        return parseActSlot(if (isAlias) alias else act, if (isAlias) SlotJoins.NONE else SlotJoins.B2B_AND_CROSS) {
+            stripLineupBracket(stripArtistSuffix(it))
+        }
     }
 
     /**

@@ -115,14 +115,14 @@ class TresorOverviewPageScraperTest {
 
     @Test
     fun `reads the live mark bare, bracketed and as LIVE Hybrid, and nowhere else in a name`() {
-        slotRole("Marc Houle LIVE") shouldBe ArtistRole.LIVE
-        slotRole("Fireground [LIVE]") shouldBe ArtistRole.LIVE
-        slotRole("Colin Benders LIVE ") shouldBe ArtistRole.LIVE
-        slotRole(".VRIL & Cecilia Tosh LIVE Hybrid") shouldBe ArtistRole.LIVE
-        slotRole("Sarah Sommers") shouldBe ArtistRole.DJ
-        slotRole("Live Rhythm Unit") shouldBe ArtistRole.DJ
-        slotRole("Daniel Boubet - Live Visuals") shouldBe ArtistRole.DJ
-        slotRole("Delivery") shouldBe ArtistRole.DJ
+        actsOf("Marc Houle LIVE", stage = null).first().role shouldBe ArtistRole.LIVE
+        actsOf("Fireground [LIVE]", stage = null).first().role shouldBe ArtistRole.LIVE
+        actsOf("Colin Benders LIVE ", stage = null).first().role shouldBe ArtistRole.LIVE
+        actsOf(".VRIL & Cecilia Tosh LIVE Hybrid", stage = null).first().role shouldBe ArtistRole.LIVE
+        actsOf("Sarah Sommers", stage = null).first().role shouldBe ArtistRole.DJ
+        actsOf("Live Rhythm Unit", stage = null).first().role shouldBe ArtistRole.DJ
+        actsOf("Daniel Boubet - Live Visuals", stage = null).first().role shouldBe ArtistRole.DJ
+        actsOf("Delivery", stage = null).first().role shouldBe ArtistRole.DJ
     }
 
     @Test
@@ -147,8 +147,8 @@ class TresorOverviewPageScraperTest {
     // Tresor x RA25 (2026-11-21) billed Appleblim twice.
     @Test
     fun `strips a bracketed set note, and keeps a bracket that names no set`() {
-        splitActs("Appleblim (Grime Set)") shouldBe listOf("Appleblim")
-        splitActs("Set (Grime)") shouldBe listOf("Set (Grime)")
+        actsOf("Appleblim (Grime Set)", stage = null).map { it.name } shouldBe listOf("Appleblim")
+        actsOf("Set (Grime)", stage = null).map { it.name } shouldBe listOf("Set (Grime)")
     }
 
     @Test
@@ -159,18 +159,18 @@ class TresorOverviewPageScraperTest {
             "Listening Session: Oscean Collection",
             "Listening Session - Borderland (Tresor.262)",
             "Globus Listening Session: The Fear Ratio 'Slinky'"
-        ).forEach { splitActs(it).shouldBeEmpty() }
+        ).forEach { actsOf(it, stage = null).shouldBeEmpty() }
     }
 
     @Test
     fun `a format note after a dash leaves no dash on the stored act`() {
         // The 2026-09-19 Klubnacht's Globus slot; the dash stays here and comes off at sync.
-        splitActs("Ben Sims b2b Stevie Cox - All night long").map { stripArtistSuffix(it) } shouldBe listOf("Ben Sims", "Stevie Cox")
+        actsOf("Ben Sims b2b Stevie Cox - All night long", stage = null).map { stripArtistSuffix(it.name) } shouldBe listOf("Ben Sims", "Stevie Cox")
     }
 
     @Test
     fun `keeps an act whose name opens with a room's name`() {
-        splitActs("Tresor Listening Club") shouldBe listOf("Tresor Listening Club")
+        actsOf("Tresor Listening Club", stage = null).map { it.name } shouldBe listOf("Tresor Listening Club")
     }
 
     @Test
