@@ -41,6 +41,7 @@ data class TransitImportSummary(
 class TransitStopImportService(
     private val store: TransitStopStore,
     private val properties: TransitProperties,
+    private val metrics: TransitStopMetrics,
     buildProperties: ObjectProvider<BuildProperties>,
     @Qualifier("ioDispatcher") private val ioDispatcher: CoroutineDispatcher,
     private val clock: Clock = Clock.systemUTC()
@@ -77,6 +78,23 @@ class TransitStopImportService(
         }
     }
 
+    /** Starts the gauge from the newest stored import, so a restart does not hide the age until the next one. */
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // A start must not fail on a gauge; the gauge stays at 0 and the line says why.
+    suspend fun seedLastSuccess() {
+        try {
+            val newest = store.newestImportedAt()
+            if (newest == null) {
+                logger.info { "Transit stop import gauge not seeded: no import has stored a station yet" }
+                return
+            }
+            metrics.seed(newest)
+            logger.info { "Transit stop import gauge seeded from the import at $newest" }
+        } catch (e: Exception) {
+            rethrowIfCancelled()
+            logger.warn(e) { "Transit stop import gauge not seeded" }
+        }
+    }
+
     private suspend fun pass(): TransitImportSummary {
         logger.info { "Transit stop import started from ${properties.gtfsUrl}" }
         val file = withContext(ioDispatcher) { Files.createTempFile("gtfs-", ".zip") }
@@ -87,7 +105,9 @@ class TransitStopImportService(
             check(stations.size >= properties.minStations) {
                 "The feed names ${stations.size} station(s) with a U-Bahn, S-Bahn or tram line, fewer than ${properties.minStations}"
             }
-            store.replaceAll(stations, Instant.now(clock))
+            val importedAt = Instant.now(clock)
+            store.replaceAll(stations, importedAt)
+            metrics.markSucceeded(importedAt)
             logger.info { "Transit stop import finished: ${stations.size} station(s) stored from $bytes bytes" }
             return TransitImportSummary(stations.size, bytes)
         } finally {

@@ -26,6 +26,7 @@ it produces an alert that never fires rather than an error.
     Discogs failing or stuck       -> ej-discogs-failing, ej-discogs-backlog-stuck (#2043)
     artist lookup tick stopped     -> ej-artist-lookup-tick-stale (#2059)
     venue site check stopped       -> ej-venue-site-check-stale   (#3147)
+    transit stop import stopped    -> ej-transit-stops-stale      (#4596)
     nightly passes stopped         -> ej-classification-stale, ej-instagram-stale (#3645)
     classification budget running out -> ej-classification-budget (#3645)
     sign-in mail failing or abused -> ej-signin-mail-failing, ej-signin-abuse (#4034)
@@ -642,6 +643,28 @@ rule(
     ">",
     33 * 24,
     stream_name="importer_venues_site_check_last_success",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+# The station import runs once a quarter, at 04:45 UTC on the 2nd of January, April, July
+# and October, and a failed one keeps the stored rows and leaves only an ERROR line. The
+# gauge stamps an import that replaced the rows, and the importer seeds it at start from
+# the newest stored row. 95 days is the longest quarter (92) plus the import and slack.
+# `> bool 0` as in `ej-artist-lookup-tick-stale`, so an import that never ran stays quiet.
+rule(
+    "ej-transit-stops-stale",
+    "The quarterly VBB stop import has not replaced the stations in 95 days. It runs at 04:45 "
+    "UTC on the 2nd of January, April, July and October, so that import failed or did not "
+    "start. The venue pages keep the old stations. Read the importer log for `Transit stop "
+    "import`; `POST /api/admin/transit-stops/import` runs an import now.",
+    "((timestamp(max(importer_transit_stops_import_last_success)) "
+    "- max(importer_transit_stops_import_last_success)) / 3600) "
+    "* (max(importer_transit_stops_import_last_success) > bool 0)",
+    ">",
+    95 * 24,
+    stream_name="importer_transit_stops_import_last_success",
     period_minutes=60,
     frequency_minutes=60,
     silence_minutes=24 * 60,

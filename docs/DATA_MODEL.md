@@ -369,9 +369,9 @@ line serves. No other table refers to it.
 
 `TransitStopImportService` runs at 04:45 UTC on the 2nd of January, April, July and October. It downloads the feed to
 a temporary file and replaces every row in one transaction. A failed download, or a feed with fewer than 300 stations,
-keeps the stored rows and logs `ERROR`. `POST /api/admin/transit-stops/import` runs one import now. The BFF computes
-the nearest stations of a venue per request: up to three within 1,500 m on foot. The walk is the straight line times
-1.3.
+keeps the stored rows and logs `ERROR`. `ej-transit-stops-stale` alerts when no import replaced the rows in 95 days.
+`POST /api/admin/transit-stops/import` runs one import now. The BFF computes the nearest stations of a venue per
+request: up to three within 1,500 m on foot. The walk is the straight line times 1.3.
 
 ### Event
 
