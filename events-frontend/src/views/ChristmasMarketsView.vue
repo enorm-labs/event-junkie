@@ -4,7 +4,6 @@
  * `christmas-market` feature, which keeps it out of every other list (EVENT_SCOPE.md §3.6). Nearest first (#5010)
  * measures on the device: the origin stays in memory, and the URL carries only `sort=distance`.
  */
-import { LocateFixed, MapPin as MapPinIcon } from '@lucide/vue'
 import { computed, onMounted, ref, useId, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
@@ -20,6 +19,8 @@ import LocateStatus from '@/components/LocateStatus.vue'
 import MapPanel from '@/components/MapPanel.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import NearOriginControls from '@/components/NearOriginControls.vue'
+import OriginPickerButtons from '@/components/OriginPickerButtons.vue'
+import OriginPickHint from '@/components/OriginPickHint.vue'
 import { Button } from '@/components/ui/button'
 import { useAsync } from '@/composables/useAsync'
 import { searchEvents } from '@/composables/useEvents'
@@ -312,27 +313,12 @@ function marker(market: ChristmasMarket<EventSummary>): string | undefined {
             {{ t('christmasMarkets.nearest') }}
           </Button>
           <template v-if="nearest">
-            <Button
-              :disabled="locateState === 'locating'"
-              size="sm"
-              type="button"
-              variant="outline"
-              @click="useDevice"
-            >
-              <LocateFixed aria-hidden="true" />
-              {{ t('map.near.useLocation') }}
-            </Button>
-            <Button
-              v-if="!mapUnavailable"
-              :aria-pressed="picking"
-              :variant="picking ? 'default' : 'outline'"
-              size="sm"
-              type="button"
-              @click="picking = !picking"
-            >
-              <MapPinIcon aria-hidden="true" />
-              {{ t('map.near.pickOnMap') }}
-            </Button>
+            <OriginPickerButtons
+              v-model:picking="picking"
+              :map-unavailable="mapUnavailable"
+              :state="locateState"
+              @device="useDevice"
+            />
             <BaseSelect
               v-if="marketVenues.length"
               :aria-label="t('christmasMarkets.near.fromMarket')"
@@ -346,12 +332,7 @@ function marker(market: ChristmasMarket<EventSummary>): string | undefined {
             </BaseSelect>
           </template>
         </div>
-        <p v-if="picking" class="flex flex-wrap items-center gap-2 text-body text-muted-foreground">
-          {{ t('map.near.pickHint') }}
-          <Button size="xs" type="button" variant="link" @click="pickCenter">
-            {{ t('map.near.useCentre') }}
-          </Button>
-        </p>
+        <OriginPickHint v-if="picking" @center="pickCenter" />
         <LocateStatus :state="locateState" messages="christmasMarkets.near" />
         <div v-if="nearest && origin" class="flex flex-wrap items-center gap-2 text-body">
           <NearOriginControls :origin="origin" @clear="clearNearest" />

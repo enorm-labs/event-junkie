@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { LocateFixed, MapPin as MapPinIcon } from '@lucide/vue'
 import { computed, onMounted, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { type LocationQueryRaw, RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -16,6 +15,8 @@ import ListPage from '@/components/ListPage.vue'
 import MapPanel from '@/components/MapPanel.vue'
 import LocateStatus from '@/components/LocateStatus.vue'
 import NearOriginControls from '@/components/NearOriginControls.vue'
+import OriginPickerButtons from '@/components/OriginPickerButtons.vue'
+import OriginPickHint from '@/components/OriginPickHint.vue'
 import { useAsync } from '@/composables/useAsync'
 import { fetchCalendarEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
@@ -281,27 +282,12 @@ function distance(km: number): string {
 
     <section :aria-label="t('map.near.label')" class="space-y-3">
       <div class="flex flex-wrap items-center gap-2">
-        <Button
-          :disabled="locateState === 'locating'"
-          size="sm"
-          type="button"
-          variant="outline"
-          @click="useDevice"
-        >
-          <LocateFixed aria-hidden="true" />
-          {{ t('map.near.useLocation') }}
-        </Button>
-        <Button
-          v-if="!unavailable"
-          :aria-pressed="picking"
-          :variant="picking ? 'default' : 'outline'"
-          size="sm"
-          type="button"
-          @click="picking = !picking"
-        >
-          <MapPinIcon aria-hidden="true" />
-          {{ t('map.near.pickOnMap') }}
-        </Button>
+        <OriginPickerButtons
+          v-model:picking="picking"
+          :map-unavailable="unavailable"
+          :state="locateState"
+          @device="useDevice"
+        />
         <BaseSelect
           v-if="anchors.length"
           :aria-label="t('map.near.nearVenue')"
@@ -315,12 +301,7 @@ function distance(km: number): string {
         </BaseSelect>
       </div>
 
-      <p v-if="picking" class="flex flex-wrap items-center gap-2 text-body text-muted-foreground">
-        {{ t('map.near.pickHint') }}
-        <Button size="xs" type="button" variant="link" @click="pickCenter">
-          {{ t('map.near.useCentre') }}
-        </Button>
-      </p>
+      <OriginPickHint v-if="picking" @center="pickCenter" />
       <LocateStatus :state="locateState" messages="map.near" />
 
       <div v-if="origin" class="flex flex-wrap items-center gap-2 text-body">
