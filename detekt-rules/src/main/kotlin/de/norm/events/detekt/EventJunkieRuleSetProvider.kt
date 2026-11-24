@@ -14,5 +14,6 @@ import dev.detekt.api.RuleSetProvider
 class EventJunkieRuleSetProvider : RuleSetProvider {
     override val ruleSetId = RuleSetId("event-junkie")
 
-    override fun instance() = RuleSet(ruleSetId, listOf(::LongComment, ::CommentDensity, ::CommentSmell, ::CatchAllSwallowsCancellation))
+    override fun instance() =
+        RuleSet(ruleSetId, listOf(::LongComment, ::CommentDensity, ::CommentSmell, ::CatchAllSwallowsCancellation, ::PrivateLineUpPattern))
 }
