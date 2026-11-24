@@ -1020,6 +1020,36 @@
     ]
   },
   {
+    "name": "ej-watch-conversion-stale",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "bff_account_watch_conversion_last_success",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The watch conversion has not held a run in an hour, against a five-minute interval. No watch becomes a follow, and no account gets the bell for a new Berlin date of an act it watches. Read the BFF log for `Watch conversion failed`: each failed run is a WARN with its exception. A healthy run writes `Watch conversion:` even when it converts nothing. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "((timestamp(max(bff_account_watch_conversion_last_success)) - max(bff_account_watch_conversion_last_success)) / 60) * (max(bff_account_watch_conversion_last_success) > bool 0)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 60
+      }
+    },
+    "trigger_condition": {
+      "period": 10,
+      "frequency": 5,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 720
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
     "name": "ej-mail-quota-high",
     "org_id": "default",
     "stream_type": "metrics",

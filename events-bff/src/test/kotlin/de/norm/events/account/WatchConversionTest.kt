@@ -2,17 +2,24 @@ package de.norm.events.account
 
 import de.norm.events.BaseControllerTest
 import de.norm.events.common.BERLIN
+import de.norm.events.push.PushSender
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.support.StaticListableBeanFactory
 import org.springframework.r2dbc.core.await
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
@@ -202,6 +209,68 @@ class WatchConversionTest : BaseControllerTest() {
 
             watches.list(fan).map { it.notify } shouldBe listOf("off")
         }
+
+    @Test
+    fun `a failed run is counted and leaves the last success, and a run that held moves it`() {
+        val registry = SimpleMeterRegistry()
+        val start = Instant.parse("2026-11-24T10:00:00Z")
+        val clock = SteppingClock(start)
+        var broken = true
+        val store =
+            object : WatchStore(databaseClient) {
+                override suspend fun convert(
+                    today: LocalDate,
+                    now: Instant
+                ): List<ConvertedWatch> = if (broken) error("database gone") else super.convert(today, now)
+            }
+        val job = conversion(store, clock, registry)
+        lastSuccess(registry) shouldBe start.epochSecond.toDouble()
+
+        clock.instant = start.plus(1, ChronoUnit.HOURS)
+        runBlocking { job.run() }
+        lastSuccess(registry) shouldBe start.epochSecond.toDouble()
+        failedRuns(registry) shouldBe 1.0
+
+        broken = false
+        clock.instant = start.plus(2, ChronoUnit.HOURS)
+        runBlocking { job.run() }
+        lastSuccess(registry) shouldBe clock.instant.epochSecond.toDouble()
+        failedRuns(registry) shouldBe 1.0
+    }
+
+    private fun conversion(
+        store: WatchStore,
+        clock: Clock,
+        registry: MeterRegistry
+    ) = WatchConversionJob(
+        store,
+        PushSubscriptionStore(databaseClient),
+        AccountMetrics(registry),
+        NotificationMetrics(registry),
+        StaticListableBeanFactory().getBeanProvider(PushSender::class.java),
+        clock
+    )
+
+    // The literals, not the constants: the alert rule reads these names (architecture.instructions.md § Metrics).
+    private fun lastSuccess(registry: MeterRegistry) = registry.find("bff.account.watch.conversion.last_success").gauge()!!.value()
+
+    private fun failedRuns(registry: MeterRegistry) =
+        registry
+            .find("bff.account.watch")
+            .tag("action", "conversion_failed")
+            .counter()!!
+            .count()
+
+    /** A clock the test moves, so the seed and the stamp can differ. */
+    private class SteppingClock(
+        var instant: Instant
+    ) : Clock() {
+        override fun getZone(): ZoneId = BERLIN
+
+        override fun withZone(zone: ZoneId): Clock = this
+
+        override fun instant(): Instant = instant
+    }
 
     private companion object {
         const val MODERAT = "2d2a7d9e-6cf0-4f2f-9d5c-4b9b1e3a7f10"
