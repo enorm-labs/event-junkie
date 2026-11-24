@@ -24,9 +24,10 @@ import java.net.UnknownHostException
  * custom resolver on the connector, which is worth doing when this leaves the importer's own
  * network; it is recorded rather than pretended away.
  *
- * **It also guards every redirect hop of the scraper client** (#5444). [ImageFetcher] checks the
- * first URL, and the scraper's `RedirectFollowingFilter` asks this class about each `Location` before
- * it sends the hop, for images, scraped pages and venue-site probes alike.
+ * **It also guards every request of the scraper clients** (#5444, #5448). The scraper's
+ * `RedirectFollowingFilter` asks this class about the first URL and each `Location` before it sends
+ * them, for images, scraped pages, `robots.txt` reads and venue-site probes alike. [ImageFetcher]
+ * asks it first as well, so a refused image URL is a plain `Rejected` and not a `WARN`.
  *
  * **`open` only so a test can permit loopback.** [ImageFetcher]'s own suite runs against a local
  * HTTP server, which this class refuses by design. The refusal is asserted in [ImageUrlValidatorTest]

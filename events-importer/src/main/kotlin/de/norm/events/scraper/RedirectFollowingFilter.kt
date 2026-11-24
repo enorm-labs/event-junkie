@@ -25,16 +25,19 @@ class RedirectFailedException(
 ) : RuntimeException("Redirect from $url not followed: $reason")
 
 /**
- * Raised when a redirect points at a URL the [RedirectTargetGuard] refuses (#5444). Nothing was sent to it.
+ * Raised when a request or one of its redirects points at a URL the [RedirectTargetGuard] refuses (#5444, #5448).
+ * Nothing was sent to it. [fromHost] is the redirecting host, and null for the first request.
  *
  * The message names the hosts and not the URLs, because it reaches the log and `event_source.last_error`, and a
  * query string has no place in either.
  */
-class RedirectRefusedException(
+class RequestRefusedException(
     val fromHost: String?,
     val targetHost: String?,
     val reason: String
-) : RuntimeException("Redirect from $fromHost to $targetHost refused: $reason")
+) : RuntimeException(
+        if (fromHost == null) "Request to $targetHost refused: $reason" else "Redirect from $fromHost to $targetHost refused: $reason"
+    )
 
 /**
  * Follows a scraper request's redirects in the filter chain, so each hop is a request of its own (#5417).
@@ -48,10 +51,11 @@ class RedirectRefusedException(
  * Netty did. A hop to another host drops the `Cookie` and `Authorization` headers, because they belong
  * to the first host, and logs one `INFO` line with both hosts.
  *
- * **Every hop passes [guard] before it is sent** (#5444). A public page that redirects to `169.254.169.254` or to a
- * host that resolves to `10.x` fails with [RedirectRefusedException] and one `WARN` line, and the target receives
- * nothing. The first request is the caller's to check: `ImageFetcher` asks the same guard before it sends one. The
- * guard resolves the host, so it runs on [ioDispatcher] and not on the event loop.
+ * **The first request and every hop pass [guard] before they are sent** (#5444, #5448). A scraper reads detail and
+ * pagination URLs from a venue's page, so the first URL is as untrusted as a `Location`. A URL to `169.254.169.254`,
+ * to a host that resolves to `10.x`, or with a scheme other than `http` fails with [RequestRefusedException] and one
+ * `WARN` line, and the target receives nothing, not even a `robots.txt` read. The guard resolves the host, so it runs
+ * on [ioDispatcher] and not on the event loop.
  */
 class RedirectFollowingFilter(
     private val guard: RedirectTargetGuard,
@@ -70,6 +74,7 @@ class RedirectFollowingFilter(
         request: ClientRequest,
         next: ExchangeFunction
     ): ClientResponse {
+        refuseIfGuarded(from = null, status = null, target = request.url())
         var current = request
         var hops = 0
         while (true) {
@@ -88,17 +93,23 @@ class RedirectFollowingFilter(
         }
     }
 
+    /** Refuses [target] when the guard does; [from] and [status] are null for the first request. */
     private suspend fun refuseIfGuarded(
-        from: ClientRequest,
-        status: Int,
+        from: ClientRequest?,
+        status: Int?,
         target: URI
     ) {
         val reason = withContext(ioDispatcher) { guard.reject(target.toString()) } ?: return
+        val fromHost = from?.url()?.host
         logger.at(Level.WARN) {
-            message = "Refused a $status redirect from ${from.url().host} to ${target.host}: $reason"
-            payload = mapOf(LogFields.HTTP_STATUS to status)
+            if (status == null) {
+                message = "Refused a request to ${target.host}: $reason"
+            } else {
+                message = "Refused a $status redirect from $fromHost to ${target.host}: $reason"
+                payload = mapOf(LogFields.HTTP_STATUS to status)
+            }
         }
-        throw RedirectRefusedException(from.url().host, target.host, reason)
+        throw RequestRefusedException(fromHost, target.host, reason)
     }
 
     private fun hop(

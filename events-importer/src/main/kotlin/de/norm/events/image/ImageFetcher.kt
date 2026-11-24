@@ -1,6 +1,6 @@
 package de.norm.events.image
 
-import de.norm.events.scraper.RedirectRefusedException
+import de.norm.events.scraper.RequestRefusedException
 import de.norm.events.scraper.SCRAPER_WEB_CLIENT
 import de.norm.events.scraper.encodeForUri
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -101,7 +101,7 @@ class ImageFetcher(
 
     /** The [ImageFetchResult.Rejected] for a fault the fetch threw. */
     private fun rejection(e: Exception): ImageFetchResult.Rejected {
-        val refused = e.causes().filterIsInstance<RedirectRefusedException>().firstOrNull()
+        val refused = e.causes().filterIsInstance<RequestRefusedException>().firstOrNull()
         return when {
             // The same refusal as the check in [fetch], one hop later (#5444); not a transport fault.
             refused != null -> ImageFetchResult.Rejected("redirect refused: ${refused.reason}")

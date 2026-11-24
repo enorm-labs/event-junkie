@@ -32,9 +32,9 @@ const val SCRAPER_WEB_CLIENT = "scraperWebClient"
  * cannot be forgotten.
  *
  * It follows a `robots.txt` redirect through its own [RedirectFollowingFilter], up to
- * [RedirectFollowingFilter.MAX_HOPS], the five RFC 9309 §2.3.1.2 asks for. Every hop passes the
- * [RedirectTargetGuard] before it is sent, so a `robots.txt` that redirects to a private address
- * fails the fetch, and [RobotsRulesCache] reads that as an unreachable host (#5446).
+ * [RedirectFollowingFilter.MAX_HOPS], the five RFC 9309 §2.3.1.2 asks for. The first request and every
+ * hop pass the [RedirectTargetGuard] before they are sent, so a `robots.txt` on or redirecting to a private
+ * address fails the fetch, and [RobotsRulesCache] reads that as an unreachable host (#5446, #5448).
  */
 const val SCRAPER_BASE_WEB_CLIENT = "scraperBaseWebClient"
 
@@ -83,7 +83,7 @@ private const val ROBOTS_MAX_HEADER_SIZE = 32 * 1024
  * 301-redirects to its canonical `/portfolio/<slug>/` page (ADR-007 best-practice #6). The
  * [RedirectFollowingFilter] is the outermost filter of [SCRAPER_WEB_CLIENT] and sends each hop through
  * the whole chain, so a hop to another host passes that host's `robots.txt` check and throttle. It also refuses a
- * hop to a private address before sending it ([RedirectTargetGuard], #5444).
+ * first URL or a hop to a private address before sending it ([RedirectTargetGuard], #5444, #5448).
  * [SCRAPER_BASE_WEB_CLIENT] follows a `robots.txt` redirect through a filter of its own, with the same guard (#5446).
  * Scrapers receive the final document either way. The
  * response body size limit is controlled by the standard `spring.http.codecs.max-in-memory-size`
@@ -126,7 +126,7 @@ class ScraperHttpClientConfig {
         @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher
     ): WebClient =
         baseClient(webClientBuilder, scraperProperties, connectionProvider, maxHeaderSize = ROBOTS_MAX_HEADER_SIZE)
-            // First of all, so every hop passes the SSRF guard, the host filters and the throttle of its own host.
+            // First of all, so the request and every hop pass the SSRF guard, the host filters and the throttle of their own host.
             // No RobotsTxtFilter: this client is the one that reads robots.txt.
             .filters { it.add(0, RedirectFollowingFilter(redirectGuard, ioDispatcher)) }
             .filter(throttle)
@@ -144,7 +144,7 @@ class ScraperHttpClientConfig {
         @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher
     ): WebClient =
         baseClient(webClientBuilder, scraperProperties, connectionProvider)
-            // First of all, so every hop passes the SSRF guard, the host filters, the robots check and the throttle of its own host.
+            // First of all, so the request and every hop pass the SSRF guard, the host filters, the robots check and the throttle of their own host.
             .filters { it.add(0, RedirectFollowingFilter(redirectGuard, ioDispatcher)) }
             // Ordered before the throttle so the robots.txt fetch behind this filter is itself
             // throttled — see RobotsTxtFilter's KDoc.
