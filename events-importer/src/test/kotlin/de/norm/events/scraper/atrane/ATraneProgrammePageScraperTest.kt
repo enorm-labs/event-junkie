@@ -205,6 +205,39 @@ class ATraneProgrammePageScraperTest {
         guests("HEUTE MIT: SEBASTIAN MERK - JOHN SCHRÖDER-ANNA MÜLLER") shouldBe listOf("Sebastian Merk", "John Schröder", "Anna Müller")
     }
 
+    /** A student night of [lines], its title's quotes escaped for the JSON-LD the helper writes. */
+    private fun studentNight(vararg lines: String): ScrapedEvent =
+        session("\\\"STUDENTS LIVE\\\"", "IN ZUSAMMENARBEIT MIT: UdK & JIB", "TWO CONCERTS ONE NIGHT", *lines)
+
+    @Test
+    fun `bills a student night's bands without their schools, and not its title`() {
+        // #5483, event 14961.
+        val night = studentNight("HEUTE MIT: JIB-«Rosa, Rosa, Rosa»", "UdK-ANTONINA«OKTETT»")
+
+        night.title shouldBe "\"STUDENTS LIVE\""
+        night.subtitle shouldBe
+            "IN ZUSAMMENARBEIT MIT: UdK & JIB · TWO CONCERTS ONE NIGHT · Heute mit: Jib-«Rosa, Rosa, Rosa» · UdK-ANTONINA«OKTETT»"
+        night.artists.map { it.name to it.role } shouldBe
+            listOf("Rosa, Rosa, Rosa" to ArtistRole.HEADLINER, "Antonina Oktett" to ArtistRole.HEADLINER)
+    }
+
+    @Test
+    fun `bills a student night's bands whichever line and dash name them`() {
+        fun bands(vararg lines: String) = studentNight(*lines).artists.map { it.name }
+
+        bands("HEUTE MIT: JIB-«Rosa, Rosa, Rosa»- UdK-ANTONINA«OKTETT»") shouldBe listOf("Rosa, Rosa, Rosa", "Antonina Oktett")
+        bands("HEUTE MIT: JIB - «Rosa, Rosa, Rosa»", "UdK – ANNA MÜLLER-LÜDENSCHEIDT") shouldBe listOf("Rosa, Rosa, Rosa", "Anna Müller-Lüdenscheidt")
+        bands("HEUTE MIT:", "JIB-«Rosa, Rosa, Rosa»", "UdK-ANTONINA«OKTETT»", "EINTRITT FREI") shouldBe listOf("Rosa, Rosa, Rosa", "Antonina Oktett")
+        bands("HEUTE MIT:").shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads schools and guillemets only on a student night`() {
+        guests("HEUTE MIT: JIB-«Rosa, Rosa, Rosa»") shouldBe listOf("Jib-«Rosa, Rosa, Rosa»")
+        guests("HEUTE MIT: ANNA «THE VOICE» MÜLLER") shouldBe listOf("Anna «The Voice» Müller")
+        session("STUDENTS LIVE QUARTET", "HEUTE MIT: ANNA MÜLLER").artists.map { it.name } shouldBe listOf("STUDENTS LIVE QUARTET", "Anna Müller")
+    }
+
     @Test
     fun `keeps a line below the guests in the subtitle, after them`() {
         val night = session("ANDREAS SCHMIDT & FRIENDS", "HEUTE MIT: ROLAND SCHNEIDER", "JAM SESSION AB 22 UHR")

@@ -50,6 +50,7 @@ import java.time.format.DateTimeFormatter
  * (`WEIHNACHTLICH BESINNLICHES MIT:`) joins the line below it, the act, to make the title (#4548).
  * An availability banner (`LETZTEN PLÄTZE AN DER BAR`, `AUSVERKAUFT`) or an added-show banner
  * (`ZUSATZKONZERT-EXTRA CONCERT`, event 15063) can head the lines; it is dropped like the credit (#3165).
+ * A student night (`"STUDENTS LIVE"`) bills its music schools' bands, not its title (#5483).
  *
  * Some cards print an admission time in their markup: a winter-Sunday subtitle (`EINLASS 17.00 UHR
  * KONZERTBEGINN: 18.00 UHR`), a day-of seats notice (`EINLASS: 19.00 UR`) or a one-night special
@@ -84,6 +85,8 @@ class ATraneProgrammePageScraper {
                 logger.warn { "No parseable start for A-Trane event '$title', skipping" }
             }
         val tags = card.select(".evoet_eventtypes [data-filter^=event_type]").map { it.attr("data-v").trim() }
+        val headliners = if (billing.isStudentNight) emptyList() else buildArtistsForEventType(stripFriendsTail(act), null, EventType.CONCERT.name)
+        val guestRole = if (billing.isStudentNight) ArtistRole.HEADLINER else ArtistRole.SUPPORT
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
@@ -100,11 +103,11 @@ class ATraneProgrammePageScraper {
             free = tags.any { FREE_ENTRY.containsMatchIn(it) },
             status = event.schemaStatus(),
             artists =
-                buildArtistsForEventType(stripFriendsTail(act), null, EventType.CONCERT.name) +
+                headliners +
                     guests
                         .filterNot { names(act, it) }
                         .distinctBy { it.lowercase() }
-                        .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
+                        .map { ScrapedArtist(name = it, role = guestRole) }
         )
     }
 
@@ -121,7 +124,10 @@ class ATraneProgrammePageScraper {
         val subtitle: String?,
         val guests: List<String> = emptyList(),
         val act: String = title
-    )
+    ) {
+        /** A night whose title names no act, only that students play. */
+        val isStudentNight: Boolean = STUDENT_NIGHT.matches(title)
+    }
 
     /**
      * A festival night names its act after "TAG n HEUTE … MIT:" below a banner line, so the
@@ -144,7 +150,7 @@ class ATraneProgrammePageScraper {
                     Billing(act?.let { "${title.removeSuffix(":")} $it" } ?: title, below, act = act ?: title)
                 }
             }
-        return billing?.let { it.copy(guests = it.guests + body.flatMap(::lineGuests)) }
+        return billing?.let { it.copy(guests = (if (it.isStudentNight) studentBands(body) else it.guests) + body.flatMap(::lineGuests)) }
     }
 
     /**
@@ -169,12 +175,7 @@ class ATraneProgrammePageScraper {
         acts: List<String>,
         guestIndex: Int
     ): Billing {
-        val guests =
-            acts[guestIndex]
-                .split(GUEST_SEPARATOR)
-                .flatMap(::splitRunTogether)
-                .map(::deshout)
-                .filter { it.isNotEmpty() && !isNonArtistName(it) }
+        val guests = splitGuests(acts[guestIndex])
         val subtitle = acts.take(guestIndex).drop(1) + "Heute mit: ${guests.joinToString(", ")}" + acts.drop(guestIndex + 1)
         return Billing(acts.first(), subtitle.filter { it.isNotEmpty() }.joinToString(" · "), guests)
     }
@@ -252,19 +253,40 @@ class ATraneProgrammePageScraper {
         val BANNER =
             Regex("""^letzten?\s+pl(?:ä|ae)tze\b|last\s+seats\b|ausverkauft|sold\s*out|^zusatzkonzert\b|^extra\s+concert\b""", RegexOption.IGNORE_CASE)
         val TONIGHT_WITH = Regex("""^(?:tag\s*\d+\s+)?heute\b.*?\bmit:""", RegexOption.IGNORE_CASE)
-        val GUESTS_LABEL = Regex("""^heute\s+mit:""", RegexOption.IGNORE_CASE)
         val SPECIAL_GUEST = Regex("""^(?:featuring\s+)?special\s+guest(s?)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
         val MEETS = Regex("""^meets\s+(.+)$""", RegexOption.IGNORE_CASE)
         val QUOTED_NAME = Regex("""^[«"„“]([^»"“”]+)[»"“”]""")
         val GUESTS_SEPARATOR = Regex("""\s*[&,]\s*""")
         val LEAD_IN = Regex("""\bmit:$""", RegexOption.IGNORE_CASE)
-        val GUEST_SEPARATOR = Regex("""\s*[-–]\s+|\s+[-–]\s*""")
 
         val NOT_A_STYLE = Regex("""live concert|eintritt frei""", RegexOption.IGNORE_CASE)
         val FREE_ENTRY = Regex("""eintritt frei|no cover""", RegexOption.IGNORE_CASE)
         val CONCESSION = Regex("""student""", RegexOption.IGNORE_CASE)
     }
 }
+
+private val GUESTS_LABEL = Regex("""^heute\s+mit:""", RegexOption.IGNORE_CASE)
+private val STUDENT_NIGHT = Regex("""[«"„“]?\s*students\s+live\s*[»"“”]?""", RegexOption.IGNORE_CASE)
+private val SCHOOL = Regex("""(?<![\p{L}\d-])(?:jib|udk)\s*[-–]\s*""", RegexOption.IGNORE_CASE)
+private val GUILLEMETS = Regex("""\s*[«»]\s*""")
+
+/**
+ * The bands of a student night, one per music school: `HEUTE MIT: JIB-«Rosa, Rosa, Rosa»` above `UdK-ANTONINA«OKTETT»`.
+ * The school goes from each. Guillemets mark a band's name or a part of it, so only the marks go.
+ */
+private fun studentBands(lines: List<String>): List<String> =
+    lines
+        .filter { GUESTS_LABEL.containsMatchIn(it) || SCHOOL.matchesAt(it, 0) }
+        .flatMap { splitGuests(it.replace(GUESTS_LABEL, "").replace(SCHOOL, "").replace(GUILLEMETS, " ")) }
+
+private val GUEST_SEPARATOR = Regex("""\s*[-–]\s+|\s+[-–]\s*""")
+
+private fun splitGuests(guests: String): List<String> =
+    guests
+        .split(GUEST_SEPARATOR)
+        .flatMap(::splitRunTogether)
+        .map(::deshout)
+        .filter { it.isNotEmpty() && !isNonArtistName(it) }
 
 private val BARE_HYPHEN = Regex("""(?<=\S)-(?=\S)""")
 private val WORD_GAP = Regex("""\s+""")
