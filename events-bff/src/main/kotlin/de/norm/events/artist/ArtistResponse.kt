@@ -42,7 +42,11 @@ data class ArtistSummaryResponse(
     @Schema(description = "URL of the artist's Bandcamp page, which the event page's lineup links to")
     val bandcampUrl: String?,
     @Schema(description = "URL of the artist's SoundCloud profile, which the event page's lineup links to")
-    val soundcloudUrl: String?
+    val soundcloudUrl: String?,
+    @Schema(description = "URL of the artist's YouTube channel, which the event page's lineup links to")
+    val youtubeUrl: String?,
+    @Schema(description = "URL of the artist's Spotify page, which the event page's lineup links to")
+    val spotifyUrl: String?
 ) {
     companion object {
         fun fromEntity(
@@ -61,7 +65,9 @@ data class ArtistSummaryResponse(
                 intrinsicWidth = image.intrinsicWidth,
                 intrinsicHeight = image.intrinsicHeight,
                 bandcampUrl = entity.bandcampUrl,
-                soundcloudUrl = entity.soundcloudUrl
+                soundcloudUrl = entity.soundcloudUrl,
+                youtubeUrl = entity.youtubeUrl,
+                spotifyUrl = entity.spotifyUrl
             )
     }
 }

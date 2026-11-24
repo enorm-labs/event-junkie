@@ -1640,6 +1640,10 @@ export interface components {
             bandcampUrl?: string | null;
             /** @description URL of the artist's SoundCloud profile, which the event page's lineup links to */
             soundcloudUrl?: string | null;
+            /** @description URL of the artist's YouTube channel, which the event page's lineup links to */
+            youtubeUrl?: string | null;
+            /** @description URL of the artist's Spotify page, which the event page's lineup links to */
+            spotifyUrl?: string | null;
         };
         /** @description Compact event summary for lists and calendar */
         EventSummaryResponse: {

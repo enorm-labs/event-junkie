@@ -61,7 +61,7 @@ lists what that includes and what it excludes.
 - See the date, doors, start and end in one **When** block, with prices and the source link.
 - See the **running order and set times** of a club night, where the venue publishes them. While the night is on, a dot marks the set that
   plays now.
-- Open an act on **Bandcamp or SoundCloud** from the line-up, where the artist has a link. Nothing loads from either site before a click.
+- Open an act on **Bandcamp, YouTube, Spotify or SoundCloud** from the line-up, where the artist has a link. An act shows two links at most, and a DJ shows SoundCloud first. Nothing loads from these sites before a click.
 - See the **spoken language** of comedy, readings and screenings, where the venue states it.
 - See **upcoming events like this one**.
 - **Share** the event, copy its link, or **add it to a calendar** as an `.ics` file or a Google Calendar link.
