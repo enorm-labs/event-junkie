@@ -302,20 +302,31 @@ class ArtistAssociationSync(
 }
 
 /**
- * The acts of [event] after the steps [ArtistAssociationSync.billedArtists] applies to each name alone: the status
- * marker, a bracketed guest, an emoji run and a `b2b` slot split off, the suffix stripped, and a refused name or a
- * festival's title-derived name dropped.
+ * The acts of [event] after the steps [ArtistAssociationSync.billedArtists] applies to each name alone: [cleanedBillings],
+ * without a refused name or a festival's title-derived name.
  */
 internal fun strippedArtists(event: ScrapedEvent): List<ScrapedArtist> {
     val festival = event.resolvedEventType() == EventType.FESTIVAL
-    return event.artists
+    return cleanedBillings(event)
+        .map { (_, act) -> act }
+        .filterNot { artistRefusal(it.name) != null || (it.titleDerived && festival) }
+}
+
+/** The names of [event] that [strippedArtists] refuses, as the venue billed them, for the data-quality worklist. */
+internal fun refusedArtists(event: ScrapedEvent): List<Pair<QualityFlagKind, String>> =
+    cleanedBillings(event).mapNotNull { (billed, act) -> artistRefusal(act.name)?.let { it to billed.trim() } }
+
+/**
+ * Each act of [event] with its name as billed: the status marker stripped, a bracketed guest, an emoji run and a `b2b` slot
+ * split off, then the suffix stripped. The line-up and the worklist flags both read it, so they judge one name (#5487).
+ */
+private fun cleanedBillings(event: ScrapedEvent): List<Pair<String, ScrapedArtist>> =
+    event.artists
         .map { it.copy(name = stripTitleStatusMarker(it.name)) }
         .flatMap { artist -> splitGuest(artist) }
         .flatMap { artist -> splitOnEmoji(artist) }
         .flatMap { artist -> splitBackToBack(artist) }
-        .map { it.copy(name = stripArtistSuffix(it.name, fromTitle = it.titleDerived)) }
-        .filterNot { artistRefusal(it.name) != null || (it.titleDerived && festival) }
-}
+        .map { it.name to it.copy(name = stripArtistSuffix(it.name, fromTitle = it.titleDerived)) }
 
 /** Why the gate keeps [name] off a lineup, or null when the name may stay. */
 internal fun artistRefusal(name: String): QualityFlagKind? =
