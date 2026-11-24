@@ -7,12 +7,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.expectBody
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 
 /** The admin API refuses a ticket or Facebook link with no host on POST, PUT and PATCH (#4288). */
 class EventUrlValidationTest : BaseControllerTest() {
-    private val jsonMapper = JsonMapper.builder().addModule(kotlinModule()).build()
     private val hostless = listOf("https://", "http://", "https:///path", "ftp://x")
     private val valid = listOf(null, "https://www.eventim.de/event/the-adicts", "https://tickets.example.de/a b")
 
@@ -123,7 +120,7 @@ class EventUrlValidationTest : BaseControllerTest() {
         .patch()
         .uri("/api/admin/events/$id")
         .header("Content-Type", "application/json")
-        .bodyValue(jsonMapper.writeValueAsString(fields))
+        .bodyValue(jsonBody(fields))
         .exchange()
 
     private fun getEvent(id: Long): EventResponse =

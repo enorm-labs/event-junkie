@@ -11,15 +11,11 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.expectBody
-import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ObjectNode
-import tools.jackson.module.kotlin.kotlinModule
 import java.time.LocalDate
 
 /** An event's festival (#3273): set, kept and cleared through the PUT, the `festivalId` filter, and the festival's count. */
 class EventFestivalTest : BaseControllerTest() {
-    private val jsonMapper = JsonMapper.builder().addModule(kotlinModule()).build()
-
     private fun createVenue(name: String): VenueResponse =
         webTestClient
             .post()
@@ -96,9 +92,6 @@ class EventFestivalTest : BaseControllerTest() {
             .returnResult()
             .responseBody!!
 
-    /** The request as the wire carries it, so a test can tell a missing field from an explicit null. */
-    private fun json(request: EventRequest): ObjectNode = jsonMapper.valueToTree(request)
-
     private fun idsWhere(query: String): Pair<List<Long>, Long> {
         val page =
             webTestClient
@@ -130,19 +123,19 @@ class EventFestivalTest : BaseControllerTest() {
         val venue = createVenue("Festival Venue")
         val festival = createFestival("Fête de la Musique 2027")
         val request = EventRequestFixtures.create(venueId = venue.id, sourceId = "test:festival-put")
-        val created = createEvent(json(request))
+        val created = createEvent(request.asJsonObject())
         created.festivalId shouldBe null
 
-        putEvent(created.id, json(request).put("festivalId", festival.id)).also {
+        putEvent(created.id, request.asJsonObject().put("festivalId", festival.id)).also {
             it.festivalId shouldBe festival.id
             // A link is no correction of the source's data, so it pins nothing.
             it.pinnedFields shouldBe emptyList()
         }
 
-        putEvent(created.id, json(request).apply { remove("festivalId") }.put("title", "Edited")).festivalId shouldBe festival.id
+        putEvent(created.id, request.asJsonObject().apply { remove("festivalId") }.put("title", "Edited")).festivalId shouldBe festival.id
         getEvent(created.id).festivalId shouldBe festival.id
 
-        putEvent(created.id, json(request).putNull("festivalId")).festivalId shouldBe null
+        putEvent(created.id, request.asJsonObject().putNull("festivalId")).festivalId shouldBe null
         getEvent(created.id).festivalId shouldBe null
     }
 
@@ -154,18 +147,23 @@ class EventFestivalTest : BaseControllerTest() {
         webTestClient
             .post()
             .uri("/api/admin/events")
-            .bodyValue(json(request).put("festivalId", 99999).toString())
+            .bodyValue(request.asJsonObject().put("festivalId", 99999).toString())
             .header("Content-Type", "application/json")
             .exchange()
             .expectStatus()
             .isNotFound
 
-        val created = createEvent(json(request))
+        val created = createEvent(request.asJsonObject())
         webTestClient
             .put()
             .uri("/api/admin/events/${created.id}")
-            .bodyValue(json(request).put("festivalId", 99999).put("title", "Not saved").toString())
-            .header("Content-Type", "application/json")
+            .bodyValue(
+                request
+                    .asJsonObject()
+                    .put("festivalId", 99999)
+                    .put("title", "Not saved")
+                    .toString()
+            ).header("Content-Type", "application/json")
             .exchange()
             .expectStatus()
             .isNotFound
@@ -188,7 +186,9 @@ class EventFestivalTest : BaseControllerTest() {
             title: String = "Open Air",
             festivalId: Long? = null
         ) = createEvent(
-            json(EventRequestFixtures.create(venueId = venue.id, sourceId = sourceId, eventDate = date, title = title))
+            EventRequestFixtures
+                .create(venueId = venue.id, sourceId = sourceId, eventDate = date, title = title)
+                .asJsonObject()
                 .also { body -> festivalId?.let { body.put("festivalId", it) } }
         )
 
@@ -216,7 +216,7 @@ class EventFestivalTest : BaseControllerTest() {
         val venue = createVenue("Deleted Festival Venue")
         val festival = createFestival("Deleted Festival")
         val created =
-            createEvent(json(EventRequestFixtures.create(venueId = venue.id, sourceId = "test:festival-deleted")).put("festivalId", festival.id))
+            createEvent(EventRequestFixtures.create(venueId = venue.id, sourceId = "test:festival-deleted").asJsonObject().put("festivalId", festival.id))
         created.festivalId shouldBe festival.id
 
         webTestClient
