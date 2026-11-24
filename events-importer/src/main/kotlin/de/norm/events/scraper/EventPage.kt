@@ -113,7 +113,7 @@ suspend fun <T : Any> enrichFromSharedPages(
     val pages =
         groups.mapValues { (_, rows) ->
             readEventPage(fetch, rows.first()) { document ->
-                parse(document)?.let { SharedPage(it, secondLanguage?.let { language -> document.alternateLanguageUrl(language.hreflang) }) }
+                parse(document)?.let { SharedPage(it, secondLanguage?.urlIn(document)) }
             }
         }
     val alternates = secondLanguage?.let { readAlternates(fetch, pages, it) }.orEmpty()

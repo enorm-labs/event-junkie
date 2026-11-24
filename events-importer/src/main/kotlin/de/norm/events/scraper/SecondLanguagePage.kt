@@ -12,11 +12,18 @@ private val logger = KotlinLogging.logger {}
  * The page in another language that a venue publishes beside the one an importer reads (ADR-026
  * rule 2, #330). [hreflang] names it, as the page's own `hreflang` link does. [description] reads
  * the event text from that page, so the importer stores it as [ScrapedEvent.descriptionAlt].
+ * [rewriteUrl] maps the linked URL to the one the importer fetches, for a site whose link only redirects (#5458).
  */
 class SecondLanguagePage(
     val hreflang: String,
+    val rewriteUrl: (String) -> String,
     val description: (Document) -> String?
-)
+) {
+    constructor(hreflang: String, description: (Document) -> String?) : this(hreflang, { it }, description)
+
+    /** The URL of [document]'s version in [hreflang], as fetched, or null when the page links none. */
+    fun urlIn(document: Document): String? = document.alternateLanguageUrl(hreflang)?.let(rewriteUrl)
+}
 
 /**
  * The URL of this page in [hreflang], from a `<link rel="alternate">` or a language-switch link,

@@ -232,4 +232,38 @@ class VolksbuehneSpielplanScraperTest {
         VolksbuehneSpielplanScraper(VolksbuehneHouse.ROSA_LUXEMBURG_PLATZ).scrape(Jsoup.parse(html, url), url).single().forChildrenPhrase shouldBe
             "für Kinder"
     }
+
+    @Test
+    fun `moves a programme link on the bare domain to www and keeps its path and identity`() {
+        val html =
+            """
+            <section id="performances"><ul><li class="activity">
+              <p class="activity__time"><time datetime="2026-12-14T20:00:00+01:00">20:00</time></p>
+              <p class="activity__stage">Große Bühne</p>
+              <h3 class="activity__title"><a href="https://volksbuehne-berlin.de/produktionen/row/20261214-1900/?lang=de">Row</a></h3>
+            </li></ul></section>
+            """.trimIndent()
+
+        val event = VolksbuehneSpielplanScraper(VolksbuehneHouse.ROSA_LUXEMBURG_PLATZ).scrape(Jsoup.parse(html, url), url).single()
+
+        event.sourceUrl shouldBe "https://www.volksbuehne-berlin.de/produktionen/row/20261214-1900/?lang=de"
+        event.sourceId shouldBe "volksbuehne:row-20261214-1900"
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        "https://volksbuehne-berlin.de/en/productions/x/, https://www.volksbuehne-berlin.de/en/productions/x/",
+        "http://VOLKSBUEHNE-BERLIN.DE/, http://www.volksbuehne-berlin.de/",
+        "https://volksbuehne-berlin.de, https://www.volksbuehne-berlin.de",
+        "https://www.volksbuehne-berlin.de/produktionen/x/, https://www.volksbuehne-berlin.de/produktionen/x/",
+        "https://ticket.volksbuehne-berlin.de/shop?event=1, https://ticket.volksbuehne-berlin.de/shop?event=1",
+        "https://volksbuehne-berlin.de.example/x, https://volksbuehne-berlin.de.example/x",
+        "https://example.de/?from=https://volksbuehne-berlin.de/, https://example.de/?from=https://volksbuehne-berlin.de/"
+    )
+    fun `rewrites only the bare domain to www`(
+        url: String,
+        expected: String
+    ) {
+        VolksbuehneSpielplanScraper.onWwwHost(url) shouldBe expected
+    }
 }
