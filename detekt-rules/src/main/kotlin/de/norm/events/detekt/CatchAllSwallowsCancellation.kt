@@ -20,10 +20,11 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
  * body does not rethrow one (#4638). Such a catch also takes the coroutine's cancellation: the run
  * logs a failure and goes on.
  *
- * detekt's `SuspendFunSwallowedCancellation` reported none of the four importer sites #4638 fixed,
- * type-resolved or not. This rule is syntax-level, so it cannot see which calls suspend: it reports
- * every catch-all in a suspend function, lambdas inside it included, since an inline lambda such as
- * `forEach`'s runs in the same coroutine.
+ * detekt's `SuspendFunSwallowedCancellation` needs type resolution, and it misses two shapes: a
+ * suspend call that is an argument of another call in the `try`, and a whole `try` inside an inline
+ * lambda. It reports others that this rule does not, so both run. This rule is syntax-level and cannot
+ * see which calls suspend: it reports every catch-all in a suspend function, lambdas inside it
+ * included, since an inline lambda such as `forEach`'s runs in the same coroutine.
  */
 class CatchAllSwallowsCancellation(
     config: Config

@@ -37,7 +37,7 @@ class MailQuotaRefresh(
     private val client = webClients.baseUrl(baseUrl).build()
 
     @Scheduled(initialDelayString = "\${app.mail.quota.initial-delay}", fixedDelayString = "\${app.mail.quota.refresh}")
-    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Any failure ends this run with a WARN; the gauges keep their last values.
     suspend fun refresh() {
         try {
             val count = get("project-consumption").path("monthly_emails_count").asLong()

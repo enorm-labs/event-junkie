@@ -142,6 +142,6 @@ event-junkie:
 
   CatchAllSwallowsCancellation:
     active: true
-    # The try/catch half of coroutines>SuspendFunSwallowedCancellation, which sees runCatching only (#4638).
+    # Beside coroutines>SuspendFunSwallowedCancellation, which misses two shapes of try/catch (#4638).
     excludes: ['**/test/**']
 

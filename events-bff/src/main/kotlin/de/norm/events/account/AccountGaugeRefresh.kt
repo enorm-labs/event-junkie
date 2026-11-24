@@ -18,7 +18,7 @@ class AccountGaugeRefresh(
     private val clock: Clock
 ) {
     @Scheduled(fixedDelayString = "\${app.accounts.gauge-refresh:PT5M}")
-    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Any failure ends this run with a WARN; the gauges keep their last values.
     suspend fun refresh() {
         try {
             val now = clock.instant()

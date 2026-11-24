@@ -38,7 +38,7 @@ class WeatherForecasts(
     private val current = AtomicReference<MosmixForecast?>()
 
     @Scheduled(initialDelayString = "\${app.weather.initial-delay}", fixedDelayString = "\${app.weather.refresh}")
-    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Any failure ends this run with a WARN; the held forecast stays.
     suspend fun refresh() {
         try {
             val kmz =
