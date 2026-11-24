@@ -315,6 +315,18 @@ test('opens on the week list below md', async ({ page }) => {
   await expect(page.getByRole('tab', { name: 'Month view' })).toBeVisible()
 })
 
+test('keeps the page as wide as the screen in a week across two years', async ({ page }) => {
+  // The longest title: "28 December 2026 – 3 January 2027".
+  await page.clock.setFixedTime(new Date('2026-12-29T12:00:00Z'))
+  await page.goto('/calendar')
+  await page.getByRole('tab', { name: 'Week view' }).click()
+
+  await expect(page.locator('.ej-title')).toContainText('2027')
+  const overflow = () =>
+    page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(await overflow()).toBe(0)
+})
+
 test('returns to the list, the week and the scroll position on Back from an event', async ({
   page,
 }) => {
