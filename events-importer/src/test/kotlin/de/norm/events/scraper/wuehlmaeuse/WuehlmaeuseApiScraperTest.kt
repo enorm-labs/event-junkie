@@ -117,6 +117,15 @@ class WuehlmaeuseApiScraperTest {
     }
 
     @Test
+    fun `bills no act for a podcast's live show (#5452)`() {
+        scraper
+            .toEvents(listOf(ticket("Stimmen im Kopf", "Abgründe der Psyche")))
+            .single()
+            .artists
+            .shouldBeEmpty()
+    }
+
+    @Test
     fun `degrades a body that is not JSON to an empty last page`() {
         val broken = scraper.scrapePage("not json")
 
