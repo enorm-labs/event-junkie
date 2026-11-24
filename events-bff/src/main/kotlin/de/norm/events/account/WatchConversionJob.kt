@@ -18,7 +18,9 @@ private val logger = KotlinLogging.logger {}
  * past its cursor, and the verdict comes on a tick after the import that stored the event.
  *
  * Every replica runs it. [WatchStore.convert] locks each watch it takes, so a watch converts once. Each run logs one line,
- * also an empty one, so a quiet run is not mistaken for a job that never ran.
+ * also an empty one, so a quiet run is not mistaken for a job that never ran. A run that held stamps
+ * `bff.account.watch.conversion.last_success`, and the job seeds it with its start time, so a release that breaks the
+ * job ages from the deploy and fires `ej-watch-conversion-stale` (#5456).
  */
 @Component
 class WatchConversionJob(
@@ -29,6 +31,10 @@ class WatchConversionJob(
     private val sender: ObjectProvider<PushSender>,
     private val clock: Clock
 ) {
+    init {
+        metrics.stampWatchConversion(clock.instant())
+    }
+
     @Scheduled(fixedDelayString = "\${app.watch.conversion-delay}", initialDelayString = "\${app.watch.conversion-initial-delay}")
     // Any failure ends this run with a WARN. The statement changed nothing, and the next run tries again.
     @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
@@ -40,6 +46,7 @@ class WatchConversionJob(
             val dates = rows.mapNotNull { it.announced }
             metrics.record(WatchAction.CONVERTED, converted.toLong())
             notificationMetrics.record(NotificationAction.CREATED, dates.size.toLong())
+            metrics.stampWatchConversion(clock.instant())
             logger.info { "Watch conversion: $converted watches to $followed follows, ${dates.size} notifications" }
             val due = rows.filter { it.push }.mapNotNull { it.announced }
             val push = sender.ifAvailable ?: return
@@ -48,6 +55,7 @@ class WatchConversionJob(
             logger.info { "Watch conversion push finished: ${outcomes.summary()}" }
         } catch (e: Exception) {
             rethrowIfCancelled()
+            metrics.record(WatchAction.CONVERSION_FAILED)
             logger.warn(e) { "Watch conversion failed" }
         }
     }

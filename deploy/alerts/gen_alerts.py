@@ -30,6 +30,7 @@ it produces an alert that never fires rather than an error.
     classification budget running out -> ej-classification-budget (#3645)
     sign-in mail failing or abused -> ej-signin-mail-failing, ej-signin-abuse (#4034)
     account cleanup failing or stopped -> ej-account-cleanup-failing, ej-account-cleanup-stale (#4034)
+    watch conversion stopped       -> ej-watch-conversion-stale   (#5456)
     mail quota nearly used or unread -> ej-mail-quota-high, ej-mail-quota-stale (#4017)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
@@ -1049,6 +1050,29 @@ rule(
     period_minutes=60,
     frequency_minutes=60,
     silence_minutes=24 * 60,
+)
+
+# A watch becomes a follow, and its bell rings, only when this pass runs (#5214).
+# `bff_account_watch_total{action="converted"}` reads 0 on an idle run and on a failing
+# one alike, so the gauge stamps a run that held, and the job seeds it with its start
+# time, as in `ej-account-cleanup-stale`. The job runs every five minutes on every
+# replica, so an hour is about eleven missed runs, as in `ej-artist-lookup-tick-stale`.
+rule(
+    "ej-watch-conversion-stale",
+    "The watch conversion has not held a run in an hour, against a five-minute interval. "
+    "No watch becomes a follow, and no account gets the bell for a new Berlin date of an act "
+    "it watches. Read the BFF log for `Watch conversion failed`: each failed run is a WARN with "
+    "its exception. A healthy run writes `Watch conversion:` even when it converts nothing. "
+    "`timestamp(x) - x` because OpenObserve freezes `time()` at the window start.",
+    "((timestamp(max(bff_account_watch_conversion_last_success)) "
+    "- max(bff_account_watch_conversion_last_success)) / 60) "
+    "* (max(bff_account_watch_conversion_last_success) > bool 0)",
+    ">",
+    60,
+    stream_name="bff_account_watch_conversion_last_success",
+    period_minutes=10,
+    frequency_minutes=5,
+    silence_minutes=12 * 60,
 )
 
 # --- The Scaleway mail quota (#4017) ---------------------------------------------

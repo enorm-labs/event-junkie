@@ -38,6 +38,9 @@ class AccountMetrics(
     /** Epoch seconds of the last cleanup pass with no failed step. The counters move only on deleted rows, so they cannot tell quiet from dead. */
     private val cleanupLastSuccess = gauge(CLEANUP_LAST_SUCCESS, Tags.empty())
 
+    /** Epoch seconds of the last watch conversion that held. `converted` reads 0 on an idle run and on a failing one alike. */
+    private val watchConversionLastSuccess = gauge(WATCH_CONVERSION_LAST_SUCCESS, Tags.empty())
+
     private fun gauge(
         name: String,
         tags: Tags
@@ -92,6 +95,11 @@ class AccountMetrics(
         cleanupLastSuccess.accumulateAndGet(at.epochSecond, ::maxOf)
     }
 
+    /** Stamps a watch conversion that held at [at], as [stampCleanup] does for its pass, for `ej-watch-conversion-stale`. Never moves back. */
+    fun stampWatchConversion(at: Instant) {
+        watchConversionLastSuccess.accumulateAndGet(at.epochSecond, ::maxOf)
+    }
+
     companion object {
         /** `bff.auth.link{outcome}`: requests for a sign-in link. */
         const val LINK = "bff.auth.link"
@@ -125,9 +133,12 @@ class AccountMetrics(
 
         /**
          * `bff.account.watch{action}`: acts watched by MusicBrainz id, unwatched, turned into artist follows (#5214), and
-         * moved to a merge's survivor (#5225).
+         * moved to a merge's survivor (#5225), and the conversion runs that failed (#5456).
          */
         const val WATCH = "bff.account.watch"
+
+        /** `bff_account_watch_conversion_last_success`: epoch seconds of the last watch conversion that held, for `ej-watch-conversion-stale` (#5456). */
+        private const val WATCH_CONVERSION_LAST_SUCCESS = "bff.account.watch.conversion.last_success"
 
         /** `bff.account.follow{action,kind}`: follows and unfollows (#3889). */
         const val FOLLOW = "bff.account.follow"
@@ -238,7 +249,10 @@ enum class WatchAction(
     CONVERTED("converted"),
 
     /** MusicBrainz merged the watched id into another, and the watch moved to the survivor (#5225). */
-    MOVED("moved")
+    MOVED("moved"),
+
+    /** A conversion run threw. It changed nothing, and the next run tries again (#5456). */
+    CONVERSION_FAILED("conversion_failed")
 }
 
 enum class SavedSearchAction(
