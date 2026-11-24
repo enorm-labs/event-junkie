@@ -2,9 +2,9 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
-import type { AdminEvent } from '@/api/events'
 import type { InstagramDraft } from '@/api/instagramDrafts'
 import DraftsView from '@/views/DraftsView.vue'
+import { adminEvent } from '@/lib/__tests__/adminEvent'
 import { json } from '@/lib/__tests__/jsonResponse'
 
 function draft(overrides: Partial<InstagramDraft>): InstagramDraft {
@@ -36,35 +36,16 @@ function draft(overrides: Partial<InstagramDraft>): InstagramDraft {
 
 let listed: InstagramDraft[] = []
 
-const approvedEvent = {
+const approvedEvent = adminEvent({
   id: 8426,
   venueId: 7,
   title: 'XTRUDE',
-  subtitle: null,
-  description: null,
   eventType: 'PARTY',
-  status: 'SCHEDULED',
   slug: '2026-10-17-rso-xtrude',
   eventDate: '2026-10-17',
-  doorsTime: null,
   startTime: '23:00:00',
-  imageUrl: null,
-  sourceUrl: null,
   sourceId: 'manual:rso-berlin:2026-10-17-xtrude',
-  ticketUrl: null,
-  facebookEventUrl: null,
-  genre: null,
-  genreTags: [],
-  pricePresale: null,
-  priceBoxOffice: null,
-  priceCurrency: 'EUR',
-  priceNote: null,
-  soldOut: false,
-  free: false,
-  artists: [],
-  promoterIds: [],
-  pinnedFields: [],
-} satisfies AdminEvent
+})
 const fetchMock = vi.fn<typeof fetch>()
 
 beforeEach(() => {
