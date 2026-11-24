@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -270,7 +271,7 @@ class CassiopeiaDetailPageScraper {
         private val VENUE_NAME = Regex("""cassiopeia(?:\s+berlin)?""", RegexOption.IGNORE_CASE)
 
         /** The paragraph that opens a festival's act list: `Line-up:`, `Lineup`, `LINE UP:`. */
-        private val LINEUP_LABEL = Regex("""line[- ]?up:?""", RegexOption.IGNORE_CASE)
+        private val LINEUP_LABEL = Regex("""$LINE_UP_WORD:?""", RegexOption.IGNORE_CASE)
 
         /** An act's head in that list, `**Shaemless** — a Dutch trio…`: a bold name, then a dash. */
         private val LINEUP_HEAD = Regex("""(?:^|\s)\*\*([^*]+)\*\*\s*[—–-]\s""")

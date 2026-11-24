@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -131,7 +132,7 @@ class WeekendUpcomingPageScraper {
 
         const val LINEUP_EMOJI = "🎶"
 
-        val LINEUP_HEADING = Regex("""(?:DJ\s+)?LINE[\s-]?UP:?""", RegexOption.IGNORE_CASE)
+        val LINEUP_HEADING = Regex("""(?:DJ\s+)?$LINE_UP_WORD:?""", RegexOption.IGNORE_CASE)
 
         val INLINE_DJS = Regex("""^DJs?:\s*(.+)$""", RegexOption.IGNORE_CASE)
 

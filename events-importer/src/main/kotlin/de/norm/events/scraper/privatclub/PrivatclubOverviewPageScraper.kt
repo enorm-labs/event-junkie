@@ -28,6 +28,7 @@ import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaOffers
 import de.norm.events.scraper.schemaTime
+import de.norm.events.scraper.splitDjList
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
@@ -470,7 +471,7 @@ private fun subtitleDjs(subtitle: String?): SubtitleDjs? {
             .removePrefix(sharedLabel?.value.orEmpty())
             .replace(COLLECTIVE_TAIL, "")
             .replace(HOUSE_TAIL, "")
-            .split(DJ_SEPARATOR)
+            .let(::splitDjList)
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .map { if (sharedLabel == null) it else "DJ $it" }
@@ -503,8 +504,6 @@ private val COLLECTIVE_TAIL = Regex("""\s+vom\s+(.+)$""", RegexOption.IGNORE_CAS
 
 /** `im Privatclub`: the house itself, not a name. */
 private val HOUSE_TAIL = Regex("""\s+im\s+Privatclub$""", RegexOption.IGNORE_CASE)
-
-private val DJ_SEPARATOR = Regex("""\s*(?:,|\+|&|\bund\b)\s*""")
 
 /** The label line of a party's DJ paragraph. */
 private val DJ_LABEL = Regex("""djs?\s*:""", RegexOption.IGNORE_CASE)

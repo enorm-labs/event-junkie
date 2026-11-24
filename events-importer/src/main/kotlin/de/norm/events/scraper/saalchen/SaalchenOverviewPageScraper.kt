@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.CONCESSION_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.MYSQL_DATE_TIME
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -359,7 +360,7 @@ private val TRAILING_BRACKET = Regex("""\s*\([^()]*\)\s*$""")
 private val EMOJI_FRAME = Regex("""^[\p{IsExtended_Pictographic}\x{FE0F}\x{200D}\s]+|[\p{IsExtended_Pictographic}\x{FE0F}\x{200D}\s]+$""")
 
 /** The prose sentence that names a festival's line-up, up to its full stop. */
-private val LINEUP_SENTENCE = Regex("""line-?up\b[^.:]*\bmit:\s*([^.]+)\.""", RegexOption.IGNORE_CASE)
+private val LINEUP_SENTENCE = Regex("""$LINE_UP_WORD\b[^.:]*\bmit:\s*([^.]+)\.""", RegexOption.IGNORE_CASE)
 
 /**
  * Every label the venue uses in its AddToCalendar metadata block. A line starting with one is

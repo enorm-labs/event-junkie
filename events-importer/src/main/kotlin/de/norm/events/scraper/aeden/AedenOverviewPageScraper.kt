@@ -3,6 +3,7 @@ package de.norm.events.scraper.aeden
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dateOrNull
@@ -139,7 +140,7 @@ class AedenOverviewPageScraper {
         private val AEDEN_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
 
         /** The `Lineup:` label opening the roster paragraph, stripped off the first name. */
-        private val LINEUP_LABEL = Regex("""^\s*line\s*-?\s*up\s*:?\s*""", RegexOption.IGNORE_CASE)
+        private val LINEUP_LABEL = Regex("""^\s*$LINE_UP_WORD\s*:?\s*""", RegexOption.IGNORE_CASE)
 
         /** A decorative `&`/`+` the venue prefixes to the last act of a roster (`& SECRET ACT`). */
         private val LEADING_CONJUNCTION = Regex("""^\s*[&+]\s*""")

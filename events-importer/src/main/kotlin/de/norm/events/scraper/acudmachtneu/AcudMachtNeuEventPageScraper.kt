@@ -2,6 +2,7 @@ package de.norm.events.scraper.acudmachtneu
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.DOORS_LABELS
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -201,7 +202,7 @@ class AcudMachtNeuEventPageScraper {
         val TICKET_LINK_TEXT = Regex("""(?:presale(?:\s+only)?|tickets?|vorverkauf|vvk)""", RegexOption.IGNORE_CASE)
 
         /** A qualifier in brackets, `Lineup (A-Z):`, only before a colon or the line's end, so `Line up (band) X` keeps its act. */
-        val LINE_UP = Regex("""^\s*line[\s-]?up\s*(?:\([^()]*\)\s*(?::|$)|:)?\s*""", RegexOption.IGNORE_CASE)
+        val LINE_UP = Regex("""^\s*$LINE_UP_WORD\s*(?:\([^()]*\)\s*(?::|$)|:)?\s*""", RegexOption.IGNORE_CASE)
 
         /** `// dj:` or `// djs:` heading the DJs, the way the venue heads `// mc:` and `// judges:` too. */
         val DJ_BLOCK = Regex("""^\s*//\s*djs?\s*:\s*""", RegexOption.IGNORE_CASE)

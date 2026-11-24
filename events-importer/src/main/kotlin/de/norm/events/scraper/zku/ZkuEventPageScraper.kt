@@ -2,6 +2,7 @@ package de.norm.events.scraper.zku
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -140,7 +141,7 @@ class ZkuEventPageScraper {
     )
 
     private companion object {
-        val LINE_UP_HEADING = Regex("""line[\s-]?up""", RegexOption.IGNORE_CASE)
+        val LINE_UP_HEADING = Regex("""$LINE_UP_WORD""", RegexOption.IGNORE_CASE)
         val TIMED_SLOT = Regex("""^\s*(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})""")
         val DJ_SUFFIX = Regex("""\s+[–-]\s*DJ\s*$""", RegexOption.IGNORE_CASE)
 

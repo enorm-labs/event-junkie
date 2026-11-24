@@ -1,5 +1,6 @@
 package de.norm.events.scraper.distel
 
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import org.jsoup.nodes.Document
@@ -46,7 +47,7 @@ class DistelShowPageScraper {
     }
 
     private companion object {
-        val LINE_UP = Regex("""line\s?-?up:?""", RegexOption.IGNORE_CASE)
-        val LINE_UP_PREFIX = Regex("""^\s*line\s?-?up:?\s*""", RegexOption.IGNORE_CASE)
+        val LINE_UP = Regex("""$LINE_UP_WORD:?""", RegexOption.IGNORE_CASE)
+        val LINE_UP_PREFIX = Regex("""^\s*$LINE_UP_WORD:?\s*""", RegexOption.IGNORE_CASE)
     }
 }

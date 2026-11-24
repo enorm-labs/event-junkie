@@ -3,6 +3,7 @@ package de.norm.events.scraper.ritterbutzke
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -209,4 +210,4 @@ private const val LINEUP_ROW_SELECTOR = "div[style*=padding-left]"
 private val FLOOR_TAKEOVER = Regex("""\stakeover$""", RegexOption.IGNORE_CASE)
 
 /** The label introducing the DJ roster. */
-private val LINEUP_LABEL = Regex("""^\s*line\s*up\s*:""", RegexOption.IGNORE_CASE)
+private val LINEUP_LABEL = Regex("""^\s*$LINE_UP_WORD\s*:""", RegexOption.IGNORE_CASE)

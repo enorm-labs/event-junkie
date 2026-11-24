@@ -22,6 +22,7 @@ import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseRelocation
 import de.norm.events.scraper.promoterFromCredit
+import de.norm.events.scraper.splitDjList
 import de.norm.events.scraper.stripRelocationPrefix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -150,7 +151,7 @@ private fun metropolDjs(description: String?): List<ScrapedArtist> =
         .find(description.orEmpty())
         ?.groupValues
         ?.get(1)
-        ?.split(DJ_SEPARATOR)
+        ?.let(::splitDjList)
         .orEmpty()
         .map { it.trim() }
         .filter { it.isNotEmpty() && !isNonArtistName(it) }
@@ -164,5 +165,3 @@ private val FESTIVAL_KEYWORDS = mapOf("fest" to EventType.FESTIVAL.name)
 
 /** A line `Mit den DJs <names>` or `Mit DJ <name>`. */
 private val DJ_LINE = Regex("""(?im)^\s*mit\s+(?:den\s+)?DJs?\s+(.+?)\s*$""")
-
-private val DJ_SEPARATOR = Regex("""\s+und\s+|\s*[&,]\s*""")

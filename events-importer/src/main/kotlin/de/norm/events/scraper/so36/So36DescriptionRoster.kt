@@ -1,5 +1,6 @@
 package de.norm.events.scraper.so36
 
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
 import de.norm.events.scraper.WHITESPACE
@@ -96,7 +97,7 @@ internal fun labelledLineup(lines: List<String>): List<String> {
 }
 
 /** `Line up: Rollers HiFi`, `Lineup: …`, `Line-Up: …` as a line of its own. */
-private val LINE_UP_LINE = Regex("""line\s*-?\s*up\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
+private val LINE_UP_LINE = Regex("""$LINE_UP_WORD\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
 
 /** The first letter of each word: `Mekanik Destrüktiw Komandöh` is `MDK`. */
 private fun initials(name: String): String = name.split(WHITESPACE).mapNotNull { word -> word.firstOrNull(Char::isLetter) }.joinToString("")

@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -158,7 +159,7 @@ class OrwohausCalendarScraper(
 
         val HOUSE_NAME = Regex("""^\s*ORWOhaus(?:\s+e\.V\.)?(?:\s*-\s*)?""", RegexOption.IGNORE_CASE)
 
-        val LINEUP_HEADING = Regex("""(?:line[\s-]?up|bands\s+für\s+diese\s+vorrunde):?""", RegexOption.IGNORE_CASE)
+        val LINEUP_HEADING = Regex("""(?:$LINE_UP_WORD|bands\s+für\s+diese\s+vorrunde):?""", RegexOption.IGNORE_CASE)
 
         /** The `-` line the house separates the description's blocks with. */
         const val RULE = "-"

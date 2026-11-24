@@ -3,6 +3,7 @@ package de.norm.events.scraper.voidclub
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.SlotJoins
@@ -272,7 +273,7 @@ class VoidClubOverviewPageScraper(
          * The label opening the DJ billing, in each spelling (`WITH`, `LINEUP`, `LINE-UP`). Any other
          * label — `RAVE THE PLANET AFTER PARTY` — makes the paragraph a note.
          */
-        val BILLING_LABEL = Regex("""with|line\s?-?\s?up""", RegexOption.IGNORE_CASE)
+        val BILLING_LABEL = Regex("""with|$LINE_UP_WORD""", RegexOption.IGNORE_CASE)
 
         /** The venue's "the rest of the lineup isn't fixed yet" phrasings, with any dash lead-in. */
         val UNANNOUNCED_TAIL =

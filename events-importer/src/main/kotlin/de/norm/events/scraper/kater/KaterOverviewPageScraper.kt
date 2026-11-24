@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.SlotJoins
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.endsAsSentence
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
@@ -185,7 +186,7 @@ class KaterOverviewPageScraper(
      * A short line keeps a full stop as a name does (`arkadiusz.` at FOREVER 25).
      */
     private fun readsAsProse(line: String): Boolean =
-        (SENTENCE_END.containsMatchIn(line) && line.split(WHITESPACE).size >= MIN_SENTENCE_WORDS) ||
+        endsAsSentence(line, MIN_SENTENCE_WORDS) ||
             actsOf(line).any { it.name.split(WHITESPACE).size > MAX_ACT_WORDS }
 
     /** The lines that are not part of a floor block — the event's own blurb, if it has one. */
@@ -283,8 +284,6 @@ class KaterOverviewPageScraper(
 
         /** The set time a line opens with, with or without its end: `02:30 Per Hammar`. */
         val SLOT_TIME = Regex("""^(\d{1,2}:\d{2})(?:\s*[-–—]\s*\d{1,2}:\d{2})?\s+(?=\S)""")
-
-        val SENTENCE_END = Regex("""[.!?]$""")
 
         /** Longest an act may be before it reads as prose rather than a name, as at Renate. */
         const val MAX_ACT_WORDS = 6

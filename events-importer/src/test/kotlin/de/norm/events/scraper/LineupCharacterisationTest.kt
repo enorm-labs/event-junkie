@@ -1,9 +1,14 @@
 package de.norm.events.scraper
 
 import de.norm.events.common.BERLIN
+import de.norm.events.scraper.artstalker.ArtStalkerOverviewPageScraper
 import de.norm.events.scraper.kater.KaterOverviewPageScraper
+import de.norm.events.scraper.konradtoenz.KonradToenzOverviewPageScraper
+import de.norm.events.scraper.lux.LuxOverviewPageScraper
 import de.norm.events.scraper.minimalbar.MinimalBarOverviewPageScraper
+import de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper
 import de.norm.events.scraper.renate.RenateOverviewPageScraper
+import de.norm.events.scraper.supamolly.SupamollyOverviewPageScraper
 import de.norm.events.scraper.tresor.TresorDetailPageScraper
 import de.norm.events.scraper.tresor.TresorOverviewPageScraper
 import de.norm.events.scraper.voidclub.VoidClubOverviewPageScraper
@@ -14,7 +19,7 @@ import java.time.Clock
 import java.time.Instant
 
 /**
- * Every act the venues on [parseActSlot] bill from their saved pages. A change to the shared slot rules shows here for each
+ * Every act the venues on [parseActSlot] or [splitDjList] bill from their saved pages. A change to a shared rule shows here for each
  * venue, also where no test of the venue names the act. After a wanted change, copy the actual file over the expected one.
  */
 class LineupCharacterisationTest {
@@ -39,6 +44,11 @@ class LineupCharacterisationTest {
             return listOfNotNull(TresorDetailPageScraper().scrape(fixtureDocument(fixture, url), url))
         }
 
+        fun supamolly(fixture: String): List<ScrapedEvent> {
+            val url = "https://www.supamolly.de/?p=programm"
+            return SupamollyOverviewPageScraper().scrape(fixtureDocument(fixture, url), url)
+        }
+
         val LINEUPS: Map<String, (String) -> List<ScrapedEvent>> =
             mapOf(
                 "kater/kater-overview.html" to { KaterOverviewPageScraper(clockAt("2026-08-01")).scrape(fixtureDocument(it), "https://www.katerclub.de/") },
@@ -51,7 +61,17 @@ class LineupCharacterisationTest {
                 "tresor/tresor-detail-no-times.html" to ::tresorPage,
                 "voidclub/voidclub-overview.html" to
                     { VoidClubOverviewPageScraper(clockAt("2026-08-04")).scrape(fixtureDocument(it), "https://www.void-club.de/") },
-                "minimalbar/minimalbar-overview.html" to { MinimalBarOverviewPageScraper().scrape(fixtureDocument(it), "https://minimalbar.de/dates/") }
+                "minimalbar/minimalbar-overview.html" to { MinimalBarOverviewPageScraper().scrape(fixtureDocument(it), "https://minimalbar.de/dates/") },
+                "artstalker/artstalker-overview.html" to
+                    { ArtStalkerOverviewPageScraper().scrape(fixtureDocument(it, "https://art-stalker.reservix.de/")) },
+                "konradtoenz/konradtoenz-overview.html" to
+                    { KonradToenzOverviewPageScraper().scrape(fixtureDocument(it, "http://www.konradtoenzbar.de/"), "http://www.konradtoenzbar.de/") },
+                "lux/lux-overview.html" to { LuxOverviewPageScraper(clockAt("2026-10-17")).scrape(fixtureDocument(it), "https://www.lux-berlin.net/") },
+                "privatclub/privatclub-overview.html" to
+                    { PrivatclubOverviewPageScraper().scrape(fixtureDocument(it, "https://privatclub-berlin.de/"), "https://privatclub-berlin.de/") },
+                "supamolly/supamolly-overview-2026-09.html" to ::supamolly,
+                "supamolly/supamolly-overview-2026-10.html" to ::supamolly,
+                "supamolly/supamolly-overview-2026-11.html" to ::supamolly
             )
     }
 }

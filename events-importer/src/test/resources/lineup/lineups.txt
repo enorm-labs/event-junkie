@@ -745,3 +745,123 @@ minimal_bar:2027-10-15 |  | D A Z A | DJ
 minimal_bar:2027-11-05 |  | Bruno Otranto | DJ
 minimal_bar:2027-12-03 |  | Bruno Otranto | DJ
 minimal_bar:2027-12-11 |  | D A Z A | DJ
+
+# artstalker/artstalker-overview.html
+art_stalker:2555973 |  | New Breed | HEADLINER
+art_stalker:2536387 |  | DJ Louie Prima | DJ
+art_stalker:2535642 |  | Dan Patlansky | HEADLINER
+art_stalker:2553479 |  | Dakil Berlin Friends | HEADLINER
+art_stalker:2578408 |  | BOFF | HEADLINER
+art_stalker:2532014 |  | 2Mädchen und Uwe | HEADLINER
+art_stalker:2532014 |  | SMILING SUN SONS | SUPPORT
+art_stalker:2582036 |  | Deer Anna | HEADLINER
+art_stalker:2582036 |  | Lily Rieke Marty | SUPPORT
+art_stalker:2578878 |  | Jed Thomas Band | HEADLINER
+art_stalker:2485646 |  | FREE COMPANY | HEADLINER
+art_stalker:2592781 |  | Glam Jam | HEADLINER
+art_stalker:2592781 |  | Mission BlueZ | HEADLINER
+art_stalker:2584693 |  | Berlin-Wedding Singers | HEADLINER
+art_stalker:2539236 |  | The Bottomline | HEADLINER
+art_stalker:2536388 |  | DJ Louie Prima | DJ
+art_stalker:2579427 |  | The Friendly Neighbourhood Band | HEADLINER
+art_stalker:2579427 |  | Hiddit! | HEADLINER
+
+# konradtoenz/konradtoenz-overview.html
+konrad_toenz:2026-10-16 |  | DJ Turbo Pascal | DJ
+konrad_toenz:2026-10-24 |  | DJ gina d`orio | DJ
+konrad_toenz:2026-10-24 |  | DJ johnboyadonis | DJ
+konrad_toenz:2026-10-30 |  | DJ Bomber Harris | DJ
+konrad_toenz:2026-10-31 |  | DJ Guy Bosch | DJ
+konrad_toenz:2026-11-06 |  | DJ Amok77 | DJ
+konrad_toenz:2026-11-07 |  | DJ Polaroyd | DJ
+konrad_toenz:2026-11-13 |  | DJ Turbo Pascal | DJ
+konrad_toenz:2026-11-14 |  | DJ Blow-Up | DJ
+konrad_toenz:2026-11-20 |  | DJ Herr Siebendaum | DJ
+konrad_toenz:2026-11-21 |  | DJ Rob Tormento | DJ
+konrad_toenz:2026-11-27 |  | DJ Nonoyesnonono | DJ
+konrad_toenz:2026-11-28 |  | DJ Cook | DJ
+
+# lux/lux-overview.html
+lux:2026-10-15 |  | CAROLA CAIRO | DJ
+lux:2026-10-15 |  | DJ MAD MAX | DJ
+lux:2026-10-16 |  | AL CHEM | DJ
+lux:2026-10-22 |  | ZiegelMukke | DJ
+lux:2026-11-05 |  | ANITA DRINK | DJ
+lux:2026-11-05 |  | BLEACH | DJ
+lux:2026-11-05 |  | PLASTIC PENNY | DJ
+lux:2026-11-05 |  | VISTA VISIONS | DJ
+
+# privatclub/privatclub-overview.html
+privatclub:sean-rowe-2 |  | Sean Rowe | HEADLINER
+privatclub:this-charming-man-2-3 |  | DJ Spencer | DJ
+privatclub:rita-dakota |  | Rita Dakota | HEADLINER
+privatclub:sandra-hesch |  | Sandra Hesch | HEADLINER
+privatclub:sandra-hesch |  | Luana | SUPPORT
+privatclub:telenova |  | TELENOVA | HEADLINER
+privatclub:velvet-wasted |  | Velvet Wasted | HEADLINER
+privatclub:sonya-shats |  | Sonya Shats | HEADLINER
+
+# supamolly/supamolly-overview-2026-09.html
+supamolly:202609032100 |  | Skarface | HEADLINER
+supamolly:202609112130 |  | Edelfaul 7th Anniversary | HEADLINER
+supamolly:202609112130 |  | DIKDaeDØR | SUPPORT
+supamolly:202609112130 |  | Shoee | SUPPORT
+supamolly:202609112130 |  | Celine Demon | SUPPORT
+supamolly:202609112130 |  | Coasta | SUPPORT
+supamolly:202609122130 |  | Jaerman Anxt | HEADLINER
+supamolly:202609122130 |  | BetonKinder | SUPPORT
+supamolly:202609182130 |  | Monde de Merde | HEADLINER
+supamolly:202609192130 |  | Headbutt | HEADLINER
+supamolly:202609192130 |  | Banana Of Death | SUPPORT
+supamolly:202609192130 |  | Moloch | SUPPORT
+supamolly:202609252130 |  | Necarions | HEADLINER
+supamolly:202609252130 |  | Pia United | SUPPORT
+supamolly:202609262130 |  | Feo & Friends | HEADLINER
+supamolly:202609262130 |  | La Mula Santa | SUPPORT
+
+# supamolly/supamolly-overview-2026-10.html
+supamolly:202610032130 |  | Future Jesus & The Electric Lucifer | HEADLINER
+supamolly:202610032130 |  | Gelbes Pep | SUPPORT
+supamolly:202610092130 |  | Missstand | HEADLINER
+supamolly:202610092130 |  | Endlich Schlechte Musik | SUPPORT
+supamolly:202610092130 |  | Pommes oder Pizza | SUPPORT
+supamolly:202610162130 |  | TisDass | HEADLINER
+supamolly:202610172130 |  | MNGLXMPLR | LIVE
+supamolly:202610172130 |  | DJ Terror Wave | DJ
+supamolly:202610182100 |  | Bebawinigi | HEADLINER
+supamolly:202610232130 |  | Zusamm-halt | HEADLINER
+supamolly:202610232130 |  | Borgelt Beat | SUPPORT
+supamolly:202610242130 |  | Brezel Göring & Psychoanalyse | HEADLINER
+supamolly:202610242130 |  | DJ Spikey Mikey | DJ
+supamolly:202610302130 |  | Khateym | HEADLINER
+supamolly:202610302130 |  | Gorz | SUPPORT
+supamolly:202610312130 |  | Circus Rhapsody | HEADLINER
+supamolly:202610312130 |  | FONA | SUPPORT
+
+# supamolly/supamolly-overview-2026-11.html
+supamolly:202610172200 |  | MNGLXMPLR | LIVE
+supamolly:202610172200 |  | DJ Terror Wave | DJ
+supamolly:202610182100 |  | Bebawinigi | HEADLINER
+supamolly:202610232130 |  | Zusamm-halt | HEADLINER
+supamolly:202610232130 |  | Borgelt Beat | SUPPORT
+supamolly:202610242130 |  | Brezel Göring & Psychoanalyse | HEADLINER
+supamolly:202610242130 |  | Ben Bloodygrave | SUPPORT
+supamolly:202610242130 |  | Schnauze | SUPPORT
+supamolly:202610242130 |  | DJ Spikey Mikey | DJ
+supamolly:202610302130 |  | Khateym | HEADLINER
+supamolly:202610302130 |  | Gorz | SUPPORT
+supamolly:202610302130 |  | Kandeesha | SUPPORT
+supamolly:202610312130 |  | Circus Rhapsody | HEADLINER
+supamolly:202610312130 |  | FONA | SUPPORT
+supamolly:202611062200 |  | Subact | LIVE
+supamolly:202611062200 |  | Bain | DJ
+supamolly:202611062200 |  | Berry T | DJ
+supamolly:202611062200 |  | Kite | DJ
+supamolly:202611062200 |  | Domske | DJ
+supamolly:202611142130 |  | Ostbahnhof | HEADLINER
+supamolly:202611142130 |  | Ciern | SUPPORT
+supamolly:202611142130 |  | Angela Sintesis | SUPPORT
+supamolly:202611202130 |  | Neofarius Orchestra #249 | HEADLINER
+supamolly:202611202130 |  | Option Weg | SUPPORT
+supamolly:202611212130 |  | Losksos | HEADLINER
+supamolly:202611212130 |  | Ginsen Bonbons | SUPPORT

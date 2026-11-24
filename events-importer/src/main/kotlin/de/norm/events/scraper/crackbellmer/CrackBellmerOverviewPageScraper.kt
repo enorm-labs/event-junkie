@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -250,7 +251,7 @@ class CrackBellmerOverviewPageScraper(
          */
         val PROGRAMME_FILLER =
             Regex(
-                """secret\s+line\s*-?\s*up|line\s*-?\s*up|spo?ntaneous\b.*|open\s+decks(\s+slot)?|ping\s+pong|music|hangouts?|(?:(?:and|&)\s+)?more""",
+                """secret\s+$LINE_UP_WORD|$LINE_UP_WORD|spo?ntaneous\b.*|open\s+decks(\s+slot)?|ping\s+pong|music|hangouts?|(?:(?:and|&)\s+)?more""",
                 RegexOption.IGNORE_CASE
             )
     }

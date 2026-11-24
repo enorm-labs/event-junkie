@@ -12,6 +12,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseListing
+import de.norm.events.scraper.splitDjList
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -113,8 +114,7 @@ class KonradToenzOverviewPageScraper {
     ): List<ScrapedArtist> {
         val tail = (DJ_TAIL.find(title) ?: DJ_ENDS_NAME.find(title))?.groupValues?.get(1) ?: return emptyList()
         val names =
-            (if (stylesInTitle) beforeFirstGenreWord(tail) else tail)
-                .split(DJ_SEPARATOR)
+            splitDjList(if (stylesInTitle) beforeFirstGenreWord(tail) else tail)
                 .mapNotNull { it.trim().replace(TRAILING_BANGS, "").blankToNull() }
         return (if (DJANE_OPENER.containsMatchIn(tail)) djaneListNames(names) else names)
             .filterNot(::isNonArtistName)
@@ -179,6 +179,5 @@ class KonradToenzOverviewPageScraper {
 
         /** The exclamation a title ends on, `DJ Nonoyesnonono!`, which is not part of the name. */
         val TRAILING_BANGS = Regex("""!+$""")
-        val DJ_SEPARATOR = Regex("""\s+(?:&|und|and)\s+|,\s*""", RegexOption.IGNORE_CASE)
     }
 }
