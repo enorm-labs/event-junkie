@@ -446,7 +446,7 @@ class RobotsRulesCacheTest {
             }
     }
 
-    /** A `robots.txt` that redirects: each hop passes the SSRF guard before it is sent (#5446). */
+    /** A `robots.txt` read: its URL and each redirect hop pass the SSRF guard before they are sent (#5446, #5448). */
     @Nested
     inner class Redirects {
         private fun enqueueRedirect(location: String) =
@@ -500,6 +500,16 @@ class RobotsRulesCacheTest {
                     logger.detachAppender(appender)
                     internal.close()
                 }
+            }
+
+        @Test
+        fun `sends nothing to a robots txt on a loopback address, and permits everything`() =
+            runTest {
+                enqueueRobots("User-agent: *\nDisallow: /\n")
+
+                cache(redirectGuard = ImageUrlValidator()).check(url("/private")).allowed shouldBe true
+
+                server.requestCount shouldBe 0
             }
 
         /** The real guard, except that it lets [port] through, so the venue's own server stands for a public host. */

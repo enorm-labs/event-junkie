@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.web.reactive.function.client.WebClient
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.net.URI
 import java.util.Locale
 import javax.imageio.ImageIO
 
@@ -93,7 +94,7 @@ class ImageFetcherTest {
         }
 
     // The first URL passes the check, and the hop it redirects to must not (#5444). Through the client the
-    // importer uses, whose redirect filter asks the real guard: only the first URL is stubbed permissive.
+    // importer uses, whose redirect filter asks the real guard: only the local server's port is let through.
     @Test
     fun `refuses an image whose URL redirects to a private address`() =
         runTest {
@@ -116,7 +117,7 @@ class ImageFetcherTest {
                 }
             val fetcher =
                 ImageFetcher(
-                    webClient = redirectFollowingWebClient(),
+                    webClient = redirectFollowingWebClient(permittedPort = server.port),
                     ioDispatcher = Dispatchers.IO,
                     validator = permissiveValidator(),
                     properties = ImageProperties(fetchEnabled = true)
@@ -397,8 +398,8 @@ class ImageFetcherTest {
 
 private val PNG_MAGIC_BYTES = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
 
-/** The importer's [de.norm.events.scraper.SCRAPER_WEB_CLIENT], with the real redirect guard. */
-private fun redirectFollowingWebClient(): WebClient {
+/** The importer's [de.norm.events.scraper.SCRAPER_WEB_CLIENT], with the real guard except for [permittedPort]. */
+private fun redirectFollowingWebClient(permittedPort: Int): WebClient {
     val properties = ScraperProperties(politeDelayMillis = 0)
     val config = ScraperHttpClientConfig()
     val connections = config.scraperConnectionProvider(properties)
@@ -410,7 +411,9 @@ private fun redirectFollowingWebClient(): WebClient {
         connections,
         throttle,
         RobotsRulesCache(base, properties),
-        ImageUrlValidator(),
+        object : ImageUrlValidator() {
+            override fun reject(url: String): String? = if (URI(url).port == permittedPort) null else super.reject(url)
+        },
         Dispatchers.IO
     )
 }

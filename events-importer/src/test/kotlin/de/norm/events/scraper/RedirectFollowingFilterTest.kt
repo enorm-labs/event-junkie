@@ -40,8 +40,9 @@ import kotlin.time.TimeMark
  * the venue at `127.0.0.1` and another host at `localhost`, because [RobotsRulesCache] and
  * [PerHostThrottlingFilter] key on the host name, not the port.
  *
- * The guard is the real [ImageUrlValidator] with the two servers' ports let through, so a hop between them stands for
- * a hop to a public host, and every other loopback, private or metadata address is refused as on the cluster (#5444).
+ * The guard is the real [ImageUrlValidator] with the two servers' ports let through, so a request to either stands for
+ * a request to a public host, and every other loopback, private or metadata address is refused as on the cluster
+ * (#5444, #5448).
  */
 class RedirectFollowingFilterTest {
     private val config = ScraperHttpClientConfig()
@@ -90,11 +91,48 @@ class RedirectFollowingFilterTest {
     }
 
     @Test
+    fun `refuses a first URL on a loopback address and sends it nothing, not even a robots txt read`() {
+        internal.routes["/admin"] = page("never")
+
+        val refused = shouldThrow<RequestRefusedException> { get(client(), internal.url("/admin")) }
+
+        refused.fromHost shouldBe null
+        refused.reason shouldBe "resolves to a blocked address"
+        internal.requests.shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["http://169.254.169.254/latest/meta-data/", "http://$PRIVATE_HOST/", "file:///etc/passwd"])
+    fun `refuses a first URL to the metadata address, to a host that resolves to a private address, and to another scheme`(url: String) {
+        val refused = shouldThrow<RequestRefusedException> { get(client(), url) }
+
+        refused.fromHost shouldBe null
+        refused.targetHost shouldBe URI(url).host
+    }
+
+    @Test
+    fun `logs a refused first URL once as a WARN with the host and the reason, and no query string`() {
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        val logger = LoggerFactory.getLogger(RedirectFollowingFilter::class.java) as Logger
+        logger.addAppender(appender)
+
+        try {
+            shouldThrow<RequestRefusedException> { get(client(), "http://169.254.169.254/latest/meta-data/?token=secret") }.message shouldNotContain "?"
+        } finally {
+            logger.detachAppender(appender)
+        }
+
+        val line = appender.list.single()
+        line.level shouldBe Level.WARN
+        line.formattedMessage shouldBe "Refused a request to 169.254.169.254: resolves to a blocked address"
+    }
+
+    @Test
     fun `refuses a hop to a loopback address and sends it nothing`() {
         venue.routes["/p"] = redirect(302, internal.url("/admin"))
         internal.routes["/admin"] = page("never")
 
-        shouldThrow<RedirectRefusedException> { get(client(), venue.url("/p")) }.reason shouldBe "resolves to a blocked address"
+        shouldThrow<RequestRefusedException> { get(client(), venue.url("/p")) }.reason shouldBe "resolves to a blocked address"
 
         internal.requests.shouldBeEmpty()
     }
@@ -104,7 +142,7 @@ class RedirectFollowingFilterTest {
     fun `refuses a hop to the metadata address, to a host that resolves to a private address, and to another scheme`(location: String) {
         venue.routes["/p"] = redirect(302, location)
 
-        val refused = shouldThrow<RedirectRefusedException> { get(client(), venue.url("/p")) }
+        val refused = shouldThrow<RequestRefusedException> { get(client(), venue.url("/p")) }
 
         refused.fromHost shouldBe "127.0.0.1"
         refused.targetHost shouldBe URI(location).host
@@ -118,7 +156,7 @@ class RedirectFollowingFilterTest {
         logger.addAppender(appender)
 
         try {
-            shouldThrow<RedirectRefusedException> { get(client(), venue.url("/p?id=7")) }.message shouldNotContain "?"
+            shouldThrow<RequestRefusedException> { get(client(), venue.url("/p?id=7")) }.message shouldNotContain "?"
         } finally {
             logger.detachAppender(appender)
         }

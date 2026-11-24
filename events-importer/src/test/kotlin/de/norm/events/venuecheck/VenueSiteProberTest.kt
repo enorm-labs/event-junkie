@@ -1,10 +1,13 @@
 package de.norm.events.venuecheck
 
-import de.norm.events.scraper.RedirectRefusedException
+import de.norm.events.image.ImageUrlValidator
+import de.norm.events.scraper.RedirectTargetGuard
+import de.norm.events.scraper.RequestRefusedException
 import de.norm.events.scraper.RobotsDisallowedException
 import de.norm.events.scraper.RobotsRulesCache
 import de.norm.events.scraper.ScraperHttpClientConfig
 import de.norm.events.scraper.ScraperProperties
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.netty.channel.ConnectTimeoutException
 import kotlinx.coroutines.Dispatchers
@@ -157,6 +160,14 @@ class VenueSiteProberTest {
         }
 
     @Test
+    fun `a site on a loopback address is an OTHER failure, and receives nothing`() =
+        runTest {
+            prober(guard = ImageUrlValidator()).probe(url("/")).outcome shouldBe SiteOutcome.OTHER
+
+            paths.shouldBeEmpty()
+        }
+
+    @Test
     fun `a refused connection is a CONNECTION failure`() =
         runTest {
             val closedPort = ServerSocket(0).use { it.localPort }
@@ -175,7 +186,7 @@ class VenueSiteProberTest {
         prober.classify(url, ConnectException("refused")).outcome shouldBe SiteOutcome.CONNECTION
         prober.classify(url, IllegalStateException("odd")).outcome shouldBe SiteOutcome.OTHER
         // A redirect to a private address is a failed probe, not a crash of the pass (#5444).
-        prober.classify(url, RedirectRefusedException("example.test", "169.254.169.254", "resolves to a blocked address")).outcome shouldBe
+        prober.classify(url, RequestRefusedException("example.test", "169.254.169.254", "resolves to a blocked address")).outcome shouldBe
             SiteOutcome.OTHER
         prober.classify(url, RobotsDisallowedException(url, "https://example.test/robots.txt")).outcome shouldBe SiteOutcome.SKIPPED
         // A 4xx on robots.txt never reaches here as a disallow; if one did, it says nothing about the site.
@@ -207,15 +218,15 @@ class VenueSiteProberTest {
 
     private fun url(path: String) = server.url(path).toString()
 
-    private fun prober(): VenueSiteProber {
+    private fun prober(guard: RedirectTargetGuard = RedirectTargetGuard { null }): VenueSiteProber {
         val properties = ScraperProperties(politeDelayMillis = 0, responseTimeout = Duration.ofSeconds(5))
         val config = ScraperHttpClientConfig()
         val connections = config.scraperConnectionProvider(properties)
         val throttle = config.perHostThrottlingFilter(properties)
         val base = config.scraperBaseWebClient(WebClient.builder(), properties, connections, throttle, { null }, Dispatchers.IO)
         val client =
-            // Permits loopback, where the server under test listens; RedirectFollowingFilterTest covers the guard.
-            config.scraperWebClient(WebClient.builder(), properties, connections, throttle, RobotsRulesCache(base, properties), { null }, Dispatchers.IO)
+            // Permits loopback by default, where the server under test listens; RedirectFollowingFilterTest covers the guard.
+            config.scraperWebClient(WebClient.builder(), properties, connections, throttle, RobotsRulesCache(base, properties), guard, Dispatchers.IO)
         return VenueSiteProber(client)
     }
 }
