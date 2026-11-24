@@ -67,6 +67,24 @@ class PfefferbergHaus13DetailPageScraperTest {
     }
 
     @Test
+    fun `bills a listed act without its bracketed genre, its origin or the joining und`() {
+        val event = page("inklusion-rockt", "inklusion-rockt-im-advent-mit-die-optimisten-und-talia-ishai")
+
+        event.artists.map { it.name to it.role } shouldBe listOf("Die Optimisten" to ArtistRole.HEADLINER, "Talia Ishai" to ArtistRole.HEADLINER)
+    }
+
+    @Test
+    fun `cuts an act name at its genre or origin and drops a trailing joiner`() {
+        actName("Die Optimisten (Country, Stimmungsmusik und Volkslieder) aus Berlin und") shouldBe "Die Optimisten"
+        actName("Talia Ishai (Punk-Liedermacherin) aus Isreal") shouldBe "Talia Ishai"
+        actName("Hartholz aus Leipzig,") shouldBe "Hartholz"
+        actName("Limbo Boys &") shouldBe "Limbo Boys"
+        actName("Unglaublicher Vorfall") shouldBe "Unglaublicher Vorfall"
+        actName("Klaus aus dem Off") shouldBe "Klaus aus dem Off"
+        actName("Sound und Vision") shouldBe "Sound und Vision"
+    }
+
+    @Test
     fun `reads an item as an act only with a short name and a blurb of words`() {
         fun act(html: String) = blurbedAct(Jsoup.parseBodyFragment("<ul>$html</ul>").selectFirst("li")!!)
 
@@ -79,6 +97,7 @@ class PfefferbergHaus13DetailPageScraperTest {
         act("<li>Tickets: an der Kasse</li>").shouldBeNull()
         act("<li>Eine sehr lange Reihe von Wörtern – und dann ein langer Satz danach.</li>").shouldBeNull()
         act("<li>Limbo Boys</li>").shouldBeNull()
+        act("<li><strong>Amptray (Indie) aus Berlin</strong> – eine Band, die laut spielt.</li>") shouldBe "Amptray"
     }
 
     @Test
