@@ -117,6 +117,12 @@ data class ScrapedEvent(
      */
     val detailPageOwns: Set<ScrapedField> = emptySet(),
     /**
+     * Only the event's own page can say the event is this venue's, set by a listing that two houses
+     * share. Never stored: the read of the page clears it or drops the row, and a run that could not
+     * read the page drops the row and spares its stored event (#5474).
+     */
+    val venueUnconfirmed: Boolean = false,
+    /**
      * The `sourceId` of the exhibition run this [detailUnavailable] day belongs to if that run is
      * stored. Only the page says EXHIBITION, so the upsert folds the day into a stored run (#2575).
      */

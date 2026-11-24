@@ -64,8 +64,9 @@ sealed interface ImportResult {
         /** False when a page that holds events failed to load, which skips the stale cleanup (#1980). */
         val complete: Boolean = true,
         /**
-         * The `sourceId`s of rows the listing named but the run dropped for want of a date, because
-         * their own page did not load. The stale cleanup keeps their stored events (#4793).
+         * The `sourceId`s of rows the listing named but the run dropped for want of a date (#4793) or of
+         * a confirmed venue (#5474), because their own page did not load. The stale cleanup keeps their
+         * stored events.
          */
         val spared: Set<String> = emptySet()
     ) : ImportResult

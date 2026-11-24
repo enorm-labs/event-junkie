@@ -12,8 +12,8 @@ import kotlin.time.Duration.Companion.seconds
  * The one fetch orchestration behind [AbstractSinglePageWebsiteImporter], [AbstractTwoPageWebsiteImporter]
  * and [AbstractMonthPagesWebsiteImporter] (#4643). Each base describes its run as an [HtmlImport]; this
  * runs the steps in one order: entry page, listing, after-listing pass, second-language listing,
- * event pages, shared pages, fold, undated drop. A step a base leaves out is skipped. Every base gets
- * the dateless-row retry and the undated drop.
+ * event pages, shared pages, fold, unconfirmed drop, undated drop. A step a base leaves out is
+ * skipped. Every base gets the dateless-row retry and both drops.
  *
  * [logger] is the base's own, so every line still names the concrete importer.
  */
@@ -48,16 +48,17 @@ internal class HtmlImportPipeline(
             import.secondLanguageListing?.let { withSecondLanguageListing(htmlFetcher::fetchDocument, listed, entry.document, it) } ?: listed
         val enriched = import.eventPages?.let { readEventPages(translated, it) } ?: translated
         val folded = import.foldRuns(withSharedPages(htmlFetcher::fetchDocument, enriched, import.sharedPages))
-        val (events, spared) = dropUnresolvedDates(folded)
+        val (confirmed, unconfirmed) = dropUnconfirmedVenues(folded)
+        val (events, undated) = dropUnresolvedDates(confirmed)
         import.doneLine?.let { line -> logger.info { line(events, listing) } }
 
         return ImportResult.Success(
             events = events,
             etag = entry.etag,
             lastModified = entry.lastModified,
-            droppedUnresolvedDate = folded.size - events.size,
+            droppedUnresolvedDate = confirmed.size - events.size,
             complete = listing.complete,
-            spared = spared
+            spared = unconfirmed + undated
         )
     }
 
@@ -114,6 +115,22 @@ internal class HtmlImportPipeline(
         val page: ReadEventPage,
         val alternateUrl: String?
     )
+
+    /**
+     * Drops the rows still marked [ScrapedEvent.venueUnconfirmed]: their page did not load, and the
+     * listing alone does not say whose night it is. Returns the kept events and the dropped
+     * `sourceId`s, which the stale cleanup must not read as gone (#5474).
+     */
+    private fun dropUnconfirmedVenues(events: List<ScrapedEvent>): Pair<List<ScrapedEvent>, Set<String>> {
+        val (unconfirmed, confirmed) = events.partition { it.venueUnconfirmed }
+        unconfirmed.forEach { event ->
+            logger.at(Level.WARN) {
+                message = "Dropping '${event.title}': its page did not load and the listing does not name its venue; sparing its stored event"
+                payload = mapOf(LogFields.URL to event.sourceUrl, LogFields.EVENT_SOURCE_ID to event.sourceId)
+            }
+        }
+        return confirmed to unconfirmed.mapTo(mutableSetOf()) { it.sourceId }
+    }
 
     /**
      * Drops events whose date is still the [UNRESOLVED_EVENT_DATE] sentinel after the merge: neither

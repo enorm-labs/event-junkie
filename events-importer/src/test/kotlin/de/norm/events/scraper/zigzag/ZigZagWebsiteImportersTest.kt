@@ -9,6 +9,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -50,7 +52,7 @@ class ZigZagWebsiteImportersTest {
     }
 
     @Test
-    fun `keeps every hall night, although its page points away from the club`() =
+    fun `keeps every prefixed hall night, although its page names no address`() =
         runTest {
             stubListing()
             coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("zigzag/zigzag-hall-detail.html", firstArg<String>()) }
@@ -61,7 +63,94 @@ class ZigZagWebsiteImportersTest {
             result.events shouldHaveSize 20
             result.events.first().pricePresale shouldBe BigDecimal("35")
             result.events.first().startTime shouldBe LocalTime.of(20, 0)
-            coVerify(exactly = 20) { htmlFetcher.fetchDocument(any()) }
+            coVerify(exactly = 55) { htmlFetcher.fetchDocument(any()) }
+        }
+
+    // The listing of 2026-11-24: 29 items, none with the hall's prefix.
+    private val november: Clock = Clock.fixed(Instant.parse("2026-11-24T10:00:00Z"), ZoneId.of("Europe/Berlin"))
+    private val chicagoUrl = "https://www.zigzag-jazzclub.berlin/program-mai/chicagolec"
+
+    private fun stubUnprefixedListing() {
+        coEvery { htmlFetcher.fetch(listingUrl, any(), any()) } returns
+            FetchResult.Success(document = fixtureDocument("zigzag/zigzag-programm-unprefixed.html", listingUrl), etag = null, lastModified = null)
+        coEvery { htmlFetcher.fetchDocument(any()) } answers { fixtureDocument("zigzag/zigzag-detail-club.html", firstArg<String>()) }
+        coEvery { htmlFetcher.fetchDocument(chicagoUrl) } returns fixtureDocument("zigzag/zigzag-hall-detail-address.html", chicagoUrl)
+    }
+
+    @Test
+    fun `gives the hall the one unprefixed night whose page names its address`() =
+        runTest {
+            stubUnprefixedListing()
+
+            val result = ZigZagHallWebsiteImporter(htmlFetcher, november).importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val night = result.events.single()
+            night.title shouldBe "Chicago Legacy"
+            night.eventDate shouldBe LocalDate.of(2026, 12, 2)
+            night.sourceId shouldBe "zig_zag_hall:chicagolec"
+            night.startTime shouldBe LocalTime.of(20, 0)
+            night.ticketUrl!! shouldStartWith "https://www.eventim-light.com/de/a/665710997ed5f05a0e32f0e9/e/"
+            night.artists.map { it.name } shouldBe listOf("Chicago Legacy")
+            night.venueUnconfirmed shouldBe false
+            night.detailUnavailable shouldBe false
+            result.spared.shouldBeEmpty()
+            coVerify(exactly = 29) { htmlFetcher.fetchDocument(any()) }
+        }
+
+    @Test
+    fun `keeps the other unprefixed nights at the club`() =
+        runTest {
+            stubUnprefixedListing()
+
+            val result = ZigZagJazzClubWebsiteImporter(htmlFetcher, november).importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 28
+            result.events.filter { it.title == "Chicago Legacy" }.shouldBeEmpty()
+        }
+
+    @Test
+    fun `refuses an unprefixed night whose page names a third place`() =
+        runTest {
+            stubUnprefixedListing()
+            coEvery { htmlFetcher.fetchDocument(chicagoUrl) } returns fixtureDocument("zigzag/zigzag-detail-elsewhere.html", chicagoUrl)
+
+            val result = ZigZagHallWebsiteImporter(htmlFetcher, november).importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events.shouldBeEmpty()
+            result.spared.shouldBeEmpty()
+        }
+
+    @Test
+    fun `leaves out an unprefixed night whose page fails or renders empty, and spares its stored row`() =
+        runTest {
+            val tributeUrl = "https://www.zigzag-jazzclub.berlin/program-mai/tribway"
+            stubUnprefixedListing()
+            coEvery { htmlFetcher.fetchDocument(chicagoUrl) } throws RuntimeException("boom")
+            coEvery { htmlFetcher.fetchDocument(tributeUrl) } returns Jsoup.parse("<html><body></body></html>", tributeUrl)
+
+            val result = ZigZagHallWebsiteImporter(htmlFetcher, november).importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events.shouldBeEmpty()
+            result.spared shouldBe setOf("zig_zag_hall:chicagolec", "zig_zag_hall:tribway")
+            result.droppedUnresolvedDate shouldBe 0
+        }
+
+    @Test
+    fun `keeps a prefixed hall night whose page cannot be fetched`() =
+        runTest {
+            stubListing()
+            coEvery { htmlFetcher.fetchDocument(any()) } throws RuntimeException("boom")
+
+            val result = hallImporter.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 20
+            result.events.all { it.detailUnavailable } shouldBe true
+            result.spared shouldHaveSize 35
         }
 
     @Test
