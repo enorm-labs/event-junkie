@@ -270,6 +270,8 @@ private val NON_ARTIST_NAMES: Set<String> =
         "unter meinem bett",
         "nightwash",
         "smash comedy deluxe",
+        // A Wühlmäuse podcast tour, billed under the podcast's name; only the prose names its hosts (#5452).
+        "stimmen im kopf",
         // Huxleys' package tour; only the page's prose names its five acts (#4513).
         "rock legends",
         // A touring band contest billed as the act at Maschinenhaus; its acts are not named.
