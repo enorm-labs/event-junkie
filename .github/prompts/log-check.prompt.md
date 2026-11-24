@@ -77,20 +77,21 @@ Every group gets one verdict. Work through them in this order, because each is c
    `first`/`last` against the ReplicaSet times in `k8s_warnings` or `kubectl get rs` usually settle it. Say whether it has stopped.
 4. **NEW** — none of the above. Go to Step 4.
 
-| Noise                                                                                       | Why it is not a defect                                                                                |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `SpringDoc … endpoint is enabled by default` at each start                                  | One line per pod start. It counts starts, not a fault                                                 |
-| `DNSConfigForming` `Nameserver limits were exceeded`                                        | Hetzner hands the node more resolvers than the kubelet uses. Constant on both clusters                |
-| Probes in a pod's first minutes: `connection refused`, `statuscode: 503`                    | A JVM or nginx not yet listening, or Spring not yet ready. The probes exist for this                  |
-| `test` component: `curl: (7) Failed to connect to event-junkie-bff:9001`, k6 JSON summaries | Helm test pods during a rollout, and load-test output. A failing smoke test shows as a failed rollout |
-| nginx `access forbidden by rule` on `/.well-known/…`, `/.git/…`, `/.env`                    | The frontend refuses these paths on purpose. Scanners ask for the last two                            |
-| otel-operator `TLS handshake error … bad certificate`, a burst when it restarts             | Stops within the minute of the restart. Likely the webhook serving a new cert before its CA lands     |
-| source-controller `handshake failed … unable to authenticate`, seconds at a time            | The deploy key is refused briefly; the next poll recovers (#2048). Over 5 min is not noise            |
-| `RobotsTxtFilter` `Blocked by robots.txt`, one line per URL                                 | The importer obeying a venue. `ej-robots-disallowed` watches the rate                                 |
-| `SimpleRobotRulesParser` `Problem processing robots.txt`, `Unknown line … Content-Signal`   | crawler-commons skips Cloudflare's unknown line and applies the rest. MAAYA, a pair per start         |
-| `MusicBrainz unavailable … answered 503`, a few a day                                       | MusicBrainz rate-limits by IP. The lookup retries on the next import                                  |
-| `AnthropicTranslationEngine` `Rejected a translation`, a few a day                          | The guard doing its job. Counted as `rejected`; `ej-translations-failing` reads only `failed`         |
-| `EventUpsertService` `Skipping duplicate event`, scraper `names no date, skipping`          | Ordinary import decisions, logged so a missing event can be explained                                 |
+| Noise                                                                                        | Why it is not a defect                                                                                |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `SpringDoc … endpoint is enabled by default` at each start                                   | One line per pod start. It counts starts, not a fault                                                 |
+| `DNSConfigForming` `Nameserver limits were exceeded`                                         | Hetzner hands the node more resolvers than the kubelet uses. Constant on both clusters                |
+| Probes in a pod's first minutes: `connection refused`, `statuscode: 503`                     | A JVM or nginx not yet listening, or Spring not yet ready. The probes exist for this                  |
+| `test` component: `curl: (7) Failed to connect to event-junkie-bff:9001`, k6 JSON summaries  | Helm test pods during a rollout, and load-test output. A failing smoke test shows as a failed rollout |
+| nginx `access forbidden by rule` on `/.well-known/…`, `/.git/…`, `/.env`                     | The frontend refuses these paths on purpose. Scanners ask for the last two                            |
+| otel-operator `TLS handshake error … bad certificate`, a burst when it restarts              | Stops within the minute of the restart. Likely the webhook serving a new cert before its CA lands     |
+| source-controller `handshake failed … unable to authenticate`, seconds at a time             | The deploy key is refused briefly; the next poll recovers (#2048). Over 5 min is not noise            |
+| `RobotsTxtFilter` `Blocked by robots.txt`, one line per URL                                  | The importer obeying a venue. `ej-robots-disallowed` watches the rate                                 |
+| `SimpleRobotRulesParser` `Problem processing robots.txt`, `Unknown line … Content-Signal`    | crawler-commons skips Cloudflare's unknown line and applies the rest. MAAYA, a pair per start         |
+| `RobotsRulesCache` `Could not reach http://www.konradtoenzbar.de/robots.txt`, this host only | Its `https` host serves a self-signed certificate (#5298). Any other host is not noise                |
+| `MusicBrainz unavailable … answered 503`, a few a day                                        | MusicBrainz rate-limits by IP. The lookup retries on the next import                                  |
+| `AnthropicTranslationEngine` `Rejected a translation`, a few a day                           | The guard doing its job. Counted as `rejected`; `ej-translations-failing` reads only `failed`         |
+| `EventUpsertService` `Skipping duplicate event`, scraper `names no date, skipping`           | Ordinary import decisions, logged so a missing event can be explained                                 |
 
 A signal that the table covers **at a rate far above normal** is not noise. Say so, with both numbers.
 
