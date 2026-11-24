@@ -92,10 +92,17 @@ This is the standard "ship it" flow — the manual equivalent of
    carry on; the notification brings you back when CI settles. Do not call the PR green, and do not hand it over as done, before that notification arrives.
 
     ```sh
-    until gh pr checks <n> --json bucket --jq 'length > 0 and all(.bucket != "pending")' 2>/dev/null | grep -qx true; do sleep 30; done
-    gh pr checks <n>
+    url=https://github.com/enorm-labs/event-junkie/pull/<n>
+    until gh pr checks "$url" --json bucket --jq 'length > 0 and all(.bucket != "pending")' 2>/dev/null | grep -qx true; do
+        gh event listen --resource "$url" --event com.github.pull_request.check_suite.status.changed.v1 --timeout 2m
+        case $? in 0 | 8) ;; *) sleep 30 ;; esac
+    done
+    gh pr checks "$url"
     ```
 
+    - **An event only triggers the next read.** Each check suite sends its own event, and one sent while no listener is attached never arrives. The
+      two-minute timeout (exit 8) bounds that loss. Any other failure, such as an account without the Event Streams preview (403), falls back to a
+      30-second poll.
     - **Do not use `gh pr checks --watch`.** It exits 0 when its connection drops, so a dropped network reads as a finished run. The loop above treats a
       failed call as "not yet", and `length > 0` waits out the seconds before the first check registers.
     - **A row can stay `pending` after its job finished.** If one check is the only thing still pending long after the others, read its job:
