@@ -57,7 +57,12 @@ class VolksbuehneSpielplanScraper(
         val dateTime = row.attrAt(".activity__time time[datetime]", "datetime")
         val day = dateTime ?: row.closest("li.day")?.attrAt(".day__label time[datetime]", "datetime")
         val date = day?.let { parseIsoDate(it.take(ISO_DATE_LENGTH)) }
-        val page = row.selectFirst("h3.activity__title a[href]")?.absUrl("href").blankToNull()
+        val page =
+            row
+                .selectFirst("h3.activity__title a[href]")
+                ?.absUrl("href")
+                .blankToNull()
+                ?.let(::onWwwHost)
         if (date == null || page == null) {
             logger.warn { "Volksbühne row without a date or a page on $url ($stage, $title, $dateTime), skipping it" }
             return null
@@ -110,6 +115,15 @@ class VolksbuehneSpielplanScraper(
     companion object {
         private const val ISO_DATE_LENGTH = 10
         private const val MAX_NAME_WORDS = 6
+
+        /** The bare domain, which answers every page with a 301 to `www`; the scheme stays, and the path and query after it. */
+        private val APEX_HOST = Regex("""^(https?://)volksbuehne-berlin\.de(?=[/?#:]|$)""", RegexOption.IGNORE_CASE)
+
+        /**
+         * [url] on `www.volksbuehne-berlin.de` when it names the bare domain, so the importer fetches the page that answers
+         * without a redirect hop through the throttle (#5458). The performance pages link their English version on the bare domain.
+         */
+        fun onWwwHost(url: String): String = APEX_HOST.replace(url, "$1www.volksbuehne-berlin.de")
 
         /** `mit A, B und C`, or `mit DJ-Sets und Performances von A, B und C`: the names after the last `von`. */
         private val WITH_LINE = Regex("""^mit\s+(?:.*\bvon\s+)?(.+)$""", RegexOption.IGNORE_CASE)

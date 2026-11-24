@@ -89,9 +89,7 @@ internal class HtmlImportPipeline(
                     pages.reader.read(event, document)?.let {
                         ReadPage(
                             it,
-                            pages.secondLanguage?.let { language ->
-                                document.alternateLanguageUrl(language.hreflang)
-                            }
+                            pages.secondLanguage?.urlIn(document)
                         )
                     }
                 }
@@ -209,7 +207,7 @@ internal class HtmlImportPipeline(
         language: SecondLanguagePage?
     ): String? =
         language?.let {
-            detailDoc.alternateLanguageUrl(it.hreflang)?.let { url -> readSecondLanguagePage(htmlFetcher::fetchDocument, url, it.description) }
+            it.urlIn(detailDoc)?.let { url -> readSecondLanguagePage(htmlFetcher::fetchDocument, url, it.description) }
         }
 
     private fun ScrapedEvent.degraded(owns: Set<ScrapedField>): ScrapedEvent = copy(detailUnavailable = true, detailPageOwns = owns)

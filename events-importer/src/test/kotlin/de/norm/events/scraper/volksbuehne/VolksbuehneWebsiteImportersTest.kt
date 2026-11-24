@@ -10,6 +10,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
@@ -39,6 +40,8 @@ class VolksbuehneWebsiteImportersTest {
             result.events.all { it.description?.startsWith("BEATRICE CORDUA") == true } shouldBe true
             result.events.first { it.title == "Perfection" }.eventType shouldBe EventType.SHOW.name
             result.events.first { it.title == "Perfection" }.typeIsFallback shouldBe false
+            coVerify { htmlFetcher.fetchDocument(match { it.startsWith("https://www.volksbuehne-berlin.de/en/") }) }
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(match { it.startsWith("https://volksbuehne-berlin.de/") }) }
         }
 
     @Test

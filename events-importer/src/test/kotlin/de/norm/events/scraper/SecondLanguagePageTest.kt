@@ -51,6 +51,15 @@ class SecondLanguagePageTest {
     }
 
     @Test
+    fun `fetches the alternate URL as the venue's rewrite gives it`() {
+        val rewrite = SecondLanguagePage("en", { it.replace("/en/", "/english/") }, read)
+
+        rewrite.urlIn(page(germanUrl, "x", alternate = englishUrl)) shouldBe "https://venue.example/english/show.html"
+        rewrite.urlIn(page(germanUrl, "x")).shouldBeNull()
+        SecondLanguagePage("en", read).urlIn(page(germanUrl, "x", alternate = englishUrl)) shouldBe englishUrl
+    }
+
+    @Test
     fun `fetches each shared page's English version once and gives every night its text`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(germanUrl) } returns page(germanUrl, "Eine Revue über das Kino", alternate = englishUrl)

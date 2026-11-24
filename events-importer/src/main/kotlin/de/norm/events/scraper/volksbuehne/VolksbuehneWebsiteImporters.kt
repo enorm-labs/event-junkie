@@ -18,8 +18,9 @@ import org.springframework.stereotype.Component
  *
  * Each row links its own performance page, read once for the text, the image and the schema.org
  * type ([SharedPages]). The site is translated by hand, and the English page is the second
- * language. The filter links (`?genre=`, `?access=zum-mitmachen`) tag too loosely to type or
- * drop a row: the participation filter also lists a play and a song salon.
+ * language. The page links it on the bare domain, so its URL moves to `www` before the fetch
+ * ([VolksbuehneSpielplanScraper.onWwwHost]). The filter links (`?genre=`, `?access=zum-mitmachen`)
+ * tag too loosely to type or drop a row: the participation filter also lists a play and a song salon.
  *
  * @see VolksbuehneSpielplanScraper for the home page.
  * @see VolksbuehneEventPageScraper for the performance page.
@@ -33,7 +34,11 @@ abstract class AbstractVolksbuehneHouseImporter(
 
     override val sharedPages: SharedPages<VolksbuehneEventPage> =
         VolksbuehneEventPageScraper().let { page ->
-            SharedPages(page::scrape, VolksbuehneEventPage::applyTo, secondLanguage = SecondLanguagePage("en", page::description))
+            SharedPages(
+                page::scrape,
+                VolksbuehneEventPage::applyTo,
+                secondLanguage = SecondLanguagePage("en", VolksbuehneSpielplanScraper::onWwwHost, page::description)
+            )
         }
 }
 
