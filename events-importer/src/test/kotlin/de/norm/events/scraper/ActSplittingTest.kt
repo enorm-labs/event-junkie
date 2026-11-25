@@ -435,6 +435,7 @@ class ActSplittingTest {
     @Test
     fun `splitSupportActs keeps a denylisted act whole`() {
         splitSupportActs("Simon & Garfunkel, Aska") shouldContainExactly listOf("Simon & Garfunkel", "Aska")
+        splitSupportActs("Pratt & Moody") shouldContainExactly listOf("Pratt & Moody")
     }
 
     @Test
