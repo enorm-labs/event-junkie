@@ -131,4 +131,50 @@ class ZkuCalendarScraperTest {
     fun `an empty page gives no events`() {
         ZkuCalendarScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    private fun calendar(
+        dateLine: String,
+        vararg days: String
+    ) = days.joinToString("\n") { day ->
+        """
+        <div class="calendar-events" id="d-$day"><div class="list-item">
+          <h3 class="h2">CONDITIONS OF ENTRY</h3><p class="date">$dateLine</p>
+          <a class="list-item__link" href="/timeline/conditions-of-entry"></a>
+        </div></div>
+        """.trimIndent()
+    }
+
+    private fun scrapeRun(
+        dateLine: String,
+        vararg days: String
+    ) = ZkuCalendarScraper().scrape(Jsoup.parse(calendar(dateLine, *days), baseUrl), baseUrl)
+
+    @Test
+    fun `an exhibition is one row over its run, whatever days the calendar repeats it on (events 15350 to 15359)`() {
+        val run =
+            scrapeRun("27 NOVEMBER – 03 DECEMBER 2026 / OPENING ON 26 NOVEMBER, 19:00", "2026-11-01", "2026-11-26", "2026-11-27", "2026-11-30").single()
+
+        run.eventType shouldBe EventType.EXHIBITION.name
+        run.typeIsFallback shouldBe false
+        run.eventDate shouldBe LocalDate.of(2026, 11, 26)
+        run.startTime shouldBe LocalTime.of(19, 0)
+        run.endDate shouldBe LocalDate.of(2026, 12, 3)
+        run.endTime.shouldBeNull()
+        run.sourceId shouldBe "zku:conditions-of-entry-2026-11-26"
+    }
+
+    @Test
+    fun `an exhibition with opening hours has no start time, and a run over New Year starts in the old one`() {
+        val run = scrapeRun("26 NOVEMBER – 06 DECEMBER 2026 / SELECTED OPENING HOURS OR BY APPOINTMENT", "2026-11-26", "2026-11-27").single()
+        run.eventDate shouldBe LocalDate.of(2026, 11, 26)
+        run.startTime.shouldBeNull()
+        run.endDate shouldBe LocalDate.of(2026, 12, 6)
+
+        scrapeRun("20 DECEMBER – 10 JANUARY 2027 / OPENING ON 19 DECEMBER, 18:00", "2026-12-19").single().eventDate shouldBe LocalDate.of(2026, 12, 19)
+    }
+
+    @Test
+    fun `a range that names no opening keeps one row a day`() {
+        scrapeRun("27 NOVEMBER – 28 NOVEMBER 2026 / 19:00", "2026-11-27", "2026-11-28") shouldHaveSize 2
+    }
 }

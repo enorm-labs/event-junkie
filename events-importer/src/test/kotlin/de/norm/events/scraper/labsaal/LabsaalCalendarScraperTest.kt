@@ -163,4 +163,41 @@ class LabsaalCalendarScraperTest {
         typeOf("Wir laden euch ein\\, die Ausstellung entweder zu den Öffnungszeiten oder während einer Veranstaltung anzusehen.") shouldBe "EXHIBITION"
         typeOf("Der Abend erinnert an die Ausstellung des letzten Jahres.") shouldBe "OTHER"
     }
+
+    private fun night(
+        title: String,
+        description: String = "Konzert"
+    ): ScrapedEvent =
+        scraper
+            .scrape(
+                listOf(
+                    "BEGIN:VCALENDAR",
+                    "BEGIN:VEVENT",
+                    "DTSTART;TZID=Europe/Berlin:20270430T210000",
+                    "SUMMARY:$title",
+                    "DESCRIPTION:$description",
+                    "URL:https://labsaal.de/events/a-night/",
+                    "CATEGORIES:Alle Veranstaltungen",
+                    "END:VEVENT",
+                    "END:VCALENDAR"
+                ).joinToString("\r\n")
+            ).single()
+
+    private fun acts(title: String) = night(title).artists.map { it.name }
+
+    @Test
+    fun `bills a concert title's act after mit or before erstmals im LabSaal (events 15337 and 15338)`() {
+        acts("Tanz in den Mai mit BLACKMAIL Berlin") shouldBe listOf("BLACKMAIL Berlin")
+        acts("Bigband Kameleon erstmals im LabSaal") shouldBe listOf("Bigband Kameleon")
+        acts("Herbstkonzert mit dem Shanty Chor Reinickendorf") shouldBe listOf("Shanty Chor Reinickendorf")
+        acts("Kooperation mit der Musikschule Reinickendorf").shouldBeEmpty()
+    }
+
+    @Test
+    fun `types a disco as a party and bills nobody (event 15339)`() {
+        val disco = night("Dorfdisco im LabSaal", "Am Plattentellern sorgt ein DJ für beste Stimmung und erfüllt eure Musikwünsche.")
+
+        disco.eventType shouldBe "PARTY"
+        disco.artists.shouldBeEmpty()
+    }
 }

@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.calendarEvents
@@ -15,6 +16,7 @@ import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.parseLabelledPrices
@@ -27,6 +29,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
  * the society's weekly groups and courses; only the `Alle Veranstaltungen` category is the
  * programme ([isProgramme]). The site names no format, so the type comes from the title, then from
  * a format the description names, then from a music cue; a night with none is typed other.
+ * A concert title bills the act after `mit`, or before `erstmals im LabSaal` ([concertActs]).
  * A title such as `Theater für Kinder: …` marks the night for-children ([childrensShowPhrase],
  * EVENT_SCOPE.md §3.5). Only the title is read: it marks every children's show, and the
  * description adds none.
@@ -72,6 +75,7 @@ class LabsaalCalendarScraper {
             description = description,
             eventType = eventType,
             typeIsFallback = eventType == EventType.OTHER.name && MARKET.containsMatchIn(title).not(),
+            artists = if (eventType == EventType.CONCERT.name) concertActs(title) else emptyList(),
             eventDate = start.toLocalDate(),
             doorsTime = doors,
             startTime = startTime?.takeUnless { it == doors },
@@ -83,6 +87,12 @@ class LabsaalCalendarScraper {
             priceBoxOffice = prices.boxOffice,
             free = !hasPrice && hasFreeEntryPhrase(description)
         ).forChildrenIf(childrensShowPhrase(title, null))
+    }
+
+    /** The act of `Tanz in den Mai mit BLACKMAIL Berlin` or `Bigband Kameleon erstmals im LabSaal`; a `Kooperation mit` names a partner. */
+    private fun concertActs(title: String): List<ScrapedArtist> {
+        val act = FIRST_TIME.find(title)?.groupValues?.get(1) ?: BILLED_WITH.find(title)?.groupValues?.get(1)
+        return listOfNotNull(act?.takeUnless(::isNonArtistName)?.let { ScrapedArtist(name = it) })
     }
 
     private fun eventType(
@@ -112,8 +122,13 @@ class LabsaalCalendarScraper {
             linkedMapOf(
                 MARKET to EventType.OTHER.name,
                 Regex("""theater|pantomim""", RegexOption.IGNORE_CASE) to EventType.SHOW.name,
-                Regex("""silvester|\btanz(?:t|abend|nacht)\b""", RegexOption.IGNORE_CASE) to EventType.PARTY.name
+                Regex("""disco\b|silvester|\btanz(?:t|abend|nacht)\b""", RegexOption.IGNORE_CASE) to EventType.PARTY.name
             )
+
+        /** `Herbstkonzert mit dem Shanty Chor Reinickendorf`: the act opens with a capital. */
+        private val BILLED_WITH = Regex("""^(?!(?i:kooperation)\b).+?\smit\s+(?:(?:dem|den|der)\s+)?(\p{Lu}.*)$""")
+
+        private val FIRST_TIME = Regex("""^(.+?)\s+erstmals\s+im\s+LabSaal$""", RegexOption.IGNORE_CASE)
 
         /** A format only the description names: a travel slide show is a talk, the Brauseboys' Leseshow a reading, and `die Ausstellung … anzusehen` a run. */
         private val DESCRIPTION_FORMATS =

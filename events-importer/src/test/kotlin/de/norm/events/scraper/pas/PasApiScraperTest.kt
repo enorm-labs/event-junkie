@@ -246,4 +246,15 @@ class PasApiScraperTest {
             priceNote shouldBe "€0 – €10"
         }
     }
+
+    @Test
+    fun `bills a one-name title the description prints above its players, and no series night (event 15320)`() {
+        val players = "Max Evstropov – voice, text<br />Axel Dörner – trumpet"
+
+        val band = variant("Sacrifices", description = "<p>Monday concert at PAS:</p><p>Sacrifices:<br />$players</p>").shouldNotBeNull()
+        band.artists.map { it.name } shouldContainExactly listOf("Sacrifices")
+
+        variant("DISSIDENTS LXXXVI", description = "<p>DISSIDENTS LXXXVI</p><p>$players</p>").shouldNotBeNull().artists.shouldBeEmpty()
+        variant("Sacrifices", description = "<p>Sacrifices:</p><p>an evening of songs</p>").shouldNotBeNull().artists.shouldBeEmpty()
+    }
 }

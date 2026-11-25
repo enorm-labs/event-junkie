@@ -428,4 +428,17 @@ class UrbanSpreeDetailPageScraperTest {
             listOf("AIRSHPD" to ArtistRole.LIVE, "Katiusha" to ArtistRole.DJ, "MXX" to ArtistRole.DJ, "Superamas" to ArtistRole.DJ)
         event.promoters shouldContainExactly listOf("Urban Spree", "Recess")
     }
+
+    @Test
+    fun `scrape bills the acts of a LINEUP block instead of the night's title (event 15344)`() {
+        val description =
+            "KOROWA returns to Urban Spree. LINEUP UNHUMAN &amp; PETRA FLURR — LIVE Synthpunk Two forces collide. Unhuman joins Petra Flurr for a set. " +
+                "MARTYRMACHINE (PL) — LIVE EBM Polish duo Martyrmachine bring body music.</p><p>&nbsp;</p>" +
+                "<p>TOMO IN DER MÜHLEN (HR) — LIVE MODULAR + VISUALS Experimental For KOROWA, Tomo In der Mühlen plays. + DJ TBA"
+        val event = scraper.scrape(detailPage("KOROWA — A Night of Live &amp; Dark Sounds", description), concertUrl).shouldNotBeNull()
+
+        event.eventType shouldBe "CONCERT"
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Unhuman", "Petra Flurr", "Martyrmachine", "Tomo In der Mühlen").map { it to ArtistRole.HEADLINER }
+    }
 }
