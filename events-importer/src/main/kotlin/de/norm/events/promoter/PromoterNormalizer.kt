@@ -417,6 +417,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "ibb" to "IBB Booking",
         "kingstar" to "Kingstar Music",
         "kinkyhub" to "KinkyHub Berlin",
+        // Festsaal Kreuzberg dots the acronym, Lido does not (#5538).
+        "jawfamily" to "Jaw Family",
         "kulturalarm" to "kulturALARM",
         "kulturnews" to "kulturnews",
         "landstreicher" to "Landstreicher Konzerte",

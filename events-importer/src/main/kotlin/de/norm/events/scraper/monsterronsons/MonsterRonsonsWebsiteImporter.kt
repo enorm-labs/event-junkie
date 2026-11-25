@@ -34,7 +34,7 @@ import java.time.Clock
  * keeps its card data and is flagged, so the upsert keeps the description, price and ticket link
  * stored last time. The CMS recycles entries, so two cards may link one page, which is read once.
  *
- * **Not published**: no doors time (one time per night, taken as the start), no presale price,
+ * **Not published**: a doors time on most nights (one time per night, taken as the start), no presale price,
  * no genre, no lineup beyond the host, rarely a ticket link. The private karaoke boxes running
  * all evening appear nowhere — the listing is the main stage only.
  *
@@ -73,7 +73,7 @@ class MonsterRonsonsWebsiteImporter(
 val MONSTER_RONSONS_LIMITATIONS =
     VenueLimitations(
         EventSource.MONSTER_RONSONS,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per night, which is taken as the start", verified = "2026-08-25"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "most nights state one time, which is taken as the start", verified = "2026-11-25"),
         AcceptedLimitation(
             LimitedAspect.PRICE,
             "the price lives in prose and is often a time-banded tariff, which the model has no field for",

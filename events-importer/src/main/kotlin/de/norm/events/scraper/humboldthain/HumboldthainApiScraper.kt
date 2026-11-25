@@ -3,6 +3,7 @@ package de.norm.events.scraper.humboldthain
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
@@ -21,6 +22,7 @@ import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.humboldthain.HumboldthainApiScraper.Companion.TICKET_URL_PATTERN
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isOnlyLiveMark
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -119,6 +121,10 @@ class HumboldthainApiScraper(
         // roster, if announced, is the description's Resident Advisor artist links.
         val artists = (if (concert) headlinersFromTitle(title) else emptyList()) + djArtists(description).ifEmpty { listedActs(description) }
         val descriptionText = htmlParagraphText(descriptionHtml)
+        // All-day entries carry a placeholder time; only a real clock value becomes a start time.
+        val startTime = if (node.isAllDay) null else parseTime(node.start?.time.blankToNull())
+        // `Einlass: Ab 20 Uhr` is the doors when it is before the calendar's time, which stays the start (event 15415).
+        val doorsTime = labelledClock(descriptionText, DOORS_LABELS)?.takeIf { doors -> startTime?.let { doors < it } == true }
 
         return elfsightOccurrenceDates(node, seriesStart, LocalDate.now(clock), VENUE_NAME, id).map { date ->
             ScrapedEvent(
@@ -126,8 +132,8 @@ class HumboldthainApiScraper(
                 description = descriptionText,
                 eventType = eventType(title, concert, descriptionText).name,
                 eventDate = date,
-                // All-day entries carry a placeholder time; only a real clock value becomes a start time.
-                startTime = if (node.isAllDay) null else parseTime(node.start?.time.blankToNull()),
+                doorsTime = doorsTime,
+                startTime = startTime,
                 imageUrl =
                     node.coverImage
                         ?.url

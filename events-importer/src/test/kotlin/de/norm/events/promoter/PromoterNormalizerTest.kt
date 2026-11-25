@@ -336,6 +336,7 @@ class PromoterNormalizerTest {
             canonicalPromoterName("Rausgeganger") shouldBe "Rausgegangen"
             canonicalPromoterName("Punkfilmfestival Berlin") shouldBe "punkfilmfest berlin"
             // Listen Agency is Listen Collective, whose site calls itself that, not Friendly Reminder (#3643).
+            canonicalPromoterName("J.A.W. Family") shouldBe "Jaw Family"
             canonicalPromoterName("Listen") shouldBe "Listen"
             canonicalPromoterName("Listen Agency") shouldBe "Listen"
             canonicalPromoterName("listenagency") shouldBe "Listen"

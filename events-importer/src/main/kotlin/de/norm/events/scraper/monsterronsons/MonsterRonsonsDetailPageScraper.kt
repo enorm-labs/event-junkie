@@ -1,11 +1,13 @@
 package de.norm.events.scraper.monsterronsons
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -38,7 +40,7 @@ import java.time.LocalTime
  * the CMS field is empty, so it is read through [hasVisibleWebflowFlag], not by presence.
  * 4. **The running time is a paragraph of its own**, `18:00 - 02:00`, and gives the end. Only a
  * paragraph that is exactly that counts: a tariff band reads `19:00 - 20:00 - €5`, and a host's
- * slot sits inside prose.
+ * slot sits inside prose. A `Doors: 18:00` label before the card's time gives the doors (events 15399 and 15407).
  *
  * @see MonsterRonsonsOverviewPageScraper for the listing that supplies title, date, time and poster.
  */
@@ -78,6 +80,7 @@ class MonsterRonsonsDetailPageScraper {
             priceBoxOffice = prices.singleOrNull(),
             priceNote = paragraphs.filter { parsePricesIn(it).isNotEmpty() }.joinToString("; ").takeIf { prices.size > 1 },
             runningTimes = paragraphs.mapNotNull(::parseRunningTime),
+            doorsTime = paragraphs.firstNotNullOfOrNull { labelledClock(it, DOORS_LABELS) },
             ticketUrl = parseTicketUrl(document, url)
         )
     }
@@ -131,7 +134,9 @@ data class MonsterRonsonsNightDetail(
     /** External ticket link, on the rare night that sells tickets in advance. */
     val ticketUrl: String? = null,
     /** Every `HH:mm - HH:mm` paragraph of the body, in page order. */
-    val runningTimes: List<MonsterRonsonsRunningTime> = emptyList()
+    val runningTimes: List<MonsterRonsonsRunningTime> = emptyList(),
+    /** The time a `Doors:` label states, on the rare night that has one. */
+    val doorsTime: LocalTime? = null
 ) {
     /**
      * Applies this page's fields to the [event] the card produced. Only fills what the card could
@@ -143,7 +148,8 @@ data class MonsterRonsonsNightDetail(
                 description = event.description ?: description,
                 priceBoxOffice = event.priceBoxOffice ?: priceBoxOffice,
                 priceNote = event.priceNote ?: priceNote,
-                ticketUrl = event.ticketUrl ?: ticketUrl
+                ticketUrl = event.ticketUrl ?: ticketUrl,
+                doorsTime = event.doorsTime ?: doorsTime?.takeIf { doors -> event.startTime?.let { doors < it } == true }
             )
         )
 

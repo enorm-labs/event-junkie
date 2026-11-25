@@ -175,6 +175,16 @@ class OrangerieOverviewPageScraperTest {
     }
 
     @Test
+    fun `types a night tagged as an exhibition and keeps the tag out of the genre`() {
+        val tags = """<span class="event-tag">Exhibition Presentation</span>"""
+        val (bare, styled) = scrapeCards("Day 2" to tags, "Day 3" to """$tags<span class="event-tag">House</span>""")
+
+        bare.eventType shouldBe EventType.EXHIBITION.name
+        bare.genre.shouldBeNull()
+        styled.genre shouldBe "House"
+    }
+
+    @Test
     fun `types a Musikbingo a quiz and credits the crew that presents it (event 15288)`() {
         val html =
             """<html><head><script type="application/ld+json">{"@type":"ItemList","itemListElement":[{"@type":"Event","name":"DUCT TAPE",""" +
