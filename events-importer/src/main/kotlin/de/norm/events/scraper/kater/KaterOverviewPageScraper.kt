@@ -191,10 +191,10 @@ class KaterOverviewPageScraper(
         line.split(B2B_SEPARATOR).any { endsAsSentence(it, MIN_SENTENCE_WORDS) } ||
             actsOf(line).any { it.name.split(WHITESPACE).size > MAX_ACT_WORDS }
 
-    /** The lines that are not part of a floor block — the event's own blurb, if it has one. */
+    /** The lines that are not part of a floor block or a bare date: the event's own blurb, if it has one. */
     private fun describe(body: List<String>): String {
         val floorStart = body.indexOfFirst { FLOOR_RULE.matches(it) }
-        return (if (floorStart < 0) body else body.take(floorStart)).joinToString("\n")
+        return (if (floorStart < 0) body else body.take(floorStart)).filterNot(DATE_LINE::matches).joinToString("\n")
     }
 
     /**
@@ -261,6 +261,9 @@ class KaterOverviewPageScraper(
 
         /** The rule the venue draws above each floor name. */
         val FLOOR_RULE = Regex("""_{3,}""")
+
+        /** The night's date repeated above its floors, `27|11 – 28|11` (#5506). */
+        val DATE_LINE = Regex("""\d{1,2}\|\d{1,2}(?:\s*[—–-]\s*\d{1,2}\|\d{1,2})?""")
 
         /** A `by <presenter>` tail on a floor name, dropped so the same floor groups across nights. */
         val FLOOR_PRESENTER_SUFFIX = Regex("""\s+by\s+.*$""", RegexOption.IGNORE_CASE)
