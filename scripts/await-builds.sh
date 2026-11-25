@@ -21,6 +21,9 @@
 # A `:<job name>` after the file waits for that job of the commit's run, not the whole run. The
 # backend's informational OWASP job can outlast the wait, and it failed publishes whose gate job had
 # passed in minutes (#3690).
+#
+# A single 504 from the API failed a publish whose builds were green (#5502), so each call gets ATTEMPTS (3)
+# tries, RETRY_SECONDS (15) apart.
 
 set -euo pipefail
 
@@ -45,23 +48,46 @@ REPO="${GITHUB_REPOSITORY:-$(gh repo view --json nameWithOwner --jq .nameWithOwn
 APPEAR_SECONDS="${APPEAR_SECONDS:-180}"
 COMPLETE_SECONDS="${COMPLETE_SECONDS:-1800}"
 POLL_SECONDS="${POLL_SECONDS:-15}"
+ATTEMPTS="${ATTEMPTS:-3}"
+RETRY_SECONDS="${RETRY_SECONDS:-15}"
+
+# api <path> <jq filter> — `gh api` with retries. Prints only a successful answer: a failed `gh api` writes
+# the error body to stdout. The warnings go to stderr, because every caller captures stdout.
+api() {
+    local attempt answer
+    for ((attempt = 1; attempt <= ATTEMPTS; attempt++)); do
+        if answer="$(gh api "$1" --jq "$2")"; then
+            [[ -z "$answer" ]] || echo "$answer"
+            return 0
+        fi
+        echo "::warning::await-builds: $1 failed, attempt $attempt of $ATTEMPTS" >&2
+        if ((attempt < ATTEMPTS)); then
+            sleep "$RETRY_SECONDS"
+        fi
+    done
+    echo "::error::await-builds: $1 failed $ATTEMPTS times" >&2
+    return 1
+}
 
 # run_for <workflow> — "<id> <status> <conclusion> <url>" of the newest run on `main` for SHA, or nothing.
 run_for() {
-    gh api "repos/$REPO/actions/workflows/$1/runs?branch=main&head_sha=$SHA&per_page=5" \
-        --jq '.workflow_runs | sort_by(.created_at) | last | select(. != null) | "\(.id) \(.status) \(.conclusion // "-") \(.html_url)"'
+    api "repos/$REPO/actions/workflows/$1/runs?branch=main&head_sha=$SHA&per_page=5" \
+        '.workflow_runs | sort_by(.created_at) | last | select(. != null) | "\(.id) \(.status) \(.conclusion // "-") \(.html_url)"'
 }
 
 # job_for <run id> <job name> — "<status> <conclusion>" of that job in the run. A job not started yet
 # reads as queued. A run that finished without it reads "completed no-such-job", so a misspelt name
-# fails at once rather than after the whole wait.
+# fails at once rather than after the whole wait. An API error fails the function: it is not a state.
 job_for() {
-    local found
-    found="$(gh api "repos/$REPO/actions/runs/$1/jobs?per_page=100" \
-        --jq '.jobs[] | select(.name == "'"$2"'") | "\(.status) \(.conclusion // "-")"')"
+    local found run_status
+    found="$(api "repos/$REPO/actions/runs/$1/jobs?per_page=100" \
+        '.jobs[] | select(.name == "'"$2"'") | "\(.status) \(.conclusion // "-")"')" || return 1
     if [[ -n "$found" ]]; then
         echo "$found"
-    elif [[ "$(gh api "repos/$REPO/actions/runs/$1" --jq .status)" == "completed" ]]; then
+        return
+    fi
+    run_status="$(api "repos/$REPO/actions/runs/$1" .status)" || return 1
+    if [[ "$run_status" == "completed" ]]; then
         echo "completed no-such-job"
     else
         echo "queued -"
@@ -72,7 +98,7 @@ job_for() {
 # search rather than reading as "not an ancestor", which would fall through to an older, greener run.
 is_ancestor() {
     local status
-    status="$(gh api "repos/$REPO/compare/$1...$SHA" --jq .status)" || exit 3
+    status="$(api "repos/$REPO/compare/$1...$SHA" .status)" || exit 3
     case "$status" in
         ahead | identical) return 0 ;;
         behind | diverged) return 1 ;;
@@ -82,17 +108,18 @@ is_ancestor() {
 
 # ancestor_run <workflow> — "<sha> <conclusion> <url>" of the newest finished, not-cancelled run on an ancestor.
 ancestor_run() {
-    local run_sha conclusion url
-    # fd 3, not stdin: `gh api` inside the loop reads stdin and would swallow the remaining rows.
+    local rows run_sha conclusion url
     # No `status=completed`: beside `branch=` the API answers with no runs at all (#3769).
+    rows="$(api "repos/$REPO/actions/workflows/$1/runs?branch=main&per_page=30" \
+        '.workflow_runs[] | select(.head_sha != "'"$SHA"'") | "\(.head_sha) \(.conclusion) \(.html_url)"')" || exit 3
+    # fd 3, not stdin: `gh api` inside the loop reads stdin and would swallow the remaining rows.
     while read -r -u 3 run_sha conclusion url; do
         [[ "$conclusion" == "success" || "$conclusion" == "failure" ]] || continue
         if is_ancestor "$run_sha"; then
             echo "$run_sha $conclusion $url"
             return
         fi
-    done 3< <(gh api "repos/$REPO/actions/workflows/$1/runs?branch=main&per_page=30" \
-        --jq '.workflow_runs[] | select(.head_sha != "'"$SHA"'") | "\(.head_sha) \(.conclusion) \(.html_url)"')
+    done 3<<<"$rows"
 }
 
 summary() {
@@ -134,14 +161,18 @@ for argument in "$@"; do
 
     read -r id status conclusion url <<<"$run"
     if [[ -n "$job" ]]; then
-        read -r status conclusion <<<"$(job_for "$id" "$job")"
+        # Assigned first: `set -e` does not see a failure inside a here-string.
+        state="$(job_for "$id" "$job")"
+        read -r status conclusion <<<"$state"
     fi
     while [[ "$status" != "completed" && $((SECONDS - started)) -lt $COMPLETE_SECONDS ]]; do
         sleep "$POLL_SECONDS"
         if [[ -n "$job" ]]; then
-            read -r status conclusion <<<"$(job_for "$id" "$job")"
+            state="$(job_for "$id" "$job")"
+            read -r status conclusion <<<"$state"
         else
-            read -r id status conclusion url <<<"$(run_for "$workflow")"
+            run="$(run_for "$workflow")"
+            read -r id status conclusion url <<<"$run"
         fi
     done
     waited=$((SECONDS - started))
