@@ -69,7 +69,7 @@ spec:
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
           {{- /* One writable path, verified against the real image in #262 with `--read-only --tmpfs /tmp`.
-             /var/cache/nginx and /var/run are not needed: `nginxinc/nginx-unprivileged` sets
+             /var/cache/nginx and /var/run are not needed: `nginx/nginx-unprivileged` sets
              `pid /tmp/nginx.pid`, redirects every `*_temp_path` into /tmp and symlinks both logs to
              /dev/stdout and /dev/stderr. If the base image changes, re-check: the failure is at startup. */}}
           volumeMounts:

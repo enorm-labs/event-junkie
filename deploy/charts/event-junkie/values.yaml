@@ -239,7 +239,7 @@ frontend:
       cpu: "200m"
       # Generous for nginx serving a static bundle.
       memory: "128Mi"
-  # frontend.runAsUser is deliberately unset: `nginxinc/nginx-unprivileged` defaults to user 101 but
+  # frontend.runAsUser is deliberately unset: `nginx/nginx-unprivileged` defaults to user 101 but
   # was verified to run as 10001, so all three workloads share one UID. Here for a base image that cannot.
   runAsUser: null
   serviceAccount:

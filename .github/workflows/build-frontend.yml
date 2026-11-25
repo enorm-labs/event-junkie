@@ -143,7 +143,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           set -euo pipefail
-          image="$(sed -n 's/^FROM \(nginxinc\/nginx-unprivileged[^ ]*\).*/\1/p' events-frontend/Dockerfile)"
+          image="$(sed -n 's/^FROM \(ghcr\.io\/nginx\/nginx-unprivileged[^ ]*\).*/\1/p' events-frontend/Dockerfile)"
           [ -n "$image" ] || { echo '::error::no nginx-unprivileged FROM line in events-frontend/Dockerfile'; exit 1; }
           docker run --rm --platform linux/amd64 \
             -v "$PWD/events-frontend/docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
@@ -153,8 +153,8 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
 
-      # Both platforms build with no QEMU step: the Dockerfile does no build work in a `RUN`, and its one
-      # `apk upgrade` runs under the runner's emulation. `type=cacheonly` because a multi-platform image
+      # Both platforms build with no QEMU step: the Dockerfile does no build work in a `RUN`, and a named
+      # `apk upgrade`, when present, runs under the runner's emulation. `type=cacheonly` because a multi-platform image
       # cannot be loaded, and one platform would leave arm64 — the Hetzner nodes' architecture — unbuilt.
       - name: Build the frontend image (amd64 + arm64, no push)
         if: github.event_name == 'pull_request'
