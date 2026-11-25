@@ -9,7 +9,6 @@
  */
 import {
   type AdminEvent,
-  type ArtistRole,
   type EventArtist,
   type EventRequest,
   EVENT_TYPES,
@@ -18,6 +17,7 @@ import {
   fetchEvent,
   fetchEventFeatures,
   EVENT_FEATURES,
+  newActRole,
   parsePrice,
   setEventFeatures,
   toEventRequest,
@@ -135,12 +135,6 @@ export function acceptSuggestion(id: number, fetchFn: typeof fetch = fetch) {
 /** Marks [id] dismissed. The event stays as it is. */
 export function dismissSuggestion(id: number, fetchFn: typeof fetch = fetch) {
   return setStatus(id, 'dismiss', fetchFn)
-}
-
-/** The order of a club night ranks nobody, and the proposed names do not say who plays live. */
-function newActRole(eventType: EventType, index: number): ArtistRole {
-  if (eventType === 'PARTY') return 'DJ'
-  return index === 0 ? 'HEADLINER' : 'SUPPORT'
 }
 
 /**

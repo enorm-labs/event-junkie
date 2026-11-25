@@ -37,6 +37,12 @@ export const ARTIST_ROLES = ['HEADLINER', 'SUPPORT', 'GUEST', 'DJ', 'LIVE'] as c
 
 export type ArtistRole = (typeof ARTIST_ROLES)[number]
 
+/** The order of a club night ranks nobody, and a name does not say who plays live. */
+export function newActRole(eventType: EventType, index: number): ArtistRole {
+  if (eventType === 'PARTY') return 'DJ'
+  return index === 0 ? 'HEADLINER' : 'SUPPORT'
+}
+
 export interface EventArtist {
   artistId: number
   role: ArtistRole
