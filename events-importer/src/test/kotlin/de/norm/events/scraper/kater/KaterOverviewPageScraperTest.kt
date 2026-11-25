@@ -17,6 +17,8 @@ import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -384,6 +386,40 @@ class KaterOverviewPageScraperTest {
     @Test
     fun `leaves the description null when the summary is only a lineup`() {
         event("1885").description.shouldBeNull()
+    }
+
+    // Ten upcoming nights stored only their date as the description (#5506).
+    @ParameterizedTest
+    @CsvSource(
+        "3|12,",
+        "10|12 – 11|12,",
+        "10|12 – 11|12<br />Kuchen ab 20 Uhr, Kuchen ab 20 Uhr",
+        "24|7 open, 24|7 open"
+    )
+    fun `stores no bare date line as the description`(
+        blurb: String,
+        expected: String?
+    ) {
+        val html =
+            """
+            <article class="post-1993 event type-event" id="event-1993">
+                <header class="entry-header"><h2 class="toggle-article">
+                    <span class="date-header">10.12.</span><span class="date-title">Shebanese à la Kater</span>
+                </h2></header>
+                <div class="entry-summary">
+                    <p>Do. 10.12 17:00 — Fr. 11.12 06:00</p>
+                    <p>$blurb<br />
+                    __________________<br />
+                    ACID BOGEN</p>
+                    <p>Onix</p>
+                </div>
+            </article>
+            """.trimIndent()
+
+        val night = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        night.description shouldBe expected
+        night.artists shouldContainExactly listOf(ScrapedArtist("Onix", ArtistRole.DJ, "ACID BOGEN"))
     }
 
     @Test
