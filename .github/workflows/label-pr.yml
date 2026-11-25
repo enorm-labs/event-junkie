@@ -61,6 +61,9 @@ jobs:
       - name: Label from the PR title
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
+          # One GitHub 5xx must not leave a label wrong. Every write below may repeat: the script tolerates
+          # a 404 on a removal and a 422 on a creation, and adding a label twice changes nothing (#5527).
+          retries: 3
           script: |
             // The labels this workflow owns; anything else (`dependencies`, hand-applied) is left alone.
             const MANAGED = {

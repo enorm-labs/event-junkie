@@ -59,6 +59,9 @@ jobs:
         id: record
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
+          # One GitHub 5xx must not turn the run red. The two writes below opt out: a 5xx can follow a write
+          # that landed, and a retry would record it twice (#5527).
+          retries: 3
           script: |
             const event = context.payload.client_payload;
             if (!event || typeof event !== 'object') {
@@ -168,6 +171,7 @@ jobs:
                   cluster: metadata.cluster ?? null,
                   reportingController: event.reportingController ?? null,
                 },
+                request: { retries: 0 },
               });
               deploymentId = created.data.id;
               core.info(`Created deployment ${deploymentId} for ${environment} at ${sha.slice(0, 7)}.`);
@@ -204,6 +208,7 @@ jobs:
               // Omitted rather than null when there is no public address: an explicit empty string means "clear the
               // link", the same result by a route that reads like an accident.
               ...(ENVIRONMENTS[environment].url ? { environment_url: ENVIRONMENTS[environment].url } : {}),
+              request: { retries: 0 },
             });
 
             // For the Lighthouse job. Set here and not earlier: only a payload that produced a real
