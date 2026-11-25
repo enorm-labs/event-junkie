@@ -116,7 +116,9 @@ private val SOURCE_ARTIST_SLUG_OVERRIDES: Map<String, Map<String, String>> =
         "ohm:" to mapOf("v." to "v-2"),
         // The hard-techno DJ `Vero_` at VOID Club (V255). The Berlin rapper Vero, billed at ÆDEN and Ritter Butzke, keeps
         // `vero`.
-        "void_club:" to mapOf("vero_" to "vero-2")
+        "void_club:" to mapOf("vero_" to "vero-2"),
+        // The Chicago band Wilco at Huxleys (V280). The DJ Wilco, billed by Frannz Club and Der Weiße Hase, keeps `wilco`.
+        "huxleys:" to mapOf("wilco" to "wilco-2")
     )
 
 /**

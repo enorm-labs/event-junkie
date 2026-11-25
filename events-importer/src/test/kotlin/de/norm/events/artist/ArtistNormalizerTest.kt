@@ -71,6 +71,15 @@ class ArtistNormalizerTest {
     }
 
     @Test
+    fun `Huxleys' Wilco takes a slug of its own and the DJ keeps wilco`() {
+        assertSoftly {
+            artistSlugFor("WILCO", "huxleys:2027-06-26-wilco") shouldBe "wilco-2"
+            artistSlugFor("Wilco", "frannz:10100") shouldBe "wilco"
+            artistSlugFor("Wilco") shouldBe "wilco"
+        }
+    }
+
+    @Test
     fun `every source scope is the sourceId prefix of a real source`() {
         val prefixes = EventSource.entries.map { it.sourceIdPrefix }.toSet()
         sourceScopedArtistSlugPrefixes.filterNot { it in prefixes }.shouldBeEmpty()
