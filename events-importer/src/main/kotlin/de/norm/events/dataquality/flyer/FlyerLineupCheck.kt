@@ -29,7 +29,7 @@ data class FlyerPassResult(
 
 /**
  * The flyer-lineup check (#5048, ADR-059): one model call per stored flyer of a music night with no act, at the
- * sources [FlyerProperties.sources] names. It writes `artists` and `startTime` suggestions and never an event
+ * sources [FlyerProperties.sources] names. It writes `artists`, `startTime` and `doorsTime` suggestions and never an event
  * (ADR-041 rule 3). A flyer read once is not read again until the event's image changes.
  */
 @Service
@@ -122,7 +122,7 @@ class FlyerLineupCheck(
         }
     }
 
-    /** An `artists` row for acts above the artists floor, and a `startTime` row when the event has no start time. */
+    /** An `artists` row for acts above the artists floor, and a row for each time the event does not have. */
     private fun proposals(
         target: FlyerTarget,
         answer: FlyerAnswer
@@ -133,6 +133,9 @@ class FlyerLineupCheck(
             },
             answer.startTime?.takeIf { target.startTime == null && it.confidence >= classification.minConfidence.startTime }?.let {
                 NewSuggestion(target.id, FIELD_START_TIME, null, it.value.format(TIME_FORMAT), it.evidence, it.confidence, reader.model)
+            },
+            answer.doorsTime?.takeIf { target.doorsTime == null && it.confidence >= classification.minConfidence.startTime }?.let {
+                NewSuggestion(target.id, FIELD_DOORS_TIME, null, it.value.format(TIME_FORMAT), it.evidence, it.confidence, reader.model)
             }
         )
 
@@ -156,6 +159,7 @@ class FlyerLineupCheck(
 
         private const val FIELD_ARTISTS = EventClassificationCheck.FIELD_ARTISTS
         private const val FIELD_START_TIME = EventClassificationCheck.FIELD_START_TIME
+        private const val FIELD_DOORS_TIME = EventClassificationCheck.FIELD_DOORS_TIME
         private const val FORMAT = "jpg"
         private const val LIST_SEPARATOR = "; "
         private const val TAG_CHECK = "check"

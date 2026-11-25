@@ -69,6 +69,7 @@ const PINS: Record<string, string> = {
   eventType: 'eventType',
   artists: 'lineup',
   startTime: 'startTime',
+  doorsTime: 'doorsTime',
   pricePresale: 'pricePresale',
   priceBoxOffice: 'priceBoxOffice',
 }
@@ -186,8 +187,9 @@ async function withProposal(
       if (!EVENT_TYPES.includes(value as EventType)) throw new Error(`"${value}" is no event type.`)
       return { ...request, eventType: value as EventType }
     case 'startTime':
+    case 'doorsTime':
       if (!/^\d{2}:\d{2}$/.test(value)) throw new Error(`"${value}" is no time.`)
-      return { ...request, startTime: value }
+      return { ...request, [suggestion.field]: value }
     case 'pricePresale':
       return { ...request, pricePresale: parsePrice(value) }
     case 'priceBoxOffice':
@@ -237,6 +239,8 @@ async function storedForm(event: AdminEvent, field: string, fetchFn: typeof fetc
       return event.eventType
     case 'startTime':
       return event.startTime?.slice(0, 5) ?? null
+    case 'doorsTime':
+      return event.doorsTime?.slice(0, 5) ?? null
     case 'pricePresale':
       return event.pricePresale?.toFixed(2) ?? null
     case 'priceBoxOffice':

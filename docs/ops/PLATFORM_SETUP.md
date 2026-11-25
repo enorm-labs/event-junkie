@@ -840,7 +840,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `data_quality{source=…,metric=…}`                | Gauge                                 | Per-source quality, refreshed daily. Alert on a metric that starts rising                 |
 | `data_quality_regression{source=…,metric=…}`     | Gauge                                 | 1/0 — a share over ten points above its 7-day median, unless declared (#2604)             |
 | `data_quality_unexplained{source=…,metric=…}`    | Gauge                                 | The six excusable counts, 0 where an accepted limitation explains the metric (#5002)      |
-| `importer.data_quality.suggestions{check,field}` | Counter                               | Suggestion rows a check wrote, per field — event-classification's six, flyer-lineup's two |
+| `importer.data_quality.suggestions{check,field}` | Counter                               | Suggestion rows a check wrote per field: event-classification's six, flyer-lineup's three |
 | `importer.data_quality.classifications{outcome}` | Counter                               | answered / rejected / failed / unchanged — events the classification check read           |
 | `importer.data_quality.flyer_reads{outcome}`     | Counter                               | answered / rejected / failed — flyers the flyer-lineup check read (#5048)                 |
 | `importer.data_quality.classification.tokens`    | Gauge                                 | Tokens the classification check used this UTC month, against its budget (#2996)           |

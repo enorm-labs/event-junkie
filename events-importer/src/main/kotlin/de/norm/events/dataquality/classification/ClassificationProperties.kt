@@ -43,6 +43,7 @@ data class ClassificationProperties(
         val eventType: Double = HIGH_FLOOR,
         val artists: Double = HIGH_FLOOR,
         val features: Double = DEFAULT_FLOOR,
+        /** The floor of `startTime`, and of the flyer check's `doorsTime`. */
         val startTime: Double = DEFAULT_FLOOR,
         /** The floor of `pricePresale` and `priceBoxOffice`. */
         val prices: Double = DEFAULT_FLOOR

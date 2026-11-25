@@ -266,9 +266,9 @@ const { t } = useI18n()
         title stored as a performing artist. The result is only a suggestion, and I decide whether
         it is applied. The texts are sent to the same service provider as for translation (section
         5). For a music night with no performing artist at some venues, the stored flyer image goes
-        as well, so that the line-up and the start time can be read from it. A flyer this site may
-        not show is not read. The legal basis is Art. 6 (1) (f) GDPR. The legitimate interest is
-        correct information about the events.
+        as well, so that the line-up, the start time and the doors time can be read from it. A flyer
+        this site may not show is not read. The legal basis is Art. 6 (1) (f) GDPR. The legitimate
+        interest is correct information about the events.
       </p>
       <p>
         <strong>If you are an artist</strong> and would like your name, or a description that names

@@ -3,6 +3,8 @@ package de.norm.events.dataquality.flyer
 import de.norm.events.ai.ModelAnswer
 import de.norm.events.common.QuotedText
 import de.norm.events.dataquality.classification.Finding
+import de.norm.events.scraper.DOORS_LABELS
+import de.norm.events.scraper.labelledClock
 import tools.jackson.databind.JsonNode
 import java.time.LocalDate
 import java.time.LocalTime
@@ -18,11 +20,12 @@ data class FlyerInput(
     override fun hashCode(): Int = 31 * (31 * title.hashCode() + eventDate.hashCode()) + image.contentHashCode()
 }
 
-/** One validated answer: the text the model read off the flyer, and the acts and start time it found in that text. */
+/** One validated answer: the text the model read off the flyer, and the acts and times it found in that text. */
 data class FlyerAnswer(
     val flyerText: String,
     val acts: Finding<List<String>>?,
-    val startTime: Finding<LocalTime>?
+    val startTime: Finding<LocalTime>?,
+    val doorsTime: Finding<LocalTime>?
 )
 
 /** Why a flyer answer was turned down. The pass logs it, because a rejected flyer is not read again (#5186). */
@@ -51,7 +54,7 @@ sealed interface FlyerVerdict {
 /**
  * Parses and checks one answer of [AnthropicFlyerReader] (ADR-059).
  *
- * The model copies the flyer's text into `flyerText`. Every act, the start time and each evidence passage must
+ * The model copies the flyer's text into `flyerText`. Every act, each time and each evidence passage must
  * occur in that text, and the text must name the event's day. Nothing proves that the image shows the text, so
  * the person who reviews the suggestion compares the two (ADR-049 rule 4).
  */
@@ -88,7 +91,11 @@ object FlyerAnswerValidator {
         val startTime =
             finding(root.get("startTime"), flyerText) { node -> ModelAnswer.time(node.asString("")) }
                 ?.takeIf { ModelAnswer.namesHour(it.value, it.evidence) }
-        return FlyerVerdict.Accepted(FlyerAnswer(flyerText, acts, startTime))
+        // The hour alone would pass the 20:00 of "Doors 19 Uhr, Beginn 20 Uhr".
+        val doorsTime =
+            finding(root.get("doorsTime"), flyerText) { node -> ModelAnswer.time(node.asString("")) }
+                ?.takeIf { labelledClock(it.evidence, DOORS_LABELS) == it.value }
+        return FlyerVerdict.Accepted(FlyerAnswer(flyerText, acts, startTime, doorsTime))
     }
 
     /**

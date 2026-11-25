@@ -136,6 +136,7 @@ describe('cannotApply', () => {
       'eventType',
       'artists',
       'startTime',
+      'doorsTime',
       'pricePresale',
       'priceBoxOffice',
     ]) {
@@ -159,6 +160,24 @@ describe('applySuggestion', () => {
     expect(putBody(fetchFn)).toEqual({ ...request, startTime: '20:00' })
     expect((saved as AdminEvent).pinnedFields).toContain('startTime')
     expect(calls(fetchFn).slice(-1)[0]).toBe('POST /api/admin/data-quality/suggestions/1/accept')
+  })
+
+  it('sets and pins a doors time, and refuses a malformed one without a PUT', async () => {
+    const doors = suggestion({ field: 'doorsTime', proposedValue: '19:00' })
+    const fetchFn = importer(() => ['doorsTime'], { ...stored, doorsTime: null })
+
+    const saved = await applySuggestion(doors, fetchFn)
+
+    expect(putBody(fetchFn).doorsTime).toBe('19:00')
+    expect(putBody(fetchFn).startTime).toBe(stored.startTime)
+    expect((saved as AdminEvent).pinnedFields).toContain('doorsTime')
+    expect(calls(fetchFn).slice(-1)[0]).toBe('POST /api/admin/data-quality/suggestions/1/accept')
+
+    const malformed = importer(() => ['doorsTime'])
+    await expect(applySuggestion({ ...doors, proposedValue: '7 pm' }, malformed)).rejects.toThrow(
+      'is no time',
+    )
+    expect(calls(malformed).some((c) => c.startsWith('PUT'))).toBe(false)
   })
 
   it('sends a price as a number and a type as a type', async () => {
@@ -263,7 +282,7 @@ describe('applyToShowDates', () => {
       }
       if (method === 'PUT' && event) {
         const body = JSON.parse(String(init?.body))
-        return json({ ...event, ...body, pinnedFields: ['startTime', 'lineup'] })
+        return json({ ...event, ...body, pinnedFields: ['startTime', 'doorsTime', 'lineup'] })
       }
       return json({ detail: `unexpected ${method} ${url}` }, 404)
     })
@@ -277,6 +296,16 @@ describe('applyToShowDates', () => {
     expect(result).toEqual({ saved: 1, skipped: 2 })
     const writes = calls(fetchFn).filter((c) => !c.startsWith('GET'))
     expect(writes).toEqual(['PUT /api/admin/events/8'])
+  })
+
+  it('saves a doors time only on the dates that hold the stored doors time', async () => {
+    const doors = suggestion({ field: 'doorsTime', proposedValue: '18:30', showEventIds: [8] })
+
+    expect(await applyToShowDates({ ...doors, storedValue: '19:00' }, showImporter())).toEqual({
+      saved: 1,
+      skipped: 0,
+    })
+    expect(await applyToShowDates(doors, showImporter())).toEqual({ saved: 0, skipped: 1 })
   })
 
   it('compares a lineup by the names of its acts', async () => {

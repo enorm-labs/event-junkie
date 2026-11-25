@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 import tools.jackson.databind.json.JsonMapper
 import java.time.LocalDate
@@ -54,6 +55,42 @@ class FlyerAnswerValidatorTest {
         val invented =
             FlyerAnswerValidator.parse(json("flyerText" to SAVORY, "acts" to finding(listOf("Taube"), "Line up: Taube")), NIGHT).accepted()
         withClue("the evidence is not a passage of the flyer text") { invented.acts.shouldBeNull() }
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        "Doors 19 Uhr, 19:00",
+        "DOORS OPEN 7PM, 19:00",
+        "Einlass: 19:30 Uhr, 19:30",
+        "Doors 19 Uhr / Beginn 20 Uhr, 19:00"
+    )
+    fun `a doors time printed after a doors word is kept`(
+        line: String,
+        expected: LocalTime
+    ) {
+        val text = "$SAVORY\n$line"
+
+        val answer = FlyerAnswerValidator.parse(json("flyerText" to text, "doorsTime" to finding(expected.toString(), line)), NIGHT).accepted()
+
+        answer.doorsTime!!.value shouldBe expected
+        answer.startTime.shouldBeNull()
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        "Doors 19 Uhr / Beginn 20 Uhr, 20:00",
+        "Beginn 20 Uhr, 20:00",
+        "23:00 — END, 23:00"
+    )
+    fun `a doors time the evidence does not print after a doors word is dropped`(
+        line: String,
+        proposed: String
+    ) {
+        val text = "$SAVORY\n$line"
+
+        val answer = FlyerAnswerValidator.parse(json("flyerText" to text, "doorsTime" to finding(proposed, line)), NIGHT).accepted()
+
+        answer.doorsTime.shouldBeNull()
     }
 
     @Test
