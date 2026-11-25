@@ -34,6 +34,7 @@ import tools.jackson.databind.JsonNode
  *   names another place, or one whose title opens with the house and puts it `at` another place (`PAS event at Kallasch&!`).
  *   `DANCE at PAS` and `… Showcase at PAS Berlin` stay, and lose that tail.
  * - **The categories type the night**, music first. An event filed only under workshop, social or open call is out of scope.
+ *   An event in no category whose description credits two or more players is a concert (event 15319).
  * - **The API time is the doors** when the description prints `Doors 19:30, music a bit later`; the start is then unknown.
  * - **The title is the lineup**: sets split by `/`, players by commas and `&`. A series or label opens the title before a colon
  *   (`Music for Cosmos: RAFGAK`), and an ensemble opens a later set before its players (`RAFGAK: Bryan Eubanks & …`).
@@ -80,7 +81,7 @@ class PasApiScraper {
         return ScrapedEvent(
             title = title,
             description = description,
-            eventType = eventType ?: inferUnmarkedTitleType(title),
+            eventType = eventType ?: inferredType(title, creditedNames(event.path("description").asString("")).size),
             typeIsFallback = eventType == null,
             eventDate = start.toLocalDate(),
             doorsTime = doors,
@@ -237,3 +238,9 @@ class PasApiScraper {
             )
     }
 }
+
+/** The type of an event in no category: by its title, or a concert when the description credits two or more players. */
+private fun inferredType(
+    title: String,
+    creditedPlayers: Int
+): String = inferUnmarkedTitleType(title).let { if (it == EventType.OTHER.name && creditedPlayers > 1) EventType.CONCERT.name else it }

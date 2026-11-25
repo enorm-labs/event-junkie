@@ -184,6 +184,7 @@ class PasApiScraperTest {
 
         songs.priceNote shouldBe "10€ – 15€"
         songs.pricePresale shouldBe BigDecimal("10")
+        songs.eventType shouldBe "CONCERT"
         songs.typeIsFallback shouldBe true
         songs.endTime.shouldBeNull()
     }
@@ -221,6 +222,19 @@ class PasApiScraperTest {
         variant("Klub Demboh", listOf("Theatre", "Performance")).shouldNotBeNull().eventType shouldBe "SHOW"
         variant("Stills", listOf("Exhibition")).shouldNotBeNull().eventType shouldBe "EXHIBITION"
         variant("Film night", listOf("Film screening")).shouldNotBeNull().eventType shouldBe "SCREENING"
+    }
+
+    @Test
+    fun `types an event without a category by its credited players, and bills none (event 15319)`() {
+        val players = "<p>Max Evstropov – voice, text<br />Axel Dörner – trumpet</p>"
+
+        variant("DISSIDENTS LXXXVI", emptyList(), description = players).shouldNotBeNull().run {
+            eventType shouldBe "CONCERT"
+            typeIsFallback shouldBe true
+            artists.shouldBeEmpty()
+        }
+        variant("DISSIDENTS LXXXVI", emptyList(), description = "<p>Max Evstropov – voice</p>").shouldNotBeNull().eventType shouldBe "OTHER"
+        variant("Stills", listOf("Exhibition"), description = players).shouldNotBeNull().eventType shouldBe "EXHIBITION"
     }
 
     @Test

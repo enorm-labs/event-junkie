@@ -31,6 +31,7 @@ import tools.jackson.databind.JsonNode
  * A schema.org `ItemList` of `Event`s carries the name, the dated start and the price, so it decides the rows.
  * Each `div.card` with the same `h3.card-title` adds the cover, the style tags and the Rausgegangen ticket link.
  * A `tag-food` tag names a food pop-up and a `Musikbingo` tag a game night, not a style, so neither reaches the genre.
+ * An `Exhibition Presentation` tag types the night an exhibition and is no style either.
  */
 class OrangerieOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -65,6 +66,7 @@ class OrangerieOverviewPageScraper {
         val eventType =
             when {
                 tags.any(BINGO_TAG::containsMatchIn) -> EventType.QUIZ
+                tags.any(EXHIBITION_TAG::containsMatchIn) -> EventType.EXHIBITION
                 tags.any { it.equals(CONCERT_TAG, ignoreCase = true) } || name.startsWith(LIVE_SERIES) -> EventType.CONCERT
                 tags.isEmpty() && foodTags.isNotEmpty() -> EventType.OTHER
                 else -> EventType.PARTY
@@ -85,7 +87,7 @@ class OrangerieOverviewPageScraper {
             sourceUrl = baseUrl,
             sourceId = EventSource.ORANGERIE_NEUKOELLN.dateTitleId(date, name),
             ticketUrl = card?.selectFirst("a.og-act-link[title=Rausgegangen]")?.attr("abs:href")?.ifBlank { null },
-            genre = tags.filterNot { it.equals(CONCERT_TAG, ignoreCase = true) || BINGO_TAG.containsMatchIn(it) }.joinToString(", ").ifBlank { null },
+            genre = tags.filterNot(::namesAFormat).joinToString(", ").ifBlank { null },
             priceBoxOffice = price?.takeIf { it.signum() > 0 },
             free = price?.signum() == 0,
             artists = artists(name, eventType),
@@ -119,6 +121,10 @@ class OrangerieOverviewPageScraper {
         description: String?
     ): Boolean = description != null && Regex("""präsentiert\s+von\s+${Regex.escape(name)}(?![\p{L}\d])""").containsMatchIn(description)
 
+    /** Whether [tag] names the night's format rather than its style. */
+    private fun namesAFormat(tag: String): Boolean =
+        tag.equals(CONCERT_TAG, ignoreCase = true) || BINGO_TAG.containsMatchIn(tag) || EXHIBITION_TAG.containsMatchIn(tag)
+
     /** A bilingual tag holds a `lang="de"` and a `lang="en"` span, which `text()` would run together. */
     private fun tagText(tag: Element): String = (tag.selectFirst("[lang=en]") ?: tag).text().trim()
 
@@ -127,6 +133,7 @@ class OrangerieOverviewPageScraper {
 
         /** `Musikbingo mit verschiedenen Musikgenres`: a game night (EVENT_SCOPE.md §2). */
         val BINGO_TAG = Regex("""bingo\b""", RegexOption.IGNORE_CASE)
+        val EXHIBITION_TAG = Regex("""\bexhibition\b""", RegexOption.IGNORE_CASE)
         const val FOOD_TAG = "tag-food"
         const val LIVE_SERIES = "Parkside Sessions"
         const val WITH = " w/ "

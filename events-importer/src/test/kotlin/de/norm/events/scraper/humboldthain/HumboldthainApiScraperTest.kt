@@ -311,6 +311,16 @@ class HumboldthainApiScraperTest {
     }
 
     @Test
+    fun `scrape reads the doors the prose states before the calendar's start, as event 15415`() {
+        fun night(time: String) =
+            single("""{"id":"w","name":"WARM UP","start":{"date":"2026-12-11","time":"$time"},"description":"<div>Einlass: Ab 20 Uhr</div>"}""")
+
+        night("23:00").doorsTime shouldBe LocalTime.of(20, 0)
+        night("23:00").startTime shouldBe LocalTime.of(23, 0)
+        night("18:00").doorsTime.shouldBeNull()
+    }
+
+    @Test
     fun `scrape bills a linked act LIVE when only a live mark stands behind its link`() {
         val live = events.flatMap { it.artists }.filter { it.role == ArtistRole.LIVE }.map { it.name }
 

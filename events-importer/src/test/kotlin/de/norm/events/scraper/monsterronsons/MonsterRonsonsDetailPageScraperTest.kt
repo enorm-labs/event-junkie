@@ -160,6 +160,25 @@ class MonsterRonsonsDetailPageScraperTest {
         detail.runningTimes shouldBe listOf(MonsterRonsonsRunningTime(LocalTime.of(20, 0), LocalTime.of(2, 0)))
     }
 
+    @Test
+    fun `reads the doors a label states before the card's start, as events 15399 and 15407`() {
+        fun doors(
+            body: String,
+            start: LocalTime
+        ): LocalTime? {
+            val url = "https://www.karaokemonster.de/posts/new-years-eve-party"
+            return scraper
+                .scrape(Jsoup.parse("<div class='w-richtext'>$body</div>", url), url)
+                .shouldNotBeNull()
+                .applyTo(card(start))
+                .doorsTime
+        }
+
+        doors("<p>DOORS: 18:00 STAGE OPENS AT 20:00 10€</p>", LocalTime.of(20, 0)) shouldBe LocalTime.of(18, 0)
+        doors("<p>Doors: 18:00</p><p>19:00 - 20:00 - €5</p>", LocalTime.of(19, 0)) shouldBe LocalTime.of(18, 0)
+        doors("<p>Doors: 18:00</p>", LocalTime.of(18, 0)).shouldBeNull()
+    }
+
     private fun card(start: LocalTime) =
         ScrapedEvent(
             title = "SING WITH SCOTTY TECHNOLOGY",
