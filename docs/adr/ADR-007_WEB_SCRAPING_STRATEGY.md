@@ -520,7 +520,7 @@ it for every subclass.
 
 ### Shared Scraping Utilities
 
-Three focused extension files in the `de.norm.events.scraper` package provide reusable utilities shared across all venue scrapers. Each file has a single
+Focused extension files in the `de.norm.events.scraper` package provide reusable utilities shared across all venue scrapers. Each file has a single
 cohesive responsibility, keeping the codebase organized as the number of utilities grows with new venue scrapers.
 
 **`ScrapingExtensions.kt`** — Jsoup HTML element extraction helpers and URL resolution:
@@ -562,6 +562,15 @@ cohesive responsibility, keeping the codebase organized as the number of utiliti
 | `parseTitleStatus(title)`              | The status a venue wrote into the title itself, applied at the persistence boundary |
 | `orderDoorsBeforeStart(doors, start)`  | Recovers a source's transposed doors/start labels by swapping them back             |
 | `stripRelocationPrefix(title)`         | Strips a `"verlegt in(s) <venue> –"` note a venue prepends to a moved show's title  |
+
+**`ActSlots.kt` / `LineupVocabulary.kt`** — the line-up of a club night:
+
+| Extension / Function                      | Purpose                                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| `parseActSlot(slot, joins, stage, clean)` | The acts of one DJ slot. It reads the `LIVE` mark before `clean` removes it          |
+| `LINE_UP_WORD`                            | The spellings of `line-up`, for a pattern that adds its own anchor and colon         |
+| `splitDjList(list)`                       | The names of a list that a `DJs` label marks. Every join cuts, so never a bare title |
+| `endsAsSentence(line, minWords)`          | Whether a line closes as a sentence and has at least `minWords` words                |
 
 **`WixEventsWarmupData.kt`** — the platform-level reader for a venue on Wix with a Wix Events widget (Loge and MAXXIM
 today). The widget renders on the client, but Wix injects the full event data on the server. It arrives as strict JSON
