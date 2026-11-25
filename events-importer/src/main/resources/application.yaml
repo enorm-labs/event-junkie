@@ -125,7 +125,7 @@ app:
         prices: 0.7
     flyer:
       # The flyer-lineup check (#5048, ADR-059): reads the stored flyer of a music night with no act, at the
-      # sources below, and proposes its acts and start time. It runs inside the classification pass, with
+      # sources below, and proposes its acts, start and doors times. It runs inside the classification pass, with
       # that check's key, model and monthly token budget. Off until an operator sets it: it sends images to Anthropic.
       enabled: ${APP_DATA_QUALITY_FLYER_ENABLED:false}
       # Source slugs, comma-separated. Empty reads no flyer.

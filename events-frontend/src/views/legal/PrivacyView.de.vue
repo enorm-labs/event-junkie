@@ -291,9 +291,9 @@ const { t } = useI18n()
         Ergebnis ist nur ein Vorschlag. Ob er übernommen wird, entscheide ich. Dafür werden diese
         Texte an denselben Dienstleister übermittelt wie für die Übersetzung (Abschnitt 5). Für
         einen Musikabend ohne Künstler*innen einiger Locations geht auch das gespeicherte Flyerbild
-        mit, damit das Line-up und die Startzeit daraus gelesen werden können. Ein Flyer, den diese
-        Seite nicht zeigen darf, wird nicht gelesen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO.
-        Das berechtigte Interesse sind richtige Angaben zu den Veranstaltungen.
+        mit, damit das Line-up, die Startzeit und die Einlasszeit daraus gelesen werden können. Ein
+        Flyer, den diese Seite nicht zeigen darf, wird nicht gelesen. Rechtsgrundlage ist Art. 6
+        Abs. 1 lit. f DSGVO. Das berechtigte Interesse sind richtige Angaben zu den Veranstaltungen.
       </p>
       <p>
         <strong>Wenn du Künstler*in bist</strong> und möchtest, dass dein Name oder eine

@@ -166,6 +166,28 @@ class FlyerLineupCheckTest : BaseControllerTest() {
         }
 
     @Test
+    fun `a night with no doors time gets the doors time the flyer prints`(): Unit =
+        runBlocking {
+            val event = insertEvent("Slaughter", hash = "h1", startTime = "20:00")
+            server.enqueue(doorsAnswer())
+
+            check().pass().suggested shouldBe mapOf("doorsTime" to 1)
+
+            suggestions(event) shouldContainExactly listOf(Row("doorsTime", null, "19:00", "Doors 19 Uhr"))
+        }
+
+    @Test
+    fun `a night with a doors time gets no doorsTime row`(): Unit =
+        runBlocking {
+            val event = insertEvent("Slaughter", hash = "h1", doorsTime = "18:00")
+            server.enqueue(doorsAnswer())
+
+            check().pass().read shouldBe 1
+
+            suggestions(event).shouldBeEmpty()
+        }
+
+    @Test
     fun `a flyer that names another day proposes nothing and is not read again`(): Unit =
         runBlocking {
             val event = insertEvent("Savory", hash = "h1")
@@ -261,6 +283,16 @@ class FlyerLineupCheckTest : BaseControllerTest() {
             )
         )
 
+    private fun doorsAnswer(): mockwebserver3.MockResponse =
+        textResponse(
+            mapper.writeValueAsString(
+                mapOf(
+                    "flyerText" to "SLAUGHTER\n${dayOf(NIGHT)}\nDoors 19 Uhr",
+                    "doorsTime" to mapOf("value" to "19:00", "evidence" to "Doors 19 Uhr", "confidence" to 0.9)
+                )
+            )
+        )
+
     private suspend fun suggestions(event: Event): List<Row> =
         databaseClient
             .sql(
@@ -298,6 +330,7 @@ class FlyerLineupCheckTest : BaseControllerTest() {
         source: String = SOURCE,
         type: String = "PARTY",
         startTime: String? = null,
+        doorsTime: String? = null,
         pinned: String = "{}",
         withheld: Boolean = false,
         status: String = "SCHEDULED"
@@ -308,9 +341,9 @@ class FlyerLineupCheckTest : BaseControllerTest() {
             databaseClient
                 .sql(
                     """
-                    INSERT INTO events.event (venue_id, event_source_id, title, event_type, slug, event_date, start_time, source_id,
+                    INSERT INTO events.event (venue_id, event_source_id, title, event_type, slug, event_date, start_time, doors_time, source_id,
                                               image_url, image_withheld, pinned_fields, status)
-                    SELECT $venueId, s.id, :title, :type, :slug, CAST(:date AS date), CAST(:startTime AS time), :slug,
+                    SELECT $venueId, s.id, :title, :type, :slug, CAST(:date AS date), CAST(:startTime AS time), CAST(:doorsTime AS time), :slug,
                            :imageUrl, $withheld, CAST(:pinned AS text[]), :status
                     FROM events.event_source s WHERE s.slug = :source
                     RETURNING id
@@ -320,6 +353,7 @@ class FlyerLineupCheckTest : BaseControllerTest() {
                 .bind("slug", slug)
                 .bind("date", NIGHT.toString())
                 .let { if (startTime == null) it.bindNull("startTime", String::class.java) else it.bind("startTime", startTime) }
+                .let { if (doorsTime == null) it.bindNull("doorsTime", String::class.java) else it.bind("doorsTime", doorsTime) }
                 .bind("imageUrl", imageUrl)
                 .bind("pinned", pinned)
                 .bind("status", status)

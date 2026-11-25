@@ -20,6 +20,7 @@ data class FlyerTarget(
     val title: String,
     val eventDate: LocalDate,
     val startTime: LocalTime?,
+    val doorsTime: LocalTime?,
     val contentHash: String
 )
 
@@ -48,7 +49,7 @@ class FlyerRepository(
             template.databaseClient
                 .sql(
                     """
-                    SELECT e.id, e.title, e.event_date, e.start_time, ci.content_hash
+                    SELECT e.id, e.title, e.event_date, e.start_time, e.doors_time, ci.content_hash
                     FROM $EVENTS_SCHEMA.event e
                     JOIN $EVENTS_SCHEMA.event_source s ON s.id = e.event_source_id
                     JOIN $EVENTS_SCHEMA.cached_image ci ON ci.source_url = e.image_url
@@ -74,6 +75,7 @@ class FlyerRepository(
                         title = row.string("title"),
                         eventDate = requireNotNull(row.get("event_date", LocalDate::class.java)) { "Column 'event_date' is null" },
                         startTime = row.get("start_time", LocalTime::class.java),
+                        doorsTime = row.get("doors_time", LocalTime::class.java),
                         contentHash = row.string("content_hash")
                     )
                 }.all()

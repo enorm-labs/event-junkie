@@ -356,6 +356,7 @@ class EventClassificationCheck(
         const val FIELD_ARTISTS = "artists"
         private const val FIELD_FEATURES = "features"
         const val FIELD_START_TIME = "startTime"
+        const val FIELD_DOORS_TIME = "doorsTime"
         private const val FIELD_PRICE_PRESALE = "pricePresale"
         private const val FIELD_PRICE_BOX_OFFICE = "priceBoxOffice"
 
