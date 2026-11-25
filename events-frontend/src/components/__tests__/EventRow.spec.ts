@@ -118,7 +118,7 @@ describe('EventRow', () => {
 
   it('marks an event as live once it has started', () => {
     const wrapper = mount(EventRow, {
-      props: { event: { ...event, eventDate: todayIso(), startTime: '00:00' } },
+      props: { event: { ...event, eventDate: todayIso(), startTime: '10:00' } },
       global: { stubs },
     })
 

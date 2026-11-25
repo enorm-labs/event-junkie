@@ -1,4 +1,5 @@
 import type { EventDetail } from '@/api/types'
+import { assumedDurationHours } from '@/lib/eventDuration'
 import { addDays } from '@/lib/format'
 import { SITE_URL } from '@/lib/seo'
 
@@ -9,23 +10,6 @@ import { SITE_URL } from '@/lib/seo'
  * `EventCalendarIcs.kt` writes the calendar subscription by the same rules: change both or neither.
  */
 
-/**
- * Hours an event lasts when the venue stated no end, per event type. An estimate, and the entry
- * says so: a club night shown as a 30-minute slot at 23:00 is worse than a guess that says it is one.
- */
-export const DEFAULT_DURATION_HOURS: Readonly<Record<string, number>> = {
-  CONCERT: 3,
-  FESTIVAL: 8,
-  PARTY: 6,
-  QUIZ: 2,
-  SHOW: 2,
-  COMEDY: 2,
-  SCREENING: 2,
-  EXHIBITION: 3,
-  READING: 2,
-  OTHER: 3,
-}
-const FALLBACK_DURATION_HOURS = 3
 const HOUR_MS = 3_600_000
 
 /** A span with times, in UTC, or whole days with an exclusive end, as RFC 5545 counts them. */
@@ -119,11 +103,10 @@ export function eventCalendarSpan(event: EventDetail): CalendarSpan | null {
       endEstimated: false,
     }
   }
-  const hours = DEFAULT_DURATION_HOURS[event.eventType ?? ''] ?? FALLBACK_DURATION_HOURS
   return {
     allDay: false,
     start: startUtc,
-    end: new Date(startUtc.getTime() + hours * HOUR_MS),
+    end: new Date(startUtc.getTime() + assumedDurationHours(event.eventType) * HOUR_MS),
     startEstimated: !stated,
     endEstimated: true,
   }

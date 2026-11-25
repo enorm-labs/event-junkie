@@ -2,6 +2,7 @@
 // Berlin/EU audience.
 
 import { districtLabel } from '@/lib/districts'
+import { assumedDurationHours } from '@/lib/eventDuration'
 
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
   weekday: 'short',
@@ -224,7 +225,7 @@ export function isoWeekday(isoDate: string): number {
   return new Date(`${isoDate}T00:00:00Z`).getUTCDay() || 7
 }
 
-/** The fields that decide whether an event is over. */
+/** The fields that decide whether an event has started and is over. */
 export type EventSpan = {
   eventDate?: string | null
   endDate?: string | null
@@ -232,6 +233,7 @@ export type EventSpan = {
   startTime?: string | null
   doorsTime?: string | null
   assumedStartTime?: string | null
+  eventType?: string | null
 }
 
 /** A start at or after this is a night, and gets the grace below (#299). */
@@ -239,6 +241,11 @@ const LATE_START = '22:00'
 
 /** When last night is over (#299). The BFF and the importer share the hour. */
 const GRACE_ENDS = '06:00'
+
+/** Start, else doors, else the BFF's assumed slot, as `HH:mm`. */
+function effectiveStart(event: EventSpan): string | undefined {
+  return (event.startTime ?? event.doorsTime ?? event.assumedStartTime)?.slice(0, 5)
+}
 
 /**
  * Whether an event is over: on `endDate` when the venue stated one, else on its date, and today
@@ -258,8 +265,8 @@ export function isPastEvent(event: EventSpan): boolean {
   if (ends === today) return !!event.endTime && event.endTime.slice(0, 5) <= berlinTimeIso()
   if (event.endDate || ends !== yesterdayIso() || berlinTimeIso() >= GRACE_ENDS) return true
   // No time at all is a night too, as the importer counts it; the BFF sends a slot anyway.
-  const start = event.startTime ?? event.doorsTime ?? event.assumedStartTime
-  return !!start && start.slice(0, 5) < LATE_START
+  const start = effectiveStart(event)
+  return !!start && start < LATE_START
 }
 
 /** Whether an event started before today and is not over: a weekender in its second night. */
@@ -269,12 +276,34 @@ export function isRunningEvent(event: EventSpan): boolean {
 
 /**
  * Whether an event has started and is not over: a running weekender or last night's party, or
- * today's event once its effective start (start, else doors, else the BFF's slot) has passed in
- * Berlin. An estimate, since few events state an end: it ends where `isPastEvent` says.
+ * today's event once its effective start has passed in Berlin. It ends where `isPastEvent` says.
  */
-export function isOnNow(event: EventSpan): boolean {
+export function hasStarted(event: EventSpan): boolean {
   if (isRunningEvent(event)) return true
   if (event.eventDate !== todayIso() || isPastEvent(event)) return false
-  const start = event.startTime ?? event.doorsTime ?? event.assumedStartTime
-  return !!start && start.slice(0, 5) <= berlinTimeIso()
+  const start = effectiveStart(event)
+  return !!start && start <= berlinTimeIso()
+}
+
+/**
+ * Whether an event is on at this moment: {@link hasStarted}, and within the hours its type is
+ * assumed to last when it states no end (#5510). The event stays listed until `isPastEvent`.
+ */
+export function isOnNow(event: EventSpan): boolean {
+  return hasStarted(event) && !isPastAssumedEnd(event)
+}
+
+/** A stated end, a span of days, and a late start with its grace (#299) have no assumed end. */
+function isPastAssumedEnd(event: EventSpan): boolean {
+  const start = effectiveStart(event)
+  if (!start || event.endTime || start >= LATE_START) return false
+  if (!event.eventDate || (event.endDate && event.endDate > event.eventDate)) return false
+  // `isPastEvent` ends the event at midnight, so minutes of the start's own day are enough.
+  const ends = minutesOfDay(start) + assumedDurationHours(event.eventType) * 60
+  return ends <= minutesOfDay(berlinTimeIso())
+}
+
+function minutesOfDay(time: string): number {
+  const [hour, minute] = time.split(':').map(Number)
+  return (hour ?? 0) * 60 + (minute ?? 0)
 }

@@ -105,7 +105,7 @@ describe('toCalendarInput', () => {
       'fc-event-live',
     )
     expect(toInput(summary({ endDate: '2026-09-20' })).className).toBe('fc-event-past')
-    expect(toInput(summary({ eventDate: '2026-09-25', startTime: '10:00:00' })).className).toBe(
+    expect(toInput(summary({ eventDate: '2026-09-25', startTime: '12:00:00' })).className).toBe(
       'fc-event-live',
     )
     expect(

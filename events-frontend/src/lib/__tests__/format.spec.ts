@@ -7,6 +7,7 @@ import {
   formatDaysAgo,
   formatShortDate,
   humaniseEventType,
+  hasStarted,
   isPastEvent,
   isOnNow,
   isRunningEvent,
@@ -311,6 +312,119 @@ describe('isOnNow', () => {
 
     expect(isOnNow(on('2026-07-05', { endDate: '2026-07-08' }))).toBe(true)
     expect(isOnNow(on('2026-07-03', { endDate: '2026-07-06' }))).toBe(false)
+  })
+
+  describe('with no stated end (#5510)', () => {
+    const TODAY = '2026-07-07'
+
+    /** Sets the clock to a Berlin wall time in July, when Berlin is UTC+2. */
+    function berlin(date: string, time: string) {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(`${date}T${time}:00+02:00`))
+    }
+
+    it('ends a morning show after the hours of its type, and keeps it in the list', () => {
+      const show = on(TODAY, { startTime: '09:30:00', eventType: 'SHOW' })
+
+      berlin(TODAY, '11:29')
+      expect(isOnNow(show)).toBe(true)
+      berlin(TODAY, '11:30')
+      expect(isOnNow(show)).toBe(false)
+      berlin(TODAY, '20:00')
+      expect(isOnNow(show)).toBe(false)
+      expect(isPastEvent(show)).toBe(false)
+      expect(hasStarted(show)).toBe(true)
+    })
+
+    it('takes the fallback for an unknown type and for none', () => {
+      berlin(TODAY, '17:59')
+      expect(isOnNow(on(TODAY, { startTime: '15:00', eventType: 'BALLET' }))).toBe(true)
+      expect(isOnNow(on(TODAY, { startTime: '15:00' }))).toBe(true)
+      berlin(TODAY, '18:00')
+      expect(isOnNow(on(TODAY, { startTime: '15:00', eventType: 'BALLET' }))).toBe(false)
+      expect(isOnNow(on(TODAY, { startTime: '15:00' }))).toBe(false)
+    })
+
+    it('counts from doors, then from the assumed slot, where the start is missing', () => {
+      berlin(TODAY, '21:30')
+      const concert = { eventType: 'CONCERT' }
+      expect(isOnNow(on(TODAY, { ...concert, doorsTime: '18:30' }))).toBe(false)
+      expect(isOnNow(on(TODAY, { ...concert, doorsTime: '18:30', startTime: '19:00' }))).toBe(true)
+      expect(isOnNow(on(TODAY, { ...concert, assumedStartTime: '18:30' }))).toBe(false)
+      expect(isOnNow(on(TODAY, { ...concert, assumedStartTime: '20:00' }))).toBe(true)
+      expect(isOnNow(on(TODAY, concert))).toBe(false)
+    })
+
+    it('lets a stated end win, later or earlier than the assumed one', () => {
+      const stated = (endTime: string) =>
+        on(TODAY, { startTime: '09:30', endDate: TODAY, endTime, eventType: 'SHOW' })
+
+      berlin(TODAY, '13:00')
+      expect(isOnNow(stated('14:00'))).toBe(true)
+      berlin(TODAY, '10:30')
+      expect(isOnNow(stated('10:15'))).toBe(false)
+      // A stated end tomorrow morning.
+      berlin(TODAY, '23:30')
+      const night = { startTime: '15:00', endDate: '2026-07-08', endTime: '06:00' }
+      expect(isOnNow(on(TODAY, { ...night, eventType: 'PARTY' }))).toBe(true)
+    })
+
+    it('assumes an end where only the end date is stated, and it is the same day', () => {
+      berlin(TODAY, '20:00')
+      expect(isOnNow(on(TODAY, { startTime: '09:30', endDate: TODAY }))).toBe(false)
+    })
+
+    it.each([
+      ['its first day', TODAY, '2026-07-09'],
+      ['a middle day', '2026-07-06', '2026-07-08'],
+      ['its last day', '2026-07-05', TODAY],
+    ])('does not shorten a multi-day event on %s', (_, eventDate, endDate) => {
+      berlin(TODAY, '23:00')
+      expect(isOnNow(on(eventDate, { endDate, startTime: '10:00', eventType: 'SHOW' }))).toBe(true)
+    })
+
+    it.each(['PARTY', 'QUIZ', 'CONCERT', undefined])(
+      'keeps a 22:00 start of type %s on until six, on both sides of midnight',
+      (eventType) => {
+        const night = on(TODAY, { startTime: '22:00:00', eventType })
+        berlin(TODAY, '23:59')
+        expect(isOnNow(night)).toBe(true)
+        berlin('2026-07-08', '00:00')
+        expect(isOnNow(night)).toBe(true)
+        berlin('2026-07-08', '05:59')
+        expect(isOnNow(night)).toBe(true)
+        berlin('2026-07-08', '06:00')
+        expect(isOnNow(night)).toBe(false)
+      },
+    )
+
+    it('ends an earlier start at midnight where its assumed end is later', () => {
+      const party = on(TODAY, { startTime: '21:59', eventType: 'PARTY' })
+      berlin(TODAY, '23:59')
+      expect(isOnNow(party)).toBe(true)
+      berlin('2026-07-08', '00:00')
+      expect(isOnNow(party)).toBe(false)
+      expect(isPastEvent(party)).toBe(true)
+    })
+
+    it('ends a start after midnight on its own day', () => {
+      const party = on(TODAY, { startTime: '00:30', eventType: 'PARTY' })
+      berlin(TODAY, '06:29')
+      expect(isOnNow(party)).toBe(true)
+      berlin(TODAY, '06:30')
+      expect(isOnNow(party)).toBe(false)
+    })
+
+    it.each(['SCHEDULED', 'RELOCATED', 'CANCELLED', 'POSTPONED'])(
+      'ends a %s event by the same clock',
+      (status) => {
+        const show = { ...on(TODAY, { startTime: '09:30', eventType: 'SHOW' }), status }
+        berlin(TODAY, '10:00')
+        expect(isOnNow(show)).toBe(true)
+        berlin(TODAY, '20:00')
+        expect(isOnNow(show)).toBe(false)
+      },
+    )
   })
 })
 

@@ -25,6 +25,13 @@ const TODAY = '2026-10-07'
 
 const started: EventSummary = { slug: 'started', eventDate: TODAY, startTime: '19:00' }
 const later: EventSummary = { slug: 'later', eventDate: TODAY, startTime: '23:00' }
+// Its assumed end was at 11:30 (#5510).
+const morning: EventSummary = {
+  slug: 'morning',
+  eventDate: TODAY,
+  startTime: '09:30',
+  eventType: 'SHOW',
+}
 const lastNight: EventSummary = {
   slug: 'weekender',
   eventDate: '2026-10-06',
@@ -69,7 +76,7 @@ describe('EventsView with On now', () => {
     getMock.mockImplementation((path) =>
       Promise.resolve(
         path === '/api/events/calendar'
-          ? [lastNight, started, later]
+          ? [lastNight, morning, started, later]
           : { content: [later], page: 0, totalPages: 3, totalElements: 41 },
       ),
     )

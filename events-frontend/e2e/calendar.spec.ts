@@ -79,12 +79,12 @@ const todayInBerlin = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
 
 test("marks today's started events as live and last month's as past", async ({ page }) => {
-  // One event that started at midnight today, one on the first visible day, otherwise the same
-  // shape, so the class and the label are proven to come from the date alone.
+  // 20:00 Berlin: an event that states no end is on now only for the hours of its type.
+  await page.clock.setFixedTime(new Date('2026-08-15T18:00:00Z'))
   await page.route(calendarFeed, (route) => {
     const from = new URL(route.request().url()).searchParams.get('from') ?? '2026-07-01'
     return json(route, [
-      { slug: 'tonight-gig', title: 'Tonight Gig', eventDate: todayInBerlin(), startTime: '00:00' },
+      { slug: 'tonight-gig', title: 'Tonight Gig', eventDate: '2026-08-15', startTime: '19:00' },
       { slug: 'range-gig', title: 'Range Gig', eventDate: from, startTime: '20:00' },
     ])
   })
