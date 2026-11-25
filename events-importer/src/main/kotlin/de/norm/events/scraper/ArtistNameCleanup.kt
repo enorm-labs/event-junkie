@@ -60,6 +60,7 @@ internal val ARTIST_SUFFIX_PATTERN =
             """|(?<=\S)\s+alias\s+\S.*$""" +
             """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band|on\s+stage))?(?:\s*&\s*dj[\s-]?set)?""" +
             """(?:\s+in\s+\S.*|\s+(?:19|20)\d{2})?$""" +
+            """|(?<=\S)\s*\*\s*(?:hybrid\s+)?live(?:\s+(?:set|band|hybrid))?\s*$""" +
             """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|drag""" +
             """|(?:duo|trio)[\s-]?set|konzert|concert|zusatz(?:show|konzert|termin)|(?:extra|additional)\s+show""" +
             """|(?:all\s+)?vinyl(?:\s+(?:set|only))?|album[\s-]?set|all\s+night\s+long|open\s+to\s+close)\)\s*$""" +

@@ -907,12 +907,12 @@ jonny_knuppel:2026-07-24-2200 |  | Martin Meyer | DJ
 jonny_knuppel:2026-07-24-2200 |  | Marc Machado | DJ
 jonny_knuppel:2026-07-31-2200 |  | Alejandro Rosas | DJ
 jonny_knuppel:2026-07-31-2200 |  | Allynx | DJ
-jonny_knuppel:2026-07-31-2200 |  | Antaares *live | LIVE
-jonny_knuppel:2026-07-31-2200 |  | B4TO *live | LIVE
+jonny_knuppel:2026-07-31-2200 |  | Antaares | LIVE
+jonny_knuppel:2026-07-31-2200 |  | B4TO | LIVE
 jonny_knuppel:2026-07-31-2200 |  | Bonnie Ford | DJ
 jonny_knuppel:2026-07-31-2200 |  | CaMi b2b loufo | DJ
 jonny_knuppel:2026-07-31-2200 |  | Caro Vola | DJ
-jonny_knuppel:2026-07-31-2200 |  | Chomba *live | LIVE
+jonny_knuppel:2026-07-31-2200 |  | Chomba | LIVE
 jonny_knuppel:2026-07-31-2200 |  | Cosmic Jaet | DJ
 jonny_knuppel:2026-07-31-2200 |  | Danca | DJ
 jonny_knuppel:2026-07-31-2200 |  | Don Son / Donnie | DJ
@@ -924,7 +924,7 @@ jonny_knuppel:2026-07-31-2200 |  | Garstique | DJ
 jonny_knuppel:2026-07-31-2200 |  | GYRL | DJ
 jonny_knuppel:2026-07-31-2200 |  | Hot Oasis | DJ
 jonny_knuppel:2026-07-31-2200 |  | Iva Bodul | DJ
-jonny_knuppel:2026-07-31-2200 |  | Kahl & Kæmena *live | LIVE
+jonny_knuppel:2026-07-31-2200 |  | Kahl & Kæmena | LIVE
 jonny_knuppel:2026-07-31-2200 |  | Kataya | DJ
 jonny_knuppel:2026-07-31-2200 |  | Kate Tone | DJ
 jonny_knuppel:2026-07-31-2200 |  | Katschinka | DJ
@@ -933,11 +933,11 @@ jonny_knuppel:2026-07-31-2200 |  | Maria Theresia von Eberg | DJ
 jonny_knuppel:2026-07-31-2200 |  | Max Marlon | DJ
 jonny_knuppel:2026-07-31-2200 |  | NÚRIA | DJ
 jonny_knuppel:2026-07-31-2200 |  | Raphael Hofman | DJ
-jonny_knuppel:2026-07-31-2200 |  | REYNEKE *live | LIVE
+jonny_knuppel:2026-07-31-2200 |  | REYNEKE | LIVE
 jonny_knuppel:2026-07-31-2200 |  | Rolandson | DJ
 jonny_knuppel:2026-07-31-2200 |  | Sabura | DJ
 jonny_knuppel:2026-07-31-2200 |  | San Miguel | DJ
-jonny_knuppel:2026-07-31-2200 |  | Saraabb *live | LIVE
+jonny_knuppel:2026-07-31-2200 |  | Saraabb | LIVE
 jonny_knuppel:2026-07-31-2200 |  | Sexy against Borders | DJ
 jonny_knuppel:2026-07-31-2200 |  | Thiemo | DJ
 jonny_knuppel:2026-07-31-2200 |  | Tom Cordes | DJ
