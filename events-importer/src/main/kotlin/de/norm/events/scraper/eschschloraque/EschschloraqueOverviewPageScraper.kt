@@ -45,6 +45,7 @@ import java.time.format.DateTimeParseException
  * format decides. A `<host> presents <act> - live!` title is one: it bills a live act, so the night
  * is a `CONCERT`. Then the billing and the prose decide (#2992): a `Live:` line makes a concert, and
  * a `Dj:` or "on the couch:" line, or prose that names a party or a dancefloor, makes a club night.
+ * Without a billing line, prose that opens with a DJ's bio bills the title's name ([soloDj]).
  * "on the couch" is a DJ seat, and the venue calls those nights a "Partyreihe". Else `OTHER`.
  * Deliberately **not**
  * [inferConcertVenueType][de.norm.events.scraper.inferConcertVenueType]: defaulting a bar's DJ
@@ -68,7 +69,7 @@ class EschschloraqueOverviewPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val nodes = document.select(".node-veranstaltung")
+        val nodes = document.select(".node-veranstaltung").filterNot { CLOSED.matches(it.textAt(".veranstaltung-title").orEmpty()) }
         return nodes.parseListing(logger, "Eschschloraque event node") { node ->
             parseNode(node, baseUrl)
         }
@@ -106,7 +107,13 @@ class EschschloraqueOverviewPageScraper {
         val description = parseDescription(node, billingParagraphs)
         val (doorsTime, startTime) = resolveTimes(startDateTime.second, node.select(PROSE_PARAGRAPHS).text())
         val presentedActs = presentedLiveActs(title)
-        val lineup = (presentedActs + parseLineup(billingParagraphs).filterNot { repeatsNightName(it.name, title) }).distinctBy { it.name.lowercase() }
+        val lineup =
+            (
+                presentedActs +
+                    parseLineup(billingParagraphs).filterNot {
+                        repeatsNightName(it.name, title)
+                    }
+            ).distinctBy { it.name.lowercase() }.ifEmpty { soloDj(title, description) }
 
         return ScrapedEvent(
             title = title,
@@ -119,7 +126,13 @@ class EschschloraqueOverviewPageScraper {
             description = description,
             eventType =
                 if (presentedActs.isEmpty()) {
-                    typeOf(title, lineup, billsDjs = billingParagraphs.any { DJ_BILLING.containsMatchIn(it.text()) }, description = description)
+                    typeOf(
+                        title,
+                        lineup,
+                        billsDjs =
+                            billingParagraphs.any { DJ_BILLING.containsMatchIn(it.text()) } || (billingParagraphs.isEmpty() && lineup.isNotEmpty()),
+                        description = description
+                    )
                 } else {
                     EventType.CONCERT.name
                 },
@@ -316,6 +329,12 @@ class EschschloraqueOverviewPageScraper {
         /** The house's bingo night, a game night (EVENT_SCOPE.md §2). */
         val BINGO = Regex("""\bbingo\b""", RegexOption.IGNORE_CASE)
 
+        /** A title whose last word is a show, compounds included: `Weihnachtsshow`. */
+        val SHOW_TITLE = Regex("""show\s*$""", RegexOption.IGNORE_CASE)
+
+        /** The whole title of a day the bar stays shut. */
+        val CLOSED = Regex("""geschlossen\s*!*""", RegexOption.IGNORE_CASE)
+
         /** Prose that names a club night: a party, dancing, a dancefloor, or a resident DJ's set. */
         val CLUB_NIGHT_PROSE = Regex("""party|dancing|dancefloor|tanzfläche|resident\s+dj|\bdjing\b""", RegexOption.IGNORE_CASE)
 
@@ -347,6 +366,7 @@ class EschschloraqueOverviewPageScraper {
             return when {
                 fromTitle != EventType.OTHER.name -> fromTitle
                 BINGO.containsMatchIn(title) -> EventType.QUIZ.name
+                SHOW_TITLE.containsMatchIn(title) -> EventType.SHOW.name
                 lineup.any { it.role == LIVE_ROLE } -> EventType.CONCERT.name
                 billsDjs || CLUB_NIGHT_PROSE.containsMatchIn(description.orEmpty()) -> EventType.PARTY.name
                 else -> fromTitle
@@ -395,3 +415,26 @@ private fun isConnective(line: String): Boolean = CONNECTIVE.matches(line.trim()
 
 /** A connective on its own. `X` stays out: it is a band's name too. */
 private val CONNECTIVE = Regex("""(?:meets|vs\.?|versus|presents|präsentiert|&)""", RegexOption.IGNORE_CASE)
+
+/**
+ * The DJ a night without a billing line is titled after: the prose opens with a bio, as `A DJ duo with …` on `M&Ms — born in
+ * the club` (event 15418) or `Bial HClap is a music producer and DJ` on `Bial HClap` (event 15419). The words after a spaced
+ * dash are the night's motto.
+ */
+private fun soloDj(
+    title: String,
+    description: String?
+): List<ScrapedArtist> {
+    val name = title.split(MOTTO_DASH).first().trim()
+    val bio = Regex("""^(?:${Regex.escape(name)}\s+(?:is|are|ist|sind)\s+)?$DJ_BIO""", RegexOption.IGNORE_CASE)
+    return if (description == null || isNonArtistName(name) || !bio.containsMatchIn(description)) {
+        emptyList()
+    } else {
+        listOf(ScrapedArtist(name = name, role = ArtistRole.DJ, titleDerived = true))
+    }
+}
+
+private val MOTTO_DASH = Regex("""\s+[–—]\s+""")
+
+/** An article, up to four words of description, and the word `DJ`. */
+private const val DJ_BIO = """(?:an?|eine?)\s+(?:[\p{L}-]+\s+){0,4}?DJ\b"""

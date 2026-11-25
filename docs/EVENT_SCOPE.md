@@ -164,6 +164,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Peter Edel          | `isClosedToPublic` (`PeterEdelOverviewPageScraper.parseBox`) | An info line or ticket column that says `nur für geladene Gäste`, `Geschlossene Gesellschaft` or `Privatveranstaltung`               |
 | Bar Tausend         | `TausendOverviewPageScraper.CLOSED_EVENT_ACT`                | The act `Closed Event`: a private booking. The words `geschlossene Veranstaltung` alone are not enough                               |
 | Konrad Tönz         | `NOT_A_NIGHT` (`KonradToenzOverviewPageScraper.kt`)          | A night named only `Geschlossen`, `Geschlossene Veranstaltung` or `Offener Abend`: the bar is shut, booked or open with no programme |
+| Eschschloraque      | `CLOSED` (`EschschloraqueOverviewPageScraper.kt`)            | An entry named only `Geschlossen`: the bar is shut                                                                                   |
 | ausland             | `AuslandOverviewPageScraper.parseItem`                       | A title that names a `workshop`                                                                                                      |
 | Weltwirtschaft      | `WeltwirtschaftApiScraper.BRUNCH`                            | A title that names a `Brunch`                                                                                                        |
 | Galiläakirche       | `isOutOfScope` (`GalilaeakircheOverviewPageScraper.kt`)      | A title that names a `Markt` or an `Auktion`, whatever category it is filed under                                                    |
@@ -182,6 +183,7 @@ A market in a venue's feed stays out, a Christmas market too. Christmas markets 
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
+Humboldthain's `Vinyl Workshop` stays for the same reason: its open decks follow.
 
 Note the deliberate asymmetry. A row with **no** category is kept. The park files its one-off evening events under no
 category at all: a games night, a quiz show. Dropping an uncategorised row would lose them.

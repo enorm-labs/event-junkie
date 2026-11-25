@@ -88,4 +88,29 @@ class PalomaProgrammPageScraperTest {
     fun `a page without a programme yields nothing`() {
         scraper.scrape(Jsoup.parse("<html><body><p>Closed</p></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    private fun block(
+        heading: String,
+        vararg djs: String
+    ): List<ScrapedEvent> {
+        val rows = djs.joinToString("") { "<tr><td class=kotti_online_td>$it&nbsp;</td></tr>" }
+        val html = "<div><div><b>$heading</b></div><div><table><tr><td><b><div>A PARTY</div></b></td></tr>$rows</table></div></div>"
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+    }
+
+    @Test
+    fun `a class, the community DJs and a secret act bill nobody (events 15433 and 15439)`() {
+        val night = block("SAMSTAG 05/12 22:00", "DOREEN", "HOUSE DANCE CLASS BY SONIA", "COMMUNITY DJS", "SECRET ACT").single()
+
+        night.artists.map { it.name } shouldContainExactly listOf("DOREEN")
+    }
+
+    @Test
+    fun `a night with no time, or the midnight placeholder, has no start`() {
+        val untimed = block("SONNTAG 06/12", "ORIK").single()
+        untimed.eventDate shouldBe LocalDate.of(2026, 12, 6)
+        untimed.startTime.shouldBeNull()
+
+        block("DONNERSTAG 10/12 00:00", "MAT FINK").single().startTime.shouldBeNull()
+    }
 }

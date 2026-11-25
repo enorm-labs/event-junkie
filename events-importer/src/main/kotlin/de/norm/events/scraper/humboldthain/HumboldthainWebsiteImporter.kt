@@ -54,8 +54,8 @@ val HUMBOLDTHAIN_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing in the payload marks a night cancelled or moved", verified = "2026-10-02"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "a night without `ra.co/dj/` links names its acts only on the poster or in the prose",
-            verified = "2026-11-14"
+            "a night without `ra.co/dj/` links or a block headed `LIVE ACTS` or `DJS` names its acts only on the poster or in the prose",
+            verified = "2026-11-25"
         ),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title", verified = "2026-10-13"),
         houseGenre = "Techno, House",
