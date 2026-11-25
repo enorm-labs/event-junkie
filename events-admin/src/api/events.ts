@@ -53,16 +53,14 @@ export interface EventArtist {
   setEnd?: string | null
 }
 
-/** The fields of `EventResponse` an edit reads back. Prices arrive as JSON numbers. */
-export interface AdminEvent {
-  id: number
+/** The fields a read and a write of an event share. Prices arrive as JSON numbers. */
+interface EventFields {
   venueId: number
   title: string
   subtitle: string | null
   description: string | null
   eventType: EventType
   status: string
-  slug: string
   eventDate: string
   doorsTime: string | null
   startTime: string | null
@@ -72,7 +70,6 @@ export interface AdminEvent {
   ticketUrl: string | null
   facebookEventUrl: string | null
   genre: string | null
-  genreTags: string[]
   pricePresale: number | null
   priceBoxOffice: number | null
   priceCurrency: string
@@ -81,6 +78,13 @@ export interface AdminEvent {
   free: boolean
   artists: EventArtist[]
   promoterIds: number[]
+}
+
+/** The fields of `EventResponse` an edit reads back. */
+export interface AdminEvent extends EventFields {
+  id: number
+  slug: string
+  genreTags: string[]
   pinnedFields: string[]
   /** The festival an operator linked the event to (#3273), or null. */
   festivalId?: number | null
@@ -93,30 +97,7 @@ export interface AdminEvent {
 }
 
 /** `EventRequest`: the body of a POST or a PUT. */
-export interface EventRequest {
-  venueId: number
-  title: string
-  subtitle: string | null
-  description: string | null
-  eventType: EventType
-  status: string
-  eventDate: string
-  doorsTime: string | null
-  startTime: string | null
-  imageUrl: string | null
-  sourceUrl: string | null
-  sourceId: string
-  ticketUrl: string | null
-  facebookEventUrl: string | null
-  genre: string | null
-  pricePresale: number | null
-  priceBoxOffice: number | null
-  priceCurrency: string
-  priceNote: string | null
-  soldOut: boolean
-  free: boolean
-  artists: EventArtist[]
-  promoterIds: number[]
+export interface EventRequest extends EventFields {
   /** Left out, the importer keeps the stored festival; null clears it (#3273). */
   festivalId?: number | null
   /** An ISO instant. Left out, the importer keeps the stored pick; null clears it (#1262). */
