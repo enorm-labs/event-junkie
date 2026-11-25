@@ -27,8 +27,8 @@
 # refreshed Alpine packages sooner; 1.30-alpine is the conservative alternative.
 #
 # **The image scan does not see nginx itself.** The package comes from nginx.org, and Trivy reported
-# none of the 1.31.9 fixes against 1.31.7 (CVE-2026-123007 and others). Compare the version with
-# https://nginx.org/en/security_advisories.html: this pin must satisfy `nginx >= 1.31.10`.
+# none of the 1.31.9 fixes against 1.31.7 (CVE-2026-123007 and others). `scripts/nginx-advisories.py`
+# compares this pin with nginx.org's advisories, and `nginx-advisory-reminder.yml` runs it daily (#5514).
 #
 # Verify the package, never the digest: #770 was triaged against a digest that had moved while
 # still shipping the vulnerable openssl. This pin must also satisfy `libssl3 >= 3.5.8-r0` (#770),

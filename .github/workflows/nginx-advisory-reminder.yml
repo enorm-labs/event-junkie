@@ -1,0 +1,145 @@
+# Opens an issue when nginx.org lists an advisory against the nginx version in the frontend's base image.
+# The image scans cannot: the package comes from nginx.org, and Trivy reported none of its CVEs for
+# 1.31.7 (#5514). A digest check does not either, because the tag can stop moving: Docker Hub's did (#5511).
+#
+# **The comparison is `scripts/nginx-advisories.py`**, which a person can run before a bump. It reads the pin
+# on `main`, so a fix that waits for a release reads as clean.
+# **Idempotent**: one issue per pinned version, keyed on the exact title. An advisory that appears later
+# for the same version is a comment on it. Closing the issue accepts the advisories it names.
+name: Nginx Advisory Reminder
+
+on:
+  schedule:
+    # Daily, off-the-hour: an advisory with a public exploit cannot wait for a Monday.
+    - cron: '27 5 * * *'
+  # The only way to see it work without waiting for the schedule.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Creating the issue and its comments, and listing to find one that already exists.
+  issues: write
+
+# A dispatch racing the schedule must not produce two issues; the second still checks.
+concurrency:
+  group: nginx-advisory-reminder
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check the nginx version
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Exit 1 is "affected" and expected. Anything above it is "the check could not be made", which fails
+      # the job. `jq` fails it too when the script died with a traceback, whose exit status is also 1.
+      - name: Compare the version with nginx.org's advisories
+        id: check
+        run: |
+          rc=0
+          report="$(scripts/nginx-advisories.py --json)" || rc=$?
+          if [ "$rc" -ge 2 ]; then
+            echo "::error::The nginx advisory check could not be made — see the message above." >&2
+            exit "$rc"
+          fi
+          report="$(printf '%s' "$report" | jq -ce 'select(.version and (.affected | type == "array"))')"
+          echo "report=$report" >> "$GITHUB_OUTPUT"
+
+      - name: Open an issue for an affected version
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          REPORT: ${{ steps.check.outputs.report }}
+          # An assignee rather than a mention: an unassigned issue on a board is nobody's.
+          NGINX_OWNER: enorm
+        with:
+          script: |
+            const { version, affected } = JSON.parse(process.env.REPORT);
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const blob = `https://github.com/${owner}/${repo}/blob/main`;
+            const bot = 'github-actions[bot]';
+            // The title carries the *pinned* version, never the fix, so a newer release cannot pile up issues.
+            const title = `Bump nginx in the frontend image — ${version} has published advisories`;
+
+            const summary = core.summary.addHeading('🛡️ nginx advisories', 2);
+            if (affected.length === 0) {
+              await summary.addRaw(`nginx ${version} is in no advisory's vulnerable range.`).write();
+              return;
+            }
+
+            // Listing, not search: the search index is eventually consistent. Closed ones count, because closing
+            // accepts what the issue names. Only the bot's own text is read: anyone can comment a CVE id here.
+            const mine = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'all', creator: bot, per_page: 100,
+            });
+            const issues = mine.filter((issue) => !issue.pull_request && issue.title === title);
+            let known = '';
+            for (const issue of issues) {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: issue.number, per_page: 100,
+              });
+              const own = comments.filter((comment) => comment.user?.login === bot);
+              known += [issue.body, ...own.map((comment) => comment.body)].join('\n');
+            }
+
+            // Whole ids: `CVE-2026-1234` must not count as known because `CVE-2026-12345` is.
+            const isKnown = (id) => known.includes(`\`${id}\``);
+            const fresh = affected.filter((entry) => !entry.ids.every(isKnown));
+            const clean = (text) => text.replaceAll('`', '');
+            const rows = fresh.map((entry) =>
+              `- ${entry.ids.map((id) => `\`${clean(id)}\``).join(', ')}: \`${clean(entry.title)}\`, ` +
+                `not vulnerable: \`${clean(entry.fixed_in)}\``);
+
+            const openIssue = issues.find((issue) => issue.state === 'open');
+            if (fresh.length === 0) {
+              summary.addRaw(`nginx ${version}: every advisory is already on ${issues.map((i) => `#${i.number}`).join(', ')}.`);
+            } else if (openIssue) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: openIssue.number,
+                body: ['**More advisories list this version:**', '', ...rows].join('\n'),
+              });
+              summary.addRaw(`Commented on #${openIssue.number}: ${fresh.length} more.`);
+            } else {
+              const body = [
+                `> Opened automatically by [\`nginx-advisory-reminder.yml\`](${blob}/.github/workflows/nginx-advisory-reminder.yml) ` +
+                  '([#5514](https://github.com/enorm-labs/event-junkie/issues/5514)). The list was true when this issue opened; ' +
+                  `[\`scripts/nginx-advisories.py\`](${blob}/scripts/nginx-advisories.py) answers for today.`,
+                '',
+                `**The frontend image is on nginx \`${version}\`, and [nginx.org](https://nginx.org/en/security_advisories.html) lists it as vulnerable:**`,
+                '',
+                ...rows,
+                '',
+                '## What to do',
+                '',
+                '1. **Read each advisory against `events-frontend/docker/nginx.conf`.** The check compares versions only. ' +
+                  'Without HTTP/2, `resolver`, `alias` or a mail proxy most of them are not reachable, and that sets the priority.',
+                `2. **Bump the digest in [\`events-frontend/Dockerfile\`](${blob}/events-frontend/Dockerfile)**, if the tag has moved. ` +
+                  'If it has not, look at the project\'s other registries: the same tag can be ahead on one of them.',
+                '3. **Closing this issue accepts the advisories it names** for this version. A new one opens a new issue.',
+                '',
+                '## Done when',
+                '',
+                '- [ ] `scripts/nginx-advisories.py` exits 0 on `main`, or this issue says why the advisories do not reach us',
+              ].join('\n');
+              const { data: issue } = await github.rest.issues.create({
+                owner, repo, title, body,
+                // Intrinsic properties of the work; Status and Priority are board fields.
+                labels: ['area:frontend', 'area:security', 'size:S'],
+                assignees: [process.env.NGINX_OWNER],
+                // No milestone: a recurring maintenance obligation outlives every release gate.
+                type: 'Task',
+              });
+              // The board cannot be written from here (`GITHUB_TOKEN` cannot write to an organisation project), and
+              // "Auto-add to project" misses items (#1092). Check the card after a run.
+              core.notice(`Opened #${issue.number} — ${title}`);
+              summary.addRaw(`Opened #${issue.number}: ${fresh.length} advisories.`);
+            }
+            await summary.write();

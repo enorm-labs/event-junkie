@@ -18,6 +18,9 @@ on:
       # test_promoter_images.py reads the promoter request DTO and docs/promoters/IMAGES.tsv.
       - 'events-importer/src/main/kotlin/de/norm/events/promoter/PromoterRequest.kt'
       - 'docs/promoters/IMAGES.tsv'
+      # test_nginx_advisories.py reads the saved advisory page and the frontend's FROM line.
+      - 'scripts/nginx-advisories-fixture.html'
+      - 'events-frontend/Dockerfile'
       # test_festival_match.py reads the saved programme page.
       - 'scripts/festival-match-fixture.html'
       - 'events-importer/src/test/resources/scraper/**'
@@ -34,6 +37,9 @@ on:
       # test_promoter_images.py reads the promoter request DTO and docs/promoters/IMAGES.tsv.
       - 'events-importer/src/main/kotlin/de/norm/events/promoter/PromoterRequest.kt'
       - 'docs/promoters/IMAGES.tsv'
+      # test_nginx_advisories.py reads the saved advisory page and the frontend's FROM line.
+      - 'scripts/nginx-advisories-fixture.html'
+      - 'events-frontend/Dockerfile'
       # test_festival_match.py reads the saved programme page.
       - 'scripts/festival-match-fixture.html'
       - 'events-importer/src/test/resources/scraper/**'
@@ -86,6 +92,9 @@ jobs:
 
       - name: force-import reads every page of the source listing
         run: python3 scripts/test_force_import.py
+
+      - name: nginx-advisories reports an affected version and fails on a page it cannot read
+        run: python3 scripts/test_nginx_advisories.py
 
       - name: manual-collisions folds titles and matches a hand-entered row
         run: python3 scripts/test_manual_collisions.py

@@ -148,6 +148,9 @@ is the map and the traps.
   `user_data`, so a merged bump changes nothing on a running node until its next rebuild, and `walg_checksums` must move with the version or `backups.sh` aborts the boot. `scripts/upstream-node-pins.sh`
   holds the comparison (exit 0 current, 1 behind, 2 could not check — only 2 fails the job); titles carry the pinned version so upstream moving cannot pile
   up issues. What to do with the issue is `docs/ops/K3S_UPGRADE.md`, and it is not a rebuild.
+- `nginx-advisory-reminder.yml` (#5514) — daily, when nginx.org lists an advisory against the nginx in the frontend's base image, which Trivy does not see.
+  `scripts/nginx-advisories.py` compares, with the same exit contract. The title carries the pinned version, a later advisory is a comment, and closing the
+  issue accepts the advisories it names. It reads the pin on `main`, not the deployed image.
 - `vendored-skill-reminder.yml` — when a skill under `.claude/skills/` with a `VENDORED.md` falls behind upstream. Same shape as `node-pin-reminder.yml`:
   `scripts/upstream-vendored-skills.sh` compares, exit 2 alone fails the job, the title carries the pinned commit. **No pull request**: the update is a
   re-copy plus the gates, and a Renovate SHA bump would move `VENDORED.md` without the files.
