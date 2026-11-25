@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>OST, Berlin</title>
+  <meta name="description" content="OST is a techno club in the former power station of the Berlin Osthafen. Programme, tickets, the building, house rules and how to get there.">
+  <meta name="theme-color" content="#0b0b0b">
+  <link rel="canonical" href="https://clubost.de/">
+  <link rel="icon" href="assets/logo/favicon-64.png" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/logo/favicon-180.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="OST">
+  <meta property="og:title" content="OST, Berlin">
+  <meta property="og:description" content="Techno club in the former power station of the Berlin Osthafen. Thursday to Saturday, Alt Stralau 1-2.">
+  <meta property="og:image" content="https://clubost.de/assets/og.jpg">
+  <meta property="og:url" content="https://clubost.de/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="assets/fonts/big-shoulders-display-900.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/archivo-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/styles.css?v=20261124g">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"NightClub","name":"OST","alternateName":"Club OST","url":"https://clubost.de/","image":"https://clubost.de/assets/og.jpg","address":{"@type":"PostalAddress","streetAddress":"Alt Stralau 1-2","postalCode":"10245","addressLocality":"Berlin","addressCountry":"DE"},"sameAs":["https://www.instagram.com/club.ost/","https://www.facebook.com/club.ost","https://ra.co/clubs/141987"]}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#programme">Skip to the programme</a>
+
+  <header class="nav" id="nav">
+    <a class="nav__logo" href="#top" aria-label="OST, back to top">
+      <img src="assets/logo/ost-mark-white-480.png" alt="OST" width="480" height="236">
+    </a>
+    <nav class="nav__links" aria-label="Main">
+      <a href="#programme">Programme</a>
+      <a href="#club">Club</a>
+      <a href="#building">Building</a>
+      <a href="#rules">Rules</a>
+      <a href="#info">Info</a>
+      <a href="#newsletter">Newsletter</a>
+    </nav>
+    <a class="btn btn--solid nav__cta" data-next-tickets href="https://ra.co/clubs/141987" target="_blank" rel="noopener">Tickets</a>
+    <button class="nav__burger" id="burger" type="button" aria-expanded="false" aria-controls="menu" aria-label="Open menu">
+      <span></span><span></span>
+    </button>
+  </header>
+
+  <div class="menu" id="menu" hidden>
+    <nav class="menu__links" aria-label="Menu">
+      <a href="#programme">Programme</a>
+      <a href="#club">Club</a>
+      <a href="#building">Building</a>
+      <a href="#formats">Nights</a>
+      <a href="#rules">Rules</a>
+      <a href="#info">Info</a>
+      <a href="#newsletter">Newsletter</a>
+    </nav>
+    <div class="menu__foot">
+      <a class="btn btn--solid" data-next-tickets href="https://ra.co/clubs/141987" target="_blank" rel="noopener">Tickets</a>
+      <ul class="menu__social">
+        <li><a href="https://www.instagram.com/club.ost/" target="_blank" rel="noopener">Instagram</a></li>
+        <li><a href="https://ra.co/clubs/141987" target="_blank" rel="noopener">Resident Advisor</a></li>
+        <li><a href="https://www.facebook.com/club.ost" target="_blank" rel="noopener">Facebook</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <main id="top">
+
+    <section class="hero" aria-label="OST">
+      <picture class="hero__media">
+        <source media="(max-width: 700px)" type="image/webp" srcset="assets/img/hero-facade-portrait.webp">
+        <source media="(max-width: 700px)" srcset="assets/img/hero-facade-portrait.jpg">
+        <source type="image/webp" srcset="assets/img/hero-facade.webp">
+        <img src="assets/img/hero-facade.jpg" alt="The former Osthafen power station in Berlin-Stralau, brick facade with its tower, in black and white" width="1244" height="829" fetchpriority="high" decoding="async">
+      </picture>
+      <div class="hero__inner">
+        <h1 class="hero__mark"><img src="assets/logo/ost-mark-white.png" alt="OST" width="1175" height="577"></h1>
+        <p class="hero__sub">Thursday to Saturday in Berlin-Stralau. Dark, raw and open to everyone. Come for the building, the sound and the people.</p>
+        <div class="hero__cta">
+          <a class="btn btn--solid btn--lg" data-next-tickets href="https://ra.co/clubs/141987" target="_blank" rel="noopener">Tickets</a>
+          <a class="btn btn--ghost btn--lg" id="hero-programme" href="#programme">Programme</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="programme" id="programme" aria-labelledby="programme-h">
+      <div class="wrap">
+        <h2 class="h2" id="programme-h">Programme</h2>
+        <div class="featured" id="featured" aria-live="polite"></div>
+        <div class="grid-head reveal">
+          <h3 class="h3">Coming up</h3>
+          <p class="mono dim" id="grid-count"></p>
+        </div>
+        <ul class="posters" id="posters"></ul>
+        <div class="posters__more">
+          <button class="btn btn--ghost" id="show-all" type="button" hidden>Show all nights</button>
+        </div>
+        <p class="empty" id="empty" hidden>No nights announced right now. New dates land on <a href="https://www.instagram.com/club.ost/" target="_blank" rel="noopener">Instagram</a> first.</p>
+      </div>
+    </section>
+
+    <section class="club" id="club" aria-labelledby="club-h">
+      <div class="wrap club__grid">
+        <h2 class="club__statement reveal" id="club-h">Dark.<br>Raw.<br>Intense.<br><span class="club__statement-alt">For everyone.</span></h2>
+        <div class="club__text reveal">
+          <p>OST is a techno club in the former power station of the Berlin Osthafen, on the Spree between Friedrichshain and Treptow. High brick walls on the outside. Inside: two floors, the main floor and the Lager.</p>
+          <p>Line-ups change. The room, the sound and the people are what you come back for. Leave the week at the door, let go for a few hours and look after the person next to you.</p>
+          <dl class="facts">
+            <div><dt>Nights</dt><dd>Thursday, Friday, Saturday</dd></div>
+            <div><dt>Doors</dt><dd>23:00. Thursdays free entry till 00:30</dd></div>
+            <div><dt>Age</dt><dd>18 and over, with photo ID</dd></div>
+            <div><dt>Payment</dt><dd>Cashless at every bar</dd></div>
+            <div><dt>Photos</dt><dd>No photos or videos inside</dd></div>
+            <div><dt>Address</dt><dd>Alt Stralau 1-2, 10245 Berlin</dd></div>
+            <div><dt>Transit</dt><dd>S Treptower Park or S Ostkreuz, then about 15 minutes on foot</dd></div>
+          </dl>
+          <a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&query=Alt+Stralau+1-2%2C+10245+Berlin" target="_blank" rel="noopener">Open in Google Maps</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="building" id="building" aria-labelledby="building-h">
+      <figure class="building__lead">
+        <picture>
+          <source type="image/webp" srcset="assets/img/history/facade-1913-1200.webp 1200w, assets/img/history/facade-1913-1920.webp 1920w" sizes="100vw">
+          <img src="assets/img/history/facade-1913-1200.jpg" srcset="assets/img/history/facade-1913-720.jpg 720w, assets/img/history/facade-1913-1200.jpg 1200w, assets/img/history/facade-1913-1920.jpg 1920w" sizes="100vw" alt="Street view of the Osthafen power station shortly after completion, with the Berlin bear above the gate and gas lamps on the pavement" width="1920" height="1482" loading="lazy" decoding="async">
+        </picture>
+        <figcaption class="mono dim">The power station of the Osthafen, photographed around 1913</figcaption>
+      </figure>
+      <div class="wrap building__grid">
+        <figure class="building__hall reveal">
+          <picture>
+            <source type="image/webp" srcset="assets/img/history/machine-hall-600.webp 600w, assets/img/history/machine-hall-900.webp 900w, assets/img/history/machine-hall-1394.webp 1394w" sizes="(min-width: 900px) 40vw, 100vw">
+            <img src="assets/img/history/machine-hall-900.jpg" srcset="assets/img/history/machine-hall-600.jpg 600w, assets/img/history/machine-hall-900.jpg 900w, assets/img/history/machine-hall-1394.jpg 1394w" sizes="(min-width: 900px) 40vw, 100vw" alt="The machine hall with its glass roof, generators and flywheels, a worker standing on the ladder" width="1394" height="1920" loading="lazy" decoding="async">
+          </picture>
+          <figcaption class="mono dim">The machine hall under its glass roof. Today it is the dance floor.</figcaption>
+        </figure>
+        <div class="building__text">
+          <h2 class="h2 reveal" id="building-h">The building</h2>
+          <ol class="timeline">
+            <li class="reveal"><span class="timeline__year">1907</span><p>The city of Berlin starts building the Osthafen on the Spree, led by Stadtbaurat Friedrich Krause. A modern industrial port with iron halls, electric cranes and its own power supply.</p></li>
+            <li class="reveal"><span class="timeline__year">1913</span><p>The port opens on 28 September. Its power station stands at the edge of the complex, on the border to the old fishing village of Stralau. The Berlin bear sits above the gate. The gables of the machine hall follow the iron trusses inside.</p></li>
+            <li class="reveal"><span class="timeline__year">1993</span><p>The building is restored. For the next twelve years it houses the offices of a newspaper. The hall stays silent.</p></li>
+            <li class="reveal"><span class="timeline__year">Now</span><p>The Osthafen is a listed monument. The halls belong to OST. Where the generators once stood, there is a dance floor, and the walls have a few more stories to carry.</p></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="formats" id="formats" aria-labelledby="formats-h">
+      <h2 class="visually-hidden" id="formats-h">Our own nights</h2>
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee__track">
+          <span>OST Klubnacht</span><i></i><span>Savory</span><i></i><span>Convent</span><i></i><span>Ultra Sozial by THAM</span><i></i><span>ODD</span><i></i><span>Sektor B</span><i></i><span>Blasphemy</span><i></i><span>Mayhem x OST</span><i></i><span>Free Rave</span><i></i>
+          <span>OST Klubnacht</span><i></i><span>Savory</span><i></i><span>Convent</span><i></i><span>Ultra Sozial by THAM</span><i></i><span>ODD</span><i></i><span>Sektor B</span><i></i><span>Blasphemy</span><i></i><span>Mayhem x OST</span><i></i><span>Free Rave</span><i></i>
+        </div>
+      </div>
+      <div class="wrap formats__grid">
+        <div class="formats__text reveal">
+          <h3 class="h3">Our own nights</h3>
+          <p>OST Klubnacht, Convent, Ultra Sozial by THAM, ODD, Sektor B, Blasphemy and Mayhem are made in-house. Every Thursday is Savory: one floor, free entry till 00:30, the night Berlin locals come for.</p>
+          <p>In between, the promoters we trust bring their crowds: Euphorik, Mixmag, Devoted, Onyx, Verknipt, Revolver, Polyamor, Slave to the Rave, Pinky Promise, Gabber Industries, Sesh, Gegen.</p>
+        </div>
+        <div class="formats__dates reveal">
+          <h3 class="h3">Fixed dates in the year</h3>
+          <dl class="dates">
+            <div><dt>1 May</dt><dd>Sound Metaphors</dd></div>
+            <div><dt>21 June</dt><dd>Fête de la Musique</dd></div>
+            <div><dt>July</dt><dd>CSD week after parties</dd></div>
+            <div><dt>August</dt><dd>Rave The Planet, the OST truck and the after party</dd></div>
+            <div><dt>24 December</dt><dd>Xmas Free Rave</dd></div>
+            <div><dt>31 December</dt><dd>New Year's Eve</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <section class="rules" id="rules" aria-labelledby="rules-h">
+      <div class="wrap rules__grid">
+        <ul class="rules__list reveal" aria-labelledby="rules-h">
+          <li>No racism</li>
+          <li>No homophobia</li>
+          <li>No queerphobia</li>
+          <li>No transphobia</li>
+          <li>No sexism</li>
+          <li>No bodyshaming</li>
+          <li>No slutshaming</li>
+          <li>No disrespect of any kind</li>
+        </ul>
+        <div class="rules__text reveal">
+          <h2 class="h3" id="rules-h">House rules</h2>
+          <p>OST is for everyone who respects that. Taking care of each other is what makes the night. If something is wrong, go to the bar or the door and we will help.</p>
+          <p>No photos, no videos inside. Your camera gets a sticker at the door and the phone stays in your pocket. What happens on the floor stays there.</p>
+          <p>Every bar is cashless. Bring a card or your phone.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="info" id="info" aria-labelledby="info-h">
+      <div class="wrap info__grid">
+        <h2 class="h2 reveal" id="info-h">Good to know</h2>
+        <div class="faq reveal">
+          <details>
+            <summary>Door</summary>
+            <p>Our door team decides who gets in. Know which night you are going to, come in small groups, be respectful, and do not show up wasted. Nobody gets in under 18, so bring photo ID.</p>
+          </details>
+          <details>
+            <summary>Tickets</summary>
+            <p>Advance tickets are sold on Resident Advisor; the links are in the programme. Some nights sell out. Thursdays are free till 00:30 and have no advance tickets.</p>
+          </details>
+          <details>
+            <summary>Getting there</summary>
+            <p>Alt Stralau 1-2, 10245 Berlin, at the tip of the Stralau peninsula. From S Treptower Park cross the Elsenbrücke, from S Ostkreuz walk along the Spree. Both take about 15 minutes on foot. Taxis and ride shares drop you at the gate.</p>
+          </details>
+          <details>
+            <summary>Lost items</summary>
+            <p>Use the <button class="textlink" type="button" data-contact="lost">lost items form</button> or write to <a href="mailto:l-masked@example.de">l-masked@example.de</a> with what you lost and the night you were here. We check the box after every weekend.</p>
+          </details>
+          <details>
+            <summary>Bookings, press and jobs</summary>
+            <p>Bookings go through the <button class="textlink" type="button" data-contact="booking">booking form</button>, press and general questions through the <button class="textlink" type="button" data-contact="contact">contact form</button>, and if you want to work with us, the <button class="textlink" type="button" data-contact="job">jobs form</button>. No requests via Instagram DM.</p>
+          </details>
+          <details>
+            <summary>Daytime and private events</summary>
+            <p>The halls and the yard host markets, festivals and workshops during the day, from the Italian Street Food Festival to graffiti workshops by Urban Artists. For a daytime or private event, use the contact form.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="newsletter" id="newsletter" aria-labelledby="newsletter-h">
+      <div class="wrap newsletter__grid">
+        <div class="reveal">
+          <h2 class="h2" id="newsletter-h">Newsletter</h2>
+          <p class="newsletter__lead">Programme, pre-sales and the occasional announcement. One or two mails a month, no spam, unsubscribe with one click.</p>
+          <div class="newsletter__perks">
+            <p class="newsletter__perks-title">What the list gets</p>
+            <p class="newsletter__perks-text">Over the coming months we start giving back to the people on it. From time to time, subscribers get:</p>
+            <ul>
+              <li>Discounted tickets</li>
+              <li>Community tickets</li>
+              <li>Guest list spots</li>
+              <li>Offers for subscribers only</li>
+            </ul>
+          </div>
+        </div>
+        <div class="reveal">
+          <form class="newsletter__form" id="newsletter-form" novalidate>
+            <div class="contact__row">
+              <div class="field">
+                <label for="nl-email">E-mail</label>
+                <input id="nl-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>
+              </div>
+              <div class="field">
+                <label for="nl-name">First name <span class="dim">(optional)</span></label>
+                <input id="nl-name" name="first_name" type="text" autocomplete="given-name" maxlength="80">
+              </div>
+            </div>
+            <p class="hp" aria-hidden="true"><label>Website <input name="website" type="text" tabindex="-1" autocomplete="off"></label></p>
+            <label class="check">
+              <input type="checkbox" name="agreement" required>
+              <span id="nl-consent">I want to receive the OST newsletter by e-mail, including offers such as discounted tickets and guest list spots, and agree that OST stores my e-mail address and first name for this purpose. I can withdraw this consent at any time via the link in every mail or via the contact form. Details in the <a href="privacy.html#newsletter" target="_blank" rel="noopener">Privacy notice</a>.</span>
+            </label>
+            <div class="contact__actions">
+              <button class="btn btn--solid" id="newsletter-send" type="submit">Subscribe</button>
+              <p class="contact__status" id="newsletter-status" aria-live="polite"></p>
+            </div>
+          </form>
+          <div class="newsletter__done" id="newsletter-done" hidden aria-live="polite">
+            <p class="newsletter__done-title"></p>
+            <p class="newsletter__done-text"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer__cols">
+        <div>
+          <h2 class="mono">Visit</h2>
+          <p>OST<br>Alt Stralau 1-2<br>10245 Berlin</p>
+        </div>
+        <div>
+          <h2 class="mono">Follow</h2>
+          <ul>
+            <li><a href="https://www.instagram.com/club.ost/" target="_blank" rel="noopener">Instagram</a></li>
+            <li><a href="https://ra.co/clubs/141987" target="_blank" rel="noopener">Resident Advisor</a></li>
+            <li><a href="https://www.facebook.com/club.ost" target="_blank" rel="noopener">Facebook</a></li>
+            <li><a href="https://linktr.ee/club_ost" target="_blank" rel="noopener">Linktree</a></li>
+            <li><a href="#newsletter">Newsletter</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="mono">Contact</h2>
+          <ul>
+            <li><button class="textlink" type="button" data-contact="booking">Bookings</button></li>
+            <li><button class="textlink" type="button" data-contact="contact">Press and contact</button></li>
+            <li><button class="textlink" type="button" data-contact="job">Jobs</button></li>
+            <li><button class="textlink" type="button" data-contact="lost">Lost items</button></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="mono">Legal</h2>
+          <ul>
+            <li><a href="imprint.html">Imprint</a></li>
+            <li><a href="privacy.html">Privacy</a></li>
+          </ul>
+        </div>
+      </div>
+      <p class="footer__line mono dim">No requests via DM. New dates land on Instagram first.</p>
+    </div>
+  </footer>
+
+  <dialog class="contact" id="contact" aria-labelledby="contact-h">
+    <form class="contact__form" id="contact-form" novalidate>
+      <div class="contact__head">
+        <h2 class="h3" id="contact-h">Get in touch</h2>
+        <button class="contact__close" type="button" data-contact-close aria-label="Close">&times;</button>
+      </div>
+      <fieldset class="contact__subjects">
+        <legend class="mono dim">What is it about?</legend>
+        <label><input type="radio" name="subject" value="booking"><span>Booking</span></label>
+        <label><input type="radio" name="subject" value="contact" checked><span>Contact</span></label>
+        <label><input type="radio" name="subject" value="job"><span>Jobs</span></label>
+        <label><input type="radio" name="subject" value="lost"><span>Lost items</span></label>
+      </fieldset>
+      <p class="contact__hint" id="contact-hint"></p>
+
+      <div class="contact__row">
+        <div class="field"><label for="c-name">Name</label><input id="c-name" name="name" type="text" autocomplete="name" required></div>
+        <div class="field"><label for="c-email">Email</label><input id="c-email" name="email" type="email" autocomplete="email" required></div>
+      </div>
+      <div class="contact__row">
+        <div class="field"><label for="c-phone">Phone <span class="dim">(optional)</span></label><input id="c-phone" name="phone" type="tel" autocomplete="tel"></div>
+        <div class="field" data-for="booking"><label for="c-kind">Who are you?</label>
+          <select id="c-kind" name="booking_kind">
+            <option value="artist">Artist or agency</option>
+            <option value="venue">I want to rent the venue</option>
+          </select>
+        </div>
+        <div class="field" data-for="job"><label for="c-position">Position</label><input id="c-position" name="position" type="text" placeholder="Bar, door, runner, cloakroom, tech"></div>
+        <div class="field" data-for="lost"><label for="c-night">Which night were you here?</label><input id="c-night" name="night" type="date"></div>
+      </div>
+      <div class="field" data-for="booking:artist"><label for="c-links">Links <span class="dim">(RA, SoundCloud, Instagram)</span></label><input id="c-links" name="links" type="text" inputmode="url"></div>
+      <div class="contact__row contact__row--3" data-for="booking:venue">
+        <div class="field"><label for="c-date">Date</label><input id="c-date" name="date" type="date"></div>
+        <div class="field"><label for="c-guests">Guests</label>
+          <select id="c-guests" name="guests">
+            <option>10 to 50</option><option>50 to 100</option><option>100 to 150</option><option>150 to 250</option><option>250 to 500</option><option>More than 500</option>
+          </select>
+        </div>
+        <div class="field"><label for="c-occasion">Occasion</label>
+          <select id="c-occasion" name="occasion">
+            <option>Party</option><option>Birthday</option><option>Company event</option><option>Graduation</option><option>Christmas party</option><option>Shoot or production</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label for="c-message" id="message-label">Message</label><textarea id="c-message" name="message" rows="5" required></textarea></div>
+      <p class="hp" aria-hidden="true"><label>Leave this empty <input name="website" type="text" tabindex="-1" autocomplete="off"></label></p>
+      <label class="check"><input type="checkbox" name="agreement" required><span>I agree that OST uses this data to answer my request. <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></span></label>
+      <div class="contact__actions">
+        <button class="btn btn--solid btn--lg" type="submit" id="contact-send">Send</button>
+        <p class="contact__status" id="contact-status" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+    <div class="contact__done" id="contact-done" hidden>
+      <p class="contact__done-title">Sent.</p>
+      <p>We read everything and answer what we can. New dates land on Instagram first.</p>
+      <button class="btn btn--ghost" type="button" data-contact-close>Close</button>
+    </div>
+  </dialog>
+
+  <script type="application/json" id="events-data">[{"id":"3005038e-4723-4115-b203-e59e5c461724","title":"[FREE ENTRY TILL 00:30] SAVORY","date":"2026-11-26","date_long":"Donnerstag, 26. November 2026","start_time":"23:00","end_time":"06:00","end_date":null,"presstext":"https://ra.co/events/2569654","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/3005038e-4723-4115-b203-e59e5c461724/1834e6b7-408f-442a-9255-adcd2644755e.png"}],"bookings":[{"artist_name":"Nassia","set_start":"23:00","set_end":"01:30","set_start_day":0,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Hanne B","set_start":"01:30","set_end":"03:30","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Cobb Douglas","set_start":"03:30","set_end":"06:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"}]},{"id":"0e4fed49-0c92-42f7-a4f9-b695f43c7943","title":"Mattermind","date":"2026-11-27","date_long":"Freitag, 27. November 2026","start_time":"23:00","end_time":"08:00","end_date":null,"presstext":"https://ra.co/events/2551290","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/0e4fed49-0c92-42f7-a4f9-b695f43c7943/3330b173-ea08-4ff0-b341-4397fca2a8bb.jpeg"}],"bookings":[{"artist_name":"Intro","set_start":"23:00","set_end":"23:30","set_start_day":0,"set_end_day":0,"floor":"Schmiede"},{"artist_name":"Bishalbacht","set_start":"23:30","set_end":"01:00","set_start_day":0,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Eza","set_start":"00:30","set_end":"02:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"DJ Achim Feuervogel","set_start":"01:00","set_end":"02:15","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Dana Roosy","set_start":"02:00","set_end":"03:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"Pawlowski","set_start":"02:15","set_end":"03:45","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Paranormlia","set_start":"03:00","set_end":"04:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"MATRAKK","set_start":"03:45","set_end":"05:15","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"TERRA TWINS","set_start":"04:00","set_end":"05:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Ephy Pinkman","set_start":"05:15","set_end":"06:30","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"MUGLI PROJECT","set_start":"06:30","set_end":"08:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"}]},{"id":"abc42c08-9203-4367-8d05-a66aaddc9281","title":"Devoted","date":"2026-11-28","date_long":"Samstag, 28. November 2026","start_time":"23:00","end_time":"09:00","end_date":null,"presstext":"https://ra.co/events/2356094","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/abc42c08-9203-4367-8d05-a66aaddc9281/5c405081-393a-4f7a-b441-4a2fb88fc610.webp"}],"bookings":[{"artist_name":"jeanska","set_start":"23:00","set_end":"01:00","set_start_day":0,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Elzira","set_start":"00:00","set_end":"01:30","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"Danilo Filipe","set_start":"01:00","set_end":"02:30","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"SEKTOR69","set_start":"01:30","set_end":"03:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"Kø:lab b2b Anuuk b2b Donchoppa","set_start":"02:30","set_end":"04:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"DJ Hotmail","set_start":"03:00","set_end":"04:30","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"Ben Techy","set_start":"04:00","set_end":"05:30","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Joey","set_start":"04:30","set_end":"06:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"In Furcht","set_start":"05:30","set_end":"07:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"DJ Athina","set_start":"07:00","set_end":"09:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"}]},{"id":"8f7e9fdf-9a13-4bee-91b2-3bc5d7216301","title":"ULTRASOZIAL","date":"2026-12-04","date_long":"Freitag, 4. Dezember 2026","start_time":"23:00","end_time":"08:00","end_date":null,"presstext":"https://ra.co/events/2515790","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/8f7e9fdf-9a13-4bee-91b2-3bc5d7216301/a57f1691-6094-4c32-bba9-115fa4eee3ea.png"}],"bookings":[{"artist_name":"MKHXR","set_start":"23:00","set_end":"00:30","set_start_day":0,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Saika","set_start":"00:30","set_end":"02:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"KTK","set_start":"02:00","set_end":"03:30","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"RIKTHER","set_start":"03:30","set_end":"05:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Tham","set_start":"05:00","set_end":"06:30","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Treibende Kraft","set_start":"06:30","set_end":"08:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"}]},{"id":"8ca18914-9b10-46f3-a8d9-4c863b7871b0","title":"Polyamor","date":"2026-12-05","date_long":"Samstag, 5. Dezember 2026","start_time":"23:00","end_time":"09:00","end_date":null,"presstext":"https://ra.co/events/2375001","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/8ca18914-9b10-46f3-a8d9-4c863b7871b0/4bddf6c2-396e-4964-96e6-6ccd108376aa.webp"}],"bookings":[{"artist_name":"Diffrent","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Antonym","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Bitschu Batschu","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Cleopard2000","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Vivi909 b2b Satys Fyre","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Towic","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Elotrance","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Plattenlieferant","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Talia Dorr","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null}]},{"id":"cfad791a-6275-4286-97ae-bf523d019925","title":"Slave to the Rave","date":"2026-12-12","date_long":"Samstag, 12. Dezember 2026","start_time":"22:00","end_time":"08:00","end_date":null,"presstext":"https://ra.co/events/2387902","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/cfad791a-6275-4286-97ae-bf523d019925/2794ebf0-b747-4cc8-8c13-96aaf94cdeca.webp"}],"bookings":[{"artist_name":"CJ Bolland","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Schmiede"},{"artist_name":"Fish56Octagon","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Schmiede"},{"artist_name":"Huamaniser","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Schmiede"},{"artist_name":"Wittes","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Lager"},{"artist_name":"Tigerhead","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Schmiede"},{"artist_name":"DJ Chromz","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Lager"},{"artist_name":"mixtress","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Lager"},{"artist_name":"Napes","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Lager"},{"artist_name":"Soultrain MC","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Lager"},{"artist_name":"Beau Didier","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Schmiede"}]},{"id":"3acae219-fc22-4276-8a1f-ddc79d37b41c","title":"Blasphemy","date":"2026-12-18","date_long":"Freitag, 18. Dezember 2026","start_time":"22:00","end_time":"08:00","end_date":null,"presstext":"https://de.ra.co/events/2555115","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/3acae219-fc22-4276-8a1f-ddc79d37b41c/919a591d-fbae-4ef5-8ae9-70d52a0c49f2.png"}],"bookings":[{"artist_name":"Laviena","set_start":"23:00","set_end":"00:30","set_start_day":0,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Vendex","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":"Schmiede"},{"artist_name":"Gweld","set_start":"00:30","set_end":"02:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"BØĘRY","set_start":"02:00","set_end":"03:30","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Rebekah","set_start":"03:30","set_end":"05:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"BOLLMANN","set_start":"05:00","set_end":"06:30","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Pencil","set_start":"06:30","set_end":"08:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"}]},{"id":"c6ab7df0-ba79-48f2-9fd2-b72c4330fa72","title":"Euphorik","date":"2026-12-19","date_long":"Samstag, 19. Dezember 2026","start_time":"22:00","end_time":"08:00","end_date":null,"presstext":"https://ra.co/events/2583119","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/c6ab7df0-ba79-48f2-9fd2-b72c4330fa72/2c130f4d-14d6-575a-a188-33d6d09ef29d.png"}],"bookings":[{"artist_name":"Trancestrudel","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Liyo","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"TANJA MIJU","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Death of Mars","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"SIKXTO","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"DTEXX","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Noise Not War","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Illuminati_Techno","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Ultraviolect","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"Filialleiter b2b Kuschi","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null},{"artist_name":"NØA b2b TechTonic","set_start":null,"set_end":null,"set_start_day":0,"set_end_day":0,"floor":null}]},{"id":"3db4959b-f43d-4422-ac1c-632f94b5c9e2","title":"GEGEN X PRNCPTL X OST NYE 33H","date":"2026-12-31","date_long":"Donnerstag, 31. Dezember 2026","start_time":"23:55","end_time":"10:00","end_date":"2027-01-02","presstext":"https://ra.co/events/2480820","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/3db4959b-f43d-4422-ac1c-632f94b5c9e2/e96bfdd9-60d9-4697-9379-01609bde423c.webp"}],"bookings":[{"artist_name":"BUDAY","set_start":"23:55","set_end":"04:00","set_start_day":0,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Sparkly Pony b2b Gerald","set_start":"02:00","set_end":"05:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"TYGAPAW","set_start":"04:00","set_end":"07:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Kiddy Smile","set_start":"05:00","set_end":"08:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"Engalanan b2b Timothy Wang","set_start":"07:00","set_end":"10:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Tom Chiesa b2b Ruben Secadura","set_start":"08:00","set_end":"11:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"Vinvar","set_start":"10:00","set_end":"13:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Rakans","set_start":"11:00","set_end":"14:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"Khole b2b Alp","set_start":"13:00","set_end":"16:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"DJ Handbag","set_start":"14:00","set_end":"17:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"2Themax b2b Kemik","set_start":"16:00","set_end":"19:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Adam Munnings b2b DJ Petite","set_start":"17:00","set_end":"20:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"Shadysnack","set_start":"19:00","set_end":"22:00","set_start_day":1,"set_end_day":1,"floor":"Schmiede"},{"artist_name":"Citizen Union b2b MVHY","set_start":"20:00","set_end":"23:00","set_start_day":1,"set_end_day":1,"floor":"Lager"},{"artist_name":"Dr. Rubinstein","set_start":"22:00","set_end":"01:00","set_start_day":1,"set_end_day":2,"floor":"Schmiede"},{"artist_name":"Spacer Woman","set_start":"23:00","set_end":"03:00","set_start_day":1,"set_end_day":2,"floor":"Lager"},{"artist_name":"Laure Croft b2b Spikey Lee","set_start":"01:00","set_end":"04:00","set_start_day":2,"set_end_day":2,"floor":"Schmiede"},{"artist_name":"Hyperaktivist","set_start":"04:00","set_end":"07:00","set_start_day":2,"set_end_day":2,"floor":"Schmiede"},{"artist_name":"Mar/us","set_start":"07:00","set_end":"10:00","set_start_day":2,"set_end_day":2,"floor":"Schmiede"}]},{"id":"2f411bbf-176b-4f42-9e94-1c70f2eadb3b","title":"Polyamor","date":"2027-02-05","date_long":"Freitag, 5. Februar 2027","start_time":"23:00","end_time":"06:00","end_date":null,"presstext":"https://ra.co/events/2559338","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/2f411bbf-176b-4f42-9e94-1c70f2eadb3b/a78b1260-d369-5627-9095-d5b99cf84e9b.png"}],"bookings":[]},{"id":"01b4e16a-deb2-4091-8196-3202ab6b7add","title":"Slave To The Rave","date":"2027-02-13","date_long":"Samstag, 13. Februar 2027","start_time":"23:00","end_time":"09:00","end_date":null,"presstext":"https://ra.co/events/2389106","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/01b4e16a-deb2-4091-8196-3202ab6b7add/9e4e53a3-04c9-4066-80a0-e4e06d4fddfe.webp"}],"bookings":[]},{"id":"117a2733-f747-471d-9c2a-76d5180403e1","title":"Slave to the Rave","date":"2027-04-10","date_long":"Samstag, 10. April 2027","start_time":"23:00","end_time":"06:00","end_date":null,"presstext":"https://ra.co/events/2573964","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/117a2733-f747-471d-9c2a-76d5180403e1/b4997b2c-9bf6-5d12-a02e-4882c4912c57.jpg"}],"bookings":[]},{"id":"3b25820e-c798-44ea-865a-8b5aa3964639","title":"Polyamor","date":"2027-09-18","date_long":"Samstag, 18. September 2027","start_time":"23:00","end_time":"08:00","end_date":null,"presstext":"https://ra.co/events/2548609","attachments":[{"url":"https://ost.klubtool.de/api/public/artwork/3b25820e-c798-44ea-865a-8b5aa3964639/ef4410aa-23d5-556b-a0b6-8d2425e9ecd4.png"}],"bookings":[]}]</script>
+  <script>
+    // Newsletter sign-ups go to OST Klubtool (double opt-in, see README). On a
+    // local preview they go to a local Klubtool instead.
+    // Contact form: booking, contact, job and lost-item requests go into Klubtool.
+    window.OST_CONTACT = {
+      endpoint: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? 'http://localhost:3011/api/public/contact'
+        : 'https://ost.klubtool.de/api/public/contact'
+    };
+    window.OST_NEWSLETTER = {
+      endpoint: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? 'http://localhost:3011/api/public/newsletter/subscribe'
+        : 'https://ost.klubtool.de/api/public/newsletter/subscribe'
+    };
+  </script>
+  <script src="js/main.js?v=20261124g" defer></script>
+</body>
+</html>

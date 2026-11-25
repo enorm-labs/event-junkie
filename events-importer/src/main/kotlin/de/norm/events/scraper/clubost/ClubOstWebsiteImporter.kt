@@ -1,52 +1,25 @@
 package de.norm.events.scraper.clubost
 
-import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for Club OST's Django homepage: fetch the homepage via [HtmlFetcher] with
- * conditional headers, parse every card via [ClubOstOverviewPageScraper], the primary source
- * (date, start, flyer, ticket link), then fetch each detail page via [ClubOstDetailPageScraper]
- * for the title the listing upper-cases and the end time it lacks. The usual precedence is
- * inverted: the detail page is a stub, so [fillGapsFromOverview] keeps the overview's values for
- * everything but the title and the end; reading it as primary the way
- * [cassiopeia][de.norm.events.scraper.cassiopeia] does would trade a flyer and ticket link for
- * blanks.
+ * Website importer for Club OST: the homepage alone, which carries the whole programme as JSON.
  *
- * @see ClubOstOverviewPageScraper for the listing parse (and the site's bilingual rendering)
- * @see ClubOstDetailPageScraper for the detail parse and what the stub does not carry
+ * @see ClubOstHomePageScraper for the rows.
  * @see <a href="https://clubost.de/">Club OST homepage</a>
  */
 @Component
 class ClubOstWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher, ClubOstOverviewPageScraper()::scrape, ClubOstDetailPageScraper()::scrape) {
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Club OST", ClubOstHomePageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.CLUB_OST
-
-    /** The card shouts the title in capitals; the event page spells it (#2505). */
-    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.TITLE)
     override val listsWholeProgramme: Boolean = true
-
-    /**
-     * Merges the detail page's [primary] data over the overview's [fallback]. The card wins
-     * everywhere but the title: it alone carries the flyer and the ticket link. The detail page's
-     * description is taken when present, the placeholder being mapped to null already.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        fallback.withGapsFrom(primary).copy(
-            title = primary.title,
-            description = primary.description ?: fallback.description
-        )
 }
 
 val CLUB_OST_LIMITATIONS =
@@ -54,22 +27,17 @@ val CLUB_OST_LIMITATIONS =
         EventSource.CLUB_OST,
         AcceptedLimitation(
             LimitedAspect.DESCRIPTION,
-            "the venue programmes through Resident Advisor and leaves the CMS description empty on every event",
-            verified = "2026-08-25"
+            "the programme data has no description; its `presstext` holds the Resident Advisor link",
+            verified = "2026-11-25"
         ),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the listing carries no category; every card is a flyer, a title, a start time and a ticket link",
-            verified = "2026-08-25"
+            "the programme data has no category",
+            verified = "2026-11-25"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the listing carries no genre; every night takes the club's Techno default", verified = "2026-09-26"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the listing carries no price; tickets are sold on Resident Advisor", verified = "2026-08-25"),
-        AcceptedLimitation(
-            LimitedAspect.ARTISTS,
-            "the listing carries no lineup, though the CMS holds an empty div where one would go",
-            verified = "2026-08-25"
-        ),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries one time per night and no doors time", verified = "2026-09-30"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the programme data has no genre; every night takes the club's Techno default", verified = "2026-11-25"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the programme data has no price; tickets are sold on Resident Advisor", verified = "2026-11-25"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme data has a start and an end per night and no doors time", verified = "2026-11-25"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-11-25"),
         houseGenre = "Techno"
     )
