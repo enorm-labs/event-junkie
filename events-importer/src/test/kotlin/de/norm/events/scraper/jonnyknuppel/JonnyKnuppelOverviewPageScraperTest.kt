@@ -65,8 +65,8 @@ class JonnyKnuppelOverviewPageScraperTest {
     fun `an act with a starred or dashed live mark is LIVE`() {
         val live = events.flatMap { it.artists }.filter { it.role == ArtistRole.LIVE }.map { it.name }
 
-        live shouldContain "Antaares *live"
-        live shouldContain "Kahl & Kæmena *live"
+        live shouldContain "Antaares"
+        live shouldContain "Kahl & Kæmena"
         live shouldContain "Dario Klein"
     }
 

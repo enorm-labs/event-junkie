@@ -145,6 +145,19 @@ class ArtistNameCleanupTest {
     }
 
     @Test
+    fun `stripArtistSuffix drops a starred live mark and keeps a star inside a name`() {
+        // Sisyphos, Jonny Knüppel and Gretchen write these (#5534).
+        stripArtistSuffix("Harald F. *Live") shouldBe "Harald F."
+        stripArtistSuffix("Kahl & Kæmena *live") shouldBe "Kahl & Kæmena"
+        stripArtistSuffix("Carly Cosgrove *live*") shouldBe "Carly Cosgrove"
+        stripArtistSuffix("Anna * Live Set") shouldBe "Anna"
+        stripArtistSuffix("*n8") shouldBe "*n8"
+        stripArtistSuffix("EL*KE") shouldBe "EL*KE"
+        stripArtistSuffix("Anna *Livewire") shouldBe "Anna *Livewire"
+        stripArtistSuffix("*live") shouldBe "*live"
+    }
+
+    @Test
     fun `stripArtistSuffix drops show, tour and anniversary words a title glues on without a dash`() {
         // Production titles that minted these as acts (#1841).
         stripArtistSuffix("SIDOS WEIHNACHTSSHOW 2026") shouldBe "SIDO"
