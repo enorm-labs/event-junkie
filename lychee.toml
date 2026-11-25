@@ -23,11 +23,17 @@ exclude_loopback = true
 exclude = [
   # Sign-in pages, and pages that answer only a signed-in session.
   "^https://(accounts|konsoleh)\\.hetzner\\.com/",
+  "^https://console\\.scaleway\\.com/",
   "^https://github\\.com/enorm-labs/event-junkie/security/",
   "^https://docs\\.google\\.com/",
   # Base URLs of an API or a Helm repository, which serve no page at the root.
   "^https://api\\.hetzner\\.cloud/",
   "^https://charts\\.(hetzner\\.cloud|openobserve\\.ai)/",
+  # Placeholders in example text.
+  "^https://(www\\.)?example\\.de/",
+  "^https://event-junkie\\.de/(…|%E2%80%A6)$",
+  # Our own page, whose script renders the fragment: the fetched HTML does not hold it.
+  "^https://event-junkie\\.de/en/about#help$",
   # Not on the public internet.
   "^https://staging\\.event-junkie\\.de",
   # Refuse or stall any client without a browser fingerprint.
