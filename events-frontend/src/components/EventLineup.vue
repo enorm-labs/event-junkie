@@ -8,7 +8,7 @@ import LiveDot from '@/components/LiveDot.vue'
 import ReportLine from '@/components/ReportLine.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { EventDetail } from '@/api/types'
-import { isOnNow, isPastEvent } from '@/lib/format'
+import { hasStarted, isPastEvent } from '@/lib/format'
 import { runningOrder, setStates, type RunningOrderSet } from '@/lib/runningOrder'
 import { CARD_LIST_CLASS, cn, UNDERLINED_LINK_CLASS } from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
@@ -41,11 +41,12 @@ const clock = setInterval(() => (now.value = Date.now()), 60_000)
 onBeforeUnmount(() => clearInterval(clock))
 
 // Which set plays now, and which are over, only while the night is on and still at its venue: a
-// past night's sets are all over, and saying so adds nothing.
+// past night's sets are all over, and saying so adds nothing. `isOnNow` would cut published set
+// times at an assumed end.
 const setState = computed(() => {
   const e = props.event
   if (!floors.value || (e.status ?? 'SCHEDULED') !== 'SCHEDULED') return null
-  return isOnNow(e) ? setStates(floors.value, now.value) : null
+  return hasStarted(e) ? setStates(floors.value, now.value) : null
 })
 
 /**

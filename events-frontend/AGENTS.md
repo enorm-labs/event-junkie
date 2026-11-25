@@ -123,7 +123,7 @@ Every page lives under `/<locale>/…`; `src/i18n/locales.ts` is the single list
   bar offers it in one menu, `CalendarSubscribeMenu.vue`: Google Calendar, the system's `webcal:` handler, Outlook.com, and the address to copy
   (`lib/calendarSubscription.ts`). Android registers no `webcal:` handler, so that link alone does nothing there (#2887). Its `name` is the filters in words
   (`useFilterLabels`), which the BFF writes after "Event Junkie" as the calendar's name (#2772). `EventCalendarIcs.kt` writes
-  the file by the rules of `lib/addToCalendar.ts`: change both or neither.
+  the file by the rules of `lib/addToCalendar.ts` and the hours of `lib/eventDuration.ts`: change both sides or neither.
 - **The sitemap is the primary `hreflang` carrier.** The `<link>` tags in `lib/seoTags.ts` are script-injected and unreliable for crawlers; the injector
   writes them into served HTML for detail routes only, so an hreflang change that touches only the head tags has not shipped.
 - **Canonical URLs come from `SITE_URL`, never `window.location`** — otherwise every alias and preview declares itself canonical.

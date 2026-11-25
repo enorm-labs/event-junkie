@@ -5,7 +5,6 @@ import { i18n } from '@/i18n'
 import type { Locale } from '@/i18n/locales'
 import {
   berlinToUtc,
-  DEFAULT_DURATION_HOURS,
   escapeText,
   eventCalendarEntry,
   eventCalendarSpan,
@@ -17,6 +16,7 @@ import {
   type CalendarEntry,
   type CalendarTexts,
 } from '@/lib/addToCalendar'
+import { DEFAULT_DURATION_HOURS } from '@/lib/eventDuration'
 
 const event: EventDetail = {
   slug: '2026-06-12-lido-test-act',

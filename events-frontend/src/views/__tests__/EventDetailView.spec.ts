@@ -440,6 +440,14 @@ describe('EventDetailView', () => {
       expect(row(view, 'Closer').text()).toContain('Playing now')
     })
 
+    it('reads published set times past the assumed end of a day party', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date('2026-10-09T21:30:00+02:00'))
+      const view = await mountEvent({ ...tonight, startTime: '14:00', eventType: 'PARTY' })
+
+      expect(row(view, 'Peak').text()).toContain('Playing now')
+    })
+
     it('marks nothing on a cancelled night', async () => {
       vi.useFakeTimers({ toFake: ['Date'] })
       vi.setSystemTime(new Date('2026-10-09T21:30:00+02:00'))

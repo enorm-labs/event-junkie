@@ -74,7 +74,7 @@ describe('isLiveNow', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-10-07T12:00:00Z'))
     expect(isLiveNow({ eventDate: '2026-10-06', endDate: '2026-10-08' })).toBe(true)
-    expect(isLiveNow({ ...tonight, startTime: '10:00' })).toBe(true)
+    expect(isLiveNow({ ...tonight, startTime: '12:00' })).toBe(true)
     expect(isLiveNow({ ...tonight, startTime: '20:00' })).toBe(false)
     expect(isLiveNow(exhibition)).toBe(false)
   })

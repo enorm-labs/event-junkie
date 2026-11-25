@@ -26,7 +26,7 @@ object EventCalendarIcs {
 
     private const val MAX_LINE_OCTETS = 75
 
-    /** Hours an event lasts when the venue stated no end. Mirrors `DEFAULT_DURATION_HOURS` in `addToCalendar.ts`. */
+    /** Hours an event lasts when the venue stated no end. Mirrors `DEFAULT_DURATION_HOURS` in `eventDuration.ts`. */
     private val DEFAULT_DURATION_HOURS: Map<EventType, Long> =
         mapOf(
             EventType.CONCERT to 3,
