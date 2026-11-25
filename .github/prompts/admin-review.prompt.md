@@ -135,8 +135,9 @@ One at a time, on the environment's importer. Re-read each item first: an item s
   `DISMISS` it instead, and say so.
 - **`S…` `ACCEPT` on `artists`**: the proposed value is a `; `-separated list of names, and the field is `artists`, which pins `lineup`. Build the
   line-up as `proposedLineup` in `events-admin/src/api/suggestions.ts` does. An act the event already bills keeps its role and stage. Any other name is
-  the exact match of `GET $API/artists?name=<name>&size=100`, else `POST $API/artists` with `{"name": …}`. The first name is `HEADLINER`, the others
-  `SUPPORT`, with `billingOrder` the position and `stage` null. Then PUT and accept as above.
+  the exact match of `GET $API/artists?name=<name>&size=100`, else `POST $API/artists` with `{"name": …}`. At a `PARTY`,
+  every new act is `DJ`. At any other type, a new act is `HEADLINER` in first position and `SUPPORT` after it. `billingOrder` is the position and
+  `stage` is null. The type is the one the GET returns, so apply a named `eventType` suggestion of the same event first. Then PUT and accept as above.
 - **`S…` `DISMISS`**: `POST $API/data-quality/suggestions/<id>/dismiss`.
 - **`I…` `APPROVE #`**: `POST $API/instagram-drafts/<draft id>/approve` with `{"eventId": <id>}`.
 - **`I…` `CREATE`**: for each act, search `GET $API/artists?name=<name>&size=100` and take the exact match, else `POST $API/artists` with `{"name": …}`.
