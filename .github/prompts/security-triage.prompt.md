@@ -135,7 +135,7 @@ separately, so a package can exist for aarch64 and not for x86_64. #1118 was ver
 2. **Has the base moved?** Resolve the tag and compare with the `FROM` pin:
 
     ```sh
-    docker buildx imagetools inspect nginxinc/nginx-unprivileged:1.31-alpine | grep -m1 Digest
+    docker buildx imagetools inspect ghcr.io/nginx/nginx-unprivileged:1.31-alpine | grep -m1 Digest
     ```
 
     If it moved, build from the new digest and repeat step 1 — **the package decides, never the digest.** #770 was triaged against a digest that had

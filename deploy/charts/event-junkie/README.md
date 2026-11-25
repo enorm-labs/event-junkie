@@ -240,7 +240,7 @@ change rather than a values change.
 `readOnlyRootFilesystem: true` everywhere, which means every path a process writes to has to be an
 explicit `emptyDir`. All three workloads get exactly one: `/tmp`. The JVM services need it for
 hsperfdata and anything a library assumes; nginx needs it because #262's base image
-(`nginxinc/nginx-unprivileged`) puts its pid file and every temp path there rather than in
+(`nginx/nginx-unprivileged`) puts its pid file and every temp path there rather than in
 `/var/cache/nginx`, and symlinks its logs to stdout and stderr.
 
 **Verified by running the images, not by reading their Dockerfiles** — all three start under
@@ -260,7 +260,7 @@ passwd entry — and Kubernetes' `runAsNonRoot` check reads the number, not the 
 **Re-checked again on 2026-08-18**, when the UID moved from 1000 to **10001** (#448). All three
 images were rebuilt and run: `docker run … id` reports `uid=10001 gid=10001` for each, and the
 frontend serves `/`, a hashed asset and a 404 for a missing one under `--read-only --tmpfs /tmp`.
-`nginxinc/nginx-unprivileged` was the one expected to resist — it is built around a specific
+`nginx/nginx-unprivileged` was the one expected to resist — it is built around a specific
 unprivileged user — and did not.
 
 ### The chart's labels are not `infra/`'s labels
