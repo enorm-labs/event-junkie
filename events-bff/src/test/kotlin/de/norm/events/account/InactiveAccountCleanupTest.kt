@@ -6,6 +6,7 @@ import com.icegreen.greenmail.util.ServerSetupTest
 import de.norm.events.BaseControllerTest
 import de.norm.events.common.BERLIN
 import de.norm.events.mail.Mailer
+import de.norm.events.mail.NO_HOSTNAME_LOOKUP
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -65,6 +66,7 @@ class InactiveAccountCleanupTest : BaseControllerTest() {
                 this.port = port
                 javaMailProperties["mail.smtp.connectiontimeout"] = 2000
                 javaMailProperties["mail.smtp.timeout"] = 2000
+                javaMailProperties.putAll(NO_HOSTNAME_LOOKUP)
             },
             "Event Junkie <noreply@notify.event-junkie.de>",
             registry
