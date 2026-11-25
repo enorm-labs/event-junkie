@@ -15,7 +15,7 @@ Delete every section below that does not apply; keep the others in this order.
 ## After deploy
 
 <!-- Delete this section unless something has to happen once this runs on a cluster: an empty one fails label-pr.yml.
-     Each step is an unticked line, `- [ ] <staging|production|both>: <force-import slugs|check what passes|run scripts/… command>`,
+     Each step is an unticked line, `- [ ] <staging|production|both>: <force-import slugs|check what passes|run scripts/… command|apply-alerts rules>`,
      for example `- [ ] both: force-import <slug>`. A step that needs a window or a quiet day says when it is due:
      `- [ ] production (3 days after deploy): check …`, `- [ ] staging (from 2026-10-09): …` or `- [ ] both (dark day <slug>): force-import <slug>`. label-pr.yml then adds the
      `after-deploy` label, and `/post-release` runs each step once it is due (.github/prompts/post-release.prompt.md). -->
