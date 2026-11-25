@@ -254,6 +254,21 @@ class DateParsingExtensionsTest {
         parseGermanMonthAbbreviation(null).shouldBeNull()
     }
 
+    // --- parseEnglishMonthAbbreviation ---
+
+    @Test
+    fun `parseEnglishMonthAbbreviation maps every three-letter abbreviation case-insensitively`() {
+        Month.entries.forEach { month ->
+            val abbreviation = month.name.take(3)
+            listOf(abbreviation, abbreviation.lowercase()).forEach { parseEnglishMonthAbbreviation(it) shouldBe month }
+        }
+    }
+
+    @Test
+    fun `parseEnglishMonthAbbreviation returns null for a longer spelling, a German one and no text`() {
+        listOf("Sept", "March", "Okt", "", null).forEach { parseEnglishMonthAbbreviation(it).shouldBeNull() }
+    }
+
     // --- inferYearForWeekday ---
 
     private fun clockAt(date: String) = Clock.fixed(LocalDate.parse(date).atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)
