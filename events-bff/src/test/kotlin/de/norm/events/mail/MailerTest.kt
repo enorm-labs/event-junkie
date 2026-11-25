@@ -36,6 +36,7 @@ class MailerTest {
         this.port = port
         javaMailProperties["mail.smtp.connectiontimeout"] = timeoutMillis
         javaMailProperties["mail.smtp.timeout"] = timeoutMillis
+        javaMailProperties.putAll(NO_HOSTNAME_LOOKUP)
     }
 
     private fun count(outcome: String) = registry.timer(Mailer.SENT, Mailer.TAG_KIND, "sign-in", Mailer.TAG_OUTCOME, outcome).count()

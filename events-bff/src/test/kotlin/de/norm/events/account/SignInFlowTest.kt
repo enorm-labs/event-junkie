@@ -4,6 +4,7 @@ import com.icegreen.greenmail.util.GreenMail
 import com.icegreen.greenmail.util.GreenMailUtil
 import com.icegreen.greenmail.util.ServerSetupTest
 import de.norm.events.BaseControllerTest
+import de.norm.events.mail.NO_HOSTNAME_LOOKUP
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -360,6 +361,7 @@ class SignInFlowTest : BaseControllerTest() {
         fun mail(registry: DynamicPropertyRegistry) {
             registry.add("spring.mail.host") { "localhost" }
             registry.add("spring.mail.port") { greenMail.smtp.port }
+            NO_HOSTNAME_LOOKUP.forEach { (key, value) -> registry.add("spring.mail.properties.$key") { value } }
             registry.add("spring.mail.properties.mail.smtp.auth") { false }
             registry.add("spring.mail.properties.mail.smtp.starttls.enable") { false }
             registry.add("spring.mail.properties.mail.smtp.starttls.required") { false }
