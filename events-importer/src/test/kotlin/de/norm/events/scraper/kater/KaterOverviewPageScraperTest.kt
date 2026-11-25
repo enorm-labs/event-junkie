@@ -252,6 +252,55 @@ class KaterOverviewPageScraperTest {
     }
 
     @Test
+    fun `keeps a floor whose b2b slot ends in a dotted name, and splits a featured guest`() {
+        // Event 12959 (Kater post 1993), from the homepage on 2026-11-25 (#5501).
+        val html =
+            """
+            <article class="post-1993 event type-event" id="event-1993">
+                <header class="entry-header"><h2 class="toggle-article">
+                    <span class="date-header">10.12.</span><span class="date-title">Shebanese à la Kater</span>
+                </h2></header>
+                <div class="entry-summary">
+                    <p>Do. 10.12 17:00 — Fr. 11.12 06:00</p>
+                    <p>10|12 – 11|12<br />
+                    __________________<br />
+                    ACID BOGEN</p>
+                    <p>Aladdin b2b Phillip S.<br />
+                    der Ackermann b2b Onix<br />
+                    Dirty Hands b2b Mombaseo<br />
+                    HANNAHHANSEN b2b TRVS25<br />
+                    Kleingeld-Diskothek b2b La Flaca<br />
+                    Nÿx b2b Shurti<br />
+                    The Ralf feat. Pam, Aldarwish الدرويش &amp; Yukira [Live]</p>
+                    <p>Entrance from 17:00 – 20:00 via Holzmarkt (2€ Kulturbeitrag)<br />
+                    from 20:00 via Kater main entrance (10€)</p>
+                </div>
+            </article>
+            """.trimIndent()
+
+        val artists = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().artists
+
+        val djs =
+            listOf(
+                "Aladdin",
+                "Phillip S.",
+                "der Ackermann",
+                "Onix",
+                "Dirty Hands",
+                "Mombaseo",
+                "HANNAHHANSEN",
+                "TRVS25",
+                "Kleingeld-Diskothek",
+                "La Flaca",
+                "Nÿx",
+                "Shurti"
+            )
+        val live = listOf("The Ralf", "Pam", "Aldarwish الدرويش", "Yukira")
+        artists shouldContainExactly
+            djs.map { ScrapedArtist(it, ArtistRole.DJ, "ACID BOGEN") } + live.map { ScrapedArtist(it, ArtistRole.LIVE, "ACID BOGEN") }
+    }
+
+    @Test
     fun `strips the presenter suffix so a floor groups across nights`() {
         // The rule reads "ACID BOGEN by Wabi-Sabi & Flirt Records" on this night and plain
         // "ACID BOGEN" on others; both must land on the same stage.

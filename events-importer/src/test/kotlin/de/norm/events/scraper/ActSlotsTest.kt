@@ -47,6 +47,14 @@ class ActSlotsTest {
     }
 
     @Test
+    fun `splits a featured guest and keeps Feat as part of a name`() {
+        acts("Anna feat. Berta, Cleo & Dora [LIVE]") shouldContainExactly
+            listOf("Anna" to ArtistRole.LIVE, "Berta" to ArtistRole.LIVE, "Cleo" to ArtistRole.LIVE, "Dora" to ArtistRole.LIVE)
+        acts("Little Feat b2b Anna").map { it.first } shouldContainExactly listOf("Little Feat", "Anna")
+        acts("Anna feat. Berta", SlotJoins.B2B).map { it.first } shouldContainExactly listOf("Anna feat. Berta")
+    }
+
+    @Test
     fun `bills no placeholder`() {
         acts("Special Guest [LIVE]").shouldBeEmpty()
     }
