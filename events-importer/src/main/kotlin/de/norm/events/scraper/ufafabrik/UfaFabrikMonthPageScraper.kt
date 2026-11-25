@@ -238,6 +238,7 @@ private val GENRE_TYPES: Map<String, String> =
     linkedMapOf(
         "comedy" to EventType.COMEDY.name,
         "kabarett" to EventType.COMEDY.name,
+        "cabaret" to EventType.COMEDY.name,
         "theater" to EventType.SHOW.name,
         "zauber" to EventType.SHOW.name,
         "magie" to EventType.SHOW.name,

@@ -27,6 +27,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
 import java.math.BigDecimal
+import java.time.LocalTime
 
 /**
  * Pure parser for Tempodrom's programme, read from the schema.org JSON-LD its listing page embeds.
@@ -116,7 +117,8 @@ class TempodromOverviewPageScraper {
             // `doorTime` is a full timestamp of its own; only its clock part is wanted.
             doorsTime = event.schemaTime("doorTime"),
             // A multi-day run publishes a date-only `startDate`, so it simply has no start time.
-            startTime = event.schemaTime("startDate"),
+            // Midnight is the placeholder of a show whose time is not set yet (event 15369).
+            startTime = event.schemaTime("startDate")?.takeUnless { it == LocalTime.MIDNIGHT },
             endDate = endDate,
             endTime = endDate?.let { event.schemaTime("endDate") },
             imageUrl = event.schemaImageUrl(),

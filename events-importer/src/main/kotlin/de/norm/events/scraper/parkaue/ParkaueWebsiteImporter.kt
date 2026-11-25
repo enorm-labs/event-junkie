@@ -59,6 +59,7 @@ val PARKAUE_LIMITATIONS =
         EventSource.PARKAUE,
         AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; the ticket shop holds it", verified = "2026-11-15"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes only the start time", verified = "2026-11-15"),
+        AcceptedLimitation(LimitedAspect.END_TIME, "only some dates print an end (3 of 15 on the November page)", verified = "2026-11-25"),
         AcceptedLimitation(LimitedAspect.GENRE, "the site names formats and ages, not a music genre", verified = "2026-11-15"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "a play names its author and director, not its cast", verified = "2026-11-15"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per date", verified = "2026-11-15")

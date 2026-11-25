@@ -178,6 +178,7 @@ class ColumbiahalleOverviewPageScraper {
      * line in it ("Special Guest: Rogers") is read like the `h3` one, and the shared parser skips
      * the rest. On a card with no `h3`, a teaser that is a bare comma list is the bill itself and
      * the title is the event's name (`Unity` over `VNV Nation, IAMX, Northern Lite, Zeromancer`, #2266).
+     * A title that lists its acts after a quoted motto bills that list ([titleBill]).
      * A comedy or show card's `Live mit <names>` line bills those names. Otherwise the [titleType]
      * decides, so a comedy card that names its comedians in the title still bills them.
      */
@@ -188,6 +189,7 @@ class ColumbiahalleOverviewPageScraper {
         titleType: String,
         eventType: String
     ): List<ScrapedArtist> {
+        val listed = if (titleType == EventType.CONCERT.name) titleBill(title) else emptyList()
         val bill = teaser?.takeIf { subtitleLines.isEmpty() && BARE_BILL.matches(it) }
         val billedWith =
             subtitleLines
@@ -207,11 +209,38 @@ class ColumbiahalleOverviewPageScraper {
                         .map { ScrapedArtist(name = it) }
                 }
 
+                listed.isNotEmpty() -> {
+                    listed
+                }
+
                 else -> {
                     buildArtistsForEventType(title, (subtitleLines + listOfNotNull(teaser)).joinToString("\n"), titleType)
                 }
             }
         return artists.distinctBy { it.name.lowercase() }
+    }
+
+    /**
+     * The acts of a title that lists them after a quoted motto, one per spaced hyphen: `Electric Kingdom! „ORIGINAL PLAYERS“ -
+     * Westbam - Mr X & Mr Y - …` (event 15371). A duo keeps its `&`, and a trailing `und vielen mehr!` names nobody.
+     */
+    private fun titleBill(title: String): List<ScrapedArtist> {
+        val acts =
+            MOTTO_THEN_LIST
+                .find(title)
+                ?.groupValues
+                ?.get(1)
+                ?.replace(AND_MANY_MORE, "")
+                ?.split(LIST_SEPARATOR)
+                ?.map { it.trim() }
+                .orEmpty()
+        return if (acts.size <
+            MIN_LISTED_ACTS
+        ) {
+            emptyList()
+        } else {
+            acts.filterNot { it.isBlank() || isNonArtistName(it) }.map { ScrapedArtist(name = it, titleDerived = true) }
+        }
     }
 
     /** The card's day-of-month text against the month heading, or `null` when not a valid day. */
@@ -263,6 +292,14 @@ class ColumbiahalleOverviewPageScraper {
 
         /** Two or more names in a comma list, with no label, date or figure among them. */
         val BARE_BILL = Regex("""[^:\d,]+(?:,[^:\d,]+)+""")
+
+        /** A quoted motto, then the list after its spaced hyphen. */
+        val MOTTO_THEN_LIST = Regex("""[„“"][^„“”"]+[“”"]\s+-\s+(.+)$""")
+        val LIST_SEPARATOR = Regex("""\s+-\s+""")
+        val AND_MANY_MORE = Regex("""\s+und\s+viele[n]?\s+mehr\s*!*$""", RegexOption.IGNORE_CASE)
+
+        /** The fewest acts that make a list; a quoted album and a tour name are two parts at most. */
+        const val MIN_LISTED_ACTS = 3
 
         /** Class marking a `.eventlist_monat` month heading in the event stream. */
         private const val MONTH_HEADING_CLASS = "eventlist_monat"

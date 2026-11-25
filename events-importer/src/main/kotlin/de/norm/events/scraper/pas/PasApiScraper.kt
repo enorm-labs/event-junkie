@@ -41,6 +41,7 @@ import tools.jackson.databind.JsonNode
  *   A colon that closes the title (`Iva Nova:`) leaves the stored title, and it still marks the title as a billing, not a series night.
  * - **A `+ guests` tail names no one** (`The Electrics + guests. Day I`, events 15059 and 15060): the band is billed, and so is
  *   each player the description credits below its lone `+` line, as a guest of the band.
+ * - **A title that is one name is a series night**, unless the description prints it as `Sacrifices:` above its players: then it is the band (event 15320).
  * - **A `Kick-off:` title names the occasion, not the acts** (`Kick-off: Jazzfest Community Week & Kiez-Session #1`), so it bills none.
  * - **The tags mix styles with formats**, so only the styles are the genre.
  */
@@ -132,7 +133,8 @@ class PasApiScraper {
             val band = headlinersFromTitle(title.substring(0, tail.range.first))
             return band + guestsCredited(descriptionHtml).map { ScrapedArtist(name = it, role = ArtistRole.GUEST) }
         }
-        if (!BILLING_SEPARATOR.containsMatchIn(title) || KICK_OFF.containsMatchIn(title)) return emptyList()
+        if (KICK_OFF.containsMatchIn(title)) return emptyList()
+        if (!BILLING_SEPARATOR.containsMatchIn(title)) return if (headsItsPlayers(title, descriptionHtml)) headlinersFromTitle(title) else emptyList()
         val billing =
             title
                 .split(SET_SEPARATOR)
@@ -140,6 +142,16 @@ class PasApiScraper {
                 .joinToString(" / ") { it.replace(INSTRUMENT_NOTE, "") }
         val credited = creditedNames(descriptionHtml)
         return headlinersFromTitle(billing).map { act -> act.copy(name = fullName(act.name, credited)) }
+    }
+
+    /** Whether the description prints `<title>:` on a line of its own, with a credited player on the next one. */
+    private fun headsItsPlayers(
+        title: String,
+        descriptionHtml: String
+    ): Boolean {
+        val lines = descriptionLines(descriptionHtml).filter { it.isNotEmpty() }
+        val heading = lines.indexOfFirst { it.equals("$title:", ignoreCase = true) }
+        return heading >= 0 && lines.getOrNull(heading + 1)?.let(::creditedName) != null
     }
 
     /** The players the description credits one per line, `Name – instrument` or `Name: instrument`. */

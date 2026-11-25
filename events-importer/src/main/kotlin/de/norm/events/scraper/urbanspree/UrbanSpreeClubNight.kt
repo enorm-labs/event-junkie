@@ -75,6 +75,34 @@ private fun spelledAsInText(
             ?: name
     }
 
+/** A line-up block's opening word, in capitals as the venue prints it. */
+private val LINE_UP_OPENING = Regex("""\bLINEUP\b""")
+
+/** One `<NAME> — LIVE` entry above its blurb: a run of capitals at the block's opening or after a sentence end. */
+private val LIVE_ENTRY = Regex("""(?:^|[.!?])\s*(\p{Lu}[^\p{Ll}\d—–→.!?]*?)\s+[—–]\s+LIVE\b""")
+
+/** A country code after a name: `MARTYRMACHINE (PL)`. */
+private val COUNTRY_CODE = Regex("""\s*\(\p{Lu}{2,3}\)$""")
+
+private val LIVE_CO_BILL = Regex("""\s+&\s+""")
+
+/**
+ * The acts of a `LINEUP` block that bills each as `<NAME> — LIVE` above its blurb, in order (event 15344). Two or more
+ * entries make a block. A joint set bills each act, and a shouted name takes the blurb's own spelling.
+ */
+internal fun urbanSpreeLiveActs(description: String?): List<String> {
+    val block = description?.let { text -> LINE_UP_OPENING.find(text)?.let { text.substring(it.range.last + 1) } } ?: return emptyList()
+    val entries = LIVE_ENTRY.findAll(block).map { it.groupValues[1].replace(COUNTRY_CODE, "") }.toList()
+    if (entries.size < MIN_LIVE_ENTRIES) return emptyList()
+    return entries
+        .flatMap { it.split(LIVE_CO_BILL) }
+        .map { spelledAsInText(it.trim(), block) }
+        .filterNot { it.isBlank() || isNonArtistName(it) }
+        .distinct()
+}
+
+private const val MIN_LIVE_ENTRIES = 2
+
 /** The bracket that ends a title: `Urban Spree KLUBNACHT (Kim, Kyra)`. */
 private val TRAILING_BRACKET = Regex("""\(([^()]+)\)\s*$""")
 

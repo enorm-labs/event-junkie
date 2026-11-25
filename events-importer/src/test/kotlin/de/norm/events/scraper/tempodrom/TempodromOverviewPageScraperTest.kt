@@ -481,4 +481,20 @@ class TempodromOverviewPageScraperTest {
         val html = """<html><body><script type="application/ld+json">{ not json </script></body></html>"""
         scraper.scrape(Jsoup.parse(html, baseUrl)).shouldBeEmpty()
     }
+
+    @Test
+    fun `leaves the start empty at the midnight placeholder (event 15369)`() {
+        val html =
+            """
+            <html><body><script type="application/ld+json">[
+              {"@type": "Event", "name": "KANSAS", "description": "European Tour", "startDate": "2027-06-27T00:00:00",
+               "url": "https://www.tempodrom.de/event/kansas_2027-06-27_00/"}
+            ]</script></body></html>
+            """.trimIndent()
+
+        val kansas = scraper.scrape(Jsoup.parse(html, baseUrl)).single()
+
+        kansas.eventDate shouldBe LocalDate.of(2027, 6, 27)
+        kansas.startTime.shouldBeNull()
+    }
 }

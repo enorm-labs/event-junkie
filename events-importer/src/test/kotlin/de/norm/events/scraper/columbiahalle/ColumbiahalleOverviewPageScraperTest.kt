@@ -12,6 +12,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -243,5 +244,32 @@ class ColumbiahalleOverviewPageScraperTest {
 
         nights.single { it.sourceId == "columbiahalle:9740" }.status shouldBe "CANCELLED"
         nights.single { it.sourceId == "columbiahalle:9739" }.status shouldBe "SCHEDULED"
+    }
+
+    private fun billOf(title: String): List<String> {
+        val html =
+            """
+            <div class="mod_eventlist"><div class="eventlist_monat">März 2027</div>
+              <div class="eventlist_event"><div class="event_inhalt" id="event_9799"><div class="event_datum_tag">06</div><h2>$title</h2></div></div>
+            </div>
+            """.trimIndent()
+        return scraper
+            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+            .single()
+            .artists
+            .map { it.name }
+    }
+
+    @Test
+    fun `bills the acts a title lists after its quoted motto (event 15371)`() {
+        billOf(
+            "Electric Kingdom! „ORIGINAL PLAYERS“ - Westbam - Mr X &amp; Mr Y - Lexy &amp; K-Paul - DJ I.C.O.N. - Chemical Reaction Food und vielen mehr!"
+        ) shouldContainExactly
+            listOf("Westbam", "Mr X & Mr Y", "Lexy & K-Paul", "DJ I.C.O.N.", "Chemical Reaction Food")
+    }
+
+    @Test
+    fun `reads no list from a quoted title with a tour name`() {
+        billOf("Juju „Crashout“ - Clubtour").size shouldBe 1
     }
 }

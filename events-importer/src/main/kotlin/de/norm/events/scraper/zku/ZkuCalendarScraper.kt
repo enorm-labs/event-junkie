@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.billsTradeFairOrConference
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.collapseWhitespace
+import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.mapSkippingFailures
@@ -17,13 +18,18 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.URI
+import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Month
 
 /**
  * Pure parser for the calendar on ZK/U's TYPO3 homepage. Each day is a hidden popup,
  * `div.calendar-events#d-2026-10-24`, holding one `.list-item` per entry: an `h2` or `h3.h2` title, a
  * `p.date` line (`24 OCTOBER 2026 / 21:00 – 03:00`), an optional subtitle and the link to
  * `/timeline/<slug>/`. The popup's id gives the day, so an entry over two days is one row a day.
+ *
+ * An exhibition prints its run and its opening (`27 NOVEMBER – 03 DECEMBER 2026 / OPENING ON 26 NOVEMBER, 19:00`), and the
+ * calendar repeats it on each day of the run and on days outside it. It is one row over the run ([exhibitionRun]).
  *
  * The site names no category. Markets, workshops, open studios and meetings are dropped
  * ([isZkuParticipationFormat]), as is a conference; the rest is typed from the title and the
@@ -38,7 +44,13 @@ class ZkuCalendarScraper {
     ): List<ScrapedEvent> {
         val days = document.select("div.calendar-events[id^=d-]")
         val entries = days.flatMap { day -> day.select(".list-item").map { day.id() to it } }
-        val events = entries.mapSkippingFailures(logger, "a ZK/U calendar entry") { (dayId, item) -> parseEntry(dayId, item, sourceUrl) }
+        val events =
+            entries
+                .mapSkippingFailures(
+                    logger,
+                    "a ZK/U calendar entry"
+                ) { (dayId, item) -> parseEntry(dayId, item, sourceUrl) }
+                .distinctBy { it.sourceId }
         logger.info { "Found ${events.size} programme entr(ies) over ${days.size} day(s) of the ZK/U calendar" }
         return events
     }
@@ -48,7 +60,9 @@ class ZkuCalendarScraper {
         item: Element,
         sourceUrl: String
     ): ScrapedEvent? {
-        val date = parseIsoDate(dayId.removePrefix("d-")) ?: return null
+        val dateLine = item.selectFirst("p.date")?.text()
+        val run = exhibitionRun(dateLine)
+        val date = run?.start ?: parseIsoDate(dayId.removePrefix("d-")) ?: return null
         val title =
             item
                 .selectFirst(TITLE)
@@ -72,8 +86,8 @@ class ZkuCalendarScraper {
                 .blankToNull()
                 ?.let { resolveUrl(sourceUrl, it) } ?: return null
         val slug = URI(href).path.trimEnd('/').substringAfterLast('/')
-        val (start, end) = parseTimes(item.selectFirst("p.date")?.text())
-        val eventType = inferVenueFormatType(title, subtitle, ZKU_FORMATS)
+        val (start, end) = if (run != null) run.openingTime to null else parseTimes(dateLine)
+        val eventType = if (run != null) EventType.EXHIBITION.name else inferVenueFormatType(title, subtitle, ZKU_FORMATS)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
@@ -81,7 +95,7 @@ class ZkuCalendarScraper {
             typeIsFallback = eventType == EventType.OTHER.name,
             eventDate = date,
             startTime = start,
-            endDate = end?.let { endOn(date, start, it) },
+            endDate = run?.end ?: end?.let { endOn(date, start, it) },
             endTime = end,
             imageUrl =
                 item
@@ -101,6 +115,48 @@ class ZkuCalendarScraper {
         return clock(match.groupValues[1]) to match.groupValues[2].blankToNull()?.let(::clock)
     }
 
+    /** The run of a date line that names its first and last day and an opening; null for any other line. */
+    private fun exhibitionRun(dateLine: String?): ExhibitionRun? {
+        val match = dateLine?.let(RUN_LINE::find) ?: return null
+        val groups = match.groupValues
+        val year = groups[5].toInt()
+        val end = dayOf(groups[3], groups[4], year) ?: return null
+        val first = dayBefore(end, groups[1], groups[2]) ?: return null
+        val opening = OPENING_DAY.find(groups[6])
+        val openingDay = opening?.let { dayBefore(end, it.groupValues[1], it.groupValues[2]) }
+        val start = listOfNotNull(first, openingDay).min()
+        val openingTime =
+            opening
+                ?.takeIf { openingDay == start }
+                ?.groupValues
+                ?.get(3)
+                .blankToNull()
+                ?.let(::clock)
+        return ExhibitionRun(start, end, openingTime)
+    }
+
+    /** The day and month at or before [end], which alone carries the year. */
+    private fun dayBefore(
+        end: LocalDate,
+        day: String,
+        month: String
+    ): LocalDate? = dayOf(day, month, end.year)?.let { if (it > end) it.minusYears(1) else it }
+
+    private fun dayOf(
+        day: String,
+        month: String,
+        year: Int
+    ): LocalDate? =
+        Month.entries
+            .firstOrNull { it.name.equals(month, ignoreCase = true) }
+            ?.let { dateOrNull { LocalDate.of(year, it, day.toInt()) } }
+
+    private data class ExhibitionRun(
+        val start: LocalDate,
+        val end: LocalDate,
+        val openingTime: LocalTime?
+    )
+
     private fun clock(text: String): LocalTime? = parseTime(text.replace('.', ':').padStart(CLOCK_LENGTH, '0'))
 
     /** The speaker of a talk billed `Name Surname: Topic`. */
@@ -118,6 +174,12 @@ class ZkuCalendarScraper {
 
         val CLOCK_RANGE = Regex("""(\d{1,2}[:.]\d{2})(?:\s*[–-]\s*(\d{1,2}[:.]\d{2}))?""")
         const val CLOCK_LENGTH = 5
+
+        /** A run and its opening: `26 NOVEMBER – 06 DECEMBER 2026 / SELECTED OPENING HOURS OR BY APPOINTMENT`. */
+        val RUN_LINE = Regex("""^\s*(\d{1,2})\s+(\p{L}+)\s*[–-]\s*(\d{1,2})\s+(\p{L}+)\s+(\d{4})\s*/(.*\bopening\b.*)$""", RegexOption.IGNORE_CASE)
+
+        /** The vernissage in a run's line: `OPENING ON 26 NOVEMBER, 19:00`. */
+        val OPENING_DAY = Regex("""\bopening\s+on\s+(\d{1,2})\s+(\p{L}+)(?:,?\s+(\d{1,2}[:.]\d{2}))?""", RegexOption.IGNORE_CASE)
 
         /** Two to four capitalised words before a colon: `Dorothee Richter: Feminist Perspectives On Curating`. */
         val SPEAKER_PREFIX = Regex("""^(\p{Lu}[\p{L}.'-]+(?:\s+\p{Lu}[\p{L}.'-]+){1,3}):\s""")

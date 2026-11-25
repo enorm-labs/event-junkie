@@ -105,9 +105,12 @@ class UrbanSpreeDetailPageScraper {
             }
         // `DJ JONAS POPPE (OUM SHATT)`: a DJ billed with the band he sings in, which is an affiliation, not his name.
         // A show name after the act is no part of it either ([urbanSpreeActName]).
+        // A `LINEUP` block bills the acts of a night whose title is the series' name, so it goes before the title.
         val titleArtists =
-            buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
-                .map { withoutDjAffiliation(it.copy(name = urbanSpreeActName(it.name))) }
+            urbanSpreeLiveActs(description).map { ScrapedArtist(name = it) }.ifEmpty {
+                buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
+                    .map { withoutDjAffiliation(it.copy(name = urbanSpreeActName(it.name))) }
+            }
         val artists = titleArtists.ifEmpty { urbanSpreeClubNightLineUp(title, description, blurb?.descriptionText()) }
         // A Concerts night whose running order bills DJ sets is a club night.
         val billsDjSets = titleArtists.isEmpty() && artists.any { it.role == DJ_ROLE }
