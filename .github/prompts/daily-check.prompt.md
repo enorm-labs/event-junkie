@@ -78,6 +78,14 @@ gh issue list --state open --limit 500 --json number,title,body \
        | select($d != null and $d <= $today) | "#\(.number)\t\($d)\t\(.title)"'
 ```
 
+**The migration tests production has run** (#4671). Unless the tunnel is down, pass the version Step 1b shows production _running_:
+
+```sh
+git fetch -q --tags origin && scripts/retirable-migration-tests.sh <version>
+```
+
+Count the RETIRE lines. With the tunnel down, or exit 2, this goes under Not checked.
+
 ## Step 3 — Sort every signal
 
 One verdict each, in this order: **BLOCKER** (a red publish, a cluster not whole, a new high or critical alert), **ACT** (something only the operator can do:
@@ -113,6 +121,8 @@ an approval, a decision, a dispatch), **DRAFTED** (a new defect, with an issue d
 - **An `after_deploy` entry**: `released: true` with a step whose `due` is `now`, a past date, a `deploy+<N>d` already passed, or a dark day is ACT, "run `/post-release`", with those
   steps; production already runs the change. A step dated later is waiting until that date, a `when:<text>` step is waiting with that text, and
   `released: false` is waiting for a release: one line each.
+- **Retirable migration tests**: five or more RETIRE lines is ACT, "run `/maintain`", whose stage 14 opens the pull request. Fewer is one State line
+  with the count, and an open pull request that drops them is KNOWN. An UNREADABLE line is quoted. This command deletes nothing.
 - **Unreleased commits**: say whether they hold a product change. When they do, suggest a cut: `gh workflow run cut-release.yml -f dry_run=true` for the highlights, then `-f dry_run=false`. Never cut.
 
 ## Step 4 — The logs and the traffic
@@ -254,7 +264,7 @@ For each open pull request by `dependabot[bot]`, `renovate[bot]` or `claude[bot]
 Write `temp/daily-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/daily-check-<YYYY-MM-DD>.md`. Use this shape:
 
 1. **Action list**, most urgent first: every BLOCKER and ACT, one line each, with the link and the one thing to do.
-2. **State**: the tunnel, both clusters' versions, `release_main`, the unreleased commits, the alerts that fired, one line per rule and cluster, and
+2. **State**: the tunnel, both clusters' versions, `release_main`, the unreleased commits, the retirable migration tests, the alerts that fired, one line per rule and cluster, and
    the `/traffic` lines.
 3. **Merged**: each pull request merged in Step 6, with its subject.
 4. **Data**: the flagged new artists and promoters with their verdicts, the `/admin-review` lines with the link to its report, the manual venues: the overdue

@@ -121,6 +121,7 @@ Run by an agent or a developer. No cluster, no tunnel; `k3d-rehearsal.sh` makes 
 | `admin-fixture-server.mjs`                | Serves an `events-admin` build and those fixtures on one port, for `admin-screenshots.sh`                                                              | `admin-screenshots.sh`                                  |
 | `mask-fixture-contacts.py`                | Mask the e-mail addresses and Google API keys in the scraper fixtures and the tests that quote them; `check` lists what is left, masked (#4855, #4964) | `validate-python.yml`, hook `fixture-contacts`          |
 | `limitation-verified.py`                  | Move the `verified` date of the accepted limitations the plausibility re-check saw still silent; dry run by default (#4841)                            | `.github/prompts/maintain.prompt.md`                    |
+| `retirable-migration-tests.sh`            | Migration tests whose migration is in the version production runs, as `RETIRE`, `KEEP` or `UNREADABLE`; deletes nothing (#4671)                        | `/maintain`, `/daily-check`                             |
 
 ## Ops
 

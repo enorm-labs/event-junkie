@@ -5,7 +5,7 @@ run. The steps are the existing commands; this command only joins them.
 
 ```text
 /daily-check → file the drafts → (/refine-issues) → /afk → /afk merge → cut a release → /post-release
-  → (weekly) /artist-cleanup, /enrich → (monthly) /genre-cleanup, /data-quality-audit, re-date limitations → (idle) /next-importer → again
+  → (weekly) /artist-cleanup, /enrich → (monthly) /genre-cleanup, /data-quality-audit, re-date limitations → (at five) retire migration tests → (idle) /next-importer → again
 ```
 
 ## Important
@@ -37,6 +37,9 @@ ls -t temp/artist-cleanup-production-*.json temp/promoter-cleanup-production-*.j
   temp/enrich-*.md temp/genre-cleanup-production-*.json temp/data-quality-production-*.md 2>/dev/null   # the dated steps: when each last ran
 gh issue list --label afk-ok --state open --json number,title,assignees --jq 'length'
 gh pr list --state merged --search 'in:title "re-date accepted limitations"' --json number,mergedAt --limit 1   # stage 13
+git fetch -q --tags origin
+scripts/retirable-migration-tests.sh <version>                   # stage 14: the version production runs, from `scripts/ej.sh versions`
+gh pr list --state open --search 'in:title "drop the migration tests production has run"' --json number                        # stage 14
 ```
 
 A key that answers `{"error": …}` is not checked. Say so, and decide the stage from the rest.
@@ -60,16 +63,17 @@ The first row that holds decides. Each row names its evidence; report it with th
 | 11  | No `temp/genre-cleanup-production-*.json` from the last 30 days, and the tunnel is up                                        | `/genre-cleanup production`                       | runs         |
 | 12  | No `temp/data-quality-production-*.md` from the last 30 days, and the tunnel is up                                           | `/data-quality-audit production`                  | runs         |
 | 13  | No `re-date accepted limitations` PR merged in the last 30 days, and the newest nightly-reports issue has STILL SILENT lines | Re-date the STILL SILENT rows (below)             | runs         |
-| 14  | No open `afk-ok` issue, and no `temp/refine-*.md` from the last 7 days                                                       | `/refine-issues` on the next milestone            | proposes     |
-| 15  | A 🔨 Ready venue in `docs/EVENT_DATA_SOURCES.md`, and no open `importer` pull request                                        | `/next-importer`                                  | proposes     |
-| 16  | None of the above                                                                                                            | "Nothing due", and the next date anything is due  | reports      |
+| 14  | Five or more RETIRE lines, production settled, and no open pull request that drops them                                      | Retire the migration tests (below)                | runs         |
+| 15  | No open `afk-ok` issue, and no `temp/refine-*.md` from the last 7 days                                                       | `/refine-issues` on the next milestone            | proposes     |
+| 16  | A 🔨 Ready venue in `docs/EVENT_DATA_SOURCES.md`, and no open `importer` pull request                                        | `/next-importer`                                  | proposes     |
+| 17  | None of the above                                                                                                            | "Nothing due", and the next date anything is due  | reports      |
 
 - **Stage 3**: list the drafts, one line each with `afk-ok: yes|no — reason`, and stop. When the operator answers, file exactly those, as
   [`/daily-check`](daily-check.prompt.md) Step 7 says: the label from the verdict, the board in one batch, the heading rewritten to `(filed #N)`.
 - **Stage 5**: "no session holds" is [`/start-issue`](start-issue.prompt.md) step 2's three signals: board Status, a remote branch, an open pull
   request. `/afk` checks them again; this row only decides whether starting it is worth a turn.
 - **Stage 6**: give `gh workflow run cut-release.yml -f dry_run=true` for the highlights, then `-f dry_run=false`, and the subjects that make it a
-  product release. A release cut less than two hours ago has not settled: stage 7 waits for the rollout and the first imports, so it skips to stage 15.
+  product release. A release cut less than two hours ago has not settled: stage 7 waits for the rollout and the first imports, so it skips to stage 16.
 - **Stage 7**: a step's `due` has come when it is `now`, a date on or before today, `deploy+<N>d` with N days passed since the change reached that
   environment, or a dark day that is today. A `when:<text>` step has come only when its text holds. [`/post-release`](post-release.prompt.md)
   § When a step is due says how to read each.
@@ -89,9 +93,17 @@ The first row that holds decides. Each row names its evidence; report it with th
   request with [`/open-pr`](open-pr.prompt.md), titled `chore(importer): re-date accepted limitations`, listing the rows and linking the report comments.
   A NOW PUBLISHED row is not re-dated: it is a defect draft, and `/daily-check` Step 7 files it. A refused pair is a report row that names no declaration;
   quote it in the pull request and leave it out.
-- **Stages 14 and 15**: each asks something of the operator or takes an hour or more, so this command names it and does not run it.
+- **Stage 14**: a data fix's migration test goes once production has run it (#4671,
+  [architecture.instructions.md](../instructions/architecture.instructions.md)). Settled means the HelmRelease is Ready on the version
+  `scripts/ej.sh versions` names as _running_, never the _resolvable_ one. With the tunnel down the stage does not hold. In a worktree cut from
+  `origin/main`, run the script again and delete every RETIRE file, and nothing else: the `V` files, `MigrationTestSupport.kt`, `MigrationSlugTest`
+  and `SplitMigrationBillingOrderTest` stay. Grep the tree for each deleted class name, and correct a document or prompt that names it as a live
+  model: point it at `git log --all -- '**/<Name>.kt'`. Run `./gradlew clean build detektMain detektTest`. Open the pull request with
+  [`/open-pr`](open-pr.prompt.md), titled `test(importer): drop the migration tests production has run`, with the production version and its
+  highest migration. An UNREADABLE line is quoted in the pull request and left.
+- **Stages 15 and 16**: each asks something of the operator or takes an hour or more, so this command names it and does not run it.
 - **The dated stages read the newest file in `temp/`.** Deleting a report makes its step due again, which is the safe way round.
-- **Stage 16**: the next date is the earliest future `due`, the day a weekly or monthly stage is due again, or the next dark day of a `dark-day` step.
+- **Stage 17**: the next date is the earliest future `due`, the day a weekly or monthly stage is due again, or the next dark day of a `dark-day` step.
 
 ## Step 3 — Run or hand over
 
@@ -99,7 +111,7 @@ Run the step when the stage says _runs_, under its prompt. Then go back to Step 
 in the same invocation: the operator reads each result before the next one starts.
 
 Under `/loop /maintain`, a step that waits on something outside the session — CI, a rollout, a release window — ends the turn with a wakeup matched to it,
-not a poll. Stages 3, 6, 14 and 15 end the loop's turn with the question, and stage 16 sleeps until the next due date or the next morning, whichever comes first.
+not a poll. Stages 3, 6, 15 and 16 end the loop's turn with the question, and stage 17 sleeps until the next due date or the next morning, whichever comes first.
 
 ## Step 4 — The report
 
