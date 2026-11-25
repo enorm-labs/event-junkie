@@ -19,13 +19,13 @@ import java.time.Instant
  */
 @Schema(description = "Compact artist summary")
 data class ArtistSummaryResponse(
-    @Schema(description = "Database primary key", example = "7")
+    @Schema(description = ID_DESCRIPTION, example = "7")
     val id: Long,
-    @Schema(description = "URL-friendly identifier", example = "the-adicts")
+    @Schema(description = SLUG_DESCRIPTION, example = "the-adicts")
     val slug: String,
-    @Schema(description = "Stage name or band name", example = "The Adicts")
+    @Schema(description = NAME_DESCRIPTION, example = "The Adicts")
     val name: String,
-    @Schema(description = "URL of the artist's photo or band logo")
+    @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
@@ -80,11 +80,11 @@ data class ArtistSummaryResponse(
  */
 @Schema(description = "Full artist detail")
 data class ArtistDetailResponse(
-    @Schema(description = "Database primary key", example = "7")
+    @Schema(description = ID_DESCRIPTION, example = "7")
     val id: Long,
-    @Schema(description = "URL-friendly identifier", example = "the-adicts")
+    @Schema(description = SLUG_DESCRIPTION, example = "the-adicts")
     val slug: String,
-    @Schema(description = "Stage name or band name", example = "The Adicts")
+    @Schema(description = NAME_DESCRIPTION, example = "The Adicts")
     val name: String,
     @Schema(description = "Biography or description text")
     val description: String?,
@@ -116,7 +116,7 @@ data class ArtistDetailResponse(
     val descriptionAltLicenceId: String?,
     @Schema(description = "The page `descriptionAlt` was taken from, which the rendered credit links to", example = "https://de.wikipedia.org/wiki/Buffalo_Tom")
     val descriptionAltSourceUrl: String?,
-    @Schema(description = "URL of the artist's photo or band logo")
+    @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
@@ -213,3 +213,8 @@ data class ArtistDetailResponse(
             )
     }
 }
+
+private const val ID_DESCRIPTION = "Database primary key"
+private const val SLUG_DESCRIPTION = "URL-friendly identifier"
+private const val NAME_DESCRIPTION = "Stage name or band name"
+private const val IMAGE_URL_DESCRIPTION = "URL of the artist's photo or band logo"
