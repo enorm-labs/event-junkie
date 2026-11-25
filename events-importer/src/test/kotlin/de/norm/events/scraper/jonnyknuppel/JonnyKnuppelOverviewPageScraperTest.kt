@@ -58,7 +58,16 @@ class JonnyKnuppelOverviewPageScraperTest {
         event.description.shouldBeNull()
         event.artists.map { it.name } shouldContainExactly
             listOf("illousion", "Rave Lauren", "Lilly K.", "Nein Oh Nein", "Meta Chrom", "Friedrichstraße Geist", "DSL", "Klirre", "Mittelscharf")
-        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
+        event.artists.filter { it.role == ArtistRole.LIVE }.map { it.name } shouldContainExactly listOf("Meta Chrom", "Klirre")
+    }
+
+    @Test
+    fun `an act with a starred or dashed live mark is LIVE`() {
+        val live = events.flatMap { it.artists }.filter { it.role == ArtistRole.LIVE }.map { it.name }
+
+        live shouldContain "Antaares *live"
+        live shouldContain "Kahl & Kæmena *live"
+        live shouldContain "Dario Klein"
     }
 
     @Test

@@ -20,11 +20,14 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.humboldthain.HumboldthainApiScraper.Companion.TICKET_URL_PATTERN
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.isOnlyLiveMark
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.TextNode
 import java.text.Normalizer
 import java.time.Clock
 import java.time.LocalDate
@@ -154,17 +157,23 @@ class HumboldthainApiScraper(
     /**
      * The DJs billed on a night: the link text of every `ra.co/dj/<slug>` anchor in the
      * description, in document order, de-duplicated case-insensitively and filtered through the
-     * shared [isNonArtistName]. Resident Advisor *event* links in the same prose are ticket shops,
+     * shared [isNonArtistName]. A live mark alone behind the link makes the act LIVE. Resident Advisor *event* links in the same prose are ticket shops,
      * not performers, matched by [ticketUrl] instead.
      */
     private fun djArtists(description: Document?): List<ScrapedArtist> =
         description
             ?.select(RA_ARTIST_LINK_SELECTOR)
-            ?.map { it.text().trim() }
-            ?.filter { it.isNotBlank() && !isNonArtistName(it) }
-            ?.distinctBy { it.lowercase() }
-            ?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+            ?.map { ScrapedArtist(name = it.text().trim(), role = if (isOnlyLiveMark(noteBehind(it))) ArtistRole.LIVE else ArtistRole.DJ) }
+            ?.filter { it.name.isNotBlank() && !isNonArtistName(it.name) }
+            ?.distinctBy { it.name.lowercase() }
             .orEmpty()
+
+    /** The text between [link] and the next line break or link, such as `(live)` or the `live` of an `em`. */
+    private fun noteBehind(link: Element): String =
+        generateSequence(link.nextSibling()) { it.nextSibling() }
+            .takeWhile { it !is Element || it.normalName() !in NOTE_ENDS }
+            .joinToString("") { if (it is TextNode) it.text() else (it as? Element)?.text().orEmpty() }
+            .replace('\u00A0', ' ')
 
     /** The acts of each block headed `LIVE ACTS` or `DJS`, one per line, an emoji after a name dropped. */
     private fun listedActs(description: Document?): List<ScrapedArtist> =
@@ -221,6 +230,8 @@ class HumboldthainApiScraper(
 
         /** Resident Advisor **artist** profiles — the venue's machine-readable lineup markup. */
         private const val RA_ARTIST_LINK_SELECTOR = "a[href*=ra.co/dj/]"
+
+        private val NOTE_ENDS = setOf("br", "a", "div", "p")
 
         /** Ticket shops the venue links from its prose: a Resident Advisor event page, Eventim, or any "ticket" URL. */
         private val TICKET_URL_PATTERN = Regex("""ra\.co/events/|eventim|dice\.fm|ticket""", RegexOption.IGNORE_CASE)

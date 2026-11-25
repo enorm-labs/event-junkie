@@ -6,8 +6,10 @@ import de.norm.events.event.EventEntity
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureText
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -306,6 +308,15 @@ class HumboldthainApiScraperTest {
         night.artists.map { it.name to it.role } shouldContainExactly
             listOf("FARCE" to ArtistRole.LIVE, "JUNO030" to ArtistRole.LIVE, "SHAMZY" to ArtistRole.DJ, "DJ LUISER B2B S00DY" to ArtistRole.DJ)
         night.eventType shouldBe EventType.PARTY.name
+    }
+
+    @Test
+    fun `scrape bills a linked act LIVE when only a live mark stands behind its link`() {
+        val live = events.flatMap { it.artists }.filter { it.role == ArtistRole.LIVE }.map { it.name }
+
+        live shouldContainAll listOf("RENT (DE)", "Yowlandi", "DJ SKAIN")
+        // `Biemsix presents The Electrician (live)`: the mark belongs to the other name.
+        live shouldNotContain "Biemsix"
     }
 
     @Test

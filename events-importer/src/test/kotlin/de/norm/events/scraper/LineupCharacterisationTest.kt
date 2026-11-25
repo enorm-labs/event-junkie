@@ -1,13 +1,17 @@
 package de.norm.events.scraper
 
 import de.norm.events.common.BERLIN
+import de.norm.events.scraper.aeden.AedenOverviewPageScraper
 import de.norm.events.scraper.artstalker.ArtStalkerOverviewPageScraper
+import de.norm.events.scraper.humboldthain.HumboldthainApiScraper
+import de.norm.events.scraper.jonnyknuppel.JonnyKnuppelOverviewPageScraper
 import de.norm.events.scraper.kater.KaterOverviewPageScraper
 import de.norm.events.scraper.konradtoenz.KonradToenzOverviewPageScraper
 import de.norm.events.scraper.lux.LuxOverviewPageScraper
 import de.norm.events.scraper.minimalbar.MinimalBarOverviewPageScraper
 import de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper
 import de.norm.events.scraper.renate.RenateOverviewPageScraper
+import de.norm.events.scraper.ritterbutzke.RitterButzkeDetailPageScraper
 import de.norm.events.scraper.supamolly.SupamollyOverviewPageScraper
 import de.norm.events.scraper.tresor.TresorDetailPageScraper
 import de.norm.events.scraper.tresor.TresorOverviewPageScraper
@@ -49,6 +53,18 @@ class LineupCharacterisationTest {
             return SupamollyOverviewPageScraper().scrape(fixtureDocument(fixture, url), url)
         }
 
+        fun ritterButzke(fixture: String): List<ScrapedEvent> = ritterButzkeTemplate(fixture, EventSource.RITTER_BUTZKE)
+
+        fun kreuzwerk(fixture: String): List<ScrapedEvent> = ritterButzkeTemplate(fixture, EventSource.KREUZWERK)
+
+        fun ritterButzkeTemplate(
+            fixture: String,
+            source: EventSource
+        ): List<ScrapedEvent> {
+            val url = "https://example.de/event/${fixture.substringAfterLast('-').removeSuffix(".html")}"
+            return listOfNotNull(RitterButzkeDetailPageScraper(source, lineupFromJsonLd = true).scrape(fixtureDocument(fixture, url), url))
+        }
+
         val LINEUPS: Map<String, (String) -> List<ScrapedEvent>> =
             mapOf(
                 "kater/kater-overview.html" to { KaterOverviewPageScraper(clockAt("2026-08-01")).scrape(fixtureDocument(it), "https://www.katerclub.de/") },
@@ -71,7 +87,17 @@ class LineupCharacterisationTest {
                     { PrivatclubOverviewPageScraper().scrape(fixtureDocument(it, "https://privatclub-berlin.de/"), "https://privatclub-berlin.de/") },
                 "supamolly/supamolly-overview-2026-09.html" to ::supamolly,
                 "supamolly/supamolly-overview-2026-10.html" to ::supamolly,
-                "supamolly/supamolly-overview-2026-11.html" to ::supamolly
+                "supamolly/supamolly-overview-2026-11.html" to ::supamolly,
+                "jonnyknuppel/jonnyknuppel-overview.html" to
+                    { JonnyKnuppelOverviewPageScraper().scrape(fixtureDocument(it), "https://www.jonnyknueppel.de/") },
+                "aeden/aeden-month-2026-07.html" to { AedenOverviewPageScraper().scrape(fixtureDocument(it), "https://aeden.berlin/month/") },
+                "ritterbutzke/ritterbutzke-detail-extrawelt.html" to ::ritterButzke,
+                "ritterbutzke/ritterbutzke-detail-unison.html" to ::ritterButzke,
+                "ritterbutzke/ritterbutzke-detail-deeportament.html" to ::ritterButzke,
+                "kreuzwerk/kreuzwerk-detail-bodylanguage.html" to ::kreuzwerk,
+                "kreuzwerk/kreuzwerk-detail-powerdanceclub.html" to ::kreuzwerk,
+                "kreuzwerk/kreuzwerk-detail-tracey.html" to ::kreuzwerk,
+                "humboldthain/humboldthain-api.json" to { HumboldthainApiScraper(clockAt("2026-08-01")).scrape(fixtureText(it)) }
             )
     }
 }

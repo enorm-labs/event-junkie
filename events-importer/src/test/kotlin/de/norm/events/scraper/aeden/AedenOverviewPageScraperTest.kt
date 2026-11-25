@@ -76,6 +76,11 @@ class AedenOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills an act marked live as LIVE`() {
+        julyEvents.flatMap { it.artists }.filter { it.role == ArtistRole.LIVE }.map { it.name } shouldContainExactly listOf("Mr.Crêpes", "UNT3N")
+    }
+
+    @Test
     fun `strips the decorative ampersand and drops unannounced acts from a lineup`() {
         val event = julyEvents.first { it.eventDate == LocalDate.of(2026, 7, 15) && it.title == "LILITH" }
 

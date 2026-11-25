@@ -1,15 +1,15 @@
 package de.norm.events.scraper.jonnyknuppel
 
-import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SlotJoins
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.euroAmounts
-import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
+import de.norm.events.scraper.parseActSlot
 import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripArtistSuffix
@@ -111,11 +111,8 @@ class JonnyKnuppelOverviewPageScraper {
     private fun lineup(list: Element): List<ScrapedArtist> =
         list
             .select("> li")
-            .map { it.text() }
-            .map(::stripArtistSuffix)
-            .filter { it.isNotBlank() && !isNonArtistName(it) }
-            .distinct()
-            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+            .flatMap { line -> parseActSlot(line.text(), SlotJoins.NONE) { stripArtistSuffix(it) } }
+            .distinctBy { it.name }
 
     /** One amount is the door price; a price by arrival time (`22-23 Uhr: 10€`, `Ab 23 Uhr: 15-20€`) is a note. */
     private fun parsePrice(entry: Element?): Pair<BigDecimal?, String?> {

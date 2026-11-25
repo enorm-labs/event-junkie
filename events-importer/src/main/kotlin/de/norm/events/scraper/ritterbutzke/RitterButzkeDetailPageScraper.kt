@@ -6,15 +6,19 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SlotJoins
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.hasLiveMark
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.isOnlyLiveMark
 import de.norm.events.scraper.jsonLdEvents
+import de.norm.events.scraper.parseActSlot
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.schemaName
@@ -30,7 +34,8 @@ import java.time.LocalTime
  * `div.mt-3` below the lineup is a text block: a night blurb, then one bio per act. Ritter Butzke ends
  * the first block with house text, and [parseDescription] cuts it.
  * With [lineupFromJsonLd], on for both venues, the acts come from the JSON-LD `performer` list, which
- * drops the notes the rendered rows append (`131bpm LIVE DEBUT`, `NINSA hybrid live`). A page whose
+ * drops the notes the rendered rows append (`131bpm LIVE DEBUT`, `NINSA hybrid live`). The row still
+ * gives the role, because only it carries the live mark (#5498). A page whose
  * JSON-LD names no performer falls back to the rendered rows, as the pages captured before the
  * markup existed do.
  *
@@ -136,9 +141,15 @@ class RitterButzkeDetailPageScraper(
      * siblings all carry classes, so the style test is the discriminator.
      *
      * The *title* is a night/series name (`House of Rave w/ …`), never an act, so not minted; only
-     * these rows are, each a `DJ`.
+     * these rows are.
      */
-    private fun parseLineup(document: Document): List<ScrapedArtist> {
+    private fun parseLineup(document: Document): List<ScrapedArtist> =
+        lineupRows(document)
+            .distinct()
+            .filterNot { FLOOR_TAKEOVER.containsMatchIn(it) }
+            .flatMap { row -> parseActSlot(row, SlotJoins.NONE) { it } }
+
+    private fun lineupRows(document: Document): List<String> {
         val label = document.select("p").firstOrNull { LINEUP_LABEL.containsMatchIn(it.text()) } ?: return emptyList()
         return label
             .parent()
@@ -146,14 +157,12 @@ class RitterButzkeDetailPageScraper(
             .orEmpty()
             .filter { isAfter(label, it) }
             .mapNotNull { it.text().trim().takeIf { name -> name.isNotBlank() } }
-            .distinct()
-            .filterNot { isNonArtistName(it) || FLOOR_TAKEOVER.containsMatchIn(it) }
-            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
-    /** The acts in the page's schema.org `performer` list, each a `DJ` like the rendered rows. */
-    private fun parseJsonLdLineup(document: Document): List<ScrapedArtist> =
-        document
+    /** The acts in the page's schema.org `performer` list, live where the act's rendered row is its name and a live mark. */
+    private fun parseJsonLdLineup(document: Document): List<ScrapedArtist> {
+        val rows = lineupRows(document)
+        return document
             .jsonLdEvents()
             .firstOrNull()
             ?.path("performer")
@@ -162,7 +171,14 @@ class RitterButzkeDetailPageScraper(
             .mapNotNull { it.schemaName() }
             .distinct()
             .filterNot { isNonArtistName(it) || FLOOR_TAKEOVER.containsMatchIn(it) }
-            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+            .map { name -> ScrapedArtist(name = name, role = if (rows.any { isLiveRowOf(name, it) }) ArtistRole.LIVE else ArtistRole.DJ) }
+    }
+
+    /** Whether [row] is [name] with only a live mark behind it, which neither `Anna Berta live` nor `Annalive` is for `Anna`. */
+    private fun isLiveRowOf(
+        name: String,
+        row: String
+    ): Boolean = hasLiveMark(row) && row.startsWith(name, ignoreCase = true) && isOnlyLiveMark(row.drop(name.length))
 
     /** Whether [candidate] follows the `Line Up:` [label] in document order. */
     private fun isAfter(
