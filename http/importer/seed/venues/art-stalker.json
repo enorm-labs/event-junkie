@@ -18,7 +18,7 @@
     "sources": [
         {
             "name": "ART Stalker",
-            "url": "https://art-stalker.reservix.de/",
+            "url": "https://www.reservix.de/berlin/venue/art-stalker/v41370",
             "sourceType": "ART_STALKER",
             "enabled": true,
             "importIntervalMinutes": 1440,

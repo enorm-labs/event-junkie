@@ -746,25 +746,18 @@ minimal_bar:2027-11-05 |  | Bruno Otranto | DJ
 minimal_bar:2027-12-03 |  | Bruno Otranto | DJ
 minimal_bar:2027-12-11 |  | D A Z A | DJ
 
-# artstalker/artstalker-overview.html
-art_stalker:2555973 |  | New Breed | HEADLINER
-art_stalker:2536387 |  | DJ Louie Prima | DJ
-art_stalker:2535642 |  | Dan Patlansky | HEADLINER
-art_stalker:2553479 |  | Dakil Berlin Friends | HEADLINER
-art_stalker:2578408 |  | BOFF | HEADLINER
-art_stalker:2532014 |  | 2Mädchen und Uwe | HEADLINER
-art_stalker:2532014 |  | SMILING SUN SONS | SUPPORT
-art_stalker:2582036 |  | Deer Anna | HEADLINER
-art_stalker:2582036 |  | Lily Rieke Marty | SUPPORT
-art_stalker:2578878 |  | Jed Thomas Band | HEADLINER
-art_stalker:2485646 |  | FREE COMPANY | HEADLINER
-art_stalker:2592781 |  | Glam Jam | HEADLINER
-art_stalker:2592781 |  | Mission BlueZ | HEADLINER
-art_stalker:2584693 |  | Berlin-Wedding Singers | HEADLINER
-art_stalker:2539236 |  | The Bottomline | HEADLINER
-art_stalker:2536388 |  | DJ Louie Prima | DJ
-art_stalker:2579427 |  | The Friendly Neighbourhood Band | HEADLINER
-art_stalker:2579427 |  | Hiddit! | HEADLINER
+# artstalker/artstalker-venue-1.html
+art_stalker:2544096 |  | Die Gabys | HEADLINER
+art_stalker:2545088 |  | Lord Zeppelin | HEADLINER
+art_stalker:2536389 |  | DJ Louie Prima | DJ
+
+# artstalker/artstalker-venue-2.html
+art_stalker:2592806 |  | DZAIJL | HEADLINER
+art_stalker:2553481 |  | Dakil Berlin Friends | HEADLINER
+art_stalker:2567674 |  | The Boys of Summer | HEADLINER
+art_stalker:2622720 |  | Big Tom and the Bogsnorklers | HEADLINER
+
+# artstalker/artstalker-venue-6.html
 
 # konradtoenz/konradtoenz-overview.html
 konrad_toenz:2026-10-16 |  | DJ Turbo Pascal | DJ

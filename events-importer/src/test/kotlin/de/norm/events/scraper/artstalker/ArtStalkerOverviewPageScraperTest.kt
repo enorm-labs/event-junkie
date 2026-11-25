@@ -6,40 +6,52 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
 class ArtStalkerOverviewPageScraperTest {
-    private val baseUrl = "https://art-stalker.reservix.de/"
-    private val events =
-        ArtStalkerOverviewPageScraper().scrape(fixtureDocument("artstalker/artstalker-overview.html", baseUrl))
+    private val baseUrl = "https://www.reservix.de/berlin/venue/art-stalker/v41370"
+    private val events = listOf("1", "2", "6").flatMap { page(it) }
+
+    private fun page(number: String) = ArtStalkerOverviewPageScraper().scrape(fixtureDocument("artstalker/artstalker-venue-$number.html", baseUrl))
 
     private fun bySourceId(id: String) = events.single { it.sourceId == "art_stalker:$id" }
 
     @Test
-    fun `reads every card on the first page`() {
-        events shouldHaveSize 25
-        events.map { it.sourceId }.toSet() shouldHaveSize 25
+    fun `reads every card of a page`() {
+        page("1") shouldHaveSize 8
+        page("2") shouldHaveSize 8
+        page("6") shouldHaveSize 6
+        events.map { it.sourceId }.toSet() shouldHaveSize 22
     }
 
     @Test
-    fun `parses a concert card in full`() {
-        val event = bySourceId("2535642")
-        event.title shouldBe "Dan Patlansky"
-        event.subtitle shouldBe "Blues Rock"
+    fun `parses a card in full`() {
+        val event = bySourceId("2567674")
+        event.title shouldBe "The Boys of Summer"
+        event.subtitle shouldBe "Großstadtmusik aus Berlin"
         event.eventType shouldBe EventType.CONCERT.name
-        event.eventDate shouldBe LocalDate.of(2026, 10, 3)
+        event.eventDate shouldBe LocalDate.of(2026, 12, 12)
         event.startTime shouldBe LocalTime.of(20, 0)
-        event.imageUrl shouldBe "https://cdn.reservix.com/core/img/event/detailEvent_2535642.jpg"
-        event.sourceUrl shouldBe "https://art-stalker.reservix.de/tickets-dan-patlansky-blues-rock-in-berlin-art-stalker-am-3-10-2026/e2535642"
+        event.imageUrl shouldBe "https://cdn.reservix.com/core/img/event/detailEvent_2567674.jpg"
+        event.sourceUrl shouldBe
+            "https://www.reservix.de/tickets-the-boys-of-summer-grossstadtmusik-aus-berlin-in-berlin-art-stalker-am-12-12-2026/e2567674"
         event.ticketUrl shouldBe event.sourceUrl
-        event.pricePresale shouldBe BigDecimal("21.21")
-        event.artists shouldBe listOf(ScrapedArtist("Dan Patlansky", ArtistRole.HEADLINER, titleDerived = true))
+        event.artists shouldBe listOf(ScrapedArtist("The Boys of Summer", ArtistRole.HEADLINER, titleDerived = true))
+    }
+
+    @Test
+    fun `reads the date and start however the two time lines carry them`() {
+        // One line with both, and a range on the second line.
+        bySourceId("2580338").run { eventDate to startTime } shouldBe (LocalDate.of(2026, 11, 26) to LocalTime.of(19, 0))
+        bySourceId("2559668").run { eventDate to startTime } shouldBe (LocalDate.of(2026, 12, 9) to LocalTime.of(19, 0))
+        bySourceId("2641639").eventDate shouldBe LocalDate.of(2027, 5, 6)
+        bySourceId("2641911").eventDate shouldBe LocalDate.of(2027, 6, 9)
+        card("X", "Do., 4. März 2027").eventDate shouldBe LocalDate.of(2027, 3, 4)
+        card("X", "Sa., 4. Sept. 2027").eventDate shouldBe LocalDate.of(2027, 9, 4)
     }
 
     @Test
@@ -53,16 +65,18 @@ class ArtStalkerOverviewPageScraperTest {
 
     @Test
     fun `bills the support act named in the tagline`() {
-        bySourceId("2582036").artists.map { it.name to it.role } shouldBe
+        cardArtists("Deer Anna – For the BirdsTour - Support: Lily Rieke Marty") shouldBe
             listOf("Deer Anna" to ArtistRole.HEADLINER, "Lily Rieke Marty" to ArtistRole.SUPPORT)
-        bySourceId("2532014").artists.map { it.name to it.role } shouldBe
+        cardArtists("2Mädchen und Uwe - Support Act: SMILING SUN SONS") shouldBe
             listOf("2Mädchen und Uwe" to ArtistRole.HEADLINER, "SMILING SUN SONS" to ArtistRole.SUPPORT)
     }
 
     @Test
     fun `reads the acts past a format label and a presenter credit`() {
-        bySourceId("2592781").artists.map { it.name } shouldBe listOf("Glam Jam", "Mission BlueZ")
-        bySourceId("2485646").artists.map { it.name } shouldBe listOf("FREE COMPANY")
+        cardArtists("Doppelkonzert: Glam Jam + Mission BlueZ - Video Release").map { it.first } shouldBe listOf("Glam Jam", "Mission BlueZ")
+        cardArtists("The Friendly Neighbourhood Band + Hiddit! - Dance the Night away! - Pop/Rock + Funk/Soul").map { it.first } shouldBe
+            listOf("The Friendly Neighbourhood Band", "Hiddit!")
+        cardArtists("BAD COMPANY- und FREE-Songs präsentiert von FREE COMPANY").map { it.first } shouldBe listOf("FREE COMPANY")
     }
 
     @Test
@@ -124,41 +138,29 @@ class ArtStalkerOverviewPageScraperTest {
 
     private fun cardArtists(title: String) = card(title).artists.map { it.name to it.role }
 
-    private fun card(title: String) =
-        ArtStalkerOverviewPageScraper()
-            .scrape(
-                Jsoup.parse(
-                    """
-                    <ul data-testid="event-list"><li><a data-sync-id="1" href="https://art-stalker.reservix.de/tickets-x/e1">
-                    <time datetime="2026-11-27T20:00"></time><h2>$title</h2></a></li></ul>
-                    """.trimIndent(),
-                    baseUrl
-                )
-            ).single()
+    private fun card(
+        title: String,
+        date: String = "Fr., 27. Nov. 2026"
+    ) = ArtStalkerOverviewPageScraper()
+        .scrape(Jsoup.parse(cardHtml("<h3>$title</h3><time>$date</time><time>20:00 Uhr</time>"), baseUrl))
+        .single()
+
+    private fun cardHtml(content: String) =
+        """<ul class="p-venue__event-list"><li><a data-sync-id="1" href="https://www.reservix.de/tickets-x/e1">$content</a></li></ul>"""
 
     @Test
     fun `types the house formats and bills no act for them`() {
-        val session = bySourceId("2560217")
+        val session = bySourceId("2560222")
         session.eventType shouldBe EventType.CONCERT.name
         session.artists.shouldBeEmpty()
-        bySourceId("2556952").eventType shouldBe EventType.OTHER.name
-        bySourceId("2559666").eventType shouldBe EventType.QUIZ.name
-        bySourceId("2582102").eventType shouldBe EventType.READING.name
-        bySourceId("2536387").eventType shouldBe EventType.PARTY.name
-    }
-
-    @Test
-    fun `a free night has no price on its card`() {
-        bySourceId("2556952").pricePresale.shouldBeNull()
+        card("Musikschule City West: Bandstand - Meteora + Band Still Unnamed").eventType shouldBe EventType.OTHER.name
+        bySourceId("2559668").eventType shouldBe EventType.QUIZ.name
+        bySourceId("2582103").eventType shouldBe EventType.READING.name
+        bySourceId("2536389").eventType shouldBe EventType.PARTY.name
     }
 
     @Test
     fun `skips a card without a date`() {
-        val html =
-            """
-            <ul data-testid="event-list"><li><a data-sync-id="1" href="https://art-stalker.reservix.de/tickets-x/e1">
-            <h2>No date</h2></a></li></ul>
-            """.trimIndent()
-        ArtStalkerOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl)).shouldBeEmpty()
+        ArtStalkerOverviewPageScraper().scrape(Jsoup.parse(cardHtml("<h3>No date</h3>"), baseUrl)).shouldBeEmpty()
     }
 }

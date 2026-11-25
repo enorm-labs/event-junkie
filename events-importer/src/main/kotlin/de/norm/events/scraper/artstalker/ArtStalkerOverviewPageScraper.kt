@@ -12,37 +12,37 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.mapSkippingFailures
-import de.norm.events.scraper.parseClockPrefix
-import de.norm.events.scraper.parseIsoDate
-import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.splitDjList
 import de.norm.events.scraper.stripFriendsTail
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.time.LocalDate
+import java.time.LocalTime
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * Pure parser for the shop's listing, one `a[data-sync-id]` card per event in the
- * `[data-testid=event-list]` list: `time[datetime]` is the start, the `h2` the title, and the
- * "ab … €" line the cheapest online ticket, fees included. The type and the artists are read here,
- * from the title alone ([splitTagline]); the event page adds nothing that decides either. A party
- * names no act in its title, but a `Mit DJ …` tagline bills its DJ (event 15018).
+ * Pure parser for one page of the venue's listing, one `a[data-sync-id]` card per event in
+ * `.p-venue__event-list`: the `time` lines hold the date and the start (`19:00 - 22:00 Uhr` starts at
+ * 19:00), and the `h3` the title. The type and the artists are read here, from the title alone
+ * ([splitTagline]); the event page adds nothing that decides either. A party names no act in its
+ * title, but a `Mit DJ …` tagline bills its DJ (event 15018).
  */
 class ArtStalkerOverviewPageScraper {
     fun scrape(document: Document): List<ScrapedEvent> =
         document
-            .select("[data-testid=event-list] a[data-sync-id]")
+            .select(".p-venue__event-list a[data-sync-id]")
             .mapSkippingFailures(logger, { card -> "an ART Stalker card: ${card.attr("href")}" }) { parseCard(it) }
 
     private fun parseCard(card: Element): ScrapedEvent? {
         val url = card.absUrl("href")
         val id = SHOP_EVENT_ID.find(url)?.groupValues?.get(1)
-        val rawTitle = card.textAt("h2")
-        val dateTime = card.selectFirst("time[datetime]")?.attr("datetime")
-        val date = dateTime?.let(::parseIsoDate)
+        val rawTitle = card.textAt("h3")
+        val times = card.select("time").joinToString(" ") { it.text() }
+        val date = cardDate(times)
         if (id == null || rawTitle.isNullOrBlank() || date == null) {
             logger.warn { "Skipping an ART Stalker card without an id, a title or a date: $url" }
             return null
@@ -56,12 +56,11 @@ class ArtStalkerOverviewPageScraper {
             genre = knownGenresInStyleTail(subtitle),
             eventType = eventType,
             eventDate = date,
-            startTime = parseClockPrefix(dateTime.substringAfter("T")),
+            startTime = CARD_CLOCK.find(times)?.let { LocalTime.of(it.groupValues[1].toInt(), it.groupValues[2].toInt()) },
             imageUrl = card.imgSrcAt("img"),
             sourceUrl = url,
             sourceId = "${EventSource.ART_STALKER.sourceIdPrefix}$id",
             ticketUrl = url,
-            pricePresale = parsePriceValue(card.textAt(".c-list-item-event__event-min-price")),
             artists =
                 when {
                     openStage -> emptyList()
@@ -69,6 +68,13 @@ class ArtStalkerOverviewPageScraper {
                     else -> buildArtistsForEventType(billedActs(title), subtitle, eventType)
                 }
         )
+    }
+
+    private fun cardDate(times: String): LocalDate? {
+        val (day, month, year) = CARD_DATE.find(times)?.destructured ?: return null
+        // The long forms `Juni`, `Juli` and `Sept.` share their first three letters with the abbreviation.
+        val monthOfYear = parseGermanMonthAbbreviation(month.take(MONTH_LETTERS)) ?: return null
+        return runCatching { LocalDate.of(year.toInt(), monthOfYear, day.toInt()) }.getOrNull()
     }
 
     /** The DJs a party's tagline names: `Mit DJ Louie Prima`. */
@@ -84,6 +90,10 @@ class ArtStalkerOverviewPageScraper {
             .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
     private companion object {
+        val CARD_DATE = Regex("""(\d{1,2})\.\s*(\p{L}+)\.?\s+(\d{4})""")
+        val CARD_CLOCK = Regex("""\b([01]?\d|2[0-3]):([0-5]\d)\b""")
+        const val MONTH_LETTERS = 3
+
         /** A tagline that only names the night's DJs. */
         val TAGLINE_DJS = Regex("""^mit\s+(DJs?\s+.+)$""", RegexOption.IGNORE_CASE)
 
