@@ -8,7 +8,7 @@
 #
 # Environment:
 #   RUNS=3              runs per cell; one run is not a measurement
-#   ATTEMPTS=3          attempts per run, for Lighthouse's own NO_NAVSTART flake
+#   ATTEMPTS=5          attempts per run, for Lighthouse's own NO_NAVSTART flake
 #   CHROME_FLAGS        passed to --chrome-flags (default --headless=new)
 #   CLS_BUDGET          gate the CLS median when set; unset means report only (see below)
 #   GITHUB_STEP_SUMMARY when set, the table is appended there as well as printed
@@ -50,7 +50,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ORIGIN="${1%/}"
 OUT="${2:-$(mktemp -d)}"
 RUNS="${RUNS:-3}"
-ATTEMPTS="${ATTEMPTS:-3}"
+ATTEMPTS="${ATTEMPTS:-5}"
 CHROME_FLAGS="${CHROME_FLAGS:---headless=new}"
 LIGHTHOUSE="$REPO_ROOT/perf/lighthouse/node_modules/.bin/lighthouse"
 
@@ -113,10 +113,10 @@ CELLS=(
 )
 
 # A run is retried, and the retry is visible. Lighthouse loses the navigation trace on a fast page
-# often enough to have its own error — `NO_NAVSTART`, "Please run Lighthouse again" — and it took two
-# of three runs of one cell on the first CI run of this workflow. Retrying is what Lighthouse's own
-# message asks for. NOT SILENT: a retried run is printed, because a page that needs three attempts
-# every time is a finding even when the third one passes.
+# often enough to have its own error — `NO_NAVSTART`, "Please run Lighthouse again" — on about one
+# attempt in twelve, and three attempts in a row have failed on a healthy page. Retrying is what
+# Lighthouse's own message asks for. NOT SILENT: a retried run is printed, because a page that needs
+# every attempt is a finding even when the last one passes.
 for cell in "${CELLS[@]}"; do
     IFS='|' read -r page profile path <<<"$cell"
     preset=()
