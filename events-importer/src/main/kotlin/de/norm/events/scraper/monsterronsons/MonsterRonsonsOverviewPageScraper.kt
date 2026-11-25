@@ -10,6 +10,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.parseEnglishMonthAbbreviation
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
@@ -21,7 +22,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.LocalDate
-import java.time.Month
 import java.time.MonthDay
 
 /**
@@ -133,7 +133,7 @@ class MonsterRonsonsOverviewPageScraper(
     private fun parseMonthDay(text: String?): MonthDay? {
         val match = DAY_MONTH_PATTERN.find(text?.trim().orEmpty()) ?: return null
         val day = match.groupValues[1].toIntOrNull() ?: return null
-        val month = ENGLISH_MONTH_ABBREVIATIONS[match.groupValues[2].lowercase()] ?: return null
+        val month = parseEnglishMonthAbbreviation(match.groupValues[2]) ?: return null
         return runCatching { MonthDay.of(month, day) }.getOrNull()
     }
 
@@ -197,26 +197,5 @@ class MonsterRonsonsOverviewPageScraper(
 
         /** Splits a co-hosted night's `A & B` host list. */
         private val HOST_SEPARATOR_PATTERN = Regex("""\s*(?:&|\+|,)\s*""")
-
-        /**
-         * English month abbreviations. The shared [de.norm.events.scraper.parseGermanMonthAbbreviation]
-         * covers the German spellings every other venue uses; this venue writes English, and the two
-         * disagree on Mar/Mär, May/Mai, Oct/Okt and Dec/Dez.
-         */
-        private val ENGLISH_MONTH_ABBREVIATIONS: Map<String, Month> =
-            mapOf(
-                "jan" to Month.JANUARY,
-                "feb" to Month.FEBRUARY,
-                "mar" to Month.MARCH,
-                "apr" to Month.APRIL,
-                "may" to Month.MAY,
-                "jun" to Month.JUNE,
-                "jul" to Month.JULY,
-                "aug" to Month.AUGUST,
-                "sep" to Month.SEPTEMBER,
-                "oct" to Month.OCTOBER,
-                "nov" to Month.NOVEMBER,
-                "dec" to Month.DECEMBER
-            )
     }
 }

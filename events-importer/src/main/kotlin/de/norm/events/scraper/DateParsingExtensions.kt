@@ -153,6 +153,12 @@ fun parseNumericDate(
 fun parseGermanMonthAbbreviation(text: String?): Month? = GERMAN_MONTH_ABBREVIATIONS[text?.trim(',', '.', ' ')?.lowercase()]
 
 /**
+ * Maps an English three-letter month abbreviation (`Oct`) onto its [Month], case-insensitively. A longer
+ * spelling is null, so a venue that prints one cuts it or maps it first.
+ */
+fun parseEnglishMonthAbbreviation(text: String?): Month? = ENGLISH_MONTH_ABBREVIATIONS[text?.lowercase()]
+
+/**
  * Maps a German two-letter weekday abbreviation onto its [DayOfWeek], for [inferYearForWeekday]
  * on a year-less date ("SA 08.08."). Spelled out for the same reason as
  * [parseGermanMonthAbbreviation]. Shared by Arcanoa, Club der Visionäre, Duncker, gART.n, Kater
@@ -235,6 +241,22 @@ private val GERMAN_MONTH_ABBREVIATIONS: Map<String, Month> =
         "okt" to Month.OCTOBER,
         "nov" to Month.NOVEMBER,
         "dez" to Month.DECEMBER
+    )
+
+private val ENGLISH_MONTH_ABBREVIATIONS: Map<String, Month> =
+    mapOf(
+        "jan" to Month.JANUARY,
+        "feb" to Month.FEBRUARY,
+        "mar" to Month.MARCH,
+        "apr" to Month.APRIL,
+        "may" to Month.MAY,
+        "jun" to Month.JUNE,
+        "jul" to Month.JULY,
+        "aug" to Month.AUGUST,
+        "sep" to Month.SEPTEMBER,
+        "oct" to Month.OCTOBER,
+        "nov" to Month.NOVEMBER,
+        "dec" to Month.DECEMBER
     )
 
 /** Shared null-safe parse for the two German dotted-date formatters. */

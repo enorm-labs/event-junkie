@@ -1,5 +1,6 @@
 package de.norm.events.scraper.clubost
 
+import de.norm.events.scraper.parseEnglishMonthAbbreviation
 import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.LocalTime
@@ -46,31 +47,19 @@ internal fun splitDoorNote(title: String): Pair<String, String?> {
 private val DOOR_NOTE = Regex("""^\s*\[([^\]]+)]\s*""")
 
 /**
- * Month names as Django's `N` format renders them: AP-style, shortening only the seven long
- * names and leaving March through July spelled out. Keyed without the trailing period; `Sept.`
- * is AP's four-letter form, and `Sep.` is accepted too. The English rendering deliberately: the
+ * The month names Django's `N` format does not shorten to three letters: AP-style, it leaves March
+ * through July spelled out, and `Sept.` is AP's four-letter form. Keyed without the trailing
+ * period; [parseEnglishMonthAbbreviation] reads the rest. The English rendering deliberately: the
  * site is bilingual on `Accept-Language` (German renders "7. August 2026 | 23:00 Uhr"), and the
  * shared scraper `WebClient` sends no such header ([ClubOstOverviewPageScraper]).
  */
-private val DJANGO_MONTH_NAMES: Map<String, Month> =
+private val DJANGO_LONG_MONTH_NAMES: Map<String, Month> =
     mapOf(
-        "jan" to Month.JANUARY,
-        "feb" to Month.FEBRUARY,
         "march" to Month.MARCH,
-        "mar" to Month.MARCH,
         "april" to Month.APRIL,
-        "apr" to Month.APRIL,
-        "may" to Month.MAY,
         "june" to Month.JUNE,
-        "jun" to Month.JUNE,
         "july" to Month.JULY,
-        "jul" to Month.JULY,
-        "aug" to Month.AUGUST,
-        "sept" to Month.SEPTEMBER,
-        "sep" to Month.SEPTEMBER,
-        "oct" to Month.OCTOBER,
-        "nov" to Month.NOVEMBER,
-        "dec" to Month.DECEMBER
+        "sept" to Month.SEPTEMBER
     )
 
 /** A Django `N j, Y` date — an AP-style month name, the day, and a four-digit year ("Aug. 7, 2026"). */
@@ -92,9 +81,10 @@ private const val HALF_DAY_HOURS = 12
 internal fun parseClubOstDate(text: String?): LocalDate? {
     val match = DJANGO_DATE_PATTERN.find(text?.trim().orEmpty()) ?: return null
     val (monthName, day, year) = match.destructured
-    return DJANGO_MONTH_NAMES[monthName.lowercase()]?.let { month ->
+    val month = DJANGO_LONG_MONTH_NAMES[monthName.lowercase()] ?: parseEnglishMonthAbbreviation(monthName)
+    return month?.let {
         try {
-            LocalDate.of(year.toInt(), month, day.toInt())
+            LocalDate.of(year.toInt(), it, day.toInt())
         } catch (_: DateTimeException) {
             null
         }

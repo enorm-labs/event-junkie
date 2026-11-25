@@ -13,6 +13,7 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseClock
+import de.norm.events.scraper.parseEnglishMonthAbbreviation
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.resolveUrl
@@ -27,10 +28,7 @@ import java.time.Clock
 import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.Month
 import java.time.MonthDay
-import java.time.format.TextStyle
-import java.util.Locale
 
 /**
  * Pure parser for Pastiche's Cargo programme page, one month at a time. Each event is a `column-set` under
@@ -121,7 +119,7 @@ class PasticheProgrammePageScraper(
     /** `Thurs, 22nd Oct` at the year nearest today that falls on the printed weekday, or null for an unreadable date. */
     private fun readDate(schedule: String): LocalDate? {
         val groups = DAY.find(schedule)?.groupValues ?: return null
-        val month = MONTHS[groups[MONTH].take(MONTH_PREFIX).lowercase()] ?: return null
+        val month = parseEnglishMonthAbbreviation(groups[MONTH].take(MONTH_PREFIX)) ?: return null
         val monthDay =
             try {
                 MonthDay.of(month, groups[DAY_OF_MONTH].toInt())
@@ -161,7 +159,6 @@ class PasticheProgrammePageScraper(
         private const val TICKETS = "Tickets"
         private const val FREE = "Free"
         private val DAY = Regex("""^(\p{L}+)\.?,?\s+(\d{1,2})(?:st|nd|rd|th)?\.?\s+(\p{L}+)""", RegexOption.IGNORE_CASE)
-        private val MONTHS = Month.entries.associateBy { it.getDisplayName(TextStyle.SHORT, Locale.ENGLISH).take(MONTH_PREFIX).lowercase() }
         private val OUT_OF_SCOPE = Regex("""\bworkshops?\b|\brecord fairs?\b|\bplattenb(?:ö|oe)rse\b""", RegexOption.IGNORE_CASE)
         private val WORKSHOP = Regex("""\bworkshops?\b""", RegexOption.IGNORE_CASE)
         private val LIVE = Regex("""\blive\b""", RegexOption.IGNORE_CASE)
