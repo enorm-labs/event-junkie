@@ -584,7 +584,7 @@ fun splitSupportActs(text: String): List<String> =
         .filter { it.isNotBlank() }
 
 /** A lineup segment cut at each [LINEUP_FEATURED_GUEST] outside a bracket; the segment alone when there is none. */
-private fun splitOnFeaturedGuest(segment: String): List<String> {
+internal fun splitOnFeaturedGuest(segment: String): List<String> {
     val marker = LINEUP_FEATURED_GUEST.find(segment) ?: return listOf(segment)
     val head = segment.substring(0, marker.range.first)
     val insideBracket = head.count { it == '(' } != head.count { it == ')' }

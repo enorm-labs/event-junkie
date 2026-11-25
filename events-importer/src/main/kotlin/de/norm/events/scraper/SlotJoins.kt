@@ -11,7 +11,7 @@ enum class SlotJoins {
     /** At a `b2b` and a ` x `. A slot with a round bracket is one act, as the bracket holds a duo's members. */
     B2B_AND_CROSS,
 
-    /** At a `b2b`, a ` x ` and a conjunction. A slot with a round bracket is one act, as the bracket holds a duo's members. */
+    /** At a `b2b`, a `feat.`, a ` x ` and a conjunction. A slot with a round bracket is one act, as the bracket holds a duo's members. */
     B2B_AND_CONJUNCTIONS,
 
     /** At a ` x ` and a conjunction outside brackets; the import boundary splits the `b2b`. */
@@ -22,7 +22,9 @@ enum class SlotJoins {
             NONE -> listOf(slot)
             B2B -> slot.split(B2B_SEPARATOR)
             B2B_AND_CROSS -> if ('(' in slot) listOf(slot) else slot.split(B2B_SEPARATOR).flatMap(::splitCrossBilled)
-            B2B_AND_CONJUNCTIONS -> if ('(' in slot) listOf(slot) else slot.split(B2B_SEPARATOR).flatMap(::splitSegmentOnConjunctions)
+            B2B_AND_CONJUNCTIONS -> if ('(' in slot) listOf(slot) else slot.split(B2B_SEPARATOR).flatMap(::splitGuestsAndConjunctions)
             CONJUNCTIONS -> splitSegmentOnConjunctions(slot)
         }
 }
+
+private fun splitGuestsAndConjunctions(part: String): List<String> = splitOnFeaturedGuest(part).flatMap(::splitSegmentOnConjunctions)

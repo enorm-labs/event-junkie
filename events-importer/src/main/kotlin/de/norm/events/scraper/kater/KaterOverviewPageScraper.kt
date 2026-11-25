@@ -3,6 +3,7 @@ package de.norm.events.scraper.kater
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
@@ -183,10 +184,11 @@ class KaterOverviewPageScraper(
 
     /**
      * A sentence, or an act piece too long to be a name: the floor's acts are over and its blurb begins.
-     * A short line keeps a full stop as a name does (`arkadiusz.` at FOREVER 25).
+     * A short line keeps a full stop as a name does (`arkadiusz.` at FOREVER 25), and so does either side
+     * of a `b2b` (`Aladdin b2b Phillip S.`, #5501).
      */
     private fun readsAsProse(line: String): Boolean =
-        endsAsSentence(line, MIN_SENTENCE_WORDS) ||
+        line.split(B2B_SEPARATOR).any { endsAsSentence(it, MIN_SENTENCE_WORDS) } ||
             actsOf(line).any { it.name.split(WHITESPACE).size > MAX_ACT_WORDS }
 
     /** The lines that are not part of a floor block — the event's own blurb, if it has one. */
