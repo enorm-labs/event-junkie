@@ -77,7 +77,8 @@ This is the standard "ship it" flow — the manual equivalent of
       `events-admin/screenshot-fixtures/`, and `--click`, `--fill`, `--select` and `--wait` steps for a state such as an open panel or an error. Say in the PR
       that the shots show fixture data.
     - **Say what has to happen after it deploys**, if anything: a forced import so a parser fix reaches stored rows, a check that a migration ran, a
-      script to run. Write it under `## After deploy` in the format [`/post-release`](post-release.prompt.md) reads, one `- [ ]` line per step.
+      script to run, an alert rule to apply (`both: apply-alerts <rule>`, never `run deploy/alerts/apply.sh`).
+      Write it under `## After deploy` in the format [`/post-release`](post-release.prompt.md) reads, one `- [ ]` line per step.
       A step that needs a window or a quiet day says when it is due: "over 3 days" becomes `production (3 days after deploy):`, and a re-key
       that collides with today's rows becomes `both (dark day <slug>):`. Without that, every `/post-release` run before the date reports it again.
       `label-pr.yml` sets the `after-deploy` label from an unticked step, and fails a section with no step. The queue then lives on the pull request, so no
