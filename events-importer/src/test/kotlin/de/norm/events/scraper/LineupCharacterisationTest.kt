@@ -48,6 +48,9 @@ class LineupCharacterisationTest {
             return listOfNotNull(TresorDetailPageScraper().scrape(fixtureDocument(fixture, url), url))
         }
 
+        private fun artStalker(fixture: String) =
+            ArtStalkerOverviewPageScraper().scrape(fixtureDocument(fixture, "https://www.reservix.de/berlin/venue/art-stalker/v41370"))
+
         fun supamolly(fixture: String): List<ScrapedEvent> {
             val url = "https://www.supamolly.de/?p=programm"
             return SupamollyOverviewPageScraper().scrape(fixtureDocument(fixture, url), url)
@@ -78,8 +81,9 @@ class LineupCharacterisationTest {
                 "voidclub/voidclub-overview.html" to
                     { VoidClubOverviewPageScraper(clockAt("2026-08-04")).scrape(fixtureDocument(it), "https://www.void-club.de/") },
                 "minimalbar/minimalbar-overview.html" to { MinimalBarOverviewPageScraper().scrape(fixtureDocument(it), "https://minimalbar.de/dates/") },
-                "artstalker/artstalker-overview.html" to
-                    { ArtStalkerOverviewPageScraper().scrape(fixtureDocument(it, "https://art-stalker.reservix.de/")) },
+                "artstalker/artstalker-venue-1.html" to ::artStalker,
+                "artstalker/artstalker-venue-2.html" to ::artStalker,
+                "artstalker/artstalker-venue-6.html" to ::artStalker,
                 "konradtoenz/konradtoenz-overview.html" to
                     { KonradToenzOverviewPageScraper().scrape(fixtureDocument(it, "http://www.konradtoenzbar.de/"), "http://www.konradtoenzbar.de/") },
                 "lux/lux-overview.html" to { LuxOverviewPageScraper(clockAt("2026-10-17")).scrape(fixtureDocument(it), "https://www.lux-berlin.net/") },

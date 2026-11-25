@@ -11,6 +11,7 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
 import org.jsoup.nodes.Document
@@ -20,7 +21,8 @@ import org.jsoup.nodes.Document
  * block: the blurb, then a practical block opened by the date or a "Beginn" / "Einlass" line with
  * the prices ("VVK 12,-€ / AK 15,-€", "Ticket 7 €", "Eintritt Frei"), then house rules and the
  * address. The blurb ends where the practical block starts; doors, prices and free entry are read
- * from the practical block only, so a blurb's "ab 10 Personen" is never one.
+ * from the practical block only, so a blurb's "ab 10 Personen" is never one. A block that states no
+ * presale leaves the shop's "Tickets ab … €", the cheapest online ticket, fees included.
  */
 class ArtStalkerDetailPageScraper {
     fun scrape(
@@ -58,7 +60,7 @@ class ArtStalkerDetailPageScraper {
             sourceUrl = url,
             sourceId = "${EventSource.ART_STALKER.sourceIdPrefix}$id",
             ticketUrl = url,
-            pricePresale = presale,
+            pricePresale = presale ?: parsePriceValue(document.textAt(".c-ticket-fan__price-info")),
             priceBoxOffice = boxOffice,
             // A priced night still says "Auftretende Musiker haben freien Eintritt" for its players.
             free = presale == null && boxOffice == null && hasFreeEntryPhrase(practical)

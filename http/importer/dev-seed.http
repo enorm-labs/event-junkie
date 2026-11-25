@@ -865,7 +865,7 @@ Content-Type: application/json
 {
     "venueId": {{venue_id_art_stalker}},
     "name": "ART Stalker",
-    "url": "https://art-stalker.reservix.de/",
+    "url": "https://www.reservix.de/berlin/venue/art-stalker/v41370",
     "sourceType": "ART_STALKER",
     "enabled": true,
     "importIntervalMinutes": 1440,

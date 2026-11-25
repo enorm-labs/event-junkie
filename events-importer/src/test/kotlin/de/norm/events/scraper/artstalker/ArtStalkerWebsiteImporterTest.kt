@@ -11,6 +11,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
@@ -18,22 +19,29 @@ import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.math.BigDecimal
 
-/** Unit tests for [ArtStalkerWebsiteImporter]: the shop root, then one event page per card. */
+/** Unit tests for [ArtStalkerWebsiteImporter]: the venue's listing pages, then one event page per card. */
 class ArtStalkerWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val importer = ArtStalkerWebsiteImporter(htmlFetcher)
-    private val sourceUrl = "https://art-stalker.reservix.de/"
-    private val patlanskyUrl = "https://art-stalker.reservix.de/tickets-dan-patlansky-blues-rock-in-berlin-art-stalker-am-3-10-2026/e2535642"
+    private val sourceUrl = "https://www.reservix.de/berlin/venue/art-stalker/v41370"
+    private val boysUrl =
+        "https://www.reservix.de/tickets-the-boys-of-summer-grossstadtmusik-aus-berlin-in-berlin-art-stalker-am-12-12-2026/e2567674"
 
     private fun stubListing() {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
-                document = fixtureDocument("artstalker/artstalker-overview.html", sourceUrl),
+                document = fixtureDocument("artstalker/artstalker-venue-1.html", sourceUrl),
                 etag = "\"rx-etag\"",
                 lastModified = "Thu, 01 Oct 2026 08:00:00 GMT"
             )
-        stubFetcher(patlanskyUrl to "artstalker/artstalker-detail-patlansky.html", fetcher = htmlFetcher)
-        coEvery { htmlFetcher.fetchDocument(match { it != patlanskyUrl }) } throws IOException("refused")
+        coEvery { htmlFetcher.fetchDocument(any()) } throws IOException("refused")
+        stubFetcher(
+            "$sourceUrl/2" to "artstalker/artstalker-venue-2.html",
+            boysUrl to "artstalker/artstalker-detail-boys-of-summer.html",
+            fetcher = htmlFetcher
+        )
+        // Page 3 is served as page 6, the last, so its disabled link to page 7 must end the walk.
+        coEvery { htmlFetcher.fetchDocument("$sourceUrl/3") } returns fixtureDocument("artstalker/artstalker-venue-6.html", "$sourceUrl/3")
     }
 
     @Test
@@ -42,28 +50,29 @@ class ArtStalkerWebsiteImporterTest {
     }
 
     @Test
-    fun `merges the event page over its card and keeps the card's type and artists`() =
+    fun `walks the listing to its last page and merges the event page over its card`() =
         runTest {
             stubListing()
             val result = importer.importEvents(sourceUrl, null, null)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 25
+            result.events shouldHaveSize 22
             result.etag shouldBe "\"rx-etag\""
             result.lastModified shouldBe "Thu, 01 Oct 2026 08:00:00 GMT"
-            val patlansky = result.events.single { it.sourceId == "art_stalker:2535642" }
-            patlansky.pricePresale shouldBe BigDecimal("19")
-            patlansky.priceBoxOffice shouldBe BigDecimal("23")
-            patlansky.eventType shouldBe "CONCERT"
-            patlansky.artists.map { it.name } shouldBe listOf("Dan Patlansky")
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(match { it.endsWith("/7") || it.endsWith("/4") }) }
+            val boys = result.events.single { it.sourceId == "art_stalker:2567674" }
+            boys.pricePresale shouldBe BigDecimal("15")
+            boys.priceBoxOffice shouldBe BigDecimal("17")
+            boys.eventType shouldBe "CONCERT"
+            boys.artists.map { it.name } shouldBe listOf("The Boys of Summer")
         }
 
     @Test
-    fun `falls back to the card when its event page fails`() =
+    fun `keeps the card when its event page fails`() =
         runTest {
             stubListing()
             val result = importer.importEvents(sourceUrl, null, null)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events.single { it.sourceId == "art_stalker:2555973" }.pricePresale shouldBe BigDecimal("11.40")
+            result.events.single { it.sourceId == "art_stalker:2545088" }.title shouldBe "Lord Zeppelin – a tribute to Led Zeppelin"
         }
 
     @Test
@@ -74,7 +83,7 @@ class ArtStalkerWebsiteImporterTest {
         }
 
     @Test
-    fun `an empty shop page yields no events`() =
+    fun `an empty venue page yields no events`() =
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
                 FetchResult.Success(Jsoup.parse("<html><body></body></html>", sourceUrl), null, null)

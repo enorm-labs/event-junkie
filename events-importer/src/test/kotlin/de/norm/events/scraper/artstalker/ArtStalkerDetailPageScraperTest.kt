@@ -64,6 +64,37 @@ class ArtStalkerDetailPageScraperTest {
     }
 
     @Test
+    fun `reads an event page on reservix de like one on the shop`() {
+        val event =
+            scraper
+                .scrape(
+                    fixtureDocument("artstalker/artstalker-detail-blackmail.html"),
+                    "https://www.reservix.de/tickets-blackmail-rhythm-and-blues-rock-in-berlin-art-stalker-am-5-12-2026/e2556994"
+                ).shouldNotBeNull()
+        event.title shouldBe "Blackmail"
+        event.eventDate shouldBe LocalDate.of(2026, 12, 5)
+        event.startTime shouldBe LocalTime.of(20, 0)
+        event.doorsTime shouldBe LocalTime.of(19, 0)
+        event.pricePresale shouldBe BigDecimal("16")
+        event.description.shouldNotBeNull() shouldStartWith "Die Band steht für"
+    }
+
+    @Test
+    fun `a page that states no price leaves the shop's cheapest ticket`() {
+        val page =
+            Jsoup.parse(
+                """
+                <h1>Kiezpoeten Slam Show</h1><time class="c-event-date" datetime="2026-12-17T19:30:00"></time>
+                <div class="c-ticket-fan__price-info"><div>Tickets ab 14,67 € <sup>*</sup></div></div>
+                """.trimIndent()
+            )
+        val event = scraper.scrape(page, "https://art-stalker.reservix.de/tickets-x/e1").shouldNotBeNull()
+        event.pricePresale shouldBe BigDecimal("14.67")
+        event.priceBoxOffice.shouldBeNull()
+        event.free shouldBe false
+    }
+
+    @Test
     fun `returns null for a page without an event`() {
         scraper.scrape(Jsoup.parse("<html><body></body></html>"), "https://art-stalker.reservix.de/tickets-x/e1").shouldBeNull()
     }
