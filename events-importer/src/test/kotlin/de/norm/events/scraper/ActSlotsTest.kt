@@ -21,7 +21,17 @@ class ActSlotsTest {
 
     @ParameterizedTest
     @ValueSource(
-        strings = ["SERA (Live)", "SERA [LIVE]", "SERA live", "SERA LIVE Hybrid", "SERA (hybrid live)", "SERA live set", "SERA [live band]"]
+        strings = [
+            "SERA (Live)",
+            "SERA [LIVE]",
+            "SERA live",
+            "SERA LIVE Hybrid",
+            "SERA (hybrid live)",
+            "SERA live set",
+            "SERA [live band]",
+            "SERA *live",
+            "SERA* Live"
+        ]
     )
     fun `reads a closing live format`(billing: String) {
         hasLiveMark(billing) shouldBe true
@@ -31,6 +41,18 @@ class ActSlotsTest {
     @ValueSource(strings = ["SERA", "Live", "(Live)", "SERA Live Visuals", "Olive", "Live Wire", "V. (Opera live)", "SERA [Livestream]"])
     fun `reads no live format in a name or another note`(billing: String) {
         hasLiveMark(billing) shouldBe false
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["(live)", " [LIVE]", "live", "*live", "hybrid live"])
+    fun `reads a note that is only a live mark`(note: String) {
+        isOnlyLiveMark(note) shouldBe true
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["", "b2b", "(US)", "presents The Electrician (live)", "LIVE DEBUT", "Berta live"])
+    fun `reads no live mark in another note`(note: String) {
+        isOnlyLiveMark(note) shouldBe false
     }
 
     @Test

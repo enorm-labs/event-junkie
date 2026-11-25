@@ -2,6 +2,7 @@ package de.norm.events.scraper.ritterbutzke
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldHaveSize
@@ -70,21 +71,24 @@ class RitterButzkeDetailPageScraperTest {
 
     @Test
     fun `reads a single-act lineup`() {
-        scrape("extrawelt", "100427-WeltauswahlbyExtrawelt").artists.map { it.name } shouldBe listOf("EXTRAWELT (live)")
+        scrape("extrawelt", "100427-WeltauswahlbyExtrawelt").artists shouldBe listOf(ScrapedArtist("EXTRAWELT (live)", ArtistRole.LIVE))
     }
 
     @Test
-    fun `prefers the JSON-LD performers over the rendered rows and their notes`() {
+    fun `prefers the JSON-LD performers over the rendered rows, and reads the live mark from the row`() {
         val sourceUrl = "https://club.ritterbutzke.com/event/281126-Lexy-K-Paul-live"
         val html =
             """
             <html><head><script type="application/ld+json">
-            [{"@type": "MusicEvent", "name": "Lexy & K-Paul", "performer": [{"@type": "MusicGroup", "name": "LEXY &amp; K-PAUL"}]}]
+            [{"@type": "MusicEvent", "name": "Lexy & K-Paul", "performer": [{"@type": "MusicGroup", "name": "LEXY &amp; K-PAUL"},
+             {"@type": "MusicGroup", "name": "MATCHY"}]}]
             </script></head><body><h1>Lexy &amp; K-Paul</h1>
-            <div><p>Line Up:</p><div style="padding-left: 1rem"><a href="#">LEXY &amp; K-PAUL live</a></div></div>
+            <div><p>Line Up:</p><div style="padding-left: 1rem"><a href="#">LEXY &amp; K-PAUL live</a></div>
+            <div style="padding-left: 1rem"><a href="#">MATCHY</a></div></div>
             </body></html>
             """.trimIndent()
-        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.artists.map { it.name } shouldBe listOf("LEXY & K-PAUL")
+        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.artists shouldBe
+            listOf(ScrapedArtist("LEXY & K-PAUL", ArtistRole.LIVE), ScrapedArtist("MATCHY", ArtistRole.DJ))
     }
 
     // 211126-AlanFitzpatrick billed the floor's takeover.

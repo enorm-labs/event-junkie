@@ -1,16 +1,16 @@
 package de.norm.events.scraper.aeden
 
-import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SlotJoins
 import de.norm.events.scraper.dateOrNull
 import de.norm.events.scraper.dateTitleId
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
-import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseActSlot
 import de.norm.events.scraper.parseListing
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripLineupBracket
@@ -96,7 +96,7 @@ class AedenOverviewPageScraper {
     }
 
     /**
-     * The DJs announced in the lineup block, in billing order. The block is prose, but the roster
+     * The acts announced in the lineup block, in billing order. The block is prose, but the roster
      * is consistently one paragraph opening with a `Lineup:` label followed by `<br>`-separated
      * names, so only that paragraph is read — the blurb paragraphs go to the description. Names
      * are cleaned of the decorative leading `&`/`+` on a final act and of the `?` the venue puts
@@ -116,9 +116,8 @@ class AedenOverviewPageScraper {
                     .replaceFirst(LINEUP_LABEL, "")
                     .replaceFirst(LEADING_CONJUNCTION, "")
                     .replace(UNSURE_MARK, "")
-                    .let(::stripLineupBracket)
-            }.filter { it.isNotBlank() && !isAnnouncementPlaceholder(it) && !isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+            }.flatMap { parseActSlot(it, SlotJoins.NONE, clean = ::stripLineupBracket) }
+            .filterNot { isAnnouncementPlaceholder(it.name) }
     }
 
     /**

@@ -24,10 +24,15 @@ fun parseActSlot(
     }
 }
 
-/** Whether [billing] ends in a live format, bracketed or bare: `Fireground [LIVE]`, `SERA (Live)`, `Cecilia Tosh LIVE Hybrid`. */
+/** Whether [billing] ends in a live format, bracketed, starred or bare: `Fireground [LIVE]`, `SERA (Live)`, `Antaares *live`, `Cecilia Tosh LIVE Hybrid`. */
 fun hasLiveMark(billing: String): Boolean = LIVE_MARK.containsMatchIn(billing)
+
+/** Whether [note], the text a venue prints behind a name, is a live mark and nothing else: ` (live)`, but not ` presents Anna (live)`. */
+fun isOnlyLiveMark(note: String): Boolean = LIVE_NOTE.matches(note.trim())
 
 private const val LIVE_FORMAT = """(?:hybrid\s+)?live(?:\s+(?:set|band|hybrid))?"""
 
+private val LIVE_NOTE = Regex("""\[\s*$LIVE_FORMAT\s*]|\(\s*$LIVE_FORMAT\s*\)|\*?\s*$LIVE_FORMAT""", RegexOption.IGNORE_CASE)
+
 /** End-anchored, so `Live Visuals` is no mark, and behind a name, so the act `Live` is none either. */
-private val LIVE_MARK = Regex("""\S(?:\s*\[\s*$LIVE_FORMAT\s*]|\s*\(\s*$LIVE_FORMAT\s*\)|\s+$LIVE_FORMAT)\s*$""", RegexOption.IGNORE_CASE)
+private val LIVE_MARK = Regex("""\S(?:\s*\[\s*$LIVE_FORMAT\s*]|\s*\(\s*$LIVE_FORMAT\s*\)|\s*\*\s*$LIVE_FORMAT|\s+$LIVE_FORMAT)\s*$""", RegexOption.IGNORE_CASE)
