@@ -105,6 +105,10 @@ jobs:
       - name: Assert what migration-collisions.sh rules
         run: scripts/migration-collisions-test.sh
 
+      # A retry that swallows an API error would publish a commit no build passed (#5502).
+      - name: Assert what await-builds.sh retries and refuses
+        run: scripts/await-builds-test.sh
+
       # A retry that passes everything would publish an unsigned image the clusters refuse (#3331).
       - name: Assert what cosign-sign.sh retries and refuses
         run: scripts/cosign-sign-test.sh
