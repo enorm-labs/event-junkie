@@ -65,12 +65,12 @@ function suggestion(overrides: Partial<Suggestion> = {}): Suggestion {
   }
 }
 
-/** A fake importer: the event, two artists, and a PUT that pins what changed. */
-function importer(pins: (body: Record<string, unknown>) => string[]) {
+/** A fake importer: [event], two artists, and a PUT that pins what changed. */
+function importer(pins: (body: Record<string, unknown>) => string[], event: AdminEvent = stored) {
   return vi.fn<typeof fetch>(async (input, init) => {
     const url = String(input)
     const method = init?.method ?? 'GET'
-    if (method === 'GET' && url === '/api/admin/events/7') return json(stored)
+    if (method === 'GET' && url === '/api/admin/events/7') return json(event)
     if (method === 'GET' && url === '/api/admin/artists/11') {
       return json({ id: 11, name: 'Ash Rivers', slug: 'ash-rivers' })
     }
@@ -91,7 +91,7 @@ function importer(pins: (body: Record<string, unknown>) => string[]) {
     }
     if (method === 'PUT' && url === '/api/admin/events/7') {
       const body = JSON.parse(String(init?.body))
-      return json({ ...stored, ...body, pinnedFields: pins(body) })
+      return json({ ...event, ...body, pinnedFields: pins(body) })
     }
     if (method === 'POST' && url === '/api/admin/data-quality/suggestions/1/accept') {
       return json(suggestion({ status: 'ACCEPTED' }))
@@ -185,6 +185,41 @@ describe('applySuggestion', () => {
       { artistId: 30, role: 'SUPPORT', billingOrder: 2, stage: null },
     ])
     expect(calls(fetchFn)).toContain('POST /api/admin/artists')
+  })
+
+  it.each([
+    ['PARTY', ['DJ', 'DJ']],
+    ['CONCERT', ['HEADLINER', 'SUPPORT']],
+  ] as const)('gives the new acts of a %s the roles %j', async (eventType, roles) => {
+    const fetchFn = importer(() => ['lineup'], { ...stored, eventType })
+
+    await applySuggestion(
+      suggestion({ field: 'artists', proposedValue: 'Nova Lane; Mira Kett' }),
+      fetchFn,
+    )
+
+    expect(putBody(fetchFn).artists).toEqual([
+      { artistId: 21, role: roles[0], billingOrder: 0, stage: null },
+      { artistId: 30, role: roles[1], billingOrder: 1, stage: null },
+    ])
+  })
+
+  it('keeps the role of an act a party already bills', async () => {
+    const fetchFn = importer(() => ['lineup'], {
+      ...stored,
+      eventType: 'PARTY',
+      artists: [{ artistId: 11, role: 'LIVE', billingOrder: 0, stage: 'Hall' }],
+    })
+
+    await applySuggestion(
+      suggestion({ field: 'artists', proposedValue: 'Nova Lane; Ash Rivers' }),
+      fetchFn,
+    )
+
+    expect(putBody(fetchFn).artists).toEqual([
+      { artistId: 21, role: 'DJ', billingOrder: 0, stage: null },
+      { artistId: 11, role: 'LIVE', billingOrder: 1, stage: 'Hall' },
+    ])
   })
 
   it('empties the lineup for an empty artists value', async () => {

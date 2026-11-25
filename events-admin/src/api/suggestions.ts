@@ -9,6 +9,7 @@
  */
 import {
   type AdminEvent,
+  type ArtistRole,
   type EventArtist,
   type EventRequest,
   EVENT_TYPES,
@@ -136,10 +137,16 @@ export function dismissSuggestion(id: number, fetchFn: typeof fetch = fetch) {
   return setStatus(id, 'dismiss', fetchFn)
 }
 
+/** The order of a club night ranks nobody, and the proposed names do not say who plays live. */
+function newActRole(eventType: EventType, index: number): ArtistRole {
+  if (eventType === 'PARTY') return 'DJ'
+  return index === 0 ? 'HEADLINER' : 'SUPPORT'
+}
+
 /**
  * The lineup [names] describe, in their order. An act the event bills keeps its role and stage. Any
- * other act is the artist of that name, created when none exists, as support, or headliner when
- * it comes first.
+ * other act is the artist of that name, created when none exists, with the role of
+ * [newActRole].
  */
 async function proposedLineup(
   event: AdminEvent,
@@ -164,7 +171,7 @@ async function proposedLineup(
     if (lineup.some((entry) => entry.artistId === artist.id)) continue
     lineup.push({
       artistId: artist.id,
-      role: index === 0 ? 'HEADLINER' : 'SUPPORT',
+      role: newActRole(event.eventType, index),
       billingOrder: index,
       stage: null,
     })
