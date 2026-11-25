@@ -294,4 +294,23 @@ class HumboldthainApiScraperTest {
         english shouldNotContain "version"
         german shouldNotContain "version"
     }
+
+    @Test
+    fun `scrape bills the blocks headed LIVE ACTS and DJS in mathematical letters, as event 15415`() {
+        val night =
+            single(
+                """{"id":"w","name":"WARM UP","start":{"date":"2026-12-11","time":"23:00"},
+                   "description":"<div>Ein Line-up aus Liveacts und DJs.</div><br><div>𝓛𝓘𝓥𝓔 𝓐𝓒𝓣𝓢<br>FARCE <br>JUNO030 <br>SECRET ACT 👀</div><br><div>𝓓𝓙𝓢<br>SHAMZY <br>DJ LUISER B2B S00DY</div><br><div>Einlass: Ab 20 Uhr</div>"}"""
+            )
+
+        night.artists.map { it.name to it.role } shouldContainExactly
+            listOf("FARCE" to ArtistRole.LIVE, "JUNO030" to ArtistRole.LIVE, "SHAMZY" to ArtistRole.DJ, "DJ LUISER B2B S00DY" to ArtistRole.DJ)
+        night.eventType shouldBe EventType.PARTY.name
+    }
+
+    @Test
+    fun `scrape types a workshop other, so it takes no house genre, as event 15414`() {
+        single("""{"id":"v","name":"VINYL WORKSHOP","start":{"date":"2026-12-01","time":"20:00"},"description":"<p>Open Decks hinterher.</p>"}""")
+            .eventType shouldBe EventType.OTHER.name
+    }
 }

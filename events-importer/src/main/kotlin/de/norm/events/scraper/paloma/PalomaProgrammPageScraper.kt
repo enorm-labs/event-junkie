@@ -21,6 +21,7 @@ import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.DateTimeException
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.MonthDay
 import java.util.Locale
 
@@ -28,7 +29,8 @@ import java.util.Locale
  * Pure parser for Paloma's hand-coded `programm.php`. Each night is a block headed by a bold
  * `FREITAG 16/10 22:00` line, without a year, followed by a table of one or more party names
  * (bold cells) and the DJs under each (`td.kotti_online_td`). The year comes from the weekday.
- * The title joins the night's party names; every DJ of every party is billed.
+ * The title joins the night's party names; every DJ of every party is billed. A line for a dance class or for `COMMUNITY
+ * DJS` bills nobody. The time is missing while it is not set, and `00:00` is its placeholder.
  *
  * The PHP upper-cases names byte-wise, so accented letters stay lower case (`RENé LöWE`). The
  * parser upper-cases them again, and the artist normalizer de-shouts the result.
@@ -56,7 +58,7 @@ class PalomaProgrammPageScraper(
         val date = parseDate(day, month, weekday) ?: return null
         val block = heading.parent()?.parent() ?: error("No block around '$text'")
         val parties = block.namesIn("td > b")
-        val djs = block.namesIn("td.kotti_online_td").filterNot(::isNonArtistName)
+        val djs = block.namesIn("td.kotti_online_td").filterNot { isNonArtistName(it) || NO_ACT.containsMatchIn(it) }
         val title = parties.joinToString(TITLE_SEPARATOR).ifEmpty { djs.joinToString(", ") }.blankToNull()
         if (title == null) {
             logger.warn { "Paloma night '$text' names no party and no DJ, skipping" }
@@ -66,7 +68,11 @@ class PalomaProgrammPageScraper(
             title = title,
             eventType = inferUnmarkedTitleType(title).takeUnless { it == EventType.OTHER.name } ?: EventType.PARTY.name,
             eventDate = date,
-            startTime = parseTime(match.groupValues[TIME_GROUP]),
+            startTime =
+                match.groupValues[TIME_GROUP]
+                    .blankToNull()
+                    ?.let(::parseTime)
+                    ?.takeUnless { it == LocalTime.MIDNIGHT },
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.PALOMA.sourceIdPrefix}$date",
             artists = djs.map { ScrapedArtist(name = stripLineupBracket(it), role = ArtistRole.DJ) }
@@ -96,8 +102,11 @@ class PalomaProgrammPageScraper(
             }.distinct()
 
     private companion object {
-        /** `FREITAG 16/10 22:00`. */
-        val HEADING = Regex("""^(\p{L}+)\s+(\d{1,2})/(\d{1,2})\s+(\d{1,2}:\d{2})$""")
+        /** `FREITAG 16/10 22:00`, and `SONNTAG 06/12` while the time is not set. */
+        val HEADING = Regex("""^(\p{L}+)\s+(\d{1,2})/(\d{1,2})(?:\s+(\d{1,2}:\d{2}))?$""")
+
+        /** A line-up line that names no act: `HOUSE DANCE CLASS BY SONIA`, `COMMUNITY DJS`. */
+        val NO_ACT = Regex("""\bclass\s+by\b|^community\s+djs$""", RegexOption.IGNORE_CASE)
         const val TIME_GROUP = 4
         const val TITLE_SEPARATOR = " / "
     }

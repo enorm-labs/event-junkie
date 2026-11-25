@@ -8,6 +8,7 @@ import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -331,5 +332,44 @@ class EschschloraqueOverviewPageScraperTest {
     fun `returns an empty list for a page with no event nodes`() {
         val emptyPage = Jsoup.parse("<html><body><div class='view-content'></div></body></html>", baseUrl)
         EschschloraqueOverviewPageScraper().scrape(emptyPage, baseUrl).shouldBeEmpty()
+    }
+
+    private fun plainNight(
+        title: String,
+        prose: String
+    ) = EschschloraqueOverviewPageScraper().scrape(
+        Jsoup.parse(
+            """
+            <div class="node-veranstaltung" about="/a-night-05122026">
+              <h2 class="veranstaltung-title">$title</h2>
+              <span class="date-display-single" content="2026-12-05T21:00:00+01:00">Samstag, 5. Dezember 2026 ab 21Uhr</span>
+              <div class="field-type-text-with-summary"><p>$prose</p></div>
+            </div>
+            """.trimIndent(),
+            baseUrl
+        ),
+        baseUrl
+    )
+
+    @Test
+    fun `bills the DJ a plain night is titled after when its prose opens with the bio (events 15418 and 15419)`() {
+        val duo = plainNight("M&amp;Ms — born in the club, raised among friends", "A DJ duo with their sights set on the stars.").single()
+        duo.artists.map { it.name to it.role } shouldContainExactly listOf("M&Ms" to ArtistRole.DJ)
+        duo.eventType shouldBe EventType.PARTY.name
+
+        val producer = plainNight("Bial HClap", "Bial HClap&nbsp; is a music producer and DJ with an important legacy for hip hop.").single()
+        producer.artists.map { it.name to it.role } shouldContainExactly listOf("Bial HClap" to ArtistRole.DJ)
+        producer.eventType shouldBe EventType.PARTY.name
+
+        val other = plainNight("Electric Night", "Another evening. Later a DJ plays.").single()
+        other.artists.shouldBeEmpty()
+        other.eventType shouldBe EventType.OTHER.name
+    }
+
+    @Test
+    fun `drops a closed day and types a show by its title (events 15421 and 15422)`() {
+        plainNight("Geschlossen", "Ab 18Uhr Heute Geschlossen").shouldBeEmpty()
+        plainNight("Geschlossene Gesellschaft der Herzen", "Ein Abend.").size shouldBe 1
+        plainNight("Weihnachtsshow", "Euch erwarten weihnachtliche Drag-Performances.").single().eventType shouldBe EventType.SHOW.name
     }
 }

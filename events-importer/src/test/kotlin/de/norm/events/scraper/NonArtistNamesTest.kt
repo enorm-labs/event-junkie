@@ -620,4 +620,10 @@ class NonArtistNamesTest {
         isNonArtistName("Funk@delic") shouldBe false
         isNonArtistName("Chaos Techno.Berlin") shouldBe false
     }
+
+    @Test
+    fun `an unannounced act is no artist, and an act whose name holds the word is (event 15439)`() {
+        listOf("Secret Act", "SECRET LIVE ACT", "Surprise Acts", "Mystery Act").forEach { isNonArtistName(it) shouldBe true }
+        listOf("Secret Rhythms", "A Secret Revealed", "Secret Rule", "Secret Actress").forEach { isNonArtistName(it) shouldBe false }
+    }
 }

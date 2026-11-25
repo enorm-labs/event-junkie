@@ -21,9 +21,11 @@ import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.humboldthain.HumboldthainApiScraper.Companion.TICKET_URL_PATTERN
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.text.Normalizer
 import java.time.Clock
 import java.time.LocalDate
 
@@ -47,11 +49,13 @@ private const val HUMBOLDTHAIN_URL = "https://www.humboldthain.com/"
  *
  * **Artists come from the description's links, not its prose.** The roster is `ra.co/dj/<slug>`
  * anchors whose text is the DJ's name; the prose around them varies ("Lineup/Musik", "Line-up
- * Live:") and its other lines are door policy and awareness notes.
+ * Live:") and its other lines are door policy and awareness notes. One shape of prose is read beside them: a block headed
+ * `LIVE ACTS` or `DJS` alone, in plain or mathematical letters, with one name per line ([listedActs], event 15415).
  *
  * **Every night is a party** unless the title opens with the one category marker, `KONZERT:` or
  * `CONCERT:`, which is stripped and makes the remainder the headliner, or the prose calls the night
- * a `Gameshow`, which is a quiz (EVENT_SCOPE.md §2, event 14744). The widget's `eventType` vocabulary
+ * a `Gameshow`, which is a quiz (EVENT_SCOPE.md §2, event 14744), or its title names a `Workshop`, which an open-decks night follows
+ * (EVENT_SCOPE.md §3.2, event 15414) and which is typed other. The widget's `eventType` vocabulary
  * is ignored: the venue filled it with weekday labels ("Samstag, 14:00") that contradict
  * `start.time`.
  *
@@ -110,14 +114,14 @@ class HumboldthainApiScraper(
 
         // A "KONZERT:" or "CONCERT:" night bills its act in the title; every other night is a DJ party whose
         // roster, if announced, is the description's Resident Advisor artist links.
-        val artists = (if (concert) headlinersFromTitle(title) else emptyList()) + djArtists(description)
+        val artists = (if (concert) headlinersFromTitle(title) else emptyList()) + djArtists(description).ifEmpty { listedActs(description) }
         val descriptionText = htmlParagraphText(descriptionHtml)
 
         return elfsightOccurrenceDates(node, seriesStart, LocalDate.now(clock), VENUE_NAME, id).map { date ->
             ScrapedEvent(
                 title = title,
                 description = descriptionText,
-                eventType = eventType(concert, descriptionText).name,
+                eventType = eventType(title, concert, descriptionText).name,
                 eventDate = date,
                 // All-day entries carry a placeholder time; only a real clock value becomes a start time.
                 startTime = if (node.isAllDay) null else parseTime(node.start?.time.blankToNull()),
@@ -134,13 +138,15 @@ class HumboldthainApiScraper(
         }
     }
 
-    /** A concert by its title marker, a quiz when the prose calls it a game show, otherwise a party. */
+    /** A concert by its title marker, a workshop by its title, a quiz when the prose calls it a game show, otherwise a party. */
     private fun eventType(
+        title: String,
         concert: Boolean,
         descriptionText: String?
     ): EventType =
         when {
             concert -> EventType.CONCERT
+            WORKSHOP.containsMatchIn(title) -> EventType.OTHER
             descriptionText != null && GAME_SHOW.containsMatchIn(descriptionText) -> EventType.QUIZ
             else -> EventType.PARTY
         }
@@ -159,6 +165,28 @@ class HumboldthainApiScraper(
             ?.distinctBy { it.lowercase() }
             ?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
             .orEmpty()
+
+    /** The acts of each block headed `LIVE ACTS` or `DJS`, one per line, an emoji after a name dropped. */
+    private fun listedActs(description: Document?): List<ScrapedArtist> =
+        description
+            ?.select("div, p")
+            ?.flatMap { block ->
+                val lines = block.textLines()
+                val role = lines.firstOrNull()?.let(::roleOfHeading)
+                if (role == null) emptyList() else lines.drop(1).map { ScrapedArtist(name = it.replace(EMOJI, "").trim(), role = role) }
+            }?.filter { it.name.isNotBlank() && !isNonArtistName(it.name) }
+            ?.distinctBy { it.name.lowercase() }
+            .orEmpty()
+
+    /** The role a line gives the names below it when it is only a heading; NFKC folds `𝓓𝓙𝓢` to `DJS`. */
+    private fun roleOfHeading(line: String): ArtistRole? {
+        val heading = Normalizer.normalize(line, Normalizer.Form.NFKC).trim()
+        return when {
+            LIVE_HEADING.matches(heading) -> ArtistRole.LIVE
+            DJ_HEADING.matches(heading) -> ArtistRole.DJ
+            else -> null
+        }
+    }
 
     /**
      * The night's ticket-shop link: the widget's own "Presale Tickets" action when present,
@@ -184,6 +212,12 @@ class HumboldthainApiScraper(
 
         /** `Gameshow`, `Game-Show`, `Game Show`: the venue's word for a game night with prizes. */
         private val GAME_SHOW = Regex("""\bgame[\s-]?show""", RegexOption.IGNORE_CASE)
+
+        private val WORKSHOP = Regex("""\bworkshop\b""", RegexOption.IGNORE_CASE)
+
+        private val LIVE_HEADING = Regex("""live\s+acts?\s*:?""", RegexOption.IGNORE_CASE)
+        private val DJ_HEADING = Regex("""djs\s*:?""", RegexOption.IGNORE_CASE)
+        private val EMOJI = Regex("""[\p{IsExtended_Pictographic}&&[^\p{ASCII}]]+""")
 
         /** Resident Advisor **artist** profiles — the venue's machine-readable lineup markup. */
         private const val RA_ARTIST_LINK_SELECTOR = "a[href*=ra.co/dj/]"
