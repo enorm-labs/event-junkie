@@ -4,7 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { checkEvent, ClassificationRun } from '@/api/dataQuality'
 import type {
   AdminEvent,
+  ArtistRole,
   EventFeatures,
+  EventType,
   fetchEvent,
   fetchEventFeatures,
   setEventFeatures,
@@ -488,6 +490,49 @@ describe('EventEditor', () => {
       expect(api.updateEvent.mock.calls[1]![1].artists).toEqual([
         { artistId: 12, role: 'HEADLINER', billingOrder: 0, stage: null },
       ])
+    })
+
+    async function selectType(eventType: EventType) {
+      const select = body().querySelector<HTMLSelectElement>('select[name="eventType"]')!
+      select.value = eventType
+      select.dispatchEvent(new Event('change'))
+      await flushPromises()
+    }
+
+    async function add(name: string) {
+      await search('add-artist', name)
+      click(`Add ${name}`)
+      await flushPromises()
+    }
+
+    async function savedRoles() {
+      await submit()
+      return api.updateEvent.mock.calls[0]![1].artists.map((artist) => artist.role)
+    }
+
+    it.each<[EventType, ArtistRole[]]>([
+      ['PARTY', ['DJ', 'DJ']],
+      ['CONCERT', ['HEADLINER', 'SUPPORT']],
+    ])('gives two acts added at a stored %s the roles %j', async (eventType, roles) => {
+      api.updateEvent.mockResolvedValue(stored)
+      await mountEditor({ ...stored, eventType })
+
+      await add('Die Nerven')
+      await add('The Adicts')
+
+      expect(await savedRoles()).toEqual(roles)
+    })
+
+    it('reads the selected type when an act is added, and keeps the roles on a later change', async () => {
+      api.updateEvent.mockResolvedValue(stored)
+      await mountEditor({ ...stored, eventType: 'CONCERT' })
+
+      await add('Die Nerven')
+      await selectType('PARTY')
+      await add('The Adicts')
+      await selectType('CONCERT')
+
+      expect(await savedRoles()).toEqual(['HEADLINER', 'DJ'])
     })
 
     it('offers an artist already on the bill as added, not twice', async () => {

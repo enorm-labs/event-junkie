@@ -16,6 +16,7 @@ import {
   fetchEventFeatures,
   EVENT_FEATURES,
   MOVED_STATUSES,
+  newActRole,
   setEventFeatures,
   setTimetable,
   type TimetableSlot,
@@ -211,7 +212,7 @@ function nameOf(kind: NameKind, id: number): string {
   return known.get(id)?.name ?? `#${id} (not found)`
 }
 
-/** A new act goes to the bottom of the bill: the headliner when the lineup is empty, else support. */
+/** A new act goes to the bottom of the bill, with the role the selected type gives it. */
 function addArtist(row: NamedRow) {
   names.value.artists.set(row.id, row)
   times.value[row.id] ??= { start: '', end: '' }
@@ -219,7 +220,7 @@ function addArtist(row: NamedRow) {
   const last = Math.max(-1, ...lineup.value.map((artist) => artist.billingOrder))
   lineup.value.push({
     artistId: row.id,
-    role: lineup.value.length === 0 ? 'HEADLINER' : 'SUPPORT',
+    role: newActRole(eventType.value, lineup.value.length),
     billingOrder: last + 1,
     stage: null,
   })
