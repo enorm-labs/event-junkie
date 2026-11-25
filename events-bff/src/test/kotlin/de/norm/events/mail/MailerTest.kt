@@ -6,6 +6,7 @@ import com.icegreen.greenmail.util.ServerSetupTest
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
@@ -13,6 +14,9 @@ import jakarta.mail.Message
 import jakarta.mail.internet.MimeMessage
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.springframework.boot.env.YamlPropertySourceLoader
+import org.springframework.core.env.StandardEnvironment
+import org.springframework.core.io.FileSystemResource
 import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import java.net.ServerSocket
@@ -55,6 +59,17 @@ class MailerTest {
     }
 
     @Test
+    fun `the Message-ID names the sending domain, not the pod, and the envelope sender stays`() {
+        val sender = sender(greenMail.smtp.port).apply { javaMailProperties["mail.from"] = shippedMailFrom() }
+
+        mailer(sender).send(message).block()
+
+        val received = greenMail.receivedMessages.single()
+        received.messageID shouldEndWith "@notify.event-junkie.de>"
+        received.getHeader("Return-Path").single() shouldBe "<noreply@notify.event-junkie.de>"
+    }
+
+    @Test
     fun `a refused connection fails the send and counts as failed`() {
         val closedPort = ServerSocket(0).use { it.localPort }
 
@@ -93,7 +108,14 @@ class MailerTest {
         message.toString() shouldNotContain "visitor@example.org"
     }
 
+    private fun shippedMailFrom(): String {
+        val environment = StandardEnvironment()
+        YamlPropertySourceLoader().load(MAIN_CONFIG, FileSystemResource(MAIN_CONFIG)).forEach(environment.propertySources::addLast)
+        return environment.getRequiredProperty("spring.mail.properties.mail.from")
+    }
+
     private companion object {
+        const val MAIN_CONFIG = "src/main/resources/application.yaml"
         const val FROM = "Event Junkie <noreply@notify.event-junkie.de>"
     }
 }
