@@ -7,6 +7,8 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.splitSupportActs
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 import java.math.BigDecimal
 
 // Field mapping shared by the Urania's calendar and event pages, which state the same facts in
@@ -55,10 +57,19 @@ internal fun isParticipationFormat(format: String?): Boolean = PARTICIPATION_MAR
  * a note about the evening (`"Yoshua Yaffa - in englischer Sprache"`), and `"et al."` standing
  * in for unnamed panellists. An `OTHER` event bills nobody: a workshop leader or a walk's guide is not a performer.
  * Nor does a line that names the audience instead ([isSchoolClassAudience]).
+ *
+ * A moderator hosts the talk and is no speaker, so two credits bill nobody (#1843 keeps organiser credits out too):
+ * - a forum's credit, `rbb24-Inforadio-Forum mit <moderator>` ([FORUM_CREDIT], #5555). The speakers come from the rest of the line.
+ * - a name the prose credits under `Moderation:` ([moderators], from [uraniaModerators]). The Berlin Brains talks bill
+ *   their moderator beside the speaker (`<speaker>, <moderator> et al.`). The speakers on that line stay billed.
+ *
+ * The calendar has no prose, so it passes no [moderators]. Its billing fills in only when the event page bills no one, so a
+ * line that names only the moderator still bills them: an accepted limitation.
  */
 internal fun uraniaSpeakers(
     billing: String?,
-    eventType: String
+    eventType: String,
+    moderators: List<String> = emptyList()
 ): List<ScrapedArtist> =
     billing
         ?.takeIf { eventType != EventType.OTHER.name && !isSchoolClassAudience(it) }
@@ -69,10 +80,39 @@ internal fun uraniaSpeakers(
                 .substringBefore(EN_DASH_NOTE_SEPARATOR)
                 .split(HOST_SEPARATOR)
         }?.map { it.replace(ET_AL_TAIL, "").trim() }
-        ?.filter { it.isNotBlank() && !isNonArtistName(it) }
+        ?.filter { it.isNotBlank() && !isNonArtistName(it) && !FORUM_CREDIT.containsMatchIn(it) && !isNamedIn(it, moderators) }
         ?.distinct()
         ?.map { ScrapedArtist(name = it) }
         .orEmpty()
+
+/**
+ * The text after each `Moderation:` label in an event page's prose: a paragraph or a `<br>` line that opens with the label.
+ * A bare label takes the rest of its paragraph (`Moderation:<br><strong>…</strong>`), or the next paragraph when it stands alone.
+ * The word `Moderator` in a biography is no label, so it names nobody.
+ */
+internal fun uraniaModerators(textBox: Element?): List<String> = textBox?.select("p").orEmpty().flatMap { moderationCredits(it) }
+
+private fun moderationCredits(paragraph: Element): List<String> {
+    val lines = paragraph.html().split(LINE_BREAK).map { Jsoup.parseBodyFragment(it).text().trim() }
+    return lines.indices
+        .filter { MODERATION_LABEL.containsMatchIn(lines[it]) }
+        .map { index ->
+            lines[index]
+                .replace(MODERATION_LABEL, "")
+                .ifBlank { lines.drop(index + 1).joinToString(" ") }
+                .ifBlank { paragraph.nextElementSibling()?.text().orEmpty() }
+        }.filter { it.isNotBlank() }
+}
+
+/** Whether one of the [credits] names [name] as a whole name: `Max Muster` is not named in `Max Musterfrau`. */
+private fun isNamedIn(
+    name: String,
+    credits: List<String>
+): Boolean {
+    if (credits.isEmpty()) return false
+    val whole = Regex("""(?<!\p{L})${Regex.escape(name)}(?!\p{L})""", RegexOption.IGNORE_CASE)
+    return credits.any { whole.containsMatchIn(it) }
+}
 
 /**
  * Whether a billing line names the audience, not a speaker: `Weihnachtskino für Schulklassen` stands where a talk names its
@@ -132,3 +172,12 @@ private val HOST_SEPARATOR = Regex("""\s+bei\s+""")
 
 /** The venue's stand-in for unnamed panellists, appended to the last one it did name. */
 private val ET_AL_TAIL = Regex("""\s+et\.?\s*al\.?\s*$""", RegexOption.IGNORE_CASE)
+
+/** A forum series' credit, which names its moderator after `mit`: `rbb24-Inforadio-Forum mit <moderator>`. */
+private val FORUM_CREDIT = Regex("""\bforum\b.*\smit\s""", RegexOption.IGNORE_CASE)
+
+/** The label of the prose's moderation credit, at the start of a paragraph or a line. */
+private val MODERATION_LABEL = Regex("""^Moderation\s*:\s*""", RegexOption.IGNORE_CASE)
+
+/** A `<br>` in a paragraph's HTML, which ends a line of the prose. */
+private val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)

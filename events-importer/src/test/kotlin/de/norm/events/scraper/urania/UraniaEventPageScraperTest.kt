@@ -116,6 +116,42 @@ class UraniaEventPageScraperTest {
         salon.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
+    // Event 13094: a Berlin Brains talk bills its moderator beside the speaker and credits them under "Moderation:".
+    @Test
+    fun `bills the speaker and not the moderator the prose credits`() {
+        val brains = talkWithProse("Ada Beispiel, Erika Muster et al.", "<p>Moderation:<br />\n<strong>Erika Muster</strong></p>")
+        brains.artists.map { it.name } shouldBe listOf("Ada Beispiel")
+    }
+
+    // Event 2026-12-15-urania-aufstehen-fur-eine-bessere-zukunft-wie-gelingt-die-bildungswende (#5555).
+    @Test
+    fun `bills nobody at a forum whose billing line names only its moderator`() {
+        val forum =
+            talkWithProse(
+                "rbb24-Inforadio-Forum mit Erika Muster",
+                "<p>Moderation: <strong>Erika Muster</strong>, rbb24 Inforadio</p>",
+                format = "Podiumsdiskussion"
+            )
+        forum.artists shouldBe emptyList()
+    }
+
+    private fun talkWithProse(
+        billing: String,
+        prose: String,
+        format: String = "Vortrag"
+    ): ScrapedEvent {
+        val sourceUrl = "https://www.urania.de/event/talk/"
+        val html =
+            """
+            <h6 class="c-event-article_content_format">$format</h6>
+            <h1 class="c-event-article_content_title o-h1">Ein Abend</h1>
+            <p class="c-event-article_content_artist"><strong>$billing</strong></p>
+            <h4 class="c-event-article_content_date-time"><strong>Mi, 09.12.2026</strong> | 19:30 Uhr</h4>
+            <div class="c-text-box"><p><strong>Ada Beispiel</strong> forscht.</p>$prose</div>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!
+    }
+
     // Events 13274 and 13275: the billing line names the audience; 13274 has no format label and was typed a talk.
     @Test
     fun `bills nobody at a school-class screening and types it from the audience line`() {
