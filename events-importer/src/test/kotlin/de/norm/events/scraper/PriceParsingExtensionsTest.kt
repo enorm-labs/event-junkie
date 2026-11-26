@@ -45,9 +45,9 @@ class PriceParsingExtensionsTest {
 
     @Test
     fun `parsePresaleAndBoxOfficePrices reads every value rendering the platform emits`() {
-        parsePresaleAndBoxOfficePrices(prices(block("39,90€", "VVK"))).first shouldBe BigDecimal("39.90")
-        parsePresaleAndBoxOfficePrices(prices(block("35.20€", "VVK"))).first shouldBe BigDecimal("35.20")
-        parsePresaleAndBoxOfficePrices(prices(block("30,00&nbsp;€", "VVK"))).first shouldBe BigDecimal("30.00")
+        parsePresaleAndBoxOfficePrices(prices(block("39,90€", "VVK"))).presale shouldBe BigDecimal("39.90")
+        parsePresaleAndBoxOfficePrices(prices(block("35.20€", "VVK"))).presale shouldBe BigDecimal("35.20")
+        parsePresaleAndBoxOfficePrices(prices(block("30,00&nbsp;€", "VVK"))).presale shouldBe BigDecimal("30.00")
     }
 
     @Test
@@ -56,8 +56,59 @@ class PriceParsingExtensionsTest {
         presale.shouldBeNull()
         boxOffice.shouldBeNull()
         val empty = parsePresaleAndBoxOfficePrices(prices())
-        empty.first.shouldBeNull()
-        empty.second.shouldBeNull()
+        empty shouldBe PlatformPrices()
+    }
+
+    @Test
+    fun `parsePresaleAndBoxOfficePrices skips a concession for both columns and keeps every tier as the note`() {
+        val prices = parsePresaleAndBoxOfficePrices(prices(block("27.00€", "U25"), block("32.00€", "Vorverkauf (+ Geb.)")))
+        prices shouldBe PlatformPrices(BigDecimal("32.00"), null, "U25: 27.00€ · Vorverkauf (+ Geb.): 32.00€")
+    }
+
+    @Test
+    fun `parsePresaleAndBoxOfficePrices leaves a tier with no amount out of the note`() {
+        // Brakence at Astra, 28 May 2027 (#5551): a presale start date in a `.price` block of its own.
+        val prices =
+            parsePresaleAndBoxOfficePrices(
+                prices(
+                    block("30.00€", "Vorverkauf U25 (+ Geb.)"),
+                    block("36.00€", "Vorverkauf (+ Geb.)"),
+                    block("VVK Start Fr. 30.10. - 10:00", ""),
+                    block("", "VVK Start Fr. 30.10. - 10:00")
+                )
+            )
+        prices shouldBe PlatformPrices(BigDecimal("36.00"), null, "Vorverkauf U25 (+ Geb.): 30.00€ · Vorverkauf (+ Geb.): 36.00€")
+    }
+
+    @Test
+    fun `parsePresaleAndBoxOfficePrices reads every concession label the venues print`() {
+        listOf("U25", "u 18", "U27 Ticket", "ermäßigt", "Ermässigt", "erm.", "Schüler", "Schueler", "Student", "Studenten", "Studierende", "Mitglieder")
+            .forEach { label ->
+                val prices = parsePresaleAndBoxOfficePrices(prices(block("10,00€", label), block("20,00€", "Abendkasse"), block("15,00€", "VVK")))
+                prices.presale shouldBe BigDecimal("15.00")
+                prices.boxOffice shouldBe BigDecimal("20.00")
+                prices.note shouldBe "$label: 10,00€ · Abendkasse: 20,00€ · VVK: 15,00€"
+            }
+    }
+
+    @Test
+    fun `parsePresaleAndBoxOfficePrices keeps a concession box-office tier out of the box-office column`() {
+        val prices = parsePresaleAndBoxOfficePrices(prices(block("12,00€", "Abendkasse ermäßigt"), block("18,00€", "Abendkasse")))
+        prices.boxOffice shouldBe BigDecimal("18.00")
+        prices.presale.shouldBeNull()
+    }
+
+    @Test
+    fun `parsePresaleAndBoxOfficePrices stores only the note for a page with only a concession price`() {
+        val prices = parsePresaleAndBoxOfficePrices(prices(block("27.00€", "U25"), block("27.00€", "U25")))
+        prices shouldBe PlatformPrices(note = "U25: 27.00€")
+    }
+
+    @Test
+    fun `parsePresaleAndBoxOfficePrices writes no note without a concession, and reads no age in a longer word or number`() {
+        parsePresaleAndBoxOfficePrices(prices(block("25,00€", "Vorverkauf"), block("30,00€", "Abendkasse"))).note.shouldBeNull()
+        parsePresaleAndBoxOfficePrices(prices(block("25,00€", "Tour U2025"))).presale shouldBe BigDecimal("25.00")
+        parsePresaleAndBoxOfficePrices(prices(block("25,00€", "Club25 VVK"))).presale shouldBe BigDecimal("25.00")
     }
 
     @Test
