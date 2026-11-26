@@ -132,6 +132,15 @@ class PriceParsingExtensionsTest {
     }
 
     @Test
+    fun `euroAmounts reads a narrow no-break or thin space beside the sign`() {
+        // Columbiahalle prints `VVK: 45,88` + U+202F + `€` on some cards (#5552).
+        euroAmounts("VVK: 45,88\u202f€") shouldBe listOf(BigDecimal("45.88"))
+        euroAmounts("€\u202f15") shouldBe listOf(BigDecimal("15"))
+        euroAmounts("12\u2009€") shouldBe listOf(BigDecimal("12"))
+        euroAmounts("€\u202f20:00 Einlass").shouldBeEmpty()
+    }
+
+    @Test
     fun `parseLabelledPrices assigns each amount to the label before it`() {
         parseLabelledPrices("VVK: 28 € (zzgl. Gebühr) / AK: 32 €") shouldBe LabelledPrices(BigDecimal("28"), BigDecimal("32"))
         parseLabelledPrices("Abendkasse 30 € · Vorverkauf 25 €") shouldBe LabelledPrices(BigDecimal("25"), BigDecimal("30"))
