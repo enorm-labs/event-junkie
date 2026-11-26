@@ -468,6 +468,9 @@ class SchokoladenOverviewPageScraperTest {
                 promotersOf("Beatz aus der Kurve &amp; Else Jahn Kurve laden ein zum &nbsp;") shouldContainExactly
                     listOf("Beatz aus der Kurve", "Else Jahn Kurve")
                 promotersOf("Kiezkollektiv lädt ein zur Soliparty: &nbsp;") shouldContainExactly listOf("Kiezkollektiv")
+                // 2 January 2027: co-promoters joined by a spaced slash (#5556). A bare slash is part of a name.
+                promotersOf("Ready Steady Go / Pleasure Seekers Club") shouldContainExactly listOf("Ready Steady Go", "Pleasure Seekers Club")
+                promotersOf("Punk/Hardcore Booking + Trust presents: &nbsp;") shouldContainExactly listOf("Punk/Hardcore Booking", "Trust")
             }
         }
 

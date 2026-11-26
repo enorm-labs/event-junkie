@@ -201,8 +201,9 @@ class SchokoladenOverviewPageScraper {
     /**
      * The promoters from the header's `span.promoter`. The span is cut at its "presents" word (or "laden ein") or at a
      * ": " tagline, because the night's own billing may follow (`"m:soundtrack prsnts: Falling into
-     * Autumn: Dreamy Indie"`). Co-promoters are joined by ",", "&" and "+" (`"beav boloney, wild wax &
-     * little league shows prsnt:"`), each its own promoter row (#328). [JOINED_PROMOTERS] carry an
+     * Autumn: Dreamy Indie"`). Co-promoters are joined by ",", "&", "+" and a spaced " / " (`"beav boloney, wild wax &
+     * little league shows prsnt:"`, `"Ready Steady Go / Pleasure Seekers Club"`), each its own promoter row (#328, #5556).
+     * A bare "/" stays inside the name. [JOINED_PROMOTERS] carry an
      * "&" in their name and stay whole. A [TICKET_NOTICE] in the span is no promoter: it comes back second, as the night's price
      * note (#4886).
      */
@@ -358,8 +359,9 @@ class SchokoladenOverviewPageScraper {
         /** Promoters whose own name carries an "&", which would otherwise split them. */
         private val JOINED_PROMOTERS = listOf("""thirsty\s*&\s*miserable""", """old\s*&\s*fast\b""")
 
-        /** One promoter inside a span: a [JOINED_PROMOTERS] name, or a run between ",", "&" and "+". */
-        private val PROMOTER_TOKEN = Regex("""\s*(?:${JOINED_PROMOTERS.joinToString("|")})|[^,&+]+""", RegexOption.IGNORE_CASE)
+        /** One promoter inside a span: a [JOINED_PROMOTERS] name, or a run between ",", "&", "+" and a spaced " / ". */
+        private val PROMOTER_TOKEN =
+            Regex("""\s*(?:${JOINED_PROMOTERS.joinToString("|")})|(?:[^,&+/]|(?<!\s)/|/(?!\s))+""", RegexOption.IGNORE_CASE)
 
         /** The venue's short forms for a promoter it credits in full elsewhere. */
         private val PROMOTER_ABBREVIATIONS = mapOf("lls" to "little league shows")
