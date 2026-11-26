@@ -156,6 +156,22 @@ class KesselhausCalendarScraperTest {
     }
 
     @Test
+    fun `bills a tribute band whose name holds an ampersand as one act`() {
+        // Event 15479 on production: the Queen tribute band at Maschinenhaus.
+        val tribute = scrapeOne(title = "Queen - Thunderbolt & Lightning", subtitle = "Invite You To A Night At The Maschinenhaus")
+        tribute.artists.map { it.name to it.role } shouldBe listOf("Thunderbolt & Lightning" to ArtistRole.HEADLINER)
+
+        val withSupport = scrapeOne(title = "Queen - Thunderbolt & Lightning", subtitle = "+ Vianova")
+        withSupport.artists.map { it.name to it.role } shouldBe
+            listOf("Thunderbolt & Lightning" to ArtistRole.HEADLINER, "Vianova" to ArtistRole.SUPPORT)
+
+        // A longer head is a band billed with its members (#3637), and a co-bill without a dash still splits.
+        scrapeOne(title = "BAD COMPANY LEGACY – Dave Colwell & Robert Hart", subtitle = "").artists.map { it.name } shouldBe
+            listOf("BAD COMPANY LEGACY", "Dave Colwell", "Robert Hart")
+        scrapeOne(title = "Motörblast & Nitrogods", subtitle = "").artists.map { it.name } shouldBe listOf("Motörblast", "Nitrogods")
+    }
+
+    @Test
     fun `takes a support act from the subtitle`() {
         val events = kesselhaus.scrape(calendar, url) + maschinenhaus.scrape(calendar, url)
         val withSupport = events.filter { it.subtitle?.startsWith("Support:") == true }

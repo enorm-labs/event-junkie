@@ -572,8 +572,8 @@ private const val NIGHT_WITH = " w/ "
 /** Comma and plus always part two DJs; a slash does not, because `fragil/stabil` is one name. */
 private val DJ_HARD_SEPARATOR = Regex("""\s*[,+]\s*""")
 
-/** The `DJ` / `DJs` / `Gast DJ` label in front of a name: `Gast DJ Christian Krach` (#4886). */
-private val DJ_LABEL = Regex("""^(?:gast[\s-]?)?djs?\s+""", RegexOption.IGNORE_CASE)
+/** The `DJ` / `DJs` / `Gast DJ` label in front of a name, with or without a colon: `Gast DJ Christian Krach` (#4886), `DJ: Kingston Headroll`. */
+private val DJ_LABEL = Regex("""^(?:gast[\s-]?)?djs?:?\s+""", RegexOption.IGNORE_CASE)
 
 /** A format word after a name: `Everything Crash DJ-Set`, `fragil/stabil DJ night`, `Fish'n'Candy DJ-Team`, `Kreuzgut.Disko DJs`. */
 private val DJ_SUFFIX = Regex("""\s+dj(?:s|[\s-]?(?:set|team|night))?$""", RegexOption.IGNORE_CASE)

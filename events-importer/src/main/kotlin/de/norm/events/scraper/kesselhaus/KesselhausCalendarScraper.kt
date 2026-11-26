@@ -165,8 +165,10 @@ class KesselhausCalendarScraper(
                 if (ceilidh) {
                     ceilidhBand(subtitle)
                 } else {
-                    buildArtistsForEventType(stripFriendsTail(title), subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) } +
-                        plusSupport(subtitle, eventType)
+                    (
+                        tributeBand(title, eventType)
+                            ?: buildArtistsForEventType(stripFriendsTail(title), subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) }
+                    ) + plusSupport(subtitle, eventType)
                 }
         ).forChildrenIf(category?.takeIf { it.equals(CHILDRENS_CATEGORY, ignoreCase = true) })
     }
@@ -417,6 +419,23 @@ private fun ceilidhBand(subtitle: String?): List<ScrapedArtist> =
         .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
 
 private val CEILIDH_BAND = Regex("""^(?:feat\.?|featuring|mit)\s+(.+)""", RegexOption.IGNORE_CASE)
+
+/**
+ * The band a tribute concert's `<act> - <band>` title names, when the band's name holds an `&`: `Queen - Thunderbolt &
+ * Lightning` bills `Thunderbolt & Lightning`, not `Queen - Thunderbolt` and `Lightning`. One word before the dash is the
+ * act paid tribute to. A longer head is left to the shared split: `BAD COMPANY LEGACY – Dave Colwell & Robert Hart`.
+ */
+private fun tributeBand(
+    title: String,
+    eventType: String
+): List<ScrapedArtist>? =
+    TRIBUTE_BAND_TITLE
+        .find(title.trim())
+        ?.takeIf { eventType == EventType.CONCERT.name }
+        ?.let { listOf(ScrapedArtist(name = it.groupValues[1], role = ArtistRole.HEADLINER)) }
+
+/** `<act> - <band>`, one word before the dash and an `&` after it, which [tributeBand] bills unsplit. */
+private val TRIBUTE_BAND_TITLE = Regex("""^\S+\s[-–]\s([^-–+,]+\s&\s[^-–+,]+)$""")
 
 /**
  * The styles a concert's or a festival's topics name. The venue tags other formats loosely: a book premiere carries
