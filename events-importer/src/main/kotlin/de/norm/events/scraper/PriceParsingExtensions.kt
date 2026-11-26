@@ -44,7 +44,7 @@ fun parsePriceValue(text: String?): BigDecimal? = euroAmounts(text).firstOrNull(
 /**
  * Every euro amount in [text], in reading order. The sign may lead (`€15`) or trail (`15 €`,
  * `15,90€`, `15,- €`), and a trailing currency may be spelled out (`13,00 EUR`, `32 Euro`). A
- * regular or non-breaking space may separate sign and amount. An amount that runs straight into a
+ * regular, non-breaking, narrow no-break or thin space may separate sign and amount. An amount that runs straight into a
  * digit or a colon is refused, since that is how a clock time looks once markup is flattened
  * (`€5` + `20:00`).
  */
@@ -143,9 +143,12 @@ private val FEE_CLAUSE =
 /** An `ab` (from) qualifier directly before an amount: `ab 74,99 €`, `ab: 69,99 €`, `Ab €20`. */
 private val FROM_PRICE = Regex("""(?<!\p{L})ab\s*:?\s*(?:€\s*)?\d""", RegexOption.IGNORE_CASE)
 
+/** A space between sign and amount: `\s` misses the no-break (U+00A0), narrow no-break (U+202F) and thin (U+2009) ones. */
+private const val AMOUNT_SPACE = """[\s\u00a0\u202f\u2009]"""
+
 /** One amount: `€`-led, or trailed by `€`, `EUR` or `Euro`; German `15,-` included. */
 private val EURO_AMOUNT =
     Regex(
-        """€[\s\u00a0]*(\d+(?:[.,]\d{1,2})?)(?![\d:]|[.,]\d)|(?<![\d.,])(\d+(?:[.,]\d{1,2}|,-)?)[\s\u00a0]*(?:€|eur(?:o|os)?(?!\p{L}))""",
+        """€$AMOUNT_SPACE*(\d+(?:[.,]\d{1,2})?)(?![\d:]|[.,]\d)|(?<![\d.,])(\d+(?:[.,]\d{1,2}|,-)?)$AMOUNT_SPACE*(?:€|eur(?:o|os)?(?!\p{L}))""",
         RegexOption.IGNORE_CASE
     )
