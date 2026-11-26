@@ -1,5 +1,6 @@
 package de.norm.events.scraper.velomax
 
+import de.norm.events.event.EventStatus
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -134,6 +135,23 @@ class VelomaxWebsiteImportersTest {
             sessions shouldHaveSize 6
             sessions.map { it.sourceId }.distinct() shouldHaveSize 6
             sessions.all { it.artists.isEmpty() } shouldBe true
+        }
+
+    @Test
+    fun `keeps the listing date of a rescheduled show whose detail page has no startDate`() =
+        runTest {
+            // #5557: the RIN page says `EventRescheduled` and carries no startDate, so the listing's
+            // `Do., 26. November '26` is the only date there is.
+            val rinUrl = "https://www.max-schmeling-halle.de/events/event/rin-2026-11-27"
+            coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
+                FetchResult.Success(document = fixtureDocument("velomax/velomax-overview-2026-11.html", overviewUrl), etag = null, lastModified = null)
+            stubFetcher(rinUrl to "velomax/velomax-detail-rescheduled.html", fetcher = htmlFetcher)
+
+            val rin = events(MaxSchmelingHalleWebsiteImporter(htmlFetcher).importEvents(overviewUrl)).single { it.title == "RIN" }
+
+            rin.eventDate shouldBe LocalDate.of(2026, 11, 26)
+            rin.status shouldBe EventStatus.POSTPONED.name
+            rin.sourceId shouldBe "max_schmeling_halle:rin-2026-11-27"
         }
 
     @Test

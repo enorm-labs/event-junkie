@@ -2,6 +2,7 @@ package de.norm.events.scraper.velomax
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
+import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -12,6 +13,7 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -21,6 +23,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Month
 
 /**
  * Pure HTML parser for the shared Velomax `/events` listing.
@@ -120,22 +123,32 @@ class VelomaxOverviewPageScraper {
     private fun sessionSuffix(startTime: LocalTime?): String = startTime?.format(FOUR_DIGIT_CLOCK)?.let { "-$it" }.orEmpty()
 
     /**
-     * The date from the separate day / month / year spans — `29`, `Aug`, `'26`. The two-digit
-     * year has a leading apostrophe and the month is a German abbreviation, so each part is
-     * normalised and looked up separately, not parsed from the rendered text. The `.weekday`
-     * span ("Samstag,") checks the result ([dateCheckedAgainstWeekday]).
+     * The date from the separate day / month / year spans — `26.`, `November`, `'26`. The two-digit
+     * year has a leading apostrophe, so each part is normalised and looked up separately, not parsed
+     * from the rendered text. The listing has printed both `Nov` and `November`, and `Samstag,` and
+     * `Do.,`, so both spellings are read (#5557). The `.weekday` span checks the result
+     * ([dateCheckedAgainstWeekday]).
      */
     private fun parseListingDate(entry: Element): LocalDate? {
         val day = entry.textAt(".day")?.trim(',', '.', ' ')?.toIntOrNull() ?: return null
-        val month = parseGermanMonthAbbreviation(entry.textAt(".month")) ?: return null
+        val month = parseListingMonth(entry.textAt(".month")) ?: return null
         val year = entry.textAt(".year")?.trim('\'', ' ')?.toIntOrNull() ?: return null
         val date =
             runCatching { LocalDate.of(TWENTY_FIRST_CENTURY + year, month, day) }
                 .onFailure { logger.warn { "Unparseable Velomax listing date '$day $month $year'" } }
                 .getOrNull() ?: return null
-        val weekday = parseGermanWeekday(entry.textAt(".weekday")?.trim(',', ' '))
+        val weekdayText = entry.textAt(".weekday")?.trim(',', '.', ' ')
+        val weekday = parseGermanWeekday(weekdayText) ?: parseGermanWeekdayAbbreviation(weekdayText)
         return dateCheckedAgainstWeekday(date, weekday, entry.textAt(".date-output") ?: "$day $month $year")
     }
+
+    // The shared map reads abbreviations only, and other venues rely on a full name being null there.
+    private fun parseListingMonth(text: String?): Month? =
+        parseGermanMonthAbbreviation(text)
+            ?: GERMAN_MONTH_NAMES
+                .indexOfFirst { it.equals(text?.trim(), ignoreCase = true) }
+                .takeIf { it >= 0 }
+                ?.let { Month.of(it + 1) }
 
     private companion object {
         /**

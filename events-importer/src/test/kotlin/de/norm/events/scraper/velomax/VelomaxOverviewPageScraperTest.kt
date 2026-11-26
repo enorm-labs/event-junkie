@@ -28,6 +28,9 @@ class VelomaxOverviewPageScraperTest {
 
     private fun scrape(hall: VelomaxHall): List<ScrapedEvent> = scraper.scrape(fixtureDocument("velomax/velomax-overview.html", baseUrl), baseUrl, hall)
 
+    private fun scrapeNovember2026(hall: VelomaxHall): List<ScrapedEvent> =
+        scraper.scrape(fixtureDocument("velomax/velomax-overview-2026-11.html", baseUrl), baseUrl, hall)
+
     @Test
     fun `splits the shared listing across the three halls`() {
         // 85 entries on the page: 43 Max-Schmeling-Halle, 32 Velodrom, 10 UFO — minus sport. Every
@@ -136,6 +139,38 @@ class VelomaxOverviewPageScraperTest {
         VelomaxHall.entries.forEach { hall ->
             scrape(hall).none { it.eventDate == LocalDate.MIN } shouldBe true
         }
+    }
+
+    @Test
+    fun `reads a month the listing spells out`() {
+        // #5557: the November 2026 listing prints `Do., 26. November '26`; only `Mai` and `März` read before.
+        val rin = scrapeNovember2026(VelomaxHall.MAX_SCHMELING_HALLE).single { it.title == "RIN" }
+
+        rin.eventDate shouldBe LocalDate.of(2026, 11, 26)
+        rin.sourceId shouldBe "max_schmeling_halle:rin-2026-11-27"
+    }
+
+    @Test
+    fun `dates every entry of the spelled-out listing and checks its abbreviated weekday`() {
+        val (events, warnings) = withWeekdayWarnings { VelomaxHall.entries.flatMap(::scrapeNovember2026) }
+
+        events.isNotEmpty() shouldBe true
+        events.none { it.eventDate == LocalDate.MIN } shouldBe true
+        warnings.shouldBeEmpty()
+    }
+
+    @Test
+    fun `moves an entry whose abbreviated weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the `Sa.,` names 3 October.
+        val entry =
+            """<a class="ticketWrap velodrom concert" data-type="concert" href="https://www.velodrom.de/events/event/show-velodrom-2026-10-03">""" +
+                """<span class="date-output"><span class="weekday">Sa.,</span><span class="day">03.</span>""" +
+                """<span class="month">September</span><span class="year">'26</span></span>""" +
+                """<span class="event-title"><span class="title">Show</span></span></a>"""
+        val (events, warnings) = withWeekdayWarnings { scraper.scrape(Jsoup.parse(entry, baseUrl), baseUrl, VelomaxHall.VELODROM) }
+
+        events.single().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        warnings shouldHaveSize 1
     }
 
     @Test
