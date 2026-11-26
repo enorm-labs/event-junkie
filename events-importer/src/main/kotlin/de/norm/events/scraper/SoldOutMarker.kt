@@ -7,7 +7,7 @@ package de.norm.events.scraper
  * The words: `sold out` / `sold-out` / `soldout`, `ausverkauft`, `ausgebucht`, and `ausverauft`, the
  * misspelling Schokoladen prints. Letter-bounded, so "ausverkauften" and "Soldouts" are not one.
  */
-private const val SOLD_OUT_WORD = """(?<!\p{L})(?:sold[\s-]?out|ausverkauft|ausverauft|ausgebucht)(?!\p{L})"""
+internal const val SOLD_OUT_WORD = """(?<!\p{L})(?:sold[\s-]?out|ausverkauft|ausverauft|ausgebucht)(?!\p{L})"""
 
 /**
  * The shapes a marker takes, each anchored so a name or a sentence about a record cannot match:

@@ -57,7 +57,7 @@ private val CANCELLED_TEXT = Regex("""abgesagt|absage|cancel|\b(?:f(?:ä|ae)llt\
  * Word-anchored, and the bare "cancel" of [parseEventStatus] is not accepted: "Cancel Culture"
  * is a film.
  */
-private val TITLE_STATUS_PATTERN =
+internal val TITLE_STATUS_PATTERN =
     Regex(
         """\b(?:abgesagt|absage|cancell?ed|f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt|verschoben|postponed|verlegt""" +
             """|venue\s?(?:ä|ae)nderung)\b""",
