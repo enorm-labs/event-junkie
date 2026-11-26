@@ -234,6 +234,12 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "youngoldmann" to "youngoldmann",
         "elliephunk" to "elliephunk",
         "djvolvox" to "Volvox",
+        // The same, decided by the operator (V286): Badehaus's title misspells the rapper that Bi Nuu bills the same night,
+        // Schlot and LabSaal space one big band two ways, and Club OST and Lokschuppen bill one Polyamor DJ two ways.
+        // `DJ Amuze` and `Amuze` stay apart on purpose.
+        "jugoürgens" to "Jugo Ürdens",
+        "bigbandkameleon" to "Bigband Kameleon",
+        "satysfyre" to "Satys Fyre",
         // Frannz bills `JULIAN TSF`, and the de-shouter would write the initials `Tsf` (#5299).
         "juliantsf" to "Julian TSF"
     )

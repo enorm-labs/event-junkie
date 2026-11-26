@@ -301,6 +301,8 @@ class SchokoladenOverviewPageScraperTest {
                     listOf("Kreuzgut.Disko", "Christian Krach")
                 djsOf("+ Gast DJ Christian Krach") shouldContainExactly listOf("Christian Krach")
                 djsOf("+ Gast-DJ Christian Krach") shouldContainExactly listOf("Christian Krach")
+                // 5 December 2026: the role label carries a colon.
+                djsOf("&amp; after 22h: DJ: Kingston Headroll &amp; Berlitonian") shouldContainExactly listOf("Kingston Headroll", "Berlitonian")
                 djsOf("&amp; after 22h: DJ TBA").shouldBeEmpty()
                 // No lead-in, no lineup: a cancellation note and the sold-out banner are not DJs.
                 djsOf("[unfortunately Cool Sorcery had to cancel their EU-Tour]").shouldBeEmpty()
