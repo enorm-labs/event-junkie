@@ -47,7 +47,8 @@ class GaertenDerWeltExhibitionRunUpsertTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
-            ActTitleCasing(mockk())
+            ActTitleCasing(mockk()),
+            mockk(relaxed = true)
         )
 
     private val eventSourceId = 1L

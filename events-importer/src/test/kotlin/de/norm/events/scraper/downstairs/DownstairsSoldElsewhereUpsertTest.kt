@@ -46,7 +46,8 @@ class DownstairsSoldElsewhereUpsertTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
-            ActTitleCasing(mockk())
+            ActTitleCasing(mockk()),
+            mockk(relaxed = true)
         )
 
     private val sourceUrl = "https://www.downstairscomedy.shop/catalog/tickets?limit=100&use_sold=true&use_pagy=true&view_type=list"

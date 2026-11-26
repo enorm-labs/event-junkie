@@ -5,6 +5,7 @@ import de.norm.events.event.EventChangeLog
 import de.norm.events.event.EventContentStamp
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.event.EventSlugAliasStore
 import de.norm.events.event.PinnedField
 import de.norm.events.licence.SourceLicences
 import de.norm.events.promoter.canonicalPromoterName
@@ -46,7 +47,8 @@ class EventUpsertService(
     private val enrichmentRepository: EventEnrichmentRepository,
     private val featureSync: EventFeatureSync,
     private val changeLog: EventChangeLog,
-    private val actTitleCasing: ActTitleCasing
+    private val actTitleCasing: ActTitleCasing,
+    private val slugAliases: EventSlugAliasStore
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -181,6 +183,7 @@ class EventUpsertService(
         val insertedRows = savedChanged.filter { it.sourceId !in existingBySourceId && it.sourceId !in resolved.movedSourceIds }
         recordDateMoves(removed, insertedRows, eventSourceId)
         recordChanges(changed, existingBySourceId, resolved.movedSourceIds, eventSourceId)
+        keepFormerSlugs(savedChanged, existingBySourceId, eventSourceId)
 
         val ownFields = sourceRows.associate { (scraped, row) -> scraped.sourceId to scraped.setsOf(row) }
         val associations =
@@ -274,6 +277,21 @@ class EventUpsertService(
         val recorded = changeLog.record(pairs)
         if (recorded > 0) logger.info { "Logged $recorded change(s) to a date, time, status or venue on event source $eventSourceId" }
         changeLog.prune(eventSourceId, LocalDate.now(clock))
+    }
+
+    /**
+     * Keeps the stored slug of each saved row whose title, date or discriminator moved it, so the old
+     * link still opens the event (#5560). A row matched by slug keeps its slug, so only a row matched
+     * by `sourceId` can leave one behind.
+     */
+    private suspend fun keepFormerSlugs(
+        saved: List<EventEntity>,
+        existingBySourceId: Map<String, EventEntity>,
+        eventSourceId: Long
+    ) {
+        val storedSlugs = existingBySourceId.values.mapNotNull { stored -> stored.id?.let { it to stored.slug } }.toMap()
+        val kept = slugAliases.keep(saved, storedSlugs)
+        if (kept > 0) logger.info { "Kept the former slug of $kept retitled event(s) on event source $eventSourceId as an alias" }
     }
 
     /**

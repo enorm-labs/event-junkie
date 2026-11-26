@@ -47,7 +47,8 @@ class SisyphosShopPriceUpsertTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
-            ActTitleCasing(mockk { coEvery { storedNames(any()) } returns emptyMap() })
+            ActTitleCasing(mockk { coEvery { storedNames(any()) } returns emptyMap() }),
+            mockk(relaxed = true)
         )
 
     private val feedUrl = "https://www.sisyphos-berlin.net/collections/tickets/products.json"

@@ -152,7 +152,9 @@ class EventService(
     }
 
     /**
-     * Finds a single event by [slug], fully assembled with venue, lineup, promoters, and genre tags.
+     * Finds a single event by [slug], fully assembled with venue, lineup, promoters, and genre tags. A slug
+     * the event had before a retitle finds it too, so an old link still opens it (#5560). The response
+     * carries the event's own slug. A live event wins over an alias with the same slug.
      *
      * @throws EventNotFoundException if no event with the given slug exists.
      */
@@ -161,7 +163,8 @@ class EventService(
         // The detail path does not go through hydrateOrdered, so it applies the gate itself; this is
         // the endpoint that renders the description in full.
         val licensed =
-            eventRepository.findBySlug(slug)?.let { withLicenceApplied(listOf(it)).first() }
+            (eventRepository.findBySlug(slug) ?: eventRepository.findByAliasSlug(slug))
+                ?.let { withLicenceApplied(listOf(it)).first() }
                 ?: throw EventNotFoundException(slug)
         val event = licensed.event
         val eventId = event.requiredId()

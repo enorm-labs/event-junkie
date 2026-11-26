@@ -427,6 +427,12 @@ the end. A hand edit keeps the slug when it changes none of the title, the date 
 `-HHmm` suffix. `DELETE /api/admin/events/{id}/pins/{field}` removes a pin. The next import that reads the page then writes
 the source's value.
 
+**A changed slug keeps the old one (#5560).** The slug is the date, the venue and the stored title, so a retitle changes the URL.
+An import that updates a row writes the old slug to `event_slug_alias` with the event's id. `PUT /api/admin/events/{id}` does the same.
+`GET /api/events/{slug}` returns the event when no `event` row has the slug. The response carries the current slug.
+The event page then replaces its URL with it. A write that gives an event a slug deletes the alias with that slug.
+So a live slug always wins over an alias. Deleting the event deletes its aliases.
+
 ### Artist
 
 Represents a musical artist or band. Normalized separately so artists can appear in multiple events.

@@ -94,7 +94,8 @@ class EventUpsertServiceStaleCleanupTest {
             enrichmentRepository = mockk(relaxed = true),
             featureSync = mockk(relaxed = true),
             changeLog = changeLog,
-            actTitleCasing = ActTitleCasing(mockk())
+            actTitleCasing = ActTitleCasing(mockk()),
+            slugAliases = mockk(relaxed = true)
         )
 
     @BeforeEach

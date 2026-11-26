@@ -48,7 +48,8 @@ class BerghainExhibitionRunUpsertTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
-            ActTitleCasing(mockk { coEvery { storedNames(any()) } returns emptyMap() })
+            ActTitleCasing(mockk { coEvery { storedNames(any()) } returns emptyMap() }),
+            mockk(relaxed = true)
         )
 
     private val sourceUrl = "https://www.berghain.berlin/de/program/"

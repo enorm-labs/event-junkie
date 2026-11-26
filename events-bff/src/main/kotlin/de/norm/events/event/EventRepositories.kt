@@ -1,6 +1,8 @@
 package de.norm.events.event
 
+import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.Flow
+import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 
 /**
@@ -11,6 +13,13 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     /** Finds a single event by its unique slug, or null if not found. */
     suspend fun findBySlug(slug: String): EventEntity?
+
+    /** Finds the event that [slug] is an alias of: a slug it had before its title, date or venue changed (#5560). */
+    @Query(
+        "SELECT e.* FROM $EVENTS_SCHEMA.event e " +
+            "JOIN $EVENTS_SCHEMA.event_slug_alias alias ON alias.event_id = e.id WHERE alias.slug = :slug"
+    )
+    suspend fun findByAliasSlug(slug: String): EventEntity?
 }
 
 /**
