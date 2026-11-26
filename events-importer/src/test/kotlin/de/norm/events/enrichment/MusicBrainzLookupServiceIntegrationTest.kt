@@ -1,6 +1,7 @@
 package de.norm.events.enrichment
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.artist.ArtistDiscogsRepository
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.MusicBrainzMatch
@@ -33,6 +34,9 @@ import kotlin.time.TestTimeSource
 class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var artistRepository: ArtistRepository
+
+    @Autowired
+    private lateinit var discogsRepository: ArtistDiscogsRepository
 
     @Autowired
     private lateinit var rejectionStore: MusicBrainzRejectionStore
@@ -226,6 +230,28 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             val stored = artistRepository.findById(id).shouldNotBeNull()
             stored.musicbrainzMatch shouldBe MusicBrainzMatch.AMBIGUOUS.name
             stored.musicbrainzId.shouldBeNull()
+        }
+    }
+
+    @Test
+    fun `a status word is stored AMBIGUOUS without a search, so neither the enrichment nor Discogs links it (#5569)`() {
+        runBlocking {
+            val wird = requireNotNull(artist("WIRD").id)
+            val wire = requireNotNull(artist("Wire").id)
+            coEvery { client.search("WIRD") } returns listOf(candidate("Wird", BAND, "GB"))
+            coEvery { client.search("Wire") } returns listOf(candidate("Wire", "mbid-wire", "GB"))
+
+            service().sweep(setOf(wird, wire)).stored shouldBe 2
+
+            val stored = artistRepository.findById(wird).shouldNotBeNull()
+            stored.musicbrainzMatch shouldBe MusicBrainzMatch.AMBIGUOUS.name
+            stored.musicbrainzId.shouldBeNull()
+            stored.websiteUrl.shouldBeNull()
+            stored.bandcampUrl.shouldBeNull()
+            coVerify(exactly = 0) { client.search("WIRD") }
+            artistRepository.findNeedingMusicBrainzEnrichment(setOf(wird)).toList() shouldBe emptyList()
+            discogsRepository.findNeedingDiscogsLookup(setOf(wird)).toList() shouldBe emptyList()
+            artistRepository.findById(wire).shouldNotBeNull().musicbrainzId shouldBe "mbid-wire"
         }
     }
 

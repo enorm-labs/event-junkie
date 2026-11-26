@@ -48,6 +48,7 @@ flowchart TD
     enrichment --> artist
     enrichment --> discogs
     enrichment --> musicbrainz
+    enrichment --> scraper
     enrichment --> wikimedia
     event --> artist
     event --> common

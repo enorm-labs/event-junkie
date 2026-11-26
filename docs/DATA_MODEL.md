@@ -473,6 +473,10 @@ A rename back to a former slug removes that alias.
 The admin API refuses a new artist or a rename whose slug is the alias of another artist, with a 409.
 Deleting the artist deletes its aliases.
 
+**A status word is never matched (#5569).** The lookup stores `AMBIGUOUS` for a name that is only a status word, such as `WIRD`, `Abgesagt` or `Ausverkauft`.
+It sends no search for that name.
+So the enrichment and the Discogs sweep do not read the row, and the row gets no links.
+
 **A person decides an `AMBIGUOUS` name (#2946).** `GET /api/admin/artists?musicbrainzMatch=AMBIGUOUS&upcomingWithinDays=14` lists the rows to review.
 `GET /api/admin/artists/{id}/musicbrainz-candidates` returns what the MusicBrainz search finds for the name.
 The importer sends that request, on the same queue as the sweep.

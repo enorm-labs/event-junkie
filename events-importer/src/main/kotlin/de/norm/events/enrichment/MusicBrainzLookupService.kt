@@ -8,6 +8,8 @@ import de.norm.events.musicbrainz.MusicBrainzClient
 import de.norm.events.musicbrainz.MusicBrainzMatcher
 import de.norm.events.musicbrainz.MusicBrainzProperties
 import de.norm.events.musicbrainz.MusicBrainzUnavailableException
+import de.norm.events.musicbrainz.MusicBrainzVerdict
+import de.norm.events.scraper.isStatusWord
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import kotlin.time.TimeMark
@@ -24,6 +26,10 @@ import kotlin.time.TimeMark
  * looked at. `importer.musicbrainz.unchecked` shows it draining, and stays at zero afterwards. The
  * tick is the only caller and never overlaps itself, so no lock guards the slice (#1604). The tick
  * also sets the pass a deadline, so a MusicBrainz brownout cannot hold it for hours (#2896).
+ *
+ * **A status word is never matched** (#5569): `WIRD` or `Abgesagt` is a notice billed as an act, so it is stored
+ * AMBIGUOUS without a search. AMBIGUOUS keeps it out of the enrichment, which reads EXACT, and out of the Discogs
+ * sweep, which reads NONE, so it gets no links either.
  *
  * **Nothing but the three columns is written.** The name is never rewritten from a verdict, and
  * the head pass — the part before ` - ` or `: ` of a name MusicBrainz did not know — is a log line
@@ -70,7 +76,13 @@ class MusicBrainzLookupService(
 
     private suspend fun lookup(artist: ArtistEntity) {
         val id = artist.requiredId()
-        val verdict = MusicBrainzMatcher.decide(artist.name, client.search(artist.name), rejectionStore.rejectedIds(id))
+        val verdict =
+            if (isStatusWord(artist.name)) {
+                logger.info { "Artist $id '${artist.name}' is a status word, not an act; stored AMBIGUOUS without a search" }
+                MusicBrainzVerdict.AMBIGUOUS
+            } else {
+                MusicBrainzMatcher.decide(artist.name, client.search(artist.name), rejectionStore.rejectedIds(id))
+            }
         metrics.recordMusicBrainzLookup(verdict.match.name.lowercase())
         artistRepository.storeMusicBrainzVerdict(id, verdict.match.name, verdict.musicbrainzId)
         if (verdict.match == MusicBrainzMatch.NONE) reportHead(artist.name)
