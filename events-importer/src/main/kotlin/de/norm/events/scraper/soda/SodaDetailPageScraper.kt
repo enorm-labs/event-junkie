@@ -130,7 +130,8 @@ class SodaDetailPageScraper {
      * Kizomba / Urban Kiz: DJ Tarrixa
      * ```
      *
-     * The label before the colon names the floor. Silvester heads each room in capitals (`KESSELHAUS`), and the room is
+     * A blurb with no rule ends the list at its first info line, such as `Beginn: 22 Uhr` (15534, 15535). The label before the colon
+     * names the floor, without a leading list dash. Silvester heads each room in capitals (`KESSELHAUS`), and the room is
      * the stage then. A `Party-Liveband „JCB“` is the band, billed as the headliner.
      */
     private fun bookedDjs(content: Element): List<ScrapedArtist> {
@@ -140,7 +141,8 @@ class SodaDetailPageScraper {
         var room: String? = null
         return lines
             .drop(start + 1)
-            .takeWhile { !it.trim().startsWith(RULE) }
+            .map { it.trim().removePrefix("-").trim() }
+            .takeWhile { !it.startsWith(RULE) && !isInfoLine(it) }
             .flatMap { line ->
                 val label = line.substringBefore(':', "").trim()
                 if (label.isEmpty()) {
@@ -155,6 +157,9 @@ class SodaDetailPageScraper {
             }.filterNot { it.name.isBlank() || isNonArtistName(it.name) }
             .distinctBy { it.name.lowercase() }
     }
+
+    private fun isInfoLine(line: String): Boolean =
+        CLOCK_TIME.containsMatchIn(line) || EURO_AMOUNT.containsMatchIn(line) || line.endsWith('.') || line.endsWith('!')
 
     private fun bookedAct(
         name: String,
@@ -246,6 +251,12 @@ class SodaDetailPageScraper {
 
         /** The rule of asterisks that closes the DJ list. */
         const val RULE = "***"
+
+        /** `22 Uhr`, `22:00 Uhr`: an info line's clock time, which no DJ line carries. */
+        val CLOCK_TIME = Regex("""\b\d{1,2}([:.]\d{2})?\s*Uhr\b""")
+
+        /** `15 €`, `10,50 €`: an info line's price. */
+        val EURO_AMOUNT = Regex("""\d+([.,]\d{2})?\s*€""")
 
         /** `Party-Liveband „JCB“`: the band's name is the quoted part. */
         val LIVE_BAND = Regex("""(?:Party-)?Live-?band\s+["„“]([^"„“”]+)["“”]""", RegexOption.IGNORE_CASE)
