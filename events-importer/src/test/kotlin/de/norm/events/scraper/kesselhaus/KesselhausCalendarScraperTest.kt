@@ -115,11 +115,31 @@ class KesselhausCalendarScraperTest {
     }
 
     @Test
-    fun `marks a move and keeps the subtitle that names the new venue`() {
+    fun `marks a move and keeps the note that names the new venue as the status note only (#5553)`() {
         val event = kesselhaus.scrape(calendar, url).first { it.title == "Ruel" }
 
         event.status shouldBe "RELOCATED"
         event.statusNote shouldBe "wird ins Hole 44 verlegt"
+        event.subtitle.shouldBeNull()
+    }
+
+    @Test
+    fun `keeps a strapline that announces no move beside a postponed mark (event 7145)`() {
+        val strapline = "Geschichten die wir niemanden erzählen"
+        val page = calendarPage(Card("moe", "moé", strapline, venue = "maschinenhaus", notes = listOf("postponed")))
+
+        maschinenhaus.scrape(Jsoup.parse(page, url), url).single().subtitle shouldBe strapline
+    }
+
+    @Test
+    fun `keeps the move note as the subtitle of a show that moved into this room (#5553)`() {
+        val note = "Die Show wird vom Huxleys ins Kesselhaus verlegt"
+        val page = calendarPage(Card("arrived", "Ruel", note, notes = listOf("relocated")))
+
+        kesselhaus.scrape(Jsoup.parse(page, url), url).single().run {
+            subtitle shouldBe note
+            statusNote shouldBe note
+        }
     }
 
     @Test
@@ -360,7 +380,7 @@ class KesselhausCalendarScraperTest {
     }
 
     @Test
-    fun `marks a postponed show on the date it left and keeps the row it moved to (#5099)`() {
+    fun `marks a postponed show on the date it left and keeps the row it moved to (#5099, #5553)`() {
         // Verbatim subtitle of RE6CE, calendar id -P3jNNUJlKQBoQEIt5tm. Every card here is dated 2027-01-09.
         val left = "Die Show wird vom 09.01.27 auf den 27.05.27 verschoben!"
         val arrived = "Die Show wird vom 25.11.26 auf den 09.01.27 verschoben!"
@@ -375,9 +395,12 @@ class KesselhausCalendarScraperTest {
         events.getValue("RE6CE").run {
             status shouldBe EventStatus.POSTPONED.name
             statusNote shouldBe left
+            subtitle.shouldBeNull()
             resolvePostponement(status, listOfNotNull(statusNote, subtitle), eventDate) shouldBe EventStatus.POSTPONED.name
         }
         events.getValue("RE6CE Zusatz").run {
+            statusNote shouldBe arrived
+            subtitle shouldBe arrived
             resolvePostponement(status, listOfNotNull(statusNote, subtitle), eventDate) shouldBe EventStatus.SCHEDULED.name
         }
     }

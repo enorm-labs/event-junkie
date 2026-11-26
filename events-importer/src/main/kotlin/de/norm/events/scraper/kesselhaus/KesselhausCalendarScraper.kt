@@ -21,8 +21,11 @@ import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.movedHere
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.parseRelocation
+import de.norm.events.scraper.resolveRelocation
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stringOrNull
@@ -138,12 +141,13 @@ class KesselhausCalendarScraper(
         }
         val notes = base.path("notes").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
         val topics = base.path("topics").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
+        val statusNote = subtitle?.takeIf { RELOCATED in notes || POSTPONED in notes }
         val category = card.textAt(".category")
         val ceilidh = CEILIDH.containsMatchIn(title)
         val eventType = if (ceilidh) EventType.CONCERT.name else eventTypeOf(title, category, topics)
         return ScrapedEvent(
             title = title,
-            subtitle = subtitle ?: text.stringOrNull("pretitle"),
+            subtitle = subtitle?.takeUnless { statusNote != null && leftRoom(statusNote, start.toLocalDate(), room) } ?: text.stringOrNull("pretitle"),
             eventType = eventType,
             eventDate = start.toLocalDate(),
             startTime = start.toLocalTime(),
@@ -156,7 +160,7 @@ class KesselhausCalendarScraper(
             genre = genreOf(topics, eventType),
             soldOut = SOLD_OUT in notes,
             status = statusOf(notes),
-            statusNote = subtitle?.takeIf { RELOCATED in notes || POSTPONED in notes },
+            statusNote = statusNote,
             artists =
                 if (ceilidh) {
                     ceilidhBand(subtitle)
@@ -380,6 +384,23 @@ class KesselhausCalendarScraper(
             )
     }
 }
+
+/**
+ * Whether [note] says the show left this row: it carries a move word and names neither this date nor [room] as where the show
+ * went. The page shows its own notice there, so only [ScrapedEvent.statusNote] keeps the note (#5553). The import reads the
+ * status by the same rules. A strapline beside a `postponed` mark is no notice and stays: moé's (event 7145).
+ */
+private fun leftRoom(
+    note: String,
+    eventDate: LocalDate,
+    room: KesselhausRoom
+): Boolean =
+    MOVE_NOTICE.containsMatchIn(note) &&
+        !movedHere(note, eventDate) &&
+        resolveRelocation(EventStatus.RELOCATED.name, parseRelocation(note), room.venueName).first != EventStatus.SCHEDULED.name
+
+/** A move notice's words; `verlegt` also matches inside `HOCHVERLEGT`. */
+private val MOVE_NOTICE = Regex("""verschoben|verlegt|verlegung|postponed|relocated|moved""", RegexOption.IGNORE_CASE)
 
 /**
  * The band of a ceilidh, which the subtitle names: `feat. Nightlark`. A ceilidh is a concert although the calendar files it
