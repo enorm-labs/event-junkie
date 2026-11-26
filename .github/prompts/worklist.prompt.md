@@ -171,8 +171,9 @@ Apply only the numbers the operator names, one at a time, on the environment's i
     curl -sf -X POST -H 'Content-Type: application/json' -d '{"name": "<name>"}' localhost:$PORT/api/admin/artists | jq '{id, name, slug}'
     ```
 
-    Use the existing artist when one matches exactly. Otherwise create it. Then put its `id` as `artistId` in the event's `artists`, and PUT the event as
-    in item 2.
+    Use the existing artist when one matches exactly. Otherwise create it. A name that ends in an RA tag, `Two Dots (FR)` or `EMA (1)`, follows the rule
+    of [`/admin-review`](admin-review.prompt.md) Step 8, `I…` `CREATE`: search the bare name too, and keep the tag only beside another act. Then put its
+    `id` as `artistId` in the event's `artists`, and PUT the event as in item 2.
 
 5. **An artist rename**: the PUT replaces the whole artist, and pins the name when it changes. Project the stored artist to its request fields, and set
    the name:
