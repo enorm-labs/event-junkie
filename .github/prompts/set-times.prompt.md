@@ -78,7 +78,9 @@ For each act on the running order, in this order:
 2. **A known artist off the lineup.** `curl -sf "localhost:28081/api/admin/artists?name=<name>&size=10"`. Take a row only when its slug matches the
    whole name. A partial hit (`Rafon` against `Rafon Rodriguez`) is a question for the operator.
 3. **New.** No stored artist: propose to create one (`POST /api/admin/artists`, body `{"name": "<name>"}`). Check the name against what
-   [`/artist-cleanup`](artist-cleanup.prompt.md) would flag — a label, a format, a `presents` — before proposing it.
+   [`/artist-cleanup`](artist-cleanup.prompt.md) would flag — a label, a format, a `presents` — before proposing it. A name that ends in an RA tag,
+   `Two Dots (FR)` or `EMA (1)`, follows the rule of [`/admin-review`](admin-review.prompt.md) Step 8, `I…` `CREATE`: search the bare name too, and
+   keep the tag only beside another act. The proposal line says which.
 
 A joined slot (`LAURINE & CECILIO`) is two artist rows when the lineup or the artist table already holds the two names apart, or when the flyer tags
 two people. It is one row when a stored artist carries the joined name, or the act performs as a duo under it. When unsure, ask.

@@ -91,6 +91,8 @@ event at the venue on that date (paged, Step 1). Give each night one verdict, nu
 
 - **Acts come from the caption or the flyer text, never from the draft's `acts` alone.** The model reads a handle as a name and a floor (`Keller`) as an
   act. When two posts list one night, the newer post wins.
+- **An act whose name ends in an RA tag** (`Two Dots (FR)`, `EMA (1)`) shows the choice of Step 8 on its line: `Two Dots (new, tag dropped)`,
+  `Lobo (artist <id>, same act)` or `Amo (IT) (new, tag kept: another Amo)`.
 - **Leave a start time empty when no post names one.** A guessed time on the public site is worse than none.
 - **A title is what the venue calls the night.** A night with no name takes its first acts as the title.
 - The pass deletes a draft nobody judged in 14 days. A draft older than 10 days goes to the top of the action list.
@@ -135,12 +137,16 @@ One at a time, on the environment's importer. Re-read each item first: an item s
   `DISMISS` it instead, and say so.
 - **`S…` `ACCEPT` on `artists`**: the proposed value is a `; `-separated list of names, and the field is `artists`, which pins `lineup`. Build the
   line-up as `proposedLineup` in `events-admin/src/api/suggestions.ts` does. An act the event already bills keeps its role and stage. Any other name is
-  the exact match of `GET $API/artists?name=<name>&size=100`, else `POST $API/artists` with `{"name": …}`. At a `PARTY`,
-  every new act is `DJ`. At any other type, a new act is `HEADLINER` in first position and `SUPPORT` after it. `billingOrder` is the position and
+  the exact match of `GET $API/artists?name=<name>&size=100`, else `POST $API/artists` with `{"name": …}`. An RA tag is handled as in `I…` `CREATE`.
+  At a `PARTY`, every new act is `DJ`. At any other type, a new act is `HEADLINER` in first position and `SUPPORT` after it. `billingOrder` is the position and
   `stage` is null. The type is the one the GET returns, so apply a named `eventType` suggestion of the same event first. Then PUT and accept as above.
 - **`S…` `DISMISS`**: `POST $API/data-quality/suggestions/<id>/dismiss`.
 - **`I…` `APPROVE #`**: `POST $API/instagram-drafts/<draft id>/approve` with `{"eventId": <id>}`.
 - **`I…` `CREATE`**: for each act, search `GET $API/artists?name=<name>&size=100` and take the exact match, else `POST $API/artists` with `{"name": …}`.
+  **A name that ends in an RA tag** (`\s\((?:[A-Z]{2}|\d+)\)$`) is searched under the bare name too. RA adds the tag to keep its own artists apart,
+  so the tag is not part of the act's name. With no row under the bare name, create the bare name: `Two Dots (FR)` becomes `Two Dots`. With a row under
+  the bare name, compare the billing: genre, venues, co-billed acts, and the RA page when the operator opens it. The same act bills that row. Another
+  act keeps the tag, because the tag keeps the two apart: `Amo (IT)` stays beside `Amo`. Step 4 shows the choice before the operator names the number.
   Read the night's events again, paged. Then `POST $API/events` with `sourceId` `manual:<venue-slug>:<date>-<title-slug>`, the `permalink` as
   `sourceUrl`, and the acts as `artists` (`DJ` at a party, `HEADLINER` at a concert or a comedy night, `LIVE` for a live set at a party). Approve the
   draft with the new event's `id`.
