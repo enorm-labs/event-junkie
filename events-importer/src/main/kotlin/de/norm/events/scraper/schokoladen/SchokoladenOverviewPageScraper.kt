@@ -3,6 +3,7 @@ package de.norm.events.scraper.schokoladen
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -138,7 +139,7 @@ class SchokoladenOverviewPageScraper {
      * more than one comma-separated part loses its last, or its first when that is the country or
      * city code ("(Bln, punk)"), and a code or a spelled-out place is dropped wherever it stands.
      * A last part made only of known genres stays ("(Rocksteady, Reggae & Jamaican Jazz)").
-     * A one-part annotation is a genre unless it is a code ("(SWE)"). A DJ's note that names no
+     * A one-part annotation is a genre unless it is a code ("(SWE)") or names none ([genresFromAnnotation]). A DJ's note that names no
      * known genre credits the DJ's label or crew instead: "+ DJ Pivnoy Cowboy (Crunch Tapes / LVFT)".
      */
     private fun parseGenre(title: String): String? =
@@ -403,12 +404,16 @@ class SchokoladenOverviewPageScraper {
     }
 }
 
-/** The genres one "(genre, origin)" annotation names, with the origin left out — see [SchokoladenOverviewPageScraper.parseGenre]. */
+/**
+ * The genres one "(genre, origin)" annotation names, with the origin left out — see [SchokoladenOverviewPageScraper.parseGenre].
+ * A one-part annotation stays only when the normalizer reads a genre in it and it is no sold-out note: `CAVA (Record Release
+ * Day 1)` and `(ausverkauft)` are not genres (events 4482, 10888), while the coined `(ghost-pop)` is.
+ */
 private fun genresFromAnnotation(annotation: String): List<String> {
     val parts = annotation.split(',').map { it.trim() }.filter { it.isNotBlank() }
     val genres =
         when {
-            parts.size < 2 -> parts
+            parts.size < 2 -> parts.filter { normalizeGenre(it).isNotEmpty() && !hasSoldOutMarker("($it)") }
             isOrigin(parts.last()) -> parts.dropLast(1)
             isOrigin(parts.first()) -> parts.drop(1)
             namesOnlyGenres(parts.last()) -> parts

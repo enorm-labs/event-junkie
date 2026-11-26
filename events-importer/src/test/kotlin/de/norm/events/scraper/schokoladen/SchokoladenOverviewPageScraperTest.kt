@@ -3,6 +3,7 @@ package de.norm.events.scraper.schokoladen
 import de.norm.events.event.ArtistRole
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -228,6 +229,34 @@ class SchokoladenOverviewPageScraperTest {
             // Event 14564 stored both towns as genres.
             genreOf("Dosenstolz (Punk/Dresden) + Eddie (Punk/Neuruppin)") shouldBe "Punk"
             genreOf("DORFTERROR (Punkrock/Oberbillig) + special guest") shouldBe "Punkrock"
+        }
+
+        @Test
+        fun `stores no genre from a one-part annotation that names none`() {
+            fun eventOf(title: String): ScrapedEvent =
+                scraper
+                    .scrape(
+                        Jsoup.parse(
+                            """
+                            <div class="event"><h6 class="category">Musik</h6><h2 class="fw-bold">$title</h2>
+                              <div class="event-info" id="e20261127" data-event-date="2026-11-27"></div></div>
+                            """.trimIndent(),
+                            baseUrl
+                        ),
+                        baseUrl
+                    ).single()
+
+            // Events 4482 and 4483: a release note, not a genre (#5563).
+            eventOf("CAVA (Record Release Day 1) &amp; APOLLO").genre.shouldBeNull()
+            eventOf("CAVA (Record Release Day 2) &amp; Catch As Catch Can").genre.shouldBeNull()
+            // Event 10888: the status word is no genre, and the night stays sold out.
+            val soldOut = eventOf("Live: The TCHIK, SCHIMPFEN und eine ganze geheime Geheimband (ausverkauft)")
+            soldOut.genre.shouldBeNull()
+            soldOut.soldOut shouldBe true
+            eventOf("X (sold out)").genre.shouldBeNull()
+            // A one-part genre stays, a coined one too.
+            eventOf("Boris Bond (surf) &amp; Thee B.T's (trash/beat/garage)").genre shouldBe "surf, trash/beat/garage"
+            eventOf("The Black Elephant Band (AntiFolk) + Gutter Romance (Akustikpunk)").genre shouldBe "AntiFolk, Akustikpunk"
         }
 
         @Test
