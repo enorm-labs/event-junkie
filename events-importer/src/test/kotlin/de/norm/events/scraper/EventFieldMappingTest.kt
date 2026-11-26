@@ -115,6 +115,38 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `stripTitleStatusMarker strips a leading wird verschoben before it can be read as a tail`() {
+        // Uber Arena's event 2962 was stored as `Wird` (#5549).
+        stripTitleStatusMarker("Wird verschoben: Konstantinos Argiros") shouldBe "Konstantinos Argiros"
+        stripTitleStatusMarker("WIRD VERSCHOBEN - Konstantinos Argiros") shouldBe "Konstantinos Argiros"
+        stripTitleStatusMarker("(Wird verschoben!) Konstantinos Argiros") shouldBe "Konstantinos Argiros"
+        parseTitleStatus("Wird verschoben: Konstantinos Argiros") shouldBe "POSTPONED"
+        // The tail forms stay the tail's.
+        stripTitleStatusMarker("Konstantinos Argiros - verschoben") shouldBe "Konstantinos Argiros"
+        stripTitleStatusMarker("Konstantinos Argiros wird verschoben") shouldBe "Konstantinos Argiros"
+        stripTitleStatusMarker("Konstantinos Argiros (verschoben auf 2027)") shouldBe "Konstantinos Argiros"
+        // A leading notice and a trailing one both go, and a marker the tail uncovers too.
+        stripTitleStatusMarker("Abgesagt: Konstantinos Argiros wird verschoben") shouldBe "Konstantinos Argiros"
+        stripTitleStatusMarker("Konstantinos Argiros - abgesagt Nachholtermin vom 28.04.26") shouldBe "Konstantinos Argiros"
+        // A long title keeps every word but the notice.
+        stripTitleStatusMarker("Wird verschoben: Konstantinos Argiros & The Very Long Orchestra Name Of The Greek Night Live In Berlin 2026") shouldBe
+            "Konstantinos Argiros & The Very Long Orchestra Name Of The Greek Night Live In Berlin 2026"
+    }
+
+    @Test
+    fun `a leading wird verschoben is read as the status before the stored title loses it`() {
+        val row =
+            ScrapedEvent(
+                title = "Wird verschoben: Konstantinos Argiros",
+                eventDate = LocalDate.of(2026, 11, 25),
+                sourceUrl = "https://example.de/event",
+                sourceId = "probe:1"
+            ).toEventEntity(venueId = 1L, venueSlug = "probe", eventSourceId = 1L)
+        row.title shouldBe "Konstantinos Argiros"
+        row.status shouldBe EventStatus.POSTPONED.name
+    }
+
+    @Test
     fun `a leading verschoben is read as the status before the stored title loses it`() {
         val row =
             ScrapedEvent(

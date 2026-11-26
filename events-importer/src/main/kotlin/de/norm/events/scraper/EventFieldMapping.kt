@@ -72,19 +72,19 @@ fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?
 
 /**
  * A status marker glued to the front or end of a title (`Olga Myko - Abgesagt`, `(cancelled) The
- * Act`, `The Act [ABGESAGT!]`, `MOLIY - *Abgesagt*`, `POSTPONED: Nina`, `Wird verlegt: Deep Purple`, `VENUE ÄNDERUNG: Jazeek`)
+ * Act`, `The Act [ABGESAGT!]`, `MOLIY - *Abgesagt*`, `POSTPONED: Nina`, `Wird verlegt: Deep Purple`, `Wird verschoben: X`, `VENUE ÄNDERUNG: Jazeek`)
  * with its separator and its brackets, stars or dashes, one or a run (#2985, Zig-Zag's
  * `----ABGESAGT----- Jeff Lorber Fusion`, #4219). Whole
  * words only: "Abgesagte Lesung" is a title, not a marker. A leading "verschoben" counts only
  * with a separator after it (Uber Eats Music Hall's `VERSCHOBEN: Omah Lay`, #4762), because the
- * word also opens a sentence. A leading `Neuer Termin:` goes the same way (event 13899): the row is the
+ * word also opens a sentence, and so does a leading "wird verschoben". A leading `Neuer Termin:` goes the same way (event 13899): the row is the
  * new date, so it marks no status. A "verschoben"/"verlegt" tail is [TITLE_STATUS_TAIL]'s, and a
  * sentence that is the notice (Wild at Heart) stays the title.
  */
 private val TITLE_STATUS_MARKER =
     Regex(
         """^\s*[(\[*-]*\s*(?:abgesagt|absage|cancell?ed|postponed|wird\s+verlegt|venue\s?(?:ä|ae)nderung""" +
-            """|verschoben(?=!?\s*[)\]*:|–—-])|neuer\s+termin(?=!?\s*[)\]*:|–—-]))\b!?\s*[)\]*-]*\s*[-–—:|]*\s*""" +
+            """|(?:wird\s+)?verschoben(?=!?\s*[)\]*:|–—-])|neuer\s+termin(?=!?\s*[)\]*:|–—-]))\b!?\s*[)\]*-]*\s*[-–—:|]*\s*""" +
             """|\s*[-–—:|]*\s*[(\[*-]*\s*\b(?:abgesagt|absage|cancell?ed|postponed|venue\s?(?:ä|ae)nderung)!?\s*[)\]*-]*\s*$""",
         RegexOption.IGNORE_CASE
     )
@@ -93,11 +93,13 @@ private val TITLE_STATUS_MARKER =
  * Strips a [TITLE_STATUS_TAIL] and a leading or trailing [TITLE_STATUS_MARKER]; unchanged when
  * none or when stripping would leave nothing. It runs where the status has been read from the
  * same title, in [ScrapedEvent.toEventEntity], so no scraper can clean the status away first
- * (#2008).
+ * (#2008). The marker goes first, or the tail reads Uber Arena's `Wird verschoben: Konstantinos
+ * Argiros` as `Wird` plus a note (#5549), and again after, for a marker the tail uncovers.
  */
 fun stripTitleStatusMarker(title: String): String {
     val stripped =
         title
+            .replace(TITLE_STATUS_MARKER, "")
             .replace(TITLE_STATUS_TAIL, "")
             .replace(TITLE_STATUS_MARKER, "")
             .replace(TITLE_NOISE_PATTERN, "")

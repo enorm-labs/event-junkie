@@ -160,6 +160,30 @@ class AegOverviewPageScraperTest {
         event.artists.map { it.name } shouldBe listOf("Jazeek")
     }
 
+    // Event 2962 was stored as `Wird`, and `WIRD` was billed as its act (#5549).
+    @Test
+    fun `reads a Wird verschoben prefix as a postponement and keeps it out of the title and the lineup`() {
+        val row =
+            """
+            <html><body>
+              <div class="active-date entry clearfix" data-category="3" data-categoryname="konzert" data-date="2026-11">
+                <div class="info"><div class="details">
+                  <div class="date"><span class="m-date__singleDate"><span class="m-date__day">25.</span><span
+                      class="m-date__month">11.</span><span class="m-date__year">2026, </span><span
+                      class="m-date__hour"> 20:00 Uhr</span></span></div>
+                  <h3 class="event-title"><a
+                      href="https://www.uber-arena.de/events/detail/konstantinos-argiros/2026-11-25-2000">Wird verschoben: Konstantinos Argiros</a></h3>
+                </div></div>
+              </div>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(row, arenaUrl), arenaUrl, EventSource.UBER_ARENA).single()
+
+        event.status shouldBe EventStatus.POSTPONED.name
+        event.title shouldBe "Konstantinos Argiros"
+        event.artists.map { it.name } shouldBe listOf("Konstantinos Argiros")
+    }
+
     @Test
     fun `resolves the destination the event's own page names`() {
         // The relocation parsing already worked; a SCHEDULED status threw the answer away (#1771).
