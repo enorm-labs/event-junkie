@@ -268,6 +268,52 @@ class SodaDetailPageScraperTest {
     }
 
     @Test
+    fun `ends a dashed line-up with no rule at the first info line`() {
+        // Event 15534: the info lines below the DJs became the artists 14176 to 14180.
+        val night =
+            parse(
+                "soda-detail-x-mas-special-25.html",
+                "https://www.soda-berlin.de/events/x-mas-special-25-12-2026-25-12-2026"
+            ).shouldNotBeNull()
+
+        night.artists.map { Triple(it.name, it.role, it.stage) } shouldBe
+            listOf(
+                Triple("DJ MiWe", ArtistRole.DJ, "Urban Dance"),
+                Triple("DJ R’n’P", ArtistRole.DJ, "Urban Dance"),
+                Triple("DJ VinzMarine", ArtistRole.DJ, "R’n’B & Hip-Hop"),
+                Triple("DJ Junior", ArtistRole.DJ, "R’n’B & Hip-Hop"),
+                Triple("Kai Breest", ArtistRole.DJ, "Crossover"),
+                Triple("DJ Davido", ArtistRole.DJ, "Crossover"),
+                Triple("DJ Guess", ArtistRole.DJ, "90er – 2010er"),
+                Triple("DJ Track", ArtistRole.DJ, "90er – 2010er")
+            )
+    }
+
+    @Test
+    fun `ends a line-up with blank lines between the floors and no rule at the first info line`() {
+        // Event 15535.
+        val night =
+            parse(
+                "soda-detail-x-mas-special-26.html",
+                "https://www.soda-berlin.de/events/x-mas-special-26-12-2026-26-12-2026"
+            ).shouldNotBeNull()
+
+        night.artists.map { it.name to it.stage } shouldBe
+            listOf(
+                "Kai Breest" to "Urban Dance",
+                "DJ R’n’P" to "Urban Dance",
+                "MixMasta Pumi" to "R’n’B & Hip-Hop",
+                "DJ Amuze" to "R’n’B & Hip-Hop",
+                "DJ Miss IRiE" to "Crossover",
+                "DJ Guess" to "Crossover",
+                "DJ Chris B" to "90er – 2010er",
+                "DJ Little a" to "90er – 2010er",
+                "Paul Debonaire" to "Techno & Electro",
+                "DJ DefJam" to "Techno & Electro"
+            )
+    }
+
+    @Test
     fun `puts each DJ on the room heading above, and bills a live band as the headliner`() {
         // Event 2558, Silvester.
         val night =
