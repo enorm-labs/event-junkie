@@ -3,6 +3,7 @@ package de.norm.events.scraper.urania
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 
 /** Unit tests for the field mapping in `UraniaEventFields.kt`. */
@@ -127,6 +128,45 @@ class UraniaEventFieldsTest {
         speakersOf("Yoshua Yaffa bei Rabea Weihser - in englischer Sprache") shouldBe listOf("Yoshua Yaffa", "Rabea Weihser")
         speakersOf("Yoshua Yaffa - Gespräch bei Kerzenlicht") shouldBe listOf("Yoshua Yaffa")
         speakersOf("Christoph Koch et al. bei Rabea Weihser") shouldBe listOf("Christoph Koch", "Rabea Weihser")
+    }
+
+    // Event 2026-12-15-urania-aufstehen-fur-eine-bessere-zukunft-wie-gelingt-die-bildungswende billed the forum's credit (#5555).
+    @Test
+    fun `bills nobody from a forum's credit and keeps the rest of the line`() {
+        speakersOf("rbb24-Inforadio-Forum mit Erika Muster").shouldBeEmpty()
+        speakersOf("Ada Beispiel, rbb24-Inforadio-Forum mit Erika Muster") shouldBe listOf("Ada Beispiel")
+        speakersOf("Lea Forum und Max Muster") shouldBe listOf("Lea Forum", "Max Muster")
+    }
+
+    // Event 13094 billed its moderator beside the speaker: "<speaker>, <moderator> et al." with "Moderation: <moderator>" in the prose.
+    @Test
+    fun `bills no one the prose credits as the moderator and keeps the speakers on the same line`() {
+        uraniaSpeakers("Ada Beispiel, Erika Muster et al.", EventType.READING.name, listOf("Erika Muster")).map { it.name } shouldBe
+            listOf("Ada Beispiel")
+        uraniaSpeakers("Ada Beispiel und Erika Muster", EventType.READING.name, listOf("Erika Muster, rbb24 Inforadio")).map { it.name } shouldBe
+            listOf("Ada Beispiel")
+        uraniaSpeakers("Erika Muster und Erika Musterfrau", EventType.READING.name, listOf("Erika Musterfrau")).map { it.name } shouldBe
+            listOf("Erika Muster")
+    }
+
+    @Test
+    fun `reads the moderation credit from a block, a line and a bare label`() {
+        val textBox =
+            Jsoup
+                .parseBodyFragment(
+                    """
+                    <div class="c-text-box">
+                    <p>Ada Beispiel ist Regisseurin und Moderatorin.</p>
+                    <p>Moderation:<br /><strong>Erika Muster</strong></p>
+                    <p><strong>Max Muster</strong>, Autor<br />Moderation: <strong>Lea Beispiel</strong>, rbb24 Inforadio</p>
+                    <p>Moderation:</p>
+                    <p><strong>Tom Beispiel</strong></p>
+                    </div>
+                    """.trimIndent()
+                ).selectFirst(".c-text-box")
+
+        uraniaModerators(textBox) shouldBe listOf("Erika Muster", "Lea Beispiel, rbb24 Inforadio", "Tom Beispiel")
+        uraniaModerators(null).shouldBeEmpty()
     }
 
     @Test

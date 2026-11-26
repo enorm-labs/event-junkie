@@ -24,6 +24,9 @@ import java.time.LocalTime
  * Mitglieder: 3 €"`, or `"Eintritt frei"`). A school-class event states it at the head of the
  * prose instead, as `"Kostenfreie Tickets: anmeldung@…"`.
  *
+ * The prose credits the moderator under a `Moderation:` label, and the billing line can name them beside the speakers. The
+ * moderator hosts and is not billed ([uraniaModerators]).
+ *
  * The poster is **lazy-loaded**, so its URL is in `data-src` and never `src`. The page opens
  * with an `h2` intro summarising the evening, not repeated in the body, so it is kept at the
  * head of the description rather than dropped.
@@ -54,7 +57,8 @@ class UraniaEventPageScraper {
         val billing = document.textAt("p.c-event-article_content_artist")
         // A school-class screening has no format label and names its audience in the billing line instead.
         val format = document.textAt("h6.c-event-article_content_format") ?: billing?.takeIf { isSchoolClassAudience(it) }
-        val body = document.textAt(".c-text-box")
+        val textBox = document.selectFirst(".c-text-box")
+        val body = textBox?.text()?.takeIf { it.isNotBlank() }
         val admissionLine = admissionLineOf(body)
         val price = uraniaPrice(admissionLine)
         val eventType = uraniaEventType(format, title)
@@ -75,7 +79,7 @@ class UraniaEventPageScraper {
             priceNote = admissionLine,
             free = detectFree(pricePresale = price, priceNote = admissionLine, title = title),
             soldOut = cleanedTitle.soldOut,
-            artists = uraniaSpeakers(billing, eventType)
+            artists = uraniaSpeakers(billing, eventType, uraniaModerators(textBox))
         )
     }
 
