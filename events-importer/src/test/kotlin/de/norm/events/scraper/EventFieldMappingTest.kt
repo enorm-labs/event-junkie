@@ -520,6 +520,16 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `parseRelocation ends a name at a date phrase and keeps a house that holds am (#5561)`() {
+        parseRelocation("Verschoben und verlegt ins Hole44 auf den 17.03.2027") shouldBe Relocation(from = null, to = "Hole44")
+        parseRelocation("verlegt ins Hole 44 auf 17.03.27") shouldBe Relocation(from = null, to = "Hole 44")
+        parseRelocation("verlegt ins Hole44 am 17. März") shouldBe Relocation(from = null, to = "Hole44")
+        parseRelocation("verlegt vom Lido zum 17.03.2027 ins Hole44") shouldBe Relocation(from = "Lido", to = "Hole44")
+        parseRelocation("verlegt ins Haus am See") shouldBe Relocation(from = null, to = "Haus am See")
+        parseRelocation("verlegt ins Haus am See am 17.03.2027") shouldBe Relocation(from = null, to = "Haus am See")
+    }
+
+    @Test
     fun `resolveDatedRelocation postpones a nameless move with a new date, and nothing else`() {
         resolveDatedRelocation("RELOCATED", null, listOf("verlegt auf 17.08.27")) shouldBe "POSTPONED"
         resolveDatedRelocation("RELOCATED", null, listOf("Verlegt / Relocated")) shouldBe "RELOCATED"

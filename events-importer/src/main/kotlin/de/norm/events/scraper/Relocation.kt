@@ -223,10 +223,12 @@ private val RELOCATION_WORD = Regex("""(?<!vor)verlegt\b|\bverlegung\b|\breloc|\
  * A venue name in a note: starts with a letter and runs to punctuation, a dash, a bracket, a
  * quote, an asterisk, a line break, the relocation word or the next preposition. The relocation
  * word needs no boundary in front, so the lazy body stops short of a glued "verlegt". A hyphen
- * between two letters is part of the name: "Max-Schmeling-Halle", not "Max" (#4332).
+ * between two letters is part of the name: "Max-Schmeling-Halle", not "Max" (#4332). A date
+ * phrase stops it too — a preposition, an optional article and a day with a dot: "ins Hole44 auf
+ * den 17.03.2027" names `Hole44` (#5561). A bare "am" does not, because "Haus am See" is one house.
  */
 private const val NAME_BODY =
-    """(\p{L}[^,.!?;:()\[\]–—/*|<>"„“\n]*?)(?=\s*(?:-(?!\p{L})|\s-|[–—,.!?;:()\[\]/*|<>"„“\n]|(?:hoch)?verlegt\b|verschoben\b|\bins\b|\bin\b|\bnach\b|\bvom\b|\bvon\b|\baus\b|\bmoved\b|$))"""
+    """(\p{L}[^,.!?;:()\[\]–—/*|<>"„“\n]*?)(?=\s*(?:-(?!\p{L})|\s-|[–—,.!?;:()\[\]/*|<>"„“\n]|(?:hoch)?verlegt\b|verschoben\b|\bins\b|\bin\b|\bnach\b|\bvom\b|\bvon\b|\baus\b|\bmoved\b|\b(?:auf|am|zum)\s+(?:de[nm]\s+)?\d{1,2}\.|$))"""
 
 /** The destination, named with a contracted or articled preposition: "ins Metropol", "in den Privatclub", "nach Kreuzberg", "to Hole 44". */
 private val RELOCATION_TO =

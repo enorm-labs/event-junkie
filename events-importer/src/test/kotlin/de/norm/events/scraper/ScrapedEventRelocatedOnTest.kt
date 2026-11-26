@@ -207,6 +207,17 @@ class ScrapedEventRelocatedOnTest {
         scrapedEvent(status = "POSTPONED", statusNote = "auf den 01.09.2026", eventDate = LocalDate.of(2026, 10, 31)).toEntity().relocatedOn.shouldBeNull()
     }
 
+    @Test
+    fun `toEventEntity stores the house without the date phrase that follows it (#5561)`() {
+        // Columbia Theater: the notice names the new house, then the new date.
+        val note = "Verschoben und verlegt ins Hole44 auf den 17.03.2027"
+        val left = scrapedEvent(title = "Dominik Hartz", status = "RELOCATED", statusNote = note, eventDate = LocalDate.of(2026, 11, 28))
+        val entity = left.toEntity("columbia-theater")
+        entity.status shouldBe "RELOCATED"
+        entity.relocatedTo shouldBe "Hole44"
+        entity.relocatedOn shouldBe LocalDate.of(2027, 3, 17)
+    }
+
     private fun scrapedEvent(
         title: String = "Berliner Weisse",
         description: String? = null,
