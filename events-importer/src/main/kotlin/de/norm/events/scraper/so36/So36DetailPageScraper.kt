@@ -225,7 +225,8 @@ class So36DetailPageScraper {
      * description ([descriptionRoster]); a show or comedy night bills the performers its subtitle
      * names after `mit` (`Qualitätspodcast mit Till Reiners und Moritz Neumeier`,
      * [performersBilledWith]). A party bills the DJs of a `Line up:` line in its description
-     * ([labelledLineup], ROLLER DISCO's `Line up: Rollers HiFi`, event 13792). Any other night
+     * ([labelledLineup], ROLLER DISCO's `Line up: Rollers HiFi`, event 13792), else the acts of its
+     * `LIVE ON STAGE:` and `BEHIND THE DECKS:` labels ([stageAndDecksActs]). Any other night
      * (readings, talks) carries no roster.
      *
      * The venue names a night and its acts as `"<night> mit <acts>"` ("SADTEMBER mit TAHA, JOHNBOY
@@ -247,7 +248,10 @@ class So36DetailPageScraper {
     ): List<ScrapedArtist> {
         if (eventType == EventType.COMEDY.name && SOLO_PROGRAMME.matches(subtitle?.trim().orEmpty())) return headlinersFromTitle(title)
         if (eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) return performersBilledWith(subtitle)
-        if (eventType == EventType.PARTY.name) return labelledLineup(document.descriptionLines()).map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+        if (eventType == EventType.PARTY.name) {
+            val lines = document.descriptionLines()
+            return labelledLineup(lines).map { ScrapedArtist(name = it, role = ArtistRole.DJ) }.ifEmpty { stageAndDecksActs(lines) }
+        }
         if (eventType != EventType.CONCERT.name) return emptyList()
 
         val supportActs =

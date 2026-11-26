@@ -79,7 +79,7 @@ class KuehlspotOverviewPageScraper {
         }
         val ownStart = labelledClock(dateLine, START_LABELS) ?: parseTime(BARE_CLOCK.find(dateLine)?.groupValues?.get(1))
         val lines = block.ownSelect(".elementor-widget-text-editor p").flatMap(::lines)
-        val musicians = lines.mapNotNull(::musician) + lines.flatMap(::featured)
+        val musicians = lines.mapNotNull(::billedPlayer) + lines.flatMap(::featured)
         val promoter = lines.firstNotNullOfOrNull { PROMOTER.find(it)?.groupValues?.get(1) }
         val description =
             lines
@@ -122,14 +122,16 @@ class KuehlspotOverviewPageScraper {
             .orEmpty()
 
     /** The name of a `Name – instrument` line, or null when the line is prose or a set heading. */
-    private fun musician(line: String): String? {
-        val name =
-            MUSICIAN
-                .matchEntire(line)
-                ?.groupValues
-                ?.get(1)
-                ?.trim() ?: return null
-        return name.takeIf { ':' !in it && it.none(Char::isDigit) && it.split(' ').size <= MAX_NAME_WORDS }
+    private fun musician(line: String): String? = plausibleName((MUSICIAN.matchEntire(line) ?: MUSICIAN_CAPITALISED.matchEntire(line))?.groupValues?.get(1))
+
+    private fun billedPlayer(line: String): String? = musician(line) ?: setPlayer(line)
+
+    /** The player of a `Set 1: Name – Piano Solo: …` line, which stays in the description because it names the set's piece. */
+    private fun setPlayer(line: String): String? = plausibleName(SET_PLAYER.matchEntire(line)?.groupValues?.get(1))
+
+    private fun plausibleName(raw: String?): String? {
+        val name = raw?.replace(HOME_TOWN, "")?.trim() ?: return null
+        return name.takeIf { it.isNotEmpty() && ':' !in it && it.none(Char::isDigit) && it.split(' ').size <= MAX_NAME_WORDS }
     }
 
     /** The lines of a paragraph, which the editor breaks with `<br>`. */
@@ -171,6 +173,15 @@ class KuehlspotOverviewPageScraper {
         /** `Ingebrigt Håker Flaten – double bass`, `Nicola Hein -guitar`; the dash inside `Hui-Chun` has no space beside it. */
         val MUSICIAN = Regex("""^(.+?)(?:\s[–-]|[–-]\s)\s*\p{Ll}.*$""")
         const val MAX_NAME_WORDS = 5
+
+        /** `Daniel Kartmann (Stuttgart) – Hackbrett, Schlagzeug, Zink` (event 15520): German instruments are capitalised nouns. */
+        val MUSICIAN_CAPITALISED = Regex("""^(.+?)\s[–-]\s\p{Lu}\p{Ll}+(?:,\s*\p{Lu}\p{Ll}+)*$""")
+
+        /** `(Stuttgart)` after a musician's name: the home town, not part of the name. */
+        val HOME_TOWN = Regex("""\s*\([^()]*\)$""")
+
+        /** `Set 1: Isabel Anders – Piano Solo: „24 Improvised Préludes“` (event 15521). */
+        val SET_PLAYER = Regex("""^Set\s+\d+:\s*(.+?)\s[–-]\s\S.*$""")
 
         /**
          * `Eigenveranstaltung vom Jazzkeller 69 e.V.`, `Event organized by Jazzkeller 69 e.V.` or `Event organized and produced by Rachel D Clarke`:

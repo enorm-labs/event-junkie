@@ -67,7 +67,8 @@ class SchokoladenOverviewPageScraperTest {
             concert.promoters shouldContainExactly listOf("lose temper")
             concert.soldOut shouldBe false
             // The "(genre, origin)" annotations name the genres; "bln" is an origin, not a genre (#1495).
-            concert.genre shouldBe "punk, scumpunk"
+            // The aftershow DJs' note in the subtitle adds its known genres; "punk" is not repeated.
+            concert.genre shouldBe "punk, scumpunk, post-punk, new-wave, disco"
         }
 
         @Test
@@ -233,6 +234,44 @@ class SchokoladenOverviewPageScraperTest {
         @Test
         fun `reads every genre of an annotation that names no place`() {
             normalizeGenre("Rocksteady, Reggae & Jamaican Jazz") shouldContainAll listOf("Rocksteady", "Reggae")
+        }
+
+        // Events 15460 and 15461: the aftershow DJ's note names the night's genres too. A word the vocabulary does not know
+        // (`Psycho Keller`, `glam-punk`, `gay`, `vinyl`) is dropped.
+        @Test
+        fun `adds the known genres of the aftershow DJ's note in the subtitle`() {
+            fun genreOf(
+                title: String,
+                subtitle: String
+            ): String? =
+                scraper
+                    .scrape(
+                        Jsoup.parse(
+                            """
+                            <div class="event"><h6 class="category">Musik</h6><h2 class="fw-bold">$title</h2>
+                              <h6 class="subtitle">$subtitle</h6>
+                              <div class="event-info" id="e20261226" data-event-date="2026-12-26"></div></div>
+                            """.trimIndent(),
+                            baseUrl
+                        ),
+                        baseUrl
+                    ).single()
+                    .genre
+
+            assertSoftly {
+                genreOf(
+                    "Weihnachtstrinken II mit: Menstruationsmassaker (feminist punk, x-berg) + tba",
+                    "&amp; after 22h: DJ Sol Tight (Psycho Keller) (glam-punk, soul, indie-rock, disco)"
+                ) shouldBe "feminist punk, soul, indie-rock, disco"
+                genreOf(
+                    "SHEENA IS - Open Stage Punk Drag Night - hosted by Bleach",
+                    "&amp; after 22h: DJ Anita Drink (gay / glam / punk / disco / wave / house ... vinyl)"
+                ) shouldBe "punk, disco, wave, house"
+                // A note that names no genre adds nothing.
+                genreOf("Live: The TCHIK", "&amp; after 22h: DJs Mark Fotze x Herpes Kerkeling (Nur Hits - von ikkimel zu Vicky Leandros)").shouldBeNull()
+                // A subtitle without the lead-in is not read.
+                genreOf("in between days special w/ DJs future sailor &amp; monophonic", "indie / postpunk / new wave / soul ...").shouldBeNull()
+            }
         }
 
         @Test

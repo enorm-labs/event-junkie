@@ -84,7 +84,9 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         // A rap duo Hole 44 bills as its whole title, on tour as one act (event 14164).
         "caramella & ydra",
         // A Finnish soul duo Huxleys bills as the support (event 15409).
-        "pratt & moody"
+        "pratt & moody",
+        // A folk and chanson duo ART Stalker bills as its whole title with a padded `+` (event 15507).
+        "diotima + david"
     )
 
 /**

@@ -749,6 +749,7 @@ minimal_bar:2027-12-11 |  | D A Z A | DJ
 # artstalker/artstalker-venue-1.html
 art_stalker:2544096 |  | Die Gabys | HEADLINER
 art_stalker:2545088 |  | Lord Zeppelin | HEADLINER
+art_stalker:2627544 |  | Deine Dose | HEADLINER
 art_stalker:2536389 |  | DJ Louie Prima | DJ
 
 # artstalker/artstalker-venue-2.html
@@ -758,6 +759,7 @@ art_stalker:2567674 |  | The Boys of Summer | HEADLINER
 art_stalker:2622720 |  | Big Tom and the Bogsnorklers | HEADLINER
 
 # artstalker/artstalker-venue-6.html
+art_stalker:2645091 |  | Beat Pilots | HEADLINER
 
 # konradtoenz/konradtoenz-overview.html
 konrad_toenz:2026-10-16 |  | DJ Turbo Pascal | DJ

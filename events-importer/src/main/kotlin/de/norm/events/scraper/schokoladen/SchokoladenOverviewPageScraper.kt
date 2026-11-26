@@ -107,7 +107,7 @@ class SchokoladenOverviewPageScraper {
             sourceId = "${EventSource.SCHOKOLADEN.sourceIdPrefix}$eventId",
             // The page keeps the shop button on a sold-out show; its own words are "Tickets on the Doors".
             ticketUrl = block.hrefAt("a.ticket-btn").takeUnless { soldOut },
-            genre = parseGenre(title),
+            genre = parseGenre(title, subtitle),
             priceNote = ticketNotice,
             soldOut = soldOut,
             artists = parseArtists(title, subtitle, eventType),
@@ -140,13 +140,18 @@ class SchokoladenOverviewPageScraper {
      * A last part made only of known genres stays ("(Rocksteady, Reggae & Jamaican Jazz)").
      * A one-part annotation is a genre unless it is a code ("(SWE)"). A DJ's note that names no
      * known genre credits the DJ's label or crew instead: "+ DJ Pivnoy Cowboy (Crunch Tapes / LVFT)".
+     * The aftershow DJ's note in the subtitle adds its genres ([aftershowGenres]).
      */
-    private fun parseGenre(title: String): String? =
+    private fun parseGenre(
+        title: String,
+        subtitle: String?
+    ): String? =
         GENRE_PARENTHETICAL
             .findAll(title)
             .filterNot { LEADING_BRACKETED_ACT.containsMatchIn(stripTitleStatusMarker(title)) }
             .filterNot { isDjCreditNote(title, it) }
             .flatMap { genresFromAnnotation(it.groupValues[1]) }
+            .plus(aftershowGenres(subtitle))
             .distinct()
             .joinToString(", ")
             .takeIf { it.isNotBlank() }
@@ -514,6 +519,32 @@ private fun aftershowDjs(subtitle: String?): List<ScrapedArtist> {
         .distinct()
         .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 }
+
+/**
+ * The genres of the aftershow DJ's notes, `& after 22h: DJ Sol Tight (Psycho Keller) (glam-punk, soul, indie-rock, disco)`
+ * (event 15460). A DJ's note also names a crew or a promise (`Nur Hits - von ikkimel zu Vicky Leandros`), so only
+ * [knownGenreLabels] stay.
+ */
+private fun aftershowGenres(subtitle: String?): List<String> {
+    val lineup = AFTERSHOW_LEAD_IN.find(subtitle.orEmpty())?.groupValues?.get(1) ?: return emptyList()
+    return DJ_NOTE
+        .findAll(lineup)
+        .flatMap { note ->
+            knownGenreLabels(
+                note.value
+                    .trim()
+                    .removePrefix("(")
+                    .removeSuffix(")")
+                    .split(NOTE_GENRE_SEPARATOR)
+            )
+        }.toList()
+}
+
+/** The pieces that name a genre the vocabulary knows ([isGenreLabel]), trimmed; any other piece is dropped. */
+private fun knownGenreLabels(pieces: List<String>): List<String> = pieces.map { it.trim() }.filter { it.isNotEmpty() && isGenreLabel(it) }
+
+/** What parts the genres of a DJ's note: `,`, `/`, `&` or an ellipsis, `(gay / glam / punk / … / house ... vinyl)` (event 15461). */
+private val NOTE_GENRE_SEPARATOR = Regex("""\s*(?:[,/&]|\.{2,}|…)\s*""")
 
 /** The aftershow lead-in, capturing the lineup after it: `& after 22h:`, or a `+` straight before a `DJ` or `Gast DJ` label. */
 private val AFTERSHOW_LEAD_IN =

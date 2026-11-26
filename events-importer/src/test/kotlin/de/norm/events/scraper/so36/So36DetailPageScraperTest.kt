@@ -337,6 +337,22 @@ class So36DetailPageScraperTest {
         event.promoters shouldHaveSize 0
     }
 
+    // HOT & SEXY AFTER THIRTY on 2026-11-26 (event 15452): emoji labels instead of a `Line up:` line, the DJs on the next line.
+    @Test
+    fun `bills a party's live act and the DJs behind the decks`() {
+        val url = "https://www.so36.com/produkte/103951-tickets-hot-sexy-after-thirty-so36-berlin-am-09-01-2027"
+        val event = scraper.scrape(fixtureDocument("so36/so36-detail-stage-and-decks.html", url), url).shouldNotBeNull()
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists.map { it.name to it.role } shouldBe
+            listOf(
+                "DIE GABYS" to ArtistRole.HEADLINER,
+                "Anat" to ArtistRole.DJ,
+                "Vanessa" to ArtistRole.DJ,
+                "Rike Rainbow" to ArtistRole.DJ
+            )
+    }
+
     // ROLLER DISCO on 2026-11-12 (event 13792): "+++++ English version see below +++++", then a `+++` rule before the English half.
     @Test
     fun `cuts a pointed bilingual page at its rule and bills the party's Line up line`() {

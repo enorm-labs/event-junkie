@@ -144,6 +144,28 @@ class ClaerchensBallhausCalendarScraperTest {
         ClaerchensBallhausCalendarScraper().scrape(Jsoup.parse(page, BASE_URL), BASE_URL).single().eventType shouldBe EventType.CONCERT.name
     }
 
+    // Events 15485–15487 were OTHER with no ticket link, and the Dinnershow of 2027-03-25 was dropped as a dinner.
+    @Test
+    fun `types a Komödie as comedy, reads an Eventim Light link and keeps a Dinnershow`() {
+        val page =
+            """<script>var c = { eventSources: [[""" +
+                """{"title":"ABBA &#8211; Musical Kom&ouml;die","start":"2026-12-10T19:30:00","details":"<p>Ein Abend voller Hits</p>",""" +
+                """"permalink":"https://claerchensball.haus/abba-musical-komodie/","customLink":"https://www.eventim-light.com/de/a/123/e/456"},""" +
+                """{"title":"Dinnershow &#8211; Kom&ouml;die","start":"2027-03-25T19:00:00","details":"",""" +
+                """"permalink":"https://claerchensball.haus/dinnershow-komodie/"},""" +
+                """{"title":"Candlelight Dinner im Spiegelsaal","start":"2027-03-26T19:00:00","details":"",""" +
+                """"permalink":"https://claerchensball.haus/candlelight-dinner/"}""" +
+                """]] };</script>"""
+
+        val nights = ClaerchensBallhausCalendarScraper().scrape(Jsoup.parse(page, BASE_URL), BASE_URL)
+
+        nights.map { it.title } shouldContainExactly listOf("ABBA – Musical Komödie", "Dinnershow – Komödie")
+        nights.map { it.eventType }.distinct() shouldContainExactly listOf(EventType.COMEDY.name)
+        nights.none { it.typeIsFallback } shouldBe true
+        nights.flatMap { it.artists }.shouldBeEmpty()
+        nights.first().ticketUrl shouldBe "https://www.eventim-light.com/de/a/123/e/456"
+    }
+
     @Test
     fun `returns nothing for a page without the calendar`() {
         ClaerchensBallhausCalendarScraper().scrape(Jsoup.parse("<script>let x = 1;</script>", BASE_URL), BASE_URL).shouldBeEmpty()

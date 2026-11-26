@@ -847,10 +847,41 @@ class FrannzOverviewPageScraperTest {
         }
 
         @Test
-        fun `a subtitle with no DJ cue bills nobody`() {
-            listOf("Millennial Mixtape", "Red RHYTHM – Swing Dance Night", "Die Schöne Party", "„Flashbacks mit Liebe“").forEach { title ->
+        fun `a party whose subtitle and description name no DJ bills nobody`() {
+            listOf("Red RHYTHM – Swing Dance Night", "„Flashbacks mit Liebe“").forEach { title ->
                 parties.single { it.title == title }.artists.shouldBeEmpty()
             }
+        }
+
+        // Event 14661: the subtitle bills nobody, and the description lists one DJ per floor.
+        @Test
+        fun `reads a description's floor list when the subtitle bills nobody`() {
+            parties.single { it.title == "Millennial Mixtape" }.artists shouldContainExactly
+                listOf(dj("Danny D", "Mainfloor"), dj("DJ Danetic", "Loungefloor"), dj("Sony Straight", "Salon"))
+        }
+
+        @Test
+        fun `reads a DJ a description names in prose when the subtitle bills nobody`() {
+            parties.single { it.title == "Die Schöne Party" }.artists shouldContainExactly listOf(dj("Tyx"))
+        }
+
+        // Event 15449, as the page wrote it on 2026-11-26.
+        @Test
+        fun `reads the DJs a description names in prose, without the DJ label`() {
+            val lines =
+                listOf(
+                    "Eine Party auf der Leinwand, eine auf drei Floors – am 5. Dezember gibt es bei der Schönen Party erst einmal Kino.",
+                    "Währenddessen wird auf den anderen Floors bereits getanzt: DJ Sony Straight übernimmt den Mainfloor mit dem Schöne-Party-Mix, " +
+                        "DJ Lamboo reist in der Lounge durch die 90er. Nach dem Film macht DJ Jupp den Salon zur dritten Tanzfläche.",
+                    "Salon: Hier knallt's heute richtig mit 2000s TECHNO CLASSICS und mehr"
+                )
+
+            frannzDescriptionDjs(lines) shouldContainExactly listOf(dj("Sony Straight"), dj("Lamboo"), dj("Jupp"))
+        }
+
+        @Test
+        fun `a description with only DJ plurals and lower-case cues bills nobody`() {
+            frannzDescriptionDjs(listOf("Mit wöchentlich wechselnden Live Swing Bands und/oder DJ´s.", "(Dj Reaf)", "° Top Dj`s✨")).shouldBeEmpty()
         }
     }
 }
