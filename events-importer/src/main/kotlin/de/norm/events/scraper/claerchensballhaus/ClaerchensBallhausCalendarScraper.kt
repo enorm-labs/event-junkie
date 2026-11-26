@@ -107,6 +107,7 @@ class ClaerchensBallhausCalendarScraper {
             READING.containsMatchIn(words) -> EventType.READING.name
             CONCERT.containsMatchIn(words) -> EventType.CONCERT.name
             DANCE_NIGHT.containsMatchIn(words) -> EventType.PARTY.name
+            COMEDY.containsMatchIn(words) -> EventType.COMEDY.name
             else -> EventType.OTHER.name
         }
     }
@@ -119,8 +120,8 @@ private val KEY_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmm")
 private val CONCERT_SUFFIX = Regex("""\s+[–-]\s+Konzert$""")
 private val VOICE_TYPE = Regex("""\s+(?:Soprano|Sopran|Mezzosopran|Tenor|Bariton|Baritone)$""")
 
-/** No bare `Treffen`: a concert title can hold one. */
-private val OUT_OF_SCOPE = Regex("""Vortrag|Führung|Workshop|Weinmahl|Dinner|Menü|Lesetreffen""", RegexOption.IGNORE_CASE)
+/** No bare `Treffen`: a concert title can hold one. A `Dinnershow` is a show with a meal, so it stays. */
+private val OUT_OF_SCOPE = Regex("""Vortrag|Führung|Workshop|Weinmahl|Dinner(?!show)|Menü|Lesetreffen""", RegexOption.IGNORE_CASE)
 
 /** The audience is the choir: `Singt in dreistimmiger Harmonie und werdet Teil des … Konzerts`. A sing-along with acts stays. */
 private val SING_ALONG = Regex("""werdet Teil""", RegexOption.IGNORE_CASE)
@@ -129,6 +130,9 @@ private val SING_ALONG = Regex("""werdet Teil""", RegexOption.IGNORE_CASE)
 private val YES_CHOIR = Regex("""\bYes\s?Choir\b""", RegexOption.IGNORE_CASE)
 private val READING = Regex("""\bSlam\b|\bSalon\b|\bLesung\b""", RegexOption.IGNORE_CASE)
 private val CONCERT = Regex("""Konzert|Kammermusik|Soprano|Tenors|Choir""", RegexOption.IGNORE_CASE)
+
+/** `ABBA – Musical Komödie`, `Showgirls – Kriminal Komödie` (events 15485–15487). Read after the other cues, so it types only what they leave. */
+private val COMEDY = Regex("""Komödie|Comedy|Kabarett""", RegexOption.IGNORE_CASE)
 
 /** A plain `Tango` would repeat the title `Tango`, and a genre that repeats the title is not stored (#320). Its words resolve to Tango. */
 private const val TANGO_GENRE = "Tango Argentino"
@@ -140,4 +144,4 @@ private val DANCE_NIGHT = Regex("""Tanzabend|Milonga|Übungsstunde|\bParty\b""",
 private val HOUSE_SERIES = Regex("""Sonntagskonzert|Kinderkonzert|Familienkonzert|^DSO\b""", RegexOption.IGNORE_CASE)
 
 /** `customLink` is a ticket shop, or the organiser's or a course's own site, which is no ticket link. */
-private val TICKET_SHOP = Regex("""tickettailor\.|yesticket\.|eventbrite\.|rausgegangen\.|sevn\.ly|eventim\.|reservix\.|pretix\.""")
+private val TICKET_SHOP = Regex("""tickettailor\.|yesticket\.|eventbrite\.|rausgegangen\.|sevn\.ly|eventim\.|eventim-light\.|reservix\.|pretix\.""")

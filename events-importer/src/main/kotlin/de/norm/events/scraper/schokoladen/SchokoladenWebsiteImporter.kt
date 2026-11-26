@@ -49,8 +49,8 @@ val SCHOKOLADEN_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the venue prints doors, show time and a ticket link, never a figure", verified = "2026-10-13"),
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the genre comes only from a per-act `(genre, origin)` note; readings, parties and acts without one carry none",
-            verified = "2026-10-13"
+            "the genre comes only from an act's `(genre, origin)` note or the aftershow DJ's genre note; readings, parties and acts without one carry none",
+            verified = "2026-11-26"
         ),
         AcceptedLimitation(
             LimitedAspect.PER_EVENT_PAGE,

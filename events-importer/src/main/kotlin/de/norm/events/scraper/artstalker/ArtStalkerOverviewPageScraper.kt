@@ -48,7 +48,7 @@ class ArtStalkerOverviewPageScraper {
             return null
         }
         val (title, subtitle) = splitTagline(rawTitle)
-        val eventType = inferConcertVenueType(title, subtitle?.replace(NEGATED_CUE, ""), VENUE_FORMATS)
+        val eventType = inferConcertVenueType(title, subtitle?.replace(NEGATED_CUE, "")?.replace(TAGLINE_PARTY, ""), VENUE_FORMATS)
         val openStage = OPEN_STAGE.containsMatchIn(title)
         return ScrapedEvent(
             title = title,
@@ -108,6 +108,12 @@ class ArtStalkerOverviewPageScraper {
 
         /** A cue the tagline denies, which types nothing: `Keine Karaoke Maschine. Eine echte Live-Band` (#3792). */
         val NEGATED_CUE = Regex("""\bkein(?:e|en|er)?\s+[\p{L}-]+""", RegexOption.IGNORE_CASE)
+
+        /**
+         * `Party` in a tagline promises a mood, not a DJ night: `Beat Pilots - Authentic 60s sound - Ein Abend voller Nostalgie
+         * und Party` is the band's concert (events 15499, 15516). A party says so in its title.
+         */
+        val TAGLINE_PARTY = Regex("""\bparty\b""", RegexOption.IGNORE_CASE)
     }
 }
 

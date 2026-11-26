@@ -1,8 +1,10 @@
 package de.norm.events.scraper.so36
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
@@ -95,6 +97,26 @@ internal fun labelledLineup(lines: List<String>): List<String> {
     val acts = lines.firstNotNullOfOrNull { LINE_UP_LINE.matchEntire(it.replace(NBSP, ' ').trim())?.groupValues?.get(1) } ?: return emptyList()
     return splitSupportActs(acts).map { it.trim() }.filter { it.isNotBlank() && !isNonArtistName(it) }
 }
+
+/**
+ * The acts of a party's `🎸 LIVE ON STAGE: DIE GABYS` and `🎧 BEHIND THE DECKS:` labels (event 15452): the live act is
+ * the headliner and the DJs play after it. A label with nothing after its colon takes the next line.
+ */
+internal fun stageAndDecksActs(lines: List<String>): List<ScrapedArtist> {
+    val clean = lines.map { it.replace(NBSP, ' ').trim() }
+    return clean.flatMapIndexed { index, line ->
+        val label = STAGE_OR_DECKS_LABEL.matchEntire(line) ?: return@flatMapIndexed emptyList()
+        val acts = label.groupValues[2].ifBlank { clean.getOrNull(index + 1)?.takeUnless { STAGE_OR_DECKS_LABEL.matches(it) }.orEmpty() }
+        val role = if (label.groupValues[1].contains("deck", ignoreCase = true)) ArtistRole.DJ else ArtistRole.HEADLINER
+        splitSupportActs(acts)
+            .map { it.trim() }
+            .filter { it.isNotBlank() && !isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = role) }
+    }
+}
+
+/** `🎸 LIVE ON STAGE: …`, `🎧 BEHIND THE DECKS:`, behind any emoji. */
+private val STAGE_OR_DECKS_LABEL = Regex("""^[^\p{L}\p{N}]*(live\s+on\s+stage|behind\s+the\s+decks)\s*:\s*(.*)$""", RegexOption.IGNORE_CASE)
 
 /** `Line up: Rollers HiFi`, `Lineup: …`, `Line-Up: …` as a line of its own. */
 private val LINE_UP_LINE = Regex("""$LINE_UP_WORD\s*:\s*(.+)""", RegexOption.IGNORE_CASE)

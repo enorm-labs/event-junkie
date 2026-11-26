@@ -228,6 +228,54 @@ class KuehlspotOverviewPageScraperTest {
         scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl).single().description shouldBe "Further information on the dance workshop follows soon."
     }
 
+    // Event 15520: German instruments are capitalised, and a home town follows the name.
+    @Test
+    fun `a capitalised instrument line bills the musician without the home town`() {
+        val page =
+            """
+            <div id="events">
+              <div class="e-con e-child">
+                <h2 class="elementor-heading-title">Sunday, 29 November 2026</h2>
+                <h2 class="elementor-heading-title">SUNSWEPT SUNDAY "CRYSTAL BALLROOM STORIES"</h2>
+                <div class="elementor-widget-text-editor">
+                  <p>Daniel Kartmann (Stuttgart) &#8211; Hackbrett, Schlagzeug, Zink<br />Torsten Papenheim (Berlin) &#8211; Gitarre, Perkussion, Melodica</p>
+                  <p>Ein Abend mit Geschichten &#8211; Musik und Bilder</p>
+                </div>
+              </div>
+            </div>
+            """.trimIndent()
+
+        val night = scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl).single()
+
+        night.artists.map { it.name } shouldContainExactly listOf("Daniel Kartmann", "Torsten Papenheim")
+        night.description shouldBe "Ein Abend mit Geschichten – Musik und Bilder"
+    }
+
+    // Event 15521: each set names its player before the piece.
+    @Test
+    fun `a set line naming a player bills the player and stays in the description`() {
+        val page =
+            """
+            <div id="events">
+              <div class="e-con e-child">
+                <h2 class="elementor-heading-title">Friday, 4 December 2026</h2>
+                <h2 class="elementor-heading-title">IMPROVISATION AND THE REIMAGINING OF CLASSICAL TRADITIONS</h2>
+                <div class="elementor-widget-text-editor">
+                  <p>Set 1: Isabel Anders &#8211; Piano Solo: &#8222;24 IMPROVISED PRÉLUDES&#8220;<br />Inspired by the music of Alexander Scriabin</p>
+                  <p>Set 2: Julia Biłat &#8211; Cello Solo: Absolutely disgraceful, XXX</p>
+                  <p>Set 3: 20:00 &#8211; Reading</p>
+                </div>
+              </div>
+            </div>
+            """.trimIndent()
+
+        val night = scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl).single()
+
+        night.artists.map { it.name } shouldContainExactly listOf("Isabel Anders", "Julia Biłat")
+        night.description shouldContain "Set 1: Isabel Anders – Piano Solo"
+        night.description shouldContain "Set 2: Julia Biłat – Cello Solo"
+    }
+
     // #4932: the outer container holds two nights and no heading of its own.
     @Test
     fun `a wrapper holding only nested nights gives no event of its own and logs no warning`() {

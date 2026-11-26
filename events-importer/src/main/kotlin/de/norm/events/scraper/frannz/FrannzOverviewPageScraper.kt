@@ -157,7 +157,7 @@ class FrannzOverviewPageScraper(
             status = status,
             statusNote = statusNote,
             soldOut = cleanedTitle.soldOut,
-            artists = parseArtists(article, title, subtitle, eventType),
+            artists = parseArtists(article, title, subtitle, eventType, texts),
             promoters = parsePromoters(article.textAt("h4.event-otitle"))
         )
     }
@@ -165,13 +165,14 @@ class FrannzOverviewPageScraper(
     /**
      * The line-up. A party bills the DJs its subtitle names ([frannzPartyDjs], #5299), which the
      * shared reading never does. The subtitle is read line by line, because the venue puts each
-     * floor on its own line.
+     * floor on its own line. A subtitle that bills nobody leaves the DJs to the description ([frannzDescriptionDjs]).
      */
     private fun parseArtists(
         article: Element,
         title: String,
         subtitle: String?,
-        eventType: String?
+        eventType: String?,
+        descriptionLines: List<String>
     ): List<ScrapedArtist> {
         if (eventType != EventType.PARTY.name) return buildArtistsForEventType(title, subtitle, eventType)
         val lines =
@@ -180,7 +181,7 @@ class FrannzOverviewPageScraper(
                 ?.wholeText()
                 ?.lines()
                 .orEmpty()
-        return frannzPartyDjs(lines.map { stripMarkdownEmphasis(it) })
+        return frannzPartyDjs(lines.map { stripMarkdownEmphasis(it) }).ifEmpty { frannzDescriptionDjs(descriptionLines) }
     }
 
     /**

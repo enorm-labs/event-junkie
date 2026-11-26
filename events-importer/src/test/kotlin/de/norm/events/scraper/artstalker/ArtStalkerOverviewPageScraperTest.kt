@@ -136,6 +136,20 @@ class ArtStalkerOverviewPageScraperTest {
         party.artists.map { it.name to it.role } shouldBe listOf("DJ Louie Prima" to ArtistRole.DJ)
     }
 
+    @Test
+    fun `types a band's night as a concert when only its tagline says Party (events 15499, 15516)`() {
+        val night = card("Beat Pilots - Authentic 60s sound - Ein Abend voller Nostalgie und Party")
+
+        night.eventType shouldBe EventType.CONCERT.name
+        night.artists.map { it.name to it.role } shouldBe listOf("Beat Pilots" to ArtistRole.HEADLINER)
+        card("Die Early Bird Party: Der frühe Vogel tanzt den Beat - Mit DJ Louie Prima").eventType shouldBe EventType.PARTY.name
+    }
+
+    @Test
+    fun `bills a duo whose name holds a padded plus as one act (event 15507)`() {
+        cardArtists("Diotima + David - Die Welt des Folk, Chanson und Pop") shouldBe listOf("Diotima + David" to ArtistRole.HEADLINER)
+    }
+
     private fun cardArtists(title: String) = card(title).artists.map { it.name to it.role }
 
     private fun card(

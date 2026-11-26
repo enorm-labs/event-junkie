@@ -31,6 +31,31 @@ internal fun frannzPartyDjs(subtitleLines: List<String>): List<ScrapedArtist> {
         .distinctBy { it.name.lowercase() }
 }
 
+/**
+ * The DJs a Frannz party names only in its description, read when the subtitle bills nobody (event 15449). Two shapes,
+ * the first that yields a name wins:
+ *
+ * - A floor list, one floor a line: `Mainfloor: Danny D (Millennial Pop-Mix)`. The line holds only the floor and its bill,
+ *   so a floor's prose (`Salon: Hier knallt's heute richtig mit 2000s TECHNO CLASSICS`) is not read.
+ * - A `DJ <Name>` in prose, before a lower-case word: `DJ Sony Straight übernimmt den Mainfloor`. The name loses its `DJ`.
+ */
+internal fun frannzDescriptionDjs(descriptionLines: List<String>): List<ScrapedArtist> {
+    val lines = descriptionLines.map { it.trim() }.filter { it.isNotBlank() }
+    return floorDjs(lines.filter { FLOOR_LIST_LINE.matches(it) })
+        .ifEmpty { proseDjs(lines) }
+        .distinctBy { it.name.lowercase() }
+}
+
+private fun proseDjs(lines: List<String>): List<ScrapedArtist> =
+    lines.flatMap { line ->
+        PROSE_DJ
+            .findAll(line)
+            .map { it.groupValues[1] }
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+            .toList()
+    }
+
 private fun decksDjs(lines: List<String>): List<ScrapedArtist> = lines.flatMap { line -> DECKS.find(line)?.let { djsIn(it.groupValues[1]) }.orEmpty() }
 
 private fun floorDjs(lines: List<String>): List<ScrapedArtist> =
@@ -84,6 +109,12 @@ private val DECKS = Regex("""\bAn\s+den\s+Decks\s*:\s*(.+)$""", RegexOption.IGNO
  * `Mainfloor:`, `Radaufloor:`, `1st floor:`, `Salon:`, `Lounge:`. The colon is required: `auf 3 Floors!` is no label.
  */
 private val FLOOR_LABEL = Regex("""\b((?:\d+(?:st|nd|rd|th)\s+)?\p{L}*floor|Salon|Lounge)\s*:""", RegexOption.IGNORE_CASE)
+
+/** A description line that is one floor and its bill: `Loungefloor: DJ Danetic (00er R'n'B HipHop)`. */
+private val FLOOR_LIST_LINE = Regex("""^${FLOOR_LABEL.pattern}\s*[^()]{1,40}?\s*(?:\([^)]*\))?$""", RegexOption.IGNORE_CASE)
+
+/** `DJ Lamboo reist …`: one to three capitalised words after a case-sensitive `DJ`, then a lower-case word. */
+private val PROSE_DJ = Regex("""\bDJ\s+(\p{Lu}[\p{L}\p{N}.'’-]*(?:\s+\p{Lu}[\p{L}\p{N}.'’-]*){0,2})(?=\s+\p{Ll})""")
 
 /** `auf 1 Floor: mit DJ …` names no floor, so the act gets no stage. */
 private const val BARE_FLOOR = "floor"
