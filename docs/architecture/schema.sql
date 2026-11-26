@@ -735,6 +735,16 @@ CREATE TABLE events.event_quality_flag (
 );
 
 --
+-- Name: event_slug_alias; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.event_slug_alias (
+    slug text NOT NULL,
+    event_id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: event_source; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -1412,6 +1422,13 @@ ALTER TABLE ONLY events.event_quality_flag
     ADD CONSTRAINT event_quality_flag_pkey PRIMARY KEY (event_id, kind, value);
 
 --
+-- Name: event_slug_alias event_slug_alias_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_slug_alias
+    ADD CONSTRAINT event_slug_alias_pkey PRIMARY KEY (slug);
+
+--
 -- Name: event event_slug_key; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -1813,6 +1830,12 @@ CREATE INDEX idx_event_genre_tag_genre_tag_id ON events.event_genre_tag USING bt
 CREATE INDEX idx_event_promoter_promoter_id ON events.event_promoter USING btree (promoter_id);
 
 --
+-- Name: idx_event_slug_alias_event_id; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_slug_alias_event_id ON events.event_slug_alias USING btree (event_id);
+
+--
 -- Name: idx_event_source_prohibited; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -2161,6 +2184,13 @@ ALTER TABLE ONLY events.event_promoter
 
 ALTER TABLE ONLY events.event_quality_flag
     ADD CONSTRAINT event_quality_flag_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
+
+--
+-- Name: event_slug_alias event_slug_alias_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_slug_alias
+    ADD CONSTRAINT event_slug_alias_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
 
 --
 -- Name: event_source event_source_venue_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

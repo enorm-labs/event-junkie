@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ExternalLink, Ticket } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import BaseBadge from '@/components/BaseBadge.vue'
@@ -89,6 +89,20 @@ function load() {
 
 onMounted(load)
 watch(slug, load)
+
+// A retitled event's old slug answers with the event under its own slug (#5560), as an artist's
+// does (#4447). A replace, so Back skips the old URL, and the canonical and a share name one page.
+const router = useRouter()
+watch(event, (found) => {
+  if (route.name === 'event' && found?.slug && found.slug !== route.params.slug) {
+    void router.replace({
+      name: 'event',
+      params: { ...route.params, slug: found.slug },
+      query: route.query,
+      hash: route.hash,
+    })
+  }
+})
 
 const localePath = useLocalePath()
 const {

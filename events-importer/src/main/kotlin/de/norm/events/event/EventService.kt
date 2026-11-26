@@ -51,6 +51,7 @@ class EventService(
     private val eventPinService: EventPinService,
     private val contentStamp: EventContentStamp,
     private val changeLog: EventChangeLog,
+    private val slugAliases: EventSlugAliasStore,
     private val genreDerivation: GenreDerivationService,
     private val savedByHand: List<EventSavedByHand>,
     private val template: R2dbcEntityTemplate
@@ -151,6 +152,8 @@ class EventService(
 
         val saved = eventRepository.save(request.toEventEntity(request.slugAt(venue)).withEndFrom(request))
         val eventId = saved.requiredId()
+        // A live slug wins over an alias another event left behind (#5560).
+        slugAliases.keep(listOf(saved), emptyMap())
 
         val artistResponses = saveArtistAssociations(eventId, request.artists)
         val promoterIdResponses = savePromoterAssociations(eventId, request.promoterIds)
@@ -239,6 +242,10 @@ class EventService(
         val saved = eventRepository.save(updated.copy(pinnedFields = (existing.pinnedFields + pinned.map { it.key }).distinct()))
         // A hand edit moves the page as an import does, so the page says so either way (#2725).
         changeLog.record(listOf(existing to saved))
+        // A retitle keeps the old link working (#5560).
+        if (slugAliases.keep(listOf(saved), mapOf(id to existing.slug)) > 0) {
+            logger.info { "Kept the former slug '${existing.slug}' of event $id as an alias of '${saved.slug}'" }
+        }
 
         // Replace artist associations: delete existing, insert new with the importer-owned columns kept
         val previousLineup = eventArtistRepository.findByEventId(id).toList()

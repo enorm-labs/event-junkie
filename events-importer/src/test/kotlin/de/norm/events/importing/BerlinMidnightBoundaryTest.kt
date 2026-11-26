@@ -46,7 +46,8 @@ class BerlinMidnightBoundaryTest {
             enrichmentRepository = mockk(relaxed = true),
             featureSync = mockk(relaxed = true),
             changeLog = mockk(relaxed = true),
-            actTitleCasing = ActTitleCasing(mockk())
+            actTitleCasing = ActTitleCasing(mockk()),
+            slugAliases = mockk(relaxed = true)
         )
 
     private fun scrape(clock: Clock): List<ScrapedEvent> {
