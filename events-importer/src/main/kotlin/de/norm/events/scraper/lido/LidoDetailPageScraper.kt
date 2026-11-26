@@ -47,7 +47,7 @@ class LidoDetailPageScraper {
             return null
         }
 
-        val (pricePresale, priceBoxOffice) = parsePresaleAndBoxOfficePrices(content.select(".event-purchase__prices .price"))
+        val (pricePresale, priceBoxOffice, priceNote) = parsePresaleAndBoxOfficePrices(content.select(".event-purchase__prices .price"))
 
         return ScrapedEvent(
             title = block.title,
@@ -64,6 +64,7 @@ class LidoDetailPageScraper {
             ticketUrl = content.hrefAt(".purchase-option__button"),
             pricePresale = pricePresale,
             priceBoxOffice = priceBoxOffice,
+            priceNote = priceNote,
             soldOut = block.soldOut,
             status = block.status,
             statusNote = block.statusNote,

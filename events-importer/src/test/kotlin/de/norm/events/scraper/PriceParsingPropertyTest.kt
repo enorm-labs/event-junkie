@@ -3,7 +3,9 @@ package de.norm.events.scraper
 import de.norm.events.common.NameArbs
 import de.norm.events.event.normalizeMoneyScale
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.element
 import io.kotest.property.arbitrary.filter
@@ -12,6 +14,7 @@ import io.kotest.property.arbitrary.list
 import io.kotest.property.arbitrary.map
 import io.kotest.property.checkAll
 import kotlinx.coroutines.test.runTest
+import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
@@ -105,6 +108,32 @@ class PriceParsingPropertyTest {
         }
 
     @Test
+    fun `a concession price block is neither column, in any order, and the note keeps it`() =
+        runTest {
+            checkAll(
+                CENTS,
+                CENTS,
+                CENTS,
+                Arb.element(CONCESSION_LABELS),
+                Arb.element(PRESALE_LABELS),
+                Arb.element(LETTER_CASES)
+            ) { concession, presale, door, concessionLabel, presaleLabel, case ->
+                val blocks =
+                    listOf(
+                        priceBlock("${euros(concession)} €", case(concessionLabel)),
+                        priceBlock("${euros(presale)} €", presaleLabel),
+                        priceBlock("${euros(door)} €", "Abendkasse")
+                    )
+                listOf(blocks, blocks.reversed()).forEach { order ->
+                    val prices = parsePresaleAndBoxOfficePrices(Jsoup.parseBodyFragment(order.joinToString("")).select(".price"))
+                    prices.presale.money() shouldBe money(presale)
+                    prices.boxOffice.money() shouldBe money(door)
+                    prices.note.shouldNotBeNull() shouldContain "${case(concessionLabel)}: ${euros(concession)} €"
+                }
+            }
+        }
+
+    @Test
     fun `an ab before the amount marks a from price, and its absence does not`() =
         runTest {
             checkAll(CENTS, Arb.element(PRESALE_LABELS + BOX_OFFICE_LABELS), Arb.element("ab ", "Ab ", "ab: ", "AB ")) { cents, label, from ->
@@ -180,6 +209,15 @@ class PriceParsingPropertyTest {
 
         val PRESALE_LABELS = listOf("VVK", "vvk", "Vorverkauf", "Presale", "Pre-sale", "Advance")
         val BOX_OFFICE_LABELS = listOf("AK", "Abendkasse", "Tageskasse", "Box Office", "boxoffice", "at the door", "Door price")
+
+        /** The `.price__label` texts that name a concession on the Kulturhäuser platform (#5551). */
+        val CONCESSION_LABELS = listOf("U25", "U 18", "ermäßigt", "Ermässigt", "erm.", "Schüler", "Studierende", "Student", "Studenten", "Mitglieder")
+
+        fun priceBlock(
+            value: String,
+            label: String
+        ): String = """<div class="price"><span class="price__value">$value</span><span class="price__label">$label</span></div>"""
+
         val LETTER_CASES: List<(String) -> String> = listOf({ it.lowercase() }, { it.uppercase() }, { it })
     }
 }

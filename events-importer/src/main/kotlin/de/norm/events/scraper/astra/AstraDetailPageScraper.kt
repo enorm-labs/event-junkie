@@ -59,7 +59,7 @@ class AstraDetailPageScraper {
             return null
         }
 
-        val (pricePresale, priceBoxOffice) = parsePresaleAndBoxOfficePrices(content.select(".prices .price"))
+        val (pricePresale, priceBoxOffice, priceNote) = parsePresaleAndBoxOfficePrices(content.select(".prices .price"))
 
         return ScrapedEvent(
             title = block.title,
@@ -77,6 +77,7 @@ class AstraDetailPageScraper {
             ticketUrl = content.hrefAt(".purchase-option__button"),
             pricePresale = pricePresale,
             priceBoxOffice = priceBoxOffice,
+            priceNote = priceNote,
             soldOut = block.soldOut,
             status = block.status,
             promoters = parsePromoters(content),

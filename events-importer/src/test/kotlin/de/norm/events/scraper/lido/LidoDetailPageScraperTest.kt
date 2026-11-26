@@ -57,6 +57,29 @@ class LidoDetailPageScraperTest {
     }
 
     @Test
+    fun `stores the general presale, not the under-25 concession before it, and keeps both tiers as the note`() {
+        val url = "https://www.lido-berlin.de/events/2026-12-01-x"
+        val html =
+            """
+            <html><body><div class="event-ticket__content__title"><a href="/events/2026-12-01-x">X</a></div>
+            <div class="event-purchase__prices">
+            <div class="price"><div class="price__value">27,00&nbsp;€</div><div class="price__label">U25</div></div>
+            <div class="price"><div class="price__value">32,00&nbsp;€</div><div class="price__label">Vorverkauf <div class="price__hint">+ Geb</div></div></div>
+            </div></body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, url), url)!!
+
+        event.pricePresale shouldBe BigDecimal("32.00")
+        event.priceBoxOffice.shouldBeNull()
+        event.priceNote shouldBe "U25: 27,00 € · Vorverkauf + Geb: 32,00 €"
+    }
+
+    @Test
+    fun `writes no price note when no tier is a concession`() {
+        sorry.priceNote.shouldBeNull()
+    }
+
+    @Test
     fun `parses the ticket shop URL and image`() {
         sorry.ticketUrl shouldContain "tixforgigs.com"
         sorry.imageUrl shouldContain "kulturhaeuser-production"

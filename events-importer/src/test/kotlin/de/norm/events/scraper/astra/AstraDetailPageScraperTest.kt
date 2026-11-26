@@ -164,6 +164,27 @@ class AstraDetailPageScraperTest {
     }
 
     @Test
+    fun `stores the general presale, not the under-25 concession before it, and keeps both priced tiers as the note`() {
+        // Wasia Project, 25 November 2026 (#5551): `27.00€ U25` before `32.00€ Vorverkauf (+ Geb.)`; a tier with no amount is left out.
+        val url = "https://www.astra-berlin.de/events/2026-11-25-wasia-project"
+        val html =
+            """
+            <main class="page-content"><article><header class="event">
+            <h1 class="event__title"><a class="event__title-link" href="/events/2026-11-25-wasia-project">WASIA PROJECT</a></h1>
+            </header><aside><div class="prices">
+            <div class="price"><div class="price__value">27.00€ </div><div class="price__label">U25</div></div>
+            <div class="price"><div class="price__value">32.00€ </div><div class="price__label">Vorverkauf<div class="price__hint">(+ Geb.) </div></div></div>
+            <div class="price"><div class="price__label">VVK Start Fr. 30.10. - 10:00</div></div>
+            </div></aside></article></main>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, url), url)!!
+
+        event.pricePresale shouldBe BigDecimal("32.00")
+        event.priceBoxOffice.shouldBeNull()
+        event.priceNote shouldBe "U25: 27.00€ · Vorverkauf (+ Geb.): 32.00€"
+    }
+
+    @Test
     fun `keeps the relocation banner out of the subtitle and puts it first in the description`() {
         // Buzzcocks, 5 September 2026: tour name, support line, blank line, then the shouted banner (#1138).
         val buzzcocks = parseFixture("astra-detail-buzzcocks.html", "https://www.astra-berlin.de/events/2026-09-05-buzzcocks")

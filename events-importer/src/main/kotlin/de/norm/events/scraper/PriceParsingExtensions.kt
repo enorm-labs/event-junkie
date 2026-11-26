@@ -10,7 +10,8 @@ import java.math.BigDecimal
  * Splits Kulturhäuser-platform `.price` blocks into presale and box-office prices.
  *
  * Each `.price` carries a `.price__value` (e.g. "39,90€", "35.20€", or
- * "30,00&nbsp;€" with a non-breaking space) and a `.price__label`. A box-office
+ * "30,00&nbsp;€" with a non-breaking space) and a `.price__label`. A concession label
+ * ([PLATFORM_CONCESSION_LABEL]: `U25`, `ermäßigt`, `Schüler`, …) maps to neither column (#5551). A box-office
  * label ([isBoxOfficeLabel]) maps to the box-office price; everything else
  * (Vorverkauf / "VVK …") maps to presale. The first value
  * seen for each category wins, so the duplicate price blocks the markup renders
@@ -18,23 +19,43 @@ import java.math.BigDecimal
  *
  * @param priceElements the venue-scoped `.price` elements, e.g.
  *   `content.select(".prices .price")` (Astra) or `content.select(".price")` (Lido).
- * @return a pair of (presale, boxOffice), either of which may be `null`.
+ * @return the presale and box-office prices, either of which may be `null`, and a note.
  */
-fun parsePresaleAndBoxOfficePrices(priceElements: Elements): Pair<BigDecimal?, BigDecimal?> {
+fun parsePresaleAndBoxOfficePrices(priceElements: Elements): PlatformPrices {
     var presale: BigDecimal? = null
     var boxOffice: BigDecimal? = null
+    var concession = false
+    val tiers = mutableListOf<String>()
 
     for (price in priceElements) {
-        val value = parsePriceValue(price.selectFirst(".price__value")?.text()) ?: continue
-        if (isBoxOfficeLabel(price.selectFirst(".price__label")?.text())) {
-            boxOffice = boxOffice ?: value
-        } else {
-            presale = presale ?: value
+        val valueText = price.textAt(".price__value")
+        val label = price.textAt(".price__label")
+        val value = parsePriceValue(valueText) ?: continue
+        tiers += listOfNotNull(label, valueText).joinToString(": ")
+        when {
+            label != null && PLATFORM_CONCESSION_LABEL.containsMatchIn(label) -> concession = true
+            isBoxOfficeLabel(label) -> boxOffice = boxOffice ?: value
+            else -> presale = presale ?: value
         }
     }
 
-    return presale to boxOffice
+    val note =
+        tiers
+            .distinct()
+            .joinToString(" · ")
+            .takeIf { concession }
+    return PlatformPrices(presale, boxOffice, note)
 }
+
+/**
+ * What [parsePresaleAndBoxOfficePrices] reads. [note] lists every priced tier as `label: value` when one of them is a
+ * concession, so the tier the columns leave out is kept. A tier with no amount, such as a presale start date, is left out.
+ */
+data class PlatformPrices(
+    val presale: BigDecimal? = null,
+    val boxOffice: BigDecimal? = null,
+    val note: String? = null
+)
 
 /**
  * Parses the first euro amount in [text] ([euroAmounts]); `null` when there is none.
@@ -117,6 +138,10 @@ private const val BOX_OFFICE_LABELS = """abendkasse|tageskasse|ak|box\s*office|a
 
 /** A concession or member rate after a label, which is not the label's price. */
 internal const val CONCESSION_LABELS = """erm(?:ä|ae)(?:ss|ß)igt|erm\.|reduced|concessions?|studierende|sch(?:ü|ue)ler|mitglieder"""
+
+/** A Kulturhäuser `.price__label` naming a concession: the shared [CONCESSION_LABELS], an age limit `U25`, `Student`. */
+private val PLATFORM_CONCESSION_LABEL =
+    Regex("""(?<!\p{L})(?:$CONCESSION_LABELS|u\s?\d{2}|student(?:en|s)?)(?![\p{L}\d])""", RegexOption.IGNORE_CASE)
 
 private const val PRESALE_GROUP = "presale"
 private const val BOX_OFFICE_GROUP = "boxoffice"
