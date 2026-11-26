@@ -100,12 +100,13 @@ class VelomaxOverviewPageScraper {
         val subtitle = subtitleLines.firstOrNull()
         val signal = entry.textAt(".ticketSignal").orEmpty()
         val startTime = parseTime(TIME_PATTERN.find(entry.textAt(".begin").orEmpty())?.value)
+        val listingDate = parseListingDate(entry)
 
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
             eventType = eventType,
-            eventDate = parseListingDate(entry) ?: UNRESOLVED_EVENT_DATE,
+            eventDate = listingDate ?: UNRESOLVED_EVENT_DATE,
             startTime = startTime,
             sourceUrl = sourceUrl,
             // One permalink, many sessions — the slug names the *show*, so the start time makes a
@@ -114,13 +115,25 @@ class VelomaxOverviewPageScraper {
             // `event.source_id`'s UNIQUE constraint keeps the first and silently drops the rest. No
             // colon (`-1830`) so the id is one token, as Admiralspalast, Uber and Heimathafen do. An
             // entry with no published time keeps the bare slug — nothing to disambiguate with.
-            sourceId = "${hall.eventSource.sourceIdPrefix}$slug${sessionSuffix(startTime)}",
+            sourceId = "${hall.eventSource.sourceIdPrefix}$slug${sessionSuffix(startTime)}${otherDateSuffix(slug, listingDate)}",
             soldOut = signal.contains(SOLD_OUT_SIGNAL, ignoreCase = true) || cleanedTitle.soldOut,
             artists = if (tattoo) emptyList() else buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType)
         )
     }
 
     private fun sessionSuffix(startTime: LocalTime?): String = startTime?.format(FOUR_DIGIT_CLOCK)?.let { "-$it" }.orEmpty()
+
+    /**
+     * The listing date, when it is not the date the slug carries. The venue can link an extra show to the first
+     * show's page (Sido's Zusatzshow, see #5576). An entry on the slug's date, or a slug without one, keeps its id.
+     */
+    private fun otherDateSuffix(
+        slug: String,
+        listingDate: LocalDate?
+    ): String {
+        val slugDate = SLUG_DATE.find(slug)?.let { runCatching { LocalDate.parse(it.groupValues[1]) }.getOrNull() }
+        return if (listingDate == null || slugDate == null || listingDate == slugDate) "" else "-$listingDate"
+    }
 
     /**
      * The date from the separate day / month / year spans — `26.`, `November`, `'26`. The two-digit
@@ -168,6 +181,9 @@ class VelomaxOverviewPageScraper {
 
         /** The clock time inside a `20:00 Uhr` label. */
         val TIME_PATTERN = Regex("""\d{1,2}:\d{2}""")
+
+        /** The date a permalink ends in, `…-2027-09-24`. */
+        val SLUG_DATE = Regex("""(\d{4}-\d{2}-\d{2})$""")
 
         /** Century the listing's two-digit year (`\'26`) belongs to. */
         const val TWENTY_FIRST_CENTURY = 2000

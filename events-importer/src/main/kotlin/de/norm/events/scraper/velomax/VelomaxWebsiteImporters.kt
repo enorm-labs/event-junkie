@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -34,10 +35,12 @@ abstract class AbstractVelomaxHallImporter(
     /**
      * Merges detail-page data ([primary]) with listing data ([fallback]).
      *
-     * The Microdata is authoritative for date and status and the only source of doors time,
-     * description, poster, ticket link and promoter. Four fields keep the **listing's** value:
+     * The Microdata is authoritative for status and the only source of doors time, description,
+     * poster, ticket link and promoter. Five fields keep the **listing's** value:
      * - **`startTime`**: a run playing several sessions a day links all to one detail page, which
      * states one start time for the lot;
+     * - **`eventDate`**, for the same reason: an extra show can link the first show's page, which
+     * states the date of one of them (#5576). The detail page dates only an entry the listing cannot;
      * - **`sourceId`**, the load-bearing one for the same reason: the detail page's id comes from
      * a permalink that is one page per *show*, so every session of a day would share an id and
      * `event.source_id`'s UNIQUE constraint would keep one. The listing is the sole per-session
@@ -52,6 +55,7 @@ abstract class AbstractVelomaxHallImporter(
     ): ScrapedEvent =
         primary.withGapsFrom(fallback).copy(
             eventType = fallback.eventType ?: primary.eventType,
+            eventDate = fallback.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: primary.eventDate,
             startTime = fallback.startTime ?: primary.startTime,
             sourceId = fallback.sourceId
         )

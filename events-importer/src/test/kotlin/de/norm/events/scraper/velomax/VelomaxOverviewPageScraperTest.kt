@@ -1,5 +1,6 @@
 package de.norm.events.scraper.velomax
 
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.withWeekdayWarnings
@@ -129,6 +130,35 @@ class VelomaxOverviewPageScraperTest {
     }
 
     @Test
+    fun `keys an extra show apart from the first show whose detail page it links`() {
+        // #5576: Sido's Zusatzshow on 8 October links the 24 September page, at the same time.
+        val events = scraper.scrape(Jsoup.parse(SHARED_DETAIL_PAGE_LISTING, baseUrl), baseUrl, VelomaxHall.MAX_SCHMELING_HALLE)
+
+        events.map { it.eventDate } shouldContainExactly listOf(LocalDate.of(2027, 9, 24), LocalDate.of(2027, 10, 8))
+        events.map { it.sourceUrl }.distinct() shouldHaveSize 1
+        events.map { it.sourceId } shouldContainExactly
+            listOf(
+                "max_schmeling_halle:sido-max-schmeling-halle-2027-09-24-2000",
+                "max_schmeling_halle:sido-max-schmeling-halle-2027-09-24-2000-2027-10-08"
+            )
+    }
+
+    @Test
+    fun `keeps the id of every entry on its slug's date or with no date in its slug`() {
+        // Schlagerchampions is on 15 January 2027 behind a `…-2028-01-15` permalink, so it takes the date suffix.
+        VelomaxHall.entries.forEach { hall ->
+            scrape(hall).filterNot { it.title.startsWith("Schlagerchampions") }.forEach { event ->
+                val session =
+                    event.startTime
+                        ?.format(FOUR_DIGIT_CLOCK)
+                        ?.let { "-$it" }
+                        .orEmpty()
+                event.sourceId shouldBe "${hall.eventSource.sourceIdPrefix}${event.sourceUrl.substringAfter(EVENT_PATH_PREFIX)}$session"
+            }
+        }
+    }
+
+    @Test
     fun `flags a sold-out entry from its ticket signal`() {
         val soldOut = (scrape(VelomaxHall.VELODROM) + scrape(VelomaxHall.MAX_SCHMELING_HALLE)).filter { it.soldOut }
         soldOut.isNotEmpty() shouldBe true
@@ -147,7 +177,7 @@ class VelomaxOverviewPageScraperTest {
         val rin = scrapeNovember2026(VelomaxHall.MAX_SCHMELING_HALLE).single { it.title == "RIN" }
 
         rin.eventDate shouldBe LocalDate.of(2026, 11, 26)
-        rin.sourceId shouldBe "max_schmeling_halle:rin-2026-11-27"
+        rin.sourceId shouldBe "max_schmeling_halle:rin-2026-11-27-2026-11-26"
     }
 
     @Test
@@ -204,3 +234,19 @@ class VelomaxOverviewPageScraperTest {
         isMilitaryTattoo("Tattoo Convention") shouldBe false
     }
 }
+
+/** The first show's detail page, which the listing links for both of Sido's dates. */
+internal const val SIDO_PAGE = "https://www.max-schmeling-halle.de/events/event/sido-max-schmeling-halle-2027-09-24"
+
+/** Two `.msh` entries at 20:00 on different dates that link one detail page, as the listing printed Sido. */
+internal const val SHARED_DETAIL_PAGE_LISTING =
+    """<a class="ticketWrap msh concert" data-type="concert" href="$SIDO_PAGE">""" +
+        """<span class="date-output"><span class="weekday">Fr.,</span><span class="day">24.</span><span class="month">Sep</span>""" +
+        """<span class="year">'27</span></span><span class="begin">20:00 Uhr</span>""" +
+        """<span class="event-title"><span class="title">SIDO</span><span class="eventSubtitle">Frieden Tour 2027</span></span>""" +
+        """<span class="ticketSignal sold-out">ausverkauft</span></a>""" +
+        """<a class="ticketWrap msh concert" data-type="concert" href="$SIDO_PAGE">""" +
+        """<span class="date-output"><span class="weekday">Fr.,</span><span class="day">08.</span><span class="month">Okt</span>""" +
+        """<span class="year">'27</span></span><span class="begin">20:00 Uhr</span>""" +
+        """<span class="event-title"><span class="title">SIDO</span><span class="eventSubtitle">Frieden Tour 2027<br>Zusatzshow</span></span>""" +
+        """<span class="ticketSignal available">Im Vorverkauf erhältlich</span></a>"""
