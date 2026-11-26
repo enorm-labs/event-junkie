@@ -151,7 +151,26 @@ class VelomaxWebsiteImportersTest {
 
             rin.eventDate shouldBe LocalDate.of(2026, 11, 26)
             rin.status shouldBe EventStatus.POSTPONED.name
-            rin.sourceId shouldBe "max_schmeling_halle:rin-2026-11-27"
+            rin.sourceId shouldBe "max_schmeling_halle:rin-2026-11-27-2026-11-26"
+        }
+
+    @Test
+    fun `keeps each listing date of two shows that share one detail page`() =
+        runTest {
+            // #5576: the shared page states the extra show's date, 8 October, for both entries.
+            coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(SHARED_DETAIL_PAGE_LISTING, overviewUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(SIDO_PAGE) } returns
+                Jsoup.parse(
+                    """<div itemscope itemtype="https://schema.org/Event"><span itemprop="name">SIDO</span>""" +
+                        """<time itemprop="startDate" datetime="2027-10-08 20:00:00"></time></div>""",
+                    SIDO_PAGE
+                )
+
+            val sido = events(MaxSchmelingHalleWebsiteImporter(htmlFetcher).importEvents(overviewUrl))
+
+            sido.map { it.eventDate to it.soldOut } shouldContainExactly listOf(LocalDate.of(2027, 9, 24) to true, LocalDate.of(2027, 10, 8) to false)
+            sido.map { it.sourceId }.distinct() shouldHaveSize 2
         }
 
     @Test
