@@ -386,6 +386,22 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `parseRelocation reads the houses only in a sentence that carries the relocation word (#5550)`() {
+        // Heimathafen: the notice moves the date, and the bio later in the text names a continent.
+        val heimathafen =
+            "Das Konzert muss leider auf den 9.2.2027 verlegt werden. Bereits gekaufte Tickets behalten ihre Gültigkeit. " +
+                "El concierto del 25 de noviembre se pospone al martes 9 de febrero de 2027.\n" +
+                "Die lebende Legende der tropischen Musik kommt nach Europa!"
+        parseRelocation(heimathafen) shouldBe Relocation(from = null, to = null)
+        // A house before the notice, in prose, is no destination either.
+        parseRelocation("Die Band tourt im Frühjahr nach Kopenhagen. Das Konzert wurde verlegt.") shouldBe Relocation(from = null, to = null)
+        // The sentence with the word still names both houses, wherever it sits in the text.
+        parseRelocation("Die lebende Legende kommt nach Europa! Die Show wird vom Huxleys ins Hole44 verlegt. Tickets bleiben gültig.") shouldBe
+            Relocation(from = "Huxleys", to = "Hole44")
+        parseRelocation("Die Tour führt in Berlin durch zwei Clubs.\nVerlegt in Cassiopeia") shouldBe Relocation(from = null, to = "Cassiopeia")
+    }
+
+    @Test
     fun `parseRelocation de-shouts a destination set in capitals and keeps a styled one`() {
         parseRelocation("VERLEGT INS ASTRA KULTURHAUS") shouldBe Relocation(from = null, to = "Astra Kulturhaus")
         parseRelocation("VERLEGT VOM LIDO INS DJ PALAST") shouldBe Relocation(from = "Lido", to = "DJ Palast")

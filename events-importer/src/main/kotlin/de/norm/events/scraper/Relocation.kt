@@ -26,7 +26,7 @@ data class Relocation(
  * vom Huxleys ins Hole44 verlegt" — so this reads the two names and leaves the direction to
  * [resolveRelocation], which knows the row's own venue (#1551). A name runs to the next
  * delimiter, and a leading article is dropped: "in den Festsaal Kreuzberg" names `Festsaal
- * Kreuzberg`.
+ * Kreuzberg`. The names are read only in a sentence that carries the relocation word.
  */
 fun parseRelocation(text: String): Relocation? {
     // A tour name in quotes is not a house: "„Soul to SØL World Tour 2026“ HOCHVERLEGT IN DAS COLUMBIA THEATER".
@@ -34,9 +34,11 @@ fun parseRelocation(text: String): Relocation? {
     if (!RELOCATION_WORD.containsMatchIn(unquoted)) {
         return MOVED_HERE_INSTEAD.find(unquoted)?.let { Relocation(from = null, to = venueName(it.groupValues[1])) }
     }
-    val to = RELOCATION_TO.find(unquoted) ?: RELOCATION_TO_BARE.find(unquoted)
+    // Only the sentences with the word: a biography's "kommt nach Europa!" names no house (#5550).
+    val moves = SENTENCE_BREAK.split(unquoted).filter { RELOCATION_WORD.containsMatchIn(it) }.joinToString("\n")
+    val to = RELOCATION_TO.find(moves) ?: RELOCATION_TO_BARE.find(moves)
     return Relocation(
-        from = RELOCATION_FROM.find(unquoted)?.let { venueName(it.groupValues[1]) },
+        from = RELOCATION_FROM.find(moves)?.let { venueName(it.groupValues[1]) },
         to = to?.let { venueName(it.groupValues[1]) }
     )
 }

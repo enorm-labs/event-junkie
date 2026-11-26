@@ -52,6 +52,35 @@ class ScrapedEventRelocatedOnTest {
     }
 
     @Test
+    fun `toEventEntity postpones a dated move whose description names a place in another sentence (#5550)`() {
+        val description =
+            "Das Konzert muss leider auf den 9.2.2027 verlegt werden. Bereits gekaufte Tickets behalten ihre Gültigkeit.\n" +
+                "El concierto del 25 de noviembre se pospone al martes 9 de febrero de 2027.\n" +
+                "Die lebende Legende der tropischen Musik kommt nach Europa!"
+        val show = { title: String, date: LocalDate, end: LocalDate? ->
+            scrapedEvent(title = title, status = "RELOCATED", description = description, eventDate = date, endDate = end)
+        }
+        val left = show("La Sonora Santanera", LocalDate.of(2026, 11, 25), null).toEntity("heimathafen-neukolln")
+        left.status shouldBe "POSTPONED"
+        left.relocatedTo.shouldBeNull()
+        left.relocatedOn shouldBe LocalDate.of(2027, 2, 9)
+        // The new date's row takes place.
+        show("La Sonora Santanera", LocalDate.of(2027, 2, 9), null).toEntity("heimathafen-neukolln").status shouldBe "SCHEDULED"
+        // A long title and a show over midnight change nothing.
+        val long = "La Sonora Santanera – " + "La Leyenda Viviente de la Música Tropical ".repeat(8).trim()
+        show(long, LocalDate.of(2026, 11, 25), LocalDate.of(2026, 11, 26)).toEntity("heimathafen-neukolln").also {
+            it.status shouldBe "POSTPONED"
+            it.relocatedTo.shouldBeNull()
+            it.relocatedOn shouldBe LocalDate.of(2027, 2, 9)
+        }
+        // No status reads "Europa" as a house.
+        EventStatus.entries.forEach { status ->
+            val entity = show("La Sonora Santanera", LocalDate.of(2026, 11, 25), null).copy(status = status.name).toEntity("heimathafen-neukolln")
+            withClue("$status stored as ${entity.status}") { entity.relocatedTo.shouldBeNull() }
+        }
+    }
+
+    @Test
     fun `toEventEntity postpones a cancelled show whose note names a later date, and keeps the new date's row scheduled`() {
         // Wühlmäuse: the programme line carries the move.
         val programme = "Solo-Theater-Comedy mit Nebenwirkungen - VERLEGT auf den 24.04.2027"
