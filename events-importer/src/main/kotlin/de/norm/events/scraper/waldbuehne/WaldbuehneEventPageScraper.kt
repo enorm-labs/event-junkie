@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.disclosurePanel
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parseClockPrefix
@@ -67,11 +68,7 @@ class WaldbuehneEventPageScraper {
 
     private fun description(document: Document): String? =
         document
-            .select(ACCORDION_BUTTON)
-            .firstOrNull { it.ownText().trim().equals(DESCRIPTION_LABEL, ignoreCase = true) }
-            ?.attr("aria-controls")
-            ?.takeIf { it.isNotBlank() }
-            ?.let { document.getElementById(it) }
+            .disclosurePanel(ACCORDION_BUTTON, DESCRIPTION_LABEL)
             ?.select("p")
             ?.paragraphText()
 

@@ -7,6 +7,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.disclosurePanel
 import de.norm.events.scraper.isNonArtistName
 import org.jsoup.nodes.Document
 import java.time.LocalTime
@@ -168,14 +169,7 @@ class TempodromDetailPageScraper {
     }
 
     /** The text of the region the "Beschreibung" button opens, or `null` when the page has none. */
-    private fun description(document: Document): String? =
-        document
-            .select(ACCORDION_BUTTON)
-            .firstOrNull { it.ownText().trim().equals(DESCRIPTION_LABEL, ignoreCase = true) }
-            ?.attr("aria-controls")
-            ?.takeIf { it.isNotBlank() }
-            ?.let { document.getElementById(it) }
-            ?.text()
+    private fun description(document: Document): String? = document.disclosurePanel(ACCORDION_BUTTON, DESCRIPTION_LABEL)?.text()
 
     /** [text] read back as UTF-8 when its characters are the Latin-1 view of UTF-8 bytes: `Ã¼` is `ü`. */
     private fun repairDoubleEncoding(text: String): String {
