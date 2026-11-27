@@ -21,6 +21,18 @@ data class Unparseable(
     override fun toString(): String = "$length character(s), stopped at ${offset ?: "an unknown offset"}: $shape"
 }
 
+/** [text] with its words blanked out and its punctuation kept. */
+private fun shapeOf(text: String): String =
+    text
+        .map {
+            when {
+                it.isLetter() -> 'a'
+                it.isDigit() -> '9'
+                it.isWhitespace() -> ' '
+                else -> it
+            }
+        }.joinToString("")
+
 /** The model answered text that does not parse as JSON. */
 class UnparseableAnswer(
     val unparseable: Unparseable,
@@ -74,7 +86,7 @@ object ModelAnswer {
     fun jsonObject(raw: String): JsonNode? {
         val trimmed = raw.trim()
         val unfenced = FENCED_BLOCK.find(trimmed)?.groupValues?.get(1) ?: trimmed.replace(CODE_FENCE, "")
-        val text = closeLowNineQuotes(unfenced)
+        val text = escapeInnerQuotes(closeLowNineQuotes(unfenced))
         return try {
             mapper.readTree(text).takeIf { it.isObject }
         } catch (e: JacksonException) {
@@ -88,7 +100,7 @@ object ModelAnswer {
      * The model quotes German text as `„…"`, as it does in a translation (`QuotePairs`), and the unescaped `"` ends the
      * string early. A `"` that a `:`, `}`, `]` or the end of the text follows ends the string and stays, so valid JSON
      * never changes. So does one that a `,` and the start of a JSON value follow. A `„` with another quote mark before its
-     * `"` stays too.
+     * `"` stays too. It runs before [escapeInnerQuotes], which would otherwise escape that `"` and keep the `„` unclosed.
      */
     internal fun closeLowNineQuotes(json: String): String {
         if ('„' !in json) return json
@@ -100,6 +112,30 @@ object ModelAnswer {
                 '\\' -> if (inString) i++
                 '"' -> inString = !inString
                 '„' -> if (inString) quoteCloser(out, i)?.let { out.setCharAt(it, '“') }
+            }
+            i++
+        }
+        return out.toString()
+    }
+
+    /**
+     * [json] with each straight `"` inside a string that does not end it escaped as `\"` (#5590).
+     *
+     * The model quotes a source's text with plain quotes and does not escape them. The same test as in
+     * [closeLowNineQuotes] decides which `"` ends the string, so valid JSON never changes. A quoted phrase that a
+     * `:` follows reads as a key and stays.
+     */
+    internal fun escapeInnerQuotes(json: String): String {
+        val out = StringBuilder(json.length)
+        var inString = false
+        var i = 0
+        while (i < json.length) {
+            val c = json[i]
+            when {
+                c == '\\' && inString -> out.append(json, i, minOf(i + 2, json.length)).also { i++ }
+                c == '"' && inString && !endsString(json, i) -> out.append("\\\"")
+                c == '"' -> out.append(c).also { inString = !inString }
+                else -> out.append(c)
             }
             i++
         }
@@ -152,18 +188,6 @@ object ModelAnswer {
                 }.orEmpty()
         return Unparseable(text.length, offset, shape)
     }
-
-    /** [text] with its words blanked out and its punctuation kept. */
-    private fun shapeOf(text: String): String =
-        text
-            .map {
-                when {
-                    it.isLetter() -> 'a'
-                    it.isDigit() -> '9'
-                    it.isWhitespace() -> ' '
-                    else -> it
-                }
-            }.joinToString("")
 
     /** A price the model wrote as a number or as text, at the scale every stored price carries. */
     fun price(node: JsonNode?): BigDecimal? {
