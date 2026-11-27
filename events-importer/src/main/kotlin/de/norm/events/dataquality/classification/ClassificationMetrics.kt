@@ -1,9 +1,9 @@
 package de.norm.events.dataquality.classification
 
+import de.norm.events.common.LastSuccess
+import de.norm.events.common.LastSuccessGauge
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.stereotype.Component
-import java.time.Instant
-import java.util.concurrent.atomic.AtomicLong
 
 /**
  * The nightly pass's age and the month's budget, for `ej-classification-stale` and `ej-classification-budget` (#3645).
@@ -15,24 +15,9 @@ import java.util.concurrent.atomic.AtomicLong
 class ClassificationMetrics(
     registry: MeterRegistry,
     properties: ClassificationProperties
-) {
-    /** Epoch seconds of the last pass that ended; 0 while the check is off. */
-    private val lastSuccess = AtomicLong(0)
-
+) : LastSuccess by LastSuccessGauge(registry, LAST_SUCCESS) {
     init {
-        registry.gauge(LAST_SUCCESS, lastSuccess) { it.get().toDouble() }
         registry.gauge(TOKEN_BUDGET, properties) { it.monthlyTokenBudget.toDouble() }
-    }
-
-    /** Stamps a pass that ended at [at]. */
-    fun markSucceeded(at: Instant) = lastSuccess.set(at.epochSecond)
-
-    /**
-     * Starts the age at [at], when the runner starts. A pass that a release broke then still ages and fires; at 0 the
-     * rule would stay quiet until a pass succeeded. A pass that ended first is kept.
-     */
-    fun seed(at: Instant) {
-        lastSuccess.accumulateAndGet(at.epochSecond, ::maxOf)
     }
 
     companion object {
