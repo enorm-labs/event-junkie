@@ -37,6 +37,12 @@ def main() -> int:
     check(match_spike.head_of("Sonic Morgue") == "", "a name with no separator has no head")
     check(match_spike.head_of("Act - ") == "", "a separator with nothing after it is no split")
 
+    check(match_spike.fold("Motörhead") == match_spike.fold("MOTORHEAD"), "case and accents fold away")
+    check(match_spike.fold("Simon and Garfunkel") == "simon & garfunkel", "`and` reads as `&`")
+    check(match_spike.fold("Rock und and Roll") == "rock & & roll", "two conjunctions in a row both fold")
+    check(match_spike.fold("Mike and ") == "mike and", "a trailing conjunction is the last word, not `&`")
+    check(match_spike.fold("  Sadtember!  ") == "sadtember", "padding and trailing punctuation go")
+
     asked = []
 
     def get(url):

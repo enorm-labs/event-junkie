@@ -36,10 +36,11 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
+
 REPO = pathlib.Path(__file__).resolve().parent.parent
 PORTS = {"local": 8081, "staging": 18081, "production": 28081}
-PAGE_SIZE = 100
-MAX_PAGES = 200
 EXIT_CANNOT_RUN = 2
 USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)"
 COLUMNS = [
@@ -227,17 +228,6 @@ def get_json(url: str):
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
     with urllib.request.urlopen(request, timeout=60) as response:
         return json.load(response)
-
-
-def pages(get, url: str) -> list:
-    rows, page = [], 0
-    while page < MAX_PAGES:
-        body = get(f"{url}{'&' if '?' in url else '?'}size={PAGE_SIZE}&page={page}")
-        rows += body["content"]
-        page += 1
-        if page >= body["totalPages"]:
-            return rows
-    raise RuntimeError(f"{url} has more than {MAX_PAGES} pages")
 
 
 def fetch_page(url: str) -> str:

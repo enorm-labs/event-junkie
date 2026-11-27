@@ -36,16 +36,14 @@ import argparse
 import csv
 import json
 import pathlib
-import re
 import sys
 import time
-import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from match_spike import CONTROL, done_names, fetch_artist_names, head_of, write_rows  # noqa: E402
+from match_spike import CONTROL, done_names, fetch_artist_names, fold, head_of, write_rows  # noqa: E402
 
 MB_SEARCH = "https://musicbrainz.org/ws/2/artist/"
 USER_AGENT = "event-junkie-spike/0.1 ( https://github.com/enorm-labs/event-junkie )"
@@ -70,17 +68,6 @@ FIELDS = [
     "head_mbid",
     "head_mb_name",
 ]
-
-
-def fold(s):
-    """Casefold, strip accents, collapse whitespace, and read `&` and `and` as one word."""
-    n = unicodedata.normalize("NFKD", s)
-    n = "".join(c for c in n if not unicodedata.combining(c)).casefold()
-    n = re.sub(r"\s+", " ", n).strip(" ")
-    # Runs on collapsed, trimmed text, so a name's last word is never a conjunction however it is padded.
-    # The lookahead leaves the space after a conjunction for the next one: "a und and b" is "a & & b".
-    n = re.sub(r" (?:and|und|&)(?= )", " &", n)
-    return n.strip(" .,!")
 
 
 def lucene_phrase(name):

@@ -40,13 +40,13 @@ import pathlib
 import re
 import sys
 import time
-import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from match_spike import CONTROL, done_names, fetch_artist_names, head_of, write_rows  # noqa: E402
+from admin_api import http_get  # noqa: E402
+from match_spike import CONTROL, done_names, fetch_artist_names, fold, head_of, write_rows  # noqa: E402
 
 SEARCH = "https://api.discogs.com/database/search"
 USER_AGENT = "event-junkie-spike/0.1 +https://github.com/enorm-labs/event-junkie"
@@ -71,14 +71,6 @@ FIELDS = [
     "head_discogs_id",
     "head_discogs_name",
 ]
-
-
-def fold(s):
-    """Casefold, strip accents, collapse whitespace, and read `&` and `and` as one word."""
-    n = unicodedata.normalize("NFKD", s)
-    n = "".join(c for c in n if not unicodedata.combining(c)).casefold()
-    n = re.sub(r"\s+(?:and|und|&)\s+", " & ", n)
-    return re.sub(r"\s+", " ", n).strip(" .,!")
 
 
 def get_json(url):
@@ -200,7 +192,8 @@ def main():
     parser.add_argument("--compare", help="the MusicBrainz TSV: query its `none` rows first and print the cross-table")
     args = parser.parse_args()
 
-    names = CONTROL if args.control else fetch_artist_names(get_json, args.host)
+    # The admin API gets a plain GET: the Discogs token and its rate-limit wait belong to Discogs' requests only.
+    names = CONTROL if args.control else fetch_artist_names(http_get, args.host)
     names = [n for n in names if fold(n)]
     if args.compare:
         other = {r["name"]: r["state"] for r in read_rows(args.compare)}
