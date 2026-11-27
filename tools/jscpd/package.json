@@ -1,0 +1,12 @@
+{
+  "name": "event-junkie-jscpd",
+  "private": true,
+  "description": "The pinned jscpd that scripts/duplication.sh runs to find copied code. Its own package, so the site's dependencies do not gain an analysis tool.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=26.0.0"
+  },
+  "dependencies": {
+    "jscpd": "5.4.3"
+  }
+}

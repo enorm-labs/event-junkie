@@ -195,7 +195,7 @@ gh api "repos/enorm-labs/event-junkie/code-scanning/alerts?state=open&per_page=1
         (.most_recent_instance.location.path // "-")] | @tsv'
 ```
 
-Then `npm audit` in `events-frontend/`, `events-admin/` and `perf/lighthouse/` (CI tooling only), by [`/security-report` § Step 2b](security-report.prompt.md#step-2b--run-npm-audit-on-every-npm-lockfile).
+Then `npm audit` in `events-frontend/`, `events-admin/`, `perf/lighthouse/` and `tools/jscpd/` (tooling only), by [`/security-report` § Step 2b](security-report.prompt.md#step-2b--run-npm-audit-on-every-npm-lockfile).
 It finds an advisory before Dependabot raises an alert for it, so the alert list alone is behind.
 
 Normalise before deciding: **Dependency-Check duplicates heavily** (one CVE per matching artifact — group by CVE/GHSA) and **its paths are Gradle cache paths,

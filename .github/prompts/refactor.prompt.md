@@ -33,6 +33,7 @@ Do not invent findings. Every change here starts from something that was already
 ./gradlew detektMain detektTest                        # the type-resolved rules, which CI runs beside detekt (#407)
 ./gradlew koverLog                                     # coverage per module, the before number
 find . -name '*.kt' -not -path '*/build/*' | xargs wc -l | sort -rn | head -30
+scripts/duplication.sh report --top 20                 # copied code by file pair; `npm ci` in tools/jscpd first
 ```
 
 `/codebase-audit` already turns those numbers into a ranked list, and its rubric is the one to use. **Size is a smell, not a verdict** — a long file holding one
@@ -50,7 +51,8 @@ cohesive responsibility is finished, and splitting it produces churn and a worse
 | **Inline a needless hop**   | A one-line wrapper that only forwards, named no better than the thing it forwards |
 | **Narrow a public surface** | `internal` or `private` where nothing outside the module calls it                 |
 
-Before a deduplication, grep for the constant or string the copies share. A scan reports pairs, and the map panel it reported twice had a third copy (#4275).
+`scripts/duplication.sh` finds exact copies only: a copy with renamed variables is not on its list. Before a deduplication, grep for the constant or string the
+copies share. A scan reports pairs, and the map panel it reported twice had a third copy (#4275).
 
 A shared helper moves every caller's module onto the helper's module. Run `git grep allowedDependencies` first: a module that declares `[]` fails
 `ModularityTests`, and widening it is a decision for the PR body, not a side effect (#5422).
