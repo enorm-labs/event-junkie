@@ -272,7 +272,9 @@ updates:
   # cluster's is a difference nobody sees until a deploy.
   #
   # A `postgres` bump here fails the backend build until `POSTGRES_TEST_IMAGE` in events-core's test
-  # fixtures moves in the same pull request: no updater reads that Kotlin constant (#4222).
+  # fixtures moves in the same pull request: no updater reads that Kotlin constant (#4222). Even a
+  # patch bump can move `docs/architecture/schema.sql`, because pg_dump's output changes between
+  # releases (#5648): run `./gradlew :events-importer:updateSchemaDump` and commit what it writes.
   - package-ecosystem: "docker-compose"
     directory: "/"
     schedule:
