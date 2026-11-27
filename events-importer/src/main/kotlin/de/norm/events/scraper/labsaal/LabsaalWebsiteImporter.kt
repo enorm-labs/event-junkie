@@ -66,8 +66,9 @@ val LABSAAL_LIMITATIONS =
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "the feed has no line-up field, so only a concert title's act after `mit` or before `erstmals im LabSaal` is billed",
-            verified = "2026-11-25"
+            "the feed has no line-up field, so only a concert title's act after `mit`, before `erstmals im LabSaal` " +
+                "or as capitalised words after a dash is billed",
+            verified = "2026-11-27"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "the feed names no style", verified = "2026-10-17"),
         AcceptedLimitation(LimitedAspect.PRICE, "the event page prints price tiers with no label, kept as the note", verified = "2026-11-09"),

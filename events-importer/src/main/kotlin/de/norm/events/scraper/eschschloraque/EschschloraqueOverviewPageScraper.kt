@@ -113,7 +113,7 @@ class EschschloraqueOverviewPageScraper {
                     parseLineup(billingParagraphs).filterNot {
                         repeatsNightName(it.name, title)
                     }
-            ).distinctBy { it.name.lowercase() }.ifEmpty { soloDj(title, description) }
+            ).distinctBy { it.name.lowercase() }.ifEmpty { soloDj(title, description) }.ifEmpty { namedInBio(title, node) }
 
         return ScrapedEvent(
             title = title,
@@ -432,6 +432,26 @@ private fun soloDj(
     } else {
         listOf(ScrapedArtist(name = name, role = ArtistRole.DJ, titleDerived = true))
     }
+}
+
+/**
+ * The act a night without a billing line is titled after, when its prose opens with that name in the venue's red bold:
+ * `<span class="redweb"><strong>Acid Washed </strong></span>( Paris / Berlin ) feeds on memories…` (event 15715).
+ */
+private fun namedInBio(
+    title: String,
+    node: Element
+): List<ScrapedArtist> {
+    val paragraph = node.selectFirst(".field-type-text-with-summary p") ?: return emptyList()
+    val opening =
+        paragraph
+            .selectFirst("> .redweb")
+            ?.text()
+            ?.trim()
+            .orEmpty()
+    val name = title.trim()
+    val leads = opening.equals(name, ignoreCase = true) && paragraph.text().trim().startsWith(opening)
+    return if (leads && !isNonArtistName(name)) listOf(ScrapedArtist(name = name, role = ArtistRole.HEADLINER, titleDerived = true)) else emptyList()
 }
 
 private val MOTTO_DASH = Regex("""\s+[–—]\s+""")

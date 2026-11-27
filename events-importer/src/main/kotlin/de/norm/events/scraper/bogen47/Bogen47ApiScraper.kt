@@ -278,7 +278,9 @@ internal class Bogen47ApiScraper(
                 .replace(QUOTED_EPITHET, " ")
                 .replace(WHITESPACE, " ")
                 .trim()
-        val named = bulletedLineup(description) ?: VERSUS_NIGHT.matchEntire(billing)?.let { listOf(it.groupValues[1], it.groupValues[2]) }
+        val named =
+            bulletedLineup(description) ?: unbulletedLineup(description)
+                ?: VERSUS_NIGHT.matchEntire(billing)?.let { listOf(it.groupValues[1], it.groupValues[2]) }
         val headliners =
             named?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) } ?: headlinersFromTitle(billing, unpackWithFrame = true).flatMap { act ->
                 act.name
@@ -545,6 +547,40 @@ private fun bulletedLineup(description: String?): List<String>? {
         ?.map { it.replace(TRAILING_PARENTHESIS, "").trim() }
         ?.filterNot { it.isBlank() || isNonArtistName(it) }
 }
+
+/**
+ * The acts of a description with no bullets: only short name lines, at least [MIN_LINEUP_BULLETS] of them (event 15713), or a
+ * `With music from A, B and a secret act` sentence, without the unnamed act (event 15712). A line of prose bills nothing here.
+ */
+private fun unbulletedLineup(description: String?): List<String>? {
+    val lines =
+        description
+            .orEmpty()
+            .lines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+    val nameLines =
+        lines.takeIf { all ->
+            all.size >= MIN_LINEUP_BULLETS && all.all { NAME_LINE.matches(it) && it.split(WHITESPACE).size <= MAX_LABELLED_NAME_WORDS }
+        }
+    val names =
+        nameLines ?: MUSIC_FROM
+            .find(description.orEmpty())
+            ?.groupValues
+            ?.get(1)
+            ?.split(PROSE_LIST_SEPARATOR) ?: return null
+    return names
+        .map { it.replace(TRAILING_PARENTHESIS, "").trim() }
+        .filterNot { it.isBlank() || isNonArtistName(it) || UNNAMED_ACT.containsMatchIn(it) }
+        .ifEmpty { null }
+}
+
+/** A line of one name and at most a trailing note in brackets, with no bullet, sentence mark, colon or handle. */
+private val NAME_LINE = Regex("""(?![-–•])[^@:.!?()]*[\p{L}\p{N}][^@:.!?()]*(?:\([^)]*\))?""")
+
+private val MUSIC_FROM = Regex("""\bwith music (?:from|by)\s+([^.\n]+?)(?:[.\n]|$)""", RegexOption.IGNORE_CASE)
+
+private val UNNAMED_ACT = Regex("""\bsecret\b|\bspecial guests?\b""", RegexOption.IGNORE_CASE)
 
 /** Fewer bullets than this are a list of something else, so the title keeps the billing. */
 private const val MIN_LINEUP_BULLETS = 3

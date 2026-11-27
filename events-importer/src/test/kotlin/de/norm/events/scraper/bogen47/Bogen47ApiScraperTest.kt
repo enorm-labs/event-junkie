@@ -202,6 +202,25 @@ class Bogen47ApiScraperTest {
             .map { it.name } shouldContainExactly listOf("Ben Morgan")
     }
 
+    // Event 15713: seven name lines with no bullets are the bill, and the night's name is not an act.
+    @Test
+    fun `scrapePage bills an unbulleted list of names`() {
+        eventDescribed(
+            "low harvest saturday night",
+            """Chickenmilk dot com \r\nANTHEM \r\nshyweek\r\nghula \r\ndj stuart (ai_dubai)\r\nproductmusic\r\nsoumdcloud"""
+        ).artists.map { it.name } shouldContainExactly
+            listOf("Chickenmilk dot com", "ANTHEM", "shyweek", "ghula", "dj stuart", "productmusic", "soumdcloud")
+    }
+
+    // Event 15712: the acts after "With music from", without the secret one.
+    @Test
+    fun `scrapePage bills the acts after With music from`() {
+        eventDescribed(
+            "A Year for All",
+            """<p>Doors: 19:00<br>With music from Sally Dige, Matching Outfits and a secret act (tba soon)<br>Followed by open stage for karaoke</p>"""
+        ).artists.map { it.name } shouldContainExactly listOf("Sally Dige", "Matching Outfits")
+    }
+
     @Test
     fun `scrapePage keeps the title's act when the description holds only two bullets`() {
         val event = eventDescribed("Ben Morgan", """Mit dabei:\r\n- Tickets 20 €\r\n- Einlass 19 Uhr""")

@@ -89,9 +89,14 @@ class LabsaalCalendarScraper {
         ).forChildrenIf(childrensShowPhrase(title, null))
     }
 
-    /** The act of `Tanz in den Mai mit BLACKMAIL Berlin` or `Bigband Kameleon erstmals im LabSaal`; a `Kooperation mit` names a partner. */
+    /**
+     * The act of `Tanz in den Mai mit BLACKMAIL Berlin`, `Bigband Kameleon erstmals im LabSaal` or `Von Kishinev nach New York – Wedding
+     * Klezmer`; a `Kooperation mit` names a partner.
+     */
     private fun concertActs(title: String): List<ScrapedArtist> {
-        val act = FIRST_TIME.find(title)?.groupValues?.get(1) ?: BILLED_WITH.find(title)?.groupValues?.get(1)
+        val act =
+            FIRST_TIME.find(title)?.groupValues?.get(1) ?: BILLED_WITH.find(title)?.groupValues?.get(1)
+                ?: DASHED_ACT.find(title)?.groupValues?.get(1)
         return listOfNotNull(act?.takeUnless(::isNonArtistName)?.let { ScrapedArtist(name = it) })
     }
 
@@ -127,6 +132,9 @@ class LabsaalCalendarScraper {
 
         /** `Herbstkonzert mit dem Shanty Chor Reinickendorf`: the act opens with a capital. */
         private val BILLED_WITH = Regex("""^(?!(?i:kooperation)\b).+?\smit\s+(?:(?:dem|den|der)\s+)?(\p{Lu}.*)$""")
+
+        /** A run of up to four capitalised words after a spaced dash is the band (event 15710); a lowercase word is prose. */
+        private val DASHED_ACT = Regex("""^.+?\s[–-]\s+(\p{Lu}[\p{L}\p{N}'’.&-]*(?:\s+\p{Lu}[\p{L}\p{N}'’.&-]*){0,3})$""")
 
         private val FIRST_TIME = Regex("""^(.+?)\s+erstmals\s+im\s+LabSaal$""", RegexOption.IGNORE_CASE)
 

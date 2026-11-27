@@ -352,6 +352,15 @@ class EschschloraqueOverviewPageScraperTest {
     )
 
     @Test
+    fun `bills the act a plain night is titled after when its prose opens with the name in red (event 15715)`() {
+        val night = plainNight("Acid Washed", """<span class="redweb"><strong>Acid Washed </strong></span>( Paris / Berlin ) feeds on memories.""").single()
+        night.artists.map { it.name to it.role } shouldContainExactly listOf("Acid Washed" to ArtistRole.HEADLINER)
+        night.eventType shouldBe EventType.PARTY.name
+
+        plainNight("Electric Night", """<span class="redweb"><strong>MissVergnügen</strong></span> plays.""").single().artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `bills the DJ a plain night is titled after when its prose opens with the bio (events 15418 and 15419)`() {
         val duo = plainNight("M&amp;Ms — born in the club, raised among friends", "A DJ duo with their sights set on the stars.").single()
         duo.artists.map { it.name to it.role } shouldContainExactly listOf("M&Ms" to ArtistRole.DJ)

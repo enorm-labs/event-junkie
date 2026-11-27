@@ -31,6 +31,15 @@ class ShowfensterOverviewPageScraperTest {
         events.count { it.isForChildren } shouldBe 7
     }
 
+    // Event 15724: a show filed as `buehnenveranstaltung` names its performer before the dash, as comedy does.
+    @Test
+    fun `bills a show's performer from the title, but not a format`() {
+        assertSoftly {
+            events.first { it.title == "Bridge Markland - Faust in the Box" }.artists.map { it.name } shouldBe listOf("Bridge Markland")
+            events.first { it.title == "Improtheater - Klubbekanntschaften" }.artists.shouldBeEmpty()
+        }
+    }
+
     @Test
     fun `reads a concert in full`() {
         val event = on("2026-10-17", "Nadia Lafi")
