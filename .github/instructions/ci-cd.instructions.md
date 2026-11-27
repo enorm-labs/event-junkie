@@ -52,7 +52,7 @@ is the map and the traps.
   file: `workflow_run`, not `push` (a Dependabot push gets a read-only token and no secrets); not `pull_request_target` (a writable token plus `npm ci` on
   the branch's lockfile is arbitrary code execution); the App token is minted **below** `npm ci`, with `contents: write` only; the commit author is not
   `renovate[bot]`, so both bots abandon the branch rather than force-push the fix away — at the cost that the bump stops auto-rebasing.
-- `validate-python.yml` — `ruff check` + `ruff format --check` at `RUFF_VERSION` from the pinned image, then the four Python tests (#1189). `validate-scripts.yml`
+- `validate-python.yml` — `ruff check` + `ruff format --check` at `RUFF_VERSION` from the pinned image, then every `test_*.py` under `scripts/` and `deploy/`, one step each (#1189). `validate-scripts.yml`
   — ShellCheck the same way, shfmt at `SHFMT_VERSION` over every `.sh` but the cloud-init scripts (their bytes are `user_data`), plus the script test
   suites (`version-test.sh`, `version-deserved-test.sh`, `release-highlights-test.sh`). `validate-comments.yml` — `scripts/comment-lint.sh check`.
 - `validate-dockerfiles.yml` — hadolint over every tracked Dockerfile at `HADOLINT_VERSION`. `validate-migrations.yml` — squawk over the migrations a PR
