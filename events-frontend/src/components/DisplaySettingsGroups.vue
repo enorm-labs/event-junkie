@@ -6,7 +6,7 @@
  */
 import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Button } from '@/components/ui/button'
+import ToggleButton from '@/components/ToggleButton.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { saveTheme, storedTheme, type Theme } from '@/lib/theme'
 
@@ -71,18 +71,16 @@ const groups = computed(() => [
     <div v-for="group in groups" :key="group.id" class="flex flex-col gap-1.5">
       <span :id="group.id" class="text-meta text-muted-foreground">{{ group.label }}</span>
       <div :aria-labelledby="group.id" class="flex gap-1" role="group">
-        <Button
+        <ToggleButton
           v-for="option in group.options"
           :key="option.label"
-          :aria-pressed="option.pressed"
-          :variant="option.pressed ? 'default' : 'outline'"
+          :pressed="option.pressed"
           class="flex-1"
           size="sm"
-          type="button"
           @click="option.pick"
         >
           {{ option.label }}
-        </Button>
+        </ToggleButton>
       </div>
     </div>
   </div>

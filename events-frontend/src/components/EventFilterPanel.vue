@@ -6,9 +6,9 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
+import ToggleButton from '@/components/ToggleButton.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { activeFamilies as familiesShown, useFilterLists } from '@/composables/useFilterLists'
 import { useFilterOptions } from '@/composables/useFilterOptions'
@@ -287,36 +287,26 @@ function toggleFlag(key: 'free' | 'excludeSoldOut') {
         @keydown.enter="applyPrice"
       />
       <div class="flex gap-2">
-        <Button
+        <ToggleButton
           v-for="cap in PRICE_CAPS"
           :key="cap"
-          :aria-pressed="capActive(cap)"
-          :variant="capActive(cap) ? 'default' : 'outline'"
+          :pressed="capActive(cap)"
           size="sm"
-          type="button"
           @click="toggleCap(cap)"
         >
           {{ t('events.filters.upToPrice', { n: cap }) }}
-        </Button>
+        </ToggleButton>
       </div>
-      <Button
-        :aria-pressed="queryString('free') === 'true'"
-        :variant="queryString('free') === 'true' ? 'default' : 'outline'"
-        size="sm"
-        type="button"
-        @click="toggleFlag('free')"
-      >
+      <ToggleButton :pressed="queryString('free') === 'true'" size="sm" @click="toggleFlag('free')">
         {{ t('events.filters.freeOnly') }}
-      </Button>
-      <Button
-        :aria-pressed="queryString('excludeSoldOut') === 'true'"
-        :variant="queryString('excludeSoldOut') === 'true' ? 'default' : 'outline'"
+      </ToggleButton>
+      <ToggleButton
+        :pressed="queryString('excludeSoldOut') === 'true'"
         size="sm"
-        type="button"
         @click="toggleFlag('excludeSoldOut')"
       >
         {{ t('events.filters.hideSoldOut') }}
-      </Button>
+      </ToggleButton>
     </div>
     <p v-if="priceBounded" class="text-meta text-muted-foreground">
       {{ t('events.filters.priceHint') }}

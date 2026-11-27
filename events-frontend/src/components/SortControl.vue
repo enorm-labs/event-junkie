@@ -2,7 +2,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from '@lucide/vue'
 import { useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Button } from '@/components/ui/button'
+import ToggleButton from '@/components/ToggleButton.vue'
 
 export interface SortDirection {
   /** The `sort` query value, or `''` for an order that is the API's default. */
@@ -72,14 +72,12 @@ function press(option: SortOption) {
     <ArrowUpDown aria-hidden="true" class="size-4 shrink-0 text-muted-foreground" />
     <span :id="labelId" class="sr-only">{{ t('common.sort.label') }}</span>
     <div :aria-labelledby="labelId" class="flex gap-1" role="group">
-      <Button
+      <ToggleButton
         v-for="option in options"
         :key="option.value ?? option.directions[0].value"
         :aria-label="accessibleName(option)"
-        :aria-pressed="isActive(option)"
-        :variant="isActive(option) ? 'default' : 'outline'"
+        :pressed="isActive(option)"
         size="sm"
-        type="button"
         @click="press(option)"
       >
         {{ text(option) }}
@@ -91,7 +89,7 @@ function press(option: SortOption) {
           />
           <ArrowDown v-else aria-hidden="true" data-icon="inline-end" />
         </template>
-      </Button>
+      </ToggleButton>
     </div>
   </div>
 </template>

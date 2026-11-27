@@ -11,6 +11,7 @@ import ErrorLine from '@/components/ErrorLine.vue'
 import ListPage from '@/components/ListPage.vue'
 import NotificationEntry from '@/components/NotificationEntry.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
+import ToggleButton from '@/components/ToggleButton.vue'
 import { Button } from '@/components/ui/button'
 import {
   fetchNotificationPage,
@@ -152,24 +153,12 @@ onMounted(async () => {
       <p class="text-body text-muted-foreground">{{ t('account.notifications.page.intro') }}</p>
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div :aria-label="t('account.notifications.page.filter')" class="flex gap-2" role="group">
-          <Button
-            :aria-pressed="!unreadOnly"
-            :variant="unreadOnly ? 'outline' : 'default'"
-            size="sm"
-            type="button"
-            @click="setUnread(false)"
-          >
+          <ToggleButton :pressed="!unreadOnly" size="sm" @click="setUnread(false)">
             {{ t('account.notifications.page.all') }}
-          </Button>
-          <Button
-            :aria-pressed="unreadOnly"
-            :variant="unreadOnly ? 'default' : 'outline'"
-            size="sm"
-            type="button"
-            @click="setUnread(true)"
-          >
+          </ToggleButton>
+          <ToggleButton :pressed="unreadOnly" size="sm" @click="setUnread(true)">
             {{ t('account.notifications.page.unread') }}
-          </Button>
+          </ToggleButton>
         </div>
         <Button v-if="anyUnread" size="sm" type="button" variant="ghost" @click="readAll">
           {{ t('account.notifications.markAllRead') }}

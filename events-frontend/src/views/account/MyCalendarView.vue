@@ -14,6 +14,7 @@ import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import ListPage from '@/components/ListPage.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
+import ToggleButton from '@/components/ToggleButton.vue'
 import { Button } from '@/components/ui/button'
 import { fetchRsvpCalendar, fetchRsvpPast, fetchRsvpUpcoming } from '@/api/account'
 import { ApiError, describeError } from '@/api/client'
@@ -120,24 +121,12 @@ onMounted(async () => {
     <template #header>
       <p class="text-body text-muted-foreground">{{ t('account.rsvp.page.intro') }}</p>
       <div :aria-label="t('pageTitle.myCalendar')" class="flex gap-2" role="group">
-        <Button
-          :aria-pressed="!showCalendar"
-          :variant="showCalendar ? 'outline' : 'default'"
-          size="sm"
-          type="button"
-          @click="setView(false)"
-        >
+        <ToggleButton :pressed="!showCalendar" size="sm" @click="setView(false)">
           {{ t('account.rsvp.page.list') }}
-        </Button>
-        <Button
-          :aria-pressed="showCalendar"
-          :variant="showCalendar ? 'default' : 'outline'"
-          size="sm"
-          type="button"
-          @click="setView(true)"
-        >
+        </ToggleButton>
+        <ToggleButton :pressed="showCalendar" size="sm" @click="setView(true)">
           {{ t('account.rsvp.page.calendar') }}
-        </Button>
+        </ToggleButton>
       </div>
     </template>
 

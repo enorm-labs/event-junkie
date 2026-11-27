@@ -8,6 +8,7 @@
 import { X } from '@lucide/vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ToggleButton from '@/components/ToggleButton.vue'
 import { Button } from '@/components/ui/button'
 import type { Origin } from '@/composables/useLocation'
 import { formatDistance } from '@/lib/geo'
@@ -36,17 +37,15 @@ function distance(km: number): string {
 <template>
   <span>{{ t('map.near.from', { origin: originLabel }) }}</span>
   <div v-if="props.radiusKm" :aria-label="t('map.near.radius')" class="flex gap-1" role="group">
-    <Button
+    <ToggleButton
       v-for="radius in RADII"
       :key="radius"
-      :aria-pressed="radius === props.radiusKm"
-      :variant="radius === props.radiusKm ? 'default' : 'outline'"
+      :pressed="radius === props.radiusKm"
       size="sm"
-      type="button"
       @click="emit('select', radius)"
     >
       {{ distance(radius) }}
-    </Button>
+    </ToggleButton>
   </div>
   <Button size="sm" type="button" variant="ghost" @click="emit('clear')">
     <X aria-hidden="true" />

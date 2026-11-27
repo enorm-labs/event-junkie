@@ -13,6 +13,7 @@ import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import DateRangeInputs from '@/components/DateRangeInputs.vue'
 import EventFilterPanel from '@/components/EventFilterPanel.vue'
 import FilterSearchRow from '@/components/FilterSearchRow.vue'
+import ToggleButton from '@/components/ToggleButton.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { shareFilterLists } from '@/composables/useFilterLists'
 import { useNarrowViewport } from '@/composables/useNarrowViewport'
@@ -190,40 +191,29 @@ onMounted(() => {
       <DateRangeInputs v-if="!narrow" />
 
       <!-- On now first: the time buttons widen from left to right. -->
-      <Button
-        v-if="showOnNow"
-        :aria-pressed="onNow"
-        :variant="onNow ? 'default' : 'outline'"
-        size="sm"
-        type="button"
-        @click="toggleOnNow"
-      >
+      <ToggleButton v-if="showOnNow" :pressed="onNow" size="sm" @click="toggleOnNow">
         {{ t('dateRange.onNow') }}
-      </Button>
+      </ToggleButton>
       <!-- Shortcuts that set the same from/to the inputs do, so a preset is as shareable. -->
-      <Button
+      <ToggleButton
         v-for="preset in presets"
         :key="preset.key"
-        :aria-pressed="isPresetActive(preset.key)"
-        :variant="isPresetActive(preset.key) ? 'default' : 'outline'"
+        :pressed="isPresetActive(preset.key)"
         size="sm"
-        type="button"
         @click="togglePreset(preset.key, preset.range())"
       >
         {{ t(preset.key) }}
-      </Button>
+      </ToggleButton>
       <template v-for="festival in festivals" :key="festival.slug">
-        <Button
+        <ToggleButton
           v-if="festival.slug"
-          :aria-pressed="festivalOn(festival.slug)"
-          :variant="festivalOn(festival.slug) ? 'default' : 'outline'"
+          :pressed="festivalOn(festival.slug)"
           data-testid="festival-chip"
           size="sm"
-          type="button"
           @click="toggleFestival(festival.slug)"
         >
           {{ festival.name }}
-        </Button>
+        </ToggleButton>
       </template>
     </div>
 
