@@ -1,6 +1,7 @@
 package de.norm.events.slug
 
 import com.github.slugify.Slugify
+import de.norm.events.common.withoutMarks
 import java.text.Normalizer
 import java.util.Locale
 
@@ -45,13 +46,12 @@ object SlugGenerator {
     private fun withoutMarks(input: String): String {
         val lower = Normalizer.normalize(input.lowercase(Locale.ROOT), Normalizer.Form.NFC)
         val marked = MARKED_CYRILLIC.entries.fold(lower) { text, (letter, latin) -> text.replace(letter, latin) }
-        return Normalizer.normalize(marked, Normalizer.Form.NFKD).replace(MARKS, "")
+        return marked.withoutMarks(Normalizer.Form.NFKD)
     }
 }
 
 private val TRANSLITERATED_SCRIPT = Regex("[\\p{IsCyrillic}\\p{IsGreek}]")
 private val LATIN_LETTER = Regex("\\p{IsLatin}")
-private val MARKS = Regex("\\p{M}+")
 
 /** Slugify keeps `_` as a word character, so `DJ_Dave` slugged to `dj_dave`. As a space it becomes the one separator a slug has. */
 private val UNDERSCORE: Map<String, String> = mapOf("_" to " ")

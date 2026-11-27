@@ -2,6 +2,7 @@
 
 package de.norm.events.scraper
 
+import de.norm.events.common.withoutMarks
 import de.norm.events.genretag.isGenreLabel
 import java.text.Normalizer
 
@@ -145,9 +146,9 @@ private val PROSE_END = Regex("""\s(?:in|im|mit|für|von|of|the|for|to|at|on|aus
 
 /**
  * [KNOWN_SINGLE_ACTS] without accents: venues spell `Maël & Jonas` as `Maēl`, `Mael` or `Maël`
- * (event 2386). Lazy because [COMBINING_MARKS] is declared further down the file.
+ * (event 2386).
  */
-private val KNOWN_SINGLE_ACTS_FOLDED: Set<String> by lazy { KNOWN_SINGLE_ACTS.mapTo(HashSet(), ::withoutAccents) }
+private val KNOWN_SINGLE_ACTS_FOLDED: Set<String> = KNOWN_SINGLE_ACTS.mapTo(HashSet()) { it.withoutMarks() }
 
 /**
  * True when [name] is a [KNOWN_SINGLE_ACTS] entry, conjunctions normalized to `&` and accents
@@ -158,9 +159,8 @@ private val KNOWN_SINGLE_ACTS_FOLDED: Set<String> by lazy { KNOWN_SINGLE_ACTS.ma
 private fun isKnownSingleAct(name: String): Boolean = knownBillingKey(name) in KNOWN_SINGLE_ACTS_FOLDED
 
 /** [KNOWN_SHARED_SURNAME_PAIRS] with its keys folded as [KNOWN_SINGLE_ACTS_FOLDED] folds its entries. */
-private val KNOWN_SHARED_SURNAME_PAIRS_FOLDED: Map<String, List<String>> by lazy {
-    KNOWN_SHARED_SURNAME_PAIRS.mapKeys { (billing, _) -> withoutAccents(billing) }
-}
+private val KNOWN_SHARED_SURNAME_PAIRS_FOLDED: Map<String, List<String>> =
+    KNOWN_SHARED_SURNAME_PAIRS.mapKeys { (billing, _) -> billing.withoutMarks() }
 
 /**
  * The acts a name-by-name list settles for [name]: [name] alone for a [KNOWN_SINGLE_ACTS] entry, the
@@ -171,9 +171,12 @@ private val KNOWN_SHARED_SURNAME_PAIRS_FOLDED: Map<String, List<String>> by lazy
 fun knownBillingActs(name: String): List<String>? = if (isKnownSingleAct(name)) listOf(name) else KNOWN_SHARED_SURNAME_PAIRS_FOLDED[knownBillingKey(name)]
 
 /** [name] in the form the name-by-name lists are keyed in: trimmed, conjunctions as `&`, lower case, accents stripped. */
-private fun knownBillingKey(name: String): String = withoutAccents(name.trim().replace(CONJUNCTION_SEPARATOR, " & ").lowercase())
-
-private fun withoutAccents(text: String): String = Normalizer.normalize(text, Normalizer.Form.NFD).replace(COMBINING_MARKS, "")
+private fun knownBillingKey(name: String): String =
+    name
+        .trim()
+        .replace(CONJUNCTION_SEPARATOR, " & ")
+        .lowercase()
+        .withoutMarks()
 
 /**
  * The back-to-back marker joining two DJs into one slot. Padding keeps it off a name that merely
@@ -430,8 +433,6 @@ private fun bulletCoBill(title: String): List<String>? {
 private val TYPOGRAPHIC_FORMS =
     mapOf('\u2019' to '\'', '\u2018' to '\'', '\u02bc' to '\'', '\u201c' to '"', '\u201d' to '"', '\u2013' to '-', '\u2014' to '-', '\u2212' to '-')
 
-private val COMBINING_MARKS = Regex("""\p{M}+""")
-
 /** Everything a phrase drops: punctuation, but never a space and never the `&` that joins a name. */
 private val NOT_PHRASE_CHARACTER = Regex("""[^\p{L}\p{N}&\s]""")
 
@@ -449,9 +450,10 @@ private val NOT_PHRASE_CHARACTER = Regex("""[^\p{L}\p{N}&\s]""")
  * `Yes I'm Very Tired Now` one string, which is what protects the band.
  */
 private fun phraseForm(text: String): String =
-    Normalizer
-        .normalize(text.map { TYPOGRAPHIC_FORMS[it] ?: it }.joinToString(""), Normalizer.Form.NFKD)
-        .replace(COMBINING_MARKS, "")
+    text
+        .map { TYPOGRAPHIC_FORMS[it] ?: it }
+        .joinToString("")
+        .withoutMarks(Normalizer.Form.NFKD)
         .lowercase()
         .replace(NOT_PHRASE_CHARACTER, "")
         .replace(WHITESPACE, " ")

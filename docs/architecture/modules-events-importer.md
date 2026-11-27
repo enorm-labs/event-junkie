@@ -86,8 +86,10 @@ flowchart TD
     scraper --> genretag
     scraper --> licence
     scraper --> slug
+    slug --> common
     transit --> common
     translation --> ai
+    translation --> common
     translation --> event
     venue --> common
     venue --> slug

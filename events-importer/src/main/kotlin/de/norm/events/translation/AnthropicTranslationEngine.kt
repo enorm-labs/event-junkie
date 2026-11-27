@@ -3,6 +3,7 @@ package de.norm.events.translation
 import de.norm.events.ai.AnthropicClient
 import de.norm.events.ai.AnthropicSettings
 import de.norm.events.common.runCatchingCancellable
+import de.norm.events.common.withoutMarks
 import de.norm.events.event.DescriptionLanguage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
@@ -155,16 +156,14 @@ class AnthropicTranslationEngine(
         /** A short name appears inside ordinary words, so checking for it would reject good output. */
         const val MIN_PROTECTED_TERM_LENGTH = 4
 
-        private val COMBINING_MARKS = Regex("\\p{Mn}+")
         private val APOSTROPHES = Regex("[\u2018\u2019\u201B\u02BC\u00B4`]")
         private val QUOTES = Regex("[\u201C\u201D\u201E\u201F\u00AB\u00BB]")
         private val WHITESPACE = Regex("\\s+")
 
         /** Case, accents, apostrophe and quote shapes, and line breaks: the forms a kept name changes in. */
         fun normalise(text: String): String =
-            Normalizer
-                .normalize(text, Normalizer.Form.NFKD)
-                .replace(COMBINING_MARKS, "")
+            text
+                .withoutMarks(Normalizer.Form.NFKD)
                 .replace(APOSTROPHES, "'")
                 .replace(QUOTES, "\"")
                 .replace(WHITESPACE, " ")

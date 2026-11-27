@@ -1,6 +1,7 @@
 package de.norm.events.musicbrainz
 
 import de.norm.events.artist.MusicBrainzMatch
+import de.norm.events.common.withoutMarks
 import java.text.Normalizer
 
 /**
@@ -42,7 +43,6 @@ enum class CandidateNameMatch {
  */
 object MusicBrainzMatcher {
     private const val GERMANY = "DE"
-    private val COMBINING_MARKS = Regex("\\p{M}+")
 
     // Runs on collapsed, trimmed text, so a name's last word is never a conjunction however it is padded.
     // The lookahead leaves the space after a conjunction for the next one: "a und and b" is "a & & b".
@@ -58,9 +58,8 @@ object MusicBrainzMatcher {
      * `Simon & Garfunkel` and `Simon and Garfunkel`.
      */
     fun fold(name: String): String =
-        Normalizer
-            .normalize(name, Normalizer.Form.NFKD)
-            .replace(COMBINING_MARKS, "")
+        name
+            .withoutMarks(Normalizer.Form.NFKD)
             .lowercase()
             .replace("ß", "ss")
             .replace('ς', 'σ')

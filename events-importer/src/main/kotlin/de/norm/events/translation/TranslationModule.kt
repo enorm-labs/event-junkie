@@ -8,7 +8,7 @@ import org.springframework.modulith.ApplicationModule
  * Holds the engine contract and its implementations, and nothing about when a translation is
  * allowed — that question belongs to the licence and the scraper (ADR-026). It reads `event` only
  * for [de.norm.events.event.DescriptionLanguage], the pair of languages both sides name.
- * `ai` supplies the Anthropic client (ADR-050).
+ * `ai` supplies the Anthropic client (ADR-050), and `common` the accent stripping the output check shares.
  */
-@ApplicationModule(allowedDependencies = ["event", "ai"])
+@ApplicationModule(allowedDependencies = ["event", "ai", "common"])
 class TranslationModule
