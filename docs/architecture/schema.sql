@@ -276,21 +276,6 @@ CREATE TABLE accounts.account (
 );
 
 --
--- Name: event_report; Type: TABLE; Schema: accounts; Owner: -
---
-
-CREATE TABLE accounts.event_report (
-    account_id uuid NOT NULL,
-    event_id bigint NOT NULL,
-    problems text[] NOT NULL,
-    note text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT event_report_note_check CHECK (((length(note) >= 1) AND (length(note) <= 500))),
-    CONSTRAINT event_report_problems_check CHECK ((((cardinality(problems) >= 1) AND (cardinality(problems) <= 17)) AND (problems <@ ARRAY['ARTISTS'::text, 'PROMOTER'::text, 'GENRE'::text, 'EVENT_TYPE'::text, 'FEATURES'::text, 'DATE_TIME'::text, 'TEXT'::text, 'STATUS'::text, 'PRICE_TICKETS'::text, 'NOT_AN_EVENT'::text, 'ON_IMAGE'::text, 'TITLE'::text, 'DESCRIPTION'::text, 'TYPE_GENRE'::text, 'DUPLICATE'::text, 'OTHER'::text, 'QUESTION'::text])))
-);
-
---
 -- Name: follow; Type: TABLE; Schema: accounts; Owner: -
 --
 
@@ -1186,13 +1171,6 @@ ALTER TABLE ONLY accounts.account
     ADD CONSTRAINT account_pkey PRIMARY KEY (id);
 
 --
--- Name: event_report event_report_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
---
-
-ALTER TABLE ONLY accounts.event_report
-    ADD CONSTRAINT event_report_pkey PRIMARY KEY (account_id, event_id);
-
---
 -- Name: follow follow_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
 --
 
@@ -1639,18 +1617,6 @@ CREATE UNIQUE INDEX account_email_key ON accounts.account USING btree (lower(ema
 CREATE INDEX account_last_sign_in_idx ON accounts.account USING btree (last_sign_in_at);
 
 --
--- Name: event_report_event_idx; Type: INDEX; Schema: accounts; Owner: -
---
-
-CREATE INDEX event_report_event_idx ON accounts.event_report USING btree (event_id);
-
---
--- Name: event_report_updated_idx; Type: INDEX; Schema: accounts; Owner: -
---
-
-CREATE INDEX event_report_updated_idx ON accounts.event_report USING btree (updated_at);
-
---
 -- Name: follow_entity_key; Type: INDEX; Schema: accounts; Owner: -
 --
 
@@ -2051,13 +2017,6 @@ CREATE TRIGGER trg_promoter_updated_at BEFORE UPDATE ON events.promoter FOR EACH
 --
 
 CREATE TRIGGER trg_venue_updated_at BEFORE UPDATE ON events.venue FOR EACH ROW EXECUTE FUNCTION events.set_updated_at();
-
---
--- Name: event_report event_report_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
---
-
-ALTER TABLE ONLY accounts.event_report
-    ADD CONSTRAINT event_report_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
 
 --
 -- Name: follow follow_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
