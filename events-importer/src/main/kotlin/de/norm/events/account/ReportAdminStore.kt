@@ -57,7 +57,7 @@ data class ReportRow(
 )
 
 /**
- * The open problem reports of `accounts.report` (V288) and the `can_report` allowlist (#4399, #5603). The BFF writes
+ * The open problem reports of `accounts.report` (V288) and the `can_report` flag (#4399, #5603, #5604). The BFF writes
  * the reports; resolving one here deletes it. Qualified names, because the connection's `search_path` is `events`.
  */
 @Repository
@@ -94,7 +94,19 @@ class ReportAdminStore(
             .fetch()
             .awaitRowsUpdated()
 
-    /** Sets the allowlist flag on the account with this address. Answers its id, or null when no account has it. */
+    /** Lifts or restores the cap on open reports for the account with this address. Answers its id, or null when no account has it. */
+    suspend fun setReportCapExempt(
+        email: String,
+        exempt: Boolean
+    ): UUID? =
+        databaseClient
+            .sql("UPDATE accounts.account SET report_cap_exempt = :exempt WHERE lower(email) = lower(:email) RETURNING id")
+            .bind("exempt", exempt)
+            .bind("email", email.trim())
+            .map { row, _ -> row.required("id", UUID::class.java) }
+            .awaitOneOrNull()
+
+    /** Sets the report flag on the account with this address. Answers its id, or null when no account has it. */
     suspend fun setCanReport(
         email: String,
         enabled: Boolean

@@ -119,7 +119,35 @@ class ReportAdminControllerTest : BaseControllerTest() {
     }
 
     @Test
-    fun `the allowlist is set by address, and an unknown address is a 404`() {
+    fun `the cap exemption is set by address, the account list shows it, and an unknown address is a 404`() {
+        fun put(
+            email: String,
+            exempt: Boolean
+        ) = webTestClient
+            .put()
+            .uri("/api/admin/accounts/report-cap-exempt")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(ReportCapRequest(email, exempt))
+            .exchange()
+
+        put(" ONE@example.de ", true).expectStatus().isNoContent
+        put("nobody@example.de", true).expectStatus().isNotFound
+
+        runBlocking { count("SELECT count(*) AS id FROM accounts.account WHERE report_cap_exempt AND email = 'one@example.de'") } shouldBe 1L
+        webTestClient
+            .get()
+            .uri("/api/admin/accounts")
+            .exchange()
+            .expectBody()
+            .jsonPath("$[?(@.reportCapExempt == true)].email")
+            .isEqualTo(listOf("one@example.de"))
+
+        put("one@example.de", false).expectStatus().isNoContent
+        runBlocking { count("SELECT count(*) AS id FROM accounts.account WHERE report_cap_exempt") } shouldBe 0L
+    }
+
+    @Test
+    fun `the report flag is set by address, and an unknown address is a 404`() {
         fun put(
             email: String,
             enabled: Boolean

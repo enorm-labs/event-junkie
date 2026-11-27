@@ -203,7 +203,7 @@ All verdicts go into `temp/manual-venues-<YYYY-MM-DD>.md`, in the same shape for
 [`/admin-review` Step 8](admin-review.prompt.md)'s `CREATE` rule, then `PUT /api/admin/venues/{id}/programme-checked`. The same word marks a
 NOTHING MISSING venue checked. A venue whose proposals are not entered stays unchecked.
 
-**The problem reports** (#4399). Print one line, `<n> open problem reports`: what allowed accounts reported on event pages and nobody resolved. One or
+**The problem reports** (#4399). Print one line, `<n> open problem reports`: what accounts reported on the detail pages and nobody resolved. One or
 more is ACT: "run `/fix-events`", which reads the queue when it gets no argument.
 
 ```sh

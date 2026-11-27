@@ -542,7 +542,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         <p class="text-meta text-muted-foreground">{{ t('events.detail.featuresNote') }}</p>
       </section>
 
-      <!-- For the accounts the operator allows (#4399); everyone else has the mail line at the end. -->
+      <!-- For a signed-in account (#4399, #5604); a signed-out visitor has the mail line at the end. -->
       <ReportProblem
         v-if="event.slug"
         :slug="event.slug"

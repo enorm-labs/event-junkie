@@ -20,9 +20,11 @@ import java.time.Instant
 private val logger = KotlinLogging.logger {}
 
 /**
- * "Report a problem" on an event, act, promoter or venue page (#4399, #5603), for the accounts the operator allows
- * ([Account.canReport]). A report is stored and nothing more: the operator reads the queue through the importer's
- * admin API and resolves it there. The path names the subject as its page does: `/events/{slug}`, `/venues/{slug}`.
+ * "Report a problem" on an event, act, promoter or venue page (#4399, #5603), for every account the operator has not
+ * withdrawn it from ([Account.canReport], #5604), up to [MAX_OPEN] open reports each unless exempt
+ * ([Account.reportCapExempt]). A report is stored and nothing
+ * more: the operator reads the queue through the importer's admin API and resolves it there. The path names the
+ * subject as its page does: `/events/{slug}`, `/venues/{slug}`.
  */
 @RestController
 @RequestMapping("/api/me/reports")
@@ -42,7 +44,8 @@ class ReportController(
     @Operation(
         summary = "Reports a problem with an event, act, promoter or venue, or replaces the account's earlier report on it",
         description =
-            "Only for accounts the operator allows. `kind` is events, artists, promoters or venues. At least one " +
+            "Not for an account the operator withdrew it from. At most 200 open reports per account; a new one beyond " +
+                "that is a 429. `kind` is events, artists, promoters or venues. At least one " +
                 "problem the kind allows, other than ON_IMAGE, or a note of at most 500 characters. A report with a note " +
                 "and no problem is stored as OTHER."
     )
@@ -58,6 +61,10 @@ class ReportController(
         if (note != null && note.length > MAX_NOTE) refuse(HttpStatus.BAD_REQUEST, "A note of at most $MAX_NOTE characters")
         val problems = problems(reportKind, request.problems, note != null)
         val subject = reports.subject(reportKind, slug) ?: refuse(HttpStatus.NOT_FOUND, "No such ${reportKind.tag}")
+        if (!account.reportCapExempt && !reports.exists(account.id, subject) && reports.count(account.id) >= MAX_OPEN) {
+            record(ReportAction.REFUSED, reportKind, emptyList())
+            refuse(HttpStatus.TOO_MANY_REQUESTS, "At most $MAX_OPEN open reports")
+        }
         val replaced = reports.save(account.id, subject, problems, note, clock.instant())
         record(if (replaced) ReportAction.REPLACE else ReportAction.STORE, reportKind, problems)
         return ResponseEntity.noContent().build()
@@ -86,13 +93,16 @@ class ReportController(
         problems: List<ReportProblem>
     ) {
         metrics.record(action, kind)
-        if (action != ReportAction.WITHDRAW) metrics.record(problems)
+        if (action == ReportAction.STORE || action == ReportAction.REPLACE) metrics.record(problems)
         // The problem names come from a closed list, so they are safe in the line; the note never is.
         logger.info { "Problem report (${kind.tag}) ${action.tag}" + if (problems.isEmpty()) "" else ": ${problems.joinToString()}" }
     }
 
     private companion object {
         const val MAX_NOTE = 500
+
+        /** Open reports per account (#5604): above the operator's largest run, which a cap of 30 stopped (`775e5bdac`). */
+        const val MAX_OPEN = 200L
 
         fun kind(path: String): ReportKind = ReportKind.ofPath(path) ?: refuse(HttpStatus.NOT_FOUND, "Nothing to report at $path")
 

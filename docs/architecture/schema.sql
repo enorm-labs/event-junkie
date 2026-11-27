@@ -271,7 +271,8 @@ CREATE TABLE accounts.account (
     passkey_user_handle bytea,
     change_push boolean DEFAULT true NOT NULL,
     reminder_push boolean DEFAULT true NOT NULL,
-    can_report boolean DEFAULT false NOT NULL
+    can_report boolean DEFAULT true NOT NULL,
+    report_cap_exempt boolean DEFAULT false NOT NULL
 );
 
 --

@@ -1,0 +1,32 @@
+[
+  {
+    "email": "operator-masked@example.de",
+    "locale": "de",
+    "createdAt": "2026-10-01T10:00:00Z",
+    "lastSignInAt": "2026-11-27T08:00:00Z",
+    "canReport": true,
+    "reportCapExempt": true,
+    "follows": 12,
+    "openReports": 3
+  },
+  {
+    "email": "friend-masked@example.de",
+    "locale": "en",
+    "createdAt": "2026-10-20T10:00:00Z",
+    "lastSignInAt": "2026-11-26T19:00:00Z",
+    "canReport": true,
+    "reportCapExempt": false,
+    "follows": 4,
+    "openReports": 1
+  },
+  {
+    "email": "visitor-masked@example.de",
+    "locale": "de",
+    "createdAt": "2026-11-20T10:00:00Z",
+    "lastSignInAt": "2026-11-20T10:00:00Z",
+    "canReport": true,
+    "reportCapExempt": false,
+    "follows": 0,
+    "openReports": 0
+  }
+]

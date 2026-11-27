@@ -13,7 +13,7 @@ import { useSession } from './useSession'
 /**
  * The account's open problem reports (#4399, #5603), by `reportKey`, so a detail page says "Edit
  * report" and the form pre-fills. Module state and one request per visit, as `useRsvps` does. An account the operator
- * has not allowed asks nothing.
+ * withdrew reporting from (#5604) asks nothing.
  */
 const reports = ref<Record<string, OpenReport>>({})
 let loaded: Promise<void> | null = null

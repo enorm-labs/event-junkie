@@ -170,6 +170,7 @@
     "thanks": "Danke! Wir prüfen Meldungen innerhalb weniger Tage. Bis dahin kannst du deine hier ändern oder zurückziehen.",
     "failed": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
     "forbidden": "Dieses Konto kann keine Probleme melden.",
+    "tooMany": "Du hast 200 offene Meldungen. Zieh eine zurück oder warte, bis wir einige geprüft haben.",
     "event": {
       "notePlaceholder": "z. B. „Genre ist Techno“ oder „Ist das wirklich eine Party?“",
       "problems": {

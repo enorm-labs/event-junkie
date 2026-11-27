@@ -7,6 +7,7 @@
 import { onMounted, ref } from 'vue'
 
 import {
+  fetchReporters,
   fetchReports,
   KIND_LABELS,
   PROBLEM_LABELS,
@@ -30,6 +31,9 @@ import { errorText } from '@/lib/errorText'
 const origin = publicOrigin(import.meta.env.MODE)
 
 const { data: subjects, loading, error, reload: load } = useLoad(fetchReports, [])
+const { data: reporters, reload: loadReporters } = useLoad(fetchReporters, [])
+/** The accounts named on the line above the table; the rest are summed. */
+const SHOWN = 3
 const busy = ref(false)
 
 async function resolve(subject: ReportedSubject) {
@@ -37,7 +41,7 @@ async function resolve(subject: ReportedSubject) {
   error.value = null
   try {
     await resolveReports(subject)
-    await load()
+    await Promise.all([load(), loadReporters()])
   } catch (e) {
     error.value = errorText(e)
   } finally {
@@ -53,13 +57,22 @@ const notes = (subject: ReportedSubject) =>
 const source = (subject: ReportedSubject) =>
   subject.sourceSlug ?? (subject.kind === 'events' ? 'manual' : '—')
 
-onMounted(load)
+onMounted(() => Promise.all([load(), loadReporters()]))
 </script>
 
 <template>
   <p class="mb-4 text-muted-foreground">
     Problems reported on event, act, promoter and venue pages. Resolve deletes a page's reports: do
     it once the fix is live or the verdict is final.
+  </p>
+
+  <p v-if="reporters.length" class="mb-4" data-testid="reporters">
+    Open reports per account:
+    <template v-for="(reporter, index) in reporters.slice(0, SHOWN)" :key="reporter.email"
+      ><template v-if="index">, </template>{{ reporter.email }} ({{
+        reporter.openReports
+      }})</template
+    ><template v-if="reporters.length > SHOWN">, and {{ reporters.length - SHOWN }} more</template>
   </p>
 
   <p v-if="error" class="text-destructive" role="alert">{{ error }}</p>

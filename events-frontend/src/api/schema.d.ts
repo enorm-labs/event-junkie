@@ -53,7 +53,7 @@ export interface paths {
         get?: never;
         /**
          * Reports a problem with an event, act, promoter or venue, or replaces the account's earlier report on it
-         * @description Only for accounts the operator allows. `kind` is events, artists, promoters or venues. At least one problem the kind allows, other than ON_IMAGE, or a note of at most 500 characters. A report with a note and no problem is stored as OTHER.
+         * @description Not for an account the operator withdrew it from. At most 200 open reports per account; a new one beyond that is a 429. `kind` is events, artists, promoters or venues. At least one problem the kind allows, other than ON_IMAGE, or a note of at most 500 characters. A report with a note and no problem is stored as OTHER.
          */
         put: operations["save"];
         post?: never;

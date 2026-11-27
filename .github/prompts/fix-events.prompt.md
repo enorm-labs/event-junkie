@@ -33,7 +33,7 @@ that line is the note. With no argument, Step 0 builds the same list from the qu
 
 ## Step 0 — Read the queue (no argument only)
 
-Accounts the operator allows report problems on event, act, promoter and venue pages (#4399, #5603), and the importer serves them. It needs the production forward, as
+Every signed-in account can report problems on event, act, promoter and venue pages (#4399, #5603, #5604), and the importer serves them. It needs the production forward, as
 [`/worklist`](worklist.prompt.md) does: `scripts/ej.sh status`. If the forward is down, say so and stop.
 
 ```sh

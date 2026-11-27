@@ -170,6 +170,7 @@
     "thanks": "Thanks! We check reports within a few days. You can change or withdraw yours here until then.",
     "failed": "That did not work. Please try again.",
     "forbidden": "This account cannot report problems.",
+    "tooMany": "You have 200 open reports. Withdraw one, or wait until we have checked some.",
     "event": {
       "notePlaceholder": "e.g. “Genre is techno” or “Is this really a party?”",
       "problems": {
