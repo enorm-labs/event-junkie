@@ -224,7 +224,9 @@ for p in 0 1 2; do curl -s "http://localhost:28081/api/admin/event-sources?size=
          ((now - (.lastSuccessAt | sub("\\.[0-9]+"; "") | fromdateiso8601)) / 86400 | floor | "\(.)d"), .url, .lastError] | @tsv'
 ```
 
-Fetch each `url` once, with the `USER_AGENT` of `scripts/musicbrainz-match.py`, and read the page against `lastError`. Then one verdict per source:
+Fetch each `url` once with `curl -4`, with the `USER_AGENT` of `scripts/musicbrainz-match.py`, and read the page against `lastError`. The pods
+have no IPv6 address, so only the IPv4 answer says what the importer gets. A Mac often reaches a site over IPv6: `giri` answered 200 over IPv6
+while its IPv4 host refused the TLS handshake (#5366). Then one verdict per source:
 
 - **Enabled, more than 4 days since its last success, and the site is still down**: ACT, "disable `<slug>` on both clusters and restart each
   importer", as #4175 did. `ej-importer-stale` fires on it every day until then. Name the source's issue, or draft one in the form of #4751.
@@ -233,8 +235,8 @@ Fetch each `url` once, with the `USER_AGENT` of `scripts/musicbrainz-match.py`, 
 - **Enabled, 4 days or fewer**: KNOWN, naming its issue. It can still recover on its own.
 - **Disabled, and the page still matches the error**: KNOWN, naming its issue. A disabled source publishes no gauge, so this line is the only
   watch on its site.
-- **Disabled, and the cause is gone**, such as the `#events` section back for MAAYA: ACT, "re-enable `<slug>` and force an import", with the
-  commands from its issue. A page that changed, but not to a programme, is one line under Data.
+- **Disabled, and the cause is gone**, such as the `#events` section back for MAAYA, or `giri` completing the IPv4 handshake: ACT, "re-enable
+  `<slug>` and force an import", with the commands from its issue. A page that changed, but not to a programme, is one line under Data.
 
 A source disabled on purpose, such as a takedown, keeps its last status and does not appear.
 
