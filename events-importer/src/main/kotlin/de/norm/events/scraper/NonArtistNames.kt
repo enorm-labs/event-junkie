@@ -2,8 +2,8 @@
 
 package de.norm.events.scraper
 
+import de.norm.events.common.withoutMarks
 import de.norm.events.slug.SlugGenerator
-import java.text.Normalizer
 
 // Names that are not performers: placeholders, role and slot labels, event and series names,
 // and the curated denylist. Part of the artist-name rules in ArtistNameMapping.kt.
@@ -294,9 +294,6 @@ private val TRAILING_EDITION = Regex("""\s+(?:n[°º]\s*|no\.?\s*|vol\.?\s*)?(?:
  */
 private val TRAILING_CITY = Regex("""\s+berlin$""")
 
-/** Combining diacritical marks left by NFD normalization; stripped so accents can't defeat a denylist match. */
-private val DIACRITICS = Regex("""\p{Mn}+""")
-
 /**
  * Record labels and promoters that lead a title with their own name for a showcase, where every
  * segment names a part of the programme: `"aufnahme + wiedergabe - Fünfzehn Jahre + Zweiter
@@ -395,9 +392,11 @@ internal fun isDenylistedNonArtist(name: String): Boolean = denylistKey(name) in
 
 /** [name] as the denylists spell their entries, with a trailing edition number or `Berlin` dropped. */
 private fun denylistKey(name: String): String =
-    Normalizer
-        .normalize(name.trim().replace(WHITESPACE, " ").lowercase(), Normalizer.Form.NFD)
-        .replace(DIACRITICS, "")
+    name
+        .trim()
+        .replace(WHITESPACE, " ")
+        .lowercase()
+        .withoutMarks()
         .replace(TRAILING_EDITION, "")
         .replace(TRAILING_CITY, "")
         .trim()

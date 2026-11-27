@@ -6,6 +6,7 @@ import de.norm.events.artist.ArtistSlugAliasStore
 import de.norm.events.artist.MusicBrainzMatch
 import de.norm.events.artist.artistSlugFor
 import de.norm.events.artist.canonicalArtistName
+import de.norm.events.common.withoutMarks
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventArtistEntity
 import de.norm.events.event.EventArtistRepository
@@ -25,7 +26,6 @@ import de.norm.events.scraper.stripTitleStatusMarker
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Component
-import java.text.Normalizer
 
 private val logger = KotlinLogging.logger {}
 
@@ -389,8 +389,4 @@ private fun EventArtistEntity.onRowOf(
 private fun differsOnlyByAccents(
     a: String,
     b: String
-): Boolean = !a.equals(b, ignoreCase = true) && stripAccents(a).equals(stripAccents(b), ignoreCase = true)
-
-private fun stripAccents(s: String): String = Normalizer.normalize(s, Normalizer.Form.NFD).replace(COMBINING_MARKS, "")
-
-private val COMBINING_MARKS = Regex("\\p{M}+")
+): Boolean = !a.equals(b, ignoreCase = true) && a.withoutMarks().equals(b.withoutMarks(), ignoreCase = true)
