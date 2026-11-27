@@ -133,18 +133,24 @@ describe.each(['en', 'de'] as const)('PromoterDetailView logo in %s', (locale) =
 
 describe('PromoterDetailView kind', () => {
   it.each([
-    ['en', 'collective', 'Collective · Website'],
-    ['en', 'label', 'Label · Website'],
-    ['en', 'party', 'Party series · Website'],
-    ['de', 'collective', 'Kollektiv · Website'],
-    ['de', 'label', 'Label · Website'],
-    ['de', 'party', 'Partyreihe · Website'],
-  ] as const)('opens the link line in %s for a %s: "%s"', async (locale, kind, line) => {
-    const view = await mountPromoter({ ...concerts, kind }, locale)
+    ['en', 'collective', 'Collective'],
+    ['en', 'label', 'Label'],
+    ['en', 'party', 'Party series'],
+    ['de', 'collective', 'Kollektiv'],
+    ['de', 'label', 'Label'],
+    ['de', 'party', 'Partyreihe'],
+  ] as const)(
+    'opens the link line in %s for a %s with "%s", then the website',
+    async (locale, kind, line) => {
+      const view = await mountPromoter({ ...concerts, kind }, locale)
 
-    const links = view.get('a[href="https://www.36-tickets.de/"]').element.parentElement!
-    expect(links.textContent?.replace(/\s+/g, ' ').trim()).toBe(line)
-  })
+      const links = view.get('a[href="https://www.36-tickets.de/"]').element.parentElement!
+      expect(Array.from(links.children, (child) => child.textContent?.trim())).toEqual([
+        line,
+        'Website',
+      ])
+    },
+  )
 
   it.each(['en', 'de'] as const)(
     'links the kind in %s to the promoters of that kind',

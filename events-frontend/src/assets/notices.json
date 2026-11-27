@@ -1,5 +1,5 @@
 {
-  "componentCount": 380,
+  "componentCount": 381,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -2486,6 +2486,24 @@
       ]
     },
     {
+      "license": "CC0-1.0",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "components": [
+        {
+          "name": "org.hdrhistogram:HdrHistogram",
+          "version": "2.2.2",
+          "url": "http://hdrhistogram.github.io/HdrHistogram/",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "simple-icons",
+          "version": "16.38.0",
+          "url": "https://github.com/simple-icons/simple-icons",
+          "ecosystem": "frontend"
+        }
+      ]
+    },
+    {
       "license": "LGPL-2.1",
       "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
       "components": [
@@ -2523,18 +2541,6 @@
           "name": "org.antlr:antlr-runtime",
           "version": "3.5.3",
           "url": "http://www.antlr.org",
-          "ecosystem": "backend"
-        }
-      ]
-    },
-    {
-      "license": "CC0-1.0",
-      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "components": [
-        {
-          "name": "org.hdrhistogram:HdrHistogram",
-          "version": "2.2.2",
-          "url": "http://hdrhistogram.github.io/HdrHistogram/",
           "ecosystem": "backend"
         }
       ]
