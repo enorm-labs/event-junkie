@@ -36,6 +36,7 @@ import argparse
 import csv
 import json
 import os
+import pathlib
 import re
 import sys
 import time
@@ -43,6 +44,9 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from match_spike import CONTROL, done_names, fetch_artist_names, head_of, write_rows  # noqa: E402
 
 SEARCH = "https://api.discogs.com/database/search"
 USER_AGENT = "event-junkie-spike/0.1 +https://github.com/enorm-labs/event-junkie"
@@ -52,23 +56,8 @@ NEAR_LIMIT_REMAINING = 2
 NEAR_LIMIT_SLEEP = 20
 RATE_LIMITED_SLEEP = 20
 MAX_ATTEMPTS = 6
-PAGE_SIZE = 100
-MAX_PAGES = 200
 CANDIDATES = 25
 
-CONTROL = [
-    "Kein Bock auf Nazis",  # 1110
-    "DLTLLY",  # 1135
-    "Vinyl Reduction",  # 1134
-    "Sadtember",  # 1132
-    "Sonic Morgue",  # 302
-    "Current 93 – Sonic Morgue",  # 302, the head pass should find Current 93
-    "Drone Art Show: Harry Potter",  # 306
-    "Taschenlampenweihnachtskonzert",  # 306
-    "Corrupted Blood Club Show",  # 350
-]
-
-HEAD_SEPARATOR = re.compile(r"\s+[-–—]\s+|:\s+")
 HOMONYM_SUFFIX = re.compile(r"\s*\(\d+\)$")
 FIELDS = [
     "name",
@@ -141,13 +130,6 @@ def decide(name, candidates):
     return "ambiguous", None
 
 
-def head_of(name):
-    parts = HEAD_SEPARATOR.split(name, maxsplit=1)
-    if len(parts) == 2 and parts[0].strip() and parts[1].strip():
-        return parts[0].strip()
-    return ""
-
-
 def match(name):
     candidates = search(name)
     state, chosen = decide(name, candidates)
@@ -173,16 +155,6 @@ def match(name):
             head_discogs_name=head_chosen.get("title", "") if head_chosen else "",
         )
     return row
-
-
-def fetch_artist_names(host):
-    names = []
-    for page in range(MAX_PAGES):
-        body = get_json(f"{host}/api/admin/artists?page={page}&size={PAGE_SIZE}&sort=name,asc")
-        names.extend(a["name"] for a in body.get("content", []))
-        if page + 1 >= body.get("totalPages", 0):
-            break
-    return names
 
 
 def read_rows(path):
@@ -228,29 +200,18 @@ def main():
     parser.add_argument("--compare", help="the MusicBrainz TSV: query its `none` rows first and print the cross-table")
     args = parser.parse_args()
 
-    names = CONTROL if args.control else fetch_artist_names(args.host)
+    names = CONTROL if args.control else fetch_artist_names(get_json, args.host)
     names = [n for n in names if fold(n)]
     if args.compare:
         other = {r["name"]: r["state"] for r in read_rows(args.compare)}
         names.sort(key=lambda n: other.get(n) != "none")
-    done = {r["name"] for r in read_rows(args.out)} if args.resume else set()
+    done = done_names(args.out) if args.resume else set()
     todo = [n for n in names if n not in done]
     if args.limit:
         todo = todo[: args.limit]
     print(f"{len(names)} names, {len(done)} done, {len(todo)} to query at ~{PAUSE_SECONDS}s each", file=sys.stderr)
 
-    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-    mode = "a" if args.resume and done else "w"
-    with open(args.out, mode, encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDS, delimiter="\t")
-        if mode == "w":
-            writer.writeheader()
-        for index, name in enumerate(todo, 1):
-            row = match(name)
-            writer.writerow(row)
-            handle.flush()
-            verdict = row["state"] + (f" (head {row['head_state']})" if row["head"] else "")
-            print(f"{index}/{len(todo)}  {name!r} -> {verdict}", file=sys.stderr)
+    write_rows(args.out, FIELDS, todo, match, append=bool(args.resume and done))
     summarize(args.out, args.compare)
 
 

@@ -114,6 +114,9 @@ jobs:
       - name: musicbrainz-review keeps billed AMBIGUOUS artists and writes nothing but the MBID
         run: python3 scripts/test_musicbrainz_review.py
 
+      - name: match_spike splits a head, pages the artists and resumes a TSV for both match scripts
+        run: python3 scripts/test_match_spike.py
+
       - name: artist-cleanup flags names that are not acts and skips what the orphan sweep deletes
         run: python3 scripts/test_artist_cleanup.py
 
