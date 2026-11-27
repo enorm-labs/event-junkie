@@ -25,16 +25,16 @@ def http_get(url: str):
         return json.load(response)
 
 
-def pages(get, url: str) -> list:
+def pages(get, url: str, max_pages: int = MAX_PAGES) -> list:
     """Every row of a paged admin list. `get` is the GET to call, so a test can pass a stub."""
     rows, page = [], 0
-    while page < MAX_PAGES:
+    while page < max_pages:
         body = get(f"{url}{'&' if '?' in url else '?'}size={PAGE_SIZE}&page={page}")
         rows += body["content"]
         page += 1
         if page >= body["totalPages"]:
             return rows
-    raise RuntimeError(f"{url} has more than {MAX_PAGES} pages")
+    raise RuntimeError(f"{url} has more than {max_pages} pages")
 
 
 if __name__ == "__main__":

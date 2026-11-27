@@ -40,10 +40,11 @@ import sys
 import urllib.error
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
+
 REPO = pathlib.Path(__file__).resolve().parent.parent
 PORTS = {"staging": (18081, 18080), "production": (28081, 28080)}
-PAGE_SIZE = 100
-MAX_PAGES = 200
 EXIT_FAILED = 1
 EXIT_CANNOT_RUN = 2
 COLUMNS = ["decision", "artist_id", "slug", "name", "watchers", "mbid", "candidates", "events"]
@@ -77,17 +78,6 @@ def http(method: str, url: str, body=None):
     request = urllib.request.Request(url, method=method, data=data, headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(request, timeout=60) as response:
         return json.load(response)
-
-
-def pages(get, url: str) -> list:
-    rows, page = [], 0
-    while page < MAX_PAGES:
-        body = get(f"{url}{'&' if '?' in url else '?'}size={PAGE_SIZE}&page={page}")
-        rows += body["content"]
-        page += 1
-        if page >= body["totalPages"]:
-            return rows
-    raise RuntimeError(f"{url} has more than {MAX_PAGES} pages")
 
 
 def billed_ambiguous(events: list, artists: list) -> list:

@@ -4,8 +4,8 @@
 Usage:
     import match_spike    # from a sibling script, after sys.path.insert(0, <scripts/>)
 
-Imported, not run: run alone it prints this help. Standard library only. Each script keeps its own `fold`, search and
-rule, because the two indexes differ there.
+Imported, not run: run alone it prints this help. Standard library only. Each script keeps its own search and rule,
+because the two indexes differ there. They share `fold`, as the importer's two matchers share `MusicBrainzMatcher.fold`.
 """
 
 import argparse
@@ -13,6 +13,7 @@ import csv
 import os
 import re
 import sys
+import unicodedata
 
 PAGE_SIZE = 100
 MAX_PAGES = 200
@@ -32,6 +33,17 @@ CONTROL = [
 ]
 
 HEAD_SEPARATOR = re.compile(r"\s+[-–—]\s+|:\s+")
+
+
+def fold(s):
+    """Casefold, strip accents, collapse whitespace, and read `&` and `and` as one word."""
+    n = unicodedata.normalize("NFKD", s)
+    n = "".join(c for c in n if not unicodedata.combining(c)).casefold()
+    n = re.sub(r"\s+", " ", n).strip(" ")
+    # Runs on collapsed, trimmed text, so a name's last word is never a conjunction however it is padded.
+    # The lookahead leaves the space after a conjunction for the next one: "a und and b" is "a & & b".
+    n = re.sub(r" (?:and|und|&)(?= )", " &", n)
+    return n.strip(" .,!")
 
 
 def head_of(name):
