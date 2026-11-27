@@ -186,6 +186,16 @@ class BadehausWebsiteImporterTest {
                 .map { it.name } shouldBe listOf("Prophets of the Rising Dead", "My Sundown")
         }
 
+    // Event 15660: the style after the `|` is not an act.
+    @Test
+    fun `ends the Live list at the bar before the style`() =
+        runTest {
+            events(importNight("Metal Workout Vol. 1: How to run in circles", "Live: 4Oceans, OakHeart, Reflected Shadow | Metalcore, Hardcore"))
+                .single()
+                .artists
+                .map { it.name } shouldBe listOf("4Oceans", "OakHeart", "Reflected Shadow")
+        }
+
     // Event 13319: the page files the night under Concert, which billed the night's name as the act.
     @Test
     fun `bills nobody for a concert titled as a night whose subtitle lists no acts`() =
