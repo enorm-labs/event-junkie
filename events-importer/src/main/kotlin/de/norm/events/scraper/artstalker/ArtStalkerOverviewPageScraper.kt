@@ -12,6 +12,7 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.splitDjList
 import de.norm.events.scraper.stripFriendsTail
@@ -47,7 +48,8 @@ class ArtStalkerOverviewPageScraper {
             logger.warn { "Skipping an ART Stalker card without an id, a title or a date: $url" }
             return null
         }
-        val (title, subtitle) = splitTagline(rawTitle)
+        val (billing, endDate) = splitRun(rawTitle, date)
+        val (title, subtitle) = splitTagline(billing)
         val eventType = inferConcertVenueType(title, subtitle?.replace(NEGATED_CUE, "")?.replace(TAGLINE_PARTY, ""), VENUE_FORMATS)
         val openStage = OPEN_STAGE.containsMatchIn(title)
         return ScrapedEvent(
@@ -56,6 +58,7 @@ class ArtStalkerOverviewPageScraper {
             genre = knownGenresInStyleTail(subtitle),
             eventType = eventType,
             eventDate = date,
+            endDate = endDate,
             startTime = CARD_CLOCK.find(times)?.let { LocalTime.of(it.groupValues[1].toInt(), it.groupValues[2].toInt()) },
             imageUrl = card.imgSrcAt("img"),
             sourceUrl = url,
@@ -131,6 +134,21 @@ internal fun splitTagline(raw: String): Pair<String, String?> {
 }
 
 /**
+ * An exhibition bills its run after the tagline: `Ausstellung: Face it & own it! - Lars Koepke & Vincent
+ * J. E. Sieck - 26.11.2026 - 09.01.2027` (#5588). The pair is cut off, and its second date is the end,
+ * when the first is [eventDate] and the second is after it; any other title stays whole, with no end.
+ */
+internal fun splitRun(
+    raw: String,
+    eventDate: LocalDate
+): Pair<String, LocalDate?> {
+    val run = TRAILING_RUN.find(raw.trim()) ?: return raw to null
+    val start = parseGermanDate(run.groupValues[1])
+    val end = parseGermanDate(run.groupValues[2])
+    return if (start == eventDate && end != null && end.isAfter(start)) raw.trim().substring(0, run.range.first) to end else raw to null
+}
+
+/**
  * The part of a title that names the acts. A one-word format label before them is no act
  * (`Doppelkonzert: Glam Jam + Mission BlueZ`), and a tribute night names the band after
  * "präsentiert von" (`BAD COMPANY- und FREE-Songs präsentiert von FREE COMPANY`), a sing-along
@@ -158,6 +176,7 @@ internal fun billedActs(title: String): String {
 internal val SHOP_EVENT_ID = Regex("""/e(\d+)$""")
 
 private val TAGLINE_SEPARATOR = Regex("""\s-\s""")
+private val TRAILING_RUN = Regex("""\s-\s(\d{1,2}\.\d{1,2}\.\d{4})\s-\s(\d{1,2}\.\d{1,2}\.\d{4})$""")
 private val FORMAT_LABEL = Regex("""^\p{L}+:\s+""")
 private val LIVE_TAIL = Regex("""\s+live(?:\s+und\s+in\s+farbe)?$""", RegexOption.IGNORE_CASE)
 private val PRESENTED_BY = Regex("""\spräsentiert\s+von\s+(.+)$""", RegexOption.IGNORE_CASE)

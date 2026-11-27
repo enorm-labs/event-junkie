@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -61,6 +62,38 @@ class ArtStalkerOverviewPageScraperTest {
         splitTagline("Deer Anna – For the BirdsTour - Support: Lily Rieke Marty") shouldBe
             ("Deer Anna – For the BirdsTour" to "Support: Lily Rieke Marty")
         splitTagline("Halloween Party mit Chatterbox:CHAOS & TH74") shouldBe ("Halloween Party mit Chatterbox:CHAOS & TH74" to null)
+    }
+
+    @Test
+    fun `reads an exhibition's run as its end date and keeps the acts as the subtitle (#5588)`() {
+        val exhibition = bySourceId("2580338")
+        exhibition.title shouldBe "Ausstellung: Face it & own it!"
+        exhibition.subtitle shouldBe "Lars Koepke & Vincent J. E. Sieck"
+        exhibition.eventDate shouldBe LocalDate.of(2026, 11, 26)
+        exhibition.endDate shouldBe LocalDate.of(2027, 1, 9)
+        bySourceId("2567674").endDate.shouldBeNull()
+    }
+
+    @Test
+    fun `cuts a trailing run only when it starts on the event date and ends after it`() {
+        val day = LocalDate.of(2026, 11, 26)
+        splitRun("A - B - 26.11.2026 - 09.01.2027", day) shouldBe ("A - B" to LocalDate.of(2027, 1, 9))
+        splitRun("Dan Patlansky - Blues Rock", day) shouldBe ("Dan Patlansky - Blues Rock" to null)
+        splitRun("A - B - 26.11.2026", day) shouldBe ("A - B - 26.11.2026" to null)
+        splitRun("A - B - 26.11.2026 - 20.11.2026", day) shouldBe ("A - B - 26.11.2026 - 20.11.2026" to null)
+        splitRun("A - B - 26.11.2026 - 26.11.2026", day) shouldBe ("A - B - 26.11.2026 - 26.11.2026" to null)
+        splitRun("A - B - 25.11.2026 - 09.01.2027", day) shouldBe ("A - B - 25.11.2026 - 09.01.2027" to null)
+    }
+
+    @Test
+    fun `keeps a card whose title is not a run as it was`() {
+        card("Dan Patlansky - Blues Rock").run { Triple(title, subtitle, endDate) } shouldBe Triple("Dan Patlansky", "Blues Rock", null)
+        card("Vernissage - Malerei - 27.11.2026").run { Triple(title, subtitle, endDate) } shouldBe
+            Triple("Vernissage", "Malerei - 27.11.2026", null)
+        card("Ausstellung - Malerei - 26.11.2026 - 09.01.2027").endDate.shouldBeNull()
+        val long = "Ausstellung: " + "Sehr lange Werkschau ".repeat(12).trim() + " - Viele Namen & Noch mehr - 27.11.2026 - 30.01.2027"
+        card(long).run { Triple(title, subtitle, endDate) } shouldBe
+            Triple("Ausstellung: " + "Sehr lange Werkschau ".repeat(12).trim(), "Viele Namen & Noch mehr", LocalDate.of(2027, 1, 30))
     }
 
     @Test
