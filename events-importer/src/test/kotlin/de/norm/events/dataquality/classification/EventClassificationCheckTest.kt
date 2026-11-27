@@ -205,8 +205,8 @@ class EventClassificationCheckTest : BaseControllerTest() {
     fun `an answer that is no JSON counts as rejected and not JSON, and its event stays unchecked so the next pass asks again`(): Unit =
         runBlocking {
             val event = insertEvent("Spaeti-Ritter", type = "OTHER")
-            server.enqueue(textResponse("""{"eventType": {"value": "SHOW", "evidence": "Die "Show"", "confidence": 0.9}}"""))
-            server.enqueue(textResponse("""{"eventType": {"value": "SHOW", "evidence": "Die "Show"", "confidence": 0.9}}"""))
+            server.enqueue(textResponse("""{"eventType": {"value": "SHOW", "evidence": "Die "Show": heute", "confidence": 0.9}}"""))
+            server.enqueue(textResponse("""{"eventType": {"value": "SHOW", "evidence": "Die "Show": heute", "confidence": 0.9}}"""))
 
             val lines = captureLogs { check().checkSource(SOURCE) }
 

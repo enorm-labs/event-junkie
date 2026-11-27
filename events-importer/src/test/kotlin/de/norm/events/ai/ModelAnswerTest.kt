@@ -9,19 +9,19 @@ import java.time.LocalTime
 
 class ModelAnswerTest {
     @Test
-    fun `an answer that is no JSON says where it broke and its shape there, and none of its words`() {
+    fun `an answer that is no JSON says where it broke and its shape there after the repairs, and none of its words`() {
         val raw =
             """```json
-            |{"eventType": {"value": "SHOW", "evidence": "Die "Show" am 12. Mai", "confidence": 0.9}}
+            |{"eventType": {"value": "SHOW", "evidence": "Die "Show": am 12. Mai", "confidence": 0.9}}
             |```
             """.trimMargin()
 
         val error = shouldThrow<UnparseableAnswer> { ModelAnswer.jsonObject(raw) }
 
         val unparseable = error.unparseable
-        unparseable.length shouldBe 88
-        unparseable.offset shouldBe 50L
-        unparseable.shape shouldBe "a\": \"aaaa\", \"aaaaaaaa\": \"aaa \"⟨here⟩aaaa\" aa 99. aaa\", \"aaaaaaaaaa"
+        unparseable.length shouldBe 91
+        unparseable.offset shouldBe 56L
+        unparseable.shape shouldBe "aaa\", \"aaaaaaaa\": \"aaa \\\"aaaa\"⟨here⟩: aa 99. aaa\", \\\"aaaaaaaaaa\": "
         error.message.orEmpty() shouldNotContain "Show"
         error.cause?.message.orEmpty() shouldNotContain "Show"
     }
@@ -60,6 +60,47 @@ class ModelAnswerTest {
     @Test
     fun `an answer still broken after the repair is no JSON`() {
         shouldThrow<UnparseableAnswer> { ModelAnswer.jsonObject("""{"evidence": "Die „Show", true story", "confidence": 0.9}""") }
+    }
+
+    @Test
+    fun `a straight quote inside a value that does not end it is escaped, in each shape seen on production`() {
+        val answers =
+            mapOf(
+                """{"evidence": "Subtitle reads" and "Special Guest: Elnoir", "n": 1}""" to "Subtitle reads\" and \"Special Guest: Elnoir",
+                """{"e": "says "Special Guest: Elnoir"", "n": 1}""" to "says \"Special Guest: Elnoir\"",
+                """{"evidence": "Die „Show" und "mehr"", "n": 1}""" to "Die „Show“ und \"mehr\""
+            )
+
+        answers.forEach { (raw, evidence) ->
+            val answer = ModelAnswer.jsonObject(raw)
+            answer
+                ?.properties()
+                ?.first()
+                ?.value
+                ?.asString() shouldBe evidence
+            answer?.path("n")?.asInt() shouldBe 1
+        }
+    }
+
+    @Test
+    fun `valid JSON is left as it is by the straight quote repair`() {
+        val valid =
+            listOf(
+                """{"evidence": "ends before a comma", "n": 1}""",
+                """{"evidence": "ends before a brace"}""",
+                """{"evidence": ["ends before a bracket", "and \"quotes\" escaped already"]}""",
+                """{"a": [["x", "y"], [{"b": "z"}, []], "w"], "c": {"d": ["e"]}}""",
+                """{"evidence": "a, b", "list": ["c", -1, true, false, null, {"k": "v"}]}""",
+                """ { "spaced" : "value" , "n" : [ "x" ] } """,
+                """{"evidence": "an escaped backslash \\"}"""
+            )
+
+        valid.forEach { ModelAnswer.escapeInnerQuotes(it) shouldBe it }
+    }
+
+    @Test
+    fun `a quoted phrase that a colon follows reads as a key and stays broken`() {
+        shouldThrow<UnparseableAnswer> { ModelAnswer.jsonObject("""{"e": "says "Special Guest": Elnoir", "n": 1}""") }
     }
 
     @Test
