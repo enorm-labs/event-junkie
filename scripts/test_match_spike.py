@@ -48,12 +48,12 @@ def main() -> int:
     def get(url):
         asked.append(url)
         page = int(url.split("page=")[1].split("&")[0])
-        return {"content": [{"name": f"Act {page}"}], "totalPages": 2}
+        return {"content": [{"name": f"Act {page}"}] * (100 - 50 * page), "totalElements": 150}
 
     names = match_spike.fetch_artist_names(get, "http://localhost:18081")
-    check(names == ["Act 0", "Act 1"], "every page's names are read, in order")
-    check(len(asked) == 2, "the reading stops at totalPages")
-    check(asked[0] == "http://localhost:18081/api/admin/artists?page=0&size=100&sort=name,asc", "the list URL")
+    check(names == ["Act 0"] * 100 + ["Act 1"] * 50, "every page's names are read, in order")
+    check(len(asked) == 2, "the reading stops at totalElements")
+    check(asked[0] == "http://localhost:18081/api/admin/artists?sort=name,asc&page=0&size=100", "the list URL")
 
     def match(name):
         return {"name": name, "state": "none", "head": "", "head_state": ""}

@@ -58,7 +58,7 @@ def fake_get(seen):
             content = EVENTS.get(params["date"], [])
         else:
             raise AssertionError(f"unexpected read {url}")
-        return {"content": content, "totalPages": 1}
+        return {"content": content, "totalElements": len(content), "totalPages": 1}
 
     return get
 

@@ -11,12 +11,13 @@ because the two indexes differ there. They share `fold`, as the importer's two m
 import argparse
 import csv
 import os
+import pathlib
 import re
 import sys
 import unicodedata
 
-PAGE_SIZE = 100
-MAX_PAGES = 200
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
 
 # Names the closed defects already settled as not artists. Every one must come back `none`; one that
 # does not is a false positive of the rule, and the count of those is the second number #1549 wants.
@@ -56,13 +57,7 @@ def head_of(name):
 
 def fetch_artist_names(get, host):
     """Every artist name on the importer at `host`, by name. `get` is the calling script's GET."""
-    names = []
-    for page in range(MAX_PAGES):
-        body = get(f"{host}/api/admin/artists?page={page}&size={PAGE_SIZE}&sort=name,asc")
-        names.extend(a["name"] for a in body.get("content", []))
-        if page + 1 >= body.get("totalPages", 0):
-            break
-    return names
+    return [a["name"] for a in pages(get, f"{host}/api/admin/artists?sort=name,asc")]
 
 
 def done_names(path):

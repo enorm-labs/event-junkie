@@ -9,6 +9,7 @@ Imported, not run: run alone it prints this help. Standard library only, so a sc
 
 import argparse
 import json
+import time
 import urllib.request
 
 PORTS = {"staging": 18081, "production": 28081}
@@ -25,16 +26,29 @@ def http_get(url: str):
         return json.load(response)
 
 
-def pages(get, url: str, max_pages: int = MAX_PAGES) -> list:
-    """Every row of a paged admin list. `get` is the GET to call, so a test can pass a stub."""
-    rows, page = [], 0
-    while page < max_pages:
-        body = get(f"{url}{'&' if '?' in url else '?'}size={PAGE_SIZE}&page={page}")
+class PartialListing(SystemExit):
+    """A listing read short of its `totalElements`, or past its page cap. Uncaught, it prints and exits 1."""
+
+
+def pages(get, url: str, max_pages: int = MAX_PAGES, pause: float = 0.0) -> list:
+    """Every row of a paged list, or `PartialListing`. `get` is the GET to call, so a test can pass a stub.
+
+    The count is checked because a first page and a complete list look alike: see #810.
+    """
+    rows, page, separator = [], 0, "&" if "?" in url else "?"
+    while True:
+        body = get(f"{url}{separator}page={page}&size={PAGE_SIZE}")
+        total = body["totalElements"]
         rows += body["content"]
+        if not body["content"] or len(rows) >= total:
+            break
         page += 1
-        if page >= body["totalPages"]:
-            return rows
-    raise RuntimeError(f"{url} has more than {max_pages} pages")
+        if page >= max_pages:
+            raise PartialListing(f"Stopped after {max_pages} pages of {url}. The listing is not terminating.")
+        time.sleep(pause)
+    if len(rows) != total:
+        raise PartialListing(f"Read {len(rows)} of {total} from {url}. Refusing to act on a partial listing.")
+    return rows
 
 
 if __name__ == "__main__":

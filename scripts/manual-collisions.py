@@ -27,6 +27,7 @@ Exit 0 when no row needs a decision, 1 when a row is SLUG, TITLE or NIGHT, 2 whe
 import argparse
 import datetime
 import json
+import pathlib
 import subprocess
 import sys
 import urllib.error
@@ -34,12 +35,14 @@ import urllib.parse
 import urllib.request
 import zoneinfo
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
+
 PORTS = {"staging": 18081, "production": 28081}
 REFERENCE = "staging"
 MANUAL_PREFIX = "manual:"
 EXIT_DECISION = 1
 EXIT_CANNOT_RUN = 2
-PAGE_SIZE = 100
 MAX_PAGES = 50
 PROPOSED = ("SLUG", "TITLE")
 
@@ -72,19 +75,7 @@ def call(base: str, path: str):
 
 def paged(base: str, path: str, fetch=call) -> list:
     """Every item of a paged admin listing. The API caps a page at 100; a partial read is refused."""
-    out, page = [], 0
-    separator = "&" if "?" in path else "?"
-    while True:
-        body = fetch(base, f"{path}{separator}page={page}&size={PAGE_SIZE}")
-        out.extend(body["content"])
-        if not body["content"] or len(out) >= body["totalElements"]:
-            break
-        page += 1
-        if page >= MAX_PAGES:
-            raise SystemExit(f"Stopped after {MAX_PAGES} pages of {path}. The listing is not terminating.")
-    if len(out) != body["totalElements"]:
-        raise SystemExit(f"Read {len(out)} of {body['totalElements']} from {path}. Refusing a partial listing.")
-    return out
+    return pages(lambda url: fetch(base, url), path, max_pages=MAX_PAGES)
 
 
 def fold(title: str) -> str:

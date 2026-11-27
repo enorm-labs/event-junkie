@@ -41,15 +41,18 @@ import argparse
 import csv
 import datetime
 import json
+import pathlib
 import sys
 import urllib.error
 import urllib.request
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
 
 REVIEWED = "docs/promoters/REVIEWED.tsv"
 NO_WEBSITE = "none"
 KINDS = {"promoter", "collective", "label", "party", "media", "artist", "sponsor", "venue"}
 LOCAL_HOST = "http://localhost:18081"
-PAGE_SIZE = 100
 MAX_PAGES = 100
 
 
@@ -61,12 +64,7 @@ def get_json(url):
 
 def fetch_promoters(host):
     """Every promoter the target holds, keyed by slug."""
-    promoters = []
-    for page in range(MAX_PAGES):
-        body = get_json(f"{host}/api/admin/promoters?page={page}&size={PAGE_SIZE}&sort=name,asc")
-        promoters.extend(body.get("content", []))
-        if page + 1 >= body.get("totalPages", 0):
-            break
+    promoters = pages(get_json, f"{host}/api/admin/promoters?sort=name,asc", max_pages=MAX_PAGES)
     return {p["slug"]: p for p in promoters}
 
 

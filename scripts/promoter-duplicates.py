@@ -41,6 +41,7 @@ Standard library only, and no key: the BFF is unauthenticated.
 import argparse
 import itertools
 import json
+import pathlib
 import re
 import sys
 import unicodedata
@@ -48,10 +49,12 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
+
 LOCAL_HOST = "http://localhost:18080"
 ADMIN_HOST = "http://localhost:18081"
 AGENT = "event-junkie/1.0 (https://github.com/enorm-labs/event-junkie)"
-PAGE_SIZE = 100
 MAX_PAGES = 100
 MAX_EDITS = 2
 # A key this short matches too much by `edit` and `prefix`: "act" is one edit from "atok".
@@ -112,20 +115,18 @@ def edits(a, b):
 
 
 def get_json(host, path, query):
-    url = f"{host}{path}?{urllib.parse.urlencode(query)}"
+    return get_url(f"{host}{path}?{urllib.parse.urlencode(query)}")
+
+
+def get_url(url):
     request = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": AGENT})
     with urllib.request.urlopen(request, timeout=30) as response:
         return json.load(response)
 
 
 def fetch_promoters(host, path="/api/promoters", query=None):
-    rows = []
-    for page in range(MAX_PAGES):
-        body = get_json(host, path, {"size": PAGE_SIZE, "page": page, **(query or {})})
-        rows.extend(body.get("content", []))
-        if page + 1 >= body.get("totalPages", 0):
-            break
-    return rows
+    url = f"{host}{path}?{urllib.parse.urlencode(query)}" if query else f"{host}{path}"
+    return pages(get_url, url, max_pages=MAX_PAGES)
 
 
 def event_count(host, slug):

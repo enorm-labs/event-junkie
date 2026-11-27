@@ -21,9 +21,13 @@ Standard library only.
 import argparse
 import csv
 import json
+import pathlib
 import sys
 import urllib.error
 import urllib.request
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
 
 PROPOSED = "docs/venue-character-tags/PROPOSED.tsv"
 LOCAL_HOST = "http://localhost:8081"
@@ -43,7 +47,6 @@ TAGS = (
     "cash-only",
     "wheelchair-accessible",
 )
-PAGE_SIZE = 100
 MAX_PAGES = 100
 
 
@@ -89,18 +92,7 @@ def request(url, method="GET", body=None):
 
 def fetch_all_venues(host):
     """Read every venue, and refuse a listing shorter than the total the API reports (#810)."""
-    out, page = [], 0
-    while True:
-        body = request(f"{host}/api/admin/venues?page={page}&size={PAGE_SIZE}&sort=name,asc")
-        out.extend(body["content"])
-        if len(out) >= body["totalElements"]:
-            break
-        page += 1
-        if page > MAX_PAGES:
-            sys.exit(f"Stopped after {MAX_PAGES} pages. The listing is not terminating.")
-    if len(out) != body["totalElements"]:
-        sys.exit(f"Read {len(out)} of {body['totalElements']} venues. Refusing to act on a partial listing.")
-    return out
+    return pages(request, f"{host}/api/admin/venues?sort=name,asc", max_pages=MAX_PAGES)
 
 
 def main():

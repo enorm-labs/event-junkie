@@ -19,17 +19,19 @@ because a search already found nothing or only a doubtful site.
 import argparse
 import csv
 import json
+import pathlib
 import sys
-import time
 import urllib.error
 import urllib.request
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
 
 USER_AGENT = "event-junkie-spike/0.1 ( https://github.com/enorm-labs/event-junkie )"
 REVIEWED = "docs/promoters/REVIEWED.tsv"
 SEARCHED = "docs/promoters/SEARCHED.tsv"
 SITE = "https://event-junkie.de"
 HOST = "http://localhost:28081"
-PAGE_SIZE = 100
 MAX_PAGES = 100
 PAUSE = 0.3
 NO_DESCRIPTION_KINDS = {"junk", "artist", "party", "unverified"}
@@ -43,14 +45,7 @@ def get_json(url):
 
 def every_page(url):
     """Every item behind a paged list route. [url] carries its own query, so the page parameters append."""
-    items = []
-    for page in range(MAX_PAGES):
-        body = get_json(f"{url}&page={page}&size={PAGE_SIZE}")
-        items.extend(body.get("content", []))
-        if page + 1 >= body.get("totalPages", 0):
-            break
-        time.sleep(PAUSE)
-    return items
+    return pages(get_json, url, max_pages=MAX_PAGES, pause=PAUSE)
 
 
 def share(rows, field):
