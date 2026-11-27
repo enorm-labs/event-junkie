@@ -154,6 +154,7 @@ class InterkosmosApiScraper {
                 "Spieleabend" to EventType.OTHER.name,
                 "Party" to EventType.PARTY.name,
                 "Burlesque Show" to EventType.SHOW.name,
+                "Kino" to EventType.SCREENING.name,
                 "Konzert" to EventType.CONCERT.name
             )
     }

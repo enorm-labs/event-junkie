@@ -16,7 +16,8 @@ import org.jsoup.nodes.Element
  * it names another format. Its weekly `Modus Comedy` series is COMEDY: the shared comedy pattern
  * leaves a bare "comedy" alone, because a band can be called that (#2398). A detail page whose
  * [description] says `sounds by` is a DJ night (`Off-Season`, event 14869). A bare `DJ` is no cue:
- * a band's blurb mentions one too.
+ * a band's blurb mentions one too. A `… - Aufzeichnung` is the recording of a show: COMEDY when its
+ * description names comedy, as event 15566's YouTube show does, else SHOW.
  */
 internal fun modusEventType(
     title: String,
@@ -25,6 +26,10 @@ internal fun modusEventType(
     when {
         isModusComedySeries(title) -> {
             EventType.COMEDY.name
+        }
+
+        isShowRecording(title) -> {
+            if (description != null && COMEDY_WORD.containsMatchIn(description)) EventType.COMEDY.name else EventType.SHOW.name
         }
 
         else -> {
@@ -37,7 +42,7 @@ internal fun modusEventType(
 /**
  * The acts a Modus page bills. The comedy series bills its lineup in [description] only, so a
  * listing tile passes `null` and bills nobody. A numbered `… Session 004` keeps its line-up secret
- * and bills nobody (#3751). Any other title is read with the `<night> mit <acts>` frame unpacked:
+ * and bills nobody (#3751), and so does a show recording, whose title names the show. Any other title is read with the `<night> mit <acts>` frame unpacked:
  * `Just Signed! | mit Yasola, Victoria West & PARA` bills the three acts, not the night.
  */
 internal fun modusLineup(
@@ -48,6 +53,7 @@ internal fun modusLineup(
     when {
         isModusComedySeries(title) -> comedySeriesLineup(description)
         NUMBERED_SESSION.containsMatchIn(title) -> emptyList()
+        isShowRecording(title) -> emptyList()
         else -> buildArtistsForEventType(withoutSeriesName(title, eventType), subtitle = null, eventType = eventType, unpackWithFrame = true)
     }
 
@@ -100,6 +106,13 @@ private val NUMBERED_SESSION = Regex("""\bsession\s+\d+\s*$""", RegexOption.IGNO
 
 /** `WITH SOUNDS BY`: the venue's words for the DJs of a club night. */
 private val SOUNDS_BY = Regex("""\bsounds\s+by\b""", RegexOption.IGNORE_CASE)
+
+/** Whether [title] is the recording of a show before an audience: `falsch, aber lustig - Aufzeichnung`. */
+private fun isShowRecording(title: String): Boolean = SHOW_RECORDING.containsMatchIn(title)
+
+private val SHOW_RECORDING = Regex("""\s[-–]\s*Aufzeichnung\s*$""", RegexOption.IGNORE_CASE)
+
+private val COMEDY_WORD = Regex("""\bcomedy\b""", RegexOption.IGNORE_CASE)
 
 private val COMEDY_SERIES = Regex("""^modus\s+comedy\b""", RegexOption.IGNORE_CASE)
 
