@@ -38,5 +38,11 @@ val HUMBOLDT_FORUM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "the categories name a format, not a music style", verified = "2026-11-15"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the API gives one start time per date", verified = "2026-11-15"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the API gives one price line, with the concessions in it", verified = "2026-11-15"),
+        // #5589: "Der Eintritt am Eröffnungsabend ist frei." is on item 171634's page and in no API field.
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "an item with an empty price line states its admission only on its event page, which the importer does not fetch",
+            verified = "2026-11-27"
+        ),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the house programmes every item itself and names no partner field", verified = "2026-11-15")
     )
