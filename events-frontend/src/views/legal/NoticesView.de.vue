@@ -7,13 +7,14 @@
  * alphabetische Zeilen sind eine Wand, „das hier sind die MIT-Komponenten“ dagegen eine Aussage,
  * mit der man etwas anfangen kann.
  *
- * Die Aufklapp-Logik und die Koordinaten-Formatierung liegen in `useNotices`, damit beide
+ * Die Lizenzliste liegt in `NoticesLicenceGroups`, ihr Verhalten in `useNotices`, damit beide
  * Sprachfassungen dieselbe Implementierung teilen; unterschiedlich ist nur der Text.
  */
 import LegalPage from '@/components/LegalPage.vue'
+import NoticesLicenceGroups from '@/components/NoticesLicenceGroups.vue'
 import { useNotices } from '@/composables/useNotices'
 
-const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices()
+const { componentCount } = useNotices()
 </script>
 
 <template>
@@ -87,38 +88,7 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
 
     <section>
       <h2>Komponenten nach Lizenz</h2>
-      <details
-        v-for="group in groups"
-        :key="group.license"
-        class="rounded-lg border border-border p-4"
-        @toggle="toggle(group.license, ($event.target as HTMLDetailsElement).open)"
-      >
-        <summary class="cursor-pointer text-card-title font-medium text-foreground">
-          {{ group.license }}
-          <span class="font-normal text-muted-foreground">
-            — {{ group.components.length }}
-            {{ group.components.length === 1 ? 'Komponente' : 'Komponenten' }}
-          </span>
-        </summary>
-
-        <p v-if="group.url" class="mt-2 text-body">
-          <a :href="group.url" rel="noopener" target="_blank"
-            >Lizenztext {{ group.license }} lesen</a
-          >
-        </p>
-
-        <!-- Nur im aufgeklappten Zustand gerendert: alle Zeilen vorab zu mounten sind ~640
-             Listenelemente und ein sichtbarer Ruckler beim ersten Aufbau dieser Route. -->
-        <ul v-if="openGroups.has(group.license)" class="mt-3 text-body">
-          <li v-for="component in group.components" :key="`${component.name}@${component.version}`">
-            <a v-if="component.url" :href="component.url" rel="noopener" target="_blank">{{
-              component.name
-            }}</a>
-            <span v-else>{{ component.name }}</span
-            ><span class="text-muted-foreground">{{ versionSuffix(component) }}</span>
-          </li>
-        </ul>
-      </details>
+      <NoticesLicenceGroups />
     </section>
   </LegalPage>
 </template>
