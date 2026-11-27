@@ -83,6 +83,14 @@ class InterkosmosApiScraperTest {
     }
 
     @Test
+    fun `types a Kino evening as a screening`() {
+        // Event 15652.
+        val json = "[${oneOffRow(15652, "Filmabend mit DWe", "Kino")}]"
+
+        InterkosmosApiScraper().scrape(json, "[]", today).single().eventType shouldBe EventType.SCREENING.name
+    }
+
+    @Test
     fun `drops a title that names a workshop or crafting, whatever its type`() {
         val titles =
             listOf(

@@ -14,6 +14,17 @@ class ModusComedySeriesTest {
             .map { it.name }
 
     @Test
+    fun `a show recording bills nobody and takes comedy from its description`() {
+        // Event 15566: a comedy collective's YouTube show, recorded before an audience.
+        val title = "falsch, aber lustig - Aufzeichnung"
+        val description = "„falsch, aber lustig“ ist die YouTube Show des Comedy Kollektivs."
+
+        modusEventType(title, description) shouldBe EventType.COMEDY.name
+        modusEventType("Quizrunde – Aufzeichnung", "Eine Show über Wissen.") shouldBe EventType.SHOW.name
+        modusLineup(title, EventType.COMEDY.name, description = null) shouldBe emptyList()
+    }
+
+    @Test
     fun `stops at a line ending in sentence punctuation`() {
         lineup("<p>Host: Anna Bomhard<br>Rebecca Pap<br>Wir sind im Comedy-Modus!<br>Ludwig Benecke</p>") shouldBe
             listOf("Anna Bomhard", "Rebecca Pap")

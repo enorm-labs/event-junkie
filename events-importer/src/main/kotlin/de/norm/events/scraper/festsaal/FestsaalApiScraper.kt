@@ -250,7 +250,8 @@ class FestsaalApiScraper {
      * its subtitle names ([djsOf]); other types (festivals, quizzes) name an event, not an artist, so none. Non-artist noise
      * (placeholders, role labels, festival labels) is filtered by the shared [isNonArtistName].
      * A show of another act's songs names that act in a [SONGS_OF_LINE], and its title is the show, not
-     * a band: `ANNA` above "Die Lieder von Rosenstolz & Anna R. live" bills no headliner.
+     * a band: `ANNA` above "Die Lieder von Rosenstolz & Anna R. live" bills no headliner. A showcase names
+     * its acts in the subtitle ([showcaseOf]), and its title is the format.
      */
     private fun buildArtists(
         title: String,
@@ -261,6 +262,7 @@ class FestsaalApiScraper {
     ): List<ScrapedArtist> {
         if (eventType == EventType.PARTY.name) return djsOf(subtitle)
         if (eventType != EventType.CONCERT.name) return emptyList()
+        showcaseOf(subtitle)?.let { return it }
         val supportActs =
             support
                 ?.let(::splitSupportActs)
@@ -402,6 +404,22 @@ private fun djsOf(subtitle: String?): List<ScrapedArtist> {
         .filterNot(::isNonArtistName)
         .mapIndexed { index, name -> ScrapedArtist(name = name, role = if (index == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT) }
 }
+
+/**
+ * The acts a showcase's subtitle names, each a headliner: `FritzSessions XXL` over `mit Cordoba78, Lotta, Mika Noé, …`
+ * (event 15634). Null below [MIN_SHOWCASE_ACTS], because `mit <act>` under a band's name is its guest.
+ */
+private fun showcaseOf(subtitle: String?): List<ScrapedArtist>? {
+    val list = subtitle?.let { SHOWCASE_LINE.matchEntire(it.trim()) }?.groupValues?.get(1) ?: return null
+    return splitSupportActs(list)
+        .filterNot(::isNonArtistName)
+        .takeIf { it.size >= MIN_SHOWCASE_ACTS }
+        ?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+}
+
+private val SHOWCASE_LINE = Regex("""mit\s+(.+)""", RegexOption.IGNORE_CASE)
+
+private const val MIN_SHOWCASE_ACTS = 3
 
 /** The subtitle of a night whose DJs it names: `Arnim legt auf + RAEDY`, `A & B legen auf`. */
 private val DJ_LINE = Regex("""(.+?)\s+(?:legt|legen)\s+auf\b(?:\s*\+\s*(.*))?""", RegexOption.IGNORE_CASE)

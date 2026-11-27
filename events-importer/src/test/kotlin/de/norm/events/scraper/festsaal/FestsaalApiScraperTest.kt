@@ -261,6 +261,23 @@ class FestsaalApiScraperTest {
     }
 
     @Test
+    fun `bills a showcase's acts from its mit subtitle and not its title`() {
+        // Event 15634.
+        val showcase = scraper.scrape(apiWithSubtitle("FritzSessions XXL", "mit Cordoba78, Lotta, Mika Noé, Paula Dalla Corte, Roya")).single()
+
+        showcase.eventType shouldBe EventType.CONCERT.name
+        showcase.artists.map { it.name } shouldContainExactly listOf("Cordoba78", "Lotta", "Mika Noé", "Paula Dalla Corte", "Roya")
+        showcase.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.HEADLINER)
+    }
+
+    @Test
+    fun `keeps the headliner of a concert whose mit subtitle names one guest`() {
+        val concert = scraper.scrape(apiWithSubtitle("Elena Rose", "mit Ludwig Otto Henze")).single()
+
+        concert.artists shouldContainExactly listOf(ScrapedArtist("Elena Rose", ArtistRole.HEADLINER, titleDerived = true))
+    }
+
+    @Test
     fun `keeps a concert whose subtitle names a tour or an after-show, with its headliner`() {
         listOf("Indie Rave Tour 2026", "+ Aftershow: FISH'N'CANDY", "+ Aftershow: Arnim legt auf").forEach { subtitle ->
             val concert = scraper.scrape(apiWithSubtitle("Elena Rose", subtitle)).single()
