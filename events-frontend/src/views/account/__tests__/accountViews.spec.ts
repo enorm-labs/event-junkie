@@ -16,6 +16,7 @@ const account = vi.hoisted(() => ({
   signOut: vi.fn<() => Promise<void>>(),
   signOutEverywhere: vi.fn<() => Promise<void>>(),
   deleteAccount: vi.fn<() => Promise<void>>(),
+  fetchReportList: vi.fn<() => Promise<unknown[]>>(),
   signInWithPasskey:
     vi.fn<(mediation?: CredentialMediationRequirement, signal?: AbortSignal) => Promise<unknown>>(),
 }))
@@ -37,6 +38,7 @@ beforeEach(() => {
   account.prepareCsrf.mockResolvedValue()
   account.fetchSession.mockResolvedValue(null)
   account.fetchSessionState.mockResolvedValue({ account: null, signUpOpen: true })
+  account.fetchReportList.mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -384,6 +386,9 @@ describe('AccountView', () => {
     expect(view.find('a[href="/api/me/export"]').attributes('download')).toBeDefined()
     // What you follow is a tab of the Following page (#4080).
     expect(view.find('a[href="/en/following?tab=follows"]').text()).toBe('What you follow')
+    // My reports sits above Your data (#5308).
+    const headings = view.findAll('h2').map((h) => h.text())
+    expect(headings.indexOf('My reports')).toBeLessThan(headings.indexOf('Your data'))
   })
 
   it('sends a browser that is not signed in to the sign-in page', async () => {

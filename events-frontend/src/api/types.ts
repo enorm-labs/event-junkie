@@ -31,5 +31,7 @@ export type SearchResults = Schemas['SearchResponse']
 export type Account = Schemas['AccountResponse']
 export type Follow = Schemas['FollowResponse']
 export type AccountNotification = Schemas['NotificationResponse']
+/** One of the account's open problem reports, as its account page lists them (#5308). */
+export type AccountReport = Schemas['ReportResponse']
 /** A page of events without the list's lead, as `/api/me/following` answers. */
 export type EventSummaryPage = Schemas['PageResponseEventSummaryResponse']

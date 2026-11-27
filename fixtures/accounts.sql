@@ -51,6 +51,12 @@ SELECT 'ada00000-0000-4000-8000-000000000001'::uuid, id, 'interested' FROM event
 UNION ALL
 SELECT 'b0b00000-0000-4000-8000-000000000002'::uuid, id, 'going' FROM events.event WHERE source_id = 'fixture-sold-out';
 
+-- What a resolve of Bob's venue report leaves him (#5308): a note without an event, a minute older than the cancellation.
+INSERT INTO accounts.notification (id, account_id, kind, about_kind, about_id, subject_kind, subject_title, outcome, reply, created_at)
+SELECT 'b0b00000-0000-4000-8000-000000000032'::uuid, 'b0b00000-0000-4000-8000-000000000002'::uuid, 'report', 'report', id, 'venue', name,
+       'unchanged', 'The address is the venue''s own.', now() - interval '1 minute'
+FROM events.venue WHERE slug = 'kesselhaus-nord';
+
 -- Two problem reports (#4399, #5603), each addressed by its page's kind and slug: an event's and a venue's.
 INSERT INTO accounts.report (account_id, kind, subject_id, problems, note)
 SELECT 'b0b00000-0000-4000-8000-000000000002'::uuid, 'event', id, ARRAY ['ARTISTS', 'OTHER'], 'Fixture report'

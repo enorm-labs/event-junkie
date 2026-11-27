@@ -138,6 +138,30 @@ test('a change to an event marked as going names what changed', async ({ page })
   await expect(page.getByRole('link', { name: /Cancelled/ })).toHaveAttribute('href', '/en/events/mock-night')
 })
 
+test('a resolved report names its page and outcome, shows the reply and links to the page (#5308)', async ({
+  page,
+}) => {
+  const report = {
+    ...entry('00000000-0000-4000-8000-000000000004', 'unused', 'Mock Venue'),
+    kind: 'report',
+    event: null,
+    date: null,
+    title: 'Mock Venue',
+    aboutKind: 'report',
+    subjectKind: 'venue',
+    subjectSlug: 'mock-venue',
+    outcome: 'unchanged',
+    reply: 'The address is right.',
+  }
+  await mockBff(page, true, [report as unknown as ReturnType<typeof entry>])
+  await page.goto('/en/about')
+
+  await page.getByRole('button', { name: 'Notifications, 3 unread' }).click()
+  const link = page.getByRole('link', { name: /Checked, left as is: Mock Venue/ })
+  await expect(link).toHaveAttribute('href', '/en/venues/mock-venue')
+  await expect(link).toContainText('The address is right.')
+})
+
 test('Show all opens the page, Show more loads the next 50, and Unread keeps to the unread ones', async ({
   page,
 }) => {

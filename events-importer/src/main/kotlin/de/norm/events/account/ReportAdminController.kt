@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -53,10 +54,25 @@ data class ReportEntryResponse(
     val updatedAt: Instant
 )
 
-@Schema(description = "How many reports a resolve deleted")
+@Schema(description = "How many reports a resolve deleted, and how many notes it left under the reporters' bells")
 data class ResolvedResponse(
-    val resolved: Long
+    val resolved: Long,
+    val notified: Long
 )
+
+data class ResolveRequest(
+    @Schema(description = "The subject's kind from the list", allowableValues = ["events", "artists", "promoters", "venues"], example = "venues")
+    val kind: String,
+    @Schema(description = "The subject's `id` from the list")
+    val id: Long,
+    @Schema(description = "What the operator did: `fixed`, or `unchanged` when the page stays as it is", allowableValues = ["fixed", "unchanged"])
+    val outcome: String = ReportOutcome.FIXED.tag,
+    @Schema(description = "An optional answer to the reporters, at most $MAX_REPLY characters. Every reporter on the subject reads it.")
+    val reply: String? = null
+)
+
+/** The longest reply, as V290's CHECK holds it. */
+const val MAX_REPLY = 500
 
 data class CanReportRequest(
     @Schema(description = "The account's address, as it signs in.", example = "operator@example.de")
@@ -75,8 +91,9 @@ data class ReportCapRequest(
 /**
  * The problem reports visitors file on event, act, promoter and venue pages (#4399, #5603), and the flag that
  * withdraws reporting from an account that abuses the form (#5604).
- * `/fix-events` and the admin app read the list; resolving an event's reports deletes them (the privacy notice's
- * retention), so a resolve comes after the fix is live or the verdict is final.
+ * `/fix-events` and the admin app read the list. Resolving a subject's reports deletes them (the privacy notice's
+ * retention) and leaves each reporter a note under the bell (#5308), so a resolve comes after the fix is live or the
+ * verdict is final.
  */
 @RestController
 @RequestMapping("/api/admin")
@@ -101,12 +118,29 @@ class ReportAdminController(
             )
         }
 
-    @DeleteMapping("/reports")
+    @PostMapping("/reports/resolve")
     @Operation(
-        summary = "Resolves every report on a subject: deletes them",
-        description = "`kind` and `id` from the list. `eventId` alone is the event case, for steps written before #5603."
+        summary = "Resolves every report on a subject: deletes them, and leaves each reporter a note under the bell",
+        description = "The note names the page and the outcome, and carries the reply. The reply goes in the body, never the URL."
     )
     suspend fun resolve(
+        @RequestBody request: ResolveRequest
+    ): ResolvedResponse {
+        val subject = ReportSubject.ofPath(request.kind) ?: badRequest("Unknown kind ${request.kind}")
+        val outcome = ReportOutcome.ofTag(request.outcome) ?: badRequest("Unknown outcome ${request.outcome}")
+        val reply = request.reply?.trim()?.ifEmpty { null }
+        if (reply != null && reply.length > MAX_REPLY) badRequest("The reply is longer than $MAX_REPLY characters")
+        return resolve(subject, request.id, outcome, reply)
+    }
+
+    @DeleteMapping("/reports")
+    @Operation(
+        summary = "Resolves every report on a subject as fixed, with no reply",
+        description =
+            "For steps written before #5308; `POST /reports/resolve` takes an outcome and a reply. `kind` and `id` from the list. " +
+                "`eventId` alone is the event case, for steps written before #5603."
+    )
+    suspend fun resolveFixed(
         @Parameter(description = "events, artists, promoters or venues", example = "venues")
         @RequestParam(required = false)
         kind: String?,
@@ -131,9 +165,24 @@ class ReportAdminController(
                     throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Either kind and id, or eventId")
                 }
             }
-        val resolved = store.resolve(subject, subjectId)
-        logger.info { "Resolved $resolved problem reports on ${subject.tag} $subjectId" }
-        return ResolvedResponse(resolved)
+        return resolve(subject, subjectId, ReportOutcome.FIXED, null)
+    }
+
+    private fun badRequest(message: String): Nothing = throw ResponseStatusException(HttpStatus.BAD_REQUEST, message)
+
+    private suspend fun resolve(
+        subject: ReportSubject,
+        id: Long,
+        outcome: ReportOutcome,
+        reply: String?
+    ): ResolvedResponse {
+        val result = store.resolve(subject, id, outcome, reply)
+        // Whether there is a reply, never its text: the log leaves the cluster.
+        logger.info {
+            "Resolved ${result.resolved} problem reports on ${subject.tag} $id as ${outcome.tag}, " +
+                "${result.notified} notified, ${if (reply == null) "no reply" else "with a reply"}"
+        }
+        return ResolvedResponse(result.resolved, result.notified)
     }
 
     @PutMapping("/accounts/can-report")

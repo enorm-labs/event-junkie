@@ -247,11 +247,21 @@ class NotificationFlowTest : BaseControllerTest() {
                         "WHERE event_id = (SELECT id FROM events.event WHERE slug = 'old')"
                 ).await()
             databaseClient.sql("DELETE FROM events.event WHERE slug = 'removed'").await()
+            // A report note has no event, so only its age ends it (#5308).
+            databaseClient
+                .sql(
+                    "INSERT INTO accounts.notification (account_id, kind, about_kind, about_id, subject_kind, subject_title, outcome) " +
+                        "SELECT id, 'report', 'report', 1, 'venue', 'Club', 'fixed' FROM accounts.account"
+                ).await()
 
             cleanup.run()
 
-            rows() shouldBe 1
-            list().jsonPath("$[0].event").isEqualTo("fresh")
+            rows() shouldBe 2
+            list()
+                .jsonPath("$[0].kind")
+                .isEqualTo("report")
+                .jsonPath("$[1].event")
+                .isEqualTo("fresh")
         }
 
     @Test

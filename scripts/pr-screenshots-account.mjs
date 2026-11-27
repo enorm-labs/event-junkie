@@ -3,7 +3,8 @@
 // account request.
 //
 // The account follows production's busiest venue, an artist and a promoter, waits for one invented act, keeps two saved searches and two RSVPs,
-// has eight notifications over three days, three of them unread and the first a change to the event marked going, and has no push. Its feeds come from the public /api/events, so the cards are real events. A write answers 204 and
+// has eight notifications over three days, three of them unread and the first a change to the event marked going, then one answer to
+// a resolved report on the venue (#5308), and has no push. It holds two open reports. Its feeds come from the public /api/events, so the cards are real events. A write answers 204 and
 // changes nothing. An /api/me path this file does not know answers 404 and is logged once, so a new endpoint shows.
 
 const ACCOUNT = { email: 'ada@example.de', locale: 'en', createdAt: '2026-10-01T10:00:00Z', canReport: true }
@@ -66,7 +67,31 @@ async function loadAccount(context, origin) {
     createdAt: new Date(Date.now() - index * 9 * 3_600_000).toISOString(),
     readAt: index < 2 || index === 4 ? null : new Date().toISOString(),
   }))
-  return { follows, rsvps, rsvpEvents: [going, interested].filter(Boolean), notifications }
+  const venue = venues.content?.[0]
+  if (venue?.slug) {
+    notifications.splice(1, 0, {
+      id: '00000000-0000-4000-8000-000000000201',
+      kind: 'report',
+      event: null,
+      title: venue.name,
+      date: null,
+      aboutKind: 'report',
+      aboutName: venue.name,
+      change: null,
+      createdAt: new Date(Date.now() - 3_600_000).toISOString(),
+      readAt: null,
+      subjectKind: 'venue',
+      subjectSlug: venue.slug,
+      outcome: 'unchanged',
+      reply: 'The address is the one the venue gives on its own site.',
+    })
+  }
+  const updatedAt = new Date(Date.now() - 2 * 86_400_000).toISOString()
+  const reports = [
+    ...(venue?.slug ? [{ kind: 'venues', slug: venue.slug, title: venue.name, problems: ['ADDRESS'], note: null, updatedAt }] : []),
+    ...(going ? [{ kind: 'events', slug: going.slug, title: going.title, problems: ['GENRE', 'DATE_TIME'], note: null, updatedAt }] : []),
+  ]
+  return { follows, rsvps, rsvpEvents: [going, interested].filter(Boolean), notifications, reports }
 }
 
 /** Signs every page of [context] in, against the preview server at [origin]. */
@@ -116,8 +141,8 @@ export async function signIn(context, origin) {
       if (path === '/api/me/watches') return json(route, WATCHES)
       if (path === '/api/me/musicbrainz/artists') return json(route, CANDIDATES)
       if (path === '/api/me/rsvps') return json(route, account.rsvps)
-  // Allowed to report (#4399), with nothing reported yet, so an event page shows the button.
-  if (path === '/api/me/reports') return json(route, [])
+      // Allowed to report (#4399), with two open reports (#5308).
+      if (path === '/api/me/reports') return json(route, account.reports)
       if (path === '/api/me/rsvps/upcoming') {
         const content = account.rsvpEvents
         return json(route, { ...EMPTY_PAGE, content, totalElements: content.length, totalPages: 1 })

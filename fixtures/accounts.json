@@ -19,6 +19,7 @@
       "passkeyId": "b0b00000-0000-4000-8000-000000000021",
       "pushEndpoint": "https://fcm.googleapis.com/fcm/send/fixture-bob",
       "notificationId": "b0b00000-0000-4000-8000-000000000031",
+      "reportNoteId": "b0b00000-0000-4000-8000-000000000032",
       "reminderPush": false,
       "canReport": true
     }

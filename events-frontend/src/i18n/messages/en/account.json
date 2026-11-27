@@ -219,6 +219,19 @@
       }
     }
   },
+  "myReports": {
+    "title": "My reports",
+    "intro": "We check each report within a few days. When we have, the bell tells you what came of it.",
+    "empty": "No open reports. To report a problem, use the button at the top of any event, act, promoter or venue page.",
+    "other": "Note only",
+    "failed": "Could not load your reports. Try again later.",
+    "kind": {
+      "events": "Event",
+      "artists": "Act",
+      "promoters": "Promoter",
+      "venues": "Venue"
+    }
+  },
   "push": {
     "title": "Notifications",
     "intro": "A push to this browser when an artist, venue or promoter you follow has a new date. Choose which ones with the bell on",
@@ -270,7 +283,7 @@
     "label": "Notifications",
     "labelUnread": "Notifications, {count} unread",
     "title": "What is new",
-    "empty": "Nothing new yet. New dates of what you follow, and changes to events you plan to go to, show up here.",
+    "empty": "Nothing new yet. New dates of what you follow, changes to events you plan to go to, and answers to your reports show up here.",
     "markAllRead": "Mark all as read",
     "unread": "Unread",
     "artist": "New date: {name}",
@@ -287,13 +300,18 @@
     "failed": "Could not load notifications. Try again later.",
     "showAll": "Show all",
     "page": {
-      "intro": "New dates of what you follow, and changes to events you plan to go to. Each entry goes after 30 days.",
+      "intro": "New dates of what you follow, changes to events you plan to go to, and answers to your reports. Each entry goes after 30 days.",
       "filter": "Which notifications",
       "all": "All",
       "unread": "Unread",
       "today": "Today",
       "yesterday": "Yesterday",
       "noneUnread": "Nothing unread. Everything here has been opened."
+    },
+    "report": {
+      "fixed": "Fixed after your report: {name}",
+      "unchanged": "Checked, left as is: {name}",
+      "thanks": "Thanks for your report."
     }
   }
 }

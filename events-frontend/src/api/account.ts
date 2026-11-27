@@ -1,7 +1,14 @@
 import type { Locale } from '@/i18n/locales'
 import { api, ApiError, unwrap } from './client'
 import type { operations } from './schema'
-import type { Account, AccountNotification, EventSummary, EventSummaryPage, Follow } from './types'
+import type {
+  Account,
+  AccountNotification,
+  AccountReport,
+  EventSummary,
+  EventSummaryPage,
+  Follow,
+} from './types'
 import {
   creationOptions,
   credentialJson,
@@ -346,13 +353,17 @@ export const reportKey = (kind: ReportKind, slug: string) => `${kind}/${slug}`
 
 /** The account's open problem reports, by `reportKey`. Only accounts that may report have any. */
 export async function fetchReports(): Promise<Record<string, OpenReport>> {
-  const reports = (await unwrap(api.GET('/api/me/reports'))) ?? []
   return Object.fromEntries(
-    reports.map((r) => [
+    (await fetchReportList()).map((r) => [
       reportKey(r.kind as ReportKind, r.slug ?? ''),
       { problems: (r.problems ?? []) as ReportProblem[], note: r.note ?? '' },
     ]),
   )
+}
+
+/** The account's open problem reports as a list, newest change first, for its account page (#5308). */
+export async function fetchReportList(): Promise<AccountReport[]> {
+  return (await unwrap(api.GET('/api/me/reports'))) ?? []
 }
 
 export async function saveReport(

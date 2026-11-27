@@ -6,7 +6,7 @@ import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.awaitOneOrNull
-import org.springframework.r2dbc.core.awaitRowsUpdated
+import org.springframework.r2dbc.core.awaitSingle
 import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Repository
 import java.time.Instant
@@ -34,6 +34,24 @@ enum class ReportSubject(
         fun ofTag(tag: String): ReportSubject = entries.first { it.tag == tag }
     }
 }
+
+/** What the operator did about a report (#5308), as `accounts.notification.outcome` (V290) stores it. */
+enum class ReportOutcome(
+    val tag: String
+) {
+    FIXED("fixed"),
+    UNCHANGED("unchanged");
+
+    companion object {
+        fun ofTag(tag: String): ReportOutcome? = entries.firstOrNull { it.tag == tag }
+    }
+}
+
+/** How many reports a resolve deleted, and how many notes it left. */
+data class Resolved(
+    val resolved: Long,
+    val notified: Long
+)
 
 /** True when the subject of the report aliased `r` still exists. */
 internal val REPORT_SUBJECT_EXISTS =
@@ -82,17 +100,43 @@ class ReportAdminStore(
             .flow()
             .toList()
 
-    /** Resolves every report on the subject. Answers how many it deleted. */
+    /**
+     * Resolves every report on the subject: deletes them and leaves each reporter a note under the bell with the page's
+     * name, the [outcome] and the [reply] (#5308). One statement, so the notes and the delete commit together. A subject
+     * that is gone gets no note, because nothing names it.
+     */
     suspend fun resolve(
         kind: ReportSubject,
-        id: Long
-    ): Long =
-        databaseClient
-            .sql("DELETE FROM accounts.report WHERE kind = :kind AND subject_id = :id")
-            .bind("kind", kind.tag)
-            .bind("id", id)
-            .fetch()
-            .awaitRowsUpdated()
+        id: Long,
+        outcome: ReportOutcome,
+        reply: String?
+    ): Resolved {
+        val spec =
+            databaseClient
+                .sql(
+                    """
+                    WITH gone AS (
+                        DELETE FROM accounts.report WHERE kind = :kind AND subject_id = :id RETURNING account_id
+                    ), noted AS (
+                        INSERT INTO accounts.notification
+                            (account_id, kind, about_kind, about_id, subject_kind, subject_title, outcome, reply)
+                        SELECT g.account_id, 'report', 'report', :id, :kind, x.${kind.nameColumn}, :outcome, :reply
+                        FROM gone g JOIN $EVENTS_SCHEMA.${kind.table} x ON x.id = :id
+                        RETURNING 1
+                    )
+                    SELECT (SELECT count(*) FROM gone) AS resolved, (SELECT count(*) FROM noted) AS notified
+                    """.trimIndent()
+                ).bind("kind", kind.tag)
+                .bind("id", id)
+                .bind("outcome", outcome.tag)
+        return (if (reply == null) spec.bindNull("reply", String::class.java) else spec.bind("reply", reply))
+            .map { row, _ ->
+                Resolved(
+                    row.required("resolved", Long::class.javaObjectType),
+                    row.required("notified", Long::class.javaObjectType)
+                )
+            }.awaitSingle()
+    }
 
     /** Lifts or restores the cap on open reports for the account with this address. Answers its id, or null when no account has it. */
     suspend fun setReportCapExempt(

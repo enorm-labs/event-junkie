@@ -76,17 +76,35 @@ export async function fetchReports(fetchFn: typeof fetch = fetch): Promise<Repor
   return (await response.json()) as ReportedSubject[]
 }
 
-/** Resolves (deletes) every report on the subject. Answers how many went. */
+/** What the operator did about a page's reports (#5308): the bell's note says it to each reporter. */
+export type ReportOutcome = 'fixed' | 'unchanged'
+
+/** The longest reply, as the importer and V290 hold it. */
+export const MAX_REPLY = 500
+
+/**
+ * Resolves every report on the subject: deletes them, and leaves each reporter a note under the
+ * bell with the outcome and the reply (#5308). The reply goes in the body, never the URL, because
+ * the ingress logs URLs. Answers how many reports went.
+ */
 export async function resolveReports(
   subject: Pick<ReportedSubject, 'kind' | 'id'>,
+  outcome: ReportOutcome = 'fixed',
+  reply = '',
   fetchFn: typeof fetch = fetch,
 ): Promise<number> {
-  const path = `${REPORTS}?${new URLSearchParams({ kind: subject.kind, id: String(subject.id) })}`
+  const path = `${REPORTS}/resolve`
   const response = await fetchFn(path, {
-    method: 'DELETE',
-    headers: { Accept: 'application/json' },
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      kind: subject.kind,
+      id: subject.id,
+      outcome,
+      reply: reply.trim() || undefined,
+    }),
   })
-  await failOnError(response, `DELETE ${path}`)
+  await failOnError(response, `POST ${path}`)
   return ((await response.json()) as { resolved: number }).resolved
 }
 

@@ -26,8 +26,9 @@ import java.util.UUID
 private val logger = KotlinLogging.logger {}
 
 /**
- * The header's bell (#4078) and the notifications page (#4169): what is new from what the account follows, unread until
- * opened. Every route needs a session. The header asks for the count on each page load, so the count is one indexed query.
+ * The header's bell (#4078) and the notifications page (#4169): what is new from what the account follows, and
+ * the operator's answers to its problem reports (#5308), unread until opened. Every route needs a session. The
+ * header asks for the count on each page load, so the count is one indexed query.
  */
 @RestController
 @RequestMapping("/api/me/notifications")
@@ -108,18 +109,29 @@ class NotificationController(
 /** One notification, in the bell's menu and in the export. */
 data class NotificationResponse(
     val id: UUID,
-    /** `new_date`, or `change` for an event the account marked (#4045). */
+    /** `new_date`, `change` for an event the account marked (#4045), or `report` for a resolved problem report (#5308). */
     val kind: String,
-    val event: String,
+    /** The event's slug; null on a report note. */
+    val event: String?,
+    /** The event's title, or the reported page's name at the resolve. */
     val title: String,
-    val date: LocalDate,
-    /** What made it: the follow's `artist`, `venue` or `promoter`, or `rsvp` for a change. */
+    /** The event's date; null on a report note. */
+    val date: LocalDate?,
+    /** What made it: the follow's `artist`, `venue` or `promoter`, `rsvp` for a change, or `report`. */
     val aboutKind: String,
     val aboutName: String,
     /** For a change, what changed: `cancelled`, `postponed`, `relocated`, `date`, `time` or `venue`. */
     val change: String?,
     val createdAt: Instant,
-    val readAt: Instant?
+    val readAt: Instant?,
+    /** For a report note, what the report was about: `event`, `artist`, `promoter` or `venue`. */
+    val subjectKind: String?,
+    /** For a report note, the page's slug now; null when the page is gone. */
+    val subjectSlug: String?,
+    /** For a report note, what the operator did: `fixed` or `unchanged`. */
+    val outcome: String?,
+    /** For a report note, the operator's answer, when there is one. */
+    val reply: String?
 ) {
     companion object {
         fun of(notification: Notification) =
@@ -133,7 +145,11 @@ data class NotificationResponse(
                 aboutName = notification.aboutName,
                 change = notification.change,
                 createdAt = notification.createdAt,
-                readAt = notification.readAt
+                readAt = notification.readAt,
+                subjectKind = notification.subjectKind,
+                subjectSlug = notification.subjectSlug,
+                outcome = notification.outcome,
+                reply = notification.reply
             )
     }
 }

@@ -9,7 +9,7 @@ import { failUnmockedGets } from './unmocked'
  *
  * Endpoints: GET /api/auth/session · GET /api/auth/csrf · GET /api/venues/:slug · GET /api/events?…
  * · GET|PUT|DELETE /api/me/follows/:kind/:slug · GET /api/me/follows · GET /api/me/following
- * · GET /api/me/following/today · GET /api/me/rsvps · GET /api/me · GET /api/me/passkeys
+ * · GET /api/me/following/today · GET /api/me/rsvps · GET /api/me · GET /api/me/passkeys · GET /api/me/reports
  * · GET /api/me/push
  * · GET|POST /api/me/searches · PATCH|DELETE /api/me/searches/:id
  * · GET /api/me/watches · PUT|DELETE /api/me/watches/:mbid · GET /api/me/musicbrainz/artists (#5214)
@@ -115,6 +115,7 @@ async function mockBff(
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
     if (path === '/api/me/passkeys/accepted') return route.fulfill({ status: 204 })
     if (path === '/api/me/passkeys') return json(route, [])
+    if (path === '/api/me/reports') return json(route, [])
     if (path === '/api/me/push') return json(route, { publicKey: null })
     return fallthrough(route)
   })
