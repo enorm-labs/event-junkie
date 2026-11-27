@@ -401,6 +401,23 @@ CREATE TABLE accounts.push_subscription (
 );
 
 --
+-- Name: report; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.report (
+    account_id uuid NOT NULL,
+    kind text NOT NULL,
+    subject_id bigint NOT NULL,
+    problems text[] NOT NULL,
+    note text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT report_kind_check CHECK ((kind = ANY (ARRAY['event'::text, 'artist'::text, 'promoter'::text, 'venue'::text]))),
+    CONSTRAINT report_note_check CHECK (((length(note) >= 1) AND (length(note) <= 500))),
+    CONSTRAINT report_problems_check CHECK ((((cardinality(problems) >= 1) AND (cardinality(problems) <= 24)) AND (problems <@ ARRAY['ARTISTS'::text, 'PROMOTER'::text, 'GENRE'::text, 'EVENT_TYPE'::text, 'FEATURES'::text, 'DATE_TIME'::text, 'TEXT'::text, 'STATUS'::text, 'PRICE_TICKETS'::text, 'NOT_AN_EVENT'::text, 'ON_IMAGE'::text, 'TITLE'::text, 'DESCRIPTION'::text, 'TYPE_GENRE'::text, 'DUPLICATE'::text, 'OTHER'::text, 'QUESTION'::text, 'NAME'::text, 'ADDRESS'::text, 'LINKS'::text, 'CLOSED'::text, 'WRONG_ACT'::text, 'IMAGE'::text, 'NOT_A_PROMOTER'::text])))
+);
+
+--
 -- Name: rsvp; Type: TABLE; Schema: accounts; Owner: -
 --
 
@@ -1233,6 +1250,13 @@ ALTER TABLE ONLY accounts.push_subscription
     ADD CONSTRAINT push_subscription_pkey PRIMARY KEY (id);
 
 --
+-- Name: report report_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.report
+    ADD CONSTRAINT report_pkey PRIMARY KEY (account_id, kind, subject_id);
+
+--
 -- Name: rsvp rsvp_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
 --
 
@@ -1680,6 +1704,18 @@ CREATE INDEX passkey_account_idx ON accounts.passkey USING btree (account_id);
 CREATE INDEX push_subscription_account_idx ON accounts.push_subscription USING btree (account_id);
 
 --
+-- Name: report_subject_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX report_subject_idx ON accounts.report USING btree (kind, subject_id);
+
+--
+-- Name: report_updated_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX report_updated_idx ON accounts.report USING btree (updated_at);
+
+--
 -- Name: rsvp_event_idx; Type: INDEX; Schema: accounts; Owner: -
 --
 
@@ -2044,6 +2080,13 @@ ALTER TABLE ONLY accounts.passkey_challenge
 
 ALTER TABLE ONLY accounts.push_subscription
     ADD CONSTRAINT push_subscription_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
+
+--
+-- Name: report report_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.report
+    ADD CONSTRAINT report_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
 
 --
 -- Name: rsvp rsvp_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -

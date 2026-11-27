@@ -100,12 +100,14 @@ class AccountFixtureTest : BaseControllerTest() {
     }
 
     @Test
-    fun `bob's problem report comes back, for the isolation check to aim at`() {
+    fun `bob's problem reports on an event and a venue come back, for the isolation check to aim at`() {
         get("/me/reports", bob)
             .jsonPath("$.length()")
-            .isEqualTo(1)
-            .jsonPath("$[0].problems")
+            .isEqualTo(2)
+            .jsonPath("$[?(@.kind == 'events')].problems[*]")
             .isEqualTo(listOf("ARTISTS", "OTHER"))
+            .jsonPath("$[?(@.kind == 'venues')].slug")
+            .isEqualTo(listOf("kesselhaus-nord"))
     }
 
     @Test

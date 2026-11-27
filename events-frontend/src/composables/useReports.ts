@@ -3,14 +3,16 @@ import {
   fetchReports,
   type OpenReport,
   prepareCsrf,
+  reportKey,
+  type ReportKind,
   saveReport,
   withdrawReport,
 } from '@/api/account'
 import { useSession } from './useSession'
 
 /**
- * The account's open problem reports (#4399), so the event page says "Edit report" and the form
- * pre-fills. Module state and one request per visit, as `useRsvps` does. An account the operator
+ * The account's open problem reports (#4399, #5603), by `reportKey`, so a detail page says "Edit
+ * report" and the form pre-fills. Module state and one request per visit, as `useRsvps` does. An account the operator
  * has not allowed asks nothing.
  */
 const reports = ref<Record<string, OpenReport>>({})
@@ -38,17 +40,18 @@ export function useReports() {
   }
   loaded ??= ready().then(() => (account.value?.canReport ? load() : undefined))
 
-  async function save(slug: string, report: OpenReport): Promise<void> {
+  async function save(kind: ReportKind, slug: string, report: OpenReport): Promise<void> {
     await prepareCsrf()
-    await saveReport(slug, report)
-    reports.value = { ...reports.value, [slug]: { ...report, note: report.note.trim() } }
+    await saveReport(kind, slug, report)
+    const key = reportKey(kind, slug)
+    reports.value = { ...reports.value, [key]: { ...report, note: report.note.trim() } }
   }
 
-  async function withdraw(slug: string): Promise<void> {
+  async function withdraw(kind: ReportKind, slug: string): Promise<void> {
     await prepareCsrf()
-    await withdrawReport(slug)
+    await withdrawReport(kind, slug)
     const next = { ...reports.value }
-    delete next[slug]
+    delete next[reportKey(kind, slug)]
     reports.value = next
   }
 

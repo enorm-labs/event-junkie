@@ -433,14 +433,15 @@ const { t } = useI18n()
       </p>
       <p>
         <strong>Probleme melden:</strong> Einige Konten, die ich persönlich freischalte, sehen auf
-        der Seite eines Events „Problem melden“. Meldest du ein Problem, speichere ich zu deinem
-        Konto, welches Event es betrifft, welche Probleme du angekreuzt hast, deine Notiz, falls du
-        eine schreibst, und wann du gemeldet hast. Nur ich lese die Meldung, um das Event zu
-        korrigieren. Die Seite zeigt sie niemandem, und kein Dienstleister erhält sie. Ist das
-        Problem erledigt, lösche ich die Meldung. Bleibt sie liegen, lösche ich sie
-        <strong>60 Tage</strong> nach ihrer letzten Änderung. Du kannst sie vorher selbst
-        zurückziehen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO, mein berechtigtes Interesse an
-        richtigen Angaben im Kalender, das du mit deiner Meldung teilst.
+        der Seite eines Events, eines Acts, eines Veranstalters oder einer Location „Problem
+        melden“. Meldest du ein Problem, speichere ich zu deinem Konto, welche Seite es betrifft,
+        welche Probleme du angekreuzt hast, deine Notiz, falls du eine schreibst, und wann du
+        gemeldet hast. Nur ich lese die Meldung, um die Seite zu korrigieren. Die Seite zeigt sie
+        niemandem, und kein Dienstleister erhält sie. Ist das Problem erledigt, lösche ich die
+        Meldung. Bleibt sie liegen, lösche ich sie <strong>60 Tage</strong> nach ihrer letzten
+        Änderung. Du kannst sie vorher selbst zurückziehen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f
+        DSGVO, mein berechtigtes Interesse an richtigen Angaben im Kalender, das du mit deiner
+        Meldung teilst.
       </p>
       <p>
         <strong>Benachrichtigungen:</strong> Schaltest du Benachrichtigungen in einem Browser ein,

@@ -22,7 +22,10 @@ vi.mock('@/api/account', async (importOriginal) => ({
 }))
 
 vi.mock('@/composables/useSession', () => ({
-  useSession: () => ({ account: ref({ email: 'visitor@example.de' }) }),
+  useSession: () => ({
+    account: ref({ email: 'visitor@example.de' }),
+    ready: () => Promise.resolve(),
+  }),
 }))
 
 const { default: ArtistDetailView } = await import('@/views/ArtistDetailView.vue')

@@ -38,7 +38,7 @@ Below, `$PORT` is `28081` for production and `18081` for staging, and `$TAG` is 
 ```sh
 scripts/worklist.sh <env> --out temp/worklist-$TAG.json
 scripts/worklist.sh <env> --summary > temp/worklist-$TAG.tsv
-curl -sf localhost:$PORT/api/admin/reports | jq -e '[.[].eventId]' > temp/reported-$TAG.json \
+curl -sf localhost:$PORT/api/admin/reports | jq -e '[.[] | select(.kind == "events") | .id]' > temp/reported-$TAG.json \
   || echo 'problem reports not readable'                       # the events Important hands to /fix-events; unreadable goes in the report
 ```
 

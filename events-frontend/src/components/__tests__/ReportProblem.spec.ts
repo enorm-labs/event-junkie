@@ -1,29 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 
+import type { ReportKind } from '@/api/account'
 import { ApiError } from '@/api/client'
 
 const account = vi.hoisted(() => ({
-  REPORT_PROBLEMS: [
-    'ARTISTS',
-    'PROMOTER',
-    'GENRE',
-    'EVENT_TYPE',
-    'FEATURES',
-    'DATE_TIME',
-    'TEXT',
-    'STATUS',
-    'PRICE_TICKETS',
-    'NOT_AN_EVENT',
-  ],
-  REPORT_HINT: 'ON_IMAGE',
   prepareCsrf: vi.fn<() => Promise<void>>(),
   fetchSession: vi.fn<() => Promise<unknown>>(),
   fetchReports: vi.fn<() => Promise<Record<string, unknown>>>(),
-  saveReport: vi.fn<(slug: string, report: unknown) => Promise<void>>(),
-  withdrawReport: vi.fn<(slug: string) => Promise<void>>(),
+  saveReport: vi.fn<(kind: string, slug: string, report: unknown) => Promise<void>>(),
+  withdrawReport: vi.fn<(kind: string, slug: string) => Promise<void>>(),
 }))
-vi.mock('@/api/account', () => account)
+// The box lists and `reportKey` stay real, so the form shows what the BFF accepts.
+vi.mock('@/api/account', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  ...account,
+}))
 
 const { default: ReportProblem } = await import('@/components/ReportProblem.vue')
 const { default: ReportProblemForm } = await import('@/components/ReportProblemForm.vue')
@@ -47,8 +39,8 @@ afterEach(() => {
   wrapper = undefined
 })
 
-async function mountForm() {
-  wrapper = mount(ReportProblemForm, { props: { slug: 'tonight' } })
+async function mountForm(kind: ReportKind = 'events', slug = 'tonight') {
+  wrapper = mount(ReportProblemForm, { props: { kind, slug } })
   await flushPromises()
   return wrapper
 }
@@ -58,7 +50,7 @@ const send = (view: VueWrapper) => view.find('[data-testid="report-send"]')
 describe('ReportProblem', () => {
   it('is not there for an account the operator has not allowed, nor signed out', async () => {
     setSession({ ...me, canReport: false } as never)
-    wrapper = mount(ReportProblem, { props: { slug: 'tonight', title: 'Tonight' } })
+    wrapper = mount(ReportProblem, { props: { kind: 'events', slug: 'tonight', title: 'Tonight' } })
     expect(wrapper.find('[data-testid="report-open"]').exists()).toBe(false)
 
     setSession(null)
@@ -68,11 +60,11 @@ describe('ReportProblem', () => {
 
   it('is there for an allowed account, and says Edit report once reported', async () => {
     setSession({ ...me, canReport: true } as never)
-    wrapper = mount(ReportProblem, { props: { slug: 'tonight', title: 'Tonight' } })
+    wrapper = mount(ReportProblem, { props: { kind: 'events', slug: 'tonight', title: 'Tonight' } })
     await flushPromises()
     expect(wrapper.find('[data-testid="report-open"]').text()).toBe('Report a problem')
 
-    useReports().reports.value = { tonight: { problems: ['TEXT'], note: '' } }
+    useReports().reports.value = { 'events/tonight': { problems: ['TEXT'], note: '' } }
     await flushPromises()
     expect(wrapper.find('[data-testid="report-open"]').text()).toBe('Edit report')
   })
@@ -91,11 +83,11 @@ describe('ReportProblemForm', () => {
 
     await view.find('form').trigger('submit')
     await flushPromises()
-    expect(account.saveReport).toHaveBeenCalledWith('tonight', {
+    expect(account.saveReport).toHaveBeenCalledWith('events', 'tonight', {
       problems: ['ARTISTS', 'DATE_TIME'],
       note: '  Starts at 23:00  ',
     })
-    expect(useReports().reports.value.tonight).toEqual({
+    expect(useReports().reports.value['events/tonight']).toEqual({
       problems: ['ARTISTS', 'DATE_TIME'],
       note: 'Starts at 23:00',
     })
@@ -114,7 +106,7 @@ describe('ReportProblemForm', () => {
 
     await view.find('form').trigger('submit')
     await flushPromises()
-    expect(account.saveReport).toHaveBeenCalledWith('tonight', {
+    expect(account.saveReport).toHaveBeenCalledWith('events', 'tonight', {
       problems: [],
       note: 'Is this really a party?',
     })
@@ -134,7 +126,7 @@ describe('ReportProblemForm', () => {
 
     await view.find('form').trigger('submit')
     await flushPromises()
-    expect(account.saveReport).toHaveBeenCalledWith('tonight', {
+    expect(account.saveReport).toHaveBeenCalledWith('events', 'tonight', {
       problems: ['GENRE', 'ON_IMAGE'],
       note: '',
     })
@@ -143,7 +135,7 @@ describe('ReportProblemForm', () => {
   it('keeps the names of an older form on save, and shows no box for them', async () => {
     setSession({ ...me, canReport: true } as never)
     useReports().reports.value = {
-      tonight: { problems: ['TYPE_GENRE', 'ON_IMAGE', 'QUESTION'], note: '' },
+      'events/tonight': { problems: ['TYPE_GENRE', 'ON_IMAGE', 'QUESTION'], note: '' },
     }
     const view = await mountForm()
     expect(view.find('[data-testid="report-TYPE_GENRE"]').exists()).toBe(false)
@@ -156,7 +148,7 @@ describe('ReportProblemForm', () => {
     await view.find('[data-testid="report-EVENT_TYPE"]').setValue(true)
     await view.find('form').trigger('submit')
     await flushPromises()
-    expect(account.saveReport).toHaveBeenCalledWith('tonight', {
+    expect(account.saveReport).toHaveBeenCalledWith('events', 'tonight', {
       problems: ['EVENT_TYPE', 'ON_IMAGE', 'TYPE_GENRE', 'QUESTION'],
       note: '',
     })
@@ -164,7 +156,9 @@ describe('ReportProblemForm', () => {
 
   it('pre-fills an earlier report, and withdraws it', async () => {
     setSession({ ...me, canReport: true } as never)
-    useReports().reports.value = { tonight: { problems: ['STATUS'], note: 'Cancelled' } }
+    useReports().reports.value = {
+      'events/tonight': { problems: ['STATUS'], note: 'Cancelled' },
+    }
     const view = await mountForm()
 
     expect((view.find('[data-testid="report-STATUS"]').element as HTMLInputElement).checked).toBe(
@@ -177,8 +171,32 @@ describe('ReportProblemForm', () => {
 
     await view.find('[data-testid="report-withdraw"]').trigger('click')
     await flushPromises()
-    expect(account.withdrawReport).toHaveBeenCalledWith('tonight')
-    expect(useReports().reports.value.tonight).toBeUndefined()
+    expect(account.withdrawReport).toHaveBeenCalledWith('events', 'tonight')
+    expect(useReports().reports.value['events/tonight']).toBeUndefined()
+  })
+
+  it("shows a venue's own boxes and no image hint, and sends them for the venue", async () => {
+    setSession({ ...me, canReport: true } as never)
+    useReports().reports.value = { 'events/club': { problems: ['STATUS'], note: '' } }
+    const view = await mountForm('venues', 'club')
+    expect(view.findAll('input[type="checkbox"]').map((b) => b.attributes('data-testid'))).toEqual([
+      'report-NAME',
+      'report-ADDRESS',
+      'report-LINKS',
+      'report-TEXT',
+      'report-CLOSED',
+    ])
+    expect(view.text()).toContain('Address or map pin wrong')
+    expect(send(view).text()).toBe('Send report')
+
+    await view.find('[data-testid="report-ADDRESS"]').setValue(true)
+    await view.find('form').trigger('submit')
+    await flushPromises()
+    expect(account.saveReport).toHaveBeenCalledWith('venues', 'club', {
+      problems: ['ADDRESS'],
+      note: '',
+    })
+    expect(useReports().reports.value['venues/club']).toEqual({ problems: ['ADDRESS'], note: '' })
   })
 
   it.each([

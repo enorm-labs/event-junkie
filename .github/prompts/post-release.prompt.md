@@ -50,7 +50,7 @@ One step per line: `<env>: <verb> <arguments>`, or `<env> (<when>): <verb> <argu
 | `force-import <slug>[, <slug>…]`/`all` | Fetches those sources without the validators, so a parser fix reaches the rows already stored. A source type (`eight_mm`) that one source carries also works                                            |
 | `check <what to confirm>`              | A read only: logs, the admin or public API, a read-only database query. The text says what passes                                                                                                       |
 | `run <scripts/… command>`              | A script under `scripts/`, exactly as written                                                                                                                                                           |
-| `resolve-reports <id>[, <id>…]`        | Production only. Deletes the open problem reports (#4399) on those event ids, once the fix they reported is live. `/fix-events` writes it                                                               |
+| `resolve-reports <id>[, <id>…]`        | Production only. Deletes the open problem reports (#4399) on those event ids, or on `<kind>/<id>` for an act, promoter or venue (#5603), once the fix is live. `/fix-events` writes it                  |
 | `apply-alerts <rule>[, <rule>…]`       | Compares `deploy/alerts` with the deployed commit, hands the operator the commands, and reads what they paste ([Alert rules](#alert-rules)). Names every rule the pull request adds, changes or removes |
 
 **A new venue** takes this block per environment, in this order, with the venues' names. `--allow-unreviewed` is not optional: Uber Eats Music Hall
@@ -134,10 +134,12 @@ environments in the arguments that are due (see [When a step is due](#the-format
 
     It exits 1 when a source did not refresh and names it. A known failure (a 429 or a DNS error at one venue) is reported, not retried in a loop.
 
-4. **Resolved reports**, after the forced imports, so the fix is in the stored rows first. One call per event id, over the production forward:
+4. **Resolved reports**, after the forced imports, so the fix is in the stored rows first. One call per id, over the production forward. A bare id
+   is an event; `<kind>/<id>` names an act, promoter or venue (`artists`, `promoters`, `venues`):
 
     ```sh
-    curl -sf -X DELETE "localhost:28081/api/admin/reports?eventId=<id>" | jq .resolved
+    curl -sf -X DELETE "localhost:28081/api/admin/reports?eventId=<id>" | jq .resolved          # a bare id
+    curl -sf -X DELETE "localhost:28081/api/admin/reports?kind=<kind>&id=<id>" | jq .resolved   # <kind>/<id>
     ```
 
     The count goes in the report. A `0` is fine: the operator resolved it in the admin app first.

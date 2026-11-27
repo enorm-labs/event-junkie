@@ -20,7 +20,10 @@ class AccountMetrics(
     private val signIns = SignInOutcome.entries.associateWith { registry.counter(SIGN_IN, TAG_OUTCOME, it.tag) }
     private val searches = SavedSearchAction.entries.associateWith { registry.counter(SAVED_SEARCH, TAG_ACTION, it.tag) }
     private val rsvps = RsvpAction.entries.associateWith { registry.counter(RSVP, TAG_ACTION, it.tag) }
-    private val reports = ReportAction.entries.associateWith { registry.counter(REPORT, TAG_ACTION, it.tag) }
+    private val reports =
+        ReportAction.entries.associateWith { action ->
+            ReportKind.entries.associateWith { kind -> registry.counter(REPORT, TAG_ACTION, action.tag, TAG_KIND, kind.tag) }
+        }
     private val reportProblems = ReportProblem.entries.associateWith { registry.counter(REPORT_PROBLEM, TAG_PROBLEM, it.name.lowercase()) }
     private val pushes = PushAction.entries.associateWith { registry.counter(PUSH, TAG_ACTION, it.tag) }
     private val passkeys = PasskeyOutcome.entries.associateWith { registry.counter(PASSKEY, TAG_OUTCOME, it.tag) }
@@ -64,7 +67,10 @@ class AccountMetrics(
 
     fun record(action: RsvpAction) = rsvps.getValue(action).increment()
 
-    fun record(action: ReportAction) = reports.getValue(action).increment()
+    fun record(
+        action: ReportAction,
+        kind: ReportKind
+    ) = reports.getValue(action).getValue(kind).increment()
 
     fun record(problems: List<ReportProblem>) = problems.forEach { reportProblems.getValue(it).increment() }
 
@@ -119,7 +125,7 @@ class AccountMetrics(
         /** `bff.account.rsvp{action}`: RSVPs set or changed, and withdrawn (#3892). */
         const val RSVP = "bff.account.rsvp"
 
-        /** `bff.account.report{action}`: problem reports stored, replaced and withdrawn, and those refused at the limit (#4399). */
+        /** `bff.account.report{action,kind}`: problem reports stored, replaced and withdrawn, per kind of subject (#4399, #5603). */
         private const val REPORT = "bff.account.report"
 
         /** `bff.account.report.problem{problem}`: each ticked box of a stored or replaced report, counts only (#4978). */
@@ -217,7 +223,7 @@ enum class CleanupOutcome(
     /** Notifications older than 30 days, or whose event the importer removed (#4078). */
     NOTIFICATIONS_PURGED("notifications_purged"),
 
-    /** Problem reports older than 60 days, or whose event the importer removed (#4399). */
+    /** Problem reports older than 60 days, or whose subject the importer removed (#4399, #5603). */
     REPORTS_PURGED("reports_purged"),
 
     /** Passkey challenges nobody answered (#3888). */

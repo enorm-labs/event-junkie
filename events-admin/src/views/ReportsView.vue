@@ -1,12 +1,18 @@
 <script setup lang="ts">
 /**
- * The problem reports allowed accounts file on event pages (#4399). One row per event. Resolve
- * deletes its reports, as the privacy notice promises, so resolve once the fix is live or the
+ * The problem reports allowed accounts file on event, act, promoter and venue pages (#4399,
+ * #5603). One row per subject. Resolve deletes its reports, as the privacy notice promises, so resolve once the fix is live or the
  * verdict is final. `/fix-events` works the same queue.
  */
 import { onMounted, ref } from 'vue'
 
-import { fetchReports, PROBLEM_LABELS, type ReportedEvent, resolveReports } from '@/api/reports'
+import {
+  fetchReports,
+  KIND_LABELS,
+  PROBLEM_LABELS,
+  type ReportedSubject,
+  resolveReports,
+} from '@/api/reports'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,14 +29,14 @@ import { errorText } from '@/lib/errorText'
 
 const origin = publicOrigin(import.meta.env.MODE)
 
-const { data: events, loading, error, reload: load } = useLoad(fetchReports, [])
+const { data: subjects, loading, error, reload: load } = useLoad(fetchReports, [])
 const busy = ref(false)
 
-async function resolve(event: ReportedEvent) {
+async function resolve(subject: ReportedSubject) {
   busy.value = true
   error.value = null
   try {
-    await resolveReports(event.eventId)
+    await resolveReports(subject)
     await load()
   } catch (e) {
     error.value = errorText(e)
@@ -39,19 +45,21 @@ async function resolve(event: ReportedEvent) {
   }
 }
 
-const problems = (event: ReportedEvent) => [
-  ...new Set(event.reports.flatMap((report) => report.problems)),
+const problems = (subject: ReportedSubject) => [
+  ...new Set(subject.reports.flatMap((report) => report.problems)),
 ]
-const notes = (event: ReportedEvent) =>
-  event.reports.map((report) => report.note).filter((note): note is string => Boolean(note))
+const notes = (subject: ReportedSubject) =>
+  subject.reports.map((report) => report.note).filter((note): note is string => Boolean(note))
+const source = (subject: ReportedSubject) =>
+  subject.sourceSlug ?? (subject.kind === 'events' ? 'manual' : '—')
 
 onMounted(load)
 </script>
 
 <template>
   <p class="mb-4 text-muted-foreground">
-    Problems reported on event pages. Resolve deletes an event's reports: do it once the fix is live
-    or the verdict is final.
+    Problems reported on event, act, promoter and venue pages. Resolve deletes a page's reports: do
+    it once the fix is live or the verdict is final.
   </p>
 
   <p v-if="error" class="text-destructive" role="alert">{{ error }}</p>
@@ -59,8 +67,8 @@ onMounted(load)
     <Table>
       <TableHeader class="bg-muted">
         <TableRow>
-          <TableHead>Date</TableHead>
-          <TableHead>Event</TableHead>
+          <TableHead>Date or kind</TableHead>
+          <TableHead>Page</TableHead>
           <TableHead>Source</TableHead>
           <TableHead>Problems</TableHead>
           <TableHead>Notes</TableHead>
@@ -74,43 +82,48 @@ onMounted(load)
           </TableCell>
         </TableRow>
         <template v-else>
-          <TableRow v-for="event in events" :key="event.eventId">
-            <TableCell class="tabular-nums">{{ event.eventDate }}</TableCell>
+          <TableRow v-for="subject in subjects" :key="`${subject.kind}/${subject.id}`">
+            <TableCell class="tabular-nums">
+              <template v-if="subject.eventDate">{{ subject.eventDate }}</template>
+              <Badge v-else variant="secondary">{{ KIND_LABELS[subject.kind] }}</Badge>
+            </TableCell>
             <TableCell class="whitespace-normal">
               <a
-                :href="`${origin}/de/events/${event.slug}`"
+                :href="`${origin}/de/${subject.kind}/${subject.slug}`"
                 class="underline-offset-4 hover:underline"
                 rel="noopener noreferrer"
                 target="_blank"
               >
-                {{ event.title }}
+                {{ subject.name }}
               </a>
-              <span v-if="event.venue" class="block text-muted-foreground">{{ event.venue }}</span>
+              <span v-if="subject.venue" class="block text-muted-foreground">{{
+                subject.venue
+              }}</span>
             </TableCell>
-            <TableCell class="font-mono">{{ event.sourceSlug ?? 'manual' }}</TableCell>
+            <TableCell class="font-mono">{{ source(subject) }}</TableCell>
             <TableCell class="whitespace-normal">
               <span class="flex flex-wrap gap-1">
-                <Badge v-for="problem in problems(event)" :key="problem" variant="outline">
+                <Badge v-for="problem in problems(subject)" :key="problem" variant="outline">
                   {{ PROBLEM_LABELS[problem] ?? problem }}
                 </Badge>
               </span>
             </TableCell>
             <TableCell class="whitespace-normal">
-              <p v-for="(note, index) in notes(event)" :key="index">{{ note }}</p>
+              <p v-for="(note, index) in notes(subject)" :key="index">{{ note }}</p>
             </TableCell>
             <TableCell class="text-right">
               <Button
-                :aria-label="`Resolve: ${event.title}`"
+                :aria-label="`Resolve: ${subject.name}`"
                 :disabled="busy"
                 size="sm"
                 variant="outline"
-                @click="resolve(event)"
+                @click="resolve(subject)"
               >
                 Resolve
               </Button>
             </TableCell>
           </TableRow>
-          <TableRow v-if="!events.length">
+          <TableRow v-if="!subjects.length">
             <TableCell class="h-24 text-center" colspan="6">No open reports.</TableCell>
           </TableRow>
         </template>

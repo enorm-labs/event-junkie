@@ -16,7 +16,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 
-/** "Report a problem" (#4399): the allowlist, the checks, replace and withdraw, privacy, the export and the purges. */
+/** "Report a problem" (#4399, #5603): the allowlist, the kinds, the checks, replace and withdraw, privacy, the export and the purges. */
 class ReportFlowTest : BaseControllerTest() {
     @Autowired
     private lateinit var accounts: AccountStore
@@ -51,6 +51,8 @@ class ReportFlowTest : BaseControllerTest() {
             val club = insertVenue("Club", "club")
             insertEvent(club, "Tonight", "tonight", today)
             insertEvent(club, "Next week", "next-week", today.plusDays(7))
+            insertArtist("Ada", "ada")
+            insertPromoter("Night Shift", "night-shift")
             Unit
         }
 
@@ -79,10 +81,11 @@ class ReportFlowTest : BaseControllerTest() {
         slug: String,
         problems: List<String>,
         note: String? = null,
-        who: String = session
+        who: String = session,
+        kind: String = "events"
     ) = webTestClient
         .put()
-        .uri("/me/reports/$slug")
+        .uri("/me/reports/$kind/$slug")
         .contentType(MediaType.APPLICATION_JSON)
         .bodyValue(ReportRequest(problems, note))
         .signedIn(who)
@@ -97,12 +100,14 @@ class ReportFlowTest : BaseControllerTest() {
         .signedIn(who)
         .exchange()
 
-    private fun withdraw(slug: String) =
-        webTestClient
-            .delete()
-            .uri("/me/reports/$slug")
-            .signedIn()
-            .exchange()
+    private fun withdraw(
+        slug: String,
+        kind: String = "events"
+    ) = webTestClient
+        .delete()
+        .uri("/me/reports/$kind/$slug")
+        .signedIn()
+        .exchange()
 
     @Test
     fun `the session says whether the account may report`() {
@@ -122,7 +127,9 @@ class ReportFlowTest : BaseControllerTest() {
             .expectBody()
             .jsonPath("$.length()")
             .isEqualTo(1)
-            .jsonPath("$[0].event")
+            .jsonPath("$[0].kind")
+            .isEqualTo("events")
+            .jsonPath("$[0].slug")
             .isEqualTo("tonight")
             .jsonPath("$[0].problems")
             .isEqualTo(listOf("DATE_TIME"))
@@ -165,15 +172,15 @@ class ReportFlowTest : BaseControllerTest() {
 
         get("/me/reports")
             .expectBody()
-            .jsonPath("$[?(@.event == 'tonight')].problems[*]")
+            .jsonPath("$[?(@.slug == 'tonight')].problems[*]")
             .isEqualTo(listOf("OTHER"))
-            .jsonPath("$[?(@.event == 'next-week')].problems[*]")
+            .jsonPath("$[?(@.slug == 'next-week')].problems[*]")
             .isEqualTo(listOf("ON_IMAGE"))
 
         put("tonight", listOf("GENRE", "TYPE_GENRE", "QUESTION"), "Is this really a party?").expectStatus().isNoContent
         get("/me/reports")
             .expectBody()
-            .jsonPath("$[?(@.event == 'tonight')].problems[*]")
+            .jsonPath("$[?(@.slug == 'tonight')].problems[*]")
             .isEqualTo(listOf("GENRE", "TYPE_GENRE", "QUESTION"))
     }
 
@@ -236,11 +243,65 @@ class ReportFlowTest : BaseControllerTest() {
         runBlocking {
             databaseClient
                 .sql(
-                    "UPDATE accounts.event_report SET updated_at = now() - interval '61 days' " +
-                        "WHERE event_id = (SELECT id FROM events.event WHERE slug = 'tonight')"
+                    "UPDATE accounts.report SET updated_at = now() - interval '61 days' " +
+                        "WHERE kind = 'event' AND subject_id = (SELECT id FROM events.event WHERE slug = 'tonight')"
                 ).await()
             reportRows.deleteOlderThan(Instant.now().minus(Duration.ofDays(60))) shouldBe 1L
         }
-        get("/me/reports").expectBody().jsonPath("$[*].event").isEqualTo(listOf("next-week"))
+        get("/me/reports").expectBody().jsonPath("$[*].slug").isEqualTo(listOf("next-week"))
+    }
+
+    @Test
+    fun `an act, a promoter and a venue are reported with their own boxes, and named by their page's path`() {
+        put("ada", listOf("WRONG_ACT", "IMAGE"), kind = "artists").expectStatus().isNoContent
+        put("night-shift", listOf("NOT_A_PROMOTER"), kind = "promoters").expectStatus().isNoContent
+        put("club", listOf("ADDRESS", "CLOSED"), "Moved to the next street", kind = "venues").expectStatus().isNoContent
+        put("club", listOf("TITLE"), kind = "events").expectStatus().isNotFound
+
+        get("/me/reports")
+            .expectBody()
+            .jsonPath("$.length()")
+            .isEqualTo(3)
+            .jsonPath("$[?(@.kind == 'artists')].title")
+            .isEqualTo(listOf("Ada"))
+            .jsonPath("$[?(@.kind == 'promoters')].problems[*]")
+            .isEqualTo(listOf("NOT_A_PROMOTER"))
+            .jsonPath("$[?(@.kind == 'venues')].slug")
+            .isEqualTo(listOf("club"))
+            .jsonPath("$[?(@.kind == 'venues')].title")
+            .isEqualTo(listOf("Club"))
+
+        withdraw("ada", kind = "artists").expectStatus().isNoContent
+        get("/me/reports").expectBody().jsonPath("$.length()").isEqualTo(2)
+    }
+
+    @Test
+    fun `a box another kind owns, an unknown kind and an unknown subject are refused, a note alone is OTHER everywhere`() {
+        put("club", listOf("ARTISTS"), kind = "venues").expectStatus().isBadRequest
+        put("club", listOf("ON_IMAGE"), "See flyer", kind = "venues").expectStatus().isBadRequest
+        put("ada", listOf("ADDRESS"), kind = "artists").expectStatus().isBadRequest
+        put("tonight", listOf("WRONG_ACT")).expectStatus().isBadRequest
+        put("club", listOf("NAME"), kind = "festivals").expectStatus().isNotFound
+        put("nobody", listOf("NAME"), kind = "artists").expectStatus().isNotFound
+
+        put("night-shift", emptyList(), "Two promoters in one", kind = "promoters").expectStatus().isNoContent
+        get("/me/reports").expectBody().jsonPath("$[0].problems").isEqualTo(listOf("OTHER"))
+    }
+
+    @Test
+    fun `a report whose act, promoter or venue is gone is purged, the others kept`() {
+        runBlocking { insertVenue("Bar", "bar") }
+        put("ada", listOf("NAME"), kind = "artists").expectStatus().isNoContent
+        put("night-shift", listOf("LINKS"), kind = "promoters").expectStatus().isNoContent
+        put("bar", listOf("NAME"), kind = "venues").expectStatus().isNoContent
+        put("tonight", listOf("TITLE")).expectStatus().isNoContent
+
+        runBlocking {
+            databaseClient.sql("DELETE FROM events.artist WHERE slug = 'ada'").await()
+            databaseClient.sql("DELETE FROM events.promoter WHERE slug = 'night-shift'").await()
+            databaseClient.sql("DELETE FROM events.venue WHERE slug = 'bar'").await()
+            reportRows.deleteOrphans() shouldBe 3L
+        }
+        get("/me/reports").expectBody().jsonPath("$[*].slug").isEqualTo(listOf("tonight"))
     }
 }
