@@ -211,7 +211,7 @@ class LidoOverviewPageScraperTest {
             )
     }
 
-    // #3637: the 2027-02-04 and 2027-01-29 articles, a band with two members, and a name the `&` belongs to.
+    // #3637: the 2027-02-04 and 2027-01-29 articles, a band with two members, and a name the `&` belongs to. The `+` line bills support.
     @Test
     fun `bills every act of a dashed co-bill and keeps a name with an ampersand whole`() {
         val html =
@@ -232,7 +232,7 @@ class LidoOverviewPageScraperTest {
 
         val (badCompany, reverend) = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
-        badCompany.artists.map { it.name } shouldContainExactly listOf("BAD COMPANY LEGACY", "Dave Colwell", "Robert Hart")
+        badCompany.artists.map { it.name } shouldContainExactly listOf("BAD COMPANY LEGACY", "Dave Colwell", "Robert Hart", "M.O.N.O.K.E.L.")
         reverend.artists.map { it.name } shouldContainExactly listOf("REVEREND HARDY HARDON & THE CHURCH OF ELVIS")
     }
 

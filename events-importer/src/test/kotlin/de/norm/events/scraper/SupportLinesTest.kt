@@ -103,6 +103,16 @@ class SupportLinesTest {
         extractSupportFromSubtitle(supportSubtitleLines(lines)) shouldContainExactly listOf("SEVEN SPIRES", "SECRET RULE")
     }
 
+    // Event 15669 at Lido, and Astra's `+BAT` under Carcass: a line that opens with `+` bills acts with no marker.
+    @Test
+    fun `supportSubtitleLines reads a line that opens with a plus as support`() {
+        extractSupportFromSubtitle(supportSubtitleLines(listOf("+ Iguana Death Cult + Manduria"))) shouldContainExactly
+            listOf("Iguana Death Cult", "Manduria")
+        extractSupportFromSubtitle(supportSubtitleLines(listOf("+BAT"))) shouldContainExactly listOf("BAT")
+        supportSubtitleLines(listOf("80s Party + Pop Hits")) shouldBe null
+        supportSubtitleLines(listOf("+ SUPERGAST: SCHWEINERÖCK")) shouldBe null
+    }
+
     @Test
     fun `a support act named after a role word keeps that word`() {
         // The Czech band billed as the support act, which the colon-less strip maimed (#1732).

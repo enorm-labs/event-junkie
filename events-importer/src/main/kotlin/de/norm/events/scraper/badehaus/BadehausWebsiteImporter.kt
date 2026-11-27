@@ -109,14 +109,19 @@ class BadehausWebsiteImporter(
 
     /**
      * The acts a concert's subtitle lists after `Live:`, over a title that names the night: `Live: Prophets of the Rising Dead, My
-     * Sundown` under `Unholy Alliance Vol. IX` (event 13315).
+     * Sundown` under `Unholy Alliance Vol. IX` (event 13315). The list ends at a `|`, after which the line names the style (event 15660).
      */
     private fun liveLineup(
         subtitle: String?,
         eventType: String
     ): List<ScrapedArtist>? {
         if (eventType != EventType.CONCERT.name) return null
-        val acts = subtitle?.let { LIVE_LINEUP.find(it.trim()) }?.groupValues?.get(1) ?: return null
+        val acts =
+            subtitle
+                ?.let { LIVE_LINEUP.find(it.trim()) }
+                ?.groupValues
+                ?.get(1)
+                ?.substringBefore('|') ?: return null
         return headliners(acts)
     }
 

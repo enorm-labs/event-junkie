@@ -48,7 +48,22 @@ private val FURTHER_SUPPORT_MARKER = Regex("""\s+$SUPPORT_MARKER""", RegexOption
 /**
  * The subtitle lines carrying a support-billing marker from already-split [lines], joined with a
  * newline, or `null` when none does. A line without a marker, such as an "ABGESAGT …" note, is
- * dropped, or `.text()` flattens it into a support act. Pair with
+ * dropped, or `.text()` flattens it into a support act. A line that opens with `+` and no marker,
+ * `+ Iguana Death Cult + Manduria` (event 15669), bills its acts as support too. Pair with
  * [textLinesAt][de.norm.events.scraper.textLinesAt]. Shared by Astra and Lido.
  */
-fun supportSubtitleLines(lines: List<String>): String? = lines.filter { SUPPORT_INTRO_PATTERN.containsMatchIn(it) }.joinToString("\n").ifEmpty { null }
+fun supportSubtitleLines(lines: List<String>): String? =
+    lines
+        .mapNotNull { line ->
+            when {
+                SUPPORT_INTRO_PATTERN.containsMatchIn(line) -> line
+                else -> BARE_PLUS_LINE.find(line)?.let { "Support: ${it.groupValues[1]}" }
+            }
+        }.joinToString("\n")
+        .ifEmpty { null }
+
+/**
+ * A subtitle line that opens with `+` and lists acts with no marker: `+ SATURNUS + ANN MY GUARD`, `+BAT`.
+ * A colon means a label this rule does not know, `+ SUPERGAST: SCHWEINERÖCK`, so such a line bills nobody.
+ */
+private val BARE_PLUS_LINE = Regex("""^\s*\+\s*([^\s:][^:]*)$""")
