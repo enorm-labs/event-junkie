@@ -1,9 +1,10 @@
 <script setup lang="ts">
 /**
  * The event page's action row: the page's own buttons from the slot, then the Share menu with
- * the calendar entries added (#2564).
+ * the calendar entries added (#2564), then the `after` slot, "Report a problem" (#5605). `status`
+ * is the row's live region, which Share and the report both write to.
  */
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { CalendarPlus, ExternalLink } from '@lucide/vue'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
@@ -28,7 +29,7 @@ const pageUrl = computed(() =>
   canonicalUrl(locale.value as Locale, `/events/${props.event.slug ?? ''}`),
 )
 
-const status = ref('')
+const status = defineModel<string>('status', { default: '' })
 
 const calendarTexts = computed((): CalendarTexts => ({
   movedTo: (venue) => t('events.status.movedTo', { venue }),
@@ -86,6 +87,7 @@ function downloadIcs(): void {
           </DropdownMenuItem>
         </template>
       </ShareMenu>
+      <slot name="after" />
     </div>
     <p class="text-body text-muted-foreground" role="status">{{ status }}</p>
   </section>

@@ -33,9 +33,10 @@ const heading = computed(() =>
   intent ? t(`account.signIn.heading.${intent}`) : t('pageTitle.signIn'),
 )
 
-const BENEFITS = ['follow', 'push', 'calendar', 'save'] as const
+const BENEFITS = ['follow', 'push', 'calendar', 'save', 'report'] as const
 const FIRST: Record<SignInIntent, (typeof BENEFITS)[number]> = {
   follow: 'follow',
+  report: 'report',
   rsvp: 'calendar',
   save: 'save',
 }

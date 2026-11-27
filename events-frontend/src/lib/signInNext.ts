@@ -1,5 +1,12 @@
 /** What the page a sign-in returns to does at once, as the visitor's press would have (#4969). */
-export const SIGN_IN_ACTIONS = ['follow', 'rsvp-going', 'rsvp-interested', 'save', 'watch'] as const
+export const SIGN_IN_ACTIONS = [
+  'follow',
+  'report',
+  'rsvp-going',
+  'rsvp-interested',
+  'save',
+  'watch',
+] as const
 
 export type SignInAction = (typeof SIGN_IN_ACTIONS)[number]
 

@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineComponent, h } from 'vue'
 import type { VenueDetail } from '@/api/types'
 import { i18n } from '@/i18n'
+import ReportProblem from '@/components/ReportProblem.vue'
 
 const { getMock } = vi.hoisted(() => ({ getMock: vi.fn<(path: string) => Promise<unknown>>() }))
 
@@ -188,13 +189,14 @@ describe('VenueDetailView', () => {
     expect(view.text()).toContain('No upcoming nights here yet')
   })
 
-  it('offers a prefilled mail that names the venue page (#2963)', async () => {
+  it('puts Report a problem in the header row, and no report mail (#2963, #5605)', async () => {
     const view = await mountVenue(kater)
 
-    const mail = view.findAll('a').find((link) => link.text() === 'hello@event-junkie.de')
-    const url = new URL(mail?.attributes('href') ?? '')
-    expect(url.searchParams.get('subject')).toBe(`Wrong data: ${kater.name}`)
-    expect(url.searchParams.get('body')).toContain('https://event-junkie.de/en/venues/kater')
+    const report = view.find('header').findComponent(ReportProblem)
+    expect(report.props()).toMatchObject({ kind: 'venues', slug: 'kater', title: kater.name })
+    expect(view.findAll('a').some((link) => link.attributes('href')?.startsWith('mailto:'))).toBe(
+      false,
+    )
   })
 
   it('tags the website link as a referral from this site (#2770)', async () => {

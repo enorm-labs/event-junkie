@@ -170,7 +170,6 @@
     "hasTakenPlace": "This event has already taken place.",
     "upcomingAtVenue": "See what is coming up at {venue}.",
     "browseUpcoming": "See what is on now.",
-    "reportWrong": "Something wrong with this event? Report it by email:",
     "setTimesAsk": "Know the set times? Send them by email, as text or a screenshot:",
     "related": "More like this",
     "relatedAtVenue": "Also at {venue}",

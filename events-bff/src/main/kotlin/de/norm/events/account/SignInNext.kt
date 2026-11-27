@@ -7,7 +7,7 @@ package de.norm.events.account
  */
 internal object SignInNext {
     /** `watch` opens the MusicBrainz picker on `/search` (#5214). */
-    val ACTIONS = listOf("follow", "rsvp-going", "rsvp-interested", "save", "watch")
+    val ACTIONS = listOf("follow", "report", "rsvp-going", "rsvp-interested", "save", "watch")
 
     /** The keys a saved search writes, and the list's own dates. */
     val FILTERS =
