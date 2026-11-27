@@ -46,6 +46,7 @@
     "openapi-fetch": "0.17.0",
     "pmtiles": "4.5.0",
     "reka-ui": "2.11.0",
+    "simple-icons": "16.38.0",
     "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.5",
     "temporal-polyfill": "1.0.8",

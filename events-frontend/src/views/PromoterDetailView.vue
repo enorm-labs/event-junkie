@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import DetailLinks, { type DetailLink } from '@/components/DetailLinks.vue'
+import { serviceIcons } from '@/lib/serviceIcons'
 import { useDetailPage } from '@/composables/useDetailPage'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { usePromoter } from '@/composables/usePromoter'
@@ -29,9 +30,13 @@ const kindLink = computed(() =>
 // "Instagram" is a brand name, so it stays the same in both locales.
 const links = computed(() =>
   [
-    { label: t('common.actions.website'), url: promoter.value?.websiteUrl },
-    { label: 'Instagram', url: promoter.value?.instagramUrl },
-  ].filter((link): link is DetailLink => Boolean(link.url)),
+    {
+      label: t('common.actions.website'),
+      icon: serviceIcons.website,
+      url: promoter.value?.websiteUrl,
+    },
+    { label: 'Instagram', icon: serviceIcons.instagram, url: promoter.value?.instagramUrl },
+  ].filter((link): link is DetailLink & typeof link => Boolean(link.url)),
 )
 </script>
 

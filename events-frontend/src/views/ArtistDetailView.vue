@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import DetailLinks, { type DetailLink } from '@/components/DetailLinks.vue'
+import { serviceIcons } from '@/lib/serviceIcons'
 import CreditLine from '@/components/CreditLine.vue'
 import { useArtist } from '@/composables/useArtist'
 import { useDetailPage } from '@/composables/useDetailPage'
@@ -32,19 +33,28 @@ watch(artist, (found) => {
 
 const links = computed(() =>
   [
-    // The brand labels stay as they are; only "Website" is a word. The MusicBrainz link is the
-    // correction path ADR-031 chose: a wrong match is fixed there, not here.
-    { label: t('common.actions.website'), url: artist.value?.websiteUrl },
-    { label: 'Bandcamp', url: artist.value?.bandcampUrl },
-    { label: 'SoundCloud', url: artist.value?.soundcloudUrl },
-    { label: 'Spotify', url: artist.value?.spotifyUrl },
-    { label: 'YouTube', url: artist.value?.youtubeUrl },
-    { label: 'Instagram', url: artist.value?.instagramUrl },
-    { label: 'Facebook', url: artist.value?.facebookUrl },
-    { label: 'Discogs', url: artist.value?.discogsUrl },
-    { label: 'Resident Advisor', url: artist.value?.residentAdvisorUrl },
-    { label: 'MusicBrainz', url: artist.value?.musicbrainzUrl },
-  ].filter((link): link is DetailLink => Boolean(link.url)),
+    // Listening first, since that is what most visitors came for; then the act's own channels,
+    // then the reference sites. The brand labels stay as they are; only "Website" is a word. The
+    // MusicBrainz link is the correction path ADR-031 chose: a wrong match is fixed there, not here.
+    { label: 'Bandcamp', icon: serviceIcons.bandcamp, url: artist.value?.bandcampUrl },
+    { label: 'SoundCloud', icon: serviceIcons.soundcloud, url: artist.value?.soundcloudUrl },
+    { label: 'Spotify', icon: serviceIcons.spotify, url: artist.value?.spotifyUrl },
+    { label: 'YouTube', icon: serviceIcons.youtube, url: artist.value?.youtubeUrl },
+    {
+      label: t('common.actions.website'),
+      icon: serviceIcons.website,
+      url: artist.value?.websiteUrl,
+    },
+    { label: 'Instagram', icon: serviceIcons.instagram, url: artist.value?.instagramUrl },
+    { label: 'Facebook', icon: serviceIcons.facebook, url: artist.value?.facebookUrl },
+    { label: 'Discogs', icon: serviceIcons.discogs, url: artist.value?.discogsUrl },
+    {
+      label: 'Resident Advisor',
+      icon: serviceIcons.residentAdvisor,
+      url: artist.value?.residentAdvisorUrl,
+    },
+    { label: 'MusicBrainz', icon: serviceIcons.musicbrainz, url: artist.value?.musicbrainzUrl },
+  ].filter((link): link is DetailLink & typeof link => Boolean(link.url)),
 )
 
 // Discogs' terms prescribe the wording, so the line stays English on the German page too.

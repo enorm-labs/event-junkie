@@ -31,6 +31,11 @@ const Page = defineComponent({ render: () => h('p') })
 
 const SURVIVOR = { slug: 'testbild', name: 'Testbild' }
 
+const SURVIVOR_LINKS = [
+  ['websiteUrl', 'https://example.de/'],
+  ['spotifyUrl', 'https://open.spotify.com/artist/x'],
+] as const
+
 function artistSlugs(): string[] {
   return getMock.mock.calls
     .filter(([path]) => path === '/api/artists/{slug}')
@@ -124,5 +129,26 @@ describe('the artist page on any other slug', () => {
 
     expect(router.currentRoute.value.path).toBe('/en/artists/nope')
     expect(page.text()).toContain('Artist not found')
+  })
+})
+
+describe('the artist page links', () => {
+  it('gives every outbound link an icon beside its label', async () => {
+    SURVIVOR_LINKS.forEach(([field, url]) => Object.assign(SURVIVOR, { [field]: url }))
+    try {
+      const page = await open('/en/artists/testbild')
+
+      const outbound = page.findAll('a[target="_blank"]')
+      const spotify = outbound.find((a) => a.text() === 'Spotify')
+      expect(spotify?.find('svg').exists()).toBe(true)
+      expect(
+        outbound
+          .find((a) => a.text() === 'Website')
+          ?.find('svg')
+          .exists(),
+      ).toBe(true)
+    } finally {
+      SURVIVOR_LINKS.forEach(([field]) => Reflect.deleteProperty(SURVIVOR, field))
+    }
   })
 })

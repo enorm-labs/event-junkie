@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import BaseBadge from '@/components/BaseBadge.vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import DetailLinks, { type DetailLink } from '@/components/DetailLinks.vue'
+import { serviceIcons } from '@/lib/serviceIcons'
 import DirectionsLink from '@/components/DirectionsLink.vue'
 import NearbyStops from '@/components/NearbyStops.vue'
 import { useFormat } from '@/composables/useFormat'
@@ -49,11 +50,12 @@ const links = computed(() =>
   [
     {
       label: t('common.actions.website'),
+      icon: serviceIcons.website,
       url: venue.value?.websiteUrl ? withReferral(venue.value.websiteUrl) : null,
     },
-    { label: 'Instagram', url: venue.value?.instagramUrl },
-    { label: 'Facebook', url: venue.value?.facebookUrl },
-  ].filter((link): link is DetailLink => Boolean(link.url)),
+    { label: 'Instagram', icon: serviceIcons.instagram, url: venue.value?.instagramUrl },
+    { label: 'Facebook', icon: serviceIcons.facebook, url: venue.value?.facebookUrl },
+  ].filter((link): link is DetailLink & typeof link => Boolean(link.url)),
 )
 
 /** The link to the programme of a venue we do not import, labelled by where it points (#2766). */
