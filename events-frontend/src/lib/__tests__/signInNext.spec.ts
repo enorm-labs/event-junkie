@@ -11,6 +11,7 @@ describe('signInNext', () => {
       '/de/artists/ada?do=follow',
       '/en/events?genre=techno&genre=house&q=Caf%C3%A9+Nacht&from=2026-11-20&do=save',
       '/de/search?q=Moderat&do=watch',
+      '/en/promoters/kater?do=report',
     ])
       expect(signInNext(next)).toBe(next)
   })

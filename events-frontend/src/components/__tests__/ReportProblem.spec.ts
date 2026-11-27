@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
+import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 
 import type { ReportKind } from '@/api/account'
 import { ApiError } from '@/api/client'
@@ -47,26 +48,71 @@ async function mountForm(kind: ReportKind = 'events', slug = 'tonight') {
 
 const send = (view: VueWrapper) => view.find('[data-testid="report-send"]')
 
-describe('ReportProblem', () => {
-  it('is not there for an account the operator withdrew reporting from, nor signed out', async () => {
-    setSession({ ...me, canReport: false } as never)
-    wrapper = mount(ReportProblem, { props: { kind: 'events', slug: 'tonight', title: 'Tonight' } })
-    expect(wrapper.find('[data-testid="report-open"]').exists()).toBe(false)
+async function mountButton(path = '/en/events/tonight') {
+  const router: Router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: '/:any(.*)*', component: { render: () => null } }],
+  })
+  await router.push(path)
+  wrapper = mount(ReportProblem, {
+    props: { kind: 'events', slug: 'tonight', title: 'Tonight' },
+    global: { plugins: [router] },
+  })
+  await flushPromises()
+  return { view: wrapper, router }
+}
 
+describe('ReportProblem', () => {
+  it('signed out, is a link to sign-in that comes back to report', async () => {
     setSession(null)
-    await flushPromises()
-    expect(wrapper.find('[data-testid="report-open"]').exists()).toBe(false)
+    const { view } = await mountButton()
+
+    const link = view.find('[data-testid="report-sign-in"]')
+    expect(link.text()).toBe('Report a problem')
+    const href = new URL(link.attributes('href') ?? '', 'https://example.de')
+    expect(href.pathname).toBe('/en/sign-in')
+    expect(href.searchParams.get('next')).toBe('/en/events/tonight?do=report')
+    expect(href.searchParams.get('intent')).toBe('report')
+    expect(view.find('[data-testid="report-open"]').exists()).toBe(false)
+  })
+
+  it('is not there for an account the operator withdrew reporting from', async () => {
+    setSession({ ...me, canReport: false } as never)
+    const { view } = await mountButton()
+    expect(view.find('[data-testid="report-open"]').exists()).toBe(false)
+    expect(view.find('[data-testid="report-sign-in"]').exists()).toBe(false)
   })
 
   it('is there for a signed-in account, and says Edit report once reported', async () => {
     setSession({ ...me, canReport: true } as never)
-    wrapper = mount(ReportProblem, { props: { kind: 'events', slug: 'tonight', title: 'Tonight' } })
-    await flushPromises()
-    expect(wrapper.find('[data-testid="report-open"]').text()).toBe('Report a problem')
+    const { view } = await mountButton()
+    expect(view.find('[data-testid="report-open"]').text()).toBe('Report a problem')
 
     useReports().reports.value = { 'events/tonight': { problems: ['TEXT'], note: '' } }
     await flushPromises()
-    expect(wrapper.find('[data-testid="report-open"]').text()).toBe('Edit report')
+    expect(view.find('[data-testid="report-open"]').text()).toBe('Edit report')
+  })
+
+  it('back from sign-in, opens the sheet once and drops do from the URL', async () => {
+    setSession({ ...me, canReport: true } as never)
+    const { view, router } = await mountButton('/en/events/tonight?do=report')
+
+    expect(view.findComponent(ReportProblemForm).exists()).toBe(true)
+    expect(router.currentRoute.value.query.do).toBeUndefined()
+  })
+
+  it('says thanks on the status it is bound to once a report is sent', async () => {
+    setSession({ ...me, canReport: true } as never)
+    const { view } = await mountButton()
+    await view.find('[data-testid="report-open"]').trigger('click')
+    await flushPromises()
+
+    useReports().reports.value = { 'events/tonight': { problems: ['TEXT'], note: '' } }
+    view.findComponent(ReportProblemForm).vm.$emit('done')
+    await flushPromises()
+    expect(view.emitted('update:status')?.slice(-1)[0]).toEqual([
+      'Thanks! We check reports within a few days. You can change or withdraw yours here until then.',
+    ])
   })
 })
 

@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import { defineComponent, h, nextTick, ref } from 'vue'
 
 import { ApiError } from '@/api/client'
+import ReportProblem from '@/components/ReportProblem.vue'
 
 const { getMock, fetchFollowNotifyMock } = vi.hoisted(() => ({
   getMock: vi.fn<(path: string, init?: unknown) => Promise<unknown>>(),
@@ -103,10 +104,10 @@ describe('the artist page on an alias slug', () => {
     const page = await open('/en/artists/dj-testbild')
 
     expect(fetchFollowNotifyMock.mock.calls.map(([, slug]) => slug)).toEqual(['testbild'])
-    const mail = page.findAll('a').find((a) => a.attributes('href')?.startsWith('mailto:'))
-    const body = decodeURIComponent(mail?.attributes('href') ?? '')
-    expect(body).toContain('/en/artists/testbild')
-    expect(body).not.toContain('dj-testbild')
+    expect(page.findComponent(ReportProblem).props()).toMatchObject({
+      kind: 'artists',
+      slug: 'testbild',
+    })
   })
 
   it('asks for events by the current slug after the replace', async () => {

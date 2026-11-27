@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 /**
- * A prefilled mail that names the page, so a visitor writes without copying anything: the data
- * report that closes every detail page (#378), and the call for a night's set times (#4631).
+ * A prefilled mail that names the page, so a visitor writes without copying anything: the call for
+ * a night's set times (#4631), which takes a screenshot the report form cannot (#5605).
  */
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -12,23 +12,23 @@ import { canonicalUrl } from '@/lib/seo'
 import { UNDERLINED_LINK_CLASS } from '@/lib/utils'
 
 const props = defineProps<{
-  /** The question before the address, e.g. "Something wrong with this venue? Report it by email:". */
+  /** The question before the address. */
   text: string
   /** The entity's name, for the mail subject. */
   title: string
   /** The page's path without the locale, e.g. `/venues/gretchen`. */
   path: string
-  /** Message keys of the mail's subject (with `title`) and body (with `url`); a data report by default. */
-  subjectKey?: string
-  bodyKey?: string
+  /** Message keys of the mail's subject (with `title`) and body (with `url`). */
+  subjectKey: string
+  bodyKey: string
 }>()
 
 const { t, locale } = useI18n()
 
 const href = computed(() =>
   feedbackMailto(
-    t(props.subjectKey ?? 'detail.reportSubject', { title: props.title }),
-    t(props.bodyKey ?? 'detail.reportBody', {
+    t(props.subjectKey, { title: props.title }),
+    t(props.bodyKey, {
       url: canonicalUrl(locale.value as Locale, props.path),
     }),
   ),

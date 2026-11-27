@@ -123,12 +123,13 @@ describe('SignInView, why the visitor came', () => {
     ['follow', 'Sign in to follow artists, venues and promoters', 'Follow artists'],
     ['rsvp', 'Sign in to keep your own calendar', 'My calendar'],
     ['save', 'Sign in to save this search', 'Saved searches'],
+    ['report', 'Sign in to report a problem', 'Report a problem'],
   ])(
     'with intent=%s, says so in the heading and lists that benefit first',
     async (intent, heading, first) => {
       const view = await mountAt(SignInView, `/en/sign-in?next=/en/events&intent=${intent}`)
       expect(view.find('h1').text()).toBe(heading)
-      expect(benefits(view)).toHaveLength(4)
+      expect(benefits(view)).toHaveLength(5)
       expect(benefits(view)[0]).toContain(first)
     },
   )
@@ -143,6 +144,7 @@ describe('SignInView, why the visitor came', () => {
       expect(view.find('h1').text()).toBe('Sign in')
       expect(benefits(view)[0]).toContain('Follow artists')
       expect(benefits(view)[3]).toContain('Saved searches')
+      expect(benefits(view)[4]).toContain('Report a problem')
       view.unmount()
     }
   })

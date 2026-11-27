@@ -432,12 +432,13 @@ const { t } = useI18n()
         Kalender verschwindet.
       </p>
       <p>
-        <strong>Probleme melden:</strong> Mit einem Konto siehst du auf der Seite eines Events,
-        eines Acts, eines Veranstalters oder einer Location „Problem melden“. Missbraucht ein Konto
-        das Formular, kann ich es für dieses Konto abschalten. Meldest du ein Problem, speichere ich
-        zu deinem Konto, welche Seite es betrifft, welche Probleme du angekreuzt hast, deine Notiz,
-        falls du eine schreibst, und wann du gemeldet hast. Nur ich lese die Meldung, um die Seite
-        zu korrigieren. Die Seite zeigt sie niemandem, und kein Dienstleister erhält sie. Ist das
+        <strong>Probleme melden:</strong> Die Seite eines Events, eines Acts, eines Veranstalters
+        oder einer Location hat einen Button „Problem melden“. Melden geht nur mit einem Konto,
+        deshalb führt der Button ohne Anmeldung zur Anmeldung. Missbraucht ein Konto das Formular,
+        kann ich es für dieses Konto abschalten. Meldest du ein Problem, speichere ich zu deinem
+        Konto, welche Seite es betrifft, welche Probleme du angekreuzt hast, deine Notiz, falls du
+        eine schreibst, und wann du gemeldet hast. Nur ich lese die Meldung, um die Seite zu
+        korrigieren. Die Seite zeigt sie niemandem, und kein Dienstleister erhält sie. Ist das
         Problem erledigt, lösche ich die Meldung. Bleibt sie liegen, lösche ich sie
         <strong>60 Tage</strong> nach ihrer letzten Änderung. Du kannst sie vorher selbst
         zurückziehen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO, mein berechtigtes Interesse an

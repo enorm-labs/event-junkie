@@ -1,44 +1,72 @@
 <script setup lang="ts">
 /**
- * "Report a problem" on an event, act, promoter or venue page (#4399, #5603), for every
- * signed-in account the operator has not withdrawn it from (#5604). It stores a report and
- * nothing more; the operator works the queue. Signed out, the mail line at the end of the page.
+ * "Report a problem" in the header row of an event, act, promoter or venue page (#4399, #5603,
+ * #5605). Signed out, a link to sign-in that comes back with the sheet open; an account the
+ * operator withdrew it from (#5604) sees nothing. It stores a report and nothing more; the
+ * operator works the queue. The thanks goes to `status`, so the row's live region says it, as
+ * Share's outcome does.
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { Flag, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import ReportProblemForm from '@/components/ReportProblemForm.vue'
 import { reportKey, type ReportKind } from '@/api/account'
+import { useLocalePath } from '@/composables/useLocalePath'
 import { useReports } from '@/composables/useReports'
 import { useSession } from '@/composables/useSession'
+import { useSignInAction } from '@/composables/useSignInAction'
+import { signInReturn } from '@/lib/signInNext'
 
 const props = defineProps<{ kind: ReportKind; slug: string; title: string }>()
+const status = defineModel<string>('status', { default: '' })
 
 const { t } = useI18n()
+const route = useRoute()
+const localePath = useLocalePath()
 const { account } = useSession()
 const { reports } = useReports()
+const signInAction = useSignInAction()
 
 const open = ref(false)
-const thanks = ref(false)
 const reported = computed(() => Boolean(reports.value[reportKey(props.kind, props.slug)]))
+
+// Back from the sign-in this link led to: the sheet opens, as the press would have.
+watch(
+  () => account.value?.canReport,
+  (can) => {
+    if (can && signInAction.take('report')) open.value = true
+  },
+  { immediate: true },
+)
 
 function done() {
   open.value = false
-  thanks.value = reported.value
+  status.value = reported.value ? t('account.report.thanks') : ''
 }
 </script>
 
 <template>
-  <div v-if="account?.canReport" class="flex flex-wrap items-center gap-3">
+  <Button v-if="account === null" as-child variant="outline">
+    <RouterLink
+      :to="{
+        path: localePath('/sign-in'),
+        query: { next: signInReturn(route.path, 'report'), intent: 'report' },
+      }"
+      data-testid="report-sign-in"
+      rel="nofollow"
+    >
+      <Flag aria-hidden="true" />
+      {{ t('account.report.open') }}
+    </RouterLink>
+  </Button>
+  <template v-else-if="account?.canReport">
     <Button data-testid="report-open" variant="outline" @click="open = true">
       <Flag aria-hidden="true" />
       {{ t(reported ? 'account.report.edit' : 'account.report.open') }}
     </Button>
-    <span class="text-body text-muted-foreground empty:hidden" role="status">{{
-      thanks ? t('account.report.thanks') : ''
-    }}</span>
 
     <Sheet v-model:open="open">
       <SheetContent :aria-describedby="undefined">
@@ -59,5 +87,5 @@ function done() {
         </div>
       </SheetContent>
     </Sheet>
-  </div>
+  </template>
 </template>

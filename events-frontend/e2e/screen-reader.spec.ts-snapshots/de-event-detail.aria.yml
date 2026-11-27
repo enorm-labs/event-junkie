@@ -8,6 +8,8 @@
       - link "Dabei":
         - /url: /de/sign-in?next=/de/events/tonight-show?do=rsvp-going&intent=rsvp
     - button "Teilen"
+    - link "Problem melden":
+      - /url: /de/sign-in?next=/de/events/tonight-show?do=report&intent=report
     - status
     - heading "Spielzeiten" [level=2]
     - heading "Main Floor" [level=3]
@@ -30,7 +32,3 @@
     - paragraph:
       - link "Mock Promoter":
         - /url: /de/promoters/mock-promoter
-    - paragraph:
-      - text: "Stimmt bei diesem Event etwas nicht? Melde es per E-Mail:"
-      - link "hello@event-junkie.de":
-        - /url: mailto:hello@event-junkie.de?subject=Fehler%20in%20den%20Daten%3A%20Tonight%20Show&body=Seite%3A%20https%3A%2F%2Fevent-junkie.de%2Fde%2Fevents%2Ftonight-show%0A%0AWas%20stimmt%20nicht%3A%0A

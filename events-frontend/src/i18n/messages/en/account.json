@@ -17,7 +17,8 @@
     "heading": {
       "follow": "Sign in to follow artists, venues and promoters",
       "rsvp": "Sign in to keep your own calendar",
-      "save": "Sign in to save this search"
+      "save": "Sign in to save this search",
+      "report": "Sign in to report a problem"
     },
     "benefits": {
       "title": "What an account gives you",
@@ -25,6 +26,7 @@
       "push": "Get a push when someone you follow announces a new date.",
       "calendar": "My calendar: the events you are interested in or going to, as a list or a calendar.",
       "save": "Saved searches: your filters, one tap away.",
+      "report": "Report a problem on any event, act, promoter or venue page, and correct the listing with me.",
       "trust": "No password: you sign in by mail link or passkey. Export or delete everything at any time."
     }
   },
@@ -193,7 +195,7 @@
         "WRONG_ACT": "Events of another act with the same name",
         "GENRE": "Genre wrong or missing",
         "LINKS": "Website or social links wrong or missing",
-        "TEXT": "Description wrong or garbled",
+        "TEXT": "Description wrong or out of date",
         "IMAGE": "Picture wrong or shows someone else"
       }
     },
@@ -202,7 +204,7 @@
       "problems": {
         "NAME": "Name wrong",
         "LINKS": "Website or social links wrong or missing",
-        "TEXT": "Description wrong or garbled",
+        "TEXT": "Description wrong or out of date",
         "NOT_A_PROMOTER": "Not a promoter (an act, a venue, …)"
       }
     },
@@ -212,7 +214,7 @@
         "NAME": "Name wrong",
         "ADDRESS": "Address or map pin wrong",
         "LINKS": "Website or social links wrong or missing",
-        "TEXT": "Description wrong or garbled",
+        "TEXT": "Description wrong or out of date",
         "CLOSED": "Closed for good"
       }
     }

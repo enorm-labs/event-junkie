@@ -127,6 +127,22 @@ for (const detail of detailRoutes) {
       expect(errors, 'unexpected uncaught exceptions').toEqual([])
     })
 
+    test('signed out, the header row offers Report a problem, and no report mail', async ({
+      page,
+    }) => {
+      await page.route(detail.matcher, (route) => json(route, detail.body))
+      await page.goto(detail.path)
+
+      // In the header, beside Share (#5605), not at the end of the page.
+      const report = page.locator('header').getByRole('link', { name: 'Report a problem' })
+      await expect(report).toBeVisible()
+      await expect(page.locator('header').getByRole('button', { name: 'Share' })).toBeVisible()
+      await expect(page.getByRole('main').locator('a[href^="mailto:"]')).toHaveCount(0)
+      await report.click()
+      await expect(page).toHaveURL(`/en/sign-in?next=/en${detail.path}?do=report&intent=report`)
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sign in to report a problem')
+    })
+
     test('shows the not-found state on a 404', async ({ page }) => {
       await page.route(detail.matcher, (route) => json(route, { message: 'not found' }, 404))
 
@@ -490,17 +506,6 @@ test.describe('a past event', () => {
     await expect(page.getByText('Headliner', { exact: true })).toBeVisible()
     await expect(page.getByText('Support', { exact: true })).toBeVisible()
   })
-})
-
-test('an event page offers a prefilled mail to report wrong data', async ({ page }) => {
-  await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, eventBody))
-  await page.goto('/en/events/mock-event')
-
-  const link = page.getByRole('link', { name: 'hello@event-junkie.de' })
-  const url = new URL((await link.getAttribute('href')) ?? '')
-  expect(url.protocol).toBe('mailto:')
-  expect(url.searchParams.get('subject')).toBe('Wrong data: Mock Fest')
-  expect(url.searchParams.get('body')).toContain('https://event-junkie.de/en/events/mock-event')
 })
 
 test('serves the venue description in the page language', async ({ page }) => {

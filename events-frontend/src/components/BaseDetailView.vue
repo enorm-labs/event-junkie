@@ -13,7 +13,6 @@ import EventRow from '@/components/EventRow.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import ShareMenu from '@/components/ShareMenu.vue'
 import type { FollowKind } from '@/api/account'
-import ReportLine from '@/components/ReportLine.vue'
 import ReportProblem from '@/components/ReportProblem.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import SectionLabel from '@/components/SectionLabel.vue'
@@ -71,9 +70,7 @@ const props = defineProps<{
   /** What the Follow button follows (#3889); no button without both. */
   followKind?: FollowKind
   followSlug?: string
-  /** The report line's question; no line without it and `pagePath`. */
-  reportText?: string
-  /** The page's path without the locale, for the Share menu and the report line. */
+  /** The page's path without the locale, for the Share menu. */
   pagePath?: string
 }>()
 
@@ -162,7 +159,7 @@ const { compact } = useCompactView()
            would push it off the screen (#811 draws one on a card). -->
         <header class="space-y-2">
           <h1 :class="PAGE_TITLE_CLASS">{{ name }}</h1>
-          <!-- Follow, then Share, as the event page's plans come before its Share (#5291). -->
+          <!-- Follow, Share, then Report: the event page's order (#5291, #5605). -->
           <div class="flex flex-wrap items-start gap-3">
             <FollowButton
               v-if="followKind && followSlug"
@@ -171,6 +168,13 @@ const { compact } = useCompactView()
               :slug="followSlug"
             />
             <ShareMenu v-if="shareUrl" v-model:status="shareStatus" :title="name" :url="shareUrl" />
+            <ReportProblem
+              v-if="followKind && followSlug && name"
+              v-model:status="shareStatus"
+              :kind="`${followKind}s`"
+              :slug="followSlug"
+              :title="name"
+            />
           </div>
           <p class="text-body text-muted-foreground" role="status">
             {{ shareStatus }}
@@ -189,21 +193,6 @@ const { compact } = useCompactView()
         </div>
 
         <slot />
-
-        <!-- For a signed-in account (#5603, #5604); a signed-out visitor has the mail line below. -->
-        <ReportProblem
-          v-if="followKind && followSlug && name"
-          :kind="`${followKind}s`"
-          :slug="followSlug"
-          :title="name"
-        />
-
-        <ReportLine
-          v-if="reportText && pagePath && name"
-          :path="pagePath"
-          :text="reportText"
-          :title="name"
-        />
       </div>
 
       <!-- `upcoming` replaces the list for an entity whose events we do not import (#2766). -->

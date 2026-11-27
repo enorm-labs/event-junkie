@@ -1,7 +1,5 @@
 {
   "notFoundHeading": "{kind} not found",
-  "reportSubject": "Wrong data: {title}",
-  "reportBody": "Page: {url}\n\nWhat is wrong:\n",
   "setTimesSubject": "Set times: {title}",
   "setTimesBody": "Page: {url}\n\nSet times (paste them here, or attach a screenshot):\n",
   "venue": {
@@ -28,20 +26,17 @@
     "closing": "Open until {date}, then closed for good",
     "closedNoEvents": "No more nights here: the venue has closed.",
     "noPhoto": "No photo of this venue yet.",
-    "noPhotoLink": "Here's how to add one",
-    "report": "Something wrong with this venue? Report it by email:"
+    "noPhotoLink": "Here's how to add one"
   },
   "artist": {
     "kind": "Artist",
     "notFound": "This act isn't on our radar.",
-    "empty": "No dates on the radar yet. Check back soon.",
-    "report": "Something wrong with this act? Report it by email:"
+    "empty": "No dates on the radar yet. Check back soon."
   },
   "promoter": {
     "kind": "Promoter",
     "notFound": "This promoter isn't in our books.",
     "empty": "Nothing on their calendar yet. Check back soon.",
-    "report": "Something wrong with this promoter? Report it by email:",
     "type": {
       "collective": "Collective",
       "label": "Label",

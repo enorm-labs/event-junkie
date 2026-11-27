@@ -256,7 +256,8 @@ data row below. No processor receives it. Each row is deleted after 30 days, rea
 marked event (#4253) is a push only and makes no row.
 
 **"Report a problem" stores what an account says is wrong with an event, an act, a promoter or a venue** (#4399,
-#5603). Every signed-in account sees the button (#5604). The operator can withdraw it from an account that abuses the form
+#5603). The button sits in the header row of every detail page. Signed out, it leads to sign-in (#5605), and every
+signed-in account can report (#5604). The operator can withdraw it from an account that abuses the form
 (`accounts.account.can_report`). An account holds at most 200 open reports. The operator can lift that cap for one account (`report_cap_exempt`), and does so only for their own.
 `accounts.report` holds one row per account and page. A row holds the kind of page, the ticked problems, an optional note of at most 500 characters, and two dates. The operator reads the reports through the importer's admin API. The site never shows
 them, and no processor receives them. Resolving a report deletes it. A report that nobody resolves is deleted 60 days

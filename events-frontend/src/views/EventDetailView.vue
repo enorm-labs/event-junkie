@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ExternalLink, Ticket } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,6 @@ import RsvpToggle from '@/components/RsvpToggle.vue'
 import ReportProblem from '@/components/ReportProblem.vue'
 import EventWhen from '@/components/EventWhen.vue'
 import PickBadge from '@/components/PickBadge.vue'
-import ReportLine from '@/components/ReportLine.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useEvent } from '@/composables/useEvent'
@@ -48,6 +47,8 @@ import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
+// The action row's live region: Share's outcome and the report's thanks (#5605).
+const actionStatus = ref('')
 
 const {
   data: event,
@@ -358,7 +359,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start">
           <RsvpToggle v-if="event.slug" :slug="event.slug" />
 
-          <EventShareActions :event="event">
+          <EventShareActions v-model:status="actionStatus" :event="event">
             <Button
               v-if="
                 event.ticketUrl && !isPast && event.status !== 'CANCELLED' && !event.relocatedTo
@@ -382,6 +383,15 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
                 {{ t('events.detail.facebook') }}
               </a>
             </Button>
+            <template #after>
+              <ReportProblem
+                v-if="event.slug"
+                v-model:status="actionStatus"
+                :slug="event.slug"
+                :title="event.title ?? ''"
+                kind="events"
+              />
+            </template>
           </EventShareActions>
         </div>
       </header>
@@ -542,14 +552,6 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         <p class="text-meta text-muted-foreground">{{ t('events.detail.featuresNote') }}</p>
       </section>
 
-      <!-- For a signed-in account (#4399, #5604); a signed-out visitor has the mail line at the end. -->
-      <ReportProblem
-        v-if="event.slug"
-        :slug="event.slug"
-        :title="event.title ?? ''"
-        kind="events"
-      />
-
       <p v-if="enrichmentCredits.length" class="text-meta text-muted-foreground">
         {{ t('events.detail.detailsFrom') }}
         <template v-for="(credit, index) in enrichmentCredits" :key="credit.url"
@@ -579,13 +581,6 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
           </template>
         </p>
       </section>
-
-      <ReportLine
-        v-if="event.slug"
-        :path="`/events/${event.slug}`"
-        :text="t('events.detail.reportWrong')"
-        :title="event.title ?? event.slug"
-      />
     </article>
 
     <!-- Outside the article: these are other events, not facts about this one. -->

@@ -17,7 +17,8 @@
     "heading": {
       "follow": "Melde dich an, um Acts, Locations und Veranstaltern zu folgen",
       "rsvp": "Melde dich an, um deinen eigenen Kalender zu führen",
-      "save": "Melde dich an, um diese Suche zu speichern"
+      "save": "Melde dich an, um diese Suche zu speichern",
+      "report": "Melde dich an, um ein Problem zu melden"
     },
     "benefits": {
       "title": "Was dir ein Konto bringt",
@@ -25,6 +26,7 @@
       "push": "Eine Push-Nachricht, sobald jemand, dem du folgst, einen neuen Termin ankündigt.",
       "calendar": "Mein Kalender: die Events, für die du dich interessierst oder bei denen du dabei bist, als Liste oder Kalender.",
       "save": "Gespeicherte Suchen: deine Filter, einen Tipp entfernt.",
+      "report": "Melde ein Problem auf der Seite eines Events, Acts, Veranstalters oder einer Location, und hilf mir, die Angaben zu korrigieren.",
       "trust": "Kein Passwort: Du meldest dich per Link in der Mail oder mit einem Passkey an. Lade alles jederzeit herunter oder lösche es."
     }
   },
@@ -193,7 +195,7 @@
         "WRONG_ACT": "Events eines anderen Acts mit gleichem Namen",
         "GENRE": "Genre falsch oder fehlt",
         "LINKS": "Website oder Social-Media-Links falsch oder fehlen",
-        "TEXT": "Beschreibung falsch oder verstümmelt",
+        "TEXT": "Beschreibung falsch oder veraltet",
         "IMAGE": "Bild falsch oder zeigt jemand anderen"
       }
     },
@@ -202,7 +204,7 @@
       "problems": {
         "NAME": "Name falsch",
         "LINKS": "Website oder Social-Media-Links falsch oder fehlen",
-        "TEXT": "Beschreibung falsch oder verstümmelt",
+        "TEXT": "Beschreibung falsch oder veraltet",
         "NOT_A_PROMOTER": "Kein Veranstalter (ein Act, eine Location, …)"
       }
     },
@@ -212,7 +214,7 @@
         "NAME": "Name falsch",
         "ADDRESS": "Adresse oder Kartenpunkt falsch",
         "LINKS": "Website oder Social-Media-Links falsch oder fehlen",
-        "TEXT": "Beschreibung falsch oder verstümmelt",
+        "TEXT": "Beschreibung falsch oder veraltet",
         "CLOSED": "Dauerhaft geschlossen"
       }
     }

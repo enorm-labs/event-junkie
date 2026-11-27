@@ -18,6 +18,7 @@ vi.mock('@/api/client', async (importOriginal) => ({
 const { default: VenueDetailView } = await import('@/views/VenueDetailView.vue')
 const { default: ArtistDetailView } = await import('@/views/ArtistDetailView.vue')
 const { default: PromoterDetailView } = await import('@/views/PromoterDetailView.vue')
+const { default: ReportProblem } = await import('@/components/ReportProblem.vue')
 
 const Page = defineComponent({ render: () => h('p') })
 
@@ -30,7 +31,7 @@ afterEach(() => {
 })
 
 // Each page passes its own filter to the shared past-events pager (#2860), and its own slug to
-// the upcoming feed and the report line, through `useDetailPage` (#2570).
+// the upcoming feed and the report button, through `useDetailPage` (#2570).
 describe.each<[string, string, Component]>([
   ['venue', 'venues', VenueDetailView],
   ['artist', 'artists', ArtistDetailView],
@@ -66,13 +67,15 @@ describe.each<[string, string, Component]>([
     })
   })
 
-  it('asks for its own upcoming events and names its own path in the report mail', async () => {
+  it('asks for its own upcoming events and reports under its own slug', async () => {
     const page = await mountPage()
 
     expect(getMock).toHaveBeenCalledWith('/api/events', {
       params: { query: { [filter]: own, size: 50 } },
     })
-    const mail = page.findAll('a').find((a) => a.attributes('href')?.startsWith('mailto:'))
-    expect(decodeURIComponent(mail?.attributes('href') ?? '')).toContain(`/en/${segment}/kater`)
+    expect(page.findComponent(ReportProblem).props()).toMatchObject({
+      kind: segment,
+      slug: 'kater',
+    })
   })
 })
