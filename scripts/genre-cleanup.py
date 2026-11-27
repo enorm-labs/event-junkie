@@ -33,10 +33,10 @@ import unicodedata
 import urllib.error
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import PORTS, base_url, http_get, pages  # noqa: E402
+
 REPO = pathlib.Path(__file__).resolve().parent.parent
-PORTS = {"staging": 18081, "production": 28081}
-PAGE_SIZE = 100
-MAX_PAGES = 200
 SAMPLE_EVENTS = 3
 EXIT_CANNOT_RUN = 2
 COLUMNS = [
@@ -85,22 +85,6 @@ def parse_args(argv=None) -> argparse.Namespace:
     wikidata.add_argument("env", choices=sorted(PORTS))
     wikidata.add_argument("--out", type=pathlib.Path, help="the JSON path; the TSV goes beside it")
     return parser.parse_args(argv)
-
-
-def http_get(url: str):
-    with urllib.request.urlopen(url, timeout=60) as response:
-        return json.load(response)
-
-
-def pages(get, url: str) -> list:
-    rows, page = [], 0
-    while page < MAX_PAGES:
-        body = get(f"{url}{'&' if '?' in url else '?'}size={PAGE_SIZE}&page={page}")
-        rows += body["content"]
-        page += 1
-        if page >= body["totalPages"]:
-            return rows
-    raise RuntimeError(f"{url} has more than {MAX_PAGES} pages")
 
 
 def plain(name: str) -> str:
@@ -234,7 +218,7 @@ def write_tsv(path: pathlib.Path, rows: list) -> None:
 
 
 def collect(args) -> int:
-    base = f"http://localhost:{PORTS[args.env]}/api/admin"
+    base = base_url(args.env)
     try:
         tags = pages(http_get, f"{base}/genre-tags")
         events = pages(http_get, f"{base}/events")
@@ -335,7 +319,7 @@ def previous_wikidata_verdicts(env: str, out: pathlib.Path) -> dict:
 
 
 def wikidata(args) -> int:
-    base = f"http://localhost:{PORTS[args.env]}/api/admin"
+    base = base_url(args.env)
     try:
         artists = http_get(f"{base}/artists/wikidata-genres")
         events = pages(http_get, f"{base}/events")
