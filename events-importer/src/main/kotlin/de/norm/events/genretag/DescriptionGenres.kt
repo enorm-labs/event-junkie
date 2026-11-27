@@ -295,5 +295,11 @@ private val AMBIGUOUS_IN_PROSE =
         "oldschool",
         "newschool",
         "downbeat",
-        "top40"
+        "top40",
+        // "a touch of glam", "the math of it", "short breaks", "the electronics", "the songwriter of the band" (#5592).
+        "glam",
+        "math",
+        "breaks",
+        "electronics",
+        "songwriter"
     )

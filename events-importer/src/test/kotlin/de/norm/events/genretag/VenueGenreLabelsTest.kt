@@ -17,10 +17,10 @@ class VenueGenreLabelsTest {
 
     @Test
     fun `Schokoladen's short forms land on the tags the filter knows`() {
-        normalizeGenre("psych/alt-rock/indie-folk").shouldContainExactly("Psychedelic", "Rock", "Indie-folk")
+        normalizeGenre("psych/alt-rock/indie-folk").shouldContainExactly("Psychedelic", "Rock", "Indie-Folk")
         normalizeGenre("jangle-pop/indie-rock").shouldContainExactly("Indie")
         // Event 14988: the band's own "Post-Noir" is no genre, and the psychedelic post-rock is Post-rock.
-        normalizeGenre("Doom/Sludge/Post-Noir, Psychedelic Post-Rock").shouldContainExactly("Doom", "Sludge", "Post-rock")
+        normalizeGenre("Doom/Sludge/Post-Noir, Psychedelic Post-Rock").shouldContainExactly("Doom", "Sludge", "Post-Rock")
         nonGenreTokens("Doom/Sludge/Post-Noir").shouldBeEmpty()
     }
 
@@ -32,7 +32,7 @@ class VenueGenreLabelsTest {
             .shouldContainExactly("Pop", "Hip Hop", "House")
         normalizeGenre("Männerparty // Fetish").shouldBeEmpty()
         normalizeGenre("Berbenautika, Cumbia, Breaks, HipHop")
-            .shouldContainExactly("Latin", "Breaks", "Hip Hop")
+            .shouldContainExactly("Latin", "Breakbeat", "Hip Hop")
     }
 
     @Test
