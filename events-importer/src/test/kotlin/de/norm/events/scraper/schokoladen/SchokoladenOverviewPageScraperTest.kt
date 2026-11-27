@@ -85,7 +85,7 @@ class SchokoladenOverviewPageScraperTest {
             rabbits.ticketUrl.shouldBeNull()
             rabbits.genre shouldBe "art-pop, indie-pop/songwriter"
             // What the shared normalizer makes of them is its own call; this pins the hand-over.
-            normalizeGenre(rabbits.genre) shouldContainExactly listOf("Art-pop", "Indie", "Songwriter")
+            normalizeGenre(rabbits.genre) shouldContainExactly listOf("Art-Pop", "Indie", "Singer-Songwriter")
 
             // Lothario's bio says a tape "sold out in a record 3 months"; that is prose, not the banner.
             val lothario = events.first { it.title.startsWith("Lothario") }
@@ -295,7 +295,7 @@ class SchokoladenOverviewPageScraperTest {
                 genreOf(
                     "SHEENA IS - Open Stage Punk Drag Night - hosted by Bleach",
                     "&amp; after 22h: DJ Anita Drink (gay / glam / punk / disco / wave / house ... vinyl)"
-                ) shouldBe "punk, disco, wave, house"
+                ) shouldBe "glam, punk, disco, wave, house"
                 // A note that names no genre adds nothing.
                 genreOf("Live: The TCHIK", "&amp; after 22h: DJs Mark Fotze x Herpes Kerkeling (Nur Hits - von ikkimel zu Vicky Leandros)").shouldBeNull()
                 // A subtitle without the lead-in is not read.

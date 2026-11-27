@@ -21,7 +21,7 @@ val WIKIDATA_GENRES: Map<String, String> =
         "Q188450" to "Electropop", // electropop
         "Q1298934" to "Synthpop", // synth-pop
         "Q213665" to "K-Pop", // K-pop
-        "Q592330" to "Dreampop", // dream pop
+        "Q592330" to "Dream-Pop", // dream pop
         "Q383982" to "Psychedelic", // psychedelic pop
         "Q104695865" to "Hyperpop", // hyperpop
         "Q959583" to "Schlager", // schlager music
@@ -31,10 +31,10 @@ val WIKIDATA_GENRES: Map<String, String> =
         "Q23301960" to "Pop", // dark pop
         "Q3397882" to "Pop", // progressive pop
         "Q3535998" to "Pop", // Indian pop
-        "Q95469495" to "Alternative-Pop", // alternative pop
+        "Q95469495" to "Pop", // alternative pop
         "Q25094849" to "Art-Pop", // art pop
-        "Q2545135" to "Noise-pop", // noise pop
-        "Q25094591" to "Experimental-pop", // experimental pop
+        "Q2545135" to "Noise-Pop", // noise pop
+        "Q25094591" to "Experimental-Pop", // experimental pop
         "Q837837" to "Power-Pop", // power pop
         "Q116985035" to "Electropop", // electronic pop
         "Q11319210" to "Synthpop", // techno-pop
@@ -77,12 +77,12 @@ val WIKIDATA_GENRES: Map<String, String> =
         "Q1929352" to "Rock", // roots rock
         "Q55296418" to "Rock", // occult rock
         "Q1166218" to "Rock", // dark rock
-        "Q1785028" to "Hardrock", // sleaze rock
-        "Q181861" to "Noise-rock", // noise rock
+        "Q1785028" to "Hard-Rock", // sleaze rock
+        "Q181861" to "Noise-Rock", // noise rock
         "Q11365" to "Grunge", // grunge
         "Q7749" to "Rock'n'Roll", // rock and roll
         "Q641318" to "Mittelalterrock", // medieval folk rock
-        "Q944465" to "Jazzrock", // jazz rock
+        "Q944465" to "Jazz-Rock", // jazz rock
         "Q2662148" to "Folk-Rock", // Celtic rock
         "Q98528291" to "Psychedelic", // heavy psych
         "Q703778" to "Psychedelic", // neo-psychedelia
@@ -123,7 +123,7 @@ val WIKIDATA_GENRES: Map<String, String> =
         "Q10922" to "Hardcore", // hardcore punk
         "Q1983116" to "Hardcore", // New York hardcore
         "Q542703" to "Melodic-Hardcore", // melodic hardcore
-        "Q377910" to "Post Hardcore", // post-hardcore
+        "Q377910" to "Post-Hardcore", // post-hardcore
         "Q10926" to "Emo", // emo
         "Q3724735" to "Emo", // emo pop
         "Q3724778" to "Emo", // emotional hardcore
@@ -132,7 +132,7 @@ val WIKIDATA_GENRES: Map<String, String> =
         "Q486365" to "Punk", // anarcho-punk
         "Q1307555" to "Punk", // punk'n'roll
         "Q930995" to "Punk", // queercore
-        "Q2296495" to "Garage-punk", // garage punk
+        "Q2296495" to "Garage-Punk", // garage punk
         "Q830325" to "Horrorpunk", // horror punk
         "Q476983" to "Electropunk", // synth-punk
         "Q209498" to "Ska", // 2 tone
@@ -331,7 +331,7 @@ val WIKIDATA_GENRES: Map<String, String> =
         "Q56580" to "Industrial", // digital hardcore
         "Q2343562" to "Coldwave", // coldwave
         "Q19938910" to "Retrowave", // synthwave
-        "Q861823" to "ElectroClash", // electroclash
+        "Q861823" to "Electroclash", // electroclash
         "Q784310" to "Electro", // electro hop
         "Q930592" to "Italo", // Italo dance
         "Q216961" to "Euro Dance", // Eurodance
@@ -393,7 +393,7 @@ val WIKIDATA_GENRES: Map<String, String> =
         "Q2404568" to "Folk", // freak folk
         "Q1414130" to "Folk", // filk
         "Q153071" to "Folk", // polka
-        "Q574651" to "AntiFolk", // anti-folk
+        "Q574651" to "Anti-Folk", // anti-folk
         "Q361164" to "Chanson", // Wienerlied
         "Q2532274" to "Schlager", // Volkstümliche Musik
         "Q1277532" to "Reggae", // early reggae

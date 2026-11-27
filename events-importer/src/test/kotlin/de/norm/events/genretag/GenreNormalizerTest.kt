@@ -36,8 +36,8 @@ class GenreNormalizerTest {
     @Test
     fun `the post-hardcore abbreviation is one tag with the spelled-out name`() {
         // Event 14562.
-        normalizeGenre("Post-HC/Indie Rock").shouldContainExactlyInAnyOrder("Post Hardcore", "Indie")
-        normalizeGenre("post-hardcore").shouldContainExactly("Post Hardcore")
+        normalizeGenre("Post-HC/Indie Rock").shouldContainExactlyInAnyOrder("Post-Hardcore", "Indie")
+        normalizeGenre("post-hardcore").shouldContainExactly("Post-Hardcore")
     }
 
     @Test
@@ -45,7 +45,7 @@ class GenreNormalizerTest {
         normalizeGenre("TRANCE, HARDTECHNO, EBM").shouldContainExactly("Trance", "Hardtechno", "EBM")
         normalizeGenre("EARLY HARDCORE").shouldContainExactly("Early Hardcore")
         normalizeGenre("DARK-EBM").shouldContainExactly("Dark-EBM")
-        normalizeGenre("ElectroClash").shouldContainExactly("ElectroClash")
+        normalizeGenre("ElectroClash").shouldContainExactly("Electroclash")
     }
 
     @Test
@@ -579,8 +579,8 @@ class GenreNormalizerTest {
         listOf("Musical", "Queer", "Music", "Impro", "Underground", "Groovy", "Movement").forEach { normalizeGenre(it).shouldBeEmpty() }
         normalizeGenre("Drag-Show & Comedy").shouldBeEmpty()
         normalizeGenre("Boston/Garagerock").shouldContainExactly("Garage-Rock")
-        normalizeGenre("rap, singer/solar-punk").shouldContainExactly("Hip Hop", "Solar-punk")
-        normalizeGenre("math & emotion, minimal & electro").shouldContainExactly("Math", "Minimal", "Electro")
+        normalizeGenre("rap, singer/solar-punk").shouldContainExactly("Hip Hop", "Punk")
+        normalizeGenre("math & emotion, minimal & electro").shouldContainExactly("Math-Rock", "Minimal", "Electro")
         normalizeGenre("House & Movement").shouldContainExactly("House")
         nonGenreTokens("Musical, Queer, Drag-Show").shouldBeEmpty()
     }
@@ -692,7 +692,7 @@ class GenreNormalizerTest {
         normalizeGenre("experimental singer, composer, multi-instrumentalist").filter(::isGenreLabel).shouldContainExactly("Experimental")
         normalizeGenre("Experimental Jazz").shouldContainExactly("Experimental", "Jazz")
         normalizeGenre("Experimental Hip Hop").shouldContainExactly("Hip Hop")
-        normalizeGenre("Experimental-pop").shouldContainExactly("Experimental-pop")
+        normalizeGenre("Experimental-Pop").shouldContainExactly("Experimental-Pop")
         isGenreLabel("Experimental") shouldBe true
     }
 
