@@ -7,7 +7,7 @@ import org.jsoup.nodes.Document
  * Abstract base class for venue importers that follow the overview → detail page pattern:
  * 1. Fetch the overview page and discover events.
  * 2. For each discovered event, fetch its detail page for richer data.
- * 3. Merge detail and overview data, preferring the detail page.
+ * 3. Merge detail and overview data, preferring the detail page, or drop an event its page files as out of scope.
  *
  * Subclasses pass their scrapers to the constructor, as `VenueOverviewPageScraper()::scrape`, and may
  * override the gap-filling strategy; this class owns the shared fetch orchestration.
@@ -21,7 +21,9 @@ abstract class AbstractTwoPageWebsiteImporter(
     /** Parses all events from the overview page HTML. */
     private val scrapeOverview: (Document, String) -> List<ScrapedEvent>,
     /** Parses the detail page for a single event, or null if the page cannot be parsed. */
-    private val scrapeDetail: (Document, String) -> ScrapedEvent?
+    private val scrapeDetail: (Document, String) -> ScrapedEvent?,
+    /** True for a detail page that files its event as out of scope: the row is dropped, not merged. */
+    private val isOutOfScope: (Document) -> Boolean = { false }
 ) : EventImporter {
     // javaClass.name, so the log names the concrete importer rather than this base.
     private val pipeline = HtmlImportPipeline(htmlFetcher, KotlinLogging.logger(javaClass.name))
@@ -88,7 +90,7 @@ abstract class AbstractTwoPageWebsiteImporter(
                     HtmlImport.Listing(overview.events, overview.complete)
                 },
                 listedLine = { count -> "Scraped $count event(s) from ${eventSource.name} overview" },
-                eventPages = HtmlImport.EventPages.Detail(scrapeDetail, ::fillGapsFromOverview, detailPageOwns, secondLanguage),
+                eventPages = HtmlImport.EventPages.Detail(scrapeDetail, ::fillGapsFromOverview, detailPageOwns, secondLanguage, isOutOfScope),
                 sharedPages = sharedPages
             ),
             url,

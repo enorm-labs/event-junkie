@@ -68,7 +68,7 @@ internal class HtmlImportPipeline(
     ): List<ScrapedEvent> =
         when (pages) {
             is HtmlImport.EventPages.Enrich -> events.mapNotNull { if (pages.hasEventPage(it)) enrichOrFlagged(it, pages) else it }
-            is HtmlImport.EventPages.Detail -> events.map { parseDetailOrFallback(it, pages) }
+            is HtmlImport.EventPages.Detail -> events.mapNotNull { parseDetailOrFallback(it, pages) }
         }
 
     /**
@@ -163,12 +163,13 @@ internal class HtmlImportPipeline(
      * degraded, so that one gets a second fetch after [RETRY_PAUSE] before the run gives up on it.
      * A degraded row is marked [ScrapedEvent.detailUnavailable], so the upsert keeps the fields the
      * detail page stored last time, and a dropped one is spared from the stale cleanup (#4793).
+     * A detail page that files the event as out of scope drops the row, and the stale cleanup takes its stored event.
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: degrade to overview data if detail page is unavailable
     private suspend fun parseDetailOrFallback(
         overview: ScrapedEvent,
         detail: HtmlImport.EventPages.Detail
-    ): ScrapedEvent {
+    ): ScrapedEvent? {
         val attempts = if (overview.eventDate == UNRESOLVED_EVENT_DATE) DATELESS_ATTEMPTS else 1
         repeat(attempts) { attempt ->
             try {
@@ -205,14 +206,14 @@ internal class HtmlImportPipeline(
     private suspend fun mergeDetail(
         overview: ScrapedEvent,
         detail: HtmlImport.EventPages.Detail
-    ): ScrapedEvent {
+    ): ScrapedEvent? {
         val detailDoc = htmlFetcher.fetchDocument(overview.sourceUrl)
         // The scope opens AFTER the fetch, deliberately: the fetch already writes `url` as a
         // payload field, and a line inside both would carry the key twice (#982). Everything
         // inside is the scraper's own parsing, which is what needed the URL and never had it.
-        val parsed =
-            withContext(LogContext.forPage(overview.sourceUrl)) { detail.scrape(detailDoc, overview.sourceUrl) }
-                ?: return overview.degraded(detail.owns)
+        val page = LogContext.forPage(overview.sourceUrl)
+        if (withContext(page) { detail.outOfScope(detailDoc) }) return null
+        val parsed = withContext(page) { detail.scrape(detailDoc, overview.sourceUrl) } ?: return overview.degraded(detail.owns)
         val merged = detail.merge(parsed, overview)
         // Only beside the detail page's own text: the listing's teaser has no counterpart there.
         return if (parsed.description == null) merged else merged.withDescriptionAlt(secondLanguageText(detailDoc, detail.secondLanguage))
@@ -286,13 +287,15 @@ internal class HtmlImport(
 
         /**
          * The detail page parsed whole by [scrape] and merged over the row by [merge], with one retry
-         * for a dateless row and the [secondLanguage] text beside a detail description.
+         * for a dateless row and the [secondLanguage] text beside a detail description. A page [outOfScope] drops the row.
          */
         class Detail(
             val scrape: (Document, String) -> ScrapedEvent?,
             val merge: (ScrapedEvent, ScrapedEvent) -> ScrapedEvent,
             val owns: Set<ScrapedField>,
-            val secondLanguage: SecondLanguagePage?
+            val secondLanguage: SecondLanguagePage?,
+            /** True for a page that files its event as out of scope, which drops the row. */
+            val outOfScope: (Document) -> Boolean
         ) : EventPages
     }
 }

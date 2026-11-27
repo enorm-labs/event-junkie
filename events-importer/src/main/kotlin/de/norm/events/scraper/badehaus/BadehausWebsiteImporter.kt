@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component
  * subtitle and the inferred event type, plus fallback title/date/doors/image.
  * 2. Each `/events/<slug>/` detail page via [BadehausDetailPageScraper] — primary for the full
  * description, the start time (`Beginn`) and the promoter, which the card omits.
+ * 3. A detail page filed under `Interactive` drops its event (EVENT_SCOPE.md §3.2).
  *
  * The configured source URL must point at `/events/` (the homepage is a separate landing page).
  *
@@ -35,7 +36,12 @@ import org.springframework.stereotype.Component
 @Component
 class BadehausWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher, BadehausOverviewPageScraper()::scrape, BadehausDetailPageScraper()::scrape) {
+) : AbstractTwoPageWebsiteImporter(
+        htmlFetcher,
+        BadehausOverviewPageScraper()::scrape,
+        BadehausDetailPageScraper()::scrape,
+        BadehausDetailPageScraper()::isOutOfScope
+    ) {
     /** The listing's type is a guess from the title; the event page names the venue's category (#2505). */
     override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE, ScrapedField.ARTISTS)
 
