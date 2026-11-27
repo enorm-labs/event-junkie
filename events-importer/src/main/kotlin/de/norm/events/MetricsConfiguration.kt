@@ -21,8 +21,9 @@ import org.springframework.context.annotation.Configuration
  *   whole scrape (#4326). `importer_run_duration_seconds{source}` and the import logs
  *   already say how each source's fetch went, by our slug rather than by host.
  *
- * `http.client.requests.active`, the in-flight long-task timer the observation adds,
- * is denied outright: nothing reads it, and it repeats every series above three times.
+ * `http.client.requests.active`, the in-flight long-task timer, is denied outright: nothing
+ * reads it, and it repeats every series above three times. Boot 4.2 adds it only when
+ * `management.metrics.observations.include-active-long-task-timer` is on; the deny holds either way.
  *
  * Every other meter is untouched — notably `http.server.requests`, whose `uri` is the
  * low-cardinality templated route (e.g. `/api/admin/venues/{id}`) and is worth keeping.

@@ -45,7 +45,9 @@ class MetricsConfigurationTest {
                 .build()
         )
         val observations = ObservationRegistry.create()
-        observations.observationConfig().observationHandler(DefaultMeterObservationHandler(registry))
+        // On, as with `management.metrics.observations.include-active-long-task-timer`, so the deny filter has a meter to drop.
+        val handler = DefaultMeterObservationHandler.builder(registry).includeActiveObservationLongTaskTimer(true).build()
+        observations.observationConfig().observationHandler(handler)
         WebClient
             .builder()
             .observationRegistry(observations)
