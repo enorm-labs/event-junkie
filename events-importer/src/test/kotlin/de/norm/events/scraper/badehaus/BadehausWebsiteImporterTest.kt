@@ -215,15 +215,15 @@ class BadehausWebsiteImporterTest {
         return importer.importEvents(sourceUrl)
     }
 
-    // The venue files a dance workshop under Interactive; the card's inferred CONCERT billed its name as the act (#3100).
+    // The venue files a dance workshop under Interactive, out of scope (EVENT_SCOPE.md §3.2, #5608); the stale cleanup takes its stored row.
     @Test
-    fun `types an Interactive night as other and bills no act`() =
+    fun `drops an event whose page is categorised Interactive`() =
         runTest {
             stubFetcher(futurebaeUrl to "badehaus/badehaus-detail-interactive.html", fetcher = htmlFetcher)
 
-            val event = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:futurebae" }
-            event.eventType shouldBe EventType.OTHER.name
-            event.artists shouldHaveSize 0
+            val events = events(importer.importEvents(sourceUrl))
+            events.none { it.sourceId == "badehaus:futurebae" } shouldBe true
+            events.single { it.sourceId == "badehaus:drunken-swallows" }.eventType shouldBe EventType.CONCERT.name
         }
 
     @Test

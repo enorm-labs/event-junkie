@@ -150,7 +150,7 @@ class BadehausOverviewPageScraperTest {
         event.artists.map { it.name } shouldBe listOf("20TOKENS")
     }
 
-    // Event 13312: a workshop is out of scope (EVENT_SCOPE.md §3.2); Café com Samba names its workshop only in the subtitle and stays.
+    // Event 13312: a workshop is out of scope (EVENT_SCOPE.md §3.2). A subtitle's workshop is not enough; Café com Samba goes by its page's category.
     @Test
     fun `skips a card whose title names a workshop, not one whose subtitle does`() {
         val cards =

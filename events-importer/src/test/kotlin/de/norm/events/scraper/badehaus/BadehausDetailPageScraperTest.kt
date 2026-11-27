@@ -32,12 +32,15 @@ import java.time.LocalTime
 class BadehausDetailPageScraperTest {
     private val scraper = BadehausDetailPageScraper()
 
-    private fun <T> withScraperWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
+    private fun <T> withScraperWarnings(
+        level: Level = Level.WARN,
+        block: () -> T
+    ): Pair<T, List<ILoggingEvent>> {
         val logger = LoggerFactory.getLogger(BadehausDetailPageScraper::class.java) as Logger
         val appender = ListAppender<ILoggingEvent>().apply { start() }
         logger.addAppender(appender)
         return try {
-            block() to appender.list.filter { it.level == Level.WARN }
+            block() to appender.list.filter { it.level == level }
         } finally {
             logger.detachAppender(appender)
             appender.stop()
@@ -193,18 +196,25 @@ class BadehausDetailPageScraperTest {
         event.eventType shouldBe EventType.CONCERT.name
     }
 
+    // Café com Samba is a dance workshop and a free-dance session, filed under Interactive: out of scope (EVENT_SCOPE.md §3.2, #5608).
     @Test
-    fun `reads the venue's Interactive category as other`() {
-        val url = "https://badehaus-berlin.com/events/cafe-com-samba-berlin-2/"
-        val (event, warnings) = withScraperWarnings { scraper.scrape(fixtureDocument("badehaus/badehaus-detail-interactive.html", url), url) }
+    fun `files a page categorised Interactive as out of scope`() {
+        val url = "https://badehaus-berlin.com/events/cafe-com-samba-berlin-4/"
+        val (outOfScope, lines) = withScraperWarnings(Level.INFO) { scraper.isOutOfScope(fixtureDocument("badehaus/badehaus-detail-interactive.html", url)) }
 
-        event.shouldNotBeNull().eventType shouldBe EventType.OTHER.name
-        warnings shouldHaveSize 0
+        outOfScope shouldBe true
+        lines.single().formattedMessage shouldBe "Skipping Badehaus 'Interactive' event 'Café com Samba Berlin': out of scope"
+    }
+
+    @Test
+    fun `keeps a page categorised Concert in scope`() {
+        val url = "https://badehaus-berlin.com/events/gauchito-club/"
+        scraper.isOutOfScope(fixtureDocument("badehaus/badehaus-detail-concert-category.html", url)) shouldBe false
     }
 
     @Test
     fun `logs an unknown category once and leaves the type to the overview`() {
-        val url = "https://badehaus-berlin.com/events/cafe-com-samba-berlin-2/"
+        val url = "https://badehaus-berlin.com/events/cafe-com-samba-berlin-4/"
         val document = fixtureDocument("badehaus/badehaus-detail-interactive.html", url)
         document.selectFirst(".post-meta a[rel~=category]").shouldNotBeNull().text("Lecture")
 

@@ -41,8 +41,9 @@ import java.time.LocalTime
  * detail page's notice decides and the class is the fallback (#1578). It also supplies fallback
  * title / date / doors / image. [BadehausWebsiteImporter] merges.
  *
- * A card whose title names a `Workshop` is out of scope (EVENT_SCOPE.md §3.2) and is skipped. A subtitle that names one is
- * not enough: `Café com Samba` mentions its dance workshop there and is a concert night (#3100).
+ * A card whose title names a `Workshop` is out of scope (EVENT_SCOPE.md §3.2) and is skipped, also when its detail page fails
+ * to load. A subtitle that names one is not enough, because a concert can mention a workshop there. The detail page's
+ * `Interactive` category drops the rest, Café com Samba's dance workshop among them ([BadehausDetailPageScraper.isOutOfScope]).
  *
  * @see BadehausWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://badehaus-berlin.com/events/">Badehaus Berlin programme</a>

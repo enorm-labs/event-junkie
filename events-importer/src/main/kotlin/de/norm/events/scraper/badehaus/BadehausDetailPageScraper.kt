@@ -1,7 +1,6 @@
 package de.norm.events.scraper.badehaus
 
 import de.norm.events.event.EventStatus
-import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
@@ -31,7 +30,8 @@ import java.time.LocalDate
  * printed in the English 12-hour form ("Start: 11:30 pm") keeps its meridiem (#1949).
  *
  * **The category** ("Categorised Party", a `rel="category"` link in the post meta) is the event
- * type when it is one [mapEventType] knows (#1950), or the venue's own `Interactive` (#3100).
+ * type when it is one [mapEventType] knows (#1950). The venue's own `Interactive` files a workshop or a community day, both
+ * formats the visitor takes part in (EVENT_SCOPE.md §3.2), so [isOutOfScope] drops the event (#5608).
  * The listing card carries none, so the overview's inferred type is the fallback. The overview stays authoritative for what only it
  * exposes reliably — the sold-out flag (a CSS class on the card) and the subtitle. The card's `VERLEGT` class is one
  * flag for two changes, a date move and a house move; the notice the page opens with ("wurde
@@ -89,17 +89,31 @@ class BadehausDetailPageScraper {
     }
 
     /**
+     * True for a page whose category is `Interactive`: Café com Samba is a dance workshop and a free-dance session, with no act on
+     * stage. The category, not a word in the text, decides: a concert night can mention a workshop in passing.
+     */
+    fun isOutOfScope(document: Document): Boolean {
+        val category = parseCategory(document)
+        if (!category.equals(INTERACTIVE_CATEGORY, ignoreCase = true)) return false
+        logger.info { "Skipping Badehaus '$category' event '${document.selectFirst(".em-event-single h1")?.text()}': out of scope" }
+        return true
+    }
+
+    /**
      * The type the page's category names, or `null` when the page has none or names one the
      * vocabulary does not know. An unknown category is logged, not guessed: a new music label
      * read as `OTHER` would drop its artists silently (#3100).
      */
     private fun parseEventType(document: Document): String? {
-        val category = document.selectFirst(".post-meta a[rel~=category]")?.text()?.takeIf { it.isNotBlank() } ?: return null
-        val type = mapEventType(category, CATEGORY_TYPES)
+        val category = parseCategory(document) ?: return null
+        val type = mapEventType(category)
         // The page's URL reaches this line through the MDC that LogContext.forPage sets around the parse.
         if (type == null) logger.warn { "Category '$category' maps to no event type, the listing's type stays" }
         return type
     }
+
+    /** The category the post meta links to: "Concert", "Party", "Interactive". */
+    private fun parseCategory(document: Document): String? = document.selectFirst(".post-meta a[rel~=category]")?.text()?.takeIf { it.isNotBlank() }
 
     /**
      * Joins the description paragraphs, dropping the meta paragraph (the "Einlass"/"Beginn" times
@@ -179,8 +193,8 @@ class BadehausDetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     private companion object {
-        /** Badehaus's own labels, kept out of the shared vocabulary: `Interactive` is a workshop or a community day. */
-        private val CATEGORY_TYPES = mapOf("interactive" to EventType.OTHER.name)
+        /** Badehaus's own label for a workshop or a community day, kept out of the shared vocabulary. */
+        private const val INTERACTIVE_CATEGORY = "Interactive"
 
         /** A meta line that states the doors time ("Einlass: 19:00", "Doors: 19:00h"), dropped from the description. */
         private val DOORS_LINE = labelledClockPattern(DOORS_LABELS)
