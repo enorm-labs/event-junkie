@@ -1,9 +1,9 @@
 package de.norm.events.instagram
 
+import de.norm.events.common.LastSuccess
+import de.norm.events.common.LastSuccessGauge
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.stereotype.Component
-import java.time.Instant
-import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Counters of the daily Instagram pass (ADR-048), and its age. The names are an interface: `ej-instagram-access-refused`
@@ -13,22 +13,10 @@ import java.util.concurrent.atomic.AtomicLong
 @Component
 class InstagramMetrics(
     private val registry: MeterRegistry
-) {
-    /** Epoch seconds of the last pass that ended; 0 while the drafts are off. */
-    private val lastSuccess = AtomicLong(0)
-
+) : LastSuccess by LastSuccessGauge(registry, LAST_SUCCESS) {
     // The alert's stream exists only once the series has been exported, and OpenObserve refuses an alert on a missing one.
     init {
         registry.counter(GRAPH_ERRORS, TAG_KIND, KIND_REFUSED)
-        registry.gauge(LAST_SUCCESS, lastSuccess) { it.get().toDouble() }
-    }
-
-    /** Stamps a pass that ended at [at]. */
-    fun markSucceeded(at: Instant) = lastSuccess.set(at.epochSecond)
-
-    /** Starts the age at [at], when the runner starts, so a pass a release broke still ages. A pass that ended first is kept. */
-    fun seed(at: Instant) {
-        lastSuccess.accumulateAndGet(at.epochSecond, ::maxOf)
     }
 
     /** Posts Business Discovery returned. */
