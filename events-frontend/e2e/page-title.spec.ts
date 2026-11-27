@@ -51,8 +51,9 @@ test('announces route changes in an aria-live region for screen readers', async 
   await page.goto('/')
 
   // The live region stays silent on the initial load; role="status" is an implicit
-  // aria-live="polite" region.
-  const announcer = page.getByRole('status')
+  // aria-live="polite" region. Found by its test id: a loaded events page has a second status region.
+  const announcer = page.getByTestId('route-announcer')
+  await expect(announcer).toHaveAttribute('role', 'status')
   await expect(announcer).toHaveText('')
 
   // A client-side navigation populates it with the new page title.

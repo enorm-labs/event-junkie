@@ -196,7 +196,7 @@ test('venues that share a door share one marker, which lists them and hands over
   await page.goto('/en/map')
 
   // One marker for both, counting the events at either: 2 at the annex and 1 at Lido.
-  const marker = page.getByRole('button', { name: /^2 venues: / })
+  const marker = page.getByRole('button', { name: /^3 events at 2 venues: / })
   await skipWithoutWebGL(page, marker)
   await expect(marker).toHaveText('3')
   await expect(page.getByRole('button', { name: /^Lido: / })).toHaveCount(0)

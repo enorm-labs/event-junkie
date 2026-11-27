@@ -387,6 +387,46 @@ test('the events map near me, with a show on now, has no detectable accessibilit
 })
 
 /**
+ * Two venues at one door share a marker that shows their event count, 3, which the static pass never
+ * draws. Its name has to contain that number (label-content-name-mismatch, #5650).
+ */
+test('the events map, with venues sharing a marker, has no detectable accessibility violations', async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date('2026-08-15T16:00:00Z'))
+  await mockBff(page)
+  const door = { latitude: 52.4995, longitude: 13.4448 }
+  const hall = { slug: 'mock-hall', name: 'Mock Hall', ...door }
+  const annex = { slug: 'mock-annex', name: 'Mock Annex', ...door }
+  const show = (slug: string, venue: typeof hall) => ({
+    slug,
+    title: slug,
+    eventDate: '2026-08-15',
+    startTime: '21:00',
+    venue,
+  })
+  await page.route(/\/api\/events\/calendar(\?|$)/, (route) =>
+    json(route, [show('hall-show', hall), show('annex-one', annex), show('annex-two', annex)]),
+  )
+  await page.goto('/en/map')
+
+  const marker = page.getByRole('button', { name: /^3 events at 2 venues: / })
+  await skipWithoutWebGL(page, marker)
+  await expect(marker).toHaveText('3')
+
+  const results = await buildScan(page).analyze()
+
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+})
+
+/**
  * The compact view is a second rendering of the same routes (#1371): rows carry the headings the
  * cards carried. The display settings stay open, so their pressed-state groups are scanned too.
  */

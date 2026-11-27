@@ -20,6 +20,7 @@
   "gestureHelpMobile": "Zwei Finger bewegen die Karte",
   "pinOnNow": "{count} läuft gerade | {count} laufen gerade",
   "groupLabel": "{count} Locations: {venues}",
+  "groupEventsLabel": "{total} Events in {count} Locations: {venues}",
   "groupHeading": "{count} Locations hier",
   "pinNothingOn": "{venue}: keine Veranstaltungen in diesem Zeitraum",
   "nothingInRange": "Keine Veranstaltungen in diesem Zeitraum",
