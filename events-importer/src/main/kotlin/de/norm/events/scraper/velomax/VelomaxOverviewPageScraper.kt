@@ -3,6 +3,7 @@ package de.norm.events.scraper.velomax
 import de.norm.events.event.EventType
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
+import de.norm.events.scraper.H_MM_CLOCK
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -99,7 +100,7 @@ class VelomaxOverviewPageScraper {
         val subtitleLines = entry.textLinesAt(".eventSubtitle")
         val subtitle = subtitleLines.firstOrNull()
         val signal = entry.textAt(".ticketSignal").orEmpty()
-        val startTime = parseTime(TIME_PATTERN.find(entry.textAt(".begin").orEmpty())?.value)
+        val startTime = parseTime(H_MM_CLOCK.find(entry.textAt(".begin").orEmpty())?.value)
         val listingDate = parseListingDate(entry)
 
         return ScrapedEvent(
@@ -178,9 +179,6 @@ class VelomaxOverviewPageScraper {
 
         /** The ticket signal marking a sold-out event ("ausverkauft"). */
         const val SOLD_OUT_SIGNAL = "ausverkauft"
-
-        /** The clock time inside a `20:00 Uhr` label. */
-        val TIME_PATTERN = Regex("""\d{1,2}:\d{2}""")
 
         /** The date a permalink ends in, `…-2027-09-24`. */
         val SLUG_DATE = Regex("""(\d{4}-\d{2}-\d{2})$""")

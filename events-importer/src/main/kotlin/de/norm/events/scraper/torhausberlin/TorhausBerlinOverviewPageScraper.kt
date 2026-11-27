@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.H_MM_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -24,8 +25,6 @@ import java.time.ZonedDateTime
 
 /** A card's React key: the Teamup event id and the start as epoch milliseconds. */
 private val CARD_KEY = Regex(""""TU(\d+):(\d+)"""")
-
-private val CLOCK = Regex("""\d{1,2}:\d{2}""")
 
 /** The end of a range that crosses midnight names its own day: `23.10.26, 18:00 – 24.10.26, 00:00`. */
 private val END_DATE = Regex("""–\s*(\d{2}\.\d{2}\.\d{2}),""")
@@ -71,7 +70,7 @@ class TorhausBerlinOverviewPageScraper {
         val radio = card.select("span").any { it.text() == RADIO_BADGE }
         val (title, names) = splitLineup(rawTitle)
         val times = card.textAt("p.font-mono").orEmpty()
-        val clocks = CLOCK.findAll(times).map { it.value }.toList()
+        val clocks = H_MM_CLOCK.findAll(times).map { it.value }.toList()
         val startTime = clocks.firstOrNull()?.let { parseTime(it) }
         val endTime = clocks.drop(1).lastOrNull()?.let { parseTime(it) }
         val date = start.toLocalDate()

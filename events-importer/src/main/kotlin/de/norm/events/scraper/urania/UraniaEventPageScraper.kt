@@ -1,6 +1,7 @@
 package de.norm.events.scraper.urania
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.H_MM_CLOCK
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
@@ -87,7 +88,7 @@ class UraniaEventPageScraper {
     private fun parseDateLine(line: String?): LocalDate? = parseGermanDate(DOTTED_DATE.find(line.orEmpty())?.value)
 
     /** The clock out of the same line. */
-    private fun parseTimeLine(line: String?): LocalTime? = parseTime(CLOCK.find(line.orEmpty())?.value)
+    private fun parseTimeLine(line: String?): LocalTime? = parseTime(H_MM_CLOCK.find(line.orEmpty())?.value)
 }
 
 /**
@@ -113,9 +114,6 @@ private fun joinIntroAndBody(
 
 /** `"03.09.2026"` inside the page's date line. */
 private val DOTTED_DATE = Regex("""\d{1,2}\.\d{1,2}\.\d{4}""")
-
-/** `"19:30"` inside the same line. */
-private val CLOCK = Regex("""\d{1,2}:\d{2}""")
 
 /**
  * The `"Eintritt …"` sentence at the foot of the prose, ending at the next sentence or line, or
