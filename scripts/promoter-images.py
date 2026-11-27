@@ -29,10 +29,12 @@ import sys
 import urllib.error
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
+
 HERE = pathlib.Path(__file__).resolve().parent
 IMAGES = HERE.parent / "docs/promoters/IMAGES.tsv"
 LOCAL_HOST = "http://localhost:18081"
-PAGE_SIZE = 100
 MAX_PAGES = 100
 ARCHIVE = "Wikimedia Commons"
 PUBLIC_DOMAIN = "PD"
@@ -71,12 +73,7 @@ def read_images(only=None):
 
 
 def fetch_promoters(host, get_json):
-    promoters = []
-    for page in range(MAX_PAGES):
-        body = get_json(f"{host}/api/admin/promoters?page={page}&size={PAGE_SIZE}&sort=name,asc")
-        promoters.extend(body.get("content", []))
-        if page + 1 >= body.get("totalPages", 0):
-            break
+    promoters = pages(get_json, f"{host}/api/admin/promoters?sort=name,asc", max_pages=MAX_PAGES)
     return {p["slug"]: p for p in promoters}
 
 

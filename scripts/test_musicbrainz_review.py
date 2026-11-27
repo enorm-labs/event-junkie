@@ -70,7 +70,7 @@ def collect_with(review, events, artists, errors, out, watched=None):
             if watched is None:
                 raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
             return watched
-        return {"content": by_path[path], "totalPages": 1}
+        return {"content": by_path[path], "totalElements": len(by_path[path]), "totalPages": 1}
 
     review.http, review.matcher = http, lambda: StubMatcher(errors)
     stderr = io.StringIO()

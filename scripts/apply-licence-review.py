@@ -22,10 +22,14 @@ operator's one-off PATCH stayed null, which the gate reads as "not granted" (#25
 import argparse
 import csv
 import json
+import pathlib
 import sys
 import unicodedata
 import urllib.error
 import urllib.request
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
 
 # docs/EVENT_DATA_SOURCES.md name -> event_source.name, verified against http/importer/seed/venues/.
 ALIASES = {
@@ -43,7 +47,6 @@ LOCAL_HOST = "http://localhost:8081"
 # Present on every EventSourceResponse from a build carrying V006. Its absence means the target
 # predates the licence review, and every PATCH below would be a silent no-op.
 LICENCE_FIELD = "descriptionLicence"
-PAGE_SIZE = 100
 MAX_PAGES = 100
 
 
@@ -72,19 +75,7 @@ def fetch_all_sources(host):
     the same JSON array, and this script wrote 20 of 86 sources reporting success. The comparison at
     the end is the part that matters: paging correctly and paging completely are different claims.
     """
-    out, page, total = [], 0, 0
-    while True:
-        body = request(f"{host}/api/admin/event-sources?page={page}&size={PAGE_SIZE}&sort=name,asc")
-        total = body["totalElements"]
-        out.extend(body["content"])
-        if len(out) >= total:
-            break
-        page += 1
-        if page > MAX_PAGES:
-            sys.exit(f"Stopped after {MAX_PAGES} pages. The listing is not terminating.")
-    if len(out) != total:
-        sys.exit(f"Read {len(out)} of {total} sources. Refusing to act on a partial listing.")
-    return out
+    return pages(request, f"{host}/api/admin/event-sources?sort=name,asc", max_pages=MAX_PAGES)
 
 
 def request(url, method="GET", body=None):

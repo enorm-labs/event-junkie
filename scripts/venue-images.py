@@ -57,12 +57,14 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from admin_api import pages  # noqa: E402
+
 REVIEWED = "docs/venue-images/REVIEWED.tsv"
 COMMONS = "https://commons.wikimedia.org/w/api.php"
 FLICKR_OEMBED = "https://www.flickr.com/services/oembed"
 AGENT = "event-junkie/1.0 (https://github.com/enorm-labs/event-junkie)"
 LOCAL_HOST = "http://localhost:8081"
-PAGE_SIZE = 100
 MAX_PAGES = 100
 
 # Wide enough for the largest render site and small enough to stay well inside the fetcher's cap.
@@ -202,14 +204,7 @@ def read_reviewed(only=None):
 
 def fetch_venues(host):
     """Every venue the target holds, keyed by name and by folded name."""
-    venues = []
-    for page in range(MAX_PAGES):
-        url = f"{host}/api/admin/venues?page={page}&size={PAGE_SIZE}&sort=name,asc"
-        body = get_json(url)
-        venues.extend(body.get("content", []))
-        if page + 1 >= body.get("totalPages", 1):
-            break
-    return venues
+    return pages(get_json, f"{host}/api/admin/venues?sort=name,asc", max_pages=MAX_PAGES)
 
 
 def commons_file(row):

@@ -63,6 +63,7 @@ import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import seed_venues  # noqa: E402  (the shared reader, beside this script)
+from admin_api import PartialListing, pages  # noqa: E402
 
 SEED_DIR = str(seed_venues.SEED_DIR.relative_to(seed_venues.REPO))
 LOCAL_HOST = "http://localhost:8081"
@@ -70,7 +71,6 @@ LOCAL_HOST = "http://localhost:8081"
 # was produced, which a scheduled check must not report as health.
 EXIT_DRIFT = 1
 EXIT_CANNOT_CHECK = 2
-PAGE_SIZE = 100
 MAX_PAGES = 100
 MARKET_FEATURE = "christmas-market"
 # Two event counts per venue the file does not carry; paced so a sweep of 50 stays gentle.
@@ -82,13 +82,9 @@ def read_seed(path):
     return [(v["venue"], v["sources"]) for v in seed_venues.load(path)]
 
 
-class ListingError(Exception):
-    """A listing could not be read completely.
-
-    Raised rather than exited, because the right exit code depends on the caller: writing on a
-    partial listing is a failure, and so is reporting one as no drift, but they are not the same
-    failure and `--site` has to tell them apart.
-    """
+# The right exit code depends on the caller: writing on a partial listing and reporting it as no drift
+# are both failures, but different ones, and `--site` has to tell them apart.
+ListingError = PartialListing
 
 
 def fetch_all(host, path, query=""):
@@ -96,19 +92,7 @@ def fetch_all(host, path, query=""):
 
     The listings carry `totalElements` since #810, so a partial read is detectable rather than
     indistinguishable from a small table."""
-    out, page, total = [], 0, 0
-    while True:
-        body = request(f"{host}{path}?{query}{'&' if query else ''}page={page}&size={PAGE_SIZE}&sort=name,asc")
-        total = body["totalElements"]
-        out.extend(body["content"])
-        if len(out) >= total:
-            break
-        page += 1
-        if page > MAX_PAGES:
-            raise ListingError(f"Stopped after {MAX_PAGES} pages of {path}. The listing is not terminating.")
-    if len(out) != total:
-        raise ListingError(f"Read {len(out)} of {total} from {path}. Refusing to act on a partial listing.")
-    return out
+    return pages(request, f"{host}{path}?{query}{'&' if query else ''}sort=name,asc", max_pages=MAX_PAGES)
 
 
 def request(url, method="GET", body=None):

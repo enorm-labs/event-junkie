@@ -64,6 +64,7 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seed_venues  # noqa: E402  (the shared reader, beside this script)
+from admin_api import pages  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SEED_DIR = os.path.join(REPO, "http", "importer", "seed", "venues")
@@ -77,7 +78,6 @@ ENV_VAR = "GOOGLE_MAPS_API_KEY"
 CACHE_SECONDS = 30 * 24 * 3600
 CONFIDENT = ("ROOFTOP", "RANGE_INTERPOLATED")
 RETRY_STATUS = ("UNKNOWN_ERROR", "OVER_QUERY_LIMIT")
-PAGE_SIZE = 100
 MAX_PAGES = 100
 
 
@@ -174,22 +174,13 @@ def venues_from_host(host):
 
     The count is checked against the total the listing reports (#810), so reading part of the table
     fails here rather than producing a geocode run that quietly covers a fraction of the venues."""
-    out, page, total = [], 0, 0
-    while True:
-        url = f"{host}/api/admin/venues?page={page}&size={PAGE_SIZE}&sort=name,asc"
-        req = urllib.request.Request(url, headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=30) as r:
-            body = json.loads(r.read().decode() or "{}")
-        total = body["totalElements"]
-        out.extend(body["content"])
-        if len(out) >= total:
-            break
-        page += 1
-        if page > MAX_PAGES:
-            sys.exit(f"Stopped after {MAX_PAGES} pages of venues. The listing is not terminating.")
-    if len(out) != total:
-        sys.exit(f"Read {len(out)} of {total} venues. Refusing to act on a partial listing.")
-    return out
+    return pages(get_json, f"{host}/api/admin/venues?sort=name,asc", max_pages=MAX_PAGES)
+
+
+def get_json(url):
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read().decode() or "{}")
 
 
 def query_for(venue):
