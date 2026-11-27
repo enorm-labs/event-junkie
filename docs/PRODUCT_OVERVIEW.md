@@ -102,8 +102,10 @@ lists what that includes and what it excludes.
 - Get a push at 10:00 on the day of the events marked **Interested** or **Going**, one per day for all of them. It is on by
   default, and **Reminders on the day** on the account page turns it off.
 - See what is new in the header. A bell beside the account menu counts the new dates of everything the account follows, bell
-  on or off. It counts the changes to its marked events too, and lists the newest 20. **Show all** opens the notifications page, which lists
+  on or off. It counts the changes to its marked events too, and the answers to its problem reports. An answer names the page, says
+  whether it was fixed, and can carry the operator's reply. It lists the newest 20. **Show all** opens the notifications page, which lists
   every entry by day, 50 at a time, all or only the unread ones. An entry stays unread until it is opened. Each one goes after 30 days.
+- See the open problem reports under **My reports** on the account page, each with a link to its page.
 - Download everything stored about the account, or delete it.
 
 **Everywhere**

@@ -17,7 +17,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
-/** The notifications page's list (#4169): keyset pages over the bell's order, the unread filter and the limit's bounds. */
+/** The notifications page's list (#4169): keyset pages over the bell's order, report notes among them (#5308), the unread filter and the limit's bounds. */
 class NotificationPagingTest : BaseControllerTest() {
     @Autowired
     private lateinit var accounts: AccountStore
@@ -76,6 +76,21 @@ class NotificationPagingTest : BaseControllerTest() {
                     "VALUES (:account, :event, 'new_date', 'venue', :venue, :createdAt, ${if (read) ":createdAt" else "NULL"})"
             ).bind("account", who)
             .bind("event", event)
+            .bind("venue", club)
+            .bind("createdAt", now.minus(Duration.ofHours(hoursAgo)))
+            .await()
+    }
+
+    /** A resolved report on the venue [club], [hoursAgo] old (#5308): no event, so it sorts after the dated ones. */
+    private suspend fun reportNote(
+        hoursAgo: Long,
+        reply: String? = null
+    ) {
+        databaseClient
+            .sql(
+                "INSERT INTO accounts.notification (account_id, kind, about_kind, about_id, subject_kind, subject_title, outcome, reply, created_at) " +
+                    "VALUES (:account, 'report', 'report', :venue, 'venue', 'Club', 'unchanged', ${if (reply == null) "NULL" else "'$reply'"}, :createdAt)"
+            ).bind("account", account)
             .bind("venue", club)
             .bind("createdAt", now.minus(Duration.ofHours(hoursAgo)))
             .await()
@@ -143,6 +158,67 @@ class NotificationPagingTest : BaseControllerTest() {
             whole.next shouldBe null
 
             (1..7).forEach { limit -> walk(limit) shouldBe whole.ids }
+        }
+
+    @Test
+    fun `report notes without an event date page with the rest, each once, after the dated ones of their batch`() =
+        runBlocking<Unit> {
+            seedSeven()
+            reportNote(hoursAgo = 1)
+            reportNote(hoursAgo = 1)
+            reportNote(hoursAgo = 3)
+            val whole = page("?limit=50")
+            whole.ids shouldHaveSize 10
+
+            (1..10).forEach { limit -> walk(limit) shouldBe whole.ids }
+        }
+
+    @Test
+    fun `a report note names the page, the outcome and the reply, links while the page exists, and counts as unread`() =
+        runBlocking<Unit> {
+            reportNote(hoursAgo = 1, reply = "The address is right.")
+
+            webTestClient
+                .get()
+                .uri("/me/notifications")
+                .cookie(SessionSecurityContextRepository.COOKIE, session)
+                .exchange()
+                .expectBody()
+                .jsonPath("$[0].kind")
+                .isEqualTo("report")
+                .jsonPath("$[0].title")
+                .isEqualTo("Club")
+                .jsonPath("$[0].subjectKind")
+                .isEqualTo("venue")
+                .jsonPath("$[0].subjectSlug")
+                .isEqualTo("club")
+                .jsonPath("$[0].outcome")
+                .isEqualTo("unchanged")
+                .jsonPath("$[0].reply")
+                .isEqualTo("The address is right.")
+                .jsonPath("$[0].event")
+                .doesNotExist()
+            webTestClient
+                .get()
+                .uri("/me/notifications/unread-count")
+                .cookie(SessionSecurityContextRepository.COOKIE, session)
+                .exchange()
+                .expectBody()
+                .jsonPath("$.count")
+                .isEqualTo(1)
+
+            databaseClient.sql("DELETE FROM events.venue WHERE slug = 'club'").await()
+
+            webTestClient
+                .get()
+                .uri("/me/notifications")
+                .cookie(SessionSecurityContextRepository.COOKIE, session)
+                .exchange()
+                .expectBody()
+                .jsonPath("$[0].title")
+                .isEqualTo("Club")
+                .jsonPath("$[0].subjectSlug")
+                .doesNotExist()
         }
 
     @Test

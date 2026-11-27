@@ -438,8 +438,11 @@ const { t } = useI18n()
         kann ich es für dieses Konto abschalten. Meldest du ein Problem, speichere ich zu deinem
         Konto, welche Seite es betrifft, welche Probleme du angekreuzt hast, deine Notiz, falls du
         eine schreibst, und wann du gemeldet hast. Nur ich lese die Meldung, um die Seite zu
-        korrigieren. Die Seite zeigt sie niemandem, und kein Dienstleister erhält sie. Ist das
-        Problem erledigt, lösche ich die Meldung. Bleibt sie liegen, lösche ich sie
+        korrigieren. Die Seite zeigt sie nur dir, auf deiner Kontoseite, und kein Dienstleister
+        erhält sie. Ist das Problem erledigt, lösche ich die Meldung und hinterlasse dir einen
+        Eintrag unter der Glocke: den Namen der Seite, ob ich sie geändert habe, und meine Antwort,
+        falls ich eine schreibe. Dieser Eintrag verschwindet nach <strong>30 Tagen</strong>, wie
+        jeder Eintrag unter der Glocke. Bleibt eine Meldung liegen, lösche ich sie
         <strong>60 Tage</strong> nach ihrer letzten Änderung. Du kannst sie vorher selbst
         zurückziehen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO, mein berechtigtes Interesse an
         richtigen Angaben im Kalender, das du mit deiner Meldung teilst.

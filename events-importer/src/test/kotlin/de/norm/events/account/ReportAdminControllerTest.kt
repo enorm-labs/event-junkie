@@ -9,7 +9,7 @@ import org.springframework.http.MediaType
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitSingle
 
-/** The operator's side of "Report a problem" (#4399, #5603): the queue of every kind, resolving it, and the allowlist. */
+/** The operator's side of "Report a problem" (#4399, #5603, #5308): the queue of every kind, resolving it with a note, and the allowlist. */
 class ReportAdminControllerTest : BaseControllerTest() {
     private var tonight = 0L
     private var later = 0L
@@ -116,6 +116,91 @@ class ReportAdminControllerTest : BaseControllerTest() {
         resolve("kind=events&id=$tonight&eventId=$tonight").expectStatus().isBadRequest
         resolve("kind=events").expectStatus().isBadRequest
         resolve("").expectStatus().isBadRequest
+    }
+
+    private fun post(body: Any) =
+        webTestClient
+            .post()
+            .uri("/api/admin/reports/resolve")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(body)
+            .exchange()
+
+    @Test
+    fun `a resolve leaves each reporter one note with the page's name, the outcome and the reply`() {
+        post(ResolveRequest("events", tonight, "unchanged", "  The DJ changed after the flyer.  "))
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.resolved")
+            .isEqualTo(2)
+            .jsonPath("$.notified")
+            .isEqualTo(2)
+
+        runBlocking {
+            count(
+                "SELECT count(*) AS id FROM accounts.notification WHERE kind = 'report' AND about_kind = 'report' " +
+                    "AND event_id IS NULL AND about_id = $tonight AND subject_kind = 'event' AND subject_title = 'Tonight' " +
+                    "AND outcome = 'unchanged' AND reply = 'The DJ changed after the flyer.'"
+            )
+        } shouldBe 2L
+        runBlocking { count("SELECT count(*) AS id FROM accounts.report WHERE kind = 'event' AND subject_id = $tonight") } shouldBe 0L
+    }
+
+    @Test
+    fun `a resolve with no reply is fixed by default, and the old delete leaves the same note`() {
+        post(mapOf("kind" to "venues", "id" to venue)).expectStatus().isOk
+        resolve("kind=artists&id=$artist").expectStatus().isOk
+
+        runBlocking {
+            count(
+                "SELECT count(*) AS id FROM accounts.notification WHERE outcome = 'fixed' AND reply IS NULL " +
+                    "AND subject_title IN ('Test Venue', 'Ada')"
+            )
+        } shouldBe 2L
+    }
+
+    @Test
+    fun `a resolve of a subject that is gone deletes its reports and leaves no note`() {
+        runBlocking { sql("DELETE FROM events.artist WHERE id = $artist") }
+
+        post(ResolveRequest("artists", artist))
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.resolved")
+            .isEqualTo(1)
+            .jsonPath("$.notified")
+            .isEqualTo(0)
+    }
+
+    @Test
+    fun `a resolve with an unknown outcome, an unknown kind or a reply over 500 characters is a 400, and deletes nothing`() {
+        post(ResolveRequest("events", tonight, "maybe")).expectStatus().isBadRequest
+        post(ResolveRequest("festivals", tonight)).expectStatus().isBadRequest
+        post(ResolveRequest("events", tonight, "fixed", "x".repeat(MAX_REPLY + 1))).expectStatus().isBadRequest
+        post(ResolveRequest("events", later, "fixed", "x".repeat(MAX_REPLY))).expectStatus().isOk
+
+        runBlocking { count("SELECT count(*) AS id FROM accounts.report WHERE kind = 'event' AND subject_id = $tonight") } shouldBe 2L
+    }
+
+    @Test
+    fun `the database refuses a report note with an event, or another note with an outcome`() {
+        fun refused(statement: String) = runCatching { runBlocking { sql(statement) } }.isFailure
+
+        val account = "'00000000-0000-4000-8000-000000000001'"
+        refused(
+            "INSERT INTO accounts.notification (account_id, event_id, kind, about_kind, about_id, subject_kind, subject_title, outcome) " +
+                "VALUES ($account, $later, 'report', 'report', $later, 'event', 'Later', 'fixed')"
+        ) shouldBe true
+        refused(
+            "INSERT INTO accounts.notification (account_id, event_id, kind, about_kind, about_id, outcome) " +
+                "VALUES ($account, $later, 'new_date', 'venue', $venue, 'fixed')"
+        ) shouldBe true
+        refused(
+            "INSERT INTO accounts.notification (account_id, kind, about_kind, about_id, subject_kind, subject_title, outcome) " +
+                "VALUES ($account, 'report', 'report', $venue, 'venue', 'Test Venue', 'fixed')"
+        ) shouldBe false
     }
 
     @Test

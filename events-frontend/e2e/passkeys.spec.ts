@@ -71,6 +71,7 @@ async function mockBff(page: Page, signedIn: boolean): Promise<{ path: string; b
     }
     if (path === '/api/me/passkeys/accepted') return route.fulfill({ status: 204 })
     if (path === '/api/me/passkeys') return json(route, stored)
+    if (path === '/api/me/reports') return json(route, [])
     if (path === '/api/auth/passkey/options') {
       return json(route, { challenge: b64('challenge-sign-in'), rpId: 'localhost', timeout: 300000, userVerification: 'required' })
     }

@@ -11,7 +11,7 @@
 # the requests it sends as Ada change none of Ada's rows, and must change none of Bob's.
 #
 # Ada's session aims every write the API addresses by id, slug or endpoint at Bob's rows: rename and
-# delete his saved search and his passkey, mark his notification read, unsubscribe his push endpoint,
+# delete his saved search and his passkey, mark his two notifications read, unsubscribe his push endpoint,
 # drop his follow and its bell, his watch, withdraw his RSVPs and his problem reports. The status codes are printed for the reader. The
 # verdict is Bob's export before and after, because a 404 and a 204 that touched nothing are both
 # correct, and only the rows say which happened. Ada's export must name none of Bob's ids either.
@@ -49,6 +49,7 @@ BOB_SEARCH="$(field bob@example.de savedSearchId)"
 BOB_PASSKEY="$(field bob@example.de passkeyId)"
 BOB_PUSH="$(field bob@example.de pushEndpoint)"
 BOB_NOTIFICATION="$(field bob@example.de notificationId)"
+BOB_REPORT_NOTE="$(field bob@example.de reportNoteId)"
 BOB_WATCH="$(field bob@example.de watchMbid)"
 
 # One request as the account the token names; prints the body, or the status with --status.
@@ -109,6 +110,7 @@ attempt DELETE "/api/me/searches/$BOB_SEARCH"
 attempt PATCH "/api/me/passkeys/$BOB_PASSKEY" '{"name":"taken"}'
 attempt DELETE "/api/me/passkeys/$BOB_PASSKEY"
 attempt POST "/api/me/notifications/$BOB_NOTIFICATION/read"
+attempt POST "/api/me/notifications/$BOB_REPORT_NOTE/read"
 attempt POST /api/me/push/unsubscribe "$(jq -cn --arg endpoint "$BOB_PUSH" '{endpoint: $endpoint}')"
 # Only a removal: a PUT would ask MusicBrainz and store a watch of Ada's own.
 attempt DELETE "/api/me/watches/$BOB_WATCH"

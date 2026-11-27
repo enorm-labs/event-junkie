@@ -11,18 +11,27 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
-/** One entry under the header's bell: a new date of something the account follows, or a change to an event it marked. */
+/**
+ * One entry under the header's bell: a new date of something the account follows, a change to an event it marked, or
+ * the operator's answer to its problem report (#5308). A report note has no event: [slug] and [date] are null, and
+ * [subjectKind] and [subjectSlug] name the page. [title] is the page's name at the resolve.
+ */
 data class Notification(
     val id: UUID,
     val kind: String,
-    val slug: String,
+    val slug: String?,
     val title: String,
-    val date: LocalDate,
+    val date: LocalDate?,
     val aboutKind: String,
     val aboutName: String,
     val change: String?,
     val createdAt: Instant,
-    val readAt: Instant?
+    val readAt: Instant?,
+    val subjectKind: String? = null,
+    /** Null when the page is gone. */
+    val subjectSlug: String? = null,
+    val outcome: String? = null,
+    val reply: String? = null
 )
 
 /** How many rows a window wrote, and for how many accounts. */
@@ -72,8 +81,9 @@ class NotificationStore(
     }
 
     /**
-     * The newest [limit] notifications whose event still exists, after [after] when it is given, and only the unread ones
-     * when [unreadOnly]. The order is total, so the cursor of one page's last row starts the next without a gap or a repeat.
+     * The newest [limit] notifications whose event still exists, and every report note, after [after] when it is given,
+     * and only the unread ones when [unreadOnly]. The order is total, so the cursor of one page's last row starts the next
+     * without a gap or a repeat. A report note has no event date, so it sorts as [NotificationCursor.NO_DATE].
      */
     suspend fun list(
         accountId: UUID,
@@ -84,22 +94,28 @@ class NotificationStore(
         val conditions =
             listOfNotNull(
                 "n.account_id = :account",
+                "(n.event_id IS NULL OR e.id IS NOT NULL)",
                 "n.read_at IS NULL".takeIf { unreadOnly },
                 (
                     "(n.created_at < :createdAt OR (n.created_at = :createdAt AND " +
-                        "(e.event_date > :eventDate OR (e.event_date = :eventDate AND n.id > :id))))"
+                        "($SORT_DATE > :eventDate OR ($SORT_DATE = :eventDate AND n.id > :id))))"
                 ).takeIf { after != null }
             )
         var spec =
             db
                 .sql(
-                    "SELECT n.id, n.kind, e.slug, e.title, e.event_date, n.about_kind, n.change, n.created_at, n.read_at, " +
-                        "COALESCE(a.name, p.name, v.name) AS about_name " +
-                        "FROM accounts.notification n JOIN $EVENTS_SCHEMA.event e ON e.id = n.event_id " +
+                    "SELECT n.id, n.kind, e.slug, COALESCE(e.title, n.subject_title) AS title, e.event_date, n.about_kind, " +
+                        "n.change, n.created_at, n.read_at, n.subject_kind, n.outcome, n.reply, " +
+                        "COALESCE(a.name, p.name, v.name) AS about_name, COALESCE(se.slug, sa.slug, sp.slug, sv.slug) AS subject_slug " +
+                        "FROM accounts.notification n LEFT JOIN $EVENTS_SCHEMA.event e ON e.id = n.event_id " +
                         "LEFT JOIN $EVENTS_SCHEMA.artist a ON n.about_kind = 'artist' AND a.id = n.about_id " +
                         "LEFT JOIN $EVENTS_SCHEMA.promoter p ON n.about_kind = 'promoter' AND p.id = n.about_id " +
                         "LEFT JOIN $EVENTS_SCHEMA.venue v ON n.about_kind = 'venue' AND v.id = n.about_id " +
-                        "WHERE ${conditions.joinToString(" AND ")} ORDER BY n.created_at DESC, e.event_date, n.id LIMIT :limit"
+                        "LEFT JOIN $EVENTS_SCHEMA.event se ON n.subject_kind = 'event' AND se.id = n.about_id " +
+                        "LEFT JOIN $EVENTS_SCHEMA.artist sa ON n.subject_kind = 'artist' AND sa.id = n.about_id " +
+                        "LEFT JOIN $EVENTS_SCHEMA.promoter sp ON n.subject_kind = 'promoter' AND sp.id = n.about_id " +
+                        "LEFT JOIN $EVENTS_SCHEMA.venue sv ON n.subject_kind = 'venue' AND sv.id = n.about_id " +
+                        "WHERE ${conditions.joinToString(" AND ")} ORDER BY n.created_at DESC, $SORT_DATE, n.id LIMIT :limit"
                 ).bind("account", accountId)
                 .bind("limit", limit)
         if (after != null) {
@@ -110,15 +126,19 @@ class NotificationStore(
                 Notification(
                     id = row.required("id", UUID::class.java),
                     kind = row.required("kind", String::class.java),
-                    slug = row.required("slug", String::class.java),
+                    slug = row.get("slug", String::class.java),
                     title = row.required("title", String::class.java),
-                    date = row.required("event_date", LocalDate::class.java),
+                    date = row.get("event_date", LocalDate::class.java),
                     aboutKind = row.required("about_kind", String::class.java),
-                    // A merged-away artist or venue leaves the event's title to name it.
+                    // A merged-away artist or venue leaves the event's title to name it, and a report note names its page.
                     aboutName = row.get("about_name", String::class.java) ?: row.required("title", String::class.java),
                     change = row.get("change", String::class.java),
                     createdAt = row.required("created_at", Instant::class.java),
-                    readAt = row.get("read_at", Instant::class.java)
+                    readAt = row.get("read_at", Instant::class.java),
+                    subjectKind = row.get("subject_kind", String::class.java),
+                    subjectSlug = row.get("subject_slug", String::class.java),
+                    outcome = row.get("outcome", String::class.java),
+                    reply = row.get("reply", String::class.java)
                 )
             }.flow()
             .toList()
@@ -128,7 +148,7 @@ class NotificationStore(
         db
             .sql(
                 "SELECT count(*) AS n FROM accounts.notification n WHERE n.account_id = :account AND n.read_at IS NULL " +
-                    "AND EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.id = n.event_id)"
+                    "AND (n.event_id IS NULL OR EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.id = n.event_id))"
             ).bind("account", accountId)
             .map { row -> row.required("n", Long::class.javaObjectType) }
             .awaitSingle()
@@ -160,15 +180,20 @@ class NotificationStore(
 
     /**
      * Notifications older than [before], read or not, and those whose event the importer removed. One whose event a date
-     * move replaced stays for [PlanChangesJob] to carry across (#4139).
+     * move replaced stays for [PlanChangesJob] to carry across (#4139). A report note has no event, so only its age ends it.
      */
     suspend fun deleteExpired(before: Instant): Long =
         db
             .sql(
                 "DELETE FROM accounts.notification n WHERE n.created_at < :before " +
-                    "OR (NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.id = n.event_id) " +
+                    "OR (n.event_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.id = n.event_id) " +
                     "AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_change c WHERE c.previous_event_id = n.event_id))"
             ).bind("before", before)
             .fetch()
             .awaitRowsUpdated()
+
+    private companion object {
+        /** The second sort key: the event's date, or [NotificationCursor.NO_DATE] for a note without an event. */
+        const val SORT_DATE = "COALESCE(e.event_date, DATE '${NotificationCursor.NO_DATE}')"
+    }
 }

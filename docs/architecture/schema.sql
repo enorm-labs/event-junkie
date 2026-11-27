@@ -319,17 +319,29 @@ CREATE TABLE accounts.follow (
 CREATE TABLE accounts.notification (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     account_id uuid NOT NULL,
-    event_id bigint NOT NULL,
+    event_id bigint,
     kind text NOT NULL,
     about_kind text NOT NULL,
     about_id bigint NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     read_at timestamp with time zone,
     change text,
-    CONSTRAINT notification_about_kind_check CHECK ((about_kind = ANY (ARRAY['artist'::text, 'venue'::text, 'promoter'::text, 'rsvp'::text]))),
+    subject_kind text,
+    subject_title text,
+    outcome text,
+    reply text,
+    CONSTRAINT notification_about_kind_check CHECK ((about_kind = ANY (ARRAY['artist'::text, 'venue'::text, 'promoter'::text, 'rsvp'::text, 'report'::text]))),
     CONSTRAINT notification_change_check CHECK ((change = ANY (ARRAY['cancelled'::text, 'postponed'::text, 'relocated'::text, 'date'::text, 'time'::text, 'venue'::text]))),
     CONSTRAINT notification_change_kind_check CHECK (((kind = 'change'::text) = (change IS NOT NULL))),
-    CONSTRAINT notification_kind_check CHECK ((kind = ANY (ARRAY['new_date'::text, 'change'::text])))
+    CONSTRAINT notification_kind_check CHECK ((kind = ANY (ARRAY['new_date'::text, 'change'::text, 'report'::text]))),
+    CONSTRAINT notification_outcome_check CHECK ((outcome = ANY (ARRAY['fixed'::text, 'unchanged'::text]))),
+    CONSTRAINT notification_reply_check CHECK (((length(reply) >= 1) AND (length(reply) <= 500))),
+    CONSTRAINT notification_report_check CHECK (
+CASE
+    WHEN (kind = 'report'::text) THEN ((event_id IS NULL) AND (about_kind = 'report'::text) AND (subject_kind IS NOT NULL) AND (subject_title IS NOT NULL) AND (outcome IS NOT NULL))
+    ELSE ((event_id IS NOT NULL) AND (about_kind <> 'report'::text) AND (subject_kind IS NULL) AND (subject_title IS NULL) AND (outcome IS NULL) AND (reply IS NULL))
+END),
+    CONSTRAINT notification_subject_kind_check CHECK ((subject_kind = ANY (ARRAY['event'::text, 'artist'::text, 'promoter'::text, 'venue'::text])))
 );
 
 --

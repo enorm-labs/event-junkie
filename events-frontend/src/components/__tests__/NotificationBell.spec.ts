@@ -127,6 +127,38 @@ describe('NotificationBell', () => {
     expect(link.textContent).toContain('Night 3')
   })
 
+  it('names a resolved report by its page and outcome, with the reply, and links to the page while it exists', async () => {
+    const report = (id: string, slug: string | null, outcome: string, reply: string | null) => ({
+      ...entry(id),
+      kind: 'report',
+      event: null,
+      date: null,
+      title: 'Sisyphos',
+      aboutKind: 'report',
+      aboutName: 'Sisyphos',
+      subjectKind: 'venue',
+      subjectSlug: slug,
+      outcome,
+      reply,
+    })
+    account.fetchUnreadCount.mockResolvedValue(2)
+    account.fetchNotifications.mockResolvedValue([
+      report('4', 'sisyphos', 'fixed', null),
+      report('5', null, 'unchanged', 'The address is right.'),
+    ])
+    await mountAt('/en/events')
+    await openMenu()
+
+    const [linked, gone] = [...document.body.querySelectorAll('[data-testid="notification"]')]
+    expect(linked!.getAttribute('href')).toBe('/en/venues/sisyphos')
+    expect(linked!.textContent).toContain('Fixed after your report: Sisyphos')
+    expect(linked!.textContent).toContain('Thanks for your report.')
+    // The page is gone: the note still reads, as plain text.
+    expect(gone!.tagName).toBe('DIV')
+    expect(gone!.textContent).toContain('Checked, left as is: Sisyphos')
+    expect(gone!.textContent).toContain('The address is right.')
+  })
+
   it('opening an unread entry marks it read, and the count asked after the mark is lower', async () => {
     account.fetchUnreadCount.mockResolvedValueOnce(1).mockResolvedValue(0)
     account.fetchNotifications.mockResolvedValue([entry('1')])

@@ -39,6 +39,7 @@ async function mockAccount(page: Page): Promise<{ path: string; csrf: string | n
     if (path === '/api/me/follows') return json(route, [])
     if (path === '/api/me/passkeys/accepted') return route.fulfill({ status: 204 })
     if (path === '/api/me/passkeys') return json(route, [])
+    if (path === '/api/me/reports') return json(route, [])
     if (path === '/api/me/push') return json(route, { publicKey: null })
     if (path === '/api/me/push/changes') return route.fulfill({ status: 204 })
     if (path === '/api/me/searches') return json(route, [])
@@ -75,6 +76,28 @@ test('the link from the mail signs in on the click, not on the load', async ({ p
   await expect(page).toHaveURL(/\/en\/following$/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Following')
   expect(writes).toEqual([{ path: '/api/auth/sign-in', csrf: 'csrf-1', body: JSON.stringify({ token: 'abc_-123' }) }])
+})
+
+test('the account page lists the open reports, each linking to its page (#5308)', async ({ page }) => {
+  await mockAccount(page)
+  // Registered after the mock, so it answers first.
+  await page.route('**/api/me/reports', (route) =>
+    json(route, [
+      {
+        kind: 'venues',
+        slug: 'mock-venue',
+        title: 'Mock Venue',
+        problems: ['ADDRESS'],
+        updatedAt: '2026-11-20T10:00:00Z',
+      },
+    ]),
+  )
+  await page.goto('/en/account')
+
+  const section = page.getByTestId('my-reports')
+  await expect(section.getByRole('heading', { name: 'My reports' })).toBeVisible()
+  await expect(section.getByRole('link', { name: 'Mock Venue' })).toHaveAttribute('href', '/en/venues/mock-venue')
+  await expect(section).toContainText('Address or map pin wrong')
 })
 
 test('the account is deleted only after the confirmation', async ({ page }) => {

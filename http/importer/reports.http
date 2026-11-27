@@ -1,10 +1,11 @@
 ### ============================================================
 ### Admin: Reports — "Report a problem" from the detail pages
-### (#4399, #5603)
+### (#4399, #5603, #5308)
 ###
 ### The queue /fix-events works through, resolving a subject's
-### reports (which deletes them), and the flag that withdraws
-### reporting from an account that abuses the form (#5604).
+### reports (which deletes them and leaves each reporter a note
+### under the bell), and the flag that withdraws reporting from
+### an account that abuses the form (#5604).
 ### ============================================================
 
 ### The open reports, one entry per event, act, promoter or venue
@@ -17,9 +18,17 @@ Accept: application/json
     });
 %}
 
-### Resolve every report on one subject (deletes them): kind and id from the list
-DELETE {{importer-host}}/api/admin/reports?kind=venues&id=1
+### Resolve every report on one subject: kind and id from the list, outcome fixed or unchanged, reply optional
+POST {{importer-host}}/api/admin/reports/resolve
+Content-Type: application/json
 Accept: application/json
+
+{
+  "kind": "venues",
+  "id": 1,
+  "outcome": "unchanged",
+  "reply": "The address on the page is the venue's own."
+}
 
 > {%
     client.test("status is 200", function () {

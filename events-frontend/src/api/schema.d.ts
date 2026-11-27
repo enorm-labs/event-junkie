@@ -2287,10 +2287,10 @@ export interface components {
             /** Format: uuid */
             id?: string;
             kind?: string;
-            event?: string;
+            event?: string | null;
             title?: string;
             /** Format: date */
-            date?: string;
+            date?: string | null;
             aboutKind?: string;
             aboutName?: string;
             change?: string | null;
@@ -2298,6 +2298,10 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             readAt?: string | null;
+            subjectKind?: string | null;
+            subjectSlug?: string | null;
+            outcome?: string | null;
+            reply?: string | null;
         };
         UnreadCountResponse: {
             /** Format: int64 */

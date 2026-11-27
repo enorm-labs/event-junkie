@@ -19,6 +19,7 @@ import {
 } from 'reka-ui'
 import ErrorLine from '@/components/ErrorLine.vue'
 import ListPage from '@/components/ListPage.vue'
+import MyReports from '@/components/MyReports.vue'
 import NotificationSettings from '@/components/NotificationSettings.vue'
 import PasskeySettings from '@/components/PasskeySettings.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
@@ -117,6 +118,8 @@ function since(createdAt?: string): string {
         />
 
         <PasskeySettings />
+
+        <MyReports />
 
         <section class="space-y-3">
           <SectionLabel as="h2">{{ t('account.page.yourData') }}</SectionLabel>

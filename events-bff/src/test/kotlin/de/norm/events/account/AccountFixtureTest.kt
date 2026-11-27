@@ -111,11 +111,11 @@ class AccountFixtureTest : BaseControllerTest() {
     }
 
     @Test
-    fun `bob's bell holds one unread cancellation of his RSVP`() {
+    fun `bob's bell holds one unread cancellation of his RSVP, then the answer to his venue report`() {
         val bobFixture = fixture.single { it.get("email").asString() == bob.email }
         get("/me/notifications", bob)
             .jsonPath("$.length()")
-            .isEqualTo(1)
+            .isEqualTo(2)
             .jsonPath("$[0].id")
             .isEqualTo(bobFixture.get("notificationId").asString())
             .jsonPath("$[0].kind")
@@ -124,6 +124,14 @@ class AccountFixtureTest : BaseControllerTest() {
             .isEqualTo("cancelled")
             .jsonPath("$[0].readAt")
             .isEmpty
+            .jsonPath("$[1].id")
+            .isEqualTo(bobFixture.get("reportNoteId").asString())
+            .jsonPath("$[1].kind")
+            .isEqualTo("report")
+            .jsonPath("$[1].subjectSlug")
+            .isEqualTo("kesselhaus-nord")
+            .jsonPath("$[1].outcome")
+            .isEqualTo("unchanged")
     }
 
     @Test

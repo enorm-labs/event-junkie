@@ -37,30 +37,57 @@ const club: ReportedSubject = {
 let events: ReportedSubject[] = []
 let accounts: { email: string; canReport: boolean; openReports: number }[] = []
 let resolveStatus = 200
+let resolved: unknown[] = []
 const fetchMock = vi.fn<typeof fetch>()
+
+/** Presses Resolve on the row, then, in the sheet, picks the outcome, types the reply and submits. */
+async function resolveIn(name: string, outcome?: 'unchanged', reply?: string) {
+  const view = mounted!
+  await view.find(`button[aria-label="Resolve: ${name}"]`).trigger('click')
+  await flushPromises()
+  if (outcome) document.querySelector<HTMLInputElement>(`input[value="${outcome}"]`)!.click()
+  if (reply !== undefined) {
+    const box = document.querySelector<HTMLTextAreaElement>('[data-testid="resolve-reply"]')!
+    box.value = reply
+    box.dispatchEvent(new Event('input'))
+  }
+  await flushPromises()
+  document.querySelector<HTMLFormElement>('#resolve-form')!.requestSubmit()
+  await flushPromises()
+}
+
+let mounted: ReturnType<typeof mount> | undefined
+const mountView = () => (mounted = mount(ReportsView, { attachTo: document.body }))
 
 beforeEach(() => {
   events = [tonight]
   accounts = []
   resolveStatus = 200
+  resolved = []
   fetchMock.mockImplementation(async (input, init) => {
     const url = String(input)
     if ((init?.method ?? 'GET') === 'GET' && url === '/api/admin/reports') return json(events)
     if (url === '/api/admin/accounts') return json(accounts)
-    if (init?.method === 'DELETE' && url === '/api/admin/reports?kind=events&id=418') {
+    if (init?.method === 'POST' && url === '/api/admin/reports/resolve') {
       if (resolveStatus !== 200) return json({ detail: 'database gone' }, resolveStatus)
+      resolved.push(JSON.parse(String(init.body)))
       events = []
-      return json({ resolved: 2 })
+      return json({ resolved: 2, notified: 2 })
     }
     return json({ detail: `unexpected ${url}` }, 500)
   })
   vi.stubGlobal('fetch', fetchMock)
 })
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  mounted?.unmount()
+  mounted = undefined
+  document.body.innerHTML = ''
+  vi.unstubAllGlobals()
+})
 
 describe('ReportsView', () => {
   it('lists one row per event, the problems once each, and the notes', async () => {
-    const view = mount(ReportsView)
+    const view = mountView()
     await flushPromises()
 
     const row = view.findAll('tbody tr')
@@ -80,17 +107,7 @@ describe('ReportsView', () => {
 
   it('shows a venue by its kind, links to its page, and resolves it by kind and id', async () => {
     events = [club]
-    fetchMock.mockImplementation(async (input, init) => {
-      const url = String(input)
-      if (url === '/api/admin/accounts') return json([])
-      if ((init?.method ?? 'GET') === 'GET') return json(events)
-      if (url === '/api/admin/reports?kind=venues&id=7') {
-        events = []
-        return json({ resolved: 1 })
-      }
-      return json({ detail: `unexpected ${url}` }, 500)
-    })
-    const view = mount(ReportsView)
+    const view = mountView()
     await flushPromises()
 
     const row = view.findAll('tbody tr')[0]!
@@ -101,8 +118,8 @@ describe('ReportsView', () => {
     expect(row.find('a').attributes('href')).toBe('https://event-junkie.de/de/venues/club')
     expect(row.text()).toContain('—')
 
-    await view.find('button[aria-label="Resolve: Club"]').trigger('click')
-    await flushPromises()
+    await resolveIn('Club')
+    expect(resolved).toEqual([{ kind: 'venues', id: 7, outcome: 'fixed' }])
     expect(view.text()).toContain('No open reports.')
   })
 
@@ -114,7 +131,7 @@ describe('ReportsView', () => {
       { email: 'c-masked@example.de', canReport: true, openReports: 2 },
       { email: 'd-masked@example.de', canReport: false, openReports: 1 },
     ]
-    const view = mount(ReportsView)
+    const view = mountView()
     await flushPromises()
 
     expect(view.find('[data-testid="reporters"]').text()).toBe(
@@ -123,28 +140,35 @@ describe('ReportsView', () => {
   })
 
   it('shows no line when nobody holds a report', async () => {
-    const view = mount(ReportsView)
+    const view = mountView()
     await flushPromises()
     expect(view.find('[data-testid="reporters"]').exists()).toBe(false)
   })
 
-  it('resolves an event and reloads', async () => {
-    const view = mount(ReportsView)
+  it('resolves an event with the outcome and the reply from the sheet, and reloads', async () => {
+    const view = mountView()
     await flushPromises()
 
-    await view.find('button[aria-label="Resolve: Die Nerven"]').trigger('click')
-    await flushPromises()
+    await resolveIn('Die Nerven', 'unchanged', '  The support act was not announced.  ')
+    expect(resolved).toEqual([
+      {
+        kind: 'events',
+        id: 418,
+        outcome: 'unchanged',
+        reply: 'The support act was not announced.',
+      },
+    ])
     expect(view.text()).toContain('No open reports.')
+    expect(document.querySelector('#resolve-form')).toBeNull()
   })
 
   it('shows why a resolve failed, and keeps the row', async () => {
     resolveStatus = 500
-    const view = mount(ReportsView)
+    const view = mountView()
     await flushPromises()
 
-    await view.find('button[aria-label="Resolve: Die Nerven"]').trigger('click')
-    await flushPromises()
-    expect(view.find('[role="alert"]').text()).toContain('database gone')
+    await resolveIn('Die Nerven')
+    expect(document.querySelector('[role="alert"]')!.textContent).toContain('database gone')
     expect(view.text()).toContain('Die Nerven')
   })
 })

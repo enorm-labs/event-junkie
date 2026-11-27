@@ -55,10 +55,11 @@ with the earliest pick that matches the visitor's filters (#1262), so a second p
 event again and PUTs it back with `featuredUntil: null`. The event editor has an "Our pick until" field, a Berlin date and time. Save sends the instant it
 names, sends `null` when the field is cleared, and leaves `featuredUntil` out when the field is untouched, so the importer keeps the stored pick.
 
-Reports (`src/views/ReportsView.vue`, `/reports`) lists `GET /api/admin/reports`: the problems allowed accounts reported on event pages (#4399), one row per
-event, by event date, with the ticked problems as badges and the notes. The title opens the event on the public site. Resolve sends
-`DELETE /api/admin/reports?eventId=<id>`, which deletes every report on the event, so resolve once the fix is live or the verdict is final. The allowlist has
-no page: `http/importer/reports.http` sets it.
+Reports (`src/views/ReportsView.vue`, `/reports`) lists `GET /api/admin/reports`: the problems accounts reported on event, act, promoter and venue pages
+(#4399, #5603), one row per page, events by date first, with the ticked problems as badges and the notes. The title opens the page on the public site.
+Resolve opens a sheet that asks for the outcome, fixed or left as is, and an optional reply of at most 500 characters. It sends
+`POST /api/admin/reports/resolve`, which deletes every report on the page and leaves each reporter a note under the bell (#5308), so resolve once the fix
+is live or the verdict is final. The report flag has no page: `http/importer/reports.http` sets it.
 
 Venues to review (`src/views/VenueReviewView.vue`) lists `GET /api/admin/venues/needs-review`: the venues without an importer whose site failed three monthly checks
 in a row (#2812), longest-failing first. "Still open" sets `reviewedAt` to now. "Closed on…" asks for the last open day and sets `closedOn` (ADR-046). The default

@@ -21,7 +21,11 @@ data class NotificationCursor(
         private const val PARTS = 3
         private val ENCODER = Base64.getUrlEncoder().withoutPadding()
 
-        fun of(notification: Notification) = NotificationCursor(notification.createdAt, notification.date, notification.id)
+        /** The sort date of a note without an event (#5308): after every real one, so it is total and never null. */
+        const val NO_DATE = "9999-12-31"
+        private val NO_EVENT_DATE: LocalDate = LocalDate.parse(NO_DATE)
+
+        fun of(notification: Notification) = NotificationCursor(notification.createdAt, notification.date ?: NO_EVENT_DATE, notification.id)
 
         /** Answers null for anything [token] did not make. */
         fun parse(token: String): NotificationCursor? =

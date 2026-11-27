@@ -219,6 +219,19 @@
       }
     }
   },
+  "myReports": {
+    "title": "Meine Meldungen",
+    "intro": "Wir prüfen jede Meldung innerhalb weniger Tage. Danach sagt dir die Glocke, was daraus geworden ist.",
+    "empty": "Keine offenen Meldungen. Um ein Problem zu melden, nutze den Button oben auf jeder Event-, Act-, Veranstalter- oder Location-Seite.",
+    "other": "Nur Notiz",
+    "failed": "Deine Meldungen konnten nicht geladen werden. Versuch es später noch einmal.",
+    "kind": {
+      "events": "Event",
+      "artists": "Act",
+      "promoters": "Veranstalter",
+      "venues": "Location"
+    }
+  },
   "push": {
     "title": "Benachrichtigungen",
     "intro": "Eine Push-Nachricht an diesen Browser, wenn ein Act, eine Location oder ein Veranstalter, dem du folgst, einen neuen Termin hat. Welche, wählst du mit der Glocke auf",
@@ -270,7 +283,7 @@
     "label": "Benachrichtigungen",
     "labelUnread": "Benachrichtigungen, {count} ungelesen",
     "title": "Was neu ist",
-    "empty": "Noch nichts Neues. Neue Termine von dem, dem du folgst, und Änderungen an Events, die du vorhast, erscheinen hier.",
+    "empty": "Noch nichts Neues. Neue Termine von dem, dem du folgst, Änderungen an Events, die du vorhast, und Antworten auf deine Meldungen erscheinen hier.",
     "markAllRead": "Alle als gelesen markieren",
     "unread": "Ungelesen",
     "artist": "Neuer Termin: {name}",
@@ -287,13 +300,18 @@
     "failed": "Benachrichtigungen konnten nicht geladen werden. Versuch es später noch einmal.",
     "showAll": "Alle anzeigen",
     "page": {
-      "intro": "Neue Termine von dem, dem du folgst, und Änderungen an Events, die du vorhast. Jeder Eintrag verschwindet nach 30 Tagen.",
+      "intro": "Neue Termine von dem, dem du folgst, Änderungen an Events, die du vorhast, und Antworten auf deine Meldungen. Jeder Eintrag verschwindet nach 30 Tagen.",
       "filter": "Welche Benachrichtigungen",
       "all": "Alle",
       "unread": "Ungelesen",
       "today": "Heute",
       "yesterday": "Gestern",
       "noneUnread": "Nichts Ungelesenes. Alles hier ist schon geöffnet."
+    },
+    "report": {
+      "fixed": "Nach deiner Meldung korrigiert: {name}",
+      "unchanged": "Geprüft, bleibt so: {name}",
+      "thanks": "Danke für deine Meldung."
     }
   }
 }
