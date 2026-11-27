@@ -6,8 +6,8 @@ import notices from '@/assets/notices.json'
  * The attribution list behind `/legal/notices`, shared by both language versions of that page.
  *
  * The page is per-locale prose (see views/localisedView.ts), but *this* is not prose — it is the
- * lazy-expansion behaviour and the coordinate formatting, and duplicating it into two components
- * would be two places for the same bug.
+ * lazy-expansion behaviour and the coordinate formatting, which `NoticesLicenceGroups` renders once
+ * for both languages. Two copies would be two places for the same bug.
  */
 
 export interface Component {
