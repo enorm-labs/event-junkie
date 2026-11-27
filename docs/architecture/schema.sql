@@ -220,7 +220,7 @@ CREATE FUNCTION events.drop_artist_billed_only_by(artist_slug text, source_prefi
     LANGUAGE sql STRICT
     BEGIN ATOMIC
  WITH dropped AS (
-          DELETE FROM events.artist a
+          DELETE FROM events.artist AS a
            WHERE ((a.slug = drop_artist_billed_only_by.artist_slug) AND (NOT (EXISTS ( SELECT 1
                     FROM (events.event_artist ea
                       JOIN events.event e ON ((e.id = ea.event_id)))

@@ -7,4 +7,4 @@ package de.norm.events
  * server. Dependabot moves `compose.yaml` and reads no Kotlin, so `PostgresTestImageTest` fails its
  * pull request until this line moves with it.
  */
-const val POSTGRES_TEST_IMAGE = "postgres:18.6-alpine"
+const val POSTGRES_TEST_IMAGE = "postgres:18.7-alpine"
