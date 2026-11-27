@@ -42,7 +42,8 @@ class ArtStalkerDetailPageScraper {
         val single = SINGLE_PRICE.find(practical)?.let { euroAmounts(it.value).firstOrNull() }
         val presale = labelled.presale ?: single
         val boxOffice = labelled.boxOffice ?: single
-        val (title, subtitle) = splitTagline(rawTitle)
+        val (billing, endDate) = splitRun(rawTitle, date)
+        val (title, subtitle) = splitTagline(billing)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
@@ -54,6 +55,7 @@ class ArtStalkerDetailPageScraper {
                     .trim()
                     .ifEmpty { null },
             eventDate = date,
+            endDate = endDate,
             doorsTime = labelledClock(practical, DOORS_LABELS),
             startTime = parseClockPrefix(dateTime.substringAfter("T")),
             imageUrl = document.imgSrcAt(".c-ticket-fan img"),

@@ -95,6 +95,22 @@ class ArtStalkerDetailPageScraperTest {
     }
 
     @Test
+    fun `reads an exhibition's run from the heading as its end date (#5588)`() {
+        val page =
+            Jsoup.parse(
+                """
+                <h1>Ausstellung: Face it &amp; own it! - Lars Koepke &amp; Vincent J. E. Sieck - 26.11.2026 - 09.01.2027</h1>
+                <time class="c-event-date" datetime="2026-11-26T19:00:00"></time>
+                """.trimIndent()
+            )
+        val event = scraper.scrape(page, "https://www.reservix.de/tickets-x/e2580338").shouldNotBeNull()
+        event.title shouldBe "Ausstellung: Face it & own it!"
+        event.subtitle shouldBe "Lars Koepke & Vincent J. E. Sieck"
+        event.endDate shouldBe LocalDate.of(2027, 1, 9)
+        scrape("patlansky", "2535642").shouldNotBeNull().endDate.shouldBeNull()
+    }
+
+    @Test
     fun `returns null for a page without an event`() {
         scraper.scrape(Jsoup.parse("<html><body></body></html>"), "https://art-stalker.reservix.de/tickets-x/e1").shouldBeNull()
     }
