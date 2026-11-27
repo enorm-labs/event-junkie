@@ -5,6 +5,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
+import de.norm.events.scraper.LINE_BREAK_TAG
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -153,7 +154,7 @@ class WuehlmaeuseApiScraper {
     }
 
     private fun toTicket(product: JsonNode): WuehlmaeuseTicket? {
-        val lines = product.stringOrNull("name")?.split(LINE_BREAK)?.map { decodeHtmlEntities(it) } ?: return null
+        val lines = product.stringOrNull("name")?.split(LINE_BREAK_TAG)?.map { decodeHtmlEntities(it) } ?: return null
         val performance = lines.firstNotNullOfOrNull { PERFORMANCE.find(it) }
         val permalink = product.stringOrNull("permalink")
         if (lines.size < MIN_LINES || performance == null || permalink == null) {
@@ -187,7 +188,6 @@ class WuehlmaeuseApiScraper {
 
     private companion object {
         const val MIN_LINES = 4
-        val LINE_BREAK = Regex("""<br\s*/?>""")
         val PERFORMANCE = Regex("""(\d{2}\.\d{2}\.\d{4}) um (\d{1,2}:\d{2})""")
         val DOORS = Regex("""Einlass ab:?\s*(\d{1,2}:\d{2})""")
         val CANCELLED = Regex("""kann leider nicht stattfinden|abgesagt""", RegexOption.IGNORE_CASE)

@@ -34,6 +34,9 @@ private val HH_MM_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH
  */
 val FOUR_DIGIT_CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
+/** A clock inside longer text, with a one- or two-digit hour (`9:30`, `23:00`). [parseTime] reads the match. */
+val H_MM_CLOCK = Regex("""\d{1,2}:\d{2}""")
+
 /**
  * Attempts to parse [text] as a [LocalTime] using the given [formatter].
  *

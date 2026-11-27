@@ -3,6 +3,7 @@ package de.norm.events.scraper.thedoor
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.H_MM_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -62,7 +63,7 @@ class TheDoorEventsPageScraper {
             soldOut = cleanedTitle?.soldOut == true,
             eventType = inferUnmarkedTitleType(title).takeUnless { it == EventType.OTHER.name } ?: EventType.PARTY.name,
             eventDate = date,
-            startTime = spans.firstOrNull { CLOCK.matches(it) }?.let(::parseTime),
+            startTime = spans.firstOrNull { H_MM_CLOCK.matches(it) }?.let(::parseTime),
             imageUrl = card.imgSrcAt("img"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.THE_DOOR.sourceIdPrefix}$date",
@@ -84,7 +85,6 @@ class TheDoorEventsPageScraper {
 
     private companion object {
         val DATE = Regex("""\d{1,2}\.\d{1,2}\.\d{4}""")
-        val CLOCK = Regex("""\d{1,2}:\d{2}""")
         const val LINEUP_LABEL = "LINEUP:"
         val COMING_SOON = setOf("coming soon", "soon", "announced soon", "tba soon")
 

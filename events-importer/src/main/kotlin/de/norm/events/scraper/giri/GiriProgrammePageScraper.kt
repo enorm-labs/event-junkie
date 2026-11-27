@@ -3,6 +3,7 @@ package de.norm.events.scraper.giri
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.H_MM_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -79,7 +80,8 @@ class GiriProgrammePageScraper {
         )
     }
 
-    private fun clocks(fact: String?): List<LocalTime> = CLOCK.findAll(fact.orEmpty()).mapNotNull { parseTime(it.value.padStart(HH_MM_LENGTH, '0')) }.toList()
+    private fun clocks(fact: String?): List<LocalTime> =
+        H_MM_CLOCK.findAll(fact.orEmpty()).mapNotNull { parseTime(it.value.padStart(HH_MM_LENGTH, '0')) }.toList()
 
     /** The `<dd>` beside the `<dt>` that reads [label] in the event's facts list. */
     private fun Element.fact(label: String): String? =
@@ -158,7 +160,6 @@ class GiriProgrammePageScraper {
         const val MUSIC_CATEGORY = "music"
         const val PROGRAMME_URL = "https://giri.berlin/programme/"
         const val HH_MM_LENGTH = 5
-        val CLOCK = Regex("""\d{1,2}:\d{2}""")
 
         /** A trailing `(live)`, `(Live Performance)` or `(hybrid live+dj set)`; any other bracket stays in the name. */
         val ROLE_NOTE = Regex("""^(.+?)\s*\(([^()]*\b(?:live|dj|set|performance)\b[^()]*)\)$""", RegexOption.IGNORE_CASE)

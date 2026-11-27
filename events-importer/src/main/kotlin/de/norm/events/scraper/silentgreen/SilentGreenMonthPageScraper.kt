@@ -1,6 +1,7 @@
 package de.norm.events.scraper.silentgreen
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.H_MM_CLOCK
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
@@ -136,7 +137,7 @@ class SilentGreenMonthPageScraper {
     }
 
     /** The `HH:mm` of the row's `.eventList-event-endtime` cell (`"-19:00"`), behind its dash; `null` without one. */
-    private fun parseRowEndTime(row: Element): LocalTime? = row.textAt(".eventList-event-endtime")?.let { CLOCK.find(it)?.value }?.let(::parseTime)
+    private fun parseRowEndTime(row: Element): LocalTime? = row.textAt(".eventList-event-endtime")?.let { H_MM_CLOCK.find(it)?.value }?.let(::parseTime)
 
     /**
      * The row's date from the day and month it renders (`"Sa 01.08."`) and the page's year.
@@ -167,9 +168,6 @@ class SilentGreenMonthPageScraper {
 
         /** The month switcher's current entry, e.g. "August 2026". */
         const val MONTH_HEADING_SELECTOR = "#calendar-timeline .current-month"
-
-        /** An `HH:mm` clock inside a time cell. */
-        val CLOCK = Regex("""\d{1,2}:\d{2}""")
 
         /** Letters of a German month name that identify it — see [parseMonthHeading]. */
         const val GERMAN_MONTH_PREFIX = 3

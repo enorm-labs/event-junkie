@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.CleanedTitle
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.H_MM_CLOCK
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -80,7 +81,7 @@ class TresorDetailPageScraper {
             eventType = EventType.PARTY.name,
             eventDate = eventDate ?: UNRESOLVED_EVENT_DATE,
             // No doors or start time is stated; the night's opening set is the only clock.
-            startTime = parseTime(OPENING_TIME.find(content.textAt(".lineup-time").orEmpty())?.value),
+            startTime = parseTime(H_MM_CLOCK.find(content.textAt(".lineup-time").orEmpty())?.value),
             imageUrl = parsePoster(document),
             ticketUrl = parseTicketUrl(content),
             sourceUrl = sourceUrl,
@@ -188,9 +189,6 @@ class TresorDetailPageScraper {
 
         /** The separator WordPress puts between the event name and the site name. */
         const val SITE_TITLE_SEPARATOR = " | "
-
-        /** The first clock time of a `23:00-02:00` set slot. */
-        val OPENING_TIME = Regex("""\d{1,2}:\d{2}""")
 
         /** A slot's start and, unless it runs to `END`, its end: `23:00-02:00`, `04:30 – 07:30`. */
         val SLOT_TIME = Regex("""(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})?""")

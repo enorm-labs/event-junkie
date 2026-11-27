@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.H_MM_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.SlotJoins
@@ -246,7 +247,7 @@ class RenateOverviewPageScraper(
     private fun isActLine(line: String): Boolean =
         line.isNotBlank() &&
             line.split(WHITESPACE).size <= MAX_ACT_WORDS &&
-            !CLOCK_TIME.containsMatchIn(line) &&
+            !H_MM_CLOCK.containsMatchIn(line) &&
             !HOST_CREDIT.containsMatchIn(line) &&
             !line.trimEnd().endsWith(':') &&
             !isUnannouncedAct(line)
@@ -268,9 +269,6 @@ class RenateOverviewPageScraper(
 
         /** A floor heading's opening time: `(from 14:00, FREE until 20:00)` or `OPENS @ 00:00`. */
         val FLOOR_OPENS = Regex("""(?:\(from|\bopens\s*@)\s*(\d{1,2}):(\d{2})\b""", RegexOption.IGNORE_CASE)
-
-        /** A clock time, which marks a schedule line rather than a performer. */
-        val CLOCK_TIME = Regex("""\d{1,2}:\d{2}""")
 
         /** The venue's "more acts to come" prefix, stripped before the shared placeholder check. */
         val MORE_PREFIX = Regex("""^\+?\s*more\s+""", RegexOption.IGNORE_CASE)
