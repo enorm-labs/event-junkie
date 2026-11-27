@@ -1,6 +1,5 @@
 package de.norm.events.account
 
-import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.common.required
 import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
@@ -24,15 +23,14 @@ data class AccountRow(
 class AccountAdminStore(
     private val databaseClient: DatabaseClient
 ) {
-    /** Every account, oldest first. A report counts only while its event exists, as in the report queue. */
+    /** Every account, oldest first. A report counts only while its subject exists, as in the report queue. */
     suspend fun list(): List<AccountRow> =
         databaseClient
             .sql(
                 """
                 SELECT a.email, a.locale, a.created_at, a.last_sign_in_at, a.can_report,
                        (SELECT count(*) FROM accounts.follow f WHERE f.account_id = a.id) AS follows,
-                       (SELECT count(*) FROM accounts.event_report r JOIN $EVENTS_SCHEMA.event e ON e.id = r.event_id
-                        WHERE r.account_id = a.id) AS open_reports
+                       (SELECT count(*) FROM accounts.report r WHERE r.account_id = a.id AND $REPORT_SUBJECT_EXISTS) AS open_reports
                 FROM accounts.account a
                 ORDER BY a.created_at, lower(a.email)
                 """.trimIndent()

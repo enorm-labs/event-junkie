@@ -1,8 +1,9 @@
 [
   {
-    "eventId": 418,
+    "kind": "events",
+    "id": 418,
     "slug": "badehaus-die-nerven-2026-11-12",
-    "title": "Die Nerven",
+    "name": "Die Nerven",
     "eventDate": "2026-11-12",
     "venue": "Badehaus",
     "sourceSlug": "badehaus",
@@ -11,15 +12,40 @@
     ]
   },
   {
-    "eventId": 512,
+    "kind": "events",
+    "id": 512,
     "slug": "sisyphos-sonntag-2026-11-15",
-    "title": "Sonntag",
+    "name": "Sonntag",
     "eventDate": "2026-11-15",
     "venue": "Sisyphos",
     "sourceSlug": "sisyphos",
     "reports": [
       { "problems": ["DATE_TIME"], "note": null, "updatedAt": "2026-11-02T08:12:00Z" },
       { "problems": ["DATE_TIME", "PRICE_TICKETS"], "note": "Opens at 23:00", "updatedAt": "2026-11-02T09:00:00Z" }
+    ]
+  },
+  {
+    "kind": "artists",
+    "id": 2071,
+    "slug": "nova-ash",
+    "name": "Nova Ash",
+    "eventDate": null,
+    "venue": null,
+    "sourceSlug": null,
+    "reports": [
+      { "problems": ["WRONG_ACT"], "note": "Two acts share this name", "updatedAt": "2026-11-03T10:00:00Z" }
+    ]
+  },
+  {
+    "kind": "venues",
+    "id": 88,
+    "slug": "badehaus",
+    "name": "Badehaus",
+    "eventDate": null,
+    "venue": null,
+    "sourceSlug": null,
+    "reports": [
+      { "problems": ["ADDRESS"], "note": "The entrance is round the back", "updatedAt": "2026-11-03T11:00:00Z" }
     ]
   }
 ]

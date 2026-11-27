@@ -163,7 +163,6 @@
     "close": "Close",
     "legend": "What is wrong?",
     "note": "Note or question (optional)",
-    "notePlaceholder": "e.g. “Genre is techno” or “Is this really a party?”",
     "hint": "The right details are on the event's image",
     "send": "Send report",
     "update": "Update report",
@@ -171,17 +170,50 @@
     "thanks": "Thanks! We check reports within a few days. You can change or withdraw yours here until then.",
     "failed": "That did not work. Please try again.",
     "forbidden": "This account cannot report problems.",
-    "problems": {
-      "ARTISTS": "Artists wrong or missing",
-      "PROMOTER": "Promoter wrong or missing",
-      "GENRE": "Genre wrong or missing",
-      "EVENT_TYPE": "Event type wrong or missing (party, concert, …)",
-      "FEATURES": "Features wrong or missing (queer, open end, dress code, for children, …)",
-      "DATE_TIME": "Date or time wrong",
-      "TEXT": "Title or description garbled",
-      "STATUS": "Cancelled, sold out or moved",
-      "PRICE_TICKETS": "Price or tickets wrong",
-      "NOT_AN_EVENT": "Not a real event, or listed twice"
+    "event": {
+      "notePlaceholder": "e.g. “Genre is techno” or “Is this really a party?”",
+      "problems": {
+        "ARTISTS": "Artists wrong or missing",
+        "PROMOTER": "Promoter wrong or missing",
+        "GENRE": "Genre wrong or missing",
+        "EVENT_TYPE": "Event type wrong or missing (party, concert, …)",
+        "FEATURES": "Features wrong or missing (queer, open end, dress code, for children, …)",
+        "DATE_TIME": "Date or time wrong",
+        "TEXT": "Title or description garbled",
+        "STATUS": "Cancelled, sold out or moved",
+        "PRICE_TICKETS": "Price or tickets wrong",
+        "NOT_AN_EVENT": "Not a real event, or listed twice"
+      }
+    },
+    "artist": {
+      "notePlaceholder": "e.g. “Two different acts share this name”",
+      "problems": {
+        "NAME": "Name wrong",
+        "WRONG_ACT": "Events of another act with the same name",
+        "GENRE": "Genre wrong or missing",
+        "LINKS": "Website or social links wrong or missing",
+        "TEXT": "Description wrong or garbled",
+        "IMAGE": "Picture wrong or shows someone else"
+      }
+    },
+    "promoter": {
+      "notePlaceholder": "e.g. “This is a venue, not a promoter”",
+      "problems": {
+        "NAME": "Name wrong",
+        "LINKS": "Website or social links wrong or missing",
+        "TEXT": "Description wrong or garbled",
+        "NOT_A_PROMOTER": "Not a promoter (an act, a venue, …)"
+      }
+    },
+    "venue": {
+      "notePlaceholder": "e.g. “The entrance is round the back”",
+      "problems": {
+        "NAME": "Name wrong",
+        "ADDRESS": "Address or map pin wrong",
+        "LINKS": "Website or social links wrong or missing",
+        "TEXT": "Description wrong or garbled",
+        "CLOSED": "Closed for good"
+      }
     }
   },
   "push": {

@@ -9,16 +9,18 @@ import org.springframework.http.MediaType
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitSingle
 
-/** The operator's side of "Report a problem" (#4399): the queue, resolving it, and the allowlist. */
+/** The operator's side of "Report a problem" (#4399, #5603): the queue of every kind, resolving it, and the allowlist. */
 class ReportAdminControllerTest : BaseControllerTest() {
     private var tonight = 0L
     private var later = 0L
+    private var venue = 0L
+    private var artist = 0L
 
     @BeforeEach
     fun seed() =
         runBlocking {
             sql("TRUNCATE TABLE accounts.session, accounts.account CASCADE")
-            val venue =
+            venue =
                 id(
                     "INSERT INTO events.venue (name, slug, address, city, postal_code) " +
                         "VALUES ('Test Venue', 'test-venue', 'Somewhere 1', 'Berlin', '10999') RETURNING id"
@@ -30,21 +32,24 @@ class ReportAdminControllerTest : BaseControllerTest() {
                 )
             tonight = event(venue, source, "Tonight", "2026-11-02")
             later = event(venue, source, "Later", "2026-11-20")
+            artist = id("INSERT INTO events.artist (name, slug) VALUES ('Ada', 'ada') RETURNING id")
             sql(
                 "INSERT INTO accounts.account (id, email, locale, can_report) VALUES " +
                     "('00000000-0000-4000-8000-000000000001', 'one@example.de', 'de', true), " +
                     "('00000000-0000-4000-8000-000000000002', 'two@example.de', 'en', false)"
             )
             sql(
-                "INSERT INTO accounts.event_report (account_id, event_id, problems, note) VALUES " +
-                    "('00000000-0000-4000-8000-000000000001', $later, ARRAY ['TITLE'], NULL), " +
-                    "('00000000-0000-4000-8000-000000000001', $tonight, ARRAY ['ARTISTS', 'OTHER'], 'Wrong DJ'), " +
-                    "('00000000-0000-4000-8000-000000000002', $tonight, ARRAY ['DATE_TIME'], NULL)"
+                "INSERT INTO accounts.report (account_id, kind, subject_id, problems, note) VALUES " +
+                    "('00000000-0000-4000-8000-000000000001', 'venue', $venue, ARRAY ['ADDRESS'], 'Moved'), " +
+                    "('00000000-0000-4000-8000-000000000001', 'event', $later, ARRAY ['TITLE'], NULL), " +
+                    "('00000000-0000-4000-8000-000000000001', 'event', $tonight, ARRAY ['ARTISTS', 'OTHER'], 'Wrong DJ'), " +
+                    "('00000000-0000-4000-8000-000000000002', 'event', $tonight, ARRAY ['DATE_TIME'], NULL), " +
+                    "('00000000-0000-4000-8000-000000000002', 'artist', $artist, ARRAY ['WRONG_ACT'], NULL)"
             )
         }
 
     @Test
-    fun `the queue holds one entry per event, by date, and never names the reporter`() {
+    fun `the queue holds one entry per subject, events by date first, and never names the reporter`() {
         webTestClient
             .get()
             .uri("/api/admin/reports")
@@ -53,7 +58,17 @@ class ReportAdminControllerTest : BaseControllerTest() {
             .isOk
             .expectBody()
             .jsonPath("$[*].slug")
-            .isEqualTo(listOf("tonight", "later"))
+            .isEqualTo(listOf("tonight", "later", "ada", "test-venue"))
+            .jsonPath("$[*].kind")
+            .isEqualTo(listOf("events", "events", "artists", "venues"))
+            .jsonPath("$[0].name")
+            .isEqualTo("Tonight")
+            .jsonPath("$[3].name")
+            .isEqualTo("Test Venue")
+            .jsonPath("$[3].eventDate")
+            .doesNotExist()
+            .jsonPath("$[2].reports[0].problems")
+            .isEqualTo(listOf("WRONG_ACT"))
             .jsonPath("$[0].sourceSlug")
             .isEqualTo("alpha")
             .jsonPath("$[0].venue")
@@ -65,19 +80,42 @@ class ReportAdminControllerTest : BaseControllerTest() {
             .consumeWith { it.responseBody!!.decodeToString().contains("example.de") shouldBe false }
     }
 
-    @Test
-    fun `resolving an event deletes its reports and no others`() {
+    private fun resolve(query: String) =
         webTestClient
             .delete()
-            .uri("/api/admin/reports?eventId=$tonight")
+            .uri("/api/admin/reports?$query")
             .exchange()
+
+    @Test
+    fun `resolving a subject deletes its reports and no others, and eventId alone still names an event`() {
+        resolve("kind=events&id=$tonight")
             .expectStatus()
             .isOk
             .expectBody()
             .jsonPath("$.resolved")
             .isEqualTo(2)
+        resolve("kind=venues&id=$venue")
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.resolved")
+            .isEqualTo(1)
+        resolve("eventId=$later")
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.resolved")
+            .isEqualTo(1)
 
-        runBlocking { count("SELECT count(*) AS id FROM accounts.event_report") } shouldBe 1L
+        runBlocking { count("SELECT count(*) AS id FROM accounts.report") } shouldBe 1L
+    }
+
+    @Test
+    fun `a resolve with an unknown kind, or with both forms, or with neither, is a 400`() {
+        resolve("kind=festivals&id=1").expectStatus().isBadRequest
+        resolve("kind=events&id=$tonight&eventId=$tonight").expectStatus().isBadRequest
+        resolve("kind=events").expectStatus().isBadRequest
+        resolve("").expectStatus().isBadRequest
     }
 
     @Test
@@ -101,20 +139,24 @@ class ReportAdminControllerTest : BaseControllerTest() {
     }
 
     @Test
-    fun `the database takes the boxes V269 added and the old ones, and refuses an unknown problem and an empty list`() {
-        fun refused(problems: String) =
-            runCatching {
-                runBlocking {
-                    sql(
-                        "INSERT INTO accounts.event_report (account_id, event_id, problems) " +
-                            "VALUES ('00000000-0000-4000-8000-000000000002', $later, $problems)"
-                    )
-                }
-            }.isFailure
+    fun `the database takes every box of every kind, and refuses an unknown problem, an empty list and an unknown kind`() {
+        fun refused(
+            problems: String,
+            kind: String = "event"
+        ) = runCatching {
+            runBlocking {
+                sql(
+                    "INSERT INTO accounts.report (account_id, kind, subject_id, problems) " +
+                        "VALUES ('00000000-0000-4000-8000-000000000002', '$kind', $later, $problems)"
+                )
+            }
+        }.isFailure
 
         refused("ARRAY ['PROMOTER', 'GENRE', 'EVENT_TYPE', 'FEATURES', 'TEXT', 'ON_IMAGE', 'TYPE_GENRE', 'DUPLICATE', 'QUESTION']") shouldBe false
+        refused("ARRAY ['NAME', 'ADDRESS', 'LINKS', 'CLOSED', 'WRONG_ACT', 'IMAGE', 'NOT_A_PROMOTER']", "promoter") shouldBe false
         refused("ARRAY ['WEATHER']") shouldBe true
         refused("ARRAY []::text[]") shouldBe true
+        refused("ARRAY ['NAME']", "festival") shouldBe true
     }
 
     private suspend fun event(

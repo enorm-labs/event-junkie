@@ -396,13 +396,13 @@ const { t } = useI18n()
       </p>
       <p>
         <strong>Reporting a problem:</strong> a few accounts that I enable personally see "Report a
-        problem" on an event's page. When you report a problem, I store with your account which
-        event it is about, which problems you ticked, your note if you write one, and when you
-        reported it. Only I read the report, to correct the event. The site shows it to nobody, and
-        no service provider receives it. Once the problem is dealt with, I delete the report. If it
-        stays open, I delete it <strong>60 days</strong> after its last change. You can withdraw it
-        yourself before that. The legal basis is Art. 6 (1) (f) GDPR, my legitimate interest in
-        correct listings, which you share by reporting.
+        problem" on the page of an event, an act, a promoter or a venue. When you report a problem,
+        I store with your account which page it is about, which problems you ticked, your note if
+        you write one, and when you reported it. Only I read the report, to correct the page. The
+        site shows it to nobody, and no service provider receives it. Once the problem is dealt
+        with, I delete the report. If it stays open, I delete it <strong>60 days</strong> after its
+        last change. You can withdraw it yourself before that. The legal basis is Art. 6 (1) (f)
+        GDPR, my legitimate interest in correct listings, which you share by reporting.
       </p>
       <p>
         <strong>Notifications:</strong> if you turn notifications on in a browser, I store that

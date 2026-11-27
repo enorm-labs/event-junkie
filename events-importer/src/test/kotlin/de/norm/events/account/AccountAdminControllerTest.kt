@@ -36,11 +36,12 @@ class AccountAdminControllerTest : BaseControllerTest() {
                     "('00000000-0000-4000-8000-000000000001', 'venue', $venue, NULL, NULL), " +
                     "('00000000-0000-4000-8000-000000000001', 'search', NULL, 'genre=techno', 'Techno')"
             )
-            // The second report's event is gone, so the queue does not show it and the count leaves it out.
+            // The third report's event is gone, so the queue does not show it and the count leaves it out.
             sql(
-                "INSERT INTO accounts.event_report (account_id, event_id, problems) VALUES " +
-                    "('00000000-0000-4000-8000-000000000001', $event, ARRAY ['TITLE']), " +
-                    "('00000000-0000-4000-8000-000000000001', ${event + 1000}, ARRAY ['TITLE'])"
+                "INSERT INTO accounts.report (account_id, kind, subject_id, problems) VALUES " +
+                    "('00000000-0000-4000-8000-000000000001', 'event', $event, ARRAY ['TITLE']), " +
+                    "('00000000-0000-4000-8000-000000000001', 'venue', $venue, ARRAY ['ADDRESS']), " +
+                    "('00000000-0000-4000-8000-000000000001', 'event', ${event + 1000}, ARRAY ['TITLE'])"
             )
         }
 
@@ -66,7 +67,7 @@ class AccountAdminControllerTest : BaseControllerTest() {
             .jsonPath("$[0].follows")
             .isEqualTo(2)
             .jsonPath("$[0].openReports")
-            .isEqualTo(1)
+            .isEqualTo(2)
             .jsonPath("$[1].locale")
             .isEqualTo("en")
             .jsonPath("$[1].canReport")

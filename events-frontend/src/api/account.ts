@@ -274,7 +274,10 @@ export async function withdrawRsvp(slug: string): Promise<void> {
   await unwrap(api.DELETE('/api/me/rsvps/{slug}', { params: { path: { slug } } }))
 }
 
-/** The problem boxes of "Report a problem" (#4399), in the order the form shows them. */
+/** What a report is about (#5603), as its page's path names it. */
+export type ReportKind = 'events' | 'artists' | 'promoters' | 'venues'
+
+/** The event boxes of "Report a problem" (#4399), in the order the form shows them. */
 export const REPORT_PROBLEMS = [
   'ARTISTS',
   'PROMOTER',
@@ -288,12 +291,24 @@ export const REPORT_PROBLEMS = [
   'NOT_AN_EVENT',
 ] as const
 
-/** A hint, not a problem, set apart below the boxes: the details are on the event's image. */
+/** The boxes of an act, a promoter and a venue (#5603). The BFF refuses a box another kind owns. */
+export const ARTIST_REPORT_PROBLEMS = [
+  'NAME',
+  'WRONG_ACT',
+  'GENRE',
+  'LINKS',
+  'TEXT',
+  'IMAGE',
+] as const
+export const PROMOTER_REPORT_PROBLEMS = ['NAME', 'LINKS', 'TEXT', 'NOT_A_PROMOTER'] as const
+export const VENUE_REPORT_PROBLEMS = ['NAME', 'ADDRESS', 'LINKS', 'TEXT', 'CLOSED'] as const
+
+/** A hint, not a problem, set apart below an event's boxes: the details are on the event's image. */
 export const REPORT_HINT = 'ON_IMAGE'
 
 /**
- * Names of earlier forms. A stored report can hold them, and an edit keeps them; the form shows
- * no box for them. `OTHER` is also what the BFF stores for a note with no box.
+ * Names of earlier event forms. A stored report can hold them, and an edit keeps them; the form
+ * shows no box for them. `OTHER` is also what the BFF stores for a note with no box.
  */
 export const OLD_REPORT_PROBLEMS = [
   'TITLE',
@@ -306,38 +321,56 @@ export const OLD_REPORT_PROBLEMS = [
 
 export type ReportProblem =
   | (typeof REPORT_PROBLEMS)[number]
+  | (typeof ARTIST_REPORT_PROBLEMS)[number]
+  | (typeof PROMOTER_REPORT_PROBLEMS)[number]
+  | (typeof VENUE_REPORT_PROBLEMS)[number]
   | typeof REPORT_HINT
   | (typeof OLD_REPORT_PROBLEMS)[number]
 
-/** The account's open report on an event, as the form pre-fills it. */
+/** The boxes the form shows for each kind. */
+export const REPORT_PROBLEMS_BY_KIND: Record<ReportKind, readonly ReportProblem[]> = {
+  events: REPORT_PROBLEMS,
+  artists: ARTIST_REPORT_PROBLEMS,
+  promoters: PROMOTER_REPORT_PROBLEMS,
+  venues: VENUE_REPORT_PROBLEMS,
+}
+
+/** The account's open report on a subject, as the form pre-fills it. */
 export interface OpenReport {
   problems: ReportProblem[]
   note: string
 }
 
-/** The account's open problem reports, as event slug to report. Only accounts that may report have any. */
+/** The key of a subject's report in `fetchReports`' answer: its page's path without the slash. */
+export const reportKey = (kind: ReportKind, slug: string) => `${kind}/${slug}`
+
+/** The account's open problem reports, by `reportKey`. Only accounts that may report have any. */
 export async function fetchReports(): Promise<Record<string, OpenReport>> {
   const reports = (await unwrap(api.GET('/api/me/reports'))) ?? []
   return Object.fromEntries(
     reports.map((r) => [
-      r.event ?? '',
+      reportKey(r.kind as ReportKind, r.slug ?? ''),
       { problems: (r.problems ?? []) as ReportProblem[], note: r.note ?? '' },
     ]),
   )
 }
 
-export async function saveReport(slug: string, report: OpenReport): Promise<void> {
+export async function saveReport(
+  kind: ReportKind,
+  slug: string,
+  report: OpenReport,
+): Promise<void> {
   const note = report.note.trim()
   await unwrap(
-    api.PUT('/api/me/reports/{slug}', {
-      params: { path: { slug } },
+    api.PUT('/api/me/reports/{kind}/{slug}', {
+      params: { path: { kind, slug } },
       body: { problems: report.problems, note: note || undefined },
     }),
   )
 }
 
-export async function withdrawReport(slug: string): Promise<void> {
-  await unwrap(api.DELETE('/api/me/reports/{slug}', { params: { path: { slug } } }))
+export async function withdrawReport(kind: ReportKind, slug: string): Promise<void> {
+  await unwrap(api.DELETE('/api/me/reports/{kind}/{slug}', { params: { path: { kind, slug } } }))
 }
 
 /** RSVPed events not over yet, by date. */

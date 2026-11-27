@@ -12,7 +12,7 @@
 #
 # Ada's session aims every write the API addresses by id, slug or endpoint at Bob's rows: rename and
 # delete his saved search and his passkey, mark his notification read, unsubscribe his push endpoint,
-# drop his follow and its bell, his watch, withdraw his RSVPs and his problem report. The status codes are printed for the reader. The
+# drop his follow and its bell, his watch, withdraw his RSVPs and his problem reports. The status codes are printed for the reader. The
 # verdict is Bob's export before and after, because a 404 and a 204 that touched nothing are both
 # correct, and only the rows say which happened. Ada's export must name none of Bob's ids either.
 #
@@ -84,7 +84,7 @@ bob_rows() {
         searches: [.searches[] | {id, name, query}] | sort_by(.id),
         watches: [.watches[] | {mbid, name, notify}] | sort_by(.mbid),
         rsvps: [.rsvps[] | {event, status}] | sort_by(.event),
-        reports: [.reports[] | {event, problems, note}] | sort_by(.event),
+        reports: [.reports[] | {kind, slug, problems, note}] | sort_by(.kind, .slug),
         passkeys: [.passkeys[] | {id, name}] | sort_by(.id),
         notifications: [.notifications[] | {id, readAt}] | sort_by(.id),
         push: (.pushSubscriptions | length)
@@ -120,8 +120,8 @@ for slug in $(jq -r '.rsvps[].event' <<<"$before"); do
     attempt DELETE "/api/me/rsvps/$slug"
 done
 # Ada may not report, so only a withdrawal: a report she stored would be a row of her own.
-for slug in $(jq -r '.reports[].event' <<<"$before"); do
-    attempt DELETE "/api/me/reports/$slug"
+for report in $(jq -r '.reports[] | "\(.kind)/\(.slug)"' <<<"$before"); do
+    attempt DELETE "/api/me/reports/$report"
 done
 
 after="$(bob_rows)"

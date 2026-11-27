@@ -22,7 +22,7 @@ data class AccountResponse(
     val changePush: Boolean,
     /** "Reminders on the day" (#4253): a push on the day of an event marked as interested or going. */
     val reminderPush: Boolean,
-    /** Whether the event page offers "Report a problem" (#4399): an allowlist the operator keeps. */
+    /** Whether the detail pages offer "Report a problem" (#4399, #5603): an allowlist the operator keeps. */
     val canReport: Boolean
 ) {
     companion object {

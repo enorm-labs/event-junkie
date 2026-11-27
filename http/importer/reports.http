@@ -1,12 +1,13 @@
 ### ============================================================
-### Admin: Reports — "Report a problem" from event pages (#4399)
+### Admin: Reports — "Report a problem" from the detail pages
+### (#4399, #5603)
 ###
-### The queue /fix-events works through, resolving an event's
+### The queue /fix-events works through, resolving a subject's
 ### reports (which deletes them), and the allowlist of accounts
 ### that see the button.
 ### ============================================================
 
-### The open reports, one entry per event
+### The open reports, one entry per event, act, promoter or venue
 GET {{importer-host}}/api/admin/reports
 Accept: application/json
 
@@ -16,8 +17,8 @@ Accept: application/json
     });
 %}
 
-### Resolve every report on one event (deletes them)
-DELETE {{importer-host}}/api/admin/reports?eventId=1
+### Resolve every report on one subject (deletes them): kind and id from the list
+DELETE {{importer-host}}/api/admin/reports?kind=venues&id=1
 Accept: application/json
 
 > {%

@@ -1,18 +1,26 @@
 <script setup lang="ts">
 /**
- * The form inside "Report a problem" (#4399): the common problems as boxes, the image hint set
- * apart, a note, Send. A box or a note is enough; the image hint alone says nothing. An earlier
- * report keeps the names of an older form, which get no box, when it is saved again.
+ * The form inside "Report a problem" (#4399, #5603): the kind's problems as boxes, on an event
+ * the image hint set apart, a note, Send. A box or a note is enough; the image hint alone says
+ * nothing. An earlier report keeps the names of an older form, which get no box, when it is
+ * saved again.
  */
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
-import { REPORT_HINT, REPORT_PROBLEMS, type OpenReport, type ReportProblem } from '@/api/account'
+import {
+  REPORT_HINT,
+  REPORT_PROBLEMS_BY_KIND,
+  reportKey,
+  type OpenReport,
+  type ReportKind,
+  type ReportProblem,
+} from '@/api/account'
 import { ApiError } from '@/api/client'
 import { useReports } from '@/composables/useReports'
 import { CHECKBOX_CLASS, cn, FIELD_CLASS } from '@/lib/utils'
 
-const props = defineProps<{ slug: string }>()
+const props = defineProps<{ kind: ReportKind; slug: string }>()
 const emit = defineEmits<{ done: [] }>()
 
 const MAX_NOTE = 500
@@ -20,8 +28,21 @@ const MAX_NOTE = 500
 const { t } = useI18n()
 const { reports, save, withdraw } = useReports()
 
-const earlier = computed<OpenReport | undefined>(() => reports.value[props.slug])
-const shown = (p: ReportProblem) => (REPORT_PROBLEMS as readonly ReportProblem[]).includes(p)
+/** The i18n group of each kind's box labels and note placeholder. */
+const LABELS: Record<ReportKind, string> = {
+  events: 'event',
+  artists: 'artist',
+  promoters: 'promoter',
+  venues: 'venue',
+}
+
+const options = computed(() => REPORT_PROBLEMS_BY_KIND[props.kind])
+const labels = computed(() => `account.report.${LABELS[props.kind]}`)
+const withHint = computed(() => props.kind === 'events')
+const earlier = computed<OpenReport | undefined>(
+  () => reports.value[reportKey(props.kind, props.slug)],
+)
+const shown = (p: ReportProblem) => REPORT_PROBLEMS_BY_KIND[props.kind].includes(p)
 const before = earlier.value?.problems ?? []
 const problems = ref<ReportProblem[]>(before.filter(shown))
 const hint = ref(before.includes(REPORT_HINT))
@@ -54,23 +75,19 @@ async function run(action: () => Promise<void>) {
 
 const send = () =>
   run(() =>
-    save(props.slug, {
+    save(props.kind, props.slug, {
       problems: [...problems.value, ...(hint.value ? [REPORT_HINT as ReportProblem] : []), ...kept],
       note: note.value,
     }),
   )
-const remove = () => run(() => withdraw(props.slug))
+const remove = () => run(() => withdraw(props.kind, props.slug))
 </script>
 
 <template>
   <form class="space-y-4" @submit.prevent="canSend && send()">
     <fieldset class="space-y-2">
       <legend class="mb-2 text-body text-muted-foreground">{{ t('account.report.legend') }}</legend>
-      <label
-        v-for="option in REPORT_PROBLEMS"
-        :key="option"
-        class="flex items-start gap-2 text-body"
-      >
+      <label v-for="option in options" :key="option" class="flex items-start gap-2 text-body">
         <input
           v-model="problems"
           :data-testid="`report-${option}`"
@@ -78,11 +95,11 @@ const remove = () => run(() => withdraw(props.slug))
           :value="option"
           type="checkbox"
         />
-        <span>{{ t(`account.report.problems.${option}`) }}</span>
+        <span>{{ t(`${labels}.problems.${option}`) }}</span>
       </label>
     </fieldset>
 
-    <label class="flex items-start gap-2 border-t border-border pt-4 text-body">
+    <label v-if="withHint" class="flex items-start gap-2 border-t border-border pt-4 text-body">
       <input
         v-model="hint"
         :class="['mt-1', CHECKBOX_CLASS]"
@@ -96,7 +113,7 @@ const remove = () => run(() => withdraw(props.slug))
       <span class="block">{{ t('account.report.note') }}</span>
       <textarea
         v-model="note"
-        :placeholder="t('account.report.notePlaceholder')"
+        :placeholder="t(`${labels}.notePlaceholder`)"
         :class="cn(FIELD_CLASS, 'h-auto min-h-20 w-full py-1')"
         :maxlength="MAX_NOTE"
         data-testid="report-note"

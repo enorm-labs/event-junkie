@@ -20,25 +20,33 @@ import java.time.LocalDate
 
 private val logger = KotlinLogging.logger {}
 
-@Schema(description = "One event with its open problem reports")
-data class ReportedEventResponse(
-    val eventId: Long,
+@Schema(description = "One event, act, promoter or venue with its open problem reports")
+data class ReportedSubjectResponse(
+    @Schema(description = "The subject's kind, as its page's path names it", allowableValues = ["events", "artists", "promoters", "venues"])
+    val kind: String,
+    @Schema(description = "The subject's id: `id` for a resolve")
+    val id: Long,
     val slug: String,
-    val title: String,
-    val eventDate: LocalDate,
+    @Schema(description = "The event's title, or the act's, promoter's or venue's name")
+    val name: String,
+    @Schema(description = "The event's date; null on the other kinds.")
+    val eventDate: LocalDate?,
+    @Schema(description = "The event's venue; null on the other kinds.")
     val venue: String?,
-    @Schema(description = "The source that imported the event, or null for a hand-entered one.")
+    @Schema(description = "The source that imported the event, or null for a hand-entered one and on the other kinds.")
     val sourceSlug: String?,
     val reports: List<ReportEntryResponse>
 )
 
-@Schema(description = "One account's report on the event. The reporter is not named.")
+@Schema(description = "One account's report on the subject. The reporter is not named.")
 data class ReportEntryResponse(
     @Schema(
         description =
-            "The ticked problems: ARTISTS, PROMOTER, GENRE, EVENT_TYPE, FEATURES, DATE_TIME, TEXT, STATUS, PRICE_TICKETS, " +
-                "NOT_AN_EVENT and the hint ON_IMAGE. Older reports can hold TITLE, DESCRIPTION, TYPE_GENRE, DUPLICATE " +
-                "and QUESTION. OTHER is a report with a note and no box."
+            "The ticked problems. An event: ARTISTS, PROMOTER, GENRE, EVENT_TYPE, FEATURES, DATE_TIME, TEXT, STATUS, " +
+                "PRICE_TICKETS, NOT_AN_EVENT and the hint ON_IMAGE; older reports can hold TITLE, DESCRIPTION, " +
+                "TYPE_GENRE, DUPLICATE and QUESTION. An act: NAME, WRONG_ACT, GENRE, LINKS, TEXT, IMAGE. A promoter: " +
+                "NAME, LINKS, TEXT, NOT_A_PROMOTER. A venue: NAME, ADDRESS, LINKS, TEXT, CLOSED. OTHER is " +
+                "a report with a note and no box."
     )
     val problems: List<String>,
     val note: String?,
@@ -53,46 +61,71 @@ data class ResolvedResponse(
 data class CanReportRequest(
     @Schema(description = "The account's address, as it signs in.", example = "operator@example.de")
     val email: String,
-    @Schema(description = "True shows \"Report a problem\" on the event page; false hides it. Open reports stay.", example = "true")
+    @Schema(description = "True shows \"Report a problem\" on the detail pages; false hides it. Open reports stay.", example = "true")
     val enabled: Boolean
 )
 
 /**
- * The problem reports visitors file on event pages (#4399), and the allowlist of accounts that may file them.
+ * The problem reports visitors file on event, act, promoter and venue pages (#4399, #5603), and the allowlist of
+ * accounts that may file them.
  * `/fix-events` and the admin app read the list; resolving an event's reports deletes them (the privacy notice's
  * retention), so a resolve comes after the fix is live or the verdict is final.
  */
 @RestController
 @RequestMapping("/api/admin")
-@Tag(name = "Admin: Reports", description = "Problem reports from event pages, and who may file them")
+@Tag(name = "Admin: Reports", description = "Problem reports from the detail pages, and who may file them")
 class ReportAdminController(
     private val store: ReportAdminStore
 ) {
     @GetMapping("/reports")
-    @Operation(summary = "Open problem reports, one entry per event, by event date")
-    suspend fun list(): List<ReportedEventResponse> =
-        store.list().groupBy { it.eventId }.values.map { rows ->
-            val event = rows.first()
-            ReportedEventResponse(
-                eventId = event.eventId,
-                slug = event.slug,
-                title = event.title,
-                eventDate = event.eventDate,
-                venue = event.venue,
-                sourceSlug = event.sourceSlug,
+    @Operation(summary = "Open problem reports, one entry per subject: events by date, then acts, promoters and venues by name")
+    suspend fun list(): List<ReportedSubjectResponse> =
+        store.list().groupBy { it.kind to it.id }.values.map { rows ->
+            val subject = rows.first()
+            ReportedSubjectResponse(
+                kind = subject.kind.path,
+                id = subject.id,
+                slug = subject.slug,
+                name = subject.name,
+                eventDate = subject.eventDate,
+                venue = subject.venue,
+                sourceSlug = subject.sourceSlug,
                 reports = rows.map { ReportEntryResponse(it.problems, it.note, it.updatedAt) }
             )
         }
 
     @DeleteMapping("/reports")
-    @Operation(summary = "Resolves every report on an event: deletes them")
+    @Operation(
+        summary = "Resolves every report on a subject: deletes them",
+        description = "`kind` and `id` from the list. `eventId` alone is the event case, for steps written before #5603."
+    )
     suspend fun resolve(
-        @Parameter(description = "The event whose reports to resolve: `eventId` from the list.", required = true)
-        @RequestParam
-        eventId: Long
+        @Parameter(description = "events, artists, promoters or venues", example = "venues")
+        @RequestParam(required = false)
+        kind: String?,
+        @Parameter(description = "The subject's `id` from the list")
+        @RequestParam(required = false)
+        id: Long?,
+        @Parameter(description = "An event's id; the same as `kind=events&id=`")
+        @RequestParam(required = false)
+        eventId: Long?
     ): ResolvedResponse {
-        val resolved = store.resolve(eventId)
-        logger.info { "Resolved $resolved problem reports on event $eventId" }
+        val (subject, subjectId) =
+            when {
+                eventId != null && kind == null && id == null -> {
+                    ReportSubject.EVENT to eventId
+                }
+
+                kind != null && id != null && eventId == null -> {
+                    (ReportSubject.ofPath(kind) ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown kind $kind")) to id
+                }
+
+                else -> {
+                    throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Either kind and id, or eventId")
+                }
+            }
+        val resolved = store.resolve(subject, subjectId)
+        logger.info { "Resolved $resolved problem reports on ${subject.tag} $subjectId" }
         return ResolvedResponse(resolved)
     }
 

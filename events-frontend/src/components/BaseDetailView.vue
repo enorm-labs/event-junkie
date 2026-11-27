@@ -14,6 +14,7 @@ import FollowButton from '@/components/FollowButton.vue'
 import ShareMenu from '@/components/ShareMenu.vue'
 import type { FollowKind } from '@/api/account'
 import ReportLine from '@/components/ReportLine.vue'
+import ReportProblem from '@/components/ReportProblem.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { ChosenDescription } from '@/lib/description'
@@ -188,6 +189,14 @@ const { compact } = useCompactView()
         </div>
 
         <slot />
+
+        <!-- For the accounts the operator allows (#5603); everyone else has the mail line below. -->
+        <ReportProblem
+          v-if="followKind && followSlug && name"
+          :kind="`${followKind}s`"
+          :slug="followSlug"
+          :title="name"
+        />
 
         <ReportLine
           v-if="reportText && pagePath && name"

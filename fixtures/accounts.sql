@@ -51,10 +51,13 @@ SELECT 'ada00000-0000-4000-8000-000000000001'::uuid, id, 'interested' FROM event
 UNION ALL
 SELECT 'b0b00000-0000-4000-8000-000000000002'::uuid, id, 'going' FROM events.event WHERE source_id = 'fixture-sold-out';
 
--- A problem report (#4399), addressed by the event's slug like an RSVP.
-INSERT INTO accounts.event_report (account_id, event_id, problems, note)
-SELECT 'b0b00000-0000-4000-8000-000000000002'::uuid, id, ARRAY ['ARTISTS', 'OTHER'], 'Fixture report'
-FROM events.event WHERE source_id = 'fixture-sold-out';
+-- Two problem reports (#4399, #5603), each addressed by its page's kind and slug: an event's and a venue's.
+INSERT INTO accounts.report (account_id, kind, subject_id, problems, note)
+SELECT 'b0b00000-0000-4000-8000-000000000002'::uuid, 'event', id, ARRAY ['ARTISTS', 'OTHER'], 'Fixture report'
+FROM events.event WHERE source_id = 'fixture-sold-out'
+UNION ALL
+SELECT 'b0b00000-0000-4000-8000-000000000002'::uuid, 'venue', id, ARRAY ['ADDRESS'], NULL
+FROM events.venue WHERE slug = 'kesselhaus-nord';
 
 -- Placeholders, not key material: nothing verifies this passkey or encrypts to this subscription.
 -- k3d and a local stack have no VAPID key, so no push is ever sent to the endpoint.

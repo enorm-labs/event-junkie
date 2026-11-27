@@ -543,7 +543,12 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
       </section>
 
       <!-- For the accounts the operator allows (#4399); everyone else has the mail line at the end. -->
-      <ReportProblem v-if="event.slug" :slug="event.slug" :title="event.title ?? ''" />
+      <ReportProblem
+        v-if="event.slug"
+        :slug="event.slug"
+        :title="event.title ?? ''"
+        kind="events"
+      />
 
       <p v-if="enrichmentCredits.length" class="text-meta text-muted-foreground">
         {{ t('events.detail.detailsFrom') }}

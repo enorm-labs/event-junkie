@@ -43,7 +43,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/me/reports/{slug}": {
+    "/api/me/reports/{kind}/{slug}": {
         parameters: {
             query?: never;
             header?: never;
@@ -52,12 +52,12 @@ export interface paths {
         };
         get?: never;
         /**
-         * Reports a problem with an event, or replaces the account's earlier report on it
-         * @description Only for accounts the operator allows. At least one problem other than ON_IMAGE, or a note of at most 500 characters. A report with a note and no problem is stored as OTHER.
+         * Reports a problem with an event, act, promoter or venue, or replaces the account's earlier report on it
+         * @description Only for accounts the operator allows. `kind` is events, artists, promoters or venues. At least one problem the kind allows, other than ON_IMAGE, or a note of at most 500 characters. A report with a note and no problem is stored as OTHER.
          */
         put: operations["save"];
         post?: never;
-        /** Withdraws the account's report on an event. Withdrawing one that does not exist changes nothing */
+        /** Withdraws the account's report on a subject. Withdrawing one that does not exist changes nothing */
         delete: operations["withdraw_1"];
         options?: never;
         head?: never;
@@ -2253,7 +2253,13 @@ export interface components {
             totalPages?: number;
         };
         ReportResponse: {
-            event?: string;
+            /**
+             * @description The subject's kind, as its page's path names it
+             * @enum {string}
+             */
+            kind?: "events" | "artists" | "promoters" | "venues";
+            slug?: string;
+            /** @description The event's title, or the act's, promoter's or venue's name */
             title?: string;
             problems?: string[];
             note?: string | null;
@@ -3099,6 +3105,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                kind: string;
                 slug: string;
             };
             cookie?: never;
@@ -3123,6 +3130,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                kind: string;
                 slug: string;
             };
             cookie?: never;

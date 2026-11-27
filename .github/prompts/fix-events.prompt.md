@@ -33,17 +33,31 @@ that line is the note. With no argument, Step 0 builds the same list from the qu
 
 ## Step 0 — Read the queue (no argument only)
 
-Accounts the operator allows report problems on event pages (#4399), and the importer serves them. It needs the production forward, as
+Accounts the operator allows report problems on event, act, promoter and venue pages (#4399, #5603), and the importer serves them. It needs the production forward, as
 [`/worklist`](worklist.prompt.md) does: `scripts/ej.sh status`. If the forward is down, say so and stop.
 
 ```sh
 curl -sf localhost:28081/api/admin/reports \
-  | jq '.[] | {eventId, slug, title, eventDate, venue, sourceSlug, reports: [.reports[] | {problems, note}]}'
+  | jq '.[] | {kind, id, slug, name, eventDate, venue, sourceSlug, reports: [.reports[] | {problems, note}]}'
 ```
 
 A failed call prints nothing, which is not an empty queue: say "queue not readable" with the status, and stop. A 404 means the release with
-the route (#4399) has not reached production. An empty list, `[]`, is "No open reports", and the run ends. Otherwise each entry becomes one URL, `https://event-junkie.de/de/events/<slug>`, and one note:
+the route (#4399) has not reached production. An empty list, `[]`, is "No open reports", and the run ends. Otherwise each `events` entry becomes one URL, `https://event-junkie.de/de/events/<slug>`, and one note:
 the ticked problems in words, then each reporter's free text. Two reports on one event are one entry with both notes.
+
+An `artists`, `promoters` or `venues` entry is not an event, so Steps 1 to 5 do not apply. List each one after the events with its page URL,
+`https://event-junkie.de/de/<kind>/<slug>`, and its problems, and propose one of these as a numbered verdict:
+
+| Kind        | Problem                            | Verdict                                                                                 |
+| ----------- | ---------------------------------- | --------------------------------------------------------------------------------------- |
+| `artists`   | `NAME`, `WRONG_ACT`                | Hand to [`/artist-cleanup`](artist-cleanup.prompt.md): a rename, a split or a merge     |
+| `artists`   | `GENRE`, `LINKS`, `TEXT`, `IMAGE`  | A hand fix of the artist through the admin API, or "accepted" when the source says so   |
+| `promoters` | `NOT_A_PROMOTER`, `NAME`           | Hand to `/artist-cleanup --kind promoters`                                              |
+| `promoters` | `LINKS`, `TEXT`                    | A row for [`/enrich`](enrich.prompt.md), or a hand fix                                  |
+| `venues`    | `ADDRESS`, `NAME`, `LINKS`, `TEXT` | A hand fix of the venue through the admin API, checked against the venue's own site     |
+| `venues`    | `CLOSED`                           | A finding for the operator: a closed venue disables its source, which is not a hand fix |
+
+Resolve such an entry by its `kind` and `id` once its verdict is final.
 
 | Problem         | Lead                                                                 |
 | --------------- | -------------------------------------------------------------------- |
@@ -63,7 +77,7 @@ the ticked problems in words, then each reporter's free text. Two reports on one
 Reports from before the form was simplified can hold `TITLE`, `DESCRIPTION` (read as `TEXT`), `TYPE_GENRE` (`GENRE` or `EVENT_TYPE`), `DUPLICATE`
 (`NOT_AN_EVENT`) and `QUESTION` (a note that asks).
 
-Keep the `eventId` and the number of reports per entry: Step 6 needs both. Then run Step 1 for each entry, as for a pasted URL.
+Keep the `id` and the number of reports per entry: Step 6 needs both. Then run Step 1 for each entry, as for a pasted URL.
 
 ## Step 1 — Measure each event
 
@@ -192,15 +206,15 @@ section holds one step that force-imports every source the PR changed:
 
 ```text
 - [ ] both: force-import <source-slug>, <source-slug>
-- [ ] production: resolve-reports <eventId>, <eventId>
+- [ ] production: resolve-reports <eventId>, <eventId>, venues/<id>
 ```
 
-The second line only in a queue run, with the queued events the PR fixes. [`/post-release`](post-release.prompt.md) runs it after the release.
+The second line only in a queue run, with the queued events the PR fixes. An act, promoter or venue the PR fixes goes in as `<kind>/<id>`. [`/post-release`](post-release.prompt.md) runs it after the release.
 
 A resolve proposal is applied only when the operator names its number, and a hand-fixed one after its hand fix:
 
 ```sh
-curl -sf -X DELETE "localhost:28081/api/admin/reports?eventId=<id>" | jq .resolved
+curl -sf -X DELETE "localhost:28081/api/admin/reports?kind=<kind>&id=<id>" | jq .resolved
 ```
 
 Report the count. A `0` means someone resolved it in the admin app first; that is fine.
