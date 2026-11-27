@@ -102,12 +102,13 @@ submission**
 
 ## Step 2b — Run `npm audit` on every npm lockfile
 
-`events-frontend/`, `events-admin/` and `perf/lighthouse/` each have a lockfile, and `dependabot.yml` covers all three. `perf/lighthouse/` is the
-Lighthouse CLI that `lighthouse.yml` runs: CI tooling, so every finding there is a tooling finding, whatever `--omit=dev` says. `npm audit` reads a
+`events-frontend/`, `events-admin/`, `perf/lighthouse/` and `tools/jscpd/` each have a lockfile, and `dependabot.yml` covers all four. `perf/lighthouse/` is the
+Lighthouse CLI that `lighthouse.yml` runs, and `tools/jscpd/` is the jscpd that `scripts/duplication.sh` runs on a developer's machine. Both are tooling, so
+every finding there is a tooling finding, whatever `--omit=dev` says. `npm audit` reads a
 lockfile against the GitHub Advisory Database directly, so it sees an advisory the day it is published. Dependabot can take days to raise the same advisory as an alert.
 
 ```bash
-for d in events-frontend events-admin perf/lighthouse; do
+for d in events-frontend events-admin perf/lighthouse tools/jscpd; do
   (cd "$d" && npm audit --omit=dev; npm audit --json) > "<SCRATCH>/npm-audit-${d//\//-}.txt" 2>&1
 done
 ```

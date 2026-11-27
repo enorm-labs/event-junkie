@@ -170,6 +170,14 @@ updates:
       interval: "weekly"
     versioning-strategy: "increase"
 
+  # The pinned jscpd that `scripts/duplication.sh` runs. Its own package for the Lighthouse reason
+  # above, and Renovate does not cover it either. A diagnostic, so a bump changes only what is listed.
+  - package-ecosystem: "npm"
+    directory: "/tools/jscpd"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: "increase"
+
   # The local admin app (ADR-045). Its pins follow `/events-frontend`; merge the two directories'
   # bumps together or they drift. Fewer groups than the frontend: only the oxlint peer lock needs
   # one of its own, for the reason given there. The sweep carries `"*"` for the same reason too.

@@ -54,7 +54,8 @@ classes/files that mix concerns, have very long functions, deep nesting, or a la
 For the frontend and the admin app, `npm run lint` and `npm run type-check` in `events-frontend/` and in `events-admin/`. Note that `schema.d.ts` is generated — never count it as a hand-written
 oversized file.
 
-**Duplication** — the highest-value thing to hunt for in this codebase. The scraper package is where duplication tends to accumulate: many venue importers
+**Duplication** — the highest-value thing to hunt for in this codebase. Start from `scripts/duplication.sh report --top 30`, and `--tests` for the test half.
+It lists exact copies by file pair, so it misses a copy with renamed variables. The scraper package is where duplication tends to accumulate: many venue importers
 implement the overview→detail pattern. Check whether shared logic actually lives in the shared extension files (`ScrapingExtensions.kt`,
 `DateParsingExtensions.kt`, `EventTypeMapping.kt`,
 `ArtistNameMapping.kt`, `EventFieldMapping.kt`) and `AbstractTwoPageWebsiteImporter`, or whether individual
