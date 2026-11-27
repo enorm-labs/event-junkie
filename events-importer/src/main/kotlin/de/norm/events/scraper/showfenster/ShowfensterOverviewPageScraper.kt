@@ -108,7 +108,7 @@ class ShowfensterOverviewPageScraper {
         return if (wixStatus == EventStatus.SCHEDULED.name && cancellation != null) parseEventStatus(cancellation.value) else wixStatus
     }
 
-    /** A concert or comedy title names its act before ` - `; the house's formats (`Die Showfenster - Varieté Show`) name none. */
+    /** A concert, comedy or show title names its act before ` - `; the house's formats (`Die Showfenster - Varieté Show`) name none. */
     private fun actsOf(
         title: String,
         eventType: EventType
@@ -165,7 +165,7 @@ private val THEATRE_TYPES = mapOf("comedy-kabarett" to EventType.COMEDY, "lesung
 
 private val CONCERT_GENRES = mapOf("jazz-blues" to "Jazz, Blues", "pop-rock" to "Pop, Rock", "folk" to "Folk")
 
-private val PERFORMER_LED = setOf(EventType.CONCERT, EventType.COMEDY)
+private val PERFORMER_LED = setOf(EventType.CONCERT, EventType.COMEDY, EventType.SHOW)
 
 private val HOUSE_FORMAT = Regex("""show|quiz|theater|offene\s+bühne""", RegexOption.IGNORE_CASE)
 

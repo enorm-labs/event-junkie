@@ -84,10 +84,11 @@ class RenaissanceTheaterSpielplanPageScraper(
                 ?.trim('(', ')', ' ')
                 ?.blankToNull()
         val teaser = row.textAt(".rt-sp-teaser > p")
+        val eventType = renaissanceEventType(title, teaser, formats) ?: EventType.SHOW.name
         return ScrapedEvent(
             title = title,
             subtitle = listOfNotNull(teaser, note).joinToString(" · ").blankToNull(),
-            eventType = renaissanceEventType(title, teaser, formats) ?: EventType.SHOW.name,
+            eventType = eventType,
             eventDate = eventDate,
             startTime = startTime,
             room = FOYER.takeIf { row.selectFirst(".specials .special-foyer") != null },
@@ -95,7 +96,7 @@ class RenaissanceTheaterSpielplanPageScraper(
             sourceId = "${EventSource.RENAISSANCE_THEATER.sourceIdPrefix}$slug-$eventDate-${startTime?.toString()?.replace(":", "") ?: "0000"}",
             ticketUrl = row.selectFirst(".specials a.special-tickets[href]")?.absUrl("href")?.blankToNull(),
             status = note?.let(::parseTitleStatus) ?: EventStatus.SCHEDULED.name,
-            artists = renaissanceActs(title, teaser)
+            artists = renaissanceActs(title, teaser, eventType)
         ).forChildrenIf(childrensShowPhrase(heading.text(), teaser))
     }
 
@@ -154,9 +155,17 @@ private fun renaissanceEventType(
  */
 private fun renaissanceActs(
     title: String,
-    subtitle: String?
+    subtitle: String?,
+    eventType: String
 ): List<ScrapedArtist> {
-    val openers = listOfNotNull(title, subtitle).mapNotNull { PERFORMER_OPENS.find(it)?.groupValues?.get(1) }
+    // Only a reading: a play of the same shape, `Rio Reiser: „Der Traum ist aus …″`, names its subject.
+    val author =
+        AUTHOR_OPENS
+            .find(title)
+            ?.groupValues
+            ?.get(1)
+            ?.takeIf { eventType == EventType.READING.name }
+    val openers = listOfNotNull(title, subtitle).mapNotNull { PERFORMER_OPENS.find(it)?.groupValues?.get(1) } + listOfNotNull(author)
     val guests = subtitle?.let { GUESTS_CLOSE.find(it)?.groupValues?.get(1) }?.let(::namesOrNull).orEmpty()
     return (openers.filter(PERSON_NAME::matches) + guests)
         .filterNot(::isNonArtistName)
@@ -176,6 +185,9 @@ private val COMEDY = Regex("""kabarett|comedy""", RegexOption.IGNORE_CASE)
 private val PLAY = Regex("""drama|theaterabend|schauspiel|komödie|theaterstück""", RegexOption.IGNORE_CASE)
 private val CONCERT = Regex("""konzert|liederabend|record release|\bsingt\b|\bsingen\b""", RegexOption.IGNORE_CASE)
 private val SHOW = Regex("""show|revue|gala|musical""", RegexOption.IGNORE_CASE)
+
+/** A reading titled `<AUTHOR>: „<book>“`, a book premiere (event 15717). */
+private val AUTHOR_OPENS = Regex("""^(.+?):\s*[„"“]""")
 
 private val PERFORMER_OPENS = Regex("""^(.+?)\s+(?:liest|singt|präsentiert)\b""")
 private val GUESTS_CLOSE = Regex("""(?:\bmit|gelesen von):?\s+([^:]+)$""")

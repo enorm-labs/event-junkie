@@ -121,4 +121,29 @@ class RenaissanceTheaterSpielplanPageScraperTest {
         parsed.first().eventDate shouldBe LocalDate.of(2026, 11, 20)
         parsed.map { it.forChildrenPhrase } shouldContainExactly listOf(null, "für Kinder")
     }
+
+    // Event 15717: a book premiere titled `<AUTHOR>: „<book>“` bills the author; a play of that shape (event 12658) bills nobody.
+    @Test
+    fun `bills the author of a reading titled with a colon, not the subject of a play`() {
+        val html =
+            """
+            <main>
+              <div class="rt-headline"><div class="rt-fullbar"><h1>März</h1></div></div>
+              <div class="grid px-5"><div class="rt-spielplan-day flex"><div class="rt-sp-day">11</div><div class="rt-sp-wday">Do</div>
+                <div class="rt-sp-times"><div class="rt-sp-date flex"><div class="rt-sp-time">20.00</div><div class="rt-sp-teaser">
+                  <a href="https://renaissance-theater.de/produktion/jakob-augstein-corso/"><h4>JAKOB AUGSTEIN: „CORSO“</h4></a><p>Berliner Buchpremiere</p>
+                </div></div></div></div></div>
+              <div class="grid px-5"><div class="rt-spielplan-day flex"><div class="rt-sp-day">12</div><div class="rt-sp-wday">Fr</div>
+                <div class="rt-sp-times"><div class="rt-sp-date flex"><div class="rt-sp-time">19.30</div><div class="rt-sp-teaser">
+                  <a href="https://renaissance-theater.de/produktion/rio-reiser/"><h4>Rio Reiser: „Der Traum ist aus, aber ...″</h4></a><p>Ein Theaterabend</p>
+                </div></div></div></div></div>
+            </main>
+            """.trimIndent()
+
+        val (reading, play) = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        reading.eventType shouldBe EventType.READING.name
+        reading.artists.map { it.name } shouldContainExactly listOf("JAKOB AUGSTEIN")
+        play.artists.shouldBeEmpty()
+    }
 }

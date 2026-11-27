@@ -186,11 +186,14 @@ class LabsaalCalendarScraperTest {
     private fun acts(title: String) = night(title).artists.map { it.name }
 
     @Test
-    fun `bills a concert title's act after mit or before erstmals im LabSaal (events 15337 and 15338)`() {
+    fun `bills a concert title's act after mit, before erstmals im LabSaal or after a dash (events 15337, 15338 and 15710)`() {
         acts("Tanz in den Mai mit BLACKMAIL Berlin") shouldBe listOf("BLACKMAIL Berlin")
         acts("Bigband Kameleon erstmals im LabSaal") shouldBe listOf("Bigband Kameleon")
         acts("Herbstkonzert mit dem Shanty Chor Reinickendorf") shouldBe listOf("Shanty Chor Reinickendorf")
         acts("Kooperation mit der Musikschule Reinickendorf").shouldBeEmpty()
+        // Event 15710: the band after the dash; lowercase words after one are prose.
+        acts("Von Kishinev nach New York – Wedding Klezmer") shouldBe listOf("Wedding Klezmer")
+        acts("Pigor singt – Benedikt Eichhorn muss begleiten").shouldBeEmpty()
     }
 
     @Test

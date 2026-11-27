@@ -47,9 +47,9 @@ val SHOWFENSTER_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives a start and an end time, no doors time", verified = "2026-10-08"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "a concert bills the players its page lists under 'Es spielen', else its title's act, as comedy does; " +
-                "a reading bills a duo by surnames, and shows, quizzes and the open stage name none",
-            verified = "2026-11-17"
+            "a concert bills the players its page lists under 'Es spielen', else its title's act, as comedy and shows do; " +
+                "a reading bills a duo by surnames, and the house's formats, quizzes and the open stage name none",
+            verified = "2026-11-27"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "only a concert's category names a style; comedy, readings and shows carry none", verified = "2026-10-13"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")
