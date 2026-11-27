@@ -10,7 +10,8 @@
 # Trivy and Dependency-Check are deliberately absent. Their counts move with an upstream advisory
 # database, so a number here would rot; both assert a floor of zero instead.
 #
-# The ZAP rule counts are exact for the pinned image. The ZAP URL counts are a spider's, and a
+# The ZAP rule counts are exact for the pinned image and the add-ons it updates to at start, which
+# the image digest does not pin. The ZAP URL counts are a spider's, and a
 # spider does not find the same number every run: the k3d full scan found 217 URLs on a laptop and
 # 107 on the runner, the production baseline 27 and 214. So those three floors sit at about half of
 # the smallest count seen, which is the line between a scan that saw the site and one that saw a
@@ -19,7 +20,9 @@
 # prints it as SKIP) and leaves the rule count, so an IGNORE on an active rule lowers that floor by
 # one in the same commit. The API scan's two script rules, 100000 and 100001, appear in the tally
 # only when they fire, so its floor is the count with neither firing — a fix that silences one of
-# them is not a smaller scan.
+# them is not a smaller scan. Its Swagger secret rule, 100043, is gone while the start-up update
+# reloads the openapi add-on (zaproxy/zaproxy#9297), so its floor is 119 until an image ships
+# commonlib 1.45.0 or later (#5617).
 #
 # The Nuclei template count is exact for the pinned templates release and its filters, and the
 # floor sits 133 under it on purpose: a templates bump that retires a handful of templates is the
@@ -28,7 +31,7 @@ flux-clusters-files	44
 flux-clusters-resources	181
 zizmor-ignored	18
 zizmor-suppressed	89
-zap-k3d-api-rules	120
+zap-k3d-api-rules	119
 zap-k3d-api-urls	40
 zap-k3d-full-rules	140
 zap-k3d-full-urls	60
