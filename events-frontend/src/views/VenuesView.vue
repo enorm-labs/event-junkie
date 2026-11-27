@@ -17,6 +17,7 @@ import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import NearOriginControls from '@/components/NearOriginControls.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl from '@/components/SortControl.vue'
+import ToggleButton from '@/components/ToggleButton.vue'
 import VenueCard from '@/components/VenueCard.vue'
 import VenueFeaturesEmpty from '@/components/VenueFeaturesEmpty.vue'
 import VenueRow from '@/components/VenueRow.vue'
@@ -348,24 +349,12 @@ const localePath = useLocalePath()
       </template>
       <template #actions>
         <div :aria-label="t('venues.view.label')" class="flex gap-2" role="group">
-          <Button
-            :aria-pressed="!showMap"
-            :variant="showMap ? 'outline' : 'default'"
-            size="sm"
-            type="button"
-            @click="setView('list')"
-          >
+          <ToggleButton :pressed="!showMap" size="sm" @click="setView('list')">
             {{ t('venues.view.list') }}
-          </Button>
-          <Button
-            :aria-pressed="showMap"
-            :variant="showMap ? 'default' : 'outline'"
-            size="sm"
-            type="button"
-            @click="setView('map')"
-          >
+          </ToggleButton>
+          <ToggleButton :pressed="showMap" size="sm" @click="setView('map')">
             {{ t('venues.view.map') }}
-          </Button>
+          </ToggleButton>
         </div>
       </template>
     </ListFilterBar>

@@ -21,7 +21,7 @@ import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import NearOriginControls from '@/components/NearOriginControls.vue'
 import OriginPickerButtons from '@/components/OriginPickerButtons.vue'
 import OriginPickHint from '@/components/OriginPickHint.vue'
-import { Button } from '@/components/ui/button'
+import ToggleButton from '@/components/ToggleButton.vue'
 import { useAsync } from '@/composables/useAsync'
 import { searchEvents } from '@/composables/useEvents'
 import { useFormat } from '@/composables/useFormat'
@@ -239,16 +239,14 @@ function marker(market: ChristmasMarket<EventSummary>): string | undefined {
     <template v-else>
       <div :class="PANEL_CLASS">
         <div class="flex flex-wrap items-center gap-2">
-          <Button
+          <ToggleButton
             v-for="word in dayWords"
             :key="word.value"
-            :aria-pressed="day === word.value"
-            :variant="day === word.value ? 'default' : 'outline'"
-            type="button"
+            :pressed="day === word.value"
             @click="setDay(day === word.value ? '' : word.value)"
           >
             {{ word.label }}
-          </Button>
+          </ToggleButton>
           <label
             :class="
               cn(
@@ -291,27 +289,17 @@ function marker(market: ChristmasMarket<EventSummary>): string | undefined {
             {{ option.label }}
           </option>
         </BaseSelect>
-        <Button
-          :aria-pressed="free"
-          :variant="free ? 'default' : 'outline'"
-          type="button"
-          @click="setFree(!free)"
-        >
+        <ToggleButton :pressed="free" @click="setFree(!free)">
           {{ t('christmasMarkets.filters.free') }}
-        </Button>
+        </ToggleButton>
         <ClearAllFilters />
       </div>
 
       <section :aria-label="t('christmasMarkets.near.label')" class="space-y-3">
         <div class="flex flex-wrap items-center gap-2 text-body">
-          <Button
-            :aria-pressed="nearest"
-            :variant="nearest ? 'default' : 'outline'"
-            type="button"
-            @click="toggleNearest"
-          >
+          <ToggleButton :pressed="nearest" @click="toggleNearest">
             {{ t('christmasMarkets.nearest') }}
-          </Button>
+          </ToggleButton>
           <template v-if="nearest">
             <OriginPickerButtons
               v-model:picking="picking"

@@ -5,6 +5,7 @@
  */
 import { LocateFixed, MapPin as MapPinIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
+import ToggleButton from '@/components/ToggleButton.vue'
 import { Button } from '@/components/ui/button'
 import type { LocateState } from '@/composables/useLocation'
 
@@ -33,15 +34,8 @@ const { t } = useI18n()
     <LocateFixed aria-hidden="true" />
     {{ t('map.near.useLocation') }}
   </Button>
-  <Button
-    v-if="!mapUnavailable"
-    :aria-pressed="picking"
-    :variant="picking ? 'default' : 'outline'"
-    size="sm"
-    type="button"
-    @click="picking = !picking"
-  >
+  <ToggleButton v-if="!mapUnavailable" :pressed="picking" size="sm" @click="picking = !picking">
     <MapPinIcon aria-hidden="true" />
     {{ t('map.near.pickOnMap') }}
-  </Button>
+  </ToggleButton>
 </template>
