@@ -3,6 +3,7 @@ package de.norm.events.scraper.weltwirtschaft
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_BREAK_TAG
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TecPage
@@ -52,7 +53,7 @@ class WeltwirtschaftApiScraper {
         val descriptionHtml = event.path("description").asString("")
         val allDay = event.path("all_day").asBoolean(false)
         val end = event.tecDateTime("end_date")
-        val cleanedLines = rawTitle.split(LINE_BREAK).map(::cleanEventTitle)
+        val cleanedLines = rawTitle.split(LINE_BREAK_TAG).map(::cleanEventTitle)
         val lines = cleanedLines.mapNotNull { it.text.blankToNull() }
         val title = lines.firstOrNull() ?: return null
         val subtitle = lines.drop(1).joinToString(" – ").blankToNull()
@@ -177,8 +178,6 @@ class WeltwirtschaftApiScraper {
 
         /** A description that closes the restaurant or books it out: `bleibt … geschlossen`, `eine Exklusiv-Veranstaltung`. */
         val CLOSED_HOUSE = Regex("""geschlossen|exklusiv""", RegexOption.IGNORE_CASE)
-
-        val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
 
         /** The label before an all-day night's start: `ab 22:00`, `ab 22 Uhr`. */
         const val FROM = "ab"

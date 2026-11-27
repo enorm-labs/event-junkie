@@ -1,5 +1,6 @@
 package de.norm.events.scraper.pastiche
 
+import de.norm.events.scraper.LINE_BREAK_TAG
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
@@ -57,7 +58,7 @@ class PasticheEventPageScraper {
  * space; two or more in a row end a paragraph.
  */
 internal fun Element.paragraphText(): String? {
-    val marked = html().replace(PARAGRAPH_BREAK, PARAGRAPH_MARK).replace(LINE_BREAK, " ")
+    val marked = html().replace(PARAGRAPH_BREAK, PARAGRAPH_MARK).replace(LINE_BREAK_TAG, " ")
     return Jsoup
         .parse(marked)
         .text()
@@ -69,4 +70,3 @@ internal fun Element.paragraphText(): String? {
 
 private const val PARAGRAPH_MARK = ""
 private val PARAGRAPH_BREAK = Regex("""(?:<br\s*/?>\s*(?:</?span[^>]*>\s*)*){2,}""", RegexOption.IGNORE_CASE)
-private val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)

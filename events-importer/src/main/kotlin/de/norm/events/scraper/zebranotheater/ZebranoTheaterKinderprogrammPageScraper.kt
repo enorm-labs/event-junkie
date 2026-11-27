@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
+import de.norm.events.scraper.LINE_BREAK_TAG
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
@@ -58,7 +59,7 @@ class ZebranoTheaterKinderprogrammPageScraper(
         val link = billing.selectFirst("a[href]")
         val title = link?.text()?.replace(WHITESPACE, " ")?.blankToNull() ?: return null
         val lines =
-            billing.html().split(LINE_BREAK).map {
+            billing.html().split(LINE_BREAK_TAG).map {
                 Jsoup
                     .parse(it)
                     .text()
@@ -99,6 +100,5 @@ class ZebranoTheaterKinderprogrammPageScraper(
         const val CHILDRENS_PROGRAMME = "Kinderprogramm"
 
         val PUBLIC_PERFORMANCES = Regex("""öffentliche\s+vorstellungen""", RegexOption.IGNORE_CASE)
-        val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
     }
 }

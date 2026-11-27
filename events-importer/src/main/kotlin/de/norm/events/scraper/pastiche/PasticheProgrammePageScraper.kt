@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_BREAK_TAG
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -164,7 +165,6 @@ class PasticheProgrammePageScraper(
         private val LIVE = Regex("""\blive\b""", RegexOption.IGNORE_CASE)
         private val DJ = Regex("""\bdj\b""", RegexOption.IGNORE_CASE)
         private val LISTENING = Regex("""\blistening\b""", RegexOption.IGNORE_CASE)
-        private val TITLE_LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
         private val FORMATS =
             listOf(
                 Regex("""\bquiz""", RegexOption.IGNORE_CASE) to EventType.QUIZ.name,
@@ -238,7 +238,7 @@ class PasticheProgrammePageScraper(
                 ?.select("b")
                 ?.firstOrNull { cleanTitle(it.text()) != null }
                 ?.html()
-                ?.split(TITLE_LINE_BREAK)
+                ?.split(LINE_BREAK_TAG)
                 ?.mapNotNull { cleanTitle(Jsoup.parse(it).text()) }
                 .orEmpty()
     }
