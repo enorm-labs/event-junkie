@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * "Report a problem" on an event, act, promoter or venue page (#4399, #5603), only for the
- * accounts the operator allows. It stores a report and nothing more; the operator works the
- * queue. Everyone else keeps the mail line at the end of the page.
+ * "Report a problem" on an event, act, promoter or venue page (#4399, #5603), for every
+ * signed-in account the operator has not withdrawn it from (#5604). It stores a report and
+ * nothing more; the operator works the queue. Signed out, the mail line at the end of the page.
  */
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'

@@ -125,7 +125,7 @@ class AccountMetrics(
         /** `bff.account.rsvp{action}`: RSVPs set or changed, and withdrawn (#3892). */
         const val RSVP = "bff.account.rsvp"
 
-        /** `bff.account.report{action,kind}`: problem reports stored, replaced and withdrawn, per kind of subject (#4399, #5603). */
+        /** `bff.account.report{action,kind}`: reports stored, replaced, withdrawn and refused at the cap, per kind (#4399, #5604). */
         private const val REPORT = "bff.account.report"
 
         /** `bff.account.report.problem{problem}`: each ticked box of a stored or replaced report, counts only (#4978). */
@@ -281,7 +281,10 @@ enum class ReportAction(
 ) {
     STORE("stored"),
     REPLACE("replaced"),
-    WITHDRAW("withdrawn")
+    WITHDRAW("withdrawn"),
+
+    /** Refused at the cap of open reports (#5604). */
+    REFUSED("refused")
 }
 
 enum class PushAction(

@@ -204,6 +204,28 @@ class ReportStore(
             .map { row -> row.required("replaced", Boolean::class.javaObjectType) }
             .awaitOne()
 
+    /** Whether the account already reported this subject, so a replacement is not held to the cap. */
+    suspend fun exists(
+        accountId: UUID,
+        subject: ReportSubject
+    ): Boolean =
+        db
+            .sql(
+                "SELECT EXISTS (SELECT 1 FROM accounts.report WHERE account_id = :account AND kind = :kind AND subject_id = :subject) AS found"
+            ).bind("account", accountId)
+            .bind("kind", subject.kind.tag)
+            .bind("subject", subject.id)
+            .map { row -> row.required("found", Boolean::class.javaObjectType) }
+            .awaitOne()
+
+    /** The account's open reports, whose subject may be gone: the cleanup deletes those daily. */
+    suspend fun count(accountId: UUID): Long =
+        db
+            .sql("SELECT count(*) AS n FROM accounts.report WHERE account_id = :account")
+            .bind("account", accountId)
+            .map { row -> row.required("n", Long::class.javaObjectType) }
+            .awaitOne()
+
     /** Answers whether there was one to withdraw. */
     suspend fun withdraw(
         accountId: UUID,

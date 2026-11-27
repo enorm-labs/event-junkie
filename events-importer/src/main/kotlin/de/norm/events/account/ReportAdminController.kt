@@ -61,13 +61,20 @@ data class ResolvedResponse(
 data class CanReportRequest(
     @Schema(description = "The account's address, as it signs in.", example = "operator@example.de")
     val email: String,
-    @Schema(description = "True shows \"Report a problem\" on the detail pages; false hides it. Open reports stay.", example = "true")
+    @Schema(description = "False withdraws \"Report a problem\" from the account; true gives it back, the default. Open reports stay.", example = "true")
     val enabled: Boolean
 )
 
+data class ReportCapRequest(
+    @Schema(description = "The account's address, as it signs in.", example = "operator@example.de")
+    val email: String,
+    @Schema(description = "True lifts the cap of 200 open reports for the account; false restores it.", example = "true")
+    val exempt: Boolean
+)
+
 /**
- * The problem reports visitors file on event, act, promoter and venue pages (#4399, #5603), and the allowlist of
- * accounts that may file them.
+ * The problem reports visitors file on event, act, promoter and venue pages (#4399, #5603), and the flag that
+ * withdraws reporting from an account that abuses the form (#5604).
  * `/fix-events` and the admin app read the list; resolving an event's reports deletes them (the privacy notice's
  * retention), so a resolve comes after the fix is live or the verdict is final.
  */
@@ -130,13 +137,26 @@ class ReportAdminController(
     }
 
     @PutMapping("/accounts/can-report")
-    @Operation(summary = "Allows or stops an account filing problem reports")
+    @Operation(summary = "Withdraws reporting from an account, or gives it back")
     suspend fun canReport(
         @RequestBody request: CanReportRequest
     ): ResponseEntity<Unit> {
         val id = store.setCanReport(request.email, request.enabled) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "No account with that address")
         // The id, never the address: the log leaves the cluster.
         logger.info { "Account $id ${if (request.enabled) "may" else "may no longer"} report problems" }
+        return ResponseEntity.noContent().build()
+    }
+
+    @PutMapping("/accounts/report-cap-exempt")
+    @Operation(summary = "Lifts the cap on open problem reports for an account, or restores it")
+    suspend fun reportCapExempt(
+        @RequestBody request: ReportCapRequest
+    ): ResponseEntity<Unit> {
+        val id =
+            store.setReportCapExempt(request.email, request.exempt)
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "No account with that address")
+        // The id, never the address: the log leaves the cluster.
+        logger.info { "Account $id ${if (request.exempt) "is exempt from" else "is held to"} the cap on open reports" }
         return ResponseEntity.noContent().build()
     }
 }

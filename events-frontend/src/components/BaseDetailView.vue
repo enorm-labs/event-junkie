@@ -190,7 +190,7 @@ const { compact } = useCompactView()
 
         <slot />
 
-        <!-- For the accounts the operator allows (#5603); everyone else has the mail line below. -->
+        <!-- For a signed-in account (#5603, #5604); a signed-out visitor has the mail line below. -->
         <ReportProblem
           v-if="followKind && followSlug && name"
           :kind="`${followKind}s`"

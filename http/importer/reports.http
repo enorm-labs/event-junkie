@@ -3,8 +3,8 @@
 ### (#4399, #5603)
 ###
 ### The queue /fix-events works through, resolving a subject's
-### reports (which deletes them), and the allowlist of accounts
-### that see the button.
+### reports (which deletes them), and the flag that withdraws
+### reporting from an account that abuses the form (#5604).
 ### ============================================================
 
 ### The open reports, one entry per event, act, promoter or venue
@@ -27,7 +27,7 @@ Accept: application/json
     });
 %}
 
-### Every account, oldest first, with its allowlist flag
+### Every account, oldest first, with its report flag
 GET {{importer-host}}/api/admin/accounts
 Accept: application/json
 
@@ -37,14 +37,20 @@ Accept: application/json
     });
 %}
 
-### Allow an account to report problems
+### Withdraw reporting from an account (enabled: true gives it back)
 PUT {{importer-host}}/api/admin/accounts/can-report
 Content-Type: application/json
 
-{ "email": "operator@example.de", "enabled": true }
+{ "email": "operator@example.de", "enabled": false }
 
 > {%
     client.test("status is 204", function () {
         client.assert(response.status === 204, "Expected 204 but got " + response.status);
     });
 %}
+
+### Lift the cap of 200 open reports for an account (exempt: false restores it)
+PUT {{importer-host}}/api/admin/accounts/report-cap-exempt
+Content-Type: application/json
+
+{ "email": "operator@example.de", "exempt": true }

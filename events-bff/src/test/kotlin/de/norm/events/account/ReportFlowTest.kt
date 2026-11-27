@@ -185,7 +185,7 @@ class ReportFlowTest : BaseControllerTest() {
     }
 
     @Test
-    fun `an account the operator has not allowed is refused`() {
+    fun `an account the operator withdrew reporting from is refused`() {
         val plain = runBlocking { sessionFor("fan@example.org", canReport = false) }
         put("tonight", listOf("ARTISTS"), who = plain).expectStatus().isForbidden
     }
@@ -201,16 +201,63 @@ class ReportFlowTest : BaseControllerTest() {
         put("tonight", listOf("QUESTION")).expectStatus().isNoContent
     }
 
-    @Test
-    fun `an account can hold any number of open reports`() {
-        runBlocking {
-            val club = insertVenue("Hall", "hall")
-            (1..40).forEach { insertEvent(club, "Night $it", "night-$it", today.plusDays(it.toLong())) }
-        }
-        (1..40).forEach { put("night-$it", listOf("TITLE")).expectStatus().isNoContent }
+    private fun refused(): Double =
+        registry
+            .get("bff.account.report")
+            .tag(AccountMetrics.TAG_ACTION, ReportAction.REFUSED.tag)
+            .tag(AccountMetrics.TAG_KIND, ReportKind.EVENT.tag)
+            .counter()
+            .count()
 
+    @Test
+    fun `an account holds at most 200 open reports, a replacement at the cap still passes, and a refusal is counted`() {
+        runBlocking {
+            val hall = insertVenue("Hall", "hall")
+            (1..200).forEach { insertEvent(hall, "Night $it", "night-$it", today.plusDays(it.toLong())) }
+        }
+        (1..199).forEach { put("night-$it", listOf("TITLE")).expectStatus().isNoContent }
         put("tonight", listOf("TITLE")).expectStatus().isNoContent
-        get("/me/reports").expectBody().jsonPath("$.length()").isEqualTo(41)
+        val before = refused()
+
+        put("night-200", listOf("TITLE")).expectStatus().isEqualTo(429)
+        put("tonight", listOf("STATUS"), "Cancelled").expectStatus().isNoContent
+        refused() - before shouldBe 1.0
+
+        withdraw("night-1").expectStatus().isNoContent
+        put("night-200", listOf("TITLE")).expectStatus().isNoContent
+        get("/me/reports").expectBody().jsonPath("$.length()").isEqualTo(200)
+    }
+
+    @Test
+    fun `an exempt account is not held to the cap`() {
+        runBlocking {
+            val hall = insertVenue("Hall", "hall")
+            (1..201).forEach { insertEvent(hall, "Night $it", "night-$it", today.plusDays(it.toLong())) }
+            databaseClient
+                .sql(
+                    "INSERT INTO accounts.report (account_id, kind, subject_id, problems) " +
+                        "SELECT a.id, 'event', e.id, ARRAY ['TITLE'] FROM accounts.account a, events.event e " +
+                        "WHERE a.email = 'operator@example.org' AND e.slug LIKE 'night-%' AND e.slug <> 'night-201'"
+                ).await()
+            databaseClient.sql("UPDATE accounts.account SET report_cap_exempt = true WHERE email = 'operator@example.org'").await()
+        }
+
+        put("night-201", listOf("TITLE")).expectStatus().isNoContent
+        get("/me/reports").expectBody().jsonPath("$.length()").isEqualTo(201)
+    }
+
+    @Test
+    fun `a new account may report, and one the operator withdrew it from may not`() {
+        val fresh =
+            runBlocking {
+                val now = Instant.now()
+                val account = accounts.signIn("new@example.org", "en", now)
+                val token = SecretTokens.next()
+                sessionRows.createSession(SecretTokens.hash(token), account.id, now, now.plus(Duration.ofDays(1)))
+                token
+            }
+        get("/me", fresh).expectBody().jsonPath("$.canReport").isEqualTo(true)
+        put("tonight", listOf("TITLE"), who = fresh).expectStatus().isNoContent
     }
 
     @Test

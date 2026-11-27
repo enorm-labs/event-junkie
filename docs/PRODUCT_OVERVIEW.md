@@ -211,7 +211,7 @@ the first column. It fails in two cases:
 | `/api/me/watches`                      | The acts the account watches by MusicBrainz id that have no Berlin date yet                             |
 | `/api/me/watches/{mbid}`               | Watching or unwatching an act. It becomes an artist follow once an artist row carries the id            |
 | `/api/me/rsvps`                        | The account's RSVPs, event slug to status                                                               |
-| `/api/me/reports`                      | The account's open problem reports, for an account the operator allows (#4399)                          |
+| `/api/me/reports`                      | The account's open problem reports, at most 200 (#4399, #5604)                                          |
 | `/api/me/reports/{kind}/{slug}`        | Reporting a problem with an event, act, promoter or venue, replacing the report, or withdrawing it      |
 | `/api/me/rsvps/{slug}`                 | Set, change or withdraw "interested" or "going" for an event                                            |
 | `/api/me/rsvps/upcoming`               | RSVPed events not over yet, by date                                                                     |

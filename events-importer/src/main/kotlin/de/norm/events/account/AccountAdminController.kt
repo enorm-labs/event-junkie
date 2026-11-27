@@ -21,6 +21,8 @@ data class AccountResponse(
     val lastSignInAt: Instant,
     @Schema(description = "True when the account sees \"Report a problem\" (PUT /api/admin/accounts/can-report).")
     val canReport: Boolean,
+    @Schema(description = "True when the cap of 200 open reports does not apply (PUT /api/admin/accounts/report-cap-exempt).")
+    val reportCapExempt: Boolean,
     @Schema(description = "How many follows the account has: artists, venues, promoters, festivals, saved searches and watched acts.")
     val follows: Long,
     @Schema(description = "How many of the account's problem reports wait in the queue.")
@@ -44,7 +46,7 @@ class AccountAdminController(
         // The count, never an address: the log leaves the cluster.
         logger.info { "Listed ${accounts.size} accounts" }
         return accounts.map {
-            AccountResponse(it.email, it.locale, it.createdAt, it.lastSignInAt, it.canReport, it.follows, it.openReports)
+            AccountResponse(it.email, it.locale, it.createdAt, it.lastSignInAt, it.canReport, it.reportCapExempt, it.follows, it.openReports)
         }
     }
 }

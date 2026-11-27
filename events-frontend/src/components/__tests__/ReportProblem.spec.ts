@@ -48,7 +48,7 @@ async function mountForm(kind: ReportKind = 'events', slug = 'tonight') {
 const send = (view: VueWrapper) => view.find('[data-testid="report-send"]')
 
 describe('ReportProblem', () => {
-  it('is not there for an account the operator has not allowed, nor signed out', async () => {
+  it('is not there for an account the operator withdrew reporting from, nor signed out', async () => {
     setSession({ ...me, canReport: false } as never)
     wrapper = mount(ReportProblem, { props: { kind: 'events', slug: 'tonight', title: 'Tonight' } })
     expect(wrapper.find('[data-testid="report-open"]').exists()).toBe(false)
@@ -58,7 +58,7 @@ describe('ReportProblem', () => {
     expect(wrapper.find('[data-testid="report-open"]').exists()).toBe(false)
   })
 
-  it('is there for an allowed account, and says Edit report once reported', async () => {
+  it('is there for a signed-in account, and says Edit report once reported', async () => {
     setSession({ ...me, canReport: true } as never)
     wrapper = mount(ReportProblem, { props: { kind: 'events', slug: 'tonight', title: 'Tonight' } })
     await flushPromises()
@@ -201,6 +201,7 @@ describe('ReportProblemForm', () => {
 
   it.each([
     [403, 'This account cannot report problems.'],
+    [429, 'You have 200 open reports. Withdraw one, or wait until we have checked some.'],
     [500, 'That did not work. Please try again.'],
   ])('a %i says why, and keeps the form open', async (status, text) => {
     setSession({ ...me, canReport: true } as never)

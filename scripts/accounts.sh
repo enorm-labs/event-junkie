@@ -50,7 +50,7 @@ body="$(curl -sf --max-time 20 "$URL")" || {
 }
 
 jq -r '
-    (["CREATED", "LAST SIGN-IN", "LOCALE", "CAN REPORT", "FOLLOWS", "REPORTS", "EMAIL"] | @tsv),
+    (["CREATED", "LAST SIGN-IN", "LOCALE", "CAN REPORT", "NO CAP", "FOLLOWS", "REPORTS", "EMAIL"] | @tsv),
     (.[] | [.createdAt[0:10], .lastSignInAt[0:10], .locale, (if .canReport then "yes" else "no" end),
-            .follows, .openReports, .email] | @tsv)
+            (if .reportCapExempt then "yes" else "no" end), .follows, .openReports, .email] | @tsv)
 ' <<<"$body" | column -t -s $'\t'

@@ -35,15 +35,18 @@ const club: ReportedSubject = {
 }
 
 let events: ReportedSubject[] = []
+let accounts: { email: string; canReport: boolean; openReports: number }[] = []
 let resolveStatus = 200
 const fetchMock = vi.fn<typeof fetch>()
 
 beforeEach(() => {
   events = [tonight]
+  accounts = []
   resolveStatus = 200
   fetchMock.mockImplementation(async (input, init) => {
     const url = String(input)
     if ((init?.method ?? 'GET') === 'GET' && url === '/api/admin/reports') return json(events)
+    if (url === '/api/admin/accounts') return json(accounts)
     if (init?.method === 'DELETE' && url === '/api/admin/reports?kind=events&id=418') {
       if (resolveStatus !== 200) return json({ detail: 'database gone' }, resolveStatus)
       events = []
@@ -79,6 +82,7 @@ describe('ReportsView', () => {
     events = [club]
     fetchMock.mockImplementation(async (input, init) => {
       const url = String(input)
+      if (url === '/api/admin/accounts') return json([])
       if ((init?.method ?? 'GET') === 'GET') return json(events)
       if (url === '/api/admin/reports?kind=venues&id=7') {
         events = []
@@ -100,6 +104,28 @@ describe('ReportsView', () => {
     await view.find('button[aria-label="Resolve: Club"]').trigger('click')
     await flushPromises()
     expect(view.text()).toContain('No open reports.')
+  })
+
+  it('names the accounts with the most open reports above the table, and sums the rest', async () => {
+    accounts = [
+      { email: 'b-masked@example.de', canReport: true, openReports: 3 },
+      { email: 'none@example.de', canReport: true, openReports: 0 },
+      { email: 'a-masked@example.de', canReport: true, openReports: 41 },
+      { email: 'c-masked@example.de', canReport: true, openReports: 2 },
+      { email: 'd-masked@example.de', canReport: false, openReports: 1 },
+    ]
+    const view = mount(ReportsView)
+    await flushPromises()
+
+    expect(view.find('[data-testid="reporters"]').text()).toBe(
+      'Open reports per account: a-masked@example.de (41), b-masked@example.de (3), c-masked@example.de (2), and 1 more',
+    )
+  })
+
+  it('shows no line when nobody holds a report', async () => {
+    const view = mount(ReportsView)
+    await flushPromises()
+    expect(view.find('[data-testid="reporters"]').exists()).toBe(false)
   })
 
   it('resolves an event and reloads', async () => {

@@ -119,7 +119,7 @@ done
 for slug in $(jq -r '.rsvps[].event' <<<"$before"); do
     attempt DELETE "/api/me/rsvps/$slug"
 done
-# Ada may not report, so only a withdrawal: a report she stored would be a row of her own.
+# Reporting is withdrawn from Ada (#5604), so only a withdrawal: a report she stored would be a row of her own.
 for report in $(jq -r '.reports[] | "\(.kind)/\(.slug)"' <<<"$before"); do
     attempt DELETE "/api/me/reports/$report"
 done

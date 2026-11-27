@@ -89,3 +89,30 @@ export async function resolveReports(
   await failOnError(response, `DELETE ${path}`)
   return ((await response.json()) as { resolved: number }).resolved
 }
+
+/** An account as `GET /api/admin/accounts` answers it, the fields the reports page reads. */
+interface AccountRow {
+  email: string
+  canReport: boolean
+  openReports: number
+}
+
+export interface Reporter {
+  email: string
+  openReports: number
+}
+
+const ACCOUNTS = '/api/admin/accounts'
+
+/**
+ * The accounts that hold open reports, the most first (#5604). Every account may report, so one
+ * account filling the queue shows here before it shows in the table.
+ */
+export async function fetchReporters(fetchFn: typeof fetch = fetch): Promise<Reporter[]> {
+  const response = await fetchFn(ACCOUNTS, { headers: { Accept: 'application/json' } })
+  await failOnError(response, `GET ${ACCOUNTS}`)
+  return ((await response.json()) as AccountRow[])
+    .filter((account) => account.openReports > 0)
+    .map(({ email, openReports }) => ({ email, openReports }))
+    .sort((a, b) => b.openReports - a.openReports)
+}

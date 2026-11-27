@@ -16,7 +16,7 @@
 -- notifications that need a second page.
 
 -- Bob has "Reminders on the day" off (#4253), so a client reads both values of the switch. Bob may report problems
--- (#4399) and Ada may not, for the same reason.
+-- (#4399) and the operator withdrew it from Ada (#5604), for the same reason.
 INSERT INTO accounts.account (id, email, locale, reminder_push, can_report)
 VALUES ('ada00000-0000-4000-8000-000000000001', 'ada@example.de', 'de', true, false),
        ('b0b00000-0000-4000-8000-000000000002', 'bob@example.de', 'en', false, true);
