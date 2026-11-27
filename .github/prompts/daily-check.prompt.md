@@ -258,8 +258,16 @@ For each open pull request by `dependabot[bot]`, `renovate[bot]` or `claude[bot]
 2. **Merge when all of these hold**: every check green, `mergeStateStatus` `CLEAN`, the diff reads right, and for `claude[bot]` a person's approval on the
    current head (`reviewDecision: APPROVED`). Then `gh pr merge <n> --rebase`. Merge independent ones first, the lockfile chain after. Re-read
    `mergeStateStatus` between merges; it reads `UNKNOWN` for about 10 seconds after each.
-3. **Otherwise say why**, one line: the failed check and its first error, `DIRTY` (for Dependabot, comment `@dependabot rebase`), a diff that needs a person.
+3. **Otherwise say why**, one line: the failed check and its first error, `DIRTY`, a diff that needs a person.
    A `claude[bot]` pull request that reads right and waits only for the approval is ACT: "approve #N", with a two-line summary of what it changes.
+
+**Dependabot commands.** Post each one as a comment of its own.
+
+- **`DIRTY`**: comment `@dependabot rebase`. A pull request that carries the notices commit from `fix-notices-on-bot-prs.yml` is edited by someone else,
+  and Dependabot refuses to rebase it. Comment `@dependabot recreate` instead. The recreated branch fails the notices check once, then the workflow
+  pushes the commit again and CI reruns. That first red notices check is not a finding.
+- **An update to hold back**: on a grouped pull request, name the dependency — `@dependabot ignore postgres major version`. The bare
+  `@dependabot ignore this major version` gets no answer there. `minor version` holds back only that minor, so the next one still arrives.
 
 ## Step 7 — The report
 
