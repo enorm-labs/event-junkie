@@ -211,17 +211,17 @@ function place(instance: MapLibreMap, pins: MapPin[]): Placed {
   element.classList.add(isGroup ? SHAPE_CLASSES.group : SHAPE_CLASSES.single)
   if (pins.every((pin) => pin.dimmed)) element.classList.add(DIMMED_CLASS)
   if (pins.some((pin) => pin.live)) element.classList.add(LIVE_CLASS)
-  const label = isGroup
-    ? t('map.groupLabel', {
-        count: pins.length,
-        venues: pins.map((pin) => pin.label).join('; '),
-      })
-    : (first?.label ?? '')
+  const total = pins.reduce((sum, pin) => sum + (pin.weight ?? 1), 0)
+  const venues = pins.map((pin) => pin.label).join('; ')
+  // The name opens with the number the marker shows (WCAG 2.5.3 Label in Name).
+  const label = !isGroup
+    ? (first?.label ?? '')
+    : total === pins.length
+      ? t('map.groupLabel', { count: pins.length, venues })
+      : t('map.groupEventsLabel', { total, count: pins.length, venues })
   element.title = label
   element.setAttribute('aria-label', label)
-  element.textContent = isGroup
-    ? String(pins.reduce((sum, pin) => sum + (pin.weight ?? 1), 0))
-    : (first?.badge ?? '')
+  element.textContent = isGroup ? String(total) : (first?.badge ?? '')
   const longitude = pins.reduce((sum, pin) => sum + pin.longitude, 0) / pins.length
   const latitude = pins.reduce((sum, pin) => sum + pin.latitude, 0) / pins.length
   const marker = new Marker({ element }).setLngLat([longitude, latitude]).addTo(instance)

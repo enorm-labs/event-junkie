@@ -56,7 +56,13 @@ const sectionLinks = computed(() =>
 <template>
   <div class="flex min-h-screen flex-col bg-background text-foreground">
     <!-- Announces route changes to screen readers; visually hidden. -->
-    <div aria-atomic="true" aria-live="polite" class="sr-only" role="status">
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      class="sr-only"
+      data-testid="route-announcer"
+      role="status"
+    >
       {{ announcement }}
     </div>
 
