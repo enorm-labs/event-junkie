@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_BREAK_TAG
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -114,7 +115,7 @@ class ATraneProgrammePageScraper {
     /** The name's lines, entities decoded and non-breaking spaces flattened, blank lines dropped. */
     private fun nameLines(name: String): List<String> =
         name
-            .split(LINE_BREAK)
+            .split(LINE_BREAK_TAG)
             .map { it.replace(WHITESPACE, " ").trim() }
             .filter { it.isNotEmpty() }
 
@@ -234,7 +235,6 @@ class ATraneProgrammePageScraper {
     private companion object {
         const val EVENT_PATH = "/Events-Directory/"
 
-        val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
         val WHITESPACE = Regex("""[\s\u00A0]+""")
         const val QUOTES = "«»\" "
         val WORK_TITLE = Regex("""\s*[«"][^»"]*[»"]\s*$""")

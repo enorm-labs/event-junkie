@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
+import de.norm.events.scraper.LINE_BREAK_TAG
 import de.norm.events.scraper.LabelledPrices
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
@@ -247,7 +248,7 @@ class KesselhausCalendarScraper(
      * it uses are removed, because a title such as `<Art of BLUE BLOOD>` is text in angle brackets.
      */
     private fun plainText(raw: String): String? =
-        decodeHtmlEntities(raw.replace(LINE_BREAK, "\n").replace(MARKUP_TAG, "").replace(BOLD, ""))
+        decodeHtmlEntities(raw.replace(LINE_BREAK_TAG, "\n").replace(MARKUP_TAG, "").replace(BOLD, ""))
             .lines()
             .dropLastWhile { it.isBlank() || HEADING.containsMatchIn(it) }
             .joinToString("\n") { it.replaceFirst(HEADING, "") }
@@ -358,7 +359,6 @@ class KesselhausCalendarScraper(
         private const val RELOCATED = "relocated"
         private const val POSTPONED = "postponed"
 
-        private val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
         private val MARKUP_TAG = Regex("""</?(?:h[1-6]|p|span|strong|em|b|i|u|div)(?:\s[^>]*)?>""", RegexOption.IGNORE_CASE)
         private val BOLD = Regex("""\*\*""")
         private val HEADING = Regex("""^#{1,6}\s+""")

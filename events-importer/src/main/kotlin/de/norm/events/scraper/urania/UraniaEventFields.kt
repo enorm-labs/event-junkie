@@ -1,6 +1,7 @@
 package de.norm.events.scraper.urania
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.LINE_BREAK_TAG
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
@@ -93,7 +94,7 @@ internal fun uraniaSpeakers(
 internal fun uraniaModerators(textBox: Element?): List<String> = textBox?.select("p").orEmpty().flatMap { moderationCredits(it) }
 
 private fun moderationCredits(paragraph: Element): List<String> {
-    val lines = paragraph.html().split(LINE_BREAK).map { Jsoup.parseBodyFragment(it).text().trim() }
+    val lines = paragraph.html().split(LINE_BREAK_TAG).map { Jsoup.parseBodyFragment(it).text().trim() }
     return lines.indices
         .filter { MODERATION_LABEL.containsMatchIn(lines[it]) }
         .map { index ->
@@ -178,6 +179,3 @@ private val FORUM_CREDIT = Regex("""\bforum\b.*\smit\s""", RegexOption.IGNORE_CA
 
 /** The label of the prose's moderation credit, at the start of a paragraph or a line. */
 private val MODERATION_LABEL = Regex("""^Moderation\s*:\s*""", RegexOption.IGNORE_CASE)
-
-/** A `<br>` in a paragraph's HTML, which ends a line of the prose. */
-private val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)

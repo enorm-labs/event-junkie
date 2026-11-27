@@ -4,6 +4,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LINE_BREAK_TAG
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -98,7 +99,7 @@ class ParkaueMonthPageScraper {
     private fun authorLine(author: Element): String? =
         author
             .html()
-            .split(LINE_BREAK)
+            .split(LINE_BREAK_TAG)
             .mapNotNull { cleanText(Parser.unescapeEntities(it.replace(TAG, ""), false)) }
             .joinToString(", ")
             .blankToNull()
@@ -116,7 +117,6 @@ class ParkaueMonthPageScraper {
         val CONCERT = Regex("""konzert""", RegexOption.IGNORE_CASE)
         val READING = Regex("""lesung|lesebühne|\btalk\b|gespräch""", RegexOption.IGNORE_CASE)
         val CONFERENCE = Regex("""\b(?:konferenz|fachtag)\b""", RegexOption.IGNORE_CASE)
-        val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
         val TAG = Regex("""<[^>]+>""")
     }
 }
