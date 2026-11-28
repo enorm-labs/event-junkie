@@ -145,6 +145,11 @@ environments in the arguments that are due (see [When a step is due](#the-format
 
     The counts go in the report. A `0` is fine: the operator resolved it in the admin app first.
 
+    **Read the row before you resolve it** (`GET localhost:28081/api/admin/events/<id>`). An import keeps a hand edit's value, so a field in
+    `pinnedFields` keeps the fix out of the row (ADR-042). That is a numbered hand fix on the operator's word: `DELETE …/events/<id>/pins/<field>`,
+    then one forced import of that source. A stale row dated today also stays until it is past, because stale removal starts tomorrow. Hold its id:
+    the box stays open, and the next run resolves it.
+
 5. **Scripts**, in the order the pull requests merged, from the worktree of the deployed commit (see Important). Remove the worktree afterwards.
    On production, a new venue's block stops before its `--enable` line.
 
