@@ -13,7 +13,7 @@ run. The steps are the existing commands; this command only joins them.
 - **Invoking this command is permission to run the steps marked _runs_ below**, each under its own prompt's rules and nothing more. `/daily-check` merges
   the bot pull requests its Step 6 allows and runs `/worklist` (which applies no fix), `/afk` opens draft pull requests, `/post-release` runs the due
   steps it finds.
-- **Never, from here:** approve or merge a pull request, arm auto-merge, cut a release, dispatch `cut-release.yml`, add or remove `afk-ok`, file an issue
+- **Never, from here:** pass `--auto` to `/daily-check`, approve or merge a pull request, arm auto-merge, cut a release, dispatch `cut-release.yml`, add or remove `afk-ok`, file an issue
   the operator has not named, or write to a cluster outside `/post-release`. Each of these is a person's decision; this command prepares it and stops.
 - **One step per invocation.** Run it, then re-read the state and name the next. A question for the operator ends the turn.
 - **The state lives on GitHub and in `temp/`**, never in this conversation. Any session can pick the loop up, and a summary loses nothing.

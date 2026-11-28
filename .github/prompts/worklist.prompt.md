@@ -8,7 +8,8 @@ and [`/daily-check`](daily-check.prompt.md) runs `/admin-review`. It also runs a
 
 - **Invoking this command is permission to read, nothing more.** No issue filed, no event or artist written, no row dismissed, no import triggered.
   Drafts, proposed fixes and proposed dismissals go in the report. `/new-issue` files a draft, and Step 7 applies a fix or a dismissal, only for the
-  numbers the operator names.
+  numbers the operator names. **Under `/daily-check --auto`** every number counts as named, by
+  [its Step 8](daily-check.prompt.md#step-8--auto-mode-act-on-every-verdict). Run alone, this command never assumes it.
 - **A worklist row is a lead, not evidence.** Re-measure every finding before you draft it: the event on the public API, the venue's own page, and the
   parser's code path. On 2026-10-06 three of eight report findings did not hold. A finding that does not hold is one line under "Not a defect".
 - **Never hand-fix what a parser fix would repair.** A hand edit pins the field (ADR-042), and the pin stays until someone removes it. The next import

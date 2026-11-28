@@ -9,6 +9,8 @@ operator names. [`/daily-check`](daily-check.prompt.md) runs this in its Step 5.
 
 - **Invoking this command is permission to read, nothing more.** No event, artist, venue, draft or suggestion is written until the operator names its
   number. "ok" to a list of verdicts names every number on it. The auto-mode guard asks for a `/permissions` approval for the first write to production.
+  **Under `/daily-check --auto`** every number that is not `UNSURE` counts as named, by [its Step 8](daily-check.prompt.md#step-8--auto-mode-act-on-every-verdict).
+  Run alone, this command never assumes it.
 - **An item is a lead, not evidence.** Re-read the source before you recommend: the venue's own page, the Instagram post, the event on the public site.
   A verdict without a checked source is `UNSURE`.
 - **Never hand-fix what a parser fix would repair.** A hand edit pins the field (ADR-042). Three or more items for one field at one venue are a parser

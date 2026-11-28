@@ -17,6 +17,8 @@ each with an optional note on what looks wrong, or with no argument the "Report 
 - **With no argument, invoking this command is permission to read the queue, not to resolve it.** A resolve deletes the reports and leaves each
   reporter a note under the bell (#5308), so it is a cluster write: a numbered proposal, applied on the operator's number, or an `## After deploy`
   step (Step 6).
+- **Under `/daily-check --auto`** the operator's word is given in advance ([its Step 8](daily-check.prompt.md#step-8--auto-mode-act-on-every-verdict)):
+  the pull request opens as a draft without asking, and every hand fix and `R` resolve is applied. Run alone, this command never assumes it.
 - **Never copy a contact into the repository.** A venue's text can carry an e-mail address, a phone number or a full name with a contact (AGENTS.md §
   Privacy). A test fixture uses `example.de` and `030 12345678`; an issue, a PR and a commit name the event by its id.
 - **Never script Resident Advisor.** Its terms forbid automated access. Read the venue's own page.
