@@ -74,14 +74,16 @@ class WikidataRereadIntegrationTest : BaseControllerTest() {
         databaseClient
             .sql(
                 "INSERT INTO events.artist (name, slug, musicbrainz_match, musicbrainz_id, wikidata_url, comedian, wikidata_genres, wikidata_read_at) " +
-                    "VALUES (:slug, :slug, 'EXACT', :mbid, :wikidata, :comedian, CAST(:genres AS TEXT[]), :readAt) RETURNING id"
+                    "VALUES (:slug, :slug, 'EXACT', :mbid, :wikidata, :comedian, CAST(:genres AS TEXT[]), " +
+                    // The database clock writes the stamp that readDaysAgo reads back with now() (#5659).
+                    "now() - make_interval(days => CAST(:readDays AS INT))) RETURNING id"
             ).bind("slug", slug)
             .bind("mbid", "mbid-$slug")
             .bind("wikidata", "https://www.wikidata.org/wiki/Q-$slug")
             .let { spec -> comedian?.let { spec.bind("comedian", it) } ?: spec.bindNull("comedian", Boolean::class.javaObjectType) }
             .let { spec -> genres?.let { spec.bind("genres", it) } ?: spec.bindNull("genres", String::class.java) }
             .let { spec ->
-                readDaysAgo?.let { spec.bind("readAt", now.minus(Duration.ofDays(it))) } ?: spec.bindNull("readAt", Instant::class.java)
+                readDaysAgo?.let { spec.bind("readDays", it.toInt()) } ?: spec.bindNull("readDays", Int::class.javaObjectType)
             }.map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
 

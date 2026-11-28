@@ -82,7 +82,13 @@ class ManualVenueControllerTest : BaseControllerTest() {
     fun `PUT programme-checked sets the time to now and leaves the other fields`(): Unit =
         runBlocking {
             val id = insertVenue("hinterhof", programme = "https://hinterhof.example/programm")
-            val before = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+            // The store writes the database's now(), so the lower bound comes from the same clock (#5659).
+            val before =
+                databaseClient
+                    .sql("SELECT now() AS now")
+                    .map { row, _ -> row.get("now", Instant::class.java)!! }
+                    .awaitSingle()
+                    .truncatedTo(ChronoUnit.SECONDS)
 
             val venue =
                 webTestClient
