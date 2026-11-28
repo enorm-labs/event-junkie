@@ -27,7 +27,7 @@ class HumboldtForumApiScraperTest {
 
     @Test
     fun `keeps one row per date of the stage, talk and screening programme and one per exhibition run`() {
-        events shouldHaveSize 70
+        events shouldHaveSize 69
         events.map { it.sourceId }.toSet().size shouldBe events.size
     }
 
@@ -113,7 +113,7 @@ class HumboldtForumApiScraperTest {
         row("172891-202611272000").free shouldBe true
         row("172891-202611272000").priceNote.shouldBeNull()
         row("172395-202611251700").free shouldBe true
-        row("172656-202611291600").free shouldBe true
+        talk(subline = "Gespräch mit Gästen", price = "Freier Eintritt").single().free shouldBe true
 
         val teaWay = row("33291-202610251300")
         teaWay.free shouldBe false
@@ -194,7 +194,8 @@ class HumboldtForumApiScraperTest {
 
     @Test
     fun `keeps a long title whole, with its no-break space collapsed`() {
-        row("172656-202611291600").title shouldBe "Wer hat, der hat? - Über Erbe, Chancen und Verantwortung"
+        talk(title = "Wer hat, der hat?\u00A0 - Über Erbe, Chancen und Verantwortung").single().title shouldBe
+            "Wer hat, der hat? - Über Erbe, Chancen und Verantwortung"
     }
 
     @Test
@@ -289,6 +290,19 @@ class HumboldtForumApiScraperTest {
         HumboldtForumApiScraper().scrape(json, SOURCE_URL).shouldBeEmpty()
     }
 
+    @ParameterizedTest(name = "{0} drops the talk")
+    @CsvSource("World Café mit Gästen", "Ausstellungsgespräch mit beteiligten Künstler*innen", "world  café mit Gästen")
+    fun `drops a talk whose subline opens with a participation format`(subline: String) {
+        talk(subline = subline).shouldBeEmpty()
+    }
+
+    @Test
+    fun `keeps a talk circle and a talk that names a World Café later`() {
+        talk(subline = "Nhé’ẽ mit Gästen") shouldHaveSize 1
+        talk(subline = "Gespräch im World Café") shouldHaveSize 1
+        rows(172656).shouldBeEmpty()
+    }
+
     @ParameterizedTest(name = "{0} bills {1}")
     @CsvSource(
         delimiter = '|',
@@ -345,6 +359,19 @@ class HumboldtForumApiScraperTest {
     fun `reads an empty list as no events`() {
         HumboldtForumApiScraper().scrape("""{"events":[]}""", SOURCE_URL).shouldBeEmpty()
     }
+
+    private fun talk(
+        title: String = "Ein Gespräch",
+        subline: String = "",
+        price: String = ""
+    ) = HumboldtForumApiScraper().scrape(
+        """
+        {"events":[{"postId":1,"title":"$title","type":"event","permalink":"https://www.humboldtforum.org/de/programm/termin/1/",
+          "genre_details":[{"text":"Gespräch"}],"acf":{"subline":"$subline","planning":{"price":"$price"},
+          "times":[{"start":"20261201 19:00","end":"20:00","status":"BUY"}]}}]}
+        """.trimIndent(),
+        SOURCE_URL
+    )
 
     private companion object {
         const val SOURCE_URL = "https://www.humboldtforum.org/wp-json/humboldt/v1/event/items?lang=de"

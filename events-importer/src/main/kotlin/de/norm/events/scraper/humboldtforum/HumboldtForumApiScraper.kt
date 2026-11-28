@@ -25,7 +25,8 @@ import java.time.format.DateTimeFormatter
  *
  * - **The venue's category types the item and sets the scope.** A tour, a workshop or another participation format drops the
  *   item whatever else it is filed under (EVENT_SCOPE.md §3.2), and so does a category that maps to no type: a publication, a
- *   shop, a symposium (§3.3). A digital, publication or permanent `type` is never an event.
+ *   shop, a symposium (§3.3). A `Gespräch` whose `acf.subline` opens with a participation format drops too
+ *   ([PARTICIPATION_SUBLINE]). A digital, publication or permanent `type` is never an event.
  * - **An exhibition (`event-period`) is one run**, from the first date of its periods to the last. A run with no end is a
  *   permanent display, and is dropped.
  * - **Every other item gives one row per `acf.times` entry**: `start` is `yyyyMMdd HH:mm`, `end` only `HH:mm`. An end before
@@ -61,6 +62,10 @@ class HumboldtForumApiScraper {
         val categories = item.path("genre_details").toList().mapNotNull { it.stringOrNull("text") }
         val type = typeOf(categories)
         if (itemType in NOT_EVENTS || type == null || categories.any { it in PARTICIPATION }) return null
+        if (isParticipationSubline(item)) {
+            logger.debug { "Humboldt Forum item ${item.path("postId").asLong()} is a participation talk, dropped" }
+            return null
+        }
         val base = baseEvent(item, type, seriesTitles) ?: return null
         val acf = item.path("acf")
         val price = priceText(acf.path("planning").stringOrNull("price"))
@@ -170,6 +175,13 @@ private fun isEntryPrice(text: String): Boolean =
         (FREE_PRICE.containsMatchIn(text) && EXTRA_TICKET !in text) ||
         (FREE_MENTION.containsMatchIn(text) && !BOOKING_PROSE.containsMatchIn(text))
 
+private fun isParticipationSubline(item: JsonNode): Boolean =
+    item
+        .path("acf")
+        .stringOrNull("subline")
+        ?.let(::plainText)
+        ?.let(PARTICIPATION_SUBLINE::containsMatchIn) == true
+
 /** The first type its categories name, in this order; null when none does. */
 internal fun typeOf(categories: List<String>): EventType? = TYPE_ORDER.firstOrNull { (names, _) -> categories.any { it in names } }?.second
 
@@ -198,6 +210,12 @@ private val NOT_EVENTS = setOf("event-digital", "event-publication", "event-perm
 
 /** EVENT_SCOPE.md §3.2: things a visitor takes part in. */
 private val PARTICIPATION = setOf("Führung", "Workshop", "Drop-In", "Fortbildung", "Meetup")
+
+/**
+ * EVENT_SCOPE.md §3.2: a `World Café` is a table discussion that visitors join, an `Ausstellungsgespräch` a talk in the
+ * galleries, close to a tour. Both are filed under `Gespräch`. The `Nhé’ẽ` circles have named speakers, and stay.
+ */
+private val PARTICIPATION_SUBLINE = Regex("""^(?:World\s+Café|Ausstellungsgespräch)(?!\p{L})""", RegexOption.IGNORE_CASE)
 
 private val TYPE_ORDER =
     listOf(
