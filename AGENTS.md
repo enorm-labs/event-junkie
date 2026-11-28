@@ -253,7 +253,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/codebase-audit` — whole-repo review: size, duplication, conventions, simplification
 - `/commit-message` — a commit message from the staged changes
 - `/compact-comments` — classify each comment block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, measure the drop
-- `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs, traffic, `/admin-review`; merges the ready bot PRs, drafts the rest
+- `/daily-check [--auto]` — the start of the day: failed runs, bot issues, unread reports, security, logs, traffic, `/admin-review`; merges the ready bot PRs, drafts the rest; `--auto` then acts on every verdict but `UNSURE`, with an undo file
 - `/data-quality-audit [<env>]` — read-only audit of the whole `events` database, production by default; leaves the names to `/artist-cleanup`
 - `/enrich [--count N] [--venues]` — websites, Instagram links and descriptions for the promoters with the most upcoming events, from their own sites, into `docs/promoters/REVIEWED.tsv` and one PR; 35 rows a run, the search budget's size
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
