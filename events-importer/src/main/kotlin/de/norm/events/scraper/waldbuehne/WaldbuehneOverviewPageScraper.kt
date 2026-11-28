@@ -38,6 +38,8 @@ import java.time.LocalTime
  * - `performer.name` repeats the event `name`, so the acts derive from the title as at any concert hall.
  * - An orchestra concert is left out until `docs/EVENT_SCOPE.md` §3.4 is decided ([ORCHESTRA]): the Berliner
  * Philharmoniker close their season here every June.
+ * - An opera ([OPERA]) is a staged work, so it is a `SHOW` and bills no act. Its title names the production
+ * (`Staatsoper goes Waldbühne: Nabucco`, event 15757), and its singers are a cast, not a headliner.
  */
 class WaldbuehneOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -61,7 +63,8 @@ class WaldbuehneOverviewPageScraper {
         val eventDate = event.schemaDate("startDate") ?: return null
         val url = event.stringOrNull("url")?.takeIf { it.startsWith("http") } ?: return null
         val subtitle = event.stringOrNull("description")?.let(::decodeHtmlEntities).blankToNull()
-        val eventType = inferConcertVenueType(title, subtitle)
+        val opera = OPERA.containsMatchIn("$title ${subtitle.orEmpty()}")
+        val eventType = if (opera) EventType.SHOW.name else inferConcertVenueType(title, subtitle)
         val (presale, priceNote) = prices(event)
 
         return ScrapedEvent(
@@ -79,7 +82,7 @@ class WaldbuehneOverviewPageScraper {
             priceNote = priceNote,
             soldOut = event.schemaSoldOut() || cleanedTitle.soldOut,
             status = event.schemaStatus(),
-            artists = castOf(subtitle) ?: buildArtistsForEventType(title, subtitle, eventType)
+            artists = if (opera) emptyList() else castOf(subtitle) ?: buildArtistsForEventType(title, subtitle, eventType)
         )
     }
 
@@ -99,6 +102,9 @@ class WaldbuehneOverviewPageScraper {
 
     private companion object {
         const val EVENT_PATH_PREFIX = "/event/"
+
+        /** An opera house or a staging named in the title or the tour line: "Staatsoper goes Waldbühne", "Halbszenische Aufführung". */
+        val OPERA = Regex("""\b(?:staats)?oper(?:ette)?\b|\bhalbszenisch""", RegexOption.IGNORE_CASE)
 
         /** An orchestra named in the title: "Berliner Philharmoniker: Saisonabschlusskonzert", "Rundfunk-Sinfonieorchester". */
         val ORCHESTRA = Regex("""\bphilharmoni(?:ker|c)\b|\w*(?:sinfonie|symphonie)orchester\b|\bsymphoniker\b""", RegexOption.IGNORE_CASE)
