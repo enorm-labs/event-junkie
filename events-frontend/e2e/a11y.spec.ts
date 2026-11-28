@@ -42,6 +42,9 @@ const staticRoutes = ['en', 'de'].flatMap((locale) => PATHS.map((path) => `/${lo
 /** The conformance target. `best-practice` is deliberately excluded: useful, but not the bar. */
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 
+/** axe's own result type, derived rather than imported: `axe-core` is only a transitive dependency. */
+type ScanResults = Awaited<ReturnType<AxeBuilder['analyze']>>
+
 /**
  * The Vite dev server injects the `vite-plugin-vue-devtools` panel, whose button carries an ARIA
  * attribute axe rejects. Not our markup and not in a build; CI runs against `npm run preview`.
@@ -58,6 +61,18 @@ async function transitionsSettled(page: Page) {
   await page.waitForFunction(() => document.getAnimations().length === 0)
 }
 
+/** Names the rules and elements in the failure message; a bare count is unactionable. */
+function expectNoViolations(results: ScanResults) {
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+}
+
 for (const path of staticRoutes) {
   test(`${path} has no detectable accessibility violations`, async ({ page }) => {
     await page.goto(path)
@@ -65,15 +80,7 @@ for (const path of staticRoutes) {
 
     const results = await buildScan(page).analyze()
 
-    // Name the rules and elements in the failure message; a bare count is unactionable.
-    expect(
-      results.violations.map((v) => ({
-        rule: v.id,
-        impact: v.impact,
-        help: v.help,
-        nodes: v.nodes.map((n) => n.target.join(' ')),
-      })),
-    ).toEqual([])
+    expectNoViolations(results)
   })
 }
 
@@ -142,14 +149,7 @@ for (const route of dataRoutes) {
 
     const results = await buildScan(page).analyze()
 
-    expect(
-      results.violations.map((v) => ({
-        rule: v.id,
-        impact: v.impact,
-        help: v.help,
-        nodes: v.nodes.map((n) => n.target.join(' ')),
-      })),
-    ).toEqual([])
+    expectNoViolations(results)
   })
 }
 
@@ -171,14 +171,7 @@ test('the calendar in light mode, with past events, has no detectable accessibil
 
   const results = await buildScan(page).analyze()
 
-  expect(
-    results.violations.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    })),
-  ).toEqual([])
+  expectNoViolations(results)
 })
 
 /** The header search, open over the page with every kind of result: a dialog the static pass never opens. */
@@ -193,14 +186,7 @@ test('the header search, open with results, has no detectable accessibility viol
 
   const results = await buildScan(page).analyze()
 
-  expect(
-    results.violations.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    })),
-  ).toEqual([])
+  expectNoViolations(results)
 })
 
 /** The header's account menu, open and signed in (#3924): the static pass is signed out and never opens it. */
@@ -219,14 +205,7 @@ test('the header account menu, open, has no detectable accessibility violations'
 
   const results = await buildScan(page).analyze()
 
-  expect(
-    results.violations.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    })),
-  ).toEqual([])
+  expectNoViolations(results)
 })
 
 /** The header's bell, open with an unread and a read entry, in German (#4078): the static pass is signed out. */
@@ -262,14 +241,7 @@ test('the header notification menu, open, has no detectable accessibility violat
 
   const results = await buildScan(page).analyze()
 
-  expect(
-    results.violations.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    })),
-  ).toEqual([])
+  expectNoViolations(results)
 })
 
 /** The header's language popover, open in German: the static pass never opens it. */
@@ -282,14 +254,7 @@ test('the header language menu, open, has no detectable accessibility violations
 
   const results = await buildScan(page).analyze()
 
-  expect(
-    results.violations.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    })),
-  ).toEqual([])
+  expectNoViolations(results)
 })
 
 test('the filter sheet on a phone, open, has no detectable accessibility violations', async ({
@@ -303,14 +268,7 @@ test('the filter sheet on a phone, open, has no detectable accessibility violati
 
   const results = await buildScan(page).analyze()
 
-  expect(
-    results.violations.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    })),
-  ).toEqual([])
+  expectNoViolations(results)
 })
 
 /**
@@ -342,14 +300,7 @@ for (const route of mapRoutes) {
 
     const results = await buildScan(page).analyze()
 
-    expect(
-      results.violations.map((v) => ({
-        rule: v.id,
-        impact: v.impact,
-        help: v.help,
-        nodes: v.nodes.map((n) => n.target.join(' ')),
-      })),
-    ).toEqual([])
+    expectNoViolations(results)
   })
 }
 
@@ -376,14 +327,7 @@ test('the events map near me, with a show on now, has no detectable accessibilit
 
   const results = await buildScan(page).analyze()
 
-  expect(
-    results.violations.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    })),
-  ).toEqual([])
+  expectNoViolations(results)
 })
 
 /**
@@ -416,14 +360,7 @@ test('the events map, with venues sharing a marker, has no detectable accessibil
 
   const results = await buildScan(page).analyze()
 
-  expect(
-    results.violations.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    })),
-  ).toEqual([])
+  expectNoViolations(results)
 })
 
 /**
@@ -441,14 +378,7 @@ test('the compact view has no detectable accessibility violations', async ({ pag
 
   const results = await buildScan(page).analyze()
 
-  expect(
-    results.violations.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    })),
-  ).toEqual([])
+  expectNoViolations(results)
 })
 
 /**
