@@ -61,6 +61,19 @@ class MadameClaudeApiScraperTest {
     }
 
     @Test
+    fun `keeps a pair billed as a duo after its x join as one headliner`() {
+        // Event 15754: the blurb introduces the cello and modular-synth duo under this one name.
+        concertArtists("Hatipoğlu X Sarıgöl Duo + Peter Cusack + Filipe Moreno + Forrest Gimp (DJ-Set)")
+            .map { it.name to it.role } shouldContainExactly
+            listOf(
+                "Hatipoğlu X Sarıgöl Duo" to ArtistRole.HEADLINER,
+                "Peter Cusack" to ArtistRole.HEADLINER,
+                "Filipe Moreno" to ArtistRole.HEADLINER,
+                "Forrest Gimp" to ArtistRole.DJ
+            )
+    }
+
+    @Test
     fun `bills the DJ-Set act of a concert as DJ, with the marker stripped`() {
         val concert = event("madame_claude:schilf-plum-texes-bgtcb-emmanuelle-5-dj-set")
         concert.eventType shouldBe "CONCERT"

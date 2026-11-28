@@ -503,4 +503,11 @@ class ActSplittingTest {
         splitSegmentOnConjunctions("Fhionn x Cathal") shouldBe listOf("Fhionn", "Cathal")
         splitCrossBilled("Los Refrescos (A x B)") shouldBe listOf("Los Refrescos (A x B)")
     }
+
+    @Test
+    fun `a pair billed as a duo or trio after its x join stays one act`() {
+        splitCrossBilled("Hatipoğlu X Sarıgöl Duo") shouldBe listOf("Hatipoğlu X Sarıgöl Duo")
+        splitCrossBilled("Kim x Lee trio") shouldBe listOf("Kim x Lee trio")
+        splitCrossBilled("Hatebreed x Duo Klexs") shouldBe listOf("Hatebreed", "Duo Klexs")
+    }
 }

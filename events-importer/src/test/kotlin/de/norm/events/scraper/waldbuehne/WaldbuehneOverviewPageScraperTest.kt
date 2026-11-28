@@ -75,6 +75,24 @@ class WaldbuehneOverviewPageScraperTest {
     }
 
     @Test
+    fun `types an opera as a show and bills no act from its production title`() {
+        val html =
+            """
+            <html><body><script type="application/ld+json">[{"@type":"MusicEvent",
+            "name":"Staatsoper goes Waldbühne: Nabucco",
+            "description":"Giuseppe Verdi - Halbszenische Aufführung mit Anna Netrebko",
+            "url":"https://www.waldbuehne-berlin.de/event/staatsoper_goes_waldbuehne-nabucco_2027-08-28_19/",
+            "startDate":"2027-08-28T19:00:00","doorTime":"2027-08-28T17:00:00"}]</script></body></html>
+            """.trimIndent()
+
+        // Event 15757.
+        val nabucco = WaldbuehneOverviewPageScraper().scrape(Jsoup.parse(html, url), url).single()
+
+        nabucco.eventType shouldBe "SHOW"
+        nabucco.artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `returns nothing for a page without JSON-LD`() {
         WaldbuehneOverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", url), url).shouldBeEmpty()
     }

@@ -264,14 +264,18 @@ private val CROSS_BILL_SEPARATOR = Regex("""(?<=\S{2})\s+x\s+(?=[\p{L}\p{N}]{2})
 /** Words that cannot open the second act of a ` x ` join, because they continue the first: `Sadat X and Grand Agent`. */
 private val CROSS_BILL_CONTINUATIONS: Set<String> = setOf("and", "und", "feat.", "feat", "ft.", "featuring", "with", "mit")
 
+/** An ensemble word that ends a ` x ` pair and names the pair as one act: `Hatipoğlu X Sarıgöl Duo` (event 15754). */
+private val ENSEMBLE_TAIL = Regex("""\s(?:duo|trio)$""", RegexOption.IGNORE_CASE)
+
 /**
  * Splits [segment] at each [CROSS_BILL_SEPARATOR] outside brackets, leaving a [KNOWN_SINGLE_ACTS]
- * duo that releases under the join whole (`Noah X Petter`). A co-brand of a series is not split
- * here: [headlinersFromTitle] drops it first ([isCoBrandedSeriesTitle]). Public because a venue
- * parser that reads its line-up line by line asks the same question (Gretchen).
+ * duo that releases under the join whole (`Noah X Petter`), and a pair billed with an [ENSEMBLE_TAIL].
+ * A co-brand of a series is not split here: [headlinersFromTitle] drops it first ([isCoBrandedSeriesTitle]).
+ * Public because a venue parser that reads its line-up line by line asks the same question (Gretchen).
  */
 fun splitCrossBilled(segment: String): List<String> {
     knownBillingActs(segment)?.let { return it }
+    if (ENSEMBLE_TAIL.containsMatchIn(segment.trim())) return listOf(segment)
     val cuts =
         cutsOutsideBrackets(segment, CROSS_BILL_SEPARATOR).filter { cut ->
             segment

@@ -98,6 +98,16 @@ class ActSplittingPropertyTest {
         }
 
     @Test
+    fun `two plain names joined by x and billed as a duo or trio stay one act`() =
+        runTest {
+            checkAll(PLAIN_NAME, PLAIN_NAME, Arb.element(" Duo", " duo", " Trio")) { first, second, ensemble ->
+                val billing = "$first x $second$ensemble"
+                splitCrossBilled(billing) shouldBe listOf(billing)
+                splitHeadlinerTitle(billing) shouldBe listOf(billing)
+            }
+        }
+
+    @Test
     fun `splitting an act of a b2b or emoji line again changes nothing`() =
         runTest {
             checkAll(BILLING) { billing ->
@@ -119,7 +129,7 @@ class ActSplittingPropertyTest {
 
         /** Words a splitter reads as a separator, a label or a band-name tail, so a plain name never holds one. */
         val RESERVED_WORDS: Set<String> =
-            setOf("b2b", "and", "und", "meets", "invite", "invites", "feat", "featuring", "ft", "with", "mit", "vs", "presents", "live") +
+            setOf("b2b", "and", "und", "meets", "invite", "invites", "feat", "featuring", "ft", "with", "mit", "vs", "presents", "live", "duo", "trio") +
                 CONJUNCTION_TAIL_MARKERS.map { it.lowercase() }
 
         val WORD: Arb<String> =
@@ -134,7 +144,27 @@ class ActSplittingPropertyTest {
         val PLAIN_NAMES: Arb<List<String>> = Arb.list(PLAIN_NAME, 2..5)
 
         private val SEPARATORS =
-            listOf(" b2b ", " & ", " and ", " und ", " x ", " + ", " / ", ", ", " meets ", " invites ", " feat. ", " 🔥 ", " (", ") ", " - ", "•", " ")
+            listOf(
+                " b2b ",
+                " & ",
+                " and ",
+                " und ",
+                " x ",
+                " + ",
+                " / ",
+                ", ",
+                " meets ",
+                " invites ",
+                " feat. ",
+                " Duo + ",
+                " trio ",
+                " 🔥 ",
+                " (",
+                ") ",
+                " - ",
+                "•",
+                " "
+            )
 
         /** A billing built from plain names and every separator the splitters know, or any name at all. */
         val BILLING: Arb<String> =
