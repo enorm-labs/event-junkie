@@ -175,7 +175,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Clash               | `MARKET_TITLE` (`ClashOverviewPageScraper.kt`)               | A title word that ends in `markt`, or the word `market`: the `TATTOO XMAS - MARKET` tattoo and craft market                                                      |
 | Badehaus            | `BadehausDetailPageScraper.isOutOfScope`, `WORKSHOP_TITLE`   | The event page's `Interactive` category: the `Café com Samba` dance workshop. A title that names a `Workshop`, also when the event page does not load            |
 | Duncker Club        | `MARKET` (`DunckerOverviewPageScraper.kt`)                   | A name or style line that names a `Market` or ends in `markt`: the `Dark Market` design and flea market                                                          |
-| Humboldt Forum      | `PARTICIPATION` (`HumboldtForumApiScraper.kt`)               | The `Führung`, `Workshop`, `Drop-In`, `Fortbildung` and `Meetup` categories, beside any other category                                                           |
+| Humboldt Forum      | `PARTICIPATION` (`HumboldtForumApiScraper.kt`)               | The `Führung`, `Workshop`, `Drop-In`, `Fortbildung` and `Meetup` categories, or a subline that opens `World Café` or `Ausstellungsgespräch`                      |
 | Crack Bellmer       | `WORKSHOP_TITLE` (`CrackBellmerOverviewPageScraper.kt`)      | A title that names a `Workshop`. The lineup field of a workshop names the collectives on its panel                                                               |
 
 A market in a venue's feed stays out, a Christmas market too. Christmas markets get their own page, entered by hand
@@ -184,6 +184,9 @@ A market in a venue's feed stays out, a Christmas market too. Christmas markets 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
 Humboldthain's `Vinyl Workshop` stays for the same reason: its open decks follow.
+
+At the Humboldt Forum, a `World Café` is a table discussion that visitors join. An `Ausstellungsgespräch` is a talk in
+the galleries, close to a tour. Both are filed under `Gespräch`. The `Nhé’ẽ` talk circles name their speakers, so they stay.
 
 Note the deliberate asymmetry. A row with **no** category is kept. The park files its one-off evening events under no
 category at all: a games night, a quiz show. Dropping an uncategorised row would lose them.
