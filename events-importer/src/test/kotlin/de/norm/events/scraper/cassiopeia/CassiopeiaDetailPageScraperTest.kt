@@ -383,6 +383,26 @@ class CassiopeiaDetailPageScraperTest {
     }
 
     @Test
+    fun `reads the acts of a Mit dabei sentence up to its full stop (event 5371)`() {
+        val html =
+            buildDetailHtml(
+                "Autumn Bash 2026",
+                descriptionParagraphs =
+                    listOf(
+                        "Autumn Bash 2026 – die 5. Edition.",
+                        "Mit dabei: Abandon the Past, Born a Rebel, Defkon-1, C.O.F.F.I.N. und White Rabbit Object. Defkon-1 feiern ihr Jubiläum."
+                    )
+            )
+        val url = "https://cassiopeia-berlin.de/event/autumn-bash-2026-111591356"
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.artists shouldContainExactly
+            listOf("Abandon the Past", "Born a Rebel", "Defkon-1", "C.O.F.F.I.N.", "White Rabbit Object").map {
+                ScrapedArtist(name = it, role = ArtistRole.HEADLINER)
+            }
+    }
+
+    @Test
     fun `lists a title headliner who is also in the line-up once`() {
         val html = buildDetailHtml("Sonic Death", descriptionParagraphs = listOf("Line-up:", "**Sonic Death** — garage punk.", "**Shaemless** — post-punk."))
         val url = "https://cassiopeia-berlin.de/event/sonic-death-1"

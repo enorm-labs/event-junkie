@@ -204,7 +204,7 @@ class CassiopeiaDetailPageScraper {
      * placeholders are filtered by [isNonArtistName]. Support acts are paragraphs prefixed
      * "Support: " (`"Support: Aska"`) or "+ " (`"+ Dani Lia"`), after the headliner, and split by [splitSupportActs] (`"Support: deshielo +
      * la haine"` is two acts, #2623). A festival title names no act, so its bands come from
-     * [lineupHeadliners] (#3102). Non-concert events extract nothing, which also keeps a party's
+     * [lineupHeadliners] (#3102), or from a `Mit dabei: A, B und C.` sentence. Non-concert events extract nothing, which also keeps a party's
      * `+ free Kicker…` line out.
      */
     private fun parseArtists(
@@ -223,7 +223,15 @@ class CassiopeiaDetailPageScraper {
                 .filter { !isNonArtistName(it) }
                 .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
 
-        return (headlinersFromTitle(title) + lineupHeadliners(content)).distinctBy { it.name.lowercase() } + supportActs
+        val named =
+            content
+                .select(".paragraph-wrapper .paragraph.events")
+                .mapNotNull { NAMED_ACTS.find(it.text().trim())?.groupValues?.get(1) }
+                .flatMap { splitSupportActs(it) }
+                .filter { !isNonArtistName(it) }
+                .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+
+        return (headlinersFromTitle(title) + lineupHeadliners(content) + named).distinctBy { it.name.lowercase() } + supportActs
     }
 
     /**
@@ -272,6 +280,12 @@ class CassiopeiaDetailPageScraper {
 
         /** The paragraph that opens a festival's act list: `Line-up:`, `Lineup`, `LINE UP:`. */
         private val LINEUP_LABEL = Regex("""$LINE_UP_WORD:?""", RegexOption.IGNORE_CASE)
+
+        /**
+         * The acts of a `Mit dabei: Abandon the Past, Defkon-1 und Salty Nacho.` sentence, up to its full stop. A stop
+         * inside a name such as `C.O.F.F.I.N.` is followed by no space and a capital, so it does not end the list.
+         */
+        private val NAMED_ACTS = Regex("""^[Mm]it dabei:\s*(.+?)(?:\.\s+\p{Lu}|\.?$)""")
 
         /** An act's head in that list, `**Shaemless** — a Dutch trio…`: a bold name, then a dash. */
         private val LINEUP_HEAD = Regex("""(?:^|\s)\*\*([^*]+)\*\*\s*[—–-]\s""")

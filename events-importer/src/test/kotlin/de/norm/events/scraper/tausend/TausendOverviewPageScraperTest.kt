@@ -50,6 +50,13 @@ class TausendOverviewPageScraperTest {
     }
 
     @Test
+    fun `takes the genre a style series names, and none from Tausend Live (event 13489)`() {
+        events.first { it.title == "Carla Valenti" }.genre shouldBe "House"
+        events.first { it.title == "Olla & The Groove Markers" }.genre.shouldBeNull()
+        events.first { it.title == "Le Salon Privé" }.genre.shouldBeNull()
+    }
+
+    @Test
     fun `keeps the text the graph's description cuts short`() {
         val night = events.first { it.title == "House Queens" }
 

@@ -3,6 +3,7 @@ package de.norm.events.scraper.silentgreen
 import de.norm.events.event.EventType
 import de.norm.events.scraper.GERMAN_DECIMAL
 import de.norm.events.scraper.HH_MM_LENGTH
+import de.norm.events.scraper.LINE_UP_WORD
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -11,6 +12,7 @@ import de.norm.events.scraper.endOn
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.isBoxOfficeLabel
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.ogImageUrl
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
@@ -36,7 +38,8 @@ import java.time.LocalTime
  * which gives a start and a doors time but no end (#4819). [dailyHours] reads them as a per-day
  * fallback. A programme highlight in the same blurb (`10. Oktober / 11 bis 18 Uhr`) has no colon
  * after the month, so it does not match: it is one screening, not the opening.
- * The same bold block may name the price (`Tickets: 10€ vor Ort`), which [ticketPrice] reads.
+ * The same bold block may name the price (`Tickets: 10€ vor Ort`), which [ticketPrice] reads. A festival's bold
+ * `Line-up:` label opens a paragraph of one act per line, which [lineupBlock] reads.
  *
  * @see SilentGreenWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -58,7 +61,8 @@ class SilentGreenDetailPageScraper {
                 runEnd = parseBlockDate(document, ".event-detail-date-end"),
                 dailyHours = runStart?.let { dailyHours(document, it) }.orEmpty(),
                 description = description(document),
-                imageUrl = document.ogImageUrl()
+                imageUrl = document.ogImageUrl(),
+                lineup = lineupBlock(document)
             )
 
         if (details == SilentGreenEventDetails()) {
@@ -87,6 +91,30 @@ class SilentGreenDetailPageScraper {
             AT_THE_DOOR.containsMatchIn(line) || isBoxOfficeLabel(line) -> SilentGreenEventDetails(priceBoxOffice = amounts.single())
             else -> SilentGreenEventDetails(pricePresale = amounts.single())
         }
+    }
+
+    /** The acts of the paragraph a bold `Line-up:` opens, one per `<br>` line; the description folds them into one line. */
+    private fun lineupBlock(document: Document): List<String> {
+        val paragraph =
+            document.select(BODY_TEXT_SELECTOR).firstOrNull {
+                LINEUP_LABEL.matches(
+                    it
+                        .selectFirst("strong")
+                        ?.text()
+                        ?.trim()
+                        .orEmpty()
+                )
+            }
+                ?: return emptyList()
+        val lines = paragraph.clone()
+        lines.selectFirst("strong")?.remove()
+        lines.select("br").forEach { it.after("\n") }
+        return lines
+            .wholeText()
+            .lines()
+            .map { it.replace(WHITESPACE_RUN, " ").trim() }
+            .filter { it.isNotEmpty() && !isNonArtistName(it) }
+            .distinct()
     }
 
     /**
@@ -163,6 +191,9 @@ class SilentGreenDetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     private companion object {
+        val LINEUP_LABEL = Regex("""$LINE_UP_WORD:?""", RegexOption.IGNORE_CASE)
+        val WHITESPACE_RUN = Regex("""\s+""")
+
         /** The detail article's prose, scoped so the page's navigation and footer stay out. */
         const val BODY_SELECTOR = ".news-detail .ce-bodytext"
         const val BODY_TEXT_SELECTOR = "$BODY_SELECTOR p"
@@ -298,14 +329,16 @@ data class SilentGreenEventDetails(
     /** The single amount on a `Tickets:` line paid `vor Ort` or at the box office. */
     val priceBoxOffice: BigDecimal? = null,
     /** A `Tickets:` line naming several amounts, verbatim. */
-    val priceNote: String? = null
+    val priceNote: String? = null,
+    /** The acts of a `Line-up:` paragraph, one per line. */
+    val lineup: List<String> = emptyList()
 ) {
     /**
      * Returns [event] with the fields the calendar row could not supply filled from this page. An
      * exhibition also takes the page's span: the calendar lists only the days inside the scraped
      * months. The days then fold in [collapseExhibitionRuns]; a festival's days keep their dates.
      * A day's [dailyHours] apply only when neither time cell gives a start. A concert's blurb `Mit:`
-     * line replaces the title's acts.
+     * line replaces the title's acts, and a concert's or festival's `Line-up:` paragraph comes before both.
      */
     fun applyTo(event: ScrapedEvent): ScrapedEvent {
         val run = event.eventType == EventType.EXHIBITION.name && runStart != null && runEnd != null && runEnd > runStart
@@ -339,10 +372,15 @@ data class SilentGreenEventDetails(
             priceNote = event.priceNote ?: priceNote
         )
 
-    /** A concert's [silentGreenPerformers] from the blurb, its [silentGreenAlbumHost], or the acts the calendar row read off the title. */
+    /**
+     * A concert's [silentGreenPerformers] from the blurb, its [silentGreenAlbumHost], or the acts the calendar row read off the title.
+     * A reading or a festival bills the people of its `Mit:` line too, as a reading's authors are billed elsewhere.
+     */
     private fun performersOr(event: ScrapedEvent): List<ScrapedArtist> {
-        if (event.eventType != EventType.CONCERT.name) return event.artists
+        if (lineup.isNotEmpty() && event.eventType in LINEUP_TYPES) return lineup.map { ScrapedArtist(name = it) }
         val blurb = event.description ?: description
+        if (event.eventType in NAMED_GUEST_TYPES) return silentGreenPerformers(blurb).ifEmpty { event.artists }
+        if (event.eventType != EventType.CONCERT.name) return event.artists
         return silentGreenPerformers(blurb)
             .ifEmpty { silentGreenAlbumHost(event.title, blurb, event.subtitle) }
             .ifEmpty { event.artists }
@@ -382,3 +420,9 @@ data class SilentGreenOpeningHours(
     /** The day the hours that open on [day] end, or `null` without an [end]. */
     fun endDate(day: LocalDate): LocalDate? = end?.let { endOn(day, start, it) }
 }
+
+/** The types whose `Mit:` line names the people on stage: authors, panelists, a festival's guests. */
+private val NAMED_GUEST_TYPES = setOf(EventType.READING.name, EventType.FESTIVAL.name)
+
+/** The types whose `Line-up:` paragraph names the acts on stage. */
+private val LINEUP_TYPES = setOf(EventType.CONCERT.name, EventType.FESTIVAL.name)

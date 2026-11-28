@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
  * Website importer for Frachtkante, a server-rendered ProcessWire one-pager whose `Veranstaltungen` section holds the programme.
  *
  * One request per import. Each event is a title, a date, a time line and, for some, a ticket link, with no page of its own.
- * The site names no category, so the title types the event: an open air is a party, a market stays other.
+ * The site names no category, so the title types the event: an open air is a party, and a market is dropped.
  *
  * @see FrachtkanteOverviewPageScraper for the parsing.
  */

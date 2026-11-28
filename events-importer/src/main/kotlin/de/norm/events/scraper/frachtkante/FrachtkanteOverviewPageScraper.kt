@@ -22,7 +22,8 @@ import java.time.LocalDate
  *
  * The date comes from `time[datetime]`; the printed line beside it carries the clock range or `Ganztägig`
  * and, for a multi-day event, the last day. The section is rendered twice, so rows are deduplicated. The
- * page has no link per event, so the `sourceId` is the date plus the title.
+ * page has no link per event, so the `sourceId` is the date plus the title. A market in the title is out of
+ * scope (EVENT_SCOPE.md §3.2) and is dropped.
  */
 class FrachtkanteOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -45,6 +46,10 @@ class FrachtkanteOverviewPageScraper {
         val title = article.textAt("h3")
         if (title.isNullOrBlank()) {
             logger.warn { "Frachtkante event without a title, skipping" }
+            return null
+        }
+        if (MARKET_TITLE.containsMatchIn(title)) {
+            logger.info { "Skipping Frachtkante event '$title': a market, out of scope" }
             return null
         }
         val eventDate = article.selectFirst("> time[datetime]")?.attr("datetime")?.let(::parseIsoDate)
@@ -94,12 +99,14 @@ class FrachtkanteOverviewPageScraper {
         /** The last day of `28. November 2026 - 29. November 2026`. */
         val DAY_RANGE = Regex("""[-–]\s*(\d{1,2}\.\s*\p{L}+\s+\d{4})\s*$""")
 
+        /** A title word that ends in `markt` (`Wintermarkt`), or the word `market`. */
+        val MARKET_TITLE = Regex("""markt(?!\p{L})|(?<!\p{L})market(?!\p{L})""", RegexOption.IGNORE_CASE)
+
         /** `tickets via https://…`, the line that only carries the ticket link. */
         val TICKET_LINE = Regex("""^tickets?\b[^.]{0,20}https?://\S+$""", RegexOption.IGNORE_CASE)
 
         /**
-         * The house's own format words; a market falls through to the shared `markt` cue. A khisdapaze
-         * open air is a DJ day party.
+         * The house's own format words. A khisdapaze open air is a DJ day party.
          */
         val VENUE_FORMATS: Map<String, String> =
             linkedMapOf(

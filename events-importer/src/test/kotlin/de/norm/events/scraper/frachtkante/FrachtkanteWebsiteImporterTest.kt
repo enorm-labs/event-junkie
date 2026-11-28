@@ -32,7 +32,7 @@ class FrachtkanteWebsiteImporterTest {
             val result = importer.importEvents(sourceUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 2
+            result.events shouldHaveSize 1
             result.etag shouldBe "\"fk-1\""
             result.lastModified shouldBe "Tue, 13 Oct 2026 18:00:00 GMT"
         }

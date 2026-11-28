@@ -85,8 +85,8 @@ val COLOSSEUM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "the house names no musical style anywhere", verified = "2026-08-25"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "no support-act convention exists in the subtitles, and a title is as often an event name as a performer's",
-            verified = "2026-09-30"
+            "a title is as often an event name as a performer's, so only a special guest, a talk's guest and host or a LIVE MUSIK list bills acts",
+            verified = "2026-11-28"
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "an event sold through Eventim, Dice or its promoter prints no figure", verified = "2026-10-13"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")

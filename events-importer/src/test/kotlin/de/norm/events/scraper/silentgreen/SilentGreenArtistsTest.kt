@@ -43,6 +43,19 @@ class SilentGreenArtistsTest {
         silentGreenPerformers(null).shouldBeEmpty()
     }
 
+    @Test
+    fun `reads a festival's Mit dabei list split at its dots, without the closing u v m (event 10692)`() {
+        silentGreenPerformers("Mit dabei: Mo Amjahid · Aida Baghernejad · Kübra Beydaş · Mirjam Zadoff u.v.m.").map { it.name } shouldContainExactly
+            listOf("Mo Amjahid", "Aida Baghernejad", "Kübra Beydaş", "Mirjam Zadoff")
+    }
+
+    @Test
+    fun `ends a Mit list at its first sentence, and not at an initial (event 13346)`() {
+        silentGreenPerformers("Mit: Batool Abu Akleen, Maha El Hissy & Husam Maarouf. Mit Musik von Cham Saloum.").map { it.name } shouldContainExactly
+            listOf("Batool Abu Akleen", "Maha El Hissy", "Husam Maarouf")
+        silentGreenPerformers("Mit: Audrey Chen und C. Spencer Yeh.").map { it.name } shouldContainExactly listOf("Audrey Chen", "C. Spencer Yeh")
+    }
+
     private fun concert(title: String) =
         ScrapedEvent(
             title = title,

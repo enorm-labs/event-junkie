@@ -40,7 +40,7 @@ class FrachtkanteOverviewPageScraperTest {
 
     @Test
     fun `reads each event once, although the section is rendered twice`() {
-        events.map { it.title } shouldContainExactly listOf("khisdapaze Open Air: TXL Summer Closing", "khisdapaze Wintermarkt 2.0")
+        events.map { it.title } shouldContainExactly listOf("khisdapaze Open Air: TXL Summer Closing")
     }
 
     @Test
@@ -59,15 +59,18 @@ class FrachtkanteOverviewPageScraperTest {
     }
 
     @Test
-    fun `reads an all-day market over two days`() {
-        val event = titled("khisdapaze Wintermarkt 2.0")
+    fun `drops a market, which is out of scope (event 7591)`() {
+        val markets =
+            listOf("khisdapaze Wintermarkt 2.0", "Vinyl Market").map {
+                article("2026-11-28T14:00:00+01:00", "<span>28. November 2026</span><span>14:00 - 22:00 Uhr</span>", it)
+            }
 
-        event.eventType shouldBe EventType.OTHER.name
-        event.eventDate shouldBe LocalDate.of(2026, 11, 28)
-        event.startTime.shouldBeNull()
-        event.endDate shouldBe LocalDate.of(2026, 11, 29)
-        event.endTime.shouldBeNull()
-        event.ticketUrl.shouldBeNull()
+        scrape(markets.joinToString("")) shouldHaveSize 0
+    }
+
+    @Test
+    fun `keeps a title that only opens with Markt`() {
+        scrape(article("2026-11-28T20:00:00+01:00", "<span>20:00 - 23:00 Uhr</span>", "Markthallen Konzert")) shouldHaveSize 1
     }
 
     @Test
