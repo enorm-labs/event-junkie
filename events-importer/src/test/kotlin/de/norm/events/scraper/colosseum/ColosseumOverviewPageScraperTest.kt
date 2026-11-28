@@ -233,7 +233,23 @@ class ColosseumOverviewPageScraperTest {
 
     @Test
     fun `derives no artists because the subtitles carry no support billing`() {
-        events.forEach { it.artists.shouldBeEmpty() }
+        events.filterNot { it.title.startsWith("Gysis Begegnungen") }.forEach { it.artists.shouldBeEmpty() }
+    }
+
+    @Test
+    fun `bills the guest of a Gysis Begegnungen talk, with Gregor Gysi as its host`() {
+        event("colosseum:gysis-begegnungen-mit-joe-kaeser").artists.map { it.name to it.role } shouldBe
+            listOf("Joe Kaeser" to ArtistRole.HEADLINER, "Gregor Gysi" to ArtistRole.SUPPORT)
+        // Event 10757 types its ellipsis.
+        scrapeOne(mapOf("title" to "Gysis Begegnungen mit … Eva Mattes")).artists.map { it.name to it.role } shouldBe
+            listOf("Eva Mattes" to ArtistRole.HEADLINER, "Gregor Gysi" to ArtistRole.SUPPORT)
+    }
+
+    @Test
+    fun `bills the guest and the host a zu Gast bei strapline names (event 15451)`() {
+        scrapeOne(mapOf("title" to "MISSVERSTEHEN SIE MICH RICHTIG", "description" to "Hanns Zischler zu Gast bei Gregor Gysi"))
+            .artists
+            .map { it.name to it.role } shouldBe listOf("Hanns Zischler" to ArtistRole.HEADLINER, "Gregor Gysi" to ArtistRole.SUPPORT)
     }
 
     @Test

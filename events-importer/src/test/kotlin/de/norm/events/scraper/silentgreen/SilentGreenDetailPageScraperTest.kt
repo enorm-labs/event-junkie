@@ -6,6 +6,7 @@ import de.norm.events.scraper.alternateLanguageUrl
 import de.norm.events.scraper.fixtureDocument
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -125,6 +126,30 @@ class SilentGreenDetailPageScraperTest {
                 LocalDate.of(2026, 12, 31) to SilentGreenOpeningHours(LocalTime.of(18, 30), LocalTime.of(23, 0)),
                 LocalDate.of(2027, 1, 2) to SilentGreenOpeningHours(LocalTime.NOON, LocalTime.MIDNIGHT)
             )
+    }
+
+    @Test
+    fun `bills a festival's Line-up paragraph one act per line, and leaves a party's alone (events 12647 to 12649)`() {
+        val document =
+            Jsoup.parse(
+                """<div class="news-detail"><div class="ce-bodytext">
+                  <p>Das dreitägige Festival präsentiert kuratierte Kollaborationen.</p>
+                  <p><strong>Line-up:</strong><br />Audrey Chen<br />C. Spencer Yeh<br /><span style="color:grey">Lê Quan Ninh</span><br />Tintin Patrone</p>
+                  </div></div>""",
+                "https://www.silent-green.net/programm/detail/dedicated-play-festival"
+            )
+        val details = scraper.scrape(document).shouldNotBeNull()
+        val row =
+            ScrapedEvent(
+                title = "Dedicated Play Festival",
+                eventType = "FESTIVAL",
+                eventDate = LocalDate.of(2026, 12, 2),
+                sourceUrl = "https://www.silent-green.net/programm/detail/dedicated-play-festival",
+                sourceId = "silent_green:2026-12-02-dedicated-play-festival"
+            )
+
+        details.applyTo(row).artists.map { it.name } shouldContainExactly listOf("Audrey Chen", "C. Spencer Yeh", "Lê Quan Ninh", "Tintin Patrone")
+        details.applyTo(row.copy(eventType = "PARTY")).artists shouldBe emptyList()
     }
 
     @Test
@@ -469,7 +494,7 @@ class SilentGreenDetailPageScraperTest {
     }
 
     @Test
-    fun `applyTo bills a concert's Mit line in place of the title, and leaves every other row's acts`() {
+    fun `applyTo bills a concert's, a reading's or a festival's Mit line in place of the title, and leaves every other row's acts`() {
         val titleAct = listOf(ScrapedArtist("Kantine Musik", titleDerived = true))
         val row =
             ScrapedEvent(
@@ -491,8 +516,10 @@ class SilentGreenDetailPageScraperTest {
 
         details.applyTo(row).artists shouldContainExactly
             listOf("Simon Rose", "Lukas Akintaya", "Cassie Kinoshi", "Eurico Mathias", "Adam Pultz Melbye").map { ScrapedArtist(it) }
-        // A reading's speakers are not a lineup, and a blurb without the line keeps the title's act.
-        details.applyTo(row.copy(eventType = "READING", artists = emptyList())).artists shouldBe emptyList()
+        // A reading and a festival bill their Mit line too, and a party does not.
+        details.applyTo(row.copy(eventType = "READING", artists = emptyList())).artists.map { it.name } shouldHaveSize 5
+        details.applyTo(row.copy(eventType = "PARTY", artists = emptyList())).artists shouldBe emptyList()
+        // A blurb without the line keeps the title's act.
         SilentGreenEventDetails(description = "Ein Abend mit dem Deutschen Filmorchester Babelsberg.").applyTo(row).artists shouldBe titleAct
         SilentGreenEventDetails().applyTo(row).artists shouldBe titleAct
     }

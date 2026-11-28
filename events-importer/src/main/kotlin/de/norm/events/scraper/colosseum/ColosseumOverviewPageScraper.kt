@@ -1,7 +1,9 @@
 package de.norm.events.scraper.colosseum
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WIX_REGISTRATION_TICKETS
 import de.norm.events.scraper.WixEventsWarmupData
@@ -126,9 +128,22 @@ class ColosseumOverviewPageScraper {
             soldOut = ticketing?.path("soldOut")?.asBoolean(false) == true || cleanedTitle.soldOut,
             status = mapWixEventStatus(node.path("status")),
             artists =
-                titleGuestBill(title)?.let { (acts, guest) -> buildArtistList(acts, listOf(guest)) }
+                hostedTalkBill(title, subtitle)
+                    ?: titleGuestBill(title)?.let { (acts, guest) -> buildArtistList(acts, listOf(guest)) }
                     ?: buildArtistList(title, extractSupportFromSubtitle(subtitle))
         )
+    }
+
+    /** A talk's guest as the headliner and its host as support, from a [GYSI_GUEST] title or a [GUEST_OF_HOST] subtitle; else `null`. */
+    private fun hostedTalkBill(
+        title: String,
+        subtitle: String?
+    ): List<ScrapedArtist>? {
+        val (guest, host) =
+            GYSI_GUEST.matchEntire(title.trim())?.let { it.groupValues[1] to GYSI }
+                ?: subtitle?.let { GUEST_OF_HOST.matchEntire(it.trim()) }?.let { it.groupValues[1] to it.groupValues[2] }
+                ?: return null
+        return listOf(ScrapedArtist(name = guest.trim(), role = ArtistRole.HEADLINER), ScrapedArtist(name = host.trim(), role = ArtistRole.SUPPORT))
     }
 
     /** A `<acts> with special guest <guest>` title split into its two halves, or `null` without the marker. */
@@ -152,6 +167,14 @@ class ColosseumOverviewPageScraper {
     private companion object {
         /** The title's own support billing, `Peter Broderick & The Winterage Men with special guest Marlais`. */
         private val SPECIAL_GUEST_MARKER = Regex("""\s+(?:with|mit)\s+special\s+guests?:?\s+""", RegexOption.IGNORE_CASE)
+
+        /** `Gysis Begegnungen mit … Eva Mattes`: the guest heads the bill, and the host Gregor Gysi is support. */
+        private val GYSI_GUEST = Regex("""Gysis\s+Begegnungen\s+mit\s*(?:…|\.{3})?\s*(\S.*)""", RegexOption.IGNORE_CASE)
+
+        private const val GYSI = "Gregor Gysi"
+
+        /** `Hanns Zischler zu Gast bei Gregor Gysi`, the strapline of `MISSVERSTEHEN SIE MICH RICHTIG`. */
+        private val GUEST_OF_HOST = Regex("""(\S.*?)\s+zu\s+Gast\s+bei\s+(\S.*)""", RegexOption.IGNORE_CASE)
 
         /**
          * A market in the title: a word ending in `markt` (`Indoor Design Weihnachtsmarkt`) or the

@@ -33,7 +33,7 @@ val TAUSEND_LIMITATIONS =
         EventSource.TAUSEND,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at its anchor on the lineup page", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.PRICE, "the lineup prints no admission", verified = "2026-10-08"),
-        AcceptedLimitation(LimitedAspect.GENRE, "each night names its styles only in its prose", verified = "2026-10-08"),
+        AcceptedLimitation(LimitedAspect.GENRE, "a night outside a style series names its styles only in its prose", verified = "2026-11-28"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the page prints no closing time, and its schema.org end is 3 am on every night", verified = "2026-10-08"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "a night links its Resident Advisor page only once that page is up", verified = "2026-10-13"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself", verified = "2026-10-13")

@@ -2,6 +2,7 @@ package de.norm.events.scraper.tausend
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.genretag.isGenreLabel
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -31,7 +32,8 @@ import java.time.format.DateTimeParseException
  * The page carries a schema.org `MusicEvent` graph with full dates, image and Resident Advisor offer,
  * so the year-less `Do | 08.10. | 21 H` line is never read. The graph's `description` is cut at about
  * 300 characters, so the full text comes from each night's `.bt-lu-body` block, matched on the same
- * [sourceId]. The `endDate` is a fixed 3 am on every night and is not stored.
+ * [sourceId]. The `endDate` is a fixed 3 am on every night and is not stored. A series that names a style, `Tausend House`
+ * or `Tausend Electronica`, is the night's genre; `Tausend Live` and a bare `Tausend` name none.
  *
  * A private booking is listed as the act `Closed Event` and is dropped (13348). The words `geschlossene Veranstaltung` alone
  * do not decide it: a public night that opens at 24 H after a booking says them too, as Le Salon Privé's does.
@@ -88,6 +90,12 @@ class TausendOverviewPageScraper {
             subtitle = series?.takeUnless { it.equals(act, ignoreCase = true) },
             description = description,
             eventType = eventType,
+            genre =
+                series
+                    ?.let { SERIES_STYLE.matchEntire(it.trim()) }
+                    ?.groupValues
+                    ?.get(1)
+                    ?.takeIf(::isGenreLabel),
             eventDate = start.date,
             startTime = start.time,
             imageUrl = node.schemaImageUrl(),
@@ -168,6 +176,9 @@ class TausendOverviewPageScraper {
     companion object {
         private const val NAME_SEPARATOR = "·"
         private const val LIVE_SERIES = "Live"
+
+        /** The style a house series names after the house: `Tausend House`. */
+        private val SERIES_STYLE = Regex("""Tausend\s+(.+)""", RegexOption.IGNORE_CASE)
         private const val CLOSED_EVENT_ACT = "Closed Event"
         private val LIVE_WITH_DJ = Regex("""(.+?)\s+&\s+(DJ\s+.+)""")
         private val LIVE_AND_DJ_SET_CREDIT = Regex("""·\s*([^·\n]+?)\s+live\s+&\s+([^·\n]+?)\s+DJ-Set\s*·""", RegexOption.IGNORE_CASE)

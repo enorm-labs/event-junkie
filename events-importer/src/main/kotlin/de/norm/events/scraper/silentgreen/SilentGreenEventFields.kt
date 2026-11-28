@@ -129,16 +129,19 @@ private fun namesAgain(
         Regex("""(?<![\p{L}\d])${Regex.escape(name)}(?![\p{L}\d])""", RegexOption.IGNORE_CASE).containsMatchIn(text)
 
 /**
- * The players a house-series concert names on a blurb line that opens `Mit:` (`Mit: Simon Rose,
+ * The players a house-series concert names on a blurb line that opens `Mit:` or `Mit dabei:` (`Mit: Simon Rose,
  * Lukas Akintaya … & Adam Pultz Melbye.`), each a headliner; empty without one (#3216). Only a line
- * that opens with the label counts, so `… mit dem Deutschen Filmorchester` in prose stays prose.
+ * that opens with the label counts, so `… mit dem Deutschen Filmorchester` in prose stays prose. The list ends at its
+ * first sentence, and a festival's `A · B · C u.v.m.` splits at each dot.
  */
 internal fun silentGreenPerformers(blurb: String?): List<ScrapedArtist> =
     blurb
         ?.lineSequence()
         ?.firstNotNullOfOrNull { PERFORMER_LINE.find(it.trim())?.groupValues?.get(1) }
         ?.replace(BRACKETED, "")
-        ?.let(::splitSupportActs)
+        ?.replace(AND_MORE, "")
+        ?.split(MIDDLE_DOT)
+        ?.flatMap(::splitSupportActs)
         ?.filterNot { isNonArtistName(it) }
         ?.distinctBy { it.lowercase() }
         ?.map { ScrapedArtist(name = it) }
@@ -173,8 +176,13 @@ private val HEAD_PRESENTS_TAIL = Regex("""(.{2,60}?)\s+(?:$PRESENTS_VERBS)\s+(.+
 /** The sub-line under a title that names the guests: `guests: Aude Langlois & Felipe Vareschi`. */
 private val GUESTS_LINE = Regex("""guests?\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
 
-/** A blurb line that opens `Mit:`, capturing the names without the closing full stop. */
-private val PERFORMER_LINE = Regex("""^Mit:\s*(.+?)\.?$""")
+/** A blurb line that opens `Mit:` or `Mit dabei:`, capturing the names up to the first full stop before a new sentence. */
+private val PERFORMER_LINE = Regex("""^Mit(?: dabei)?:\s*(.+?)(?:(?<=\p{L}{2})\.\s+\p{Lu}.*|\.?)$""")
+
+/** The `u.v.m.` (and many more) that closes a list. */
+private val AND_MORE = Regex("""\s*\bu\.\s?v\.\s?m\.?$""")
+
+private val MIDDLE_DOT = Regex("""\s*·\s*""")
 
 /** A bracketed aside after a name, such as an instrument, with the space before it. */
 private val BRACKETED = Regex("""\s*\([^)]*\)""")

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.colosseum
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.fixtureDocument
 import de.norm.events.scraper.fixtureText
@@ -89,6 +90,25 @@ class ColosseumDetailPageScraperTest {
         scrape("colosseum-detail-sandberg.html").shouldNotBeNull().eventType shouldBe EventType.CONCERT.name
         // A talk with a DJ names neither.
         scrape("colosseum-detail-gysi.html").shouldNotBeNull().eventType.shouldBeNull()
+    }
+
+    @Test
+    fun `bills the bands under each LIVE MUSIK heading, and no other list (event 7467)`() {
+        val text =
+            listOf(
+                "Samstag",
+                "🎶 LIVE MUSIK",
+                "",
+                ">>> DIE HÖCHSTE EISENBAHN, DRANGSAL (TRIO), JOSI MILLER (LIVE), LIN",
+                "🎙️ LIVE PODCAST",
+                ">>> WIE WAR DER TAG, LIEBLING?",
+                "Sonntag",
+                "🎶 LIVE MUSIK",
+                ">>> LOTTE UNPLUGGED DUO SHOW, DRANGSAL, cleomadita"
+            )
+
+        ColosseumDetailPageScraper.liveMusicActs(text).map { it.name to it.role } shouldBe
+            listOf("Die Höchste Eisenbahn", "Drangsal", "Josi Miller", "Lin", "Lotte", "cleomadita").map { it to ArtistRole.HEADLINER }
     }
 
     @ParameterizedTest

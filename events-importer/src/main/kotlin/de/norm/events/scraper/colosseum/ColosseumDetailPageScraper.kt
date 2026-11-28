@@ -1,7 +1,10 @@
 package de.norm.events.scraper.colosseum
 
+import de.norm.events.common.deshout
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.WixEventsWarmupData
@@ -38,7 +41,8 @@ import java.time.LocalTime
  *
  * **The event's own text also names its type**, where the listing gives none: a comedian, a
  * concert or a composer, or a podcast recorded live ([typeOf]). That text is also the description, `Einlass` and `Beginn` lines
- * included, as the venue wrote them (#4686). The cloned `about` block stays out, for the reason in
+ * included, as the venue wrote them (#4686). A festival's text bills its bands in a `>>>` list under each `LIVE MUSIK`
+ * heading ([liveMusicActs]). The cloned `about` block stays out, for the reason in
  * [ColosseumWebsiteImporter]'s KDoc.
  *
  * @see ColosseumWebsiteImporter for the fetch orchestration.
@@ -78,7 +82,8 @@ class ColosseumDetailPageScraper {
             pricePresale = prices.minOrNull(),
             priceNote = wixTicketPriceRange(prices),
             sourceUrl = url,
-            sourceId = "${EventSource.COLOSSEUM.sourceIdPrefix}${event.stringOrNull("slug").orEmpty()}"
+            sourceId = "${EventSource.COLOSSEUM.sourceIdPrefix}${event.stringOrNull("slug").orEmpty()}",
+            artists = liveMusicActs(text)
         )
     }
 
@@ -112,6 +117,31 @@ class ColosseumDetailPageScraper {
                 else -> null
             }
         }
+
+        /**
+         * The bands of each `>>> DIE HÖCHSTE EISENBAHN, DRANGSAL (TRIO)` list that follows a `LIVE MUSIK` heading.
+         * A list under another heading names podcasts, talks or comedians, so it stays unread.
+         */
+        fun liveMusicActs(paragraphs: List<String>): List<ScrapedArtist> =
+            paragraphs
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .zipWithNext()
+                .filter { (heading, list) -> LIVE_MUSIC_HEADING.matches(heading) && list.startsWith(LIST_MARK) }
+                .flatMap { (_, list) -> list.removePrefix(LIST_MARK).split(',') }
+                .map { it.replace(ACT_SUFFIX, "").trim() }
+                .filter { it.isNotEmpty() }
+                .map { if (it.any(Char::isLowerCase)) it else deshout(it) }
+                .distinctBy { it.lowercase() }
+                .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+
+        private const val LIST_MARK = ">>>"
+
+        /** `🎶 LIVE MUSIK`, with or without its emoji. */
+        private val LIVE_MUSIC_HEADING = Regex("""^\W*live[ -]?musik\W*$""", RegexOption.IGNORE_CASE)
+
+        /** A format note after the band: `DRANGSAL (TRIO)`, `JOSI MILLER (LIVE)`, `LOTTE UNPLUGGED DUO SHOW`. */
+        private val ACT_SUFFIX = Regex("""\s*\([^)]*\)\s*$|\s+unplugged\b.*$""", RegexOption.IGNORE_CASE)
 
         private const val EINLASS = "einlass"
         private const val BEGINN = "beginn"
